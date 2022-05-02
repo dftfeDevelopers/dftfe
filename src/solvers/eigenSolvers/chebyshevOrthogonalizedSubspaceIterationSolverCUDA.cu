@@ -17,7 +17,6 @@
 // @author Phani Motamarri, Sambit Das
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsCUDA.h>
@@ -206,22 +205,23 @@ namespace dftfe
   //
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::
     chebyshevOrthogonalizedSubspaceIterationSolverCUDA(
-      const MPI_Comm &mpi_comm_parent,
-      const MPI_Comm &mpi_comm_domain,
-      double          lowerBoundWantedSpectrum,
-      double          lowerBoundUnWantedSpectrum,
-      double          upperBoundUnWantedSpectrum)
+      const MPI_Comm &     mpi_comm_parent,
+      const MPI_Comm &     mpi_comm_domain,
+      double               lowerBoundWantedSpectrum,
+      double               lowerBoundUnWantedSpectrum,
+      double               upperBoundUnWantedSpectrum,
+      const dftParameters &dftParams)
     : d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum)
     , d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum)
     , d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum)
     , d_isTemporaryParallelVectorsCreated(false)
     , d_mpiCommParent(mpi_comm_parent)
+    , d_dftParams(dftParams)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , computing_timer(mpi_comm_domain,
                       pcout,
-                      dftParameters::reproducible_output ||
-                          dftParameters::verbosity < 4 ?
+                      dftParams.reproducible_output || dftParams.verbosity < 4 ?
                         dealii::TimerOutput::never :
                         dealii::TimerOutput::summary,
                       dealii::TimerOutput::wall_times)
@@ -266,7 +266,7 @@ namespace dftfe
     dealii::TimerOutput computingTimerStandard(
       operatorMatrix.getMPICommunicator(),
       pcout,
-      dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
+      d_dftParams.reproducible_output || d_dftParams.verbosity < 2 ?
         dealii::TimerOutput::never :
         dealii::TimerOutput::every_call,
       dealii::TimerOutput::wall_times);
@@ -293,7 +293,7 @@ namespace dftfe
 
 
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::chebyWfcBlockSize, totalNumberWaveFunctions);
+      std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedGPUVec<dataTypes::numberGPU> &cudaFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
@@ -310,18 +310,18 @@ namespace dftfe
           operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
           vectorsBlockSize);
 
-        if (dftParameters::isPseudopotential)
+        if (d_dftParams.isPseudopotential)
           {
-            if (dftParameters::overlapComputeCommunCheby)
+            if (d_dftParams.overlapComputeCommunCheby)
               d_projectorKetTimesVector2.reinit(projectorKetTimesVector);
           }
 
 
-        if (dftParameters::overlapComputeCommunCheby)
+        if (d_dftParams.overlapComputeCommunCheby)
           d_cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
-        if (dftParameters::overlapComputeCommunCheby)
+        if (d_dftParams.overlapComputeCommunCheby)
           d_YArray2.reinit(d_cudaFlattenedArrayBlock2);
 
 
@@ -330,7 +330,7 @@ namespace dftfe
 
     if (isFirstFilteringCall)
       {
-        if (dftParameters::gpuFineGrainedTimings)
+        if (d_dftParams.gpuFineGrainedTimings)
           {
             cudaDeviceSynchronize();
             computingTimerStandard.enter_subsection("Lanczos upper bound");
@@ -342,9 +342,10 @@ namespace dftfe
             cudaFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
-            vectorsBlockSize);
+            vectorsBlockSize,
+            d_dftParams);
 
-        if (dftParameters::gpuFineGrainedTimings)
+        if (d_dftParams.gpuFineGrainedTimings)
           {
             cudaDeviceSynchronize();
             computingTimerStandard.leave_subsection("Lanczos upper bound");
@@ -357,11 +358,11 @@ namespace dftfe
           (d_upperBoundUnWantedSpectrum - d_lowerBoundWantedSpectrum) *
             totalNumberWaveFunctions /
             operatorMatrix.getParallelVecSingleComponent().size() *
-            (dftParameters::reproducible_output ? 10.0 : 200.0);
+            (d_dftParams.reproducible_output ? 10.0 : 200.0);
       }
-    else if (!dftParameters::reuseLanczosUpperBoundFromFirstCall)
+    else if (!d_dftParams.reuseLanczosUpperBoundFromFirstCall)
       {
-        if (dftParameters::gpuFineGrainedTimings)
+        if (d_dftParams.gpuFineGrainedTimings)
           {
             cudaDeviceSynchronize();
             computingTimerStandard.enter_subsection("Lanczos upper bound");
@@ -373,9 +374,10 @@ namespace dftfe
             cudaFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
-            vectorsBlockSize);
+            vectorsBlockSize,
+            d_dftParams);
 
-        if (dftParameters::gpuFineGrainedTimings)
+        if (d_dftParams.gpuFineGrainedTimings)
           {
             cudaDeviceSynchronize();
             computingTimerStandard.leave_subsection("Lanczos upper bound");
@@ -384,14 +386,14 @@ namespace dftfe
         d_upperBoundUnWantedSpectrum = bounds.second;
       }
 
-    if (dftParameters::gpuFineGrainedTimings)
+    if (d_dftParams.gpuFineGrainedTimings)
       {
         cudaDeviceSynchronize();
         computingTimerStandard.enter_subsection("Chebyshev filtering on GPU");
       }
 
 
-    unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
+    unsigned int chebyshevOrder = d_dftParams.chebyshevOrder;
 
     //
     // set Chebyshev order
@@ -401,22 +403,22 @@ namespace dftfe
         chebyshevOrder =
           internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
-        if (dftParameters::orthogType.compare("CGS") == 0 &&
-            !dftParameters::isPseudopotential)
+        if (d_dftParams.orthogType.compare("CGS") == 0 &&
+            !d_dftParams.isPseudopotential)
           chebyshevOrder *= 0.5;
       }
 
     chebyshevOrder =
-      (isFirstScf && dftParameters::isPseudopotential) ?
+      (isFirstScf && d_dftParams.isPseudopotential) ?
         chebyshevOrder *
-          dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor :
+          d_dftParams.chebyshevFilterPolyDegreeFirstScfScalingFactor :
         chebyshevOrder;
 
 
     //
     // output statements
     //
-    if (dftParameters::verbosity >= 2)
+    if (d_dftParams.verbosity >= 2)
       {
         char buffer[100];
 
@@ -452,7 +454,7 @@ namespace dftfe
     // two blocks of wavefunctions are filtered simultaneously when overlap
     // compute communication in chebyshev filtering is toggled on
     const unsigned int numSimultaneousBlocks =
-      dftParameters::overlapComputeCommunCheby ? 2 : 1;
+      d_dftParams.overlapComputeCommunCheby ? 2 : 1;
     unsigned int       numSimultaneousBlocksCurrent = numSimultaneousBlocks;
     const unsigned int numWfcsInBandGroup =
       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] -
@@ -499,7 +501,7 @@ namespace dftfe
                                               cudaFlattenedArrayBlock.begin(),
                                               jvec);
 
-            if (dftParameters::overlapComputeCommunCheby &&
+            if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
               stridedCopyToBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
                                          256>>>(
@@ -514,7 +516,7 @@ namespace dftfe
             // call Chebyshev filtering function only for the current block
             // or two simulataneous blocks (in case of overlap computation
             // and communication) to be filtered and does in-place filtering
-            if (dftParameters::overlapComputeCommunCheby &&
+            if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
               {
                 linearAlgebraOperationsCUDA::chebyshevFilter(
@@ -532,7 +534,8 @@ namespace dftfe
                   d_lowerBoundUnWantedSpectrum,
                   d_upperBoundUnWantedSpectrum,
                   d_lowerBoundWantedSpectrum,
-                  useMixedPrecOverall);
+                  useMixedPrecOverall,
+                  d_dftParams);
               }
             else
               {
@@ -548,7 +551,8 @@ namespace dftfe
                   d_lowerBoundUnWantedSpectrum,
                   d_upperBoundUnWantedSpectrum,
                   d_lowerBoundWantedSpectrum,
-                  useMixedPrecOverall);
+                  useMixedPrecOverall,
+                  d_dftParams);
               }
 
             // copy current wavefunction vectors block to vector containing
@@ -561,7 +565,7 @@ namespace dftfe
                                                 eigenVectorsFlattenedCUDA,
                                                 jvec);
 
-            if (dftParameters::overlapComputeCommunCheby &&
+            if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
               stridedCopyFromBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
                                            256>>>(
@@ -587,12 +591,12 @@ namespace dftfe
 
       } // block loop
 
-    if (dftParameters::gpuFineGrainedTimings)
+    if (d_dftParams.gpuFineGrainedTimings)
       {
         cudaDeviceSynchronize();
         computingTimerStandard.leave_subsection("Chebyshev filtering on GPU");
 
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           pcout << "ChebyShev Filtering Done: " << std::endl;
       }
 
@@ -629,7 +633,7 @@ namespace dftfe
                    cudaMemcpyHostToDevice);
       }
 
-    // if (dftParameters::measureOnlyChebyTime)
+    // if (d_dftParams.measureOnlyChebyTime)
     //  exit(0);
 
     /*
@@ -646,7 +650,7 @@ namespace dftfe
        "<<std::sqrt(result)<<std::endl;
      */
 
-    if (dftParameters::orthogType.compare("GS") == 0)
+    if (d_dftParams.orthogType.compare("GS") == 0)
       {
         AssertThrow(
           false,
@@ -676,6 +680,7 @@ namespace dftfe
           interBandGroupComm,
           eigenValues,
           cublasHandle,
+          d_dftParams,
           useMixedPrecOverall);
       }
     else
@@ -696,13 +701,14 @@ namespace dftfe
           interBandGroupComm,
           eigenValues,
           cublasHandle,
+          d_dftParams,
           useMixedPrecOverall);
       }
 
 
     if (computeResidual)
       {
-        if (dftParameters::gpuFineGrainedTimings)
+        if (d_dftParams.gpuFineGrainedTimings)
           {
             cudaDeviceSynchronize();
             computingTimerStandard.enter_subsection("Residual norm");
@@ -721,7 +727,8 @@ namespace dftfe
             operatorMatrix.getMPICommunicator(),
             interBandGroupComm,
             cublasHandle,
-            residualNorms);
+            residualNorms,
+            d_dftParams);
         else
           linearAlgebraOperationsCUDA::computeEigenResidualNorm(
             operatorMatrix,
@@ -736,9 +743,10 @@ namespace dftfe
             interBandGroupComm,
             cublasHandle,
             residualNorms,
+            d_dftParams,
             true);
 
-        if (dftParameters::gpuFineGrainedTimings)
+        if (d_dftParams.gpuFineGrainedTimings)
           {
             cudaDeviceSynchronize();
             computingTimerStandard.leave_subsection("Residual norm");
@@ -803,11 +811,11 @@ namespace dftfe
                                                bandGroupLowHighPlusOneIndices);
 
     const unsigned int wfcBlockSize =
-      std::min(dftParameters::wfcBlockSize, totalNumberWaveFunctions);
+      std::min(d_dftParams.wfcBlockSize, totalNumberWaveFunctions);
 
 
     const unsigned int chebyBlockSize =
-      std::min(dftParameters::chebyWfcBlockSize, totalNumberWaveFunctions);
+      std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedGPUVec<dataTypes::numberGPU> &cudaFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
@@ -825,19 +833,19 @@ namespace dftfe
           chebyBlockSize);
 
 
-        if (dftParameters::overlapComputeCommunCheby)
+        if (d_dftParams.overlapComputeCommunCheby)
           d_cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
-        if (dftParameters::overlapComputeCommunCheby)
+        if (d_dftParams.overlapComputeCommunCheby)
           d_YArray2.reinit(d_cudaFlattenedArrayBlock2);
 
 
-        if (dftParameters::overlapComputeCommunCheby)
+        if (d_dftParams.overlapComputeCommunCheby)
           d_projectorKetTimesVector2.reinit(projectorKetTimesVector);
       }
 
-    if (!dftParameters::reuseLanczosUpperBoundFromFirstCall)
+    if (!d_dftParams.reuseLanczosUpperBoundFromFirstCall)
       {
         const std::pair<double, double> bounds =
           linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(
@@ -845,12 +853,13 @@ namespace dftfe
             cudaFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
-            chebyBlockSize);
+            chebyBlockSize,
+            d_dftParams);
 
         d_upperBoundUnWantedSpectrum = bounds.second;
       }
 
-    unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
+    unsigned int chebyshevOrder = d_dftParams.chebyshevOrder;
 
     //
     // set Chebyshev order
@@ -860,16 +869,16 @@ namespace dftfe
         internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
     chebyshevOrder =
-      (dftParameters::isPseudopotential) ?
+      (d_dftParams.isPseudopotential) ?
         chebyshevOrder *
-          dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor :
+          d_dftParams.chebyshevFilterPolyDegreeFirstScfScalingFactor :
         chebyshevOrder;
 
 
     //
     // output statements
     //
-    if (dftParameters::verbosity >= 2)
+    if (d_dftParams.verbosity >= 2)
       {
         char buffer[100];
 
@@ -913,7 +922,7 @@ namespace dftfe
             // overlap compute communication in chebyshev filtering is toggled
             // on
             const unsigned int numSimultaneousBlocks =
-              dftParameters::overlapComputeCommunCheby ? 2 : 1;
+              d_dftParams.overlapComputeCommunCheby ? 2 : 1;
             unsigned int numSimultaneousBlocksCurrent = numSimultaneousBlocks;
             const unsigned int numWfcsInBandGroup =
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] -
@@ -955,7 +964,7 @@ namespace dftfe
                              cudaFlattenedArrayBlock.begin(),
                              jvec);
 
-                    if (dftParameters::overlapComputeCommunCheby &&
+                    if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyToBlockKernel<<<
                         (BVec + 255) / 256 * localVectorSize,
@@ -971,7 +980,7 @@ namespace dftfe
                     // block or two simulataneous blocks (in case of overlap
                     // computation and communication) to be filtered and does
                     // in-place filtering
-                    if (dftParameters::overlapComputeCommunCheby &&
+                    if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       {
                         linearAlgebraOperationsCUDA::chebyshevFilter(
@@ -989,7 +998,8 @@ namespace dftfe
                           d_lowerBoundUnWantedSpectrum,
                           d_upperBoundUnWantedSpectrum,
                           d_lowerBoundWantedSpectrum,
-                          useMixedPrecOverall);
+                          useMixedPrecOverall,
+                          d_dftParams);
                       }
                     else
                       {
@@ -1005,7 +1015,8 @@ namespace dftfe
                           d_lowerBoundUnWantedSpectrum,
                           d_upperBoundUnWantedSpectrum,
                           d_lowerBoundWantedSpectrum,
-                          useMixedPrecOverall);
+                          useMixedPrecOverall,
+                          d_dftParams);
                       }
 
                     // copy current wavefunction vectors block to vector
@@ -1019,7 +1030,7 @@ namespace dftfe
                              eigenVectorsFlattenedCUDA,
                              jvec);
 
-                    if (dftParameters::overlapComputeCommunCheby &&
+                    if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyFromBlockKernel<<<
                         (BVec + 255) / 256 * localVectorSize,
@@ -1047,7 +1058,7 @@ namespace dftfe
               } // cheby block loop
           }     // wfc block loop
 
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           pcout << "ChebyShev Filtering Done: " << std::endl;
 
 
@@ -1061,6 +1072,7 @@ namespace dftfe
           gpucclMpiCommDomain,
           interBandGroupComm,
           cublasHandle,
+          d_dftParams,
           useMixedPrecOverall);
       }
 

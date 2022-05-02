@@ -1,5 +1,3 @@
-----------------------Starting Initialization of BOMD-------------------------
-Starting Temperature from Input 1.400000000000000000e+03
 number of atoms: 50
 number of atoms types: 4
 Z:3
@@ -86,6 +84,8 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
+----------------------Starting Initialization of BOMD-------------------------
+Starting Temperature from Input 1.400000000000000000e+03
 RestartFlag: 0
 Initialising Velocities of species no: 0 mass in amu: 6.940999999999999837e+00Velocity Deviation1.318376460423552055e-01
 Initialising Velocities of species no: 1 mass in amu: 7.264000000000000057e+01Velocity Deviation4.075327776404268076e-02
@@ -315,3 +315,4 @@ AtomId   49:  0.000181,0.000981,0.001876
  Temperature from velocities: 2870.12
  Total Energy in Ha at timeIndex -602.37743
 MD run completed
+

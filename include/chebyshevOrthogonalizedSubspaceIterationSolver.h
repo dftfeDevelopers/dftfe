@@ -23,6 +23,7 @@
 #include "eigenSolver.h"
 #include "operator.h"
 #include "elpaScalaManager.h"
+#include "dftParameters.h"
 
 
 namespace dftfe
@@ -45,11 +46,12 @@ namespace dftfe
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
     chebyshevOrthogonalizedSubspaceIterationSolver(
-      const MPI_Comm &mpi_comm_parent,
-      const MPI_Comm &mpi_comm_domain,
-      double          lowerBoundWantedSpectrum,
-      double          lowerBoundUnWantedSpectrum,
-      double          upperBoundUnWantedSpectrum);
+      const MPI_Comm &     mpi_comm_parent,
+      const MPI_Comm &     mpi_comm_domain,
+      double               lowerBoundWantedSpectrum,
+      double               lowerBoundUnWantedSpectrum,
+      double               upperBoundUnWantedSpectrum,
+      const dftParameters &dftParams);
 
 
     /**
@@ -108,6 +110,9 @@ namespace dftfe
     // stores upper bound of unwanted spectrum
     //
     double d_upperBoundUnWantedSpectrum;
+
+
+    const dftParameters &d_dftParams;
 
     //
     // variables for printing out and timing

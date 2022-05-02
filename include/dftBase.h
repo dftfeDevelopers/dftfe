@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <deal.II/base/tensor_function.h>
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -31,6 +32,12 @@ namespace dftfe
   class dftBase
   {
   public:
+    /**
+     * @brief This is required to correctly delete the derived class object
+     * through the base class ptr
+     */
+    virtual ~dftBase(){};
+
     virtual void
     set() = 0;
 
@@ -46,12 +53,21 @@ namespace dftfe
       const double maxJacobianRatioFactor         = 1.25,
       const bool   useSingleAtomSolutionsOverride = false) = 0;
 
+    /**
+     *@brief Deforms the domain by the given deformation gradient and reinitializes the
+     * dftClass datastructures.
+     */
+    virtual void
+    deformDomain(const dealii::Tensor<2, 3, double> &deformationGradient,
+                 const bool vselfPerturbationUpdateForStress = false,
+                 const bool print                            = true) = 0;
+
 
     virtual void
-    solve(const bool computeForces,
-          const bool computeStress,
-          const bool solveLinearizedKS,
-          const bool isRestartGroundStateCalcFromChk) = 0;
+    solve(const bool computeForces                   = true,
+          const bool computeStress                   = true,
+          const bool solveLinearizedKS               = false,
+          const bool isRestartGroundStateCalcFromChk = false) = 0;
 
     virtual double
     getInternalEnergy() const = 0;
@@ -61,6 +77,21 @@ namespace dftfe
 
     virtual double
     getFreeEnergy() const = 0;
+
+    virtual distributedCPUVec<double>
+    getRhoNodalOut() const = 0;
+
+    virtual distributedCPUVec<double>
+    getRhoNodalSplitOut() const = 0;
+
+    virtual double
+    getTotalChargeforRhoSplit() = 0;
+
+    virtual void
+    resetRhoNodalIn(distributedCPUVec<double> &OutDensity) = 0;
+
+    virtual void
+    resetRhoNodalSplitIn(distributedCPUVec<double> &OutDensity) = 0;
 
     /**
      * @brief Gets the current atom Locations in cartesian form
@@ -76,6 +107,16 @@ namespace dftfe
     virtual std::vector<std::vector<double>>
     getAtomLocationsFrac() const = 0;
 
+
+    /**
+     * @brief Gets the current cell lattice vectors
+     *
+     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j]
+     *  corresponds to jth component of ith lattice vector
+     */
+    virtual std::vector<std::vector<double>>
+    getCell() const = 0;
+
     /**
      * @brief Gets the current atom types from dftClass
      */
@@ -83,10 +124,23 @@ namespace dftfe
     getAtomTypes() const = 0;
 
     /**
-     * @brief Gets the current atomic forces from dftClass
+     * @brief Gets the current atomic forces (configurational forces) from dftClass
      */
     virtual std::vector<double>
     getForceonAtoms() const = 0;
+
+
+    /**
+     * @brief Gets the current cell stress from dftClass
+     */
+    virtual dealii::Tensor<2, 3, double>
+    getCellStress() const = 0;
+
+    /**
+     * @brief Get reference to dftParameters object
+     */
+    virtual dftParameters &
+    getParametersObject() const = 0;
 
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for

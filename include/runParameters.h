@@ -14,37 +14,36 @@
 //
 // ---------------------------------------------------------------------
 //
-//
 
-#ifndef converter_h
-#define converter_h
+
+
+#ifndef runParameters_H_
+#define runParameters_H_
+
 #include <string>
 
-#include "string.h"
 namespace dftfe
 {
-  //
-  // Declare pseudoUtils function
-  //
-
   /**
-   *  @brief wrapper to convert pseudopotential file from upf to dftfe format and returns the nonlinear core correction
-   *  flag
+   * @brief Namespace which declares the input outer run parameters
    *
-   *  The functionality reads a file containing list of pseudopotential files in
-   * upf format and converts into into dftfe format -via- xml file format
-   *
-   *  @author Phani Motamarri
+   *  @author Sambit Das
    */
-
-  namespace pseudoUtils
+  class runParameters
   {
-    int
-    convert(const std::string &file,
-            const std::string &dftfeScratchFolderName,
-            const int          verbosity,
-            const unsigned     natomTypes,
-            const bool         pseudoTestsFlag);
-  }
+  public:
+    int         verbosity;
+    std::string solvermode;
+
+    runParameters() = default;
+
+    /**
+     * Parse parameters.
+     */
+    void
+    parse_parameters(const std::string &parameter_file);
+
+  }; // class runParameters
+
 } // namespace dftfe
 #endif

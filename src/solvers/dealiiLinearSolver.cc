@@ -18,7 +18,6 @@
 //
 
 #include <dealiiLinearSolver.h>
-#include <dftParameters.h>
 
 namespace dftfe
 {
@@ -58,7 +57,7 @@ namespace dftfe
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
-    if (dftParameters::verbosity >= 4)
+    if (debugLevel >= 4)
       pcout << "Time for compute rhs: " << time - start_time << std::endl;
 
     bool conv = false; // false : converged; true : converged
@@ -188,7 +187,7 @@ namespace dftfe
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime() - time;
 
-    if (dftParameters::verbosity >= 4)
+    if (debugLevel >= 4)
       pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
             << std::endl;
   }

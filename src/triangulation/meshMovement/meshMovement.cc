@@ -17,7 +17,6 @@
 // @author Sambit Das(2017)
 //
 //
-#include <dftParameters.h>
 #include <meshMovement.h>
 #include <vectorUtilities.h>
 
@@ -88,11 +87,13 @@ namespace dftfe
   //
   // constructor
   //
-  meshMovementClass::meshMovementClass(const MPI_Comm &mpi_comm_parent,
-                                       const MPI_Comm &mpi_comm_domain)
+  meshMovementClass::meshMovementClass(const MPI_Comm &     mpi_comm_parent,
+                                       const MPI_Comm &     mpi_comm_domain,
+                                       const dftParameters &dftParams)
     : FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3)
     , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
+    , d_dftParams(dftParams)
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
@@ -156,9 +157,9 @@ namespace dftfe
           }
       }
 
-    const std::array<int, 3> periodic = {dftParameters::periodicX,
-                                         dftParameters::periodicY,
-                                         dftParameters::periodicZ};
+    const std::array<int, 3> periodic = {d_dftParams.periodicX,
+                                         d_dftParams.periodicY,
+                                         d_dftParams.periodicZ};
 
     std::vector<int> periodicDirectionVector;
     for (unsigned int d = 0; d < 3; ++d)
@@ -185,7 +186,7 @@ namespace dftfe
       d_periodicity_vector, d_constraintsMoveMesh);
     d_constraintsMoveMesh.close();
 
-    if (dftParameters::createConstraintsFromSerialDofhandler)
+    if (d_dftParams.createConstraintsFromSerialDofhandler)
       {
         d_triaPtrSerial = &serialTriangulation;
         dealii::AffineConstraints<double> dummy;
@@ -196,7 +197,11 @@ namespace dftfe
           mpi_communicator,
           domainBoundingVectors,
           d_constraintsMoveMesh,
-          dummy);
+          dummy,
+          d_dftParams.verbosity,
+          d_dftParams.periodicX,
+          d_dftParams.periodicY,
+          d_dftParams.periodicZ);
       }
   }
 
@@ -236,7 +241,7 @@ namespace dftfe
   meshMovementClass::updateTriangulationVertices()
   {
     MPI_Barrier(mpi_communicator);
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       pcout << "Start moving triangulation..." << std::endl;
     std::vector<bool> vertex_moved(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
@@ -280,7 +285,7 @@ namespace dftfe
       d_triaPtr->communicate_locally_moved_vertices(locally_owned_vertices);
 
     d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       pcout << "...End moving triangulation" << std::endl;
   }
 
@@ -299,7 +304,7 @@ namespace dftfe
     solTrans.prepare_for_coarsening_and_refinement(d_incrementalDisplacement);
     d_triaPtr->execute_coarsening_and_refinement();
 
-    if (dftParameters::createConstraintsFromSerialDofhandler)
+    if (d_dftParams.createConstraintsFromSerialDofhandler)
       d_triaPtrSerial->refine_global(1);
 
     init(*d_triaPtr, *d_triaPtrSerial, d_domainBoundingVectors);
@@ -340,7 +345,7 @@ namespace dftfe
           }
       }
     /*
-       if (dftParameters::verbosity>=4)
+       if (d_dftParams.verbosity>=4)
        pcout << "Sanity check for periodic matched faces on moved
        triangulation..." << std::endl; for(unsigned int i=0; i<
        d_periodicity_vector.size(); ++i)
@@ -361,7 +366,7 @@ namespace dftfe
        movement"));
        }
        MPI_Barrier(mpi_communicator);
-       if (dftParameters::verbosity>=4)
+       if (d_dftParams.verbosity>=4)
        pcout << "...Sanity check passed" << std::endl;
 
      */
@@ -385,7 +390,7 @@ namespace dftfe
     minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
     maxElemLength = Utilities::MPI::max(maxElemLength, mpi_communicator);
 
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       pcout << "Mesh movement quality metric, h_min: " << minElemLength
             << ", h_max: " << maxElemLength << std::endl;
 
@@ -467,9 +472,9 @@ namespace dftfe
       }
 
     std::vector<bool> isPeriodic(3, false);
-    isPeriodic[0] = dftParameters::periodicX;
-    isPeriodic[1] = dftParameters::periodicY;
-    isPeriodic[2] = dftParameters::periodicZ;
+    isPeriodic[0] = d_dftParams.periodicX;
+    isPeriodic[1] = d_dftParams.periodicY;
+    isPeriodic[2] = d_dftParams.periodicZ;
 
     dealii::BoundingBox<3> boundingBoxTria(
       vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerMoveMesh));

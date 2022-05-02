@@ -34,8 +34,9 @@ namespace dftfe
      *  @param mpi_comm_parent parent mpi communicator
      *  @param mpi_comm_domain mpi communicator for domain decomposition
      */
-    meshMovementGaussianClass(const MPI_Comm &mpi_comm_parent,
-                              const MPI_Comm &mpi_comm_domaim);
+    meshMovementGaussianClass(const MPI_Comm &     mpi_comm_parent,
+                              const MPI_Comm &     mpi_comm_domaim,
+                              const dftParameters &dftParams);
 
     /** @brief Moves the triangulation corresponding to Gaussians attached to control points
      *

@@ -21,6 +21,7 @@
 
 #    include <headers.h>
 #    include <operatorCUDA.h>
+#    include "dftParameters.h"
 
 namespace dftfe
 {
@@ -53,6 +54,7 @@ namespace dftfe
       const MPI_Comm &                               mpiCommParent,
       const MPI_Comm &                               interpoolcomm,
       const MPI_Comm &                               interBandGroupComm,
+      const dftParameters &                          dftParams,
       const bool                                     spectrumSplit,
       const bool use2pPlusOneGLQuad = false);
   }

@@ -70,7 +70,7 @@ void forceClass<FEOrder, FEOrderElectro>::
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
           atomLocation[1] = dftPtr->atomLocations[iAtom][3];
           atomLocation[2] = dftPtr->atomLocations[iAtom][4];
-          if (dftParameters::isPseudopotential)
+          if (d_dftParams.isPseudopotential)
             atomCharge = dftPtr->atomLocations[iAtom][1];
           else
             atomCharge = dftPtr->atomLocations[iAtom][0];
@@ -113,7 +113,7 @@ void forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (dftParameters::xcFamilyType == "GGA" && !isCellOutsideCoreRhoTail)
+          if (d_dftParams.xcFamilyType == "GGA" && !isCellOutsideCoreRhoTail)
             {
               std::map<dealii::CellId, std::vector<double>>::const_iterator
                 it2 = hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);
@@ -229,7 +229,7 @@ void forceClass<FEOrder, FEOrderElectro>::
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
           atomLocation[1] = dftPtr->atomLocations[iAtom][3];
           atomLocation[2] = dftPtr->atomLocations[iAtom][4];
-          if (dftParameters::isPseudopotential)
+          if (d_dftParams.isPseudopotential)
             atomCharge = dftPtr->atomLocations[iAtom][1];
           else
             atomCharge = dftPtr->atomLocations[iAtom][0];
@@ -272,7 +272,7 @@ void forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (dftParameters::xcFamilyType == "GGA" && !isCellOutsideCoreRhoTail)
+          if (d_dftParams.xcFamilyType == "GGA" && !isCellOutsideCoreRhoTail)
             {
               std::map<dealii::CellId, std::vector<double>>::const_iterator
                 it2 = hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);

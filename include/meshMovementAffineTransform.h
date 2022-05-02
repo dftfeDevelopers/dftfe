@@ -34,8 +34,9 @@ namespace dftfe
      *  @param mpi_comm_parent parent mpi communicator
      *  @param mpi_comm_domain mpi communicator domain decomposition
      */
-    meshMovementAffineTransform(const MPI_Comm &mpi_comm_parent,
-                                const MPI_Comm &mpi_comm_domain);
+    meshMovementAffineTransform(const MPI_Comm &     mpi_comm_parent,
+                                const MPI_Comm &     mpi_comm_domain,
+                                const dftParameters &dftParams);
 
     /** @brief Performs affine transformation of the triangulation
      *

@@ -9,6 +9,7 @@ SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
+  ./src/dftfeWrapper.cc
   ./src/dft/dft.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
@@ -45,9 +46,9 @@ SET(TARGET_SRC
   ./src/md/molecularDynamicsClass.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
+  ./utils/runParameters.cc
   ./utils/constraintMatrixInfo.cc
   ./utils/dftUtils.cc
-  ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
   ./pseudoConverters/upfToxml.cc

@@ -18,7 +18,6 @@
 //
 
 #include <constants.h>
-#include <dftParameters.h>
 #include <kerkerSolverProblem.h>
 
 namespace dftfe
@@ -232,7 +231,6 @@ namespace dftfe
       fe_eval(matrixFreeData,
               d_matrixFreeVectorComponent,
               d_matrixFreeQuadratureComponent);
-    // double gamma = dftParameters::kerkerParameter;
 
     dealii::VectorizedArray<double> kerkerConst =
       dealii::make_vectorized_array(4 * M_PI * d_gamma);

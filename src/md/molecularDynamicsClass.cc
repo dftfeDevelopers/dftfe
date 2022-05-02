@@ -25,7 +25,6 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/gamma_distribution.hpp>
 #include <headers.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <vector>
@@ -40,49 +39,40 @@
 namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
-    dftBase *       _dftPtr,
-    const MPI_Comm &mpi_comm_parent,
-    const MPI_Comm &mpi_comm_domain,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm)
-    : dftPtr(_dftPtr)
+    dftfeWrapper &  dftfeWrapper,
+    const MPI_Comm &mpi_comm_parent)
+    : d_dftPtr(dftfeWrapper.getDftfeBasePtr())
     , d_mpiCommParent(mpi_comm_parent)
-    , d_mpi_communicator(mpi_comm_domain)
-    , d_interpoolcomm(interpoolcomm)
-    , d_interBandGroupComm(interBandGroupComm)
-    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
-    , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-             Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-             Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0))
+    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
-    MPI_Barrier(d_mpi_communicator);
-    MPI_Barrier(d_interBandGroupComm);
-    MPI_Barrier(d_interpoolcomm);
+    MPI_Barrier(d_mpiCommParent);
     d_MDstartWallTime  = MPI_Wtime();
     d_TimeIndex        = 0;
     d_startingTimeStep = checkRestart();
     d_TimeStep =
-      dftParameters::timeStepBOMD *
+      d_dftPtr->getParametersObject().timeStepBOMD *
       0.09822694541304546435; // Conversion factor from femteseconds:
                               // 0.09822694541304546435 based on NIST constants
-    d_numberofSteps = dftParameters::numberStepsBOMD;
+    d_numberofSteps = d_dftPtr->getParametersObject().numberStepsBOMD;
 
-    d_startingTemperature    = dftParameters::startingTempBOMD;
-    d_ThermostatTimeConstant = dftParameters::thermostatTimeConstantBOMD;
-    d_ThermostatType         = dftParameters::tempControllerTypeBOMD;
-    d_numberGlobalCharges    = dftParameters::natoms;
+    d_startingTemperature = d_dftPtr->getParametersObject().startingTempBOMD;
+    d_ThermostatTimeConstant =
+      d_dftPtr->getParametersObject().thermostatTimeConstantBOMD;
+    d_ThermostatType = d_dftPtr->getParametersObject().tempControllerTypeBOMD;
+    d_numberGlobalCharges = d_dftPtr->getParametersObject().natoms;
 
-    d_MaxWallTime = dftParameters::MaxWallTime;
+    d_MaxWallTime = d_dftPtr->getParametersObject().MaxWallTime;
     pcout
       << "----------------------Starting Initialization of BOMD-------------------------"
       << std::endl;
     pcout << "Starting Temperature from Input " << d_startingTemperature
           << std::endl;
     std::vector<std::vector<double>> temp_domainBoundingVectors;
-    dftUtils::readFile(3,
-                       temp_domainBoundingVectors,
-                       dftParameters::domainBoundingVectorsFile);
+    dftUtils::readFile(
+      3,
+      temp_domainBoundingVectors,
+      d_dftPtr->getParametersObject().domainBoundingVectorsFile);
 
     for (int i = 0; i < 3; i++)
       {
@@ -92,7 +82,7 @@ namespace dftfe
           temp_domainBoundingVectors[i][2] * temp_domainBoundingVectors[i][2];
         d_domainLength.push_back(pow(temp, 0.5));
       }
-    if (dftParameters::verbosity > 1)
+    if (d_dftPtr->getParametersObject().verbosity > 1)
       {
         pcout << "--$ Domain Length$ --" << std::endl;
         pcout << "Lx:= " << d_domainLength[0] << " Ly:=" << d_domainLength[1]
@@ -110,11 +100,13 @@ namespace dftfe
     // read atomic masses in amu
     //
     std::vector<std::vector<double>> atomTypesMasses;
-    dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);
+    dftUtils::readFile(2,
+                       atomTypesMasses,
+                       d_dftPtr->getParametersObject().atomicMassesFile);
     std::vector<std::vector<double>> atomLocations;
-    atomLocations = dftPtr->getAtomLocationsCart();
+    atomLocations = d_dftPtr->getAtomLocationsCart();
     std::set<unsigned int> atomTypes;
-    atomTypes = dftPtr->getAtomTypes();
+    atomTypes = d_dftPtr->getAtomTypes();
     AssertThrow(atomTypes.size() == atomTypesMasses.size(),
                 ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 
@@ -145,10 +137,12 @@ namespace dftfe
     std::vector<double> TotalEnergyVector(d_numberofSteps, 0.0);
     double              totMass = 0.0;
     double              velocityDistribution;
-    /*  d_restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType
-     == 3) && dftParameters::restartMdFromChk) ?        1 :        0; // 1;
+    /*  d_restartFlag = ((d_dftPtr->getParametersObject().chkType == 1 ||
+     d_dftPtr->getParametersObject().chkType
+     == 3) && d_dftPtr->getParametersObject().restartMdFromChk) ?        1 : 0;
+     // 1;
      //0;//1;*/
-    d_restartFlag = dftParameters::restartMdFromChk ? 1 : 0;
+    d_restartFlag = d_dftPtr->getParametersObject().restartMdFromChk ? 1 : 0;
     pcout << "RestartFlag: " << d_restartFlag << std::endl;
     if (d_restartFlag == 0)
       {
@@ -159,7 +153,7 @@ namespace dftfe
 
         dftUtils::readFile(5,
                            d_atomFractionalunwrapped,
-                           dftParameters::coordinatesFile);
+                           d_dftPtr->getParametersObject().coordinatesFile);
         std::vector<std::vector<double>> fileDisplacementData;
         std::vector<double>              initDisp(0.0, 3);
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -176,9 +170,7 @@ namespace dftfe
 
         double Px = 0.0, Py = 0.0, Pz = 0.0;
         // Initialise Velocity
-        if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             for (int jatomtype = 0; jatomtype < atomTypesMasses.size();
                  ++jatomtype)
@@ -213,7 +205,7 @@ namespace dftfe
         for (unsigned int i = 0; i < d_numberGlobalCharges * 3; ++i)
           {
             velocity[i] =
-              dealii::Utilities::MPI::sum(velocity[i], d_mpi_communicator);
+              dealii::Utilities::MPI::sum(velocity[i], d_mpiCommParent);
           }
 
 
@@ -279,8 +271,14 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
 
-        dftPtr->solve(true, false, false, false);
-        force     = dftPtr->getForceonAtoms();
+        d_dftPtr->solve(true, false, false, false);
+        force = d_dftPtr->getForceonAtoms();
+        if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
+            d_dftPtr->getParametersObject().spinPolarized != 1)
+          DensityExtrapolation(0);
+        else if (d_dftPtr->getParametersObject().reuseDensityMD == 2 &&
+                 d_dftPtr->getParametersObject().spinPolarized != 1)
+          DensitySplitExtrapolation(0);
         double dt = d_TimeStep;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -300,18 +298,16 @@ namespace dftfe
                  haPerBohrToeVPerAng) *
               AngTobohr;
           }
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
-        GroundStateEnergyvalue  = dftPtr->getInternalEnergy();
-        EntropicEnergyvalue     = dftPtr->getEntropicEnergy();
+        MPI_Barrier(d_mpiCommParent);
+        GroundStateEnergyvalue  = d_dftPtr->getInternalEnergy();
+        EntropicEnergyvalue     = d_dftPtr->getEntropicEnergy();
         KineticEnergyVector[0]  = KineticEnergy / haToeV;
         InternalEnergyVector[0] = GroundStateEnergyvalue;
         EntropicEnergyVector[0] = EntropicEnergyvalue;
         TotalEnergyVector[0]    = KineticEnergyVector[0] +
                                InternalEnergyVector[0] -
                                EntropicEnergyVector[0];
-        if (dftParameters::verbosity >= 1)
+        if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -323,8 +319,8 @@ namespace dftfe
               }
           }
 
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+            !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP" << d_startingTimeStep
                   << "------------------ " << std::endl;
@@ -339,8 +335,8 @@ namespace dftfe
             pcout << " Total Energy in Ha at timeIndex " << TotalEnergyVector[0]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+                 d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_startingTimeStep
                   << " ------------------ " << std::endl;
@@ -350,9 +346,7 @@ namespace dftfe
                   << TotalEnergyVector[0] << std::endl;
           }
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
 
         //--------------------Completed Initialization
         //----------------------------------------------//
@@ -360,9 +354,7 @@ namespace dftfe
 
     else if (d_restartFlag == 1)
       {
-        if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             int           error;
             std::string   file1 = "TotalDisplacement.chk";
@@ -406,16 +398,15 @@ namespace dftfe
             pcout << "Removed File: " << file3 << std::endl;
           }
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         InitialiseFromRestartFile(displacements,
                                   velocity,
                                   force,
                                   KineticEnergyVector,
                                   InternalEnergyVector,
                                   TotalEnergyVector);
-        if (dftParameters::verbosity > 1 && !dftParameters::reproducible_output)
+        if (d_dftPtr->getParametersObject().verbosity > 1 &&
+            !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "-- Starting Unwrapped Coordinates: --" << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -500,14 +491,12 @@ namespace dftfe
          d_TimeIndex++)
       {
         double step_time, curr_time;
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime();
         KineticEnergy =
           velocityVerlet(velocity, displacements, atomMass, force);
-        GroundStateEnergyvalue = dftPtr->getInternalEnergy();
-        EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
+        GroundStateEnergyvalue = d_dftPtr->getInternalEnergy();
+        EntropicEnergyvalue    = d_dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
           KineticEnergy / haToeV;
         InternalEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -522,11 +511,9 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
         // Based on verbose print required MD details...
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
-        if (dftParameters::verbosity >= 1)
+        if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -554,8 +541,8 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+            !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -577,8 +564,8 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+                 d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -597,11 +584,9 @@ namespace dftfe
                          d_TimeIndex);
         writeTotalDisplacementFile(displacements, d_TimeIndex);
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if (!dftParameters::reproducible_output)
+        if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -631,9 +616,7 @@ namespace dftfe
          d_TimeIndex++)
       {
         double step_time, curr_time;
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime();
 
 
@@ -647,11 +630,9 @@ namespace dftfe
               RescaleVelocities(velocity, atomMass, TemperatureFromVelocities);
           }
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
-        GroundStateEnergyvalue = dftPtr->getInternalEnergy();
-        EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
+        MPI_Barrier(d_mpiCommParent);
+        GroundStateEnergyvalue = d_dftPtr->getInternalEnergy();
+        EntropicEnergyvalue    = d_dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
           KineticEnergy / haToeV;
         InternalEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -666,11 +647,9 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
         // Based on verbose print required MD details...
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
-        if (dftParameters::verbosity >= 1)
+        if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -699,8 +678,8 @@ namespace dftfe
         // pcout<<" The Center of Mass Velocity from Rescale Thermostat:
         // "<<vx<<" "<<vy<<" "<<vz<<std::endl;
 
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+            !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -722,8 +701,8 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+                 d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -742,11 +721,9 @@ namespace dftfe
                          d_TimeIndex);
         writeTotalDisplacementFile(displacements, d_TimeIndex);
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if (!dftParameters::reproducible_output)
+        if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -803,9 +780,7 @@ namespace dftfe
          d_TimeIndex++)
       {
         double step_time, curr_time;
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime();
         NoseHoverChains(
           velocity,
@@ -818,9 +793,7 @@ namespace dftfe
         KineticEnergy =
           velocityVerlet(velocity, displacements, atomMass, force);
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
 
         NoseHoverChains(velocity,
                         Thermostatvelocity,
@@ -839,8 +812,8 @@ namespace dftfe
           }
 
 
-        GroundStateEnergyvalue = dftPtr->getInternalEnergy();
-        EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
+        GroundStateEnergyvalue = d_dftPtr->getInternalEnergy();
+        EntropicEnergyvalue    = d_dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
           KineticEnergy / haToeV;
         InternalEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -864,7 +837,7 @@ namespace dftfe
 
         // Based on verbose print required MD details...
 
-        if (dftParameters::verbosity >= 1)
+        if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -894,14 +867,12 @@ namespace dftfe
         // "<<vz<<std::endl;
 
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
 
 
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+            !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -928,8 +899,8 @@ namespace dftfe
                                                        d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+                 d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -952,9 +923,7 @@ namespace dftfe
                             d_TimeIndex);
         writeTotalDisplacementFile(displacements, d_TimeIndex);
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
         AssertThrow(
@@ -991,9 +960,7 @@ namespace dftfe
       {
         double step_time, curr_time;
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime();
 
 
@@ -1001,15 +968,13 @@ namespace dftfe
           velocityVerlet(velocity, displacements, atomMass, force);
 
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
 
         KineticEnergy = svr(velocity, KineticEnergy, KEref);
         TemperatureFromVelocities =
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
-        GroundStateEnergyvalue = dftPtr->getInternalEnergy();
-        EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
+        GroundStateEnergyvalue = d_dftPtr->getInternalEnergy();
+        EntropicEnergyvalue    = d_dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
           KineticEnergy / haToeV;
         InternalEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -1024,11 +989,9 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
         // Based on verbose print required MD details...
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
-        if (dftParameters::verbosity >= 1)
+        if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -1056,8 +1019,8 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from CSVR: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+            !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -1079,8 +1042,8 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (d_dftPtr->getParametersObject().verbosity >= 0 &&
+                 d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -1099,11 +1062,9 @@ namespace dftfe
                          d_TimeIndex);
         writeTotalDisplacementFile(displacements, d_TimeIndex);
 
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if (!dftParameters::reproducible_output)
+        if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -1130,9 +1091,7 @@ namespace dftfe
     double              COMy = 0.0;
     double              COMz = 0.0;
     std::vector<double> rloc(3 * d_numberGlobalCharges, 0.0);
-    if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         for (i = 0; i < d_numberGlobalCharges; i++)
           {
@@ -1179,14 +1138,8 @@ namespace dftfe
         COMz /= COMM;
       }
     MPI_Bcast(
-      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpi_communicator);
-    MPI_Bcast(
-      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_interBandGroupComm);
-    MPI_Bcast(
-      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_interpoolcomm);
-    if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpiCommParent);
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         for (i = 0; i < d_numberGlobalCharges; i++)
           {
@@ -1197,14 +1150,8 @@ namespace dftfe
       }
 
     MPI_Bcast(
-      &(rloc[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpi_communicator);
-    MPI_Bcast(&(rloc[0]),
-              3 * d_numberGlobalCharges,
-              MPI_DOUBLE,
-              0,
-              d_interBandGroupComm);
-    MPI_Bcast(
-      &(rloc[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_interpoolcomm);
+      &(rloc[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpiCommParent);
+
     for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
@@ -1217,17 +1164,18 @@ namespace dftfe
 
     update_time = MPI_Wtime();
 
-    dftPtr->updateAtomPositionsAndMoveMesh(
-      r, dftParameters::maxJacobianRatioFactorForMD, false);
+    d_dftPtr->updateAtomPositionsAndMoveMesh(
+      r, d_dftPtr->getParametersObject().maxJacobianRatioFactorForMD, false);
 
-    if (dftParameters::verbosity >= 1)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
         std::vector<std::vector<double>> atomLocations;
-        atomLocations = dftPtr->getAtomLocationsCart();
+        atomLocations = d_dftPtr->getAtomLocationsCart();
         pcout << "Displacement  " << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
-            if (atomLocations[iCharge][0] == dftParameters::MDTrack)
+            if (atomLocations[iCharge][0] ==
+                d_dftPtr->getParametersObject().MDTrack)
               {
                 pcout << "###Charge Id: " << iCharge << " " << r[iCharge][0]
                       << " " << r[iCharge][1] << " " << r[iCharge][2]
@@ -1252,12 +1200,14 @@ namespace dftfe
           d_atomFractionalunwrapped[iCharge][4] +
           r[iCharge][2] / d_domainLength[0];
       }
-    if (dftParameters::verbosity > 1 && !dftParameters::reproducible_output)
+    if (d_dftPtr->getParametersObject().verbosity > 1 &&
+        !d_dftPtr->getParametersObject().reproducible_output)
       {
         pcout << "---- Updated Unwrapped Coordinates: -----" << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
-            if (d_atomFractionalunwrapped[iCharge][0] == dftParameters::MDTrack)
+            if (d_atomFractionalunwrapped[iCharge][0] ==
+                d_dftPtr->getParametersObject().MDTrack)
               {
                 pcout << "$$$ Charge No. " << iCharge << " "
                       << d_atomFractionalunwrapped[iCharge][2] << " "
@@ -1276,23 +1226,25 @@ namespace dftfe
 
 
 
-    MPI_Barrier(d_mpi_communicator);
-    MPI_Barrier(d_interBandGroupComm);
-    MPI_Barrier(d_interpoolcomm);
+    MPI_Barrier(d_mpiCommParent);
 
     update_time = MPI_Wtime() - update_time;
 
-    if (dftParameters::verbosity >= 1)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       pcout << "Time taken for updateAtomPositionsAndMoveMesh: " << update_time
             << std::endl;
-    dftPtr->solve(true, false, false, false);
-    forceOnAtoms = dftPtr->getForceonAtoms();
+    d_dftPtr->solve(true, false, false, false);
+    forceOnAtoms = d_dftPtr->getForceonAtoms();
+    if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
+        d_dftPtr->getParametersObject().spinPolarized != 1)
+      DensityExtrapolation(d_TimeIndex - d_startingTimeStep);
+    else if (d_dftPtr->getParametersObject().reuseDensityMD == 2 &&
+             d_dftPtr->getParametersObject().spinPolarized != 1)
+      DensitySplitExtrapolation(d_TimeIndex - d_startingTimeStep);
     // Call Force
     totalKE = 0.0;
     /* Second half of velocty verlet */
-    if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         for (i = 0; i < d_numberGlobalCharges; i++)
           {
@@ -1315,11 +1267,7 @@ namespace dftfe
           }
       }
     MPI_Bcast(
-      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpi_communicator);
-    MPI_Bcast(
-      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_interBandGroupComm);
-    MPI_Bcast(
-      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_interpoolcomm);
+      &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpiCommParent);
     // Printing COM velocity
     double COM = 0.0;
     double vx  = 0.0;
@@ -1439,14 +1387,13 @@ namespace dftfe
     double       R1, Rsum;
     R1   = 0.0;
     Rsum = 0.0;
-    if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
-        std::time_t                  now = std::time(0);
-        boost::random::mt19937       gen{dftParameters::reproducible_output ?
-                                     0 :
-                                     static_cast<std::uint32_t>(now)};
+        std::time_t            now = std::time(0);
+        boost::random::mt19937 gen{
+          d_dftPtr->getParametersObject().reproducible_output ?
+            0 :
+            static_cast<std::uint32_t>(now)};
         boost::normal_distribution<> gaussianDist(0.0, 1.0);
         boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
           generator(gen, gaussianDist);
@@ -1480,8 +1427,8 @@ namespace dftfe
 
         // Transfer data to all mpi procs
       }
-    R1      = dealii::Utilities::MPI::sum(R1, d_mpi_communicator);
-    Rsum    = dealii::Utilities::MPI::sum(Rsum, d_mpi_communicator);
+    R1      = dealii::Utilities::MPI::sum(R1, d_mpiCommParent);
+    Rsum    = dealii::Utilities::MPI::sum(Rsum, d_mpiCommParent);
     alphasq = 0.0;
     alphasq = alphasq + std::exp(-1 / double(d_ThermostatTimeConstant));
     alphasq =
@@ -1521,7 +1468,7 @@ namespace dftfe
     int                                              time)
 
   {
-    if (dftParameters::reproducible_output == false)
+    if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
         // Writes the restart files for velocities and positions
         std::vector<std::vector<double>> fileForceData(
@@ -1575,7 +1522,7 @@ namespace dftfe
             fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
           }
         std::string cordFolder = tempfolder + "/";
-        dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
+        d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
         if (time > 1)
           pcout << "#RESTART NOTE: Positions:-"
                 << " Positions of TimeStep: " << time
@@ -1609,9 +1556,7 @@ namespace dftfe
                 << " present in file StepDisplacement.chk" << std::endl
                 << " Step Displacements of TimeStep: " << time - 1
                 << " present in file StepDisplacement.chk.old #" << std::endl;
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
 
 
         // std::string newFolder3 = tempfolder + "/" + "time.chk";
@@ -1641,10 +1586,10 @@ namespace dftfe
     std::vector<double> &                      TE)
   {
     // Initialise Position
-    if (dftParameters::verbosity >= 1)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
         std::vector<std::vector<double>> atomLocations;
-        atomLocations = dftPtr->getAtomLocationsCart();
+        atomLocations = d_dftPtr->getAtomLocationsCart();
         pcout << "Atom Locations from Restart " << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
@@ -1696,12 +1641,15 @@ namespace dftfe
     TE[0] = TE0[0][0];
 
 
-    dftPtr->solve(true, false, false, false);
-    force = dftPtr->getForceonAtoms();
-
-    if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-        Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+    d_dftPtr->solve(true, false, false, false);
+    force = d_dftPtr->getForceonAtoms();
+    if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
+        d_dftPtr->getParametersObject().spinPolarized != 1)
+      DensityExtrapolation(0);
+    else if (d_dftPtr->getParametersObject().reuseDensityMD == 2 &&
+             d_dftPtr->getParametersObject().spinPolarized != 1)
+      DensitySplitExtrapolation(0);
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string oldFolder1 = "./mdRestart/Step";
         oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
@@ -1713,9 +1661,7 @@ namespace dftfe
         dftUtils::copyFile(oldFolder1, ".");
         dftUtils::copyFile(oldFolder2, ".");
       }
-    MPI_Barrier(d_mpi_communicator);
-    MPI_Barrier(d_interBandGroupComm);
-    MPI_Barrier(d_interpoolcomm);
+    MPI_Barrier(d_mpiCommParent);
   }
 
 
@@ -1725,22 +1671,18 @@ namespace dftfe
                                                        std::vector<double> &Q)
 
   {
-    if (dftParameters::reproducible_output == false)
+    if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
         std::vector<std::vector<double>> NHCData;
         std::string                      tempfolder = "mdRestart";
-        if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldFolder1 = "./mdRestart/Step";
             oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
                          "/NHCThermostat.chk";
             dftUtils::copyFile(oldFolder1, "./mdRestart/.");
           }
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
         std::string fileName  = "NHCThermostat.chk";
         std::string newFolder = tempfolder + "/" + fileName;
         dftUtils::readFile(3, NHCData, newFolder);
@@ -1765,7 +1707,7 @@ namespace dftfe
                                               const int                  time)
 
   {
-    if (dftParameters::reproducible_output == false)
+    if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
         std::vector<std::vector<double>> fileNHCData(2,
                                                      std::vector<double>(3,
@@ -1780,18 +1722,14 @@ namespace dftfe
         std::string newFolder =
           std::string(tempfolder + "/" + "NHCThermostat.chk");
         dftUtils::writeDataIntoFile(fileNHCData, newFolder, d_mpiCommParent);
-        if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldpath = newFolder;
             std::string newpath = "./mdRestart/Step";
             newpath             = newpath + std::to_string(time) + "/.";
             dftUtils::copyFile(oldpath, newpath);
           }
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
       }
   }
 
@@ -1800,7 +1738,7 @@ namespace dftfe
     const std::vector<dealii::Tensor<1, 3, double>> &r,
     int                                              time)
   {
-    if (dftParameters::reproducible_output == false)
+    if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
         std::vector<std::vector<double>> fileDisplacementData;
         dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
@@ -1817,14 +1755,12 @@ namespace dftfe
                                     "Displacement.chk",
                                     d_mpiCommParent);
 
-        if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::ofstream outfile;
             outfile.open("TotalDisplacement.chk", std::ios_base::app);
             std::vector<std::vector<double>> atomLocations;
-            atomLocations = dftPtr->getAtomLocationsCart();
+            atomLocations = d_dftPtr->getAtomLocationsCart();
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
               {
                 outfile << atomLocations[iCharge][0] << "  "
@@ -1840,12 +1776,8 @@ namespace dftfe
               }
             outfile.close();
           }
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
-        if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
-            Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
+        MPI_Barrier(d_mpiCommParent);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldpath = "TotalDisplacement.chk";
             std::string newpath = "./mdRestart/Step";
@@ -1856,9 +1788,7 @@ namespace dftfe
             newpath2             = newpath2 + std::to_string(time) + "/.";
             dftUtils::copyFile(oldpath2, newpath2);
           }
-        MPI_Barrier(d_mpi_communicator);
-        MPI_Barrier(d_interBandGroupComm);
-        MPI_Barrier(d_interpoolcomm);
+        MPI_Barrier(d_mpiCommParent);
       }
   }
 
@@ -1886,7 +1816,7 @@ namespace dftfe
   {
     int time1 = 0;
 
-    if (dftfe::dftParameters::restartMdFromChk)
+    if (d_dftPtr->getParametersObject().restartMdFromChk)
       {
         std::vector<std::vector<double>> t1;
         pcout << " MD is in Restart Mode" << std::endl;
@@ -1910,7 +1840,7 @@ namespace dftfe
             pcout << " Restart folders:"
                   << (!readFile1.fail() && !readFile2.fail()) << std::endl;
             bool NHCflag = true;
-            if (dftfe::dftParameters::tempControllerTypeBOMD ==
+            if (d_dftPtr->getParametersObject().tempControllerTypeBOMD ==
                 "NOSE_HOVER_CHAINS")
               {
                 NHCflag = false;
@@ -1919,8 +1849,8 @@ namespace dftfe
               }
             if (!readFile1.fail() && !readFile2.fail() && NHCflag)
               {
-                flag                                  = true;
-                dftfe::dftParameters::coordinatesFile = file1;
+                flag                                            = true;
+                d_dftPtr->getParametersObject().coordinatesFile = file1;
                 pcout << " Restart files are found in: " << path << std::endl;
               }
 
@@ -1932,4 +1862,96 @@ namespace dftfe
       }
     return (time1);
   }
+  void
+  molecularDynamicsClass::DensityExtrapolation(int TimeStep)
+  {
+    if (TimeStep == 0)
+      d_extrapDensity_tmin2 = d_dftPtr->getRhoNodalOut();
+    else if (TimeStep == 1)
+      d_extrapDensity_tmin1 = d_dftPtr->getRhoNodalOut();
+    else
+      d_extrapDensity_t0 = d_dftPtr->getRhoNodalOut();
+
+
+    if (TimeStep >= 2)
+      {
+        double A, B, C;
+        // Compute Extrapolated Density
+        // for loop
+        pcout << "Using Extrapolated Density for init" << std::endl;
+        d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
+        for (int i = 0; i < d_extrapDensity_t0.local_size(); i++)
+          {
+            C = d_extrapDensity_t0.local_element(i);
+            B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +
+                       d_extrapDensity_tmin2.local_element(i) -
+                       4 * d_extrapDensity_tmin1.local_element(i));
+            A = 0.5 * (d_extrapDensity_tmin2.local_element(i) -
+                       2 * d_extrapDensity_tmin1.local_element(i) +
+                       d_extrapDensity_t0.local_element(i));
+            d_extrapDensity_tp1.local_element(i) = A + B + C;
+            if (d_extrapDensity_tp1.local_element(i) < 0)
+              d_extrapDensity_tp1.local_element(i) = 0.0;
+            // pcout<<"Current Denisty New Density at "<<i<<"
+            // "<<d_extrapDensity_0.local_element(i)<<" ->
+            // "<<d_OutDensity.local_element(i)<<std::endl;
+          }
+        // Changing the Densities
+        d_extrapDensity_tmin2 = d_extrapDensity_tmin1;
+        d_extrapDensity_tmin1 = d_extrapDensity_t0;
+        // Send OutDensity
+        d_extrapDensity_tp1.update_ghost_values();
+        d_dftPtr->resetRhoNodalIn(d_extrapDensity_tp1);
+      }
+  }
+  void
+  molecularDynamicsClass::DensitySplitExtrapolation(int TimeStep)
+  {
+    if (TimeStep == 0)
+      {
+        d_extrapDensity_tmin2 = d_dftPtr->getRhoNodalSplitOut();
+        // d_extrapDensity_tmin2.add(dftPtr->getTotalChargeforRhoSplit());
+      }
+    else if (TimeStep == 1)
+      {
+        d_extrapDensity_tmin1 = d_dftPtr->getRhoNodalSplitOut();
+        // d_extrapDensity_tmin1.add(dftPtr->getTotalChargeforRhoSplit());
+      }
+    else
+      {
+        d_extrapDensity_t0 = d_dftPtr->getRhoNodalSplitOut();
+        // d_extrapDensity_t0.add(dftPtr->getTotalChargeforRhoSplit());
+      }
+
+    if (TimeStep >= 2)
+      {
+        double A, B, C;
+        // Compute Extrapolated Density
+        // for loop
+        pcout << "Using Split Extrapolated Density for initialization"
+              << std::endl;
+        d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
+        for (int i = 0; i < d_extrapDensity_t0.local_size(); i++)
+          {
+            C = d_extrapDensity_t0.local_element(i);
+            B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +
+                       d_extrapDensity_tmin2.local_element(i) -
+                       4 * d_extrapDensity_tmin1.local_element(i));
+            A = 0.5 * (d_extrapDensity_tmin2.local_element(i) -
+                       2 * d_extrapDensity_tmin1.local_element(i) +
+                       d_extrapDensity_t0.local_element(i));
+            d_extrapDensity_tp1.local_element(i) = A + B + C;
+            // pcout<<"Current Denisty New Density at "<<i<<"
+            // "<<d_extrapDensity_t0.local_element(i)<<" -> "<<
+            // d_extrapDensity_tp1.local_element(i)<<std::endl;
+          }
+        // Changing the Densities
+        d_extrapDensity_tmin2 = d_extrapDensity_tmin1;
+        d_extrapDensity_tmin1 = d_extrapDensity_t0;
+        // Send OutDensity
+        d_extrapDensity_tp1.update_ghost_values();
+        d_dftPtr->resetRhoNodalSplitIn(d_extrapDensity_tp1);
+      }
+  }
+
 } // namespace dftfe

@@ -49,7 +49,11 @@ namespace dftfe
       const MPI_Comm &                        mpi_comm_domain,
       const std::vector<std::vector<double>> &domainBoundingVectors,
       dealii::AffineConstraints<double> &     periodicHangingConstraints,
-      dealii::AffineConstraints<double> &     onlyHangingConstraints);
+      dealii::AffineConstraints<double> &     onlyHangingConstraints,
+      const int                               verbosity,
+      const bool                              periodicX,
+      const bool                              periodicY,
+      const bool                              periodicZ);
 
 
     /** @brief Creates a custom partitioned flattened dealii vector.

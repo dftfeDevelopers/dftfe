@@ -121,8 +121,8 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
                                 nodeId);
                           for (unsigned int j = 0; j < rowData->size(); ++j)
                             {
-                              if (dftParameters::
-                                    createConstraintsFromSerialDofhandler)
+                              if (d_dftParams
+                                    .createConstraintsFromSerialDofhandler)
                                 {
                                   if (boundaryNodeMap.find(
                                         (*rowData)[j].first) ==

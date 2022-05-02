@@ -23,6 +23,7 @@
 #include "headers.h"
 #include <vector>
 #include "dftBase.h"
+#include "dftfeWrapper.h"
 
 namespace dftfe
 {
@@ -36,18 +37,9 @@ namespace dftfe
      *
      *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
      *  @param[in] mpi_comm_parent parent mpi communicator
-     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
-     * parallelization
-     *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
-     * points
-     *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
-     * bands
      */
-    molecularDynamicsClass(dftBase *       _dftPtr,
-                           const MPI_Comm &mpi_comm_parent,
-                           const MPI_Comm &mpi_comm_domain,
-                           const MPI_Comm &interpoolcomm,
-                           const MPI_Comm &interBandGroupComm);
+    molecularDynamicsClass(dftfeWrapper &  dftfeWrapper,
+                           const MPI_Comm &mpi_comm_parent);
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
     const double haToeV              = 27.211386245988;
@@ -70,13 +62,10 @@ namespace dftfe
 
   private:
     // pointer to dft class
-    dftBase *dftPtr;
+    dftBase *d_dftPtr;
 
     // parallel communication objects
     const MPI_Comm     d_mpiCommParent;
-    const MPI_Comm     d_mpi_communicator;
-    const MPI_Comm     d_interpoolcomm;
-    const MPI_Comm     d_interBandGroupComm;
     const unsigned int d_this_mpi_process;
 
     // conditional stream object
@@ -95,6 +84,10 @@ namespace dftfe
     double                           d_MaxWallTime;
     std::vector<std::vector<double>> d_atomFractionalunwrapped;
     std::vector<double>              d_domainLength;
+    distributedCPUVec<double> d_extrapDensity_tmin2, d_extrapDensity_tmin1,
+      d_extrapDensity_t0, d_extrapDensity_tp1;
+
+
     /**
      * @brief mdNVE Performs a Ccanonical Ensemble MD calculation. The inital temperature is set by runMD().
      * Temperature is NOT_CONTROLLED. Controls the timeloop.
@@ -433,6 +426,26 @@ namespace dftfe
      */
     int
     checkRestart();
+
+    /**
+     * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
+     *
+     *
+     *
+     *
+     */
+    void
+    DensityExtrapolation(int TimeStep);
+
+    /**
+     * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
+     *
+     *
+     *
+     *
+     */
+    void
+    DensitySplitExtrapolation(int TimeStep);
   };
 } // namespace dftfe
 #endif
