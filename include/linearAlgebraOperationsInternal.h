@@ -21,6 +21,7 @@
 #include <operator.h>
 #include "process_grid.h"
 #include "scalapackWrapper.h"
+#include "dftParameters.h"
 
 extern "C"
 {
@@ -38,20 +39,19 @@ namespace dftfe
      */
     namespace internal
     {
-      /** @brief setup ELPA handle.
+      /** @brief setup ELPA parameters.
        *
        */
       void
-      setupELPAHandle(
+      setupELPAHandleParameters(
         const MPI_Comm &mpi_communicator,
-        const MPI_Comm &mpi_comm_interband,
-        const MPI_Comm &mpi_comm_interpool,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               na,
         const unsigned int                               nev,
         const unsigned int                               blockSize,
-        elpa_t &                                         elpaHandle);
+        elpa_t &                                         elpaHandle,
+        const dftParameters &                            dftParams);
 
       /** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
        * dftfe::ScaLAPACKMatrix storage format.
@@ -62,6 +62,7 @@ namespace dftfe
         const MPI_Comm &                           mpi_communicator,
         const unsigned                             size,
         std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftParameters &                      dftParams,
         const bool                                 useOnlyThumbRule = false);
 
       /** @brief Wrapper function to create a two dimensional processor grid for a rectangular matrix in
@@ -73,7 +74,8 @@ namespace dftfe
         const MPI_Comm &                           mpi_communicator,
         const unsigned                             sizeRows,
         const unsigned                             sizeColumns,
-        std::shared_ptr<const dftfe::ProcessGrid> &processGrid);
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftParameters &                      dftParams);
 
 
       /** @brief Creates global row/column id to local row/column ids for dftfe::ScaLAPACKMatrix
@@ -143,7 +145,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar);
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+        const dftParameters &                            dftParams);
 
 
       /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
@@ -164,7 +167,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar);
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+        const dftParameters &                            dftParams);
 
 
       /** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
@@ -186,6 +190,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool rotationMatTranspose   = false,
         const bool isRotationMatLowerTria = false,
         const bool doCommAfterBandParal   = true);
@@ -209,6 +214,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool rotationMatTranspose = false,
         const bool doCommAfterBandParal = true);
 
@@ -239,6 +245,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                QMat,
+        const dftParameters &                            dftParams,
         const bool                                       QMatTranspose = false);
 
       /** @brief Computes Y^{T}=Q*X^{T}.
@@ -267,6 +274,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                QMat,
+        const dftParameters &                            dftParams,
         const bool                                       QMatTranspose = false);
 
 
@@ -289,6 +297,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool rotationMatTranspose = false,
         const bool doCommAfterBandParal = true);
     } // namespace internal

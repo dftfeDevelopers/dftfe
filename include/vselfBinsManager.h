@@ -17,6 +17,7 @@
 
 #include <headers.h>
 #include "constraintMatrixInfo.h"
+#include "dftParameters.h"
 #if defined(DFTFE_WITH_GPU)
 #  include <operatorCUDA.h>
 #endif
@@ -42,8 +43,9 @@ namespace dftfe
      * @param mpi_comm_parent parent mpi communicator
      * @param mpi_comm_domain domain decomposition mpi communicator
      */
-    vselfBinsManager(const MPI_Comm &mpi_comm_parent,
-                     const MPI_Comm &mpi_comm_domain);
+    vselfBinsManager(const MPI_Comm &     mpi_comm_parent,
+                     const MPI_Comm &     mpi_comm_domain,
+                     const dftParameters &dftParams);
 
 
     /**
@@ -342,6 +344,8 @@ namespace dftfe
     /// Vself ball radius. This is stored after the first call to createAtomBins
     /// and reused for subsequent calls
     double d_storedAdaptiveBallRadius;
+
+    const dftParameters &d_dftParams;
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;

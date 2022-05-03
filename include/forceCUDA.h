@@ -21,6 +21,7 @@
 
 #    include "headers.h"
 #    include "operatorCUDA.h"
+#    include "dftParameters.h"
 
 namespace dftfe
 {
@@ -52,11 +53,12 @@ namespace dftfe
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 #    endif
-      const MPI_Comm &mpiCommParent,
-      const MPI_Comm &interBandGroupComm,
-      const bool      isPsp,
-      const bool      isFloatingChargeForces,
-      const bool      addEk);
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const bool           isPsp,
+      const bool           isFloatingChargeForces,
+      const bool           addEk,
+      const dftParameters &dftParams);
   } // namespace forceCUDA
 } // namespace dftfe
 #  endif

@@ -84,7 +84,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   std::vector<double> shapeFunctionGradientValueRef;
 
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (dftPtr->d_dftParamsPtr->xcFamilyType == "GGA")
     {
       d_shapeFunctionGradientValueRefX.resize(numberQuadraturePoints *
                                                 numberDofsPerElement,
@@ -98,7 +98,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     }
 
 #ifdef USE_COMPLEX
-  if (dftParameters::xcFamilyType != "GGA")
+  if (dftPtr->d_dftParamsPtr->xcFamilyType != "GGA")
     {
       d_shapeFunctionGradientValueRefX.resize(numberQuadraturePoints *
                                                 numberDofsPerElement,
@@ -228,7 +228,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
               fe_values.reinit(cellPtr);
               fe_values_lpsp.reinit(cellPtr);
 
-              if (dftParameters::xcFamilyType == "GGA")
+              if (dftPtr->d_dftParamsPtr->xcFamilyType == "GGA")
                 {
                   const std::vector<dealii::DerivativeForm<1, 3, 3>>
                     &jacobians = fe_values.get_jacobians();
@@ -261,7 +261,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                 }
 
 #ifdef USE_COMPLEX
-              if (dftParameters::xcFamilyType != "GGA")
+              if (dftPtr->d_dftParamsPtr->xcFamilyType != "GGA")
                 {
                   const std::vector<dealii::DerivativeForm<1, 3, 3>>
                     &jacobians = fe_values.get_jacobians();

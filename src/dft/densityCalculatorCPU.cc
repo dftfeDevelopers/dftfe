@@ -20,7 +20,6 @@
 // source file for electron density related computations
 #include <constants.h>
 #include <densityCalculatorCPU.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 #include <linearAlgebraOperations.h>
@@ -81,6 +80,7 @@ namespace dftfe
     const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &                               interpoolcomm,
     const MPI_Comm &                               interBandGroupComm,
+    const dftParameters &                          dftParams,
     const bool                                     spectrumSplit,
     const bool                                     useFEOrderRhoPlusOneGLQuad)
   {
@@ -99,11 +99,11 @@ namespace dftfe
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int BVec = std::min(dftParameters::chebyWfcBlockSize,
-                                       bandGroupLowHighPlusOneIndices[1]);
+    const unsigned int BVec =
+      std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
-      (dftParameters::spinPolarized == 1) ? 1.0 : 2.0;
+      (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
 
     std::vector<T> wfcQuads(numQuadPoints * BVec, T(0.0));
@@ -159,7 +159,7 @@ namespace dftfe
                       (*gradRhoValues)[cellid].end(),
                       0.0);
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               std::fill((*rhoValuesSpinPolarized)[cellid].begin(),
                         (*rhoValuesSpinPolarized)[cellid].end(),
@@ -184,8 +184,7 @@ namespace dftfe
       totalLocallyOwnedCells * numQuadPoints * 6, 0.0);
 
 
-    for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParameters::spinPolarized);
+    for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
@@ -205,9 +204,9 @@ namespace dftfe
               0.0);
 
             const std::vector<T> &XCurrentKPoint =
-              X[(dftParameters::spinPolarized + 1) * kPoint + spinIndex];
+              X[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
             const std::vector<T> &XFracCurrentKPoint =
-              XFrac[(dftParameters::spinPolarized + 1) * kPoint + spinIndex];
+              XFrac[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
                  jvec += BVec)
@@ -233,7 +232,7 @@ namespace dftfe
                       }
                     else
                       {
-                        if (dftParameters::constraintMagnetization)
+                        if (dftParams.constraintMagnetization)
                           {
                             const double fermiEnergyConstraintMag =
                               spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
@@ -265,7 +264,7 @@ namespace dftfe
                                                         jvec + iEigenVec],
                                     fermiEnergy,
                                     C_kb,
-                                    dftParameters::TVal) *
+                                    dftParams.TVal) *
                                   kPointWeights[kPoint] * spinPolarizedFactor;
                               }
                           }
@@ -435,7 +434,7 @@ namespace dftfe
                       (jvec + totalNumWaveFunctions - Nfr + currentBlockSize) >
                         bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                     {
-                      if (dftParameters::constraintMagnetization)
+                      if (dftParams.constraintMagnetization)
                         {
                           const double fermiEnergyConstraintMag =
                             spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
@@ -470,7 +469,7 @@ namespace dftfe
                                                jvec + iEigenVec],
                                    fermiEnergy,
                                    C_kb,
-                                   dftParameters::TVal) -
+                                   dftParams.TVal) -
                                  1.0) *
                                 kPointWeights[kPoint] * spinPolarizedFactor;
                             }
@@ -660,7 +659,7 @@ namespace dftfe
                                            3 * iquad + 2] +=
                       gradRhoZContribution[icell * numQuadPoints + iquad];
                   }
-            if (dftParameters::spinPolarized == 1)
+            if (dftParams.spinPolarized == 1)
               {
                 for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
                   for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
@@ -708,7 +707,7 @@ namespace dftfe
 
 
 
-        if (dftParameters::spinPolarized == 1)
+        if (dftParams.spinPolarized == 1)
           {
             dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
                                         interpoolcomm,
@@ -733,7 +732,7 @@ namespace dftfe
                                       gradRhoValuesFlattened);
 
 
-        if (dftParameters::spinPolarized == 1)
+        if (dftParams.spinPolarized == 1)
           {
             dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
                                         interBandGroupComm,
@@ -761,15 +760,14 @@ namespace dftfe
             isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
 
           std::vector<double> &tempRhoQuadsSP =
-            (dftParameters::spinPolarized == 1) ?
-              (*rhoValuesSpinPolarized)[cellid] :
-              dummy;
+            (dftParams.spinPolarized == 1) ? (*rhoValuesSpinPolarized)[cellid] :
+                                             dummy;
           std::vector<double> &tempGradRhoQuadsSP =
-            ((dftParameters::spinPolarized == 1) && isEvaluateGradRho) ?
+            ((dftParams.spinPolarized == 1) && isEvaluateGradRho) ?
               (*gradRhoValuesSpinPolarized)[cellid] :
               dummy;
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
@@ -832,7 +830,7 @@ namespace dftfe
     MPI_Barrier(mpiCommParent);
     cpu_time = MPI_Wtime() - cpu_time;
 
-    if (this_process == 0 && dftParameters::verbosity >= 2)
+    if (this_process == 0 && dftParams.verbosity >= 2)
       std::cout << "Time for compute rho on CPU: " << cpu_time << std::endl;
   }
 
@@ -861,6 +859,7 @@ namespace dftfe
     const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &                               interpoolcomm,
     const MPI_Comm &                               interBandGroupComm,
+    const dftParameters &                          dftParams,
     const bool                                     spectrumSplit,
     const bool                                     useFEOrderRhoPlusOneGLQuad);
 } // namespace dftfe

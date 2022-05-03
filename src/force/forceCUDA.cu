@@ -19,7 +19,6 @@
 
 // source file for force related computations
 #include "constants.h"
-#include "dftParameters.h"
 #include "dftUtils.h"
 #include "forceCUDA.h"
 #include "vectorUtilities.h"
@@ -1241,11 +1240,12 @@ namespace dftfe
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 #endif
-      const MPI_Comm &mpiCommParent,
-      const MPI_Comm &interBandGroupComm,
-      const bool      isPsp,
-      const bool      isFloatingChargeForces,
-      const bool      addEk)
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const bool           isPsp,
+      const bool           isFloatingChargeForces,
+      const bool           addEk,
+      const dftParameters &dftParams)
     {
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -1257,7 +1257,7 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int blockSize =
-        std::min(dftParameters::chebyWfcBlockSize,
+        std::min(dftParams.chebyWfcBlockSize,
                  bandGroupLowHighPlusOneIndices[1]);
 
       int this_process;
@@ -1276,7 +1276,7 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParameters::verbosity >= 2)
+      if (this_process == 0 && dftParams.verbosity >= 2)
         std::cout
           << "Time for creating cuda parallel vectors for force computation: "
           << gpu_time << std::endl;
@@ -1479,7 +1479,7 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParameters::verbosity >= 1)
+      if (this_process == 0 && dftParams.verbosity >= 1)
         std::cout << "Time taken for all gpu kernels force computation: "
                   << gpu_time << std::endl;
     }

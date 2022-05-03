@@ -21,7 +21,6 @@
 #include <BFGSNonLinearSolver.h>
 #include <cg_descent_wrapper.h>
 #include <dft.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <force.h>
@@ -43,7 +42,7 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
-             !dftParameters::reproducible_output))
+             !_dftPtr->getParametersObject().reproducible_output))
   {}
 
   //
@@ -53,14 +52,15 @@ namespace dftfe
   geoOptIon<FEOrder, FEOrderElectro>::init()
   {
     const int numberGlobalAtoms = dftPtr->atomLocations.size();
-    if (dftParameters::ionRelaxFlagsFile != "")
+    if (dftPtr->getParametersObject().ionRelaxFlagsFile != "")
       {
         std::vector<std::vector<int>>    tempRelaxFlagsData;
         std::vector<std::vector<double>> tempForceData;
-        dftUtils::readRelaxationFlagsFile(6,
-                                          tempRelaxFlagsData,
-                                          tempForceData,
-                                          dftParameters::ionRelaxFlagsFile);
+        dftUtils::readRelaxationFlagsFile(
+          6,
+          tempRelaxFlagsData,
+          tempForceData,
+          dftPtr->getParametersObject().ionRelaxFlagsFile);
         AssertThrow(tempRelaxFlagsData.size() == numberGlobalAtoms,
                     ExcMessage(
                       "Incorrect number of entries in relaxationFlags file"));
@@ -114,18 +114,19 @@ namespace dftfe
   int
   geoOptIon<FEOrder, FEOrderElectro>::run()
   {
-    const double tol = dftParameters::forceRelaxTol; //(units: Hatree/Bohr)
+    const double tol =
+      dftPtr->getParametersObject().forceRelaxTol; //(units: Hatree/Bohr)
     const unsigned int maxIter = 300;
     const double       lineSearchTol =
       1e-4; // Dummy parameter for CGPRP, the actual stopping criteria are the
             // Wolfe conditions and maxLineSearchIter
     const double       lineSearchDampingParameter = 0.8;
     const unsigned int maxLineSearchIter =
-      dftParameters::maxLineSearchIterCGPRP;
+      dftPtr->getParametersObject().maxLineSearchIterCGPRP;
     const double       maxDisplacmentInAnyComponent = 0.5; // Bohr
     const unsigned int debugLevel =
       Utilities::MPI::this_mpi_process(mpi_communicator) == 0 ?
-        dftParameters::verbosity :
+        dftPtr->getParametersObject().verbosity :
         0;
 
     d_totalUpdateCalls = 0;
@@ -142,13 +143,14 @@ namespace dftfe
     CGDescent cg_descent(tol, maxIter);
 
 
-    if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
+    if (dftPtr->getParametersObject().chkType >= 1 &&
+        dftPtr->getParametersObject().restartFromChk)
       pcout << "Re starting Ion force relaxation using nonlinear CG solver... "
             << std::endl;
     else
       pcout << "Starting Ion force relaxation using nonlinear CG solver... "
             << std::endl;
-    if (dftParameters::verbosity >= 2)
+    if (dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
         pcout << "      stopping tol: " << tol << std::endl;
@@ -165,16 +167,17 @@ namespace dftfe
         nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
         bool                             cgSuccess;
 
-        if (dftParameters::chkType >= 1 && dftParameters::restartFromChk &&
-            dftParameters::ionOptSolver == "CGPRP")
+        if (dftPtr->getParametersObject().chkType >= 1 &&
+            dftPtr->getParametersObject().restartFromChk &&
+            dftPtr->getParametersObject().ionOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this, std::string("ionRelaxCG.chk"), true);
-        else if (dftParameters::chkType >= 1 &&
-                 !dftParameters::restartFromChk &&
-                 dftParameters::ionOptSolver == "CGPRP")
+        else if (dftPtr->getParametersObject().chkType >= 1 &&
+                 !dftPtr->getParametersObject().restartFromChk &&
+                 dftPtr->getParametersObject().ionOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this, std::string("ionRelaxCG.chk"));
-        else if (dftParameters::ionOptSolver == "CGPRP")
+        else if (dftPtr->getParametersObject().ionOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this);
-        else if (dftParameters::ionOptSolver == "LBFGS")
+        else if (dftPtr->getParametersObject().ionOptSolver == "LBFGS")
           {
             cg_descent.set_step(0.8);
             cg_descent.set_lbfgs(true);
@@ -211,7 +214,7 @@ namespace dftfe
           {
             pcout
               << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
-              << dftParameters::forceRelaxTol
+              << dftPtr->getParametersObject().forceRelaxTol
               << ", total number of ion position updates: "
               << d_totalUpdateCalls << std::endl;
 
@@ -235,8 +238,9 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------------"
               << std::endl;
 
-            if (dftParameters::periodicX || dftParameters::periodicY ||
-                dftParameters::periodicZ)
+            if (dftPtr->getParametersObject().periodicX ||
+                dftPtr->getParametersObject().periodicY ||
+                dftPtr->getParametersObject().periodicZ)
               {
                 pcout
                   << "-------------------Fractional coordinates of atoms----------------------"
@@ -502,7 +506,7 @@ namespace dftfe
                   mpi_communicator);
       }
 
-    if (dftParameters::verbosity >= 1)
+    if (dftPtr->getParametersObject().verbosity >= 1)
       pcout << "  Maximum force component to be relaxed: "
             << d_maximumAtomForceToBeRelaxed << std::endl;
 
@@ -522,13 +526,13 @@ namespace dftfe
 
 
     /*if(d_maximumAtomForceToBeRelaxed >= 1e-02)
-      dftParameters::selfConsistentSolverTolerance = 1e-03;
+      dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-03;
       else if(d_maximumAtomForceToBeRelaxed >= 1e-03)
-      dftParameters::selfConsistentSolverTolerance = 1e-04;
+      dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-04;
       else if(d_maximumAtomForceToBeRelaxed >= 1e-04)
-      dftParameters::selfConsistentSolverTolerance = 1e-05;
+      dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-05;
       else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
-      dftParameters::selfConsistentSolverTolerance = 5e-06;*/
+      dftPtr->getParametersObject().selfConsistentSolverTolerance = 5e-06;*/
 
     dftPtr->solve(computeForces, false);
   }

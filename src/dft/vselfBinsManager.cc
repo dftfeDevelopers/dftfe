@@ -17,7 +17,6 @@
 // @author  Sambit Das, Phani Motamarri
 //
 
-#include <dftParameters.h>
 #include <vectorUtilities.h>
 #include <vselfBinsManager.h>
 
@@ -475,11 +474,13 @@ namespace dftfe
   // constructor
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   vselfBinsManager<FEOrder, FEOrderElectro>::vselfBinsManager(
-    const MPI_Comm &mpi_comm_parent,
-    const MPI_Comm &mpi_comm_domain)
+    const MPI_Comm &     mpi_comm_parent,
+    const MPI_Comm &     mpi_comm_domain,
+    const dftParameters &dftParams)
     : mpi_communicator(mpi_comm_domain)
     , d_mpiCommParent(mpi_comm_parent)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , d_dftParams(dftParams)
     , this_mpi_process(
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
@@ -506,8 +507,8 @@ namespace dftfe
                                         d_mpiCommParent) == 0));
     dealii::TimerOutput        computing_timer(mpi_communicator,
                                         pcout,
-                                        dftParameters::reproducible_output ||
-                                            dftParameters::verbosity < 4 ?
+                                        d_dftParams.reproducible_output ||
+                                            d_dftParams.verbosity < 4 ?
                                           dealii::TimerOutput::never :
                                           dealii::TimerOutput::summary,
                                         dealii::TimerOutput::wall_times);
@@ -557,19 +558,19 @@ namespace dftfe
     double radiusAtomBallAdaptive =
       (d_storedAdaptiveBallRadius > 1e-6) ?
         d_storedAdaptiveBallRadius :
-        ((dftParameters::meshSizeOuterBall > 0.5) ? 6.0 : 4.5);
+        ((d_dftParams.meshSizeOuterBall > 0.5) ? 6.0 : 4.5);
 
-    if (dftParameters::smearedNuclearCharges &&
+    if (d_dftParams.smearedNuclearCharges &&
         (d_storedAdaptiveBallRadius < 1e-6))
-      radiusAtomBallAdaptive = ((dftParameters::meshSizeOuterBall > 1.5 &&
-                                 dftParameters::outerAtomBallRadius < 6.0) ||
-                                (dftParameters::meshSizeOuterBall > 2.2)) ?
+      radiusAtomBallAdaptive = ((d_dftParams.meshSizeOuterBall > 1.5 &&
+                                 d_dftParams.outerAtomBallRadius < 6.0) ||
+                                (d_dftParams.meshSizeOuterBall > 2.2)) ?
                                  6.0 :
                                  4.0;
 
     if (std::fabs(radiusAtomBall) < 1e-6)
       {
-        if (dftParameters::verbosity >= 1)
+        if (d_dftParams.verbosity >= 1)
           pcout
             << "Determining the ball radius around the atom for nuclear self-potential solve... "
             << std::endl;
@@ -609,14 +610,12 @@ namespace dftfe
 
         AssertThrow(check == 0, dealii::ExcMessage(message));
 
-        if (dftParameters::verbosity >= 1 &&
-            !dftParameters::reproducible_output)
+        if (d_dftParams.verbosity >= 1 && !d_dftParams.reproducible_output)
           pcout << "...Adaptively set ball radius: " << radiusAtomBallAdaptive
                 << std::endl;
 
         if (radiusAtomBallAdaptive < 2.5)
-          if (dftParameters::verbosity >= 1 &&
-              !dftParameters::reproducible_output)
+          if (d_dftParams.verbosity >= 1 && !d_dftParams.reproducible_output)
             pcout
               << "DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 2.5, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 5.0 (twice of 2.5), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."
               << std::endl;
@@ -626,7 +625,7 @@ namespace dftfe
       }
     else
       {
-        if (dftParameters::verbosity >= 1)
+        if (d_dftParams.verbosity >= 1)
           pcout
             << "Setting the ball radius for nuclear self-potential solve from input parameters value: "
             << radiusAtomBall << std::endl;
@@ -731,7 +730,7 @@ namespace dftfe
 
 
     const int numberBins = binCount + 1;
-    if (dftParameters::verbosity >= 2)
+    if (d_dftParams.verbosity >= 2)
       pcout << "number bins: " << numberBins << std::endl;
 
     computing_timer.leave_subsection("create bins: put in bins");
@@ -792,7 +791,7 @@ namespace dftfe
         std::vector<int> &imageIdsOfAtomsInCurrentBin = imageIdsInBins[iBin];
         std::vector<std::vector<double>> imagePositionsOfAtomsInCurrentBin;
 
-        if (dftParameters::verbosity >= 2)
+        if (d_dftParams.verbosity >= 2)
           pcout << "bin " << iBin
                 << ": number of global atoms: " << numberGlobalAtomsInBin
                 << std::endl;
@@ -966,7 +965,7 @@ namespace dftfe
 
                             if (minDistanceAtomId < numberGlobalAtomsInBin)
                               {
-                                if (dftParameters::isPseudopotential)
+                                if (d_dftParams.isPseudopotential)
                                   atomCharge = atomLocations[chargeId][1];
                                 else
                                   atomCharge = atomLocations[chargeId][0];
@@ -989,7 +988,7 @@ namespace dftfe
 
                             if (minDistanceAtomId < numberGlobalAtomsInBin)
                               {
-                                if (dftParameters::isPseudopotential)
+                                if (d_dftParams.isPseudopotential)
                                   atomCharge = atomLocations[chargeId][1];
                                 else
                                   atomCharge = atomLocations[chargeId][0];
@@ -1086,7 +1085,7 @@ namespace dftfe
                               atomLocations[closestChargeIdSolvedNode][3];
                             closestAtomLocationSolved[2] =
                               atomLocations[closestChargeIdSolvedNode][4];
-                            if (dftParameters::isPseudopotential)
+                            if (d_dftParams.isPseudopotential)
                               closestAtomChargeSolved =
                                 atomLocations[closestChargeIdSolvedNode][1];
                             else
@@ -1203,8 +1202,8 @@ namespace dftfe
                                 constraintMatrix.get_constraint_entries(nodeId);
                               for (unsigned int j = 0; j < rowData->size(); ++j)
                                 {
-                                  if (dftParameters::
-                                        createConstraintsFromSerialDofhandler)
+                                  if (d_dftParams
+                                        .createConstraintsFromSerialDofhandler)
                                     {
                                       //
                                       // FIXME: When constraints are obtained
@@ -1218,7 +1217,7 @@ namespace dftfe
                                             (*rowData)[j].first) ==
                                           boundaryNodeMap.end())
                                         {
-                                          if (dftParameters::verbosity >= 4)
+                                          if (d_dftParams.verbosity >= 4)
                                             std::cout
                                               << "DFT-FE Warning: relevant dofs do not have all dofs to which the local constraints expand to. This is due to a known parallel constraints issue in dealii combined with our temporary serial dof handler fix."
                                               << std::endl;
@@ -1273,15 +1272,14 @@ namespace dftfe
             if (!areBoundaryConditionsCorrectInCaseOfHangingNodes)
               radiusAtomBallReduced -= 0.5;
 
-            if (!dftParameters::reproducible_output)
+            if (!d_dftParams.reproducible_output)
               AssertThrow(
                 radiusAtomBallReduced >= 1.5,
                 dealii::ExcMessage(
                   "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 1.5. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to small domain sizes along the periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS."));
           }
 
-        if (dftParameters::verbosity >= 4 &&
-            !dftParameters::reproducible_output)
+        if (d_dftParams.verbosity >= 4 && !d_dftParams.reproducible_output)
           pcout
             << "Reduced ball radius for setting boundary conditions taking hanging nodes into consideration: "
             << radiusAtomBallReduced << std::endl;
@@ -1364,7 +1362,7 @@ namespace dftfe
     createAtomBinsSanityCheck(dofHandler, onlyHangingNodeConstraints);
     computing_timer.leave_subsection("create bins: sanity check");
 
-    if (!dftParameters::floatingNuclearCharges)
+    if (!d_dftParams.floatingNuclearCharges)
       locateAtomsInBins(dofHandler);
 
     return;
@@ -1476,7 +1474,7 @@ namespace dftfe
                               atomLocations[closestAtomId][3];
                             closestAtomLocation[2] =
                               atomLocations[closestAtomId][4];
-                            if (dftParameters::isPseudopotential)
+                            if (d_dftParams.isPseudopotential)
                               closestAtomCharge =
                                 atomLocations[closestAtomId][1];
                             else
@@ -1719,9 +1717,9 @@ namespace dftfe
                         if (feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
                           {
 #ifdef DEBUG
-                            if (dftParameters::isPseudopotential)
+                            if (d_dftParams.isPseudopotential)
                               {
-                                if (dftParameters::verbosity >= 4)
+                                if (d_dftParams.verbosity >= 4)
                                   std::cout << "atom core in bin " << iBin
                                             << " with valence charge "
                                             << d_atomLocations[chargeId][1]
@@ -1731,7 +1729,7 @@ namespace dftfe
                               }
                             else
                               {
-                                if (dftParameters::verbosity >= 4)
+                                if (d_dftParams.verbosity >= 4)
                                   std::cout << "atom core in bin " << iBin
                                             << " with charge "
                                             << d_atomLocations[chargeId][0]
@@ -1742,7 +1740,7 @@ namespace dftfe
 #endif
                             if (locally_owned_dofs.is_element(nodeID))
                               {
-                                if (dftParameters::isPseudopotential)
+                                if (d_dftParams.isPseudopotential)
                                   d_atomsInBin[iBin].insert(
                                     std::pair<dealii::types::global_dof_index,
                                               double>(
@@ -1753,14 +1751,14 @@ namespace dftfe
                                               double>(
                                       nodeID, d_atomLocations[chargeId][0]));
 #ifdef DEBUG
-                                if (dftParameters::verbosity >= 4)
+                                if (d_dftParams.verbosity >= 4)
                                   std::cout << " and added \n";
 #endif
                               }
                             else
                               {
 #ifdef DEBUG
-                                if (dftParameters::verbosity >= 4)
+                                if (d_dftParams.verbosity >= 4)
                                   std::cout << " but skipped \n";
 #endif
                               }

@@ -20,6 +20,7 @@
 #define meshMovement_H_
 #include "constants.h"
 #include "headers.h"
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -38,8 +39,9 @@ namespace dftfe
      * @param[in] mpi_comm_parent parent mpi communicator
      *  @param[in] mpi_comm_domain mpi communicator for domain decomposition
      */
-    meshMovementClass(const MPI_Comm &mpi_comm_parent,
-                      const MPI_Comm &mpi_comm_domain);
+    meshMovementClass(const MPI_Comm &     mpi_comm_parent,
+                      const MPI_Comm &     mpi_comm_domain,
+                      const dftParameters &dftParams);
 
     virtual ~meshMovementClass()
     {}
@@ -125,6 +127,8 @@ namespace dftfe
       GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
                                      d_periodicity_vector;
     std::vector<std::vector<double>> d_domainBoundingVectors;
+
+    const dftParameters &d_dftParams;
 
     // parallel objects
     MPI_Comm                   d_mpiCommParent;

@@ -90,8 +90,6 @@ namespace dftfe
   class geoOptIon;
   template <unsigned int T1, unsigned int T2>
   class geoOptCell;
-  template <unsigned int T1, unsigned int T2>
-  class molecularDynamics;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -131,11 +129,11 @@ namespace dftfe
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
      */
-    dftClass(const MPI_Comm &  mpiCommParent,
-             const MPI_Comm &  mpi_comm_domain,
-             const MPI_Comm &  interpoolcomm,
-             const MPI_Comm &  interBandGroupComm,
-             elpaScalaManager *_d_elpaScala);
+    dftClass(const MPI_Comm &mpiCommParent,
+             const MPI_Comm &mpi_comm_domain,
+             const MPI_Comm &interpoolcomm,
+             const MPI_Comm &interBandGroupComm,
+             dftParameters & dftParams);
 
     /**
      * @brief dftClass destructor
@@ -219,6 +217,21 @@ namespace dftfe
 
     double
     getFreeEnergy() const;
+
+    distributedCPUVec<double>
+    getRhoNodalOut() const;
+
+    distributedCPUVec<double>
+    getRhoNodalSplitOut() const;
+
+    double
+    getTotalChargeforRhoSplit();
+
+    void
+    resetRhoNodalIn(distributedCPUVec<double> &OutDensity);
+
+    virtual void
+    resetRhoNodalSplitIn(distributedCPUVec<double> &OutDensity);
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
@@ -325,6 +338,15 @@ namespace dftfe
     getAtomLocationsFrac() const;
 
     /**
+     * @brief Gets the current cell lattice vectors
+     *
+     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j]
+     *  corresponds to jth component of ith lattice vector
+     */
+    std::vector<std::vector<double>>
+    getCell() const;
+
+    /**
      * @brief Gets the current atom types from dftClass
      */
     std::set<unsigned int>
@@ -335,6 +357,18 @@ namespace dftfe
      */
     std::vector<double>
     getForceonAtoms() const;
+
+    /**
+     * @brief Gets the current cell stress from dftClass
+     */
+    Tensor<2, 3, double>
+    getCellStress() const;
+
+    /**
+     * @brief Get reference to dftParameters object
+     */
+    dftParameters &
+    getParametersObject() const;
 
   private:
     /**
@@ -1145,12 +1179,10 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<FEOrder, FEOrderElectro> *       forcePtr;
-    symmetryClass<FEOrder, FEOrderElectro> *    symmetryPtr;
-    geoOptIon<FEOrder, FEOrderElectro> *        geoOptIonPtr;
-    geoOptCell<FEOrder, FEOrderElectro> *       geoOptCellPtr;
-    molecularDynamics<FEOrder, FEOrderElectro> *d_mdPtr;
-    // molecularDynamicsClass<FEOrder, FEOrderElectro> *d_mdClassPtr;
+    forceClass<FEOrder, FEOrderElectro> *   forcePtr;
+    symmetryClass<FEOrder, FEOrderElectro> *symmetryPtr;
+    geoOptIon<FEOrder, FEOrderElectro> *    geoOptIonPtr;
+    geoOptCell<FEOrder, FEOrderElectro> *   geoOptCellPtr;
 
     elpaScalaManager *d_elpaScala;
 
@@ -1163,6 +1195,8 @@ namespace dftfe
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       *d_kohnShamDFTOperatorCUDAPtr;
 #endif
+
+    std::string d_dftfeScratchFolderName;
 
     /**
      * chebyshev subspace iteration solver objects
@@ -1485,6 +1519,9 @@ namespace dftfe
         &kohnShamDFTEigenOperatorCUDA
 #endif
     );
+
+    /// dftParameters object
+    dftParameters *d_dftParamsPtr;
 
     /// kPoint cartesian coordinates
     std::vector<double> d_kPointCoordinates;

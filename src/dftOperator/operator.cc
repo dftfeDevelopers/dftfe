@@ -18,7 +18,6 @@
 //
 // @author Phani Motamarri
 //
-#include <dftParameters.h>
 #include <operator.h>
 
 //

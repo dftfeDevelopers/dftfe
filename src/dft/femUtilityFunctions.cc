@@ -499,4 +499,5 @@ dftClass<FEOrder, FEOrderElectro>::l2ProjectionQuadToNodal(
     matrixFreeDataObject.get_quadrature(quadratureId),
     funcRho,
     nodalField);
+  constraintMatrix.set_zero(nodalField);
 }

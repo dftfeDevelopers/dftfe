@@ -23,6 +23,7 @@
 #include <operator.h>
 #include "process_grid.h"
 #include "scalapackWrapper.h"
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -495,7 +496,8 @@ namespace dftfe
     template <typename T>
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(operatorDFTClass &operatorMatrix,
-                                        const distributedCPUVec<T> &vect);
+                                        const distributedCPUVec<T> &vect,
+                                        const dftParameters &       dftParams);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -559,7 +561,8 @@ namespace dftfe
     unsigned int
     lowdenOrthogonalization(std::vector<dataTypes::number> &X,
                             const unsigned int              numberComponents,
-                            const MPI_Comm &                mpiComm);
+                            const MPI_Comm &                mpiComm,
+                            const dftParameters &           dftParams);
 
 
     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
@@ -577,13 +580,14 @@ namespace dftfe
      */
     template <typename T>
     unsigned int
-    pseudoGramSchmidtOrthogonalization(elpaScalaManager & elpaScala,
-                                       std::vector<T> &   X,
-                                       const unsigned int numberComponents,
-                                       const MPI_Comm &   mpiCommParent,
-                                       const MPI_Comm &   interBandGroupComm,
-                                       const MPI_Comm &   mpiCommDomain,
-                                       const bool         useMixedPrec);
+    pseudoGramSchmidtOrthogonalization(elpaScalaManager &   elpaScala,
+                                       std::vector<T> &     X,
+                                       const unsigned int   numberComponents,
+                                       const MPI_Comm &     mpiCommParent,
+                                       const MPI_Comm &     interBandGroupComm,
+                                       const MPI_Comm &     mpiCommDomain,
+                                       const bool           useMixedPrec,
+                                       const dftParameters &dftParams);
 
 
     /** @brief Compute Rayleigh-Ritz projection
@@ -609,7 +613,8 @@ namespace dftfe
                     const MPI_Comm &     interBandGroupComm,
                     const MPI_Comm &     mpiCommDomain,
                     std::vector<double> &eigenValues,
-                    const bool           useMixedPrec);
+                    const bool           useMixedPrec,
+                    const dftParameters &dftParams);
 
 
     /** @brief Compute Rayleigh-Ritz projection
@@ -635,6 +640,7 @@ namespace dftfe
                  const MPI_Comm &     interBandGroupComm,
                  const MPI_Comm &     mpiCommDomain,
                  std::vector<double> &eigenValues,
+                 const dftParameters &dftParams,
                  const bool           doCommAfterBandParal = true);
 
     /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
@@ -664,7 +670,8 @@ namespace dftfe
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiCommDomain,
                                        const bool           useMixedPrec,
-                                       std::vector<double> &eigenValues);
+                                       std::vector<double> &eigenValues,
+                                       const dftParameters &dftParams);
 
 
     /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
@@ -694,7 +701,8 @@ namespace dftfe
                                     const MPI_Comm &      interBandGroupComm,
                                     const MPI_Comm &      mpiCommDomain,
                                     const bool            useMixedPrec,
-                                    std::vector<double> & eigenValues);
+                                    std::vector<double> & eigenValues,
+                                    const dftParameters & dftParams);
 
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
@@ -714,7 +722,8 @@ namespace dftfe
                              const MPI_Comm &           mpiCommParent,
                              const MPI_Comm &           mpiCommDomain,
                              const MPI_Comm &           interBandGroupComm,
-                             std::vector<double> &      residualNorm);
+                             std::vector<double> &      residualNorm,
+                             const dftParameters &      dftParams);
 
   } // namespace linearAlgebraOperations
 

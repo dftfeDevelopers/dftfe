@@ -16,7 +16,6 @@
 //
 // @author Sambit Das (2017)
 //
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <eshelbyTensorSpinPolarized.h>
 
@@ -61,7 +60,8 @@ namespace dftfe
         const double                            fermiEnergy_,
         const double                            fermiEnergyUp_,
         const double                            fermiEnergyDown_,
-        const double                            tVal)
+        const double                            tVal,
+        const bool                              constraintMagnetization)
     {
       Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
       for (unsigned int idim = 0; idim < 3; idim++)
@@ -108,7 +108,7 @@ namespace dftfe
                 C_kb,
                 tVal);
 
-              if (dftParameters::constraintMagnetization)
+              if (constraintMagnetization)
                 {
                   partOccSpin0 = 1.0, partOccSpin1 = 1.0;
                   if (eigenValues_[ik][eigenIndex + numEigenValues] >
@@ -192,7 +192,8 @@ namespace dftfe
       const double               fermiEnergy_,
       const double               fermiEnergyUp_,
       const double               fermiEnergyDown_,
-      const double               tVal)
+      const double               tVal,
+      const bool                 constraintMagnetization)
     {
       Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
       for (unsigned int idim = 0; idim < 3; idim++)
@@ -229,7 +230,7 @@ namespace dftfe
             C_kb,
             tVal);
 
-          if (dftParameters::constraintMagnetization)
+          if (constraintMagnetization)
             {
               partOccSpin0 = 1.0, partOccSpin1 = 1.0;
               if (eigenValues_[eigenIndex + numEigenValues] > fermiEnergyDown_)
@@ -498,7 +499,8 @@ namespace dftfe
       const double                            fermiEnergy_,
       const double                            fermiEnergyUp_,
       const double                            fermiEnergyDown_,
-      const double                            tVal)
+      const double                            tVal,
+      const bool                              constraintMagnetization)
     {
       Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
       for (unsigned int idim = 0; idim < 3; idim++)
@@ -547,7 +549,7 @@ namespace dftfe
                 C_kb,
                 tVal);
 
-              if (dftParameters::constraintMagnetization)
+              if (constraintMagnetization)
                 {
                   partOccSpin0 = 1.0, partOccSpin1 = 1.0;
                   if (eigenValues_[ik][eigenIndex + numEigenValues] >

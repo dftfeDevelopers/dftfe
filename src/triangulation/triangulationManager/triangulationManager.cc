@@ -23,7 +23,6 @@
 
 
 #include <constants.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <meshGenUtils.h>
@@ -38,11 +37,12 @@ namespace dftfe
   // constructor
   //
   triangulationManager::triangulationManager(
-    const MPI_Comm &   mpi_comm_parent,
-    const MPI_Comm &   mpi_comm_domain,
-    const MPI_Comm &   interpoolcomm,
-    const MPI_Comm &   interbandgroup_comm,
-    const unsigned int FEOrder)
+    const MPI_Comm &     mpi_comm_parent,
+    const MPI_Comm &     mpi_comm_domain,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interbandgroup_comm,
+    const unsigned int   FEOrder,
+    const dftParameters &dftParams)
     : d_parallelTriangulationUnmoved(mpi_comm_domain)
     , d_parallelTriangulationUnmovedPrevious(mpi_comm_domain)
     , d_parallelTriangulationMoved(mpi_comm_domain)
@@ -53,6 +53,7 @@ namespace dftfe
     , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(interpoolcomm)
     , interBandGroupComm(interbandgroup_comm)
+    , d_dftParams(dftParams)
     , d_serialTriangulationUnmoved(MPI_COMM_SELF)
     , d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF)
     , d_serialTriangulationElectrostatics(MPI_COMM_SELF)
@@ -303,7 +304,7 @@ namespace dftfe
 
     generateCoarseMesh(d_parallelTriangulationUnmoved);
     generateCoarseMesh(d_parallelTriangulationMoved);
-    if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+    if (d_dftParams.isIonOpt || d_dftParams.isCellOpt)
       {
         generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
         generateCoarseMesh(d_serialTriangulationUnmovedPrevious);

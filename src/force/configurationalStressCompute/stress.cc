@@ -123,7 +123,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
   d_stress += d_stressKPoints;
 
-  if (dftParameters::dc_dispersioncorrectiontype != 0)
+  if (d_dftParams.dc_dispersioncorrectiontype != 0)
     {
       for (unsigned int irow = 0; irow < 3; irow++)
         {
@@ -143,7 +143,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::printStress()
 {
-  if (!dftParameters::reproducible_output)
+  if (!d_dftParams.reproducible_output)
     {
       pcout << std::endl;
       pcout << "Cell stress (Hartree/Bohr^3)" << std::endl;

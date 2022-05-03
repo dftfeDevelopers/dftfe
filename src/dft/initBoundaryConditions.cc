@@ -64,13 +64,13 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if (dftParameters::verbosity >= 1 && !vselfPerturbationUpdateForStress)
+  if (d_dftParamsPtr->verbosity >= 1 && !vselfPerturbationUpdateForStress)
     pcout << "Minimum mesh size: " << minElemLength << std::endl;
 
   if (!vselfPerturbationUpdateForStress)
     pcout << "-------------------------------------------------" << std::endl;
 
-  if (dftParameters::verbosity >= 1 && !meshOnlyDeformed)
+  if (d_dftParamsPtr->verbosity >= 1 && !meshOnlyDeformed)
     {
       pcout
         << std::endl
@@ -78,29 +78,30 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
         << std::endl;
 #ifdef USE_COMPLEX
       const double totalMem =
-        2.0 * dofHandler.n_dofs() * (dftParameters::spinPolarized + 1) *
+        2.0 * dofHandler.n_dofs() * (d_dftParamsPtr->spinPolarized + 1) *
           d_kPointWeights.size() * d_numEigenValues *
-          (2.0 + 3.0 * std::min(dftParameters::wfcBlockSize, d_numEigenValues) /
+          (2.0 + 3.0 *
+                   std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues) /
                    d_numEigenValues) *
           8 / 1e+9 +
         0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator);
 #else
       const double totalMem =
-        (dftParameters::useMixedPrecCGS_O == true ||
-         dftParameters::useMixedPrecCGS_SR == true ||
-         dftParameters::useMixedPrecXTHXSpectrumSplit == true) ?
-          dofHandler.n_dofs() * (dftParameters::spinPolarized + 1) *
+        (d_dftParamsPtr->useMixedPrecCGS_O == true ||
+         d_dftParamsPtr->useMixedPrecCGS_SR == true ||
+         d_dftParamsPtr->useMixedPrecXTHXSpectrumSplit == true) ?
+          dofHandler.n_dofs() * (d_dftParamsPtr->spinPolarized + 1) *
               d_numEigenValues *
-              (1.5 + 3.0 *
-                       std::min(dftParameters::wfcBlockSize, d_numEigenValues) /
-                       d_numEigenValues) *
+              (1.5 +
+               3.0 * std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues) /
+                 d_numEigenValues) *
               8 / 1e+9 +
             0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator) :
-          dofHandler.n_dofs() * (dftParameters::spinPolarized + 1) *
+          dofHandler.n_dofs() * (d_dftParamsPtr->spinPolarized + 1) *
               d_numEigenValues *
-              (1.0 + 3.0 *
-                       std::min(dftParameters::wfcBlockSize, d_numEigenValues) /
-                       d_numEigenValues) *
+              (1.0 +
+               3.0 * std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues) /
+                 d_numEigenValues) *
               8 / 1e+9 +
             0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator);
 #endif
@@ -121,7 +122,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   if (dofHandler.n_dofs() > 15000 && !meshOnlyDeformed)
     {
       if (dofHandler.n_dofs() / n_mpi_processes < 4000 &&
-          dftParameters::verbosity >= 1)
+          d_dftParamsPtr->verbosity >= 1)
         {
           pcout
             << "DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points)."
@@ -129,7 +130,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
         }
     }
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Dofs distributed again");
   d_supportPoints.clear();
@@ -144,12 +145,12 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(d_mpiCommParent);
   init_dofhandlerobjs = MPI_Wtime() - init_dofhandlerobjs;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout
       << "initBoundaryConditions: Time taken for creating dofhandler related objects: "
       << init_dofhandlerobjs << std::endl;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Created support points");
   //
@@ -160,7 +161,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   // additional_data.mpi_communicator = d_mpiCommParent;
   additional_data.tasks_parallel_scheme =
     MatrixFree<3>::AdditionalData::partition_partition;
-  if (dftParameters::isCellStress)
+  if (d_dftParamsPtr->isCellStress)
     additional_data.mapping_update_flags = update_values | update_gradients |
                                            update_JxW_values |
                                            update_quadrature_points;
@@ -171,7 +172,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   // push back into Constraint Matrices
   d_constraintsVector.push_back(&constraintsNone);
 
-  if (dftParameters::constraintsParallelCheck)
+  if (d_dftParamsPtr->constraintsParallelCheck)
     {
       IndexSet locally_active_dofs_debug;
       DoFTools::extract_locally_active_dofs(dofHandler,
@@ -233,13 +234,13 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
       true);
   */
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Called force init moved");
 
   MPI_Barrier(d_mpiCommParent);
   init_force = MPI_Wtime() - init_force;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for force init moved: "
           << init_force << std::endl;
 
@@ -255,11 +256,11 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(d_mpiCommParent);
   init_mf = MPI_Wtime() - init_mf;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for matrix free reinit: "
           << init_mf << std::endl;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Called matrix free reinit");
 
@@ -278,7 +279,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(d_mpiCommParent);
   init_pref = MPI_Wtime() - init_pref;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for initpRefinedObjects: "
           << init_pref << std::endl;
 

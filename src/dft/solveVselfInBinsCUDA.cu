@@ -18,7 +18,6 @@
 //
 
 #ifdef DFTFE_WITH_GPU
-#  include <dftParameters.h>
 #  include <solveVselfInBinsCUDA.h>
 #  include <vectorUtilities.h>
 
@@ -402,6 +401,9 @@ namespace dftfe
       const MPI_Comm &                         mpiCommParent,
       const MPI_Comm &                         mpiCommDomain,
       double *                                 xH,
+      const int                                verbosity,
+      const unsigned int                       maxLinearSolverIterations,
+      const double                             absLinearSolverTolerance,
       const bool isElectroFEOrderDifferentFromFEOrder)
     {
       int this_process;
@@ -428,7 +430,7 @@ namespace dftfe
 
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
-      if (dftParameters::verbosity >= 2 && this_process == 0)
+      if (verbosity >= 2 && this_process == 0)
         std::cout << " poissonCUDA::solveVselfInBins: time for creating xD: "
                   << time << std::endl;
 
@@ -489,7 +491,7 @@ namespace dftfe
       cudaDeviceSynchronize();
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
-      if (dftParameters::verbosity >= 2 && this_process == 0)
+      if (verbosity >= 2 && this_process == 0)
         std::cout << " poissonCUDA::solveVselfInBins: time for mem allocation: "
                   << time << std::endl;
 
@@ -507,9 +509,9 @@ namespace dftfe
                numberBins,
                totalLocallyOwnedCells,
                numberNodesPerElement,
-               dftParameters::verbosity,
-               dftParameters::maxLinearSolverIterations,
-               dftParameters::absLinearSolverTolerance,
+               verbosity,
+               maxLinearSolverIterations,
+               absLinearSolverTolerance,
                mpiCommParent,
                mpiCommDomain,
                xD);
@@ -534,7 +536,7 @@ namespace dftfe
              const unsigned int         numberBins,
              const unsigned int         totalLocallyOwnedCells,
              const unsigned int         numberNodesPerElement,
-             const unsigned int         debugLevel,
+             const int                  debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
              const MPI_Comm &           mpiCommParent,

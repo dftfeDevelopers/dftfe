@@ -210,7 +210,9 @@ namespace dftfe
     class Pool
     {
     public:
-      Pool(const MPI_Comm &mpi_communicator, const unsigned int n_pools);
+      Pool(const MPI_Comm &   mpi_communicator,
+           const unsigned int n_pools,
+           const int          verbosity);
 
       /**
        * @brief get the communicator across the processor groups

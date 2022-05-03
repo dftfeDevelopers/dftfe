@@ -18,6 +18,7 @@
 #include <headers.h>
 #include <dftd.h>
 #include <xc.h>
+#include "dftParameters.h"
 
 #ifndef energyCalculator_H_
 #  define energyCalculator_H_
@@ -40,10 +41,11 @@ namespace dftfe
      * @param interpool_comm mpi interpool communicator over k points
      * @param interBandGroupComm mpi interpool communicator over band groups
      */
-    energyCalculator(const MPI_Comm &mpi_comm_parent,
-                     const MPI_Comm &mpi_comm_domain,
-                     const MPI_Comm &interpool_comm,
-                     const MPI_Comm &interBandGroupComm);
+    energyCalculator(const MPI_Comm &     mpi_comm_parent,
+                     const MPI_Comm &     mpi_comm_domain,
+                     const MPI_Comm &     interpool_comm,
+                     const MPI_Comm &     interBandGroupComm,
+                     const dftParameters &dftParams);
 
     /**
      * Computes total energy of the ksdft problem in the current state and also
@@ -333,6 +335,8 @@ namespace dftfe
     const MPI_Comm mpi_communicator;
     const MPI_Comm interpoolcomm;
     const MPI_Comm interBandGroupComm;
+
+    const dftParameters &d_dftParams;
 
     /// parallel message stream
     dealii::ConditionalOStream pcout;

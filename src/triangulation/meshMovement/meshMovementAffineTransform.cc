@@ -17,16 +17,16 @@
 // @author Sambit Das(2018)
 //
 //
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <meshMovementAffineTransform.h>
 
 namespace dftfe
 {
   meshMovementAffineTransform::meshMovementAffineTransform(
-    const MPI_Comm &mpi_comm_parent,
-    const MPI_Comm &mpi_comm_domain)
-    : meshMovementClass(mpi_comm_parent, mpi_comm_domain)
+    const MPI_Comm &     mpi_comm_parent,
+    const MPI_Comm &     mpi_comm_domain,
+    const dftParameters &dftParams)
+    : meshMovementClass(mpi_comm_parent, mpi_comm_domain, dftParams)
   {}
 
 
@@ -35,13 +35,13 @@ namespace dftfe
     const Tensor<2, 3, double> &deformationGradient)
   {
     d_deformationGradient = deformationGradient;
-    if (dftParameters::verbosity == 2)
+    if (d_dftParams.verbosity == 2)
       pcout
         << "Computing triangulation displacement increment under affine deformation..."
         << std::endl;
     initIncrementField();
     computeIncrement();
-    if (dftParameters::verbosity == 2)
+    if (d_dftParams.verbosity == 2)
       pcout << "...Computed triangulation displacement increment" << std::endl;
 
     dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,

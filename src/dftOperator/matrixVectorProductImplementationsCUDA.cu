@@ -32,7 +32,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                                 dataTypes::numberGPU *      dst)
 {
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
@@ -84,7 +84,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     totalLocallyOwnedCells);
 
 
-  if (!(dftParameters::isPseudopotential &&
+  if (!(dftPtr->d_dftParamsPtr->isPseudopotential &&
         dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0))
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
