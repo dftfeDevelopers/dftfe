@@ -400,7 +400,7 @@ namespace dftfe
         rNN = rNN > rijMin ? rNN : rijMin;
       }
     double rCut = 2 * rNN;
-
+    pcout<<"DEBUG rcut"<<rCut<<std::endl;
     std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
     for (int i = 0; i < numberGlobalAtoms; ++i)
       {
@@ -431,7 +431,16 @@ namespace dftfe
                 L[i * numberGlobalAtoms + i] -= L[i * numberGlobalAtoms + j];
               }
           }
+          L[i * numberGlobalAtoms + i]+=0.1;
       }
+    pcout<<"DEBUG Laplacian"<<std::endl;
+    for(auto i=0; i<numberGlobalAtoms;++i){
+      for(auto j=0; j<numberGlobalAtoms;++j){
+        pcout<<L[i*numberGlobalAtoms+j]<<"  ";
+      }
+      pcout<<std::endl;
+    }
+
     s.clear();
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
     int icount = 0;

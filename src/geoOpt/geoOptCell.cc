@@ -220,7 +220,7 @@ namespace dftfe
                                   maxUpdateInAnyComponent);
 
     BFGSNonLinearSolver bfgsSolver(
-      tol, maxIter, debugLevel, mpi_communicator, 0.5, 0.02, 1e-6);
+      tol, maxIter, debugLevel, mpi_communicator, 0.5, 0.02, 1e-8);
 
     if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
       pcout
