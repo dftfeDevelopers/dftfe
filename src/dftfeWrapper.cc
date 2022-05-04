@@ -36,6 +36,9 @@
 #include <list>
 #include <sstream>
 #include <sys/stat.h>
+#include <chrono>
+#include <sys/time.h>
+#include <ctime>
 
 #include "dft.h"
 #include "dftParameters.h"
@@ -54,6 +57,7 @@ namespace dftfe
                  const MPI_Comm &      mpi_comm_domain,
                  const MPI_Comm &      interpoolcomm,
                  const MPI_Comm &      interBandGroupComm,
+                 const std::string &   scratchFolderName,
                  dftfe::dftParameters &dftParams,
                  dftBase **            dftfeBaseDoublePtr)
     {
@@ -61,6 +65,7 @@ namespace dftfe
                                                         mpi_comm_domain,
                                                         interpoolcomm,
                                                         interBandGroupComm,
+                                                        scratchFolderName,
                                                         dftParams);
     }
 
@@ -75,6 +80,7 @@ namespace dftfe
                               const MPI_Comm &      mpi_comm_domain,
                               const MPI_Comm &      interpoolcomm,
                               const MPI_Comm &      interBandGroupComm,
+                              const std::string &   scratchFolderName,
                               dftfe::dftParameters &dftParams,
                               dftBase **            dftBaseDoublePtr);
 
@@ -151,6 +157,7 @@ namespace dftfe
                              const bool        setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
+    , d_isGPUToMPITaskBindingSetInternally(false)
   {
     reinit(parameter_file,
            mpi_comm_parent,
@@ -171,19 +178,61 @@ namespace dftfe
   {
     clear();
     d_mpi_comm_parent = mpi_comm_parent;
-    if (mpi_comm_parent != MPI_COMM_NULL)
+    createScratchFolder();
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file,
-                                           mpi_comm_parent,
+                                           d_mpi_comm_parent,
                                            printParams);
+      }
+    initialize(setGPUToMPITaskBindingInternally);
+  }
 
+  void
+  dftfeWrapper::createScratchFolder()
+  {
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+          {
+            d_scratchFolderName =
+              "dftfeScratch" +
+              std::to_string(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
+              "t" +
+              std::to_string(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::system_clock::now().time_since_epoch())
+                  .count());
+          }
+
+        int line_size = d_scratchFolderName.size();
+        MPI_Bcast(&line_size, 1, MPI_INT, 0, d_mpi_comm_parent);
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) != 0)
+          d_scratchFolderName.resize(line_size);
+        MPI_Bcast(const_cast<char *>(d_scratchFolderName.data()),
+                  line_size,
+                  MPI_CHAR,
+                  0,
+                  d_mpi_comm_parent);
+      }
+  }
+
+  void
+  dftfeWrapper::initialize(const bool setGPUToMPITaskBindingInternally)
+  {
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
 #ifdef DFTFE_WITH_GPU
-        if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally)
-          dftfe::cudaUtils::setupGPU();
+        if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally &&
+            !d_isGPUToMPITaskBindingSetInternally)
+          {
+            dftfe::cudaUtils::setupGPU();
+            d_isGPUToMPITaskBindingSetInternally = true;
+          }
 #endif
 
-        dftfe::dftUtils::Pool kPointPool(mpi_comm_parent,
+        dftfe::dftUtils::Pool kPointPool(d_mpi_comm_parent,
                                          d_dftfeParamsPtr->npool,
                                          d_dftfeParamsPtr->verbosity);
         dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(),
@@ -197,12 +246,13 @@ namespace dftfe
           {
             dealii::ConditionalOStream pcout(
               std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
+              (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) ==
+               0));
             pcout
               << "=================================MPI Parallelization========================================="
               << std::endl;
             pcout << "Total number of MPI tasks: "
-                  << Utilities::MPI::n_mpi_processes(mpi_comm_parent)
+                  << Utilities::MPI::n_mpi_processes(d_mpi_comm_parent)
                   << std::endl;
             pcout << "k-point parallelization processor groups: "
                   << Utilities::MPI::n_mpi_processes(
@@ -289,10 +339,11 @@ namespace dftfe
           }
 #endif
         create_fn create = order_list[listIndex - 1];
-        create(mpi_comm_parent,
+        create(d_mpi_comm_parent,
                bandGroupsPool.get_intrapool_comm(),
                kPointPool.get_interpool_comm(),
                bandGroupsPool.get_interpool_comm(),
+               d_scratchFolderName,
                *d_dftfeParamsPtr,
                &d_dftfeBasePtr);
         d_dftfeBasePtr->set();
@@ -306,7 +357,16 @@ namespace dftfe
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         if (d_dftfeBasePtr != nullptr)
-          delete d_dftfeBasePtr;
+          {
+            delete d_dftfeBasePtr;
+
+            if (!d_dftfeParamsPtr->keepScratchFolder &&
+                Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+              {
+                std::string command = "rm -rf " + d_scratchFolderName;
+                system(command.c_str());
+              }
+          }
         if (d_dftfeParamsPtr != nullptr)
           delete d_dftfeParamsPtr;
       }
@@ -389,7 +449,7 @@ namespace dftfe
   }
 
   void
-  dftfeWrapper::deformDomain(
+  dftfeWrapper::deformCell(
     const std::vector<std::vector<double>> deformationGradient)
   {
     AssertThrow(

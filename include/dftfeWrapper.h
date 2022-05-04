@@ -110,18 +110,18 @@ namespace dftfe
 
 
     /**
-     *@brief Deforms the domain by the given affine deformation gradient and
+     *@brief Deforms the cell by applying the given affine deformation gradient and
      * reinitializes the underlying data-structures.
      *
      *@param[in] std::vector<std::vector<double>> deformation gradient
      * matrix given by F[i][j]=\frac{\partial x_i}{\partial X_j}
      */
     void
-    deformDomain(const std::vector<std::vector<double>> deformationGradient);
+    deformCell(const std::vector<std::vector<double>> deformationGradient);
 
     /**
      * @brief Gets the current atom Locations in cartesian form (in Bohr units)
-     * (origin at center of domain)
+     * (origin at center of cell)
      *
      *  @return std::vector<std::vector<double>> array of coords for each atom
      */
@@ -181,9 +181,17 @@ namespace dftfe
     getDftfeBasePtr();
 
   private:
+    void
+    createScratchFolder();
+
+    void
+    initialize(const bool setGPUToMPITaskBindingInternally);
+
     MPI_Comm       d_mpi_comm_parent;
     dftBase *      d_dftfeBasePtr;
     dftParameters *d_dftfeParamsPtr;
+    std::string    d_scratchFolderName;
+    bool           d_isGPUToMPITaskBindingSetInternally;
   };
 } // namespace dftfe
 #endif

@@ -128,12 +128,16 @@ namespace dftfe
      * points
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
+     *  @param[in] scratchFolderName  scratch folder name
+     *  @param[in] dftParams  dftParameters object containg parameter values
+     * parsed from an input parameter file in dftfeWrapper class
      */
-    dftClass(const MPI_Comm &mpiCommParent,
-             const MPI_Comm &mpi_comm_domain,
-             const MPI_Comm &interpoolcomm,
-             const MPI_Comm &interBandGroupComm,
-             dftParameters & dftParams);
+    dftClass(const MPI_Comm &   mpiCommParent,
+             const MPI_Comm &   mpi_comm_domain,
+             const MPI_Comm &   interpoolcomm,
+             const MPI_Comm &   interBandGroupComm,
+             const std::string &scratchFolderName,
+             dftParameters &    dftParams);
 
     /**
      * @brief dftClass destructor
