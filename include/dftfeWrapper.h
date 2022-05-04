@@ -48,18 +48,108 @@ namespace dftfe
     static void
     globalHandlesFinalize();
 
+    /**
+     * @brief constructor based on input parameter_file
+     */
     dftfeWrapper(const std::string parameter_file,
                  const MPI_Comm &  mpi_comm_parent,
                  const bool        printParams                      = false,
                  const bool        setGPUToMPITaskBindingInternally = false);
 
+    /**
+     * @brief constructor based on input list of atomic coordinates,
+     * list of atomic numbers,cell, boundary conditions,
+     * Monkhorst-Pack k-point grid, and other optional parameters.
+     * CAUTION: This constructor currently only sets up GGA PBE pseudopotential
+     * DFT calculations using ONCV pseudopotentials from the pseudo-dojo
+     * database (read from DFTFE_PP_PATH folder provided as an environment
+     * variable).
+     *
+     * @param[in] mpi_comm_parent mpi communicator to be used by the
+     * dftfeWrapper.
+     * @param[in] useGPU toggle use of GPU accelerated DFT-FE
+     * @param[in] atomicPositionsCart vector of atomic positions for
+     * each atom (in Bohr units), Origin is at cell corner
+     * @param[in] atomicNumbers vector of atomic numbers
+     * @param[in] cell 3 \times 3 matrix in Bohr units, cell[i] denotes the ith
+     * cell vector
+     * @param[in] pbc vector of bools denoting periodic boundary conditions
+     * along the three cell vectors, false denotes non-periodic and true is
+     * periodic
+     * @param[in] mpgrid vector of Monkhorst-Pack grid points along the
+     * reciprocal lattice vector directions for sampling the Brillouin zone
+     * along periodic directions. Default value is a Gamma point.
+     * @param[in] mpgridShift vector of bools where false denotes no shift and
+     * true denotes shift by half the Monkhost-Pack grid spacing. Default value
+     * is no shift.
+     * @param[in] spinPolarizedDFT toggles spin-polarized DFT calculations.
+     * Default value is false
+     * @param[in] fermiDiracSmearingTemp Fermi-Dirac smearing temperature in
+     * Kelvin. Default value is 500 K.
+     * @param[in] npkpt Number of groups of MPI tasks across which the work load
+     * of the irreducible k-points is parallelised. npkpt must be a divisor of
+     * total number of MPI tasks. Default value of 0 internally sets npkt to an
+     * heuristically determined value.
+     * @param[in] meshSize Finite-element mesh size around the atoms in Bohr
+     * units. The default value of 1.0 is sufficient to achieve chemical
+     * accuracy in energy (0.1 mHa/atom discretization error) and forces (0.1
+     * mHa/Bohr discretization error) for most of the ONCV pseudo-dojo
+     * pseudopotentials. Note that this function assumes a sixth order
+     * finite-element interpolating polynomial
+     * @param[in] verbosity printing verbosity. Default value is -1: no printing
+     * @param[in] setGPUToMPITaskBindingInternally This option is only valid for
+     * GPU runs. If set to true GPU to MPI task binding is set inside the DFT-FE
+     * code. Default behaviour is false which assumes the binding has been
+     * externally set.
+     */
+    dftfeWrapper(const MPI_Comm &                       mpi_comm_parent,
+                 const bool                             useGPU,
+                 const std::vector<std::vector<double>> atomicPositionsCart,
+                 const std::vector<unsigned int>        atomicNumbers,
+                 const std::vector<std::vector<double>> cell,
+                 const std::vector<bool>                pbc,
+                 const std::vector<double> mpGrid    = std::vector<double>{1,
+                                                                        1,
+                                                                        1},
+                 const std::vector<bool> mpGridShift = std::vector<bool>{false,
+                                                                         false,
+                                                                         false},
+                 const bool              spinPolarizedDFT       = false,
+                 const double            fermiDiracSmearingTemp = 500.0,
+                 const unsigned int      npkpt                  = 0,
+                 const double            meshSize               = 1.0,
+                 const int               verbosity              = -1,
+                 const bool setGPUToMPITaskBindingInternally    = false);
+
+
     ~dftfeWrapper();
 
+    /**
+     * @brief clear and reinitialize based on input parameter_file
+     */
     void
     reinit(const std::string parameter_file,
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
            const bool        setGPUToMPITaskBindingInternally = false);
+
+    void
+    reinit(const MPI_Comm &                       mpi_comm_parent,
+           const bool                             useGPU,
+           const std::vector<std::vector<double>> atomicPositionsCart,
+           const std::vector<unsigned int>        atomicNumbers,
+           const std::vector<std::vector<double>> cell,
+           const std::vector<bool>                pbc,
+           const std::vector<double> mpGrid      = std::vector<double>{1, 1, 1},
+           const std::vector<bool>   mpGridShift = std::vector<bool>{false,
+                                                                   false,
+                                                                   false},
+           const bool                spinPolarizedDFT                 = false,
+           const double              fermiDiracSmearingTemp           = 500.0,
+           const unsigned int        npkpt                            = 0,
+           const double              meshSize                         = 1.0,
+           const int                 verbosity                        = -1,
+           const bool                setGPUToMPITaskBindingInternally = false);
 
     void
     clear();
@@ -80,9 +170,10 @@ namespace dftfe
 
     /**
      * @brief Get ionic forces: negative of gradient of DFT free energy with
-     * respect to ionic positions (in Hartree/Bohr units)
+     * respect to ionic positions (in Hartree/Bohr units). This function should
+     * be only be called after calling computeDFTFreeEnergy
      *
-     *  @return std::vector<std::vector<double>> vector of forces on each atom
+     *  @return vector of forces on each atom
      */
     std::vector<std::vector<double>>
     getForcesAtoms() const;
@@ -90,9 +181,10 @@ namespace dftfe
     /**
      * @brief Get cell stress: negative of gradient of DFT free energy
      * with respect to affine strain components scaled by volume
-     * (Hartree/Bohr^3) units
+     * (Hartree/Bohr^3) units. This function should be only
+     * be called after calling computeDFTFreeEnergy
      *
-     * @return std::vector<std::vector<double> > 3 \times 3 matrix given by
+     * @return cell stress 3 \times 3 matrix given by
      *  sigma[i][j]=\frac{1}{\Omega}\frac{\partial E}{\partial \epsilon_{ij}}
      */
     std::vector<std::vector<double>>
@@ -101,7 +193,7 @@ namespace dftfe
     /**
      * @brief update atom positions and reinitialize all related  data-structures
      *
-     * @param[in] std::vector<std::vector<double>> vector of displacements for
+     * @param[in] atomsDisplacements vector of displacements for
      * each atom (in Bohr units)
      */
     void
@@ -113,48 +205,48 @@ namespace dftfe
      *@brief Deforms the cell by applying the given affine deformation gradient and
      * reinitializes the underlying data-structures.
      *
-     *@param[in] std::vector<std::vector<double>> deformation gradient
+     *@param[in] deformationGradient deformation gradient
      * matrix given by F[i][j]=\frac{\partial x_i}{\partial X_j}
      */
     void
     deformCell(const std::vector<std::vector<double>> deformationGradient);
 
     /**
-     * @brief Gets the current atom Locations in cartesian form (in Bohr units)
-     * (origin at center of cell)
+     * @brief Gets the current atom Positions in cartesian form (in Bohr units)
+     * (origin at corner of cell against which the cell vectors are defined)
      *
-     *  @return std::vector<std::vector<double>> array of coords for each atom
+     *  @return array of coords for each atom
      */
     std::vector<std::vector<double>>
-    getAtomLocationsCart() const;
+    getAtomPositionsCart() const;
 
     /**
-     * @brief Gets the current atom Locations in fractional form
+     * @brief Gets the current atom Positions in fractional form
      * (only applicable for periodic and semi-periodic BCs).
      * CAUTION: during relaxation and MD fractional coordinates may have negaive
      * values
      *
-     *  @return std::vector<std::vector<double>> array of coords for each atom
+     *  @return array of coords for each atom
      */
     std::vector<std::vector<double>>
-    getAtomLocationsFrac() const;
+    getAtomPositionsFrac() const;
 
 
 
     /**
-     * @brief Gets the current cell lattice vectors
+     * @brief Gets the current cell vectors
      *
-     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j] corresponds to jth component of
-     *  ith lattice vector (in Bohr units)
+     *  @return  3 \times 3 matrix, cell[i][j] corresponds to jth component of
+     *  ith cell vector (in Bohr units)
      */
     std::vector<std::vector<double>>
     getCell() const;
 
 
     /**
-     * @brief Gets the boundary conditions for each lattice vector direction
+     * @brief Gets the boundary conditions for each cell vector direction
      *
-     *  @return std::vector<bool> false denotes non-periodic BC and true denotes periodic BC
+     *  @return vector of bools, false denotes non-periodic BC and true denotes periodic BC
      */
     std::vector<bool>
     getPBC() const;
@@ -162,7 +254,7 @@ namespace dftfe
     /**
      * @brief Gets the atomic numbers vector
      *
-     *  @return std::vector<double> array of atomic number for each atom
+     *  @return vector of atomic numbers
      */
     std::vector<int>
     getAtomicNumbers() const;
@@ -171,7 +263,7 @@ namespace dftfe
     /**
      * @brief Gets the number of valence electrons for each atom
      *
-     *  @return std::vector<double> array of number of valence for each atom
+     *  @return array of number of valence for each atom
      */
     std::vector<int>
     getValenceElectronNumbers() const;

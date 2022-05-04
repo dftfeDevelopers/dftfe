@@ -1199,7 +1199,7 @@ namespace dftfe
       *d_kohnShamDFTOperatorCUDAPtr;
 #endif
 
-    std::string d_dftfeScratchFolderName;
+    const std::string d_dftfeScratchFolderName;
 
     /**
      * chebyshev subspace iteration solver objects

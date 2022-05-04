@@ -165,6 +165,46 @@ namespace dftfe
            setGPUToMPITaskBindingInternally);
   }
 
+
+  //
+  // constructor
+  //
+  dftfeWrapper::dftfeWrapper(
+    const MPI_Comm &                       mpi_comm_parent,
+    const bool                             useGPU,
+    const std::vector<std::vector<double>> atomicPositionsCart,
+    const std::vector<unsigned int>        atomicNumbers,
+    const std::vector<std::vector<double>> cell,
+    const std::vector<bool>                pbc,
+    const std::vector<double>              mpGrid,
+    const std::vector<bool>                mpGridShift,
+    const bool                             spinPolarizedDFT,
+    const double                           fermiDiracSmearingTemp,
+    const unsigned int                     npkpt,
+    const double                           meshSize,
+    const int                              verbosity,
+    const bool                             setGPUToMPITaskBindingInternally)
+    : d_dftfeBasePtr(nullptr)
+    , d_dftfeParamsPtr(nullptr)
+    , d_isGPUToMPITaskBindingSetInternally(false)
+  {
+    reinit(mpi_comm_parent,
+           useGPU,
+           atomicPositionsCart,
+           atomicNumbers,
+           cell,
+           pbc,
+           mpGrid,
+           mpGridShift,
+           spinPolarizedDFT,
+           fermiDiracSmearingTemp,
+           npkpt,
+           meshSize,
+           verbosity,
+           setGPUToMPITaskBindingInternally);
+  }
+
+
   dftfeWrapper::~dftfeWrapper()
   {
     clear();
@@ -188,6 +228,40 @@ namespace dftfe
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
+
+
+  void
+  dftfeWrapper::reinit(
+    const MPI_Comm &                       mpi_comm_parent,
+    const bool                             useGPU,
+    const std::vector<std::vector<double>> atomicPositionsCart,
+    const std::vector<unsigned int>        atomicNumbers,
+    const std::vector<std::vector<double>> cell,
+    const std::vector<bool>                pbc,
+    const std::vector<double>              mpGrid,
+    const std::vector<bool>                mpGridShift,
+    const bool                             spinPolarizedDFT,
+    const double                           fermiDiracSmearingTemp,
+    const unsigned int                     npkpt,
+    const double                           meshSize,
+    const int                              verbosity,
+    const bool                             setGPUToMPITaskBindingInternally)
+  {
+    clear();
+    d_mpi_comm_parent = mpi_comm_parent;
+    createScratchFolder();
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        d_dftfeParamsPtr = new dftfe::dftParameters;
+        /*
+        d_dftfeParamsPtr->parse_parameters(parameter_file,
+                                           d_mpi_comm_parent,
+                                           printParams);
+        */
+      }
+    initialize(setGPUToMPITaskBindingInternally);
+  }
+
 
   void
   dftfeWrapper::createScratchFolder()
@@ -215,6 +289,7 @@ namespace dftfe
                   MPI_CHAR,
                   0,
                   d_mpi_comm_parent);
+        MPI_Barrier(d_mpi_comm_parent);
       }
   }
 
@@ -464,25 +539,36 @@ namespace dftfe
   }
 
   std::vector<std::vector<double>>
-  dftfeWrapper::getAtomLocationsCart() const
+  dftfeWrapper::getAtomPositionsCart() const
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,
       dealii::ExcMessage(
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    // dftfe stores cell centered coordinates
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsCart();
     std::vector<std::vector<double>> atomLocationsCart(
       d_dftfeBasePtr->getAtomLocationsCart().size(),
       std::vector<double>(3, 0.0));
+
+    std::vector<std::vector<double>> cell = d_dftfeBasePtr->getCell();
+    std::vector<double>              shift(3, 0.0);
+    for (unsigned int idim = 0; idim < 3; idim++)
+      {
+        shift[idim] = 0;
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
+          shift[idim] -= cell[jdim][idim] / 2.0;
+      }
+
     for (unsigned int i = 0; i < atomLocationsCart.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        atomLocationsCart[i][j] = temp[i][j + 2];
+        atomLocationsCart[i][j] = temp[i][j + 2] + shift[j];
     return atomLocationsCart;
   }
 
   std::vector<std::vector<double>>
-  dftfeWrapper::getAtomLocationsFrac() const
+  dftfeWrapper::getAtomPositionsFrac() const
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,
