@@ -1086,6 +1086,7 @@ namespace dftfe
     chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
     mixingMethod                        = "";
     ionOptSolver                        = "";
+    cellOptSolver                       = "";
 
     isPseudopotential           = false;
     periodicX                   = false;
@@ -1300,39 +1301,9 @@ namespace dftfe
 
       prm.enter_subsection("Optimization");
       {
-        dftParameters::natoms          = prm.get_integer("NATOMS");
-        dftParameters::natomTypes      = prm.get_integer("NATOM TYPES");
-        dftParameters::coordinatesFile = prm.get("ATOMIC COORDINATES FILE");
-        dftParameters::coordinatesGaussianDispFile =
-          prm.get("ATOMIC DISP COORDINATES FILE");
-        dftParameters::domainBoundingVectorsFile =
-          prm.get("DOMAIN VECTORS FILE");
-
-        prm.enter_subsection("Optimization");
-        {
-          dftParameters::isIonOpt      = prm.get_bool("ION OPT");
-          dftParameters::ionOptSolver  = prm.get("ION OPT SOLVER");
-          dftParameters::cellOptSolver = prm.get("CELL OPT SOLVER");
-          dftParameters::maxLineSearchIterCGPRP =
-            prm.get_integer("MAX LINE SEARCH ITER");
-          dftParameters::nonSelfConsistentForce =
-            prm.get_bool("NON SELF CONSISTENT FORCE");
-          dftParameters::isIonForce =
-            dftParameters::isIonOpt || prm.get_bool("ION FORCE");
-          dftParameters::forceRelaxTol     = prm.get_double("FORCE TOL");
-          dftParameters::ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
-          dftParameters::isCellOpt         = prm.get_bool("CELL OPT");
-          dftParameters::isCellStress =
-            dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
-          dftParameters::stressRelaxTol = prm.get_double("STRESS TOL");
-          dftParameters::cellConstraintType =
-            prm.get_integer("CELL CONSTRAINT TYPE");
-          dftParameters::reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
-          dftParameters::reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
-        }
-        prm.leave_subsection();
         isIonOpt               = prm.get_bool("ION OPT");
         ionOptSolver           = prm.get("ION OPT SOLVER");
+        cellOptSolver          = prm.get("CELL OPT SOLVER");
         maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
         isIonForce             = isIonOpt || prm.get_bool("ION FORCE");

@@ -221,7 +221,6 @@ namespace dftfe
     BFGSNonLinearSolver bfgsSolver(
       tol, maxIter, debugLevel, mpi_communicator, 0.5, 0.02, 1e-8);
 
-    if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
     if (dftPtr->getParametersObject().chkType >= 1 &&
         dftPtr->getParametersObject().restartFromChk)
       pcout
@@ -246,21 +245,16 @@ namespace dftfe
       {
         nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
 
-        if (dftParameters::chkType >= 1 && dftParameters::restartFromChk &&
-            dftParameters::cellOptSolver == "CGPRP")
-          cgReturn =
-            cgSolver.solve(*this, std::string("cellRelaxCG.chk"), true);
-        else if (dftParameters::chkType >= 1 &&
-                 !dftParameters::restartFromChk &&
-                 dftParameters::cellOptSolver == "CGPRP")
         if (dftPtr->getParametersObject().chkType >= 1 &&
-            dftPtr->getParametersObject().restartFromChk)
+            dftPtr->getParametersObject().restartFromChk &&
+            dftPtr->getParametersObject().cellOptSolver == "CGPRP")
           cgReturn =
             cgSolver.solve(*this, std::string("cellRelaxCG.chk"), true);
         else if (dftPtr->getParametersObject().chkType >= 1 &&
-                 !dftPtr->getParametersObject().restartFromChk)
+                 !dftPtr->getParametersObject().restartFromChk &&
+                 dftPtr->getParametersObject().cellOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this, std::string("cellRelaxCG.chk"));
-        else if (dftParameters::cellOptSolver == "CGPRP")
+        else if (dftPtr->getParametersObject().cellOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this);
         else
           cgReturn = bfgsSolver.solve(*this);

@@ -239,18 +239,20 @@ namespace dftfe
       }
 
     const unsigned int one = 1;
-    double dgtdx =
+    double             dgtdx =
       ddot_(&d_numberUnknowns, delta_g.data(), &one, d_deltaXNew.data(), &one);
     double dgtdg =
       ddot_(&d_numberUnknowns, delta_g.data(), &one, delta_g.data(), &one);
-    pcout<<"DEBUG Hessian init"<<std::endl;
-    for(auto i=0; i<d_numberUnknowns;++i){
-      for(auto j=0; j<d_numberUnknowns;++j){
-        pcout<<d_hessian[i*d_numberUnknowns+j]<<"  ";
+    pcout << "DEBUG Hessian init" << std::endl;
+    for (auto i = 0; i < d_numberUnknowns; ++i)
+      {
+        for (auto j = 0; j < d_numberUnknowns; ++j)
+          {
+            pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
+          }
+        pcout << std::endl;
       }
-      pcout<<std::endl;
-    }
-    if (dgtdg>0)
+    if (dgtdg > 0)
       {
         for (auto i = 0; i < d_hessian.size(); ++i)
           {
@@ -258,13 +260,15 @@ namespace dftfe
           }
         d_hessianScaled = true;
       }
-    pcout<<"DEBUG Hessian scaled"<<std::endl;
-    for(auto i=0; i<d_numberUnknowns;++i){
-      for(auto j=0; j<d_numberUnknowns;++j){
-        pcout<<d_hessian[i*d_numberUnknowns+j]<<"  ";
+    pcout << "DEBUG Hessian scaled" << std::endl;
+    for (auto i = 0; i < d_numberUnknowns; ++i)
+      {
+        for (auto j = 0; j < d_numberUnknowns; ++j)
+          {
+            pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
+          }
+        pcout << std::endl;
       }
-      pcout<<std::endl;
-    }
   }
 
   //
@@ -475,11 +479,11 @@ namespace dftfe
         double             gtdx = ddot_(
           &d_numberUnknowns, d_deltaX.data(), &one, d_gradient.data(), &one);
 
-        d_trustRadius =
-          -0.5 * gtdx * d_trustRadius / ((d_valueNew[0] - d_value[0])/d_trustRadius - gtdx);
+        d_trustRadius = -0.5 * gtdx * d_trustRadius /
+                        ((d_valueNew[0] - d_value[0]) / d_trustRadius - gtdx);
         if (d_trustRadius < d_trustRadiusMin)
           {
-            pcout << "DEBUG reset history " << d_trustRadius<< std::endl;
+            pcout << "DEBUG reset history " << d_trustRadius << std::endl;
             initializeHessian(problem);
             d_trustRadius = d_trustRadiusInitial;
             computeRFOStep();
@@ -749,12 +753,12 @@ namespace dftfe
         if (d_stepAccepted)
           {
             if ((d_iter == 0 || d_isBFGSRestartDueToSmallRadius ||
-             !d_hessianScaled))
-          {
-            scaleHessian();
-            d_trustRadius                   = d_trustRadiusInitial;
-            d_isBFGSRestartDueToSmallRadius = false;
-          }
+                 !d_hessianScaled))
+              {
+                scaleHessian();
+                d_trustRadius                   = d_trustRadiusInitial;
+                d_isBFGSRestartDueToSmallRadius = false;
+              }
             updateHessian();
             pcout << "DEBUG step accepted " << d_valueNew[0] - d_value[0]
                   << std::endl;

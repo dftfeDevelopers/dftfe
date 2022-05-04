@@ -191,7 +191,7 @@ namespace dftfe
             cg_descent.set_memory(memory);
             cgSuccess = cg_descent.run(*this);
           }
-        else if (dftParameters::ionOptSolver == "BFGS")
+        else if (dftPtr->getParametersObject().ionOptSolver == "BFGS")
           {
             cgReturn = bfgsSolver.solve(*this);
           }
@@ -404,7 +404,7 @@ namespace dftfe
         rNN = rNN > rijMin ? rNN : rijMin;
       }
     double rCut = 2 * rNN;
-    pcout<<"DEBUG rcut"<<rCut<<std::endl;
+    pcout << "DEBUG rcut" << rCut << std::endl;
     std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
     for (int i = 0; i < numberGlobalAtoms; ++i)
       {
@@ -435,15 +435,17 @@ namespace dftfe
                 L[i * numberGlobalAtoms + i] -= L[i * numberGlobalAtoms + j];
               }
           }
-          L[i * numberGlobalAtoms + i]+=0.1;
+        L[i * numberGlobalAtoms + i] += 0.1;
       }
-    pcout<<"DEBUG Laplacian"<<std::endl;
-    for(auto i=0; i<numberGlobalAtoms;++i){
-      for(auto j=0; j<numberGlobalAtoms;++j){
-        pcout<<L[i*numberGlobalAtoms+j]<<"  ";
+    pcout << "DEBUG Laplacian" << std::endl;
+    for (auto i = 0; i < numberGlobalAtoms; ++i)
+      {
+        for (auto j = 0; j < numberGlobalAtoms; ++j)
+          {
+            pcout << L[i * numberGlobalAtoms + j] << "  ";
+          }
+        pcout << std::endl;
       }
-      pcout<<std::endl;
-    }
 
     s.clear();
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
@@ -462,7 +464,7 @@ namespace dftfe
                         if (d_relaxationFlags[j * 3 + l] == 1)
                           {
                             s[icount * getNumberUnknowns() + jcount] =
-                              k==l ? L[i * numberGlobalAtoms + j]:0.0;
+                              k == l ? L[i * numberGlobalAtoms + j] : 0.0;
                             ++jcount;
                           }
                       }
