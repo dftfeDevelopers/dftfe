@@ -45,12 +45,25 @@
 #include "cudaHelpers.h"
 #include "dftUtils.h"
 #include "dftfeWrapper.h"
-
+#include "fileReaders.h"
 
 namespace dftfe
 {
   namespace
   {
+    int
+    divisor_closest(int totalSize, int desiredDivisor)
+    {
+      int i;
+      for (i = desiredDivisor; i >= 1; --i)
+        {
+          if (totalSize % i == 0 && i <= desiredDivisor)
+            return i;
+        }
+      return 1;
+    }
+
+
     template <int n1, int n2>
     void
     create_dftfe(const MPI_Comm &      mpi_comm_parent,
@@ -176,7 +189,7 @@ namespace dftfe
     const std::vector<unsigned int>        atomicNumbers,
     const std::vector<std::vector<double>> cell,
     const std::vector<bool>                pbc,
-    const std::vector<double>              mpGrid,
+    const std::vector<unsigned int>        mpGrid,
     const std::vector<bool>                mpGridShift,
     const bool                             spinPolarizedDFT,
     const double                           fermiDiracSmearingTemp,
@@ -238,7 +251,7 @@ namespace dftfe
     const std::vector<unsigned int>        atomicNumbers,
     const std::vector<std::vector<double>> cell,
     const std::vector<bool>                pbc,
-    const std::vector<double>              mpGrid,
+    const std::vector<unsigned int>        mpGrid,
     const std::vector<bool>                mpGridShift,
     const bool                             spinPolarizedDFT,
     const double                           fermiDiracSmearingTemp,
@@ -252,12 +265,78 @@ namespace dftfe
     createScratchFolder();
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
+        dftUtils::writeDataIntoFile(cell,
+                                    d_scratchFolderName + "/domainVectors.inp",
+                                    d_mpi_comm_parent);
+
+
+        const int totalMPIProcesses =
+          Utilities::MPI::n_mpi_processes(d_mpi_comm_parent);
+
+        std::string parameter_file_path =
+          d_scratchFolderName + "/parameterFile.prm";
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+          {
+            std::string dftfePath = DFTFE_PATH;
+            std::string sourceFilePath =
+              dftfePath + "/helpers/parameterFile.prm";
+
+            std::string cmd = std::string("cp '") + sourceFilePath + "' '" +
+                              parameter_file_path + "'";
+            system(cmd.c_str());
+
+            const std::string pbc1 = pbc[0] ? "true" : "false";
+            cmd = "sed -i 's/set PERIODIC1=.*/set PERIODIC1=" + pbc1 + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string pbc2 = pbc[1] ? "true" : "false";
+            cmd = "sed -i 's/set PERIODIC2=.*/set PERIODIC2=" + pbc2 + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string pbc3 = pbc[2] ? "true" : "false";
+            cmd = "sed -i 's/set PERIODIC3=.*/set PERIODIC3=" + pbc3 + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const int spin = spinPolarizedDFT ? 1 : 0;
+            cmd = "sed -i 's/set SPIN POLARIZATION=.*/set SPIN POLARIZATION=" +
+                  std::to_string(spin) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set TEMPERATURE=.*/set TEMPERATURE=" +
+                  std::to_string(fermiDiracSmearingTemp) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const int totalIrreducibleKpt =
+              mpGrid[0] * mpGrid[1] * mpGrid[2] / 2;
+            const int npkptSet =
+              npkpt > 0 ?
+                1 :
+                divisor_closest(totalMPIProcesses, totalIrreducibleKpt);
+            cmd =
+              "sed -i 's/set NPKPT=.*/set NPKPT=" + std::to_string(npkptSet) +
+              "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+
+            cmd =
+              "sed -i 's/set MESH SIZE AROUND ATOM=.*/set MESH SIZE AROUND ATOM=" +
+              std::to_string(meshSize) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set VERBOSITY=.*/set VERBOSITY=" +
+                  std::to_string(verbosity) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+          }
+        MPI_Barrier(d_mpi_comm_parent);
         d_dftfeParamsPtr = new dftfe::dftParameters;
-        /*
-        d_dftfeParamsPtr->parse_parameters(parameter_file,
+        d_dftfeParamsPtr->parse_parameters(parameter_file_path,
                                            d_mpi_comm_parent,
-                                           printParams);
-        */
+                                           true);
+        exit(0);
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -289,6 +368,10 @@ namespace dftfe
                   MPI_CHAR,
                   0,
                   d_mpi_comm_parent);
+
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+          mkdir(d_scratchFolderName.c_str(), ACCESSPERMS);
+
         MPI_Barrier(d_mpi_comm_parent);
       }
   }
@@ -441,6 +524,7 @@ namespace dftfe
                 std::string command = "rm -rf " + d_scratchFolderName;
                 system(command.c_str());
               }
+            MPI_Barrier(d_mpi_comm_parent);
           }
         if (d_dftfeParamsPtr != nullptr)
           delete d_dftfeParamsPtr;
@@ -458,13 +542,14 @@ namespace dftfe
   }
 
   double
-  dftfeWrapper::computeDFTFreeEnergy()
+  dftfeWrapper::computeDFTFreeEnergy(const bool computeIonForces,
+                                     const bool computeCellStress)
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,
       dealii::ExcMessage(
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
-    d_dftfeBasePtr->solve(true, true, false);
+    d_dftfeBasePtr->solve(computeIonForces, computeCellStress);
     return d_dftfeBasePtr->getFreeEnergy();
   }
 

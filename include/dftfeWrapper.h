@@ -108,9 +108,8 @@ namespace dftfe
                  const std::vector<unsigned int>        atomicNumbers,
                  const std::vector<std::vector<double>> cell,
                  const std::vector<bool>                pbc,
-                 const std::vector<double> mpGrid    = std::vector<double>{1,
-                                                                        1,
-                                                                        1},
+                 const std::vector<unsigned int>        mpGrid =
+                   std::vector<unsigned int>{1, 1, 1},
                  const std::vector<bool> mpGridShift = std::vector<bool>{false,
                                                                          false,
                                                                          false},
@@ -118,7 +117,7 @@ namespace dftfe
                  const double            fermiDiracSmearingTemp = 500.0,
                  const unsigned int      npkpt                  = 0,
                  const double            meshSize               = 1.0,
-                 const int               verbosity              = -1,
+                 const int               verbosity              = 4,
                  const bool setGPUToMPITaskBindingInternally    = false);
 
 
@@ -140,16 +139,17 @@ namespace dftfe
            const std::vector<unsigned int>        atomicNumbers,
            const std::vector<std::vector<double>> cell,
            const std::vector<bool>                pbc,
-           const std::vector<double> mpGrid      = std::vector<double>{1, 1, 1},
-           const std::vector<bool>   mpGridShift = std::vector<bool>{false,
+           const std::vector<unsigned int>        mpGrid =
+             std::vector<unsigned int>{1, 1, 1},
+           const std::vector<bool> mpGridShift      = std::vector<bool>{false,
                                                                    false,
                                                                    false},
-           const bool                spinPolarizedDFT                 = false,
-           const double              fermiDiracSmearingTemp           = 500.0,
-           const unsigned int        npkpt                            = 0,
-           const double              meshSize                         = 1.0,
-           const int                 verbosity                        = -1,
-           const bool                setGPUToMPITaskBindingInternally = false);
+           const bool              spinPolarizedDFT = false,
+           const double            fermiDiracSmearingTemp           = 500.0,
+           const unsigned int      npkpt                            = 0,
+           const double            meshSize                         = 1.0,
+           const int               verbosity                        = 4,
+           const bool              setGPUToMPITaskBindingInternally = false);
 
     void
     clear();
@@ -165,7 +165,8 @@ namespace dftfe
      * energy and negative of electronic entropic energy (in Hartree units)
      */
     double
-    computeDFTFreeEnergy();
+    computeDFTFreeEnergy(const bool computeIonForces  = false,
+                         const bool computeCellStress = true);
 
 
     /**

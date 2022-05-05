@@ -41,11 +41,11 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
     // if(d_dftParamsPtr->pseudoProjector==2)
     // sprintf(psiFile,
     // "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp",
-    // DFT_PATH, Z, n, l); else
+    // DFTFE_PATH, Z, n, l); else
     sprintf(
       psiFile,
       "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp",
-      DFT_PATH,
+      DFTFE_PATH,
       Z,
       n,
       l);
@@ -54,7 +54,7 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
     sprintf(
       psiFile,
       "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp",
-      DFT_PATH,
+      DFTFE_PATH,
       Z,
       n,
       l);
