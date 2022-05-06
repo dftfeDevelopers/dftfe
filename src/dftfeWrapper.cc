@@ -172,6 +172,7 @@ namespace dftfe
                              const bool        setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
     , d_isGPUToMPITaskBindingSetInternally(false)
   {
     reinit(parameter_file,
@@ -201,6 +202,7 @@ namespace dftfe
     const bool                             setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
     , d_isGPUToMPITaskBindingSetInternally(false)
   {
     reinit(mpi_comm_parent,
@@ -232,8 +234,11 @@ namespace dftfe
                        const bool        setGPUToMPITaskBindingInternally)
   {
     clear();
-    d_mpi_comm_parent = mpi_comm_parent;
+    if (mpi_comm_parent != MPI_COMM_NULL)
+      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+
     createScratchFolder();
+
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         d_dftfeParamsPtr = new dftfe::dftParameters;
@@ -263,8 +268,11 @@ namespace dftfe
     const bool                             setGPUToMPITaskBindingInternally)
   {
     clear();
-    d_mpi_comm_parent = mpi_comm_parent;
+    if (mpi_comm_parent != MPI_COMM_NULL)
+      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+
     createScratchFolder();
+
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         const int totalMPIProcesses =
@@ -350,6 +358,11 @@ namespace dftfe
             std::vector<std::vector<double>> dftfeCoordinates(
               atomicPositionsCart.size(), std::vector<double>(5, 0));
 
+            std::vector<double> cellVectorsFlattened(9, 0.0);
+            for (unsigned int idim = 0; idim < 3; idim++)
+              for (unsigned int jdim = 0; jdim < 3; jdim++)
+                cellVectorsFlattened[3 * idim + jdim] = cell[idim][jdim];
+
             if (pbc[0] == false && pbc[1] == false && pbc[2] == false)
               {
                 std::vector<double> shift(3, 0.0);
@@ -364,6 +377,21 @@ namespace dftfe
                     dftfeCoordinates[i][0] = atomicNumbers[i];
                     dftfeCoordinates[i][1] =
                       atomicNumberToValenceNumberMap[atomicNumbers[i]];
+
+                    std::vector<double> coord(3, 0.0);
+                    coord[0] = atomicPositionsCart[i][0];
+                    coord[1] = atomicPositionsCart[i][1];
+                    coord[2] = atomicPositionsCart[i][2];
+
+                    std::vector<double> frac =
+                      dftUtils::getFractionalCoordinates(cellVectorsFlattened,
+                                                         coord);
+                    for (unsigned int idim = 0; idim < 3; idim++)
+                      AssertThrow(
+                        frac[idim] > 1e-7 && frac[idim] < (1.0 - 1e-7),
+                        dealii::ExcMessage(
+                          "DFT-FE Error: all coordinates are not inside the cell. Please check input atomicPositionsCart."));
+
                     dftfeCoordinates[i][2] =
                       atomicPositionsCart[i][0] + shift[0];
                     dftfeCoordinates[i][3] =
@@ -374,10 +402,6 @@ namespace dftfe
               }
             else
               {
-                std::vector<double> cellVectorsFlattened(9, 0.0);
-                for (unsigned int idim = 0; idim < 3; idim++)
-                  for (unsigned int jdim = 0; jdim < 3; jdim++)
-                    cellVectorsFlattened[3 * idim + jdim] = cell[idim][jdim];
                 for (unsigned int i = 0; i < dftfeCoordinates.size(); i++)
                   {
                     dftfeCoordinates[i][0] = atomicNumbers[i];
@@ -393,7 +417,7 @@ namespace dftfe
                                                          coord);
                     for (unsigned int idim = 0; idim < 3; idim++)
                       AssertThrow(
-                        frac[idim] > -1e-7 && frac[idim] < (1.0 + 1e+7),
+                        frac[idim] > -1e-7 && frac[idim] < (1.0 + 1e-7),
                         dealii::ExcMessage(
                           "DFT-FE Error: fractional coordinates doesn't lie in [0,1]. Please check input atomicPositionsCart."));
 
@@ -455,6 +479,14 @@ namespace dftfe
               "sed -i 's/set PSEUDOPOTENTIAL FILE NAMES LIST=.*/set PSEUDOPOTENTIAL FILE NAMES LIST=" +
               dftfePseudoFileNameForSed + "/g' " + parameter_file_path;
             system(cmd.c_str());
+
+            if (pbc[0] == false && pbc[1] == false && pbc[2] == false)
+              {
+                const std::string option = "false";
+                cmd = "sed -i 's/set CELL STRESS=.*/set CELL STRESS=" + option +
+                      "/g' " + parameter_file_path;
+                system(cmd.c_str());
+              }
 
             const std::string pbc1 = pbc[0] ? "true" : "false";
             cmd = "sed -i 's/set PERIODIC1=.*/set PERIODIC1=" + pbc1 + "/g' " +
@@ -725,6 +757,7 @@ namespace dftfe
           }
         if (d_dftfeParamsPtr != nullptr)
           delete d_dftfeParamsPtr;
+        MPI_Comm_free(&d_mpi_comm_parent);
       }
   }
 

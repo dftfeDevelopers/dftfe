@@ -168,8 +168,8 @@ namespace dftfe
      * energy and negative of electronic entropic energy (in Hartree units)
      */
     double
-    computeDFTFreeEnergy(const bool computeIonForces  = false,
-                         const bool computeCellStress = true);
+    computeDFTFreeEnergy(const bool computeIonForces  = true,
+                         const bool computeCellStress = false);
 
 
     /**
