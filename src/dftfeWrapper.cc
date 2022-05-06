@@ -145,6 +145,7 @@ namespace dftfe
         fprintf(stderr, "Error: ELPA API version not supported.");
         exit(1);
       }
+    dealii::MultithreadInfo::set_thread_limit(1);
   }
 
   void
