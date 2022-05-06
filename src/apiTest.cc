@@ -62,14 +62,16 @@ main(int argc, char *argv[])
 
   std::vector<bool> pbc(3, false);
 
-  dftfe::dftfeWrapper dftfeWrapped(
-    MPI_COMM_WORLD, false, atomicPositionsCart, atomicNumbers, cell, pbc);
+  if (true)
+    {
+      dftfe::dftfeWrapper dftfeWrapped(
+        MPI_COMM_WORLD, false, atomicPositionsCart, atomicNumbers, cell, pbc);
 
-  double energy = dftfeWrapped.computeDFTFreeEnergy(true, false);
+      double energy = dftfeWrapped.computeDFTFreeEnergy(true, false);
 
-  std::cout << "DFT free energy: " << energy << std::endl;
+      std::cout << "DFT free energy: " << energy << std::endl;
+    }
   dftfe::dftfeWrapper::globalHandlesFinalize();
-  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   return 0;
 }
