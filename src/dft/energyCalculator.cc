@@ -33,6 +33,7 @@ namespace dftfe
                 const double                      totalexchangeEnergy,
                 const double                      totalcorrelationEnergy,
                 const double                      totalElectrostaticEnergy,
+                const double                      dispersionEnergy,
                 const double                      totalEnergy,
                 const unsigned int                numberAtoms,
                 const dealii::ConditionalOStream &pcout,
@@ -119,6 +120,15 @@ namespace dftfe
               pcout << bufferEnergy;
             }
 
+          if (dftParams.dc_dispersioncorrectiontype != 0)
+            {
+              sprintf(bufferEnergy,
+                      "%-52s:%25.16e\n",
+                      "Dispersion energy",
+                      dispersionEnergy);
+            }
+
+          pcout << bufferEnergy;
           sprintf(bufferEnergy,
                   "%-52s:%25.16e\n",
                   "Total internal energy",
@@ -375,6 +385,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const xc_func_type &                    funcX,
     const xc_func_type &                    funcC,
+    const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
     const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -859,7 +870,12 @@ namespace dftfe
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
 
-
+    double d_energyDispersion = 0;
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
+      {
+        d_energyDispersion = dispersionCorr.getEnergyCorrection();
+        totalEnergy += d_energyDispersion;
+      }
     //
     // total energy
     //
@@ -882,6 +898,7 @@ namespace dftfe
                               totalexchangeEnergy,
                               totalcorrelationEnergy,
                               allElectronElectrostaticEnergy,
+                              d_energyDispersion,
                               totalEnergy,
                               numberGlobalAtoms,
                               pcout,
@@ -1368,6 +1385,7 @@ namespace dftfe
     const double                            fermiEnergyDown,
     const xc_func_type &                    funcX,
     const xc_func_type &                    funcC,
+    const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
     const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -2043,6 +2061,13 @@ namespace dftfe
     double totalNuclearElectrostaticEnergy =
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
+    double d_energyDispersion = 0;
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
+      {
+        d_energyDispersion = dispersionCorr.getEnergyCorrection();
+        totalEnergy += d_energyDispersion;
+      }
+
     //
     // total energy
     //
@@ -2065,6 +2090,7 @@ namespace dftfe
                               totalexchangeEnergy,
                               totalcorrelationEnergy,
                               allElectronElectrostaticEnergy,
+                              d_energyDispersion,
                               totalEnergy,
                               numberGlobalAtoms,
                               pcout,

@@ -570,6 +570,13 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                                       interBandGroupComm,
                                       *d_dftParamsPtr);
 
+  dispersionCorrection dispersionCorrHRefined(d_mpiCommParent,
+                                              mpi_communicator,
+                                              interpoolcomm,
+                                              interBandGroupComm,
+                                              *d_dftParamsPtr);
+
+
   const double totalEnergy =
     d_dftParamsPtr->spinPolarized == 0 ?
       energyCalcHRefined.computeEnergy(dofHandlerHRefined,
@@ -583,6 +590,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                                        fermiEnergy,
                                        funcX,
                                        funcC,
+                                       dispersionCorrHRefined,
                                        d_phiInValues,
                                        phiTotRhoOutHRefined,
                                        *rhoInValues,
@@ -619,6 +627,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
         fermiEnergyDown,
         funcX,
         funcC,
+        dispersionCorrHRefined,
         d_phiInValues,
         phiTotRhoOutHRefined,
         *rhoInValues,

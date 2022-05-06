@@ -617,6 +617,50 @@ namespace dftfe
           "15.0",
           Patterns::Double(),
           "[Standard] Distance from the domain till which periodic images will be considered for the local part of the pseudopotential. Units in a.u. ");
+        prm.enter_subsection("Dispersion Correction");
+        {
+          prm.declare_entry(
+            "DISPERSION CORRECTION TYPE",
+            "0",
+            Patterns::Integer(0, 2),
+            "[Standard] The dispersion correction type to be included post scf convergence: 0 for none, 1 for DFT-D3[JCP 132, 154104 (2010)][JCC 32, 1456 (2011)], 2 for DFT-D4 [JCP 147, 034112 (2017)][JCP 150, 154122 (2019)][PCCP 22, 8499-8512 (2020)].");
+          prm.declare_entry(
+            "D3 DAMPING TYPE",
+            "3",
+            Patterns::Integer(0, 4),
+            "[Standard] The damping used for DFTD3, 0 for zero damping, 1 for BJ damping, 2 for D3M variant, 3 for BJM variant (default) and 4 for the OP variant.");
+          prm.declare_entry(
+            "D3 ATM",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying whether or not the triple dipole correction in DFTD3 is to be included (ignored if DAMPING PARAMETERS FILE is specified).");
+          prm.declare_entry(
+            "D4 MBD",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying whether or not the MBD correction in DFTD4 is to be included (ignored if DAMPING PARAMETERS FILE is specified).");
+          prm.declare_entry(
+            "DAMPING PARAMETERS FILE",
+            "",
+            Patterns::Anything(),
+            "[Advanced] Name of the file containing custom damping parameters, for ZERO damping 6 parameters are expected (s6, s8, s9, sr6, sr8, alpha), for BJ anf BJM damping 6 parameters are expected (s6, s8, s9, a1, a2, alpha), for ZEROM damping 7 parameters are expected (s6, s8, s9, sr6, sr8, alpha, beta) and for optimized power damping 7 parameters are expected (s6, s8, s9, a1, a2, alpha, beta).");
+          prm.declare_entry(
+            "TWO BODY CUTOFF",
+            "94.8683298050514",
+            Patterns::Double(0.0),
+            "[Advanced] Cutoff in a.u. for computing 2 body interactions terms in D3 correction");
+          prm.declare_entry(
+            "THREE BODY CUTOFF",
+            "40.0",
+            Patterns::Double(0.0),
+            "[Advanced] Cutoff in a.u. for computing 3 body interactions terms in D3 correction");
+          prm.declare_entry(
+            "CN CUTOFF",
+            "40.0",
+            Patterns::Double(0.0),
+            "[Advanced] Cutoff in a.u. for computing coordination number in D3 correction");
+        }
+        prm.leave_subsection();
       }
       prm.leave_subsection();
 
@@ -1169,6 +1213,15 @@ namespace dftfe
     // New paramter for selecting mode and NEB parameters
     TotalImages = 1;
     solvermode  = "";
+
+    dc_dispersioncorrectiontype = 0;
+    dc_d3dampingtype            = 2;
+    dc_d3ATM                    = false;
+    dc_d4MBD                    = false;
+    dc_dampingParameterFilename = "";
+    dc_d3cutoff2                = 94.8683298050514;
+    dc_d3cutoff3                = 40.0;
+    dc_d3cutoffCN               = 40.0;
   }
 
 
@@ -1329,6 +1382,19 @@ namespace dftfe
 
     prm.enter_subsection("DFT functional parameters");
     {
+      prm.enter_subsection("Dispersion Correction");
+      {
+        dc_dispersioncorrectiontype =
+          prm.get_integer("DISPERSION CORRECTION TYPE");
+        dc_d3dampingtype            = prm.get_integer("D3 DAMPING TYPE");
+        dc_d3ATM                    = prm.get_bool("D3 ATM");
+        dc_d4MBD                    = prm.get_bool("D4 MBD");
+        dc_dampingParameterFilename = prm.get("DAMPING PARAMETERS FILE");
+        dc_d3cutoff2                = prm.get_double("TWO BODY CUTOFF");
+        dc_d3cutoff3                = prm.get_double("THREE BODY CUTOFF");
+        dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
+      }
+      prm.leave_subsection();
       isPseudopotential     = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       pseudoTestsFlag       = prm.get_bool("PSEUDO TESTS FLAG");
       pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");

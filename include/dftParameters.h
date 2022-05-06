@@ -147,6 +147,17 @@ namespace dftfe
     bool         useELPAGPUKernel;
     std::string  xcFamilyType;
     bool         gpuMemOptMode;
+
+    unsigned int dc_dispersioncorrectiontype;
+    unsigned int dc_d3dampingtype;
+    bool         dc_d3ATM;
+    bool         dc_d4MBD;
+    std::string  dc_dampingParameterFilename;
+    double       dc_d3cutoff2;
+    double       dc_d3cutoff3;
+    double       dc_d3cutoffCN;
+
+
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;
     double      MaxWallTime;

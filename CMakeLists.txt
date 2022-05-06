@@ -54,6 +54,7 @@ SET(TARGET_SRC
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
+  ./src/dft/dftd.cc
   )
 
 IF (WITH_GPU)
@@ -324,12 +325,37 @@ ELSE()
 ENDIF (DEFINED SPGLIB_DIR)
 
 #
+# DFTD3. Pass path to -DCMAKE_PREFIX_PATH
+#
+find_package(DFTD3)
+IF (DFTD3_FOUND)
+  MESSAGE(STATUS "Will Link With DFTD3 ${S-DFTD3}")
+  ADD_DEFINITIONS(-DDFTFE_WITH_DFTD3)
+  target_link_libraries(${TARGETLIB} DFTD3)
+ENDIF()
+
+
+#
+# DFTD4. Pass path to -DCMAKE_PREFIX_PATH
+#
+find_package(DFTD4)
+IF (DFTD4_FOUND)
+  MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
+  ADD_DEFINITIONS(-DDFTFE_WITH_DFTD4)
+  target_link_libraries(${TARGETLIB} DFTD4)
+ENDIF()   
+
+
+
+
+
+
+#
 # ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
 find_package(ELPA 2020 REQUIRED)
 MESSAGE(STATUS "Will Link With ELPA")
 target_link_libraries(${TARGETLIB} ELPA::ELPA)
-target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
 
 #
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH 
@@ -378,9 +404,21 @@ IF (WITH_TESTING)
   IF (WITH_COMPLEX)
      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
      ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
+     IF (DFTD3_FOUND)
+      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex/d3)
+     ENDIF()
+     IF (DFTD4_FOUND)
+      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex/d4)
+     ENDIF()
   ELSE()
      ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
      ADD_SUBDIRECTORY(tests/dft/allElectron/real)
+     IF (DFTD3_FOUND)
+      ADD_SUBDIRECTORY(tests/dft/pseudopotential/real/d3)
+     ENDIF()
+     IF (DFTD4_FOUND)
+      ADD_SUBDIRECTORY(tests/dft/pseudopotential/real/d4)
+     ENDIF()
   ENDIF()
 ENDIF()
 

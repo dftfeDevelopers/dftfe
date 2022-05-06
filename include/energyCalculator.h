@@ -16,6 +16,7 @@
 //
 
 #include <headers.h>
+#include <dftd.h>
 #include <xc.h>
 #include "dftParameters.h"
 
@@ -103,6 +104,7 @@ namespace dftfe
       const double                            fermiEnergy,
       const xc_func_type &                    funcX,
       const xc_func_type &                    funcC,
+      const dispersionCorrection &            dispersionCorr,
       const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
       const distributedCPUVec<double> &                    phiTotRhoOut,
       const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -277,6 +279,7 @@ namespace dftfe
       const double                            fermiEnergyDown,
       const xc_func_type &                    funcX,
       const xc_func_type &                    funcC,
+      const dispersionCorrection &            dispersionCorr,
       const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
       const distributedCPUVec<double> &                    phiTotRhoOut,
       const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -324,6 +327,8 @@ namespace dftfe
                           const bool   isSpinPolarized,
                           const bool   isConstraintMagnetization,
                           const double temperature) const;
+
+
 
   private:
     const MPI_Comm d_mpiCommParent;

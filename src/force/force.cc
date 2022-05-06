@@ -295,6 +295,7 @@ namespace dftfe
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator,
 #endif
+    const dispersionCorrection &     dispersionCorr,
     const unsigned int               eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
@@ -381,6 +382,19 @@ namespace dftfe
 
     MPI_Barrier(d_mpiCommParent);
     gaussian_time = MPI_Wtime() - gaussian_time;
+
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
+      {
+        for (unsigned int iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+          {
+            for (unsigned int idim = 0; idim < 3; idim++)
+              {
+                d_globalAtomsForces[iAtom * 3 + idim] +=
+                  dispersionCorr.getForceCorrection(iAtom, idim);
+              }
+          }
+      }
+
 
     if (this_mpi_process == 0 && d_dftParams.verbosity >= 4)
       std::cout
