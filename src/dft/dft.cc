@@ -25,6 +25,7 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <energyCalculator.h>
+#include <dftd.h>
 #include <fileReaders.h>
 #include <force.h>
 #include <geoOptCell.h>
@@ -2152,6 +2153,12 @@ namespace dftfe
                                 interBandGroupComm,
                                 *d_dftParamsPtr);
 
+    dispersionCorrection dispersionCorr(d_mpiCommParent,
+                                        mpi_communicator,
+                                        interpoolcomm,
+                                        interBandGroupComm,
+                                        *d_dftParamsPtr);
+
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
                                       mpi_communicator,
@@ -3231,6 +3238,8 @@ namespace dftfe
 
             const Quadrature<3> &quadrature =
               matrix_free_data.get_quadrature(d_densityQuadratureId);
+            dispersionCorr.computeDispresionCorrection(atomLocations,
+                                                       d_domainBoundingVectors);
             const double totalEnergy =
               d_dftParamsPtr->spinPolarized == 0 ?
                 energyCalc.computeEnergy(
@@ -3247,6 +3256,7 @@ namespace dftfe
                   fermiEnergy,
                   funcX,
                   funcC,
+                  dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
                   *rhoInValues,
@@ -3285,6 +3295,7 @@ namespace dftfe
                   fermiEnergyDown,
                   funcX,
                   funcC,
+                  dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
                   *rhoInValues,
@@ -3470,6 +3481,8 @@ namespace dftfe
     if (!(d_dftParamsPtr->isBOMD && d_dftParamsPtr->isXLBOMD &&
           solveLinearizedKS))
       {
+        dispersionCorr.computeDispresionCorrection(atomLocations,
+                                                   d_domainBoundingVectors);
         const double totalEnergy =
           d_dftParamsPtr->spinPolarized == 0 ?
             energyCalc.computeEnergy(d_dofHandlerPRefined,
@@ -3485,6 +3498,7 @@ namespace dftfe
                                      fermiEnergy,
                                      funcX,
                                      funcC,
+                                     dispersionCorr,
                                      d_phiInValues,
                                      d_phiTotRhoOut,
                                      *rhoInValues,
@@ -3524,6 +3538,7 @@ namespace dftfe
               fermiEnergyDown,
               funcX,
               funcC,
+              dispersionCorr,
               d_phiInValues,
               d_phiTotRhoOut,
               *rhoInValues,
@@ -3664,6 +3679,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                            kohnShamDFTEigenOperatorCUDA,
 #endif
+                                           dispersionCorr,
                                            d_eigenDofHandlerIndex,
                                            d_smearedChargeQuadratureIdElectro,
                                            d_lpspQuadratureIdElectro,
@@ -3695,6 +3711,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                            kohnShamDFTEigenOperatorCUDA,
 #endif
+                                           dispersionCorr,
                                            d_eigenDofHandlerIndex,
                                            d_smearedChargeQuadratureIdElectro,
                                            d_lpspQuadratureIdElectro,
@@ -3755,6 +3772,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                     kohnShamDFTEigenOperatorCUDA,
 #endif
+                                    dispersionCorr,
                                     d_eigenDofHandlerIndex,
                                     d_smearedChargeQuadratureIdElectro,
                                     d_lpspQuadratureIdElectro,
