@@ -107,6 +107,16 @@ namespace dftfe
       {
         d_Srfo[i] /= detS;
       }
+    pcout << "DEBUG Hessian init" << std::endl;
+    for (auto i = 0; i < d_numberUnknowns; ++i)
+      {
+        for (auto j = 0; j < d_numberUnknowns; ++j)
+          {
+            pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
+          }
+        pcout << std::endl;
+      }
+    d_hessian = d_Srfo;
   }
 
   //
@@ -238,8 +248,26 @@ namespace dftfe
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
 
-    const unsigned int one = 1;
-    double             dgtdx =
+    const unsigned int one   = 1;
+    const char         uplo  = 'U';
+    const double       one_d = 1.0;
+    // z=dg-Hdx, y=dg, s=dx
+
+    std::vector<double> Hdx(d_numberUnknowns, 0.0);
+    dsymv_(&uplo,
+           &d_numberUnknowns,
+           &one_d,
+           d_hessian.data(),
+           &d_numberUnknowns,
+           d_deltaXNew.data(),
+           &one,
+           &one_d,
+           Hdx.data(),
+           &one);
+
+    double dxtHdx =
+      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Hdx.data(), &one);
+    double dgtdx =
       ddot_(&d_numberUnknowns, delta_g.data(), &one, d_deltaXNew.data(), &one);
     double dgtdg =
       ddot_(&d_numberUnknowns, delta_g.data(), &one, delta_g.data(), &one);
@@ -256,7 +284,7 @@ namespace dftfe
       {
         for (auto i = 0; i < d_hessian.size(); ++i)
           {
-            d_hessian[i] *= dgtdg / dgtdx;
+            d_hessian[i] = d_hessian[i] * dgtdx / dxtHdx;
           }
         d_hessianScaled = true;
       }
@@ -465,7 +493,7 @@ namespace dftfe
                 pcout << "DEBUG reset history" << std::endl;
                 initializeHessian(problem);
                 d_trustRadius = d_trustRadiusInitial;
-                computeRFOStep();
+                computeNewtonStep();
                 d_trustRadius = d_trustRadius < d_normDeltaXnew ?
                                   d_trustRadius :
                                   d_normDeltaXnew;
@@ -479,14 +507,14 @@ namespace dftfe
         double             gtdx = ddot_(
           &d_numberUnknowns, d_deltaX.data(), &one, d_gradient.data(), &one);
 
-        d_trustRadius = -0.5 * gtdx * d_trustRadius /
-                        ((d_valueNew[0] - d_value[0]) / d_trustRadius - gtdx);
+        d_trustRadius =
+          -0.5 * gtdx * d_trustRadius / ((d_valueNew[0] - d_value[0]) - gtdx);
         if (d_trustRadius < d_trustRadiusMin)
           {
             pcout << "DEBUG reset history " << d_trustRadius << std::endl;
             initializeHessian(problem);
             d_trustRadius = d_trustRadiusInitial;
-            computeRFOStep();
+            computeNewtonStep();
             d_trustRadius =
               d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
             d_isBFGSRestartDueToSmallRadius = true;
@@ -719,7 +747,7 @@ namespace dftfe
         // Compute the update step
         //
         pcout << "DEBUG Start Compute step " << std::endl;
-        computeRFOStep();
+        computeNewtonStep();
         computeTrustRadius(problem);
         computeStep();
 

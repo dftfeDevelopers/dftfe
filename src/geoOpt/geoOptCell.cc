@@ -19,6 +19,7 @@
 
 #include <cgPRPNonLinearSolver.h>
 #include <BFGSNonLinearSolver.h>
+#include <LBFGSNonLinearSolver.h>
 #include <dft.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
@@ -220,6 +221,8 @@ namespace dftfe
 
     BFGSNonLinearSolver bfgsSolver(
       tol, maxIter, debugLevel, mpi_communicator, 0.5, 0.02, 1e-8);
+    LBFGSNonLinearSolver lbfgsSolver(
+      false, tol, maxIter, 5, debugLevel, mpi_communicator, 0.5, 0.02, 1e-8);
 
     if (dftPtr->getParametersObject().chkType >= 1 &&
         dftPtr->getParametersObject().restartFromChk)
@@ -256,8 +259,10 @@ namespace dftfe
           cgReturn = cgSolver.solve(*this, std::string("cellRelaxCG.chk"));
         else if (dftPtr->getParametersObject().cellOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this);
-        else
+        else if (dftPtr->getParametersObject().cellOptSolver == "BFGS")
           cgReturn = bfgsSolver.solve(*this);
+        else
+          cgReturn = lbfgsSolver.solve(*this);
         if (cgReturn == nonLinearSolver::SUCCESS)
           {
             pcout

@@ -19,6 +19,7 @@
 
 #include <cgPRPNonLinearSolver.h>
 #include <BFGSNonLinearSolver.h>
+#include <LBFGSNonLinearSolver.h>
 #include <cg_descent_wrapper.h>
 #include <dft.h>
 #include <dftUtils.h>
@@ -139,6 +140,8 @@ namespace dftfe
                                   lineSearchDampingParameter,
                                   maxDisplacmentInAnyComponent);
     BFGSNonLinearSolver  bfgsSolver(tol, maxIter, debugLevel, mpi_communicator);
+    LBFGSNonLinearSolver lbfgsSolver(
+      false, tol, maxIter, 5, debugLevel, mpi_communicator);
 
     CGDescent cg_descent(tol, maxIter);
 
@@ -194,6 +197,10 @@ namespace dftfe
         else if (dftPtr->getParametersObject().ionOptSolver == "BFGS")
           {
             cgReturn = bfgsSolver.solve(*this);
+          }
+        else if (dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
+          {
+            cgReturn = lbfgsSolver.solve(*this);
           }
         else
           {
@@ -361,7 +368,7 @@ namespace dftfe
     double    rCutNNList        = 1.0;
     std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
     bool                             allAtomsHaveNN = false;
-    while (!allAtomsHaveNN)
+    /*while (!allAtomsHaveNN)
       {
         for (int i = 0; i < numberGlobalAtoms; ++i)
           {
@@ -402,6 +409,30 @@ namespace dftfe
             rijMin = rijMin < NNdistances[i][j] ? rijMin : NNdistances[i][j];
           }
         rNN = rNN > rijMin ? rNN : rijMin;
+      }*/
+    double rNN = 0;
+    for (int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        double riMin = 0;
+        for (int j = 0; j < numberGlobalAtoms; ++j)
+          {
+            double rij = 0;
+            for (int k = 2; k < 5; ++k)
+              {
+                rij +=
+                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]) *
+                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]);
+              }
+            rij = std::sqrt(rij);
+            if ((riMin > rij && i != j) || j == 0)
+              {
+                riMin = rij;
+              }
+          }
+        if (rNN < riMin)
+          {
+            rNN = riMin;
+          }
       }
     double rCut = 2 * rNN;
     pcout << "DEBUG rcut" << rCut << std::endl;
@@ -464,7 +495,9 @@ namespace dftfe
                         if (d_relaxationFlags[j * 3 + l] == 1)
                           {
                             s[icount * getNumberUnknowns() + jcount] =
-                              k == l ? L[i * numberGlobalAtoms + j] : 0.0;
+                              k == l ? 0.0102908099018465 *
+                                         L[i * numberGlobalAtoms + j] :
+                                       0.0;
                             ++jcount;
                           }
                       }

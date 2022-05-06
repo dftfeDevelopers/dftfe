@@ -168,6 +168,27 @@ namespace dftfe
             int *         iwork,
             int *         ifail,
             int *         info);
+    void
+    dsyevx_(const char *  jobz,
+            const char *  range,
+            const char *  uplo,
+            const int *   n,
+            double *      a,
+            const int *   lda,
+            const double *vl,
+            const double *vu,
+            const int *   il,
+            const int *   iu,
+            const double *abstol,
+            int *         m,
+            double *      w,
+            double *      z,
+            const int *   ldz,
+            double *      work,
+            const int *   lwork,
+            int *         iwork,
+            int *         ifail,
+            int *         info);
     double
     dlamch_(const char *cmach);
     void

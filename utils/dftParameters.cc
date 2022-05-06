@@ -267,13 +267,13 @@ namespace dftfe
           prm.declare_entry(
             "ION OPT SOLVER",
             "CGPRP",
-            Patterns::Selection("CGDESCENT|LBFGS|CGPRP|BFGS"),
+            Patterns::Selection("CGDESCENT|LBFGS|CGPRP|BFGS|LBFGSv2"),
             "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
           prm.declare_entry(
             "CELL OPT SOLVER",
             "CGPRP",
-            Patterns::Selection("BFGS|CGPRP"),
+            Patterns::Selection("BFGS|CGPRP|LBFGSv2"),
             "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
           prm.declare_entry(
@@ -1221,14 +1221,14 @@ namespace dftfe
     TotalImages = 1;
     solvermode  = "";
 
-    unsigned int dc_dispersioncorrectiontype = 0;
-    unsigned int dc_d3dampingtype            = 2;
-    bool         dc_d3ATM                    = false;
-    bool         dc_d4MBD                    = false;
-    std::string  dc_dampingParameterFilename = "";
-    double       dc_d3cutoff2                = 94.8683298050514;
-    double       dc_d3cutoff3                = 40.0;
-    double       dc_d3cutoffCN               = 40.0;
+    dc_dispersioncorrectiontype = 0;
+    dc_d3dampingtype            = 2;
+    dc_d3ATM                    = false;
+    dc_d4MBD                    = false;
+    dc_dampingParameterFilename = "";
+    dc_d3cutoff2                = 94.8683298050514;
+    dc_d3cutoff3                = 40.0;
+    dc_d3cutoffCN               = 40.0;
   }
 
 
