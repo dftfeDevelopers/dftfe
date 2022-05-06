@@ -87,6 +87,10 @@ namespace dftfe
      * is no shift.
      * @param[in] spinPolarizedDFT toggles spin-polarized DFT calculations.
      * Default value is false
+     * @param[in] startMagnetization Starting magnetization to be used for
+     * spin-polarized DFT calculations (must be between -0.5 and +0.5).
+     * Corresponding magnetization per simulation domain will be
+     * (2 x START MAGNETIZATION x Number of electrons) in Bohr magneton units.
      * @param[in] fermiDiracSmearingTemp Fermi-Dirac smearing temperature in
      * Kelvin. Default value is 500 K.
      * @param[in] npkpt Number of groups of MPI tasks across which the work load
@@ -117,6 +121,7 @@ namespace dftfe
                                                                          false,
                                                                          false},
                  const bool              spinPolarizedDFT       = false,
+                 const double            startMagnetization     = 0.0,
                  const double            fermiDiracSmearingTemp = 500.0,
                  const unsigned int      npkpt                  = 0,
                  const double            meshSize               = 1.0,
@@ -144,10 +149,11 @@ namespace dftfe
            const std::vector<bool>                pbc,
            const std::vector<unsigned int>        mpGrid =
              std::vector<unsigned int>{1, 1, 1},
-           const std::vector<bool> mpGridShift      = std::vector<bool>{false,
+           const std::vector<bool> mpGridShift        = std::vector<bool>{false,
                                                                    false,
                                                                    false},
-           const bool              spinPolarizedDFT = false,
+           const bool              spinPolarizedDFT   = false,
+           const double            startMagnetization = 0.0,
            const double            fermiDiracSmearingTemp           = 500.0,
            const unsigned int      npkpt                            = 0,
            const double            meshSize                         = 1.0,

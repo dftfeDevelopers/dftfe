@@ -195,6 +195,7 @@ namespace dftfe
     const std::vector<unsigned int>        mpGrid,
     const std::vector<bool>                mpGridShift,
     const bool                             spinPolarizedDFT,
+    const double                           startMagnetization,
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
@@ -214,6 +215,7 @@ namespace dftfe
            mpGrid,
            mpGridShift,
            spinPolarizedDFT,
+           startMagnetization,
            fermiDiracSmearingTemp,
            npkpt,
            meshSize,
@@ -261,6 +263,7 @@ namespace dftfe
     const std::vector<unsigned int>        mpGrid,
     const std::vector<bool>                mpGridShift,
     const bool                             spinPolarizedDFT,
+    const double                           startMagnetization,
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
@@ -533,6 +536,11 @@ namespace dftfe
             const int spin = spinPolarizedDFT ? 1 : 0;
             cmd = "sed -i 's/set SPIN POLARIZATION=.*/set SPIN POLARIZATION=" +
                   std::to_string(spin) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd =
+              "sed -i 's/set START MAGNETIZATION=.*/set START MAGNETIZATION=" +
+              std::to_string(startMagnetization) + "/g' " + parameter_file_path;
             system(cmd.c_str());
 
             cmd = "sed -i 's/set TEMPERATURE=.*/set TEMPERATURE=" +
