@@ -46,10 +46,11 @@
 #include "dftUtils.h"
 #include "dftfeWrapper.h"
 #include "fileReaders.h"
+#include "PeriodicTable.h"
 
 namespace dftfe
 {
-  namespace
+  namespace internalWrapper
   {
     int
     divisor_closest(int totalSize, int desiredDivisor)
@@ -126,7 +127,7 @@ namespace dftfe
       create_dftfe<8, 15>, create_dftfe<8, 16>
 #endif
     };
-  } // namespace
+  } // namespace internalWrapper
 
   void
   dftfeWrapper::globalHandlesInitialize()
@@ -265,24 +266,193 @@ namespace dftfe
     createScratchFolder();
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
-        dftUtils::writeDataIntoFile(cell,
-                                    d_scratchFolderName + "/domainVectors.inp",
-                                    d_mpi_comm_parent);
-
-
         const int totalMPIProcesses =
           Utilities::MPI::n_mpi_processes(d_mpi_comm_parent);
 
         std::string parameter_file_path =
           d_scratchFolderName + "/parameterFile.prm";
+
         if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
           {
+            AssertThrow(
+              atomicPositionsCart.size() == atomicNumbers.size(),
+              dealii::ExcMessage(
+                "DFT-FE Error:  Mismatch in sizes of atomicPositionsCart and atomicNumbers."));
+            //
+            // write pseudo.inp
+            //
+            std::set<unsigned int> atomicNumbersSet;
+            for (unsigned int i = 0; i < atomicNumbers.size(); i++)
+              atomicNumbersSet.insert(atomicNumbers[i]);
+
+            std::vector<unsigned int> atomicNumbersUniqueVec(
+              atomicNumbersSet.size());
+            std::copy(atomicNumbersSet.begin(),
+                      atomicNumbersSet.end(),
+                      atomicNumbersUniqueVec.begin());
+
+
+            const std::string dftfePspPath(getenv("DFTFE_PSP_PATH"));
+
+            pseudoUtils::PeriodicTable periodicTable;
+            const std::string          dftfePseudoFileName =
+              d_scratchFolderName + "/pseudo.inp";
+            std::ofstream dftfePseudoFile(dftfePseudoFileName);
+            if (dftfePseudoFile.is_open())
+              {
+                for (unsigned int irow = 0;
+                     irow < atomicNumbersUniqueVec.size();
+                     ++irow)
+                  {
+                    const std::string upffilePath =
+                      dftfePspPath + "/" +
+                      periodicTable.symbol(atomicNumbersUniqueVec[irow]) +
+                      ".upf";
+
+                    dftfePseudoFile
+                      << std::to_string(atomicNumbersUniqueVec[irow]);
+                    dftfePseudoFile << " ";
+                    dftfePseudoFile << upffilePath;
+                    dftfePseudoFile << "\n";
+                  }
+
+                dftfePseudoFile.close();
+              }
+
+            //
+            // write coordinates.inp
+            //
+            std::map<unsigned int, unsigned int> atomicNumberToValenceNumberMap;
+
+            for (unsigned int i = 0; i < atomicNumbersUniqueVec.size(); i++)
+              {
+                const std::string upffilePath =
+                  dftfePspPath + "/" +
+                  periodicTable.symbol(atomicNumbersUniqueVec[i]) + ".upf";
+                std::ifstream upffile(upffilePath);
+                double        valenceNumber = 0;
+                std::string   line;
+                while (getline(upffile, line))
+                  {
+                    if (line.find("z_valence=") == std::string::npos)
+                      continue;
+                    std::istringstream ss(line);
+                    std::string        dummy1;
+                    std::string        dummy2;
+                    ss >> dummy1 >> valenceNumber >> dummy2;
+                    break;
+                  }
+                atomicNumberToValenceNumberMap[atomicNumbersUniqueVec[i]] =
+                  std::round(valenceNumber);
+              }
+
+            std::vector<std::vector<double>> dftfeCoordinates(
+              atomicPositionsCart.size(), std::vector<double>(5, 0));
+
+            if (pbc[0] == false && pbc[1] == false && pbc[2] == false)
+              {
+                std::vector<double> shift(3, 0.0);
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  {
+                    shift[idim] = 0;
+                    for (unsigned int jdim = 0; jdim < 3; jdim++)
+                      shift[idim] -= cell[jdim][idim] / 2.0;
+                  }
+                for (unsigned int i = 0; i < dftfeCoordinates.size(); i++)
+                  {
+                    dftfeCoordinates[i][0] = atomicNumbers[i];
+                    dftfeCoordinates[i][1] =
+                      atomicNumberToValenceNumberMap[atomicNumbers[i]];
+                    dftfeCoordinates[i][2] =
+                      atomicPositionsCart[i][0] + shift[0];
+                    dftfeCoordinates[i][3] =
+                      atomicPositionsCart[i][1] + shift[1];
+                    dftfeCoordinates[i][4] =
+                      atomicPositionsCart[i][2] + shift[2];
+                  }
+              }
+            else
+              {
+                std::vector<double> cellVectorsFlattened(9, 0.0);
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  for (unsigned int jdim = 0; jdim < 3; jdim++)
+                    cellVectorsFlattened[3 * idim + jdim] = cell[idim][jdim];
+                for (unsigned int i = 0; i < dftfeCoordinates.size(); i++)
+                  {
+                    dftfeCoordinates[i][0] = atomicNumbers[i];
+                    dftfeCoordinates[i][1] =
+                      atomicNumberToValenceNumberMap[atomicNumbers[i]];
+                    std::vector<double> coord(3, 0.0);
+                    coord[0] = atomicPositionsCart[i][0];
+                    coord[1] = atomicPositionsCart[i][1];
+                    coord[2] = atomicPositionsCart[i][2];
+
+                    std::vector<double> frac =
+                      dftUtils::getFractionalCoordinates(cellVectorsFlattened,
+                                                         coord);
+                    for (unsigned int idim = 0; idim < 3; idim++)
+                      AssertThrow(
+                        frac[idim] > -1e-7 && frac[idim] < (1.0 + 1e+7),
+                        dealii::ExcMessage(
+                          "DFT-FE Error: fractional coordinates doesn't lie in [0,1]. Please check input atomicPositionsCart."));
+
+                    dftfeCoordinates[i][2] = frac[0];
+                    dftfeCoordinates[i][3] = frac[1];
+                    dftfeCoordinates[i][4] = frac[2];
+                  }
+              }
+
+            const std::string dftfeCoordsFileName =
+              d_scratchFolderName + "/coordinates.inp";
+            dftUtils::writeDataIntoFile(dftfeCoordinates, dftfeCoordsFileName);
+            //
+            // write domainVectors.inp
+            //
+            const std::string dftfeCellFileName =
+              d_scratchFolderName + "/domainVectors.inp";
+            dftUtils::writeDataIntoFile(cell, dftfeCellFileName);
+
+
+
             std::string dftfePath = DFTFE_PATH;
             std::string sourceFilePath =
               dftfePath + "/helpers/parameterFile.prm";
 
-            std::string cmd = std::string("cp '") + sourceFilePath + "' '" +
-                              parameter_file_path + "'";
+            std::string cmd;
+
+            cmd = std::string("cp '") + sourceFilePath + "' '" +
+                  parameter_file_path + "'";
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set NATOMS=.*/set NATOMS=" +
+                  std::to_string(atomicPositionsCart.size()) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set NATOM TYPES=.*/set NATOM TYPES=" +
+                  std::to_string(atomicNumbersUniqueVec.size()) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string dftfeCoordsFileNameForSed =
+              d_scratchFolderName + "\\\/coordinates.inp";
+            cmd =
+              "sed -i 's/set ATOMIC COORDINATES FILE=.*/set ATOMIC COORDINATES FILE=" +
+              dftfeCoordsFileNameForSed + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string dftfeCellFileNameForSed =
+              d_scratchFolderName + "\\\/domainVectors.inp";
+            cmd =
+              "sed -i 's/set DOMAIN VECTORS FILE=.*/set DOMAIN VECTORS FILE=" +
+              dftfeCellFileNameForSed + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string dftfePseudoFileNameForSed =
+              d_scratchFolderName + "\\\/pseudo.inp";
+            cmd =
+              "sed -i 's/set PSEUDOPOTENTIAL FILE NAMES LIST=.*/set PSEUDOPOTENTIAL FILE NAMES LIST=" +
+              dftfePseudoFileNameForSed + "/g' " + parameter_file_path;
             system(cmd.c_str());
 
             const std::string pbc1 = pbc[0] ? "true" : "false";
@@ -300,6 +470,33 @@ namespace dftfe
                   parameter_file_path;
             system(cmd.c_str());
 
+            cmd = "sed -i 's/set SAMPLING POINTS 1=.*/set SAMPLING POINTS 1=" +
+                  std::to_string(mpGrid[0]) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING POINTS 2=.*/set SAMPLING POINTS 2=" +
+                  std::to_string(mpGrid[1]) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING POINTS 3=.*/set SAMPLING POINTS 3=" +
+                  std::to_string(mpGrid[2]) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING SHIFT 1=.*/set SAMPLING SHIFT 1=" +
+                  std::to_string(mpGridShift[0] ? 1 : 0) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING SHIFT 2=.*/set SAMPLING SHIFT 2=" +
+                  std::to_string(mpGridShift[1] ? 1 : 0) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING SHIFT 3=.*/set SAMPLING SHIFT 3=" +
+                  std::to_string(mpGridShift[2] ? 1 : 0) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
             const int spin = spinPolarizedDFT ? 1 : 0;
             cmd = "sed -i 's/set SPIN POLARIZATION=.*/set SPIN POLARIZATION=" +
                   std::to_string(spin) + "/g' " + parameter_file_path;
@@ -313,9 +510,9 @@ namespace dftfe
             const int totalIrreducibleKpt =
               mpGrid[0] * mpGrid[1] * mpGrid[2] / 2;
             const int npkptSet =
-              npkpt > 0 ?
-                1 :
-                divisor_closest(totalMPIProcesses, totalIrreducibleKpt);
+              npkpt > 0 ? 1 :
+                          internalWrapper::divisor_closest(totalMPIProcesses,
+                                                           totalIrreducibleKpt);
             cmd =
               "sed -i 's/set NPKPT=.*/set NPKPT=" + std::to_string(npkptSet) +
               "/g' " + parameter_file_path;
@@ -334,9 +531,7 @@ namespace dftfe
         MPI_Barrier(d_mpi_comm_parent);
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file_path,
-                                           d_mpi_comm_parent,
-                                           true);
-        exit(0);
+                                           d_mpi_comm_parent);
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -496,7 +691,8 @@ namespace dftfe
               listIndex++;
           }
 #endif
-        create_fn create = order_list[listIndex - 1];
+        internalWrapper::create_fn create =
+          internalWrapper::order_list[listIndex - 1];
         create(d_mpi_comm_parent,
                bandGroupsPool.get_intrapool_comm(),
                kPointPool.get_interpool_comm(),
@@ -643,7 +839,7 @@ namespace dftfe
       {
         shift[idim] = 0;
         for (unsigned int jdim = 0; jdim < 3; jdim++)
-          shift[idim] -= cell[jdim][idim] / 2.0;
+          shift[idim] += cell[jdim][idim] / 2.0;
       }
 
     for (unsigned int i = 0; i < atomLocationsCart.size(); ++i)

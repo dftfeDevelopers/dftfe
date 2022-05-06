@@ -32,6 +32,22 @@ namespace dftfe
 
   namespace dftUtils
   {
+    extern "C"
+    {
+      //
+      // lapack Ax=b
+      //
+      void
+      dgesv_(int *   N,
+             int *   NRHS,
+             double *A,
+             int *   LDA,
+             int *   IPIV,
+             double *B,
+             int *   LDB,
+             int *   INFO);
+    }
+
     inline double
     smearedCharge(double r, double rc)
     {
@@ -102,6 +118,37 @@ namespace dftfe
                 (5.0 * pow(rc, 8.0));
         }
       return val;
+    }
+
+    inline std::vector<double>
+    getFractionalCoordinates(
+      const std::vector<double> &latticeVectorsFlattened,
+      const std::vector<double> &coordWithRespectToCellCorner)
+    {
+      std::vector<double> latticeVectorsDup = latticeVectorsFlattened;
+      std::vector<double> coordDup          = coordWithRespectToCellCorner;
+      //
+      // to get the fractionalCoords, solve a linear
+      // system of equations
+      //
+      int N    = 3;
+      int NRHS = 1;
+      int LDA  = 3;
+      int IPIV[3];
+      int info;
+
+      dgesv_(&N,
+             &NRHS,
+             &latticeVectorsDup[0],
+             &LDA,
+             &IPIV[0],
+             &coordDup[0],
+             &LDA,
+             &info);
+      AssertThrow(info == 0,
+                  dealii::ExcMessage(
+                    "LU solve in finding fractional coordinates failed."));
+      return coordDup;
     }
 
     /** @brief Calculates value of composite generator

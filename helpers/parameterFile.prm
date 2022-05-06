@@ -1,9 +1,9 @@
 set VERBOSITY=1
 subsection Geometry
-  set NATOMS=2
+  set NATOMS=1
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE=coordinates.inp 
-  set DOMAIN VECTORS FILE = domainVectors.inp
+  set DOMAIN VECTORS FILE=domainVectors.inp
   subsection Optimization
     set ION FORCE=true
     set CELL STRESS=true

@@ -60,10 +60,11 @@ namespace dftfe
      * @brief constructor based on input list of atomic coordinates,
      * list of atomic numbers,cell, boundary conditions,
      * Monkhorst-Pack k-point grid, and other optional parameters.
-     * CAUTION: This constructor currently only sets up GGA PBE pseudopotential
-     * DFT calculations using ONCV pseudopotentials from the pseudo-dojo
-     * database (read from DFTFE_PP_PATH folder provided as an environment
-     * variable).
+     * This constructor currently only sets up GGA PBE pseudopotential
+     * DFT calculations using ONCV pseudopotentials in .upf format
+     * (read from DFTFE_PSP_PATH folder provided as an environment
+     * variable). The pseudpotential directory must contain files in the
+     * format: AtomicSymbol.upf
      *
      * @param[in] mpi_comm_parent mpi communicator to be used by the
      * dftfeWrapper.
@@ -72,7 +73,9 @@ namespace dftfe
      * each atom (in Bohr units), Origin is at cell corner
      * @param[in] atomicNumbers vector of atomic numbers
      * @param[in] cell 3 \times 3 matrix in Bohr units, cell[i] denotes the ith
-     * cell vector
+     * cell vector. DFT-FE requires the cell vectors to form a
+     * right-handed coordinate system i.e.
+     * dotProduct(crossProduct(cell[0],cell[1]),cell[2])>0
      * @param[in] pbc vector of bools denoting periodic boundary conditions
      * along the three cell vectors, false denotes non-periodic and true is
      * periodic
@@ -117,7 +120,7 @@ namespace dftfe
                  const double            fermiDiracSmearingTemp = 500.0,
                  const unsigned int      npkpt                  = 0,
                  const double            meshSize               = 1.0,
-                 const int               verbosity              = 4,
+                 const int               verbosity              = -1,
                  const bool setGPUToMPITaskBindingInternally    = false);
 
 
@@ -148,7 +151,7 @@ namespace dftfe
            const double            fermiDiracSmearingTemp           = 500.0,
            const unsigned int      npkpt                            = 0,
            const double            meshSize                         = 1.0,
-           const int               verbosity                        = 4,
+           const int               verbosity                        = -1,
            const bool              setGPUToMPITaskBindingInternally = false);
 
     void

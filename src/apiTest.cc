@@ -42,19 +42,23 @@ main(int argc, char *argv[])
 
   dftfe::dftfeWrapper::globalHandlesInitialize();
 
-  std::vector<std::vector<double>> atomicPositionsCart(
-    2, std::vector<double>(3, 0.0));
-  atomicPositionsCart[0][0] = -2.0;
-  atomicPositionsCart[0][0] = 2.0;
-
   std::vector<std::vector<double>> cell(3, std::vector<double>(3, 0.0));
   cell[0][0] = 20.0;
   cell[1][1] = 20.0;
   cell[2][2] = 20.0;
 
+  std::vector<std::vector<double>> atomicPositionsCart(
+    2, std::vector<double>(3, 0.0));
+  atomicPositionsCart[0][0] = 8.0;
+  atomicPositionsCart[0][1] = 10.0;
+  atomicPositionsCart[0][2] = 10.0;
+  atomicPositionsCart[1][0] = 11.0;
+  atomicPositionsCart[1][1] = 10.0;
+  atomicPositionsCart[1][2] = 10.0;
+
   std::vector<unsigned int> atomicNumbers(atomicPositionsCart.size());
-  atomicNumbers[0] = 7;
-  atomicNumbers[1] = 7;
+  atomicNumbers[0] = 8;
+  atomicNumbers[1] = 6;
 
   std::vector<bool> pbc(3, false);
 
@@ -63,6 +67,7 @@ main(int argc, char *argv[])
 
   double energy = dftfeWrapped.computeDFTFreeEnergy(true, false);
 
+  std::cout << "DFT free energy: " << energy << std::endl;
   dftfe::dftfeWrapper::globalHandlesFinalize();
 
   MPI_Finalize();

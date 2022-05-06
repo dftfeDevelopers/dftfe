@@ -268,6 +268,31 @@ namespace dftfe
         }
     }
 
+    void
+    writeDataIntoFile(const std::vector<std::vector<double>> &data,
+                      const std::string &                     fileName)
+    {
+      if (std::ifstream(fileName))
+        moveFile(fileName, fileName + ".old");
+
+      std::ofstream outFile(fileName);
+      if (outFile.is_open())
+        {
+          for (unsigned int irow = 0; irow < data.size(); ++irow)
+            {
+              for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
+                {
+                  outFile << std::setprecision(16) << data[irow][icol];
+                  if (icol < data[irow].size() - 1)
+                    outFile << " ";
+                }
+              outFile << "\n";
+            }
+
+          outFile.close();
+        }
+    }
+
   } // namespace dftUtils
 
 } // namespace dftfe

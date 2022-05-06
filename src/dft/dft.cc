@@ -3505,7 +3505,8 @@ namespace dftfe
                                      atomLocations.size(),
                                      lowerBoundKindex,
                                      1,
-                                     true,
+                                     d_dftParamsPtr->verbosity >= 0 ? true :
+                                                                      false,
                                      d_dftParamsPtr->smearedNuclearCharges) :
             energyCalc.computeEnergySpinPolarized(
               d_dofHandlerPRefined,
@@ -3547,7 +3548,7 @@ namespace dftfe
               atomLocations.size(),
               lowerBoundKindex,
               1,
-              true,
+              d_dftParamsPtr->verbosity >= 0 ? true : false,
               d_dftParamsPtr->smearedNuclearCharges);
 
         d_groundStateEnergy = totalEnergy;
@@ -3719,7 +3720,8 @@ namespace dftfe
                                            *rhoOutValues,
                                            *gradRhoOutValues,
                                            d_phiTotRhoIn);
-            forcePtr->printAtomsForces();
+            if (d_dftParamsPtr->verbosity >= 0)
+              forcePtr->printAtomsForces();
             computingTimerStandard.leave_subsection("Ion force computation");
             computing_timer.leave_subsection("Ion force computation");
           }
@@ -3775,7 +3777,8 @@ namespace dftfe
                                     d_hessianRhoCoreAtoms,
                                     d_constraintsPRefined,
                                     d_vselfBinsManager);
-            forcePtr->printStress();
+            if (d_dftParamsPtr->verbosity >= 0)
+              forcePtr->printStress();
             computingTimerStandard.leave_subsection("Cell stress computation");
             computing_timer.leave_subsection("Cell stress computation");
           }
