@@ -163,6 +163,7 @@ namespace dftfe
 
     /// Storage for history
     std::deque<std::vector<double>> d_deltaGq, d_deltaXq;
+    std::deque<double> d_rhoq;
 
     const int d_maxNumPastSteps;
     int       d_numPastSteps;

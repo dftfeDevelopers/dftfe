@@ -86,7 +86,7 @@ namespace dftfe
       const unsigned int n     = a.size();
       if (n * n != P.size())
         {
-          std::cout << "DEBUG check dimensions" << std::endl;
+          std::cout << "DEBUG check dimensions Pnorm" << std::endl;
           return -1;
         }
       std::vector<double> Pdx(n, 0.0);
@@ -128,7 +128,7 @@ namespace dftfe
       const unsigned int n   = a.size();
       if (n != b.size())
         {
-          std::cout << "DEBUG check dimensions" << std::endl;
+          std::cout << "DEBUG check dimensions dot" << std::endl;
           return -1;
         }
       return ddot_(&n, a.data(), &one, b.data(), &one);
@@ -144,7 +144,7 @@ namespace dftfe
       const unsigned int n   = x.size();
       if (n != y.size())
         {
-          std::cout << "DEBUG check dimensions" << std::endl;
+          std::cout << "DEBUG check dimensions axpy" << std::endl;
         }
       daxpy_(&n, &alpha, x.data(), &one, y.data(), &one);
     }
@@ -283,39 +283,69 @@ namespace dftfe
   void
   LBFGSNonLinearSolver::computeStep()
   {
+    pcout<<"DEBUG gradient history"<<std::endl;
+    for(int i=0;i<d_maxNumPastSteps;++i){
+      for(int j=0;j<d_numberUnknowns;++j){
+        pcout<<d_deltaGq[i][j]<<" ";
+      }
+      pcout<<std::endl;
+    }
+    pcout<<"DEBUG step history"<<std::endl;
+    for(int i=0;i<d_maxNumPastSteps;++i){
+      for(int j=0;j<d_numberUnknowns;++j){
+        pcout<<d_deltaXq[i][j]<<" ";
+      }
+      pcout<<std::endl;
+    }
+    pcout<<"DEBUG rho history"<<std::endl;
+    for(int i=0;i<d_maxNumPastSteps;++i){
+        pcout<<d_rhoq[i]<<std::endl;
+    }
     std::vector<double> gradient = d_gradient;
     std::vector<double> alpha(d_maxNumPastSteps, 0.0);
     for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
       {
-        alpha[j] = internal::dot(d_deltaXq[j], gradient) /
-                   internal::dot(d_deltaGq[j], d_deltaXq[j]);
+        alpha[j] = internal::dot(d_deltaXq[j], gradient) * d_rhoq[j];
         internal::axpy(-alpha[j], d_deltaGq[j], gradient);
-      }
+      
+    pcout<<"DEBUG gradient loop1 "<<j<<std::endl;
+    for(int j=0;j<d_numberUnknowns;++j){
+      pcout<<gradient[j]<<" ";
+    }
+    pcout<<std::endl;}
     if (d_usePreconditioner)
       {
         internal::linearSolve(d_preconditioner, gradient);
-        for (int i = 0; i < d_numberUnknowns; ++i)
-          {
-            gradient[i] *= -1;
-          }
       }
     else if (d_iter > 0)
       {
         for (int i = 0; i < d_numberUnknowns; ++i)
           {
-            gradient[i] *= -internal::dot(d_deltaXq[d_maxNumPastSteps - 1],
+            gradient[i] *= internal::dot(d_deltaXq[d_maxNumPastSteps - 1],
                                           d_deltaGq[d_maxNumPastSteps - 1]) /
                            internal::dot(d_deltaGq[d_maxNumPastSteps - 1],
                                          d_deltaGq[d_maxNumPastSteps - 1]);
           }
       }
+    pcout<<"DEBUG gradient scaled"<<std::endl;
+    for(int j=0;j<d_numberUnknowns;++j){
+      pcout<<gradient[j]<<" ";
+    }
+    pcout<<std::endl;
     for (int j = 0; j < d_maxNumPastSteps; ++j)
       {
-        double beta = internal::dot(d_deltaGq[j], gradient) /
-                      internal::dot(d_deltaGq[j], d_deltaXq[j]);
-        internal::axpy(-alpha[j] - beta, d_deltaXq[j], gradient);
+        double beta = internal::dot(d_deltaGq[j], gradient) * d_rhoq[j];
+        internal::axpy( alpha[j] - beta, d_deltaXq[j], gradient);
       }
-    d_deltaX        = gradient;
+    pcout<<"DEBUG gradient loop2"<<std::endl;
+    for(int j=0;j<d_numberUnknowns;++j){
+      pcout<<gradient[j]<<" ";
+    }
+    pcout<<std::endl;
+
+    for(int i=0; i<d_numberUnknowns;++i){
+      d_deltaXNew[i]=-gradient[i];
+    }
     d_normDeltaXnew = internal::computeLInfNorm(d_deltaXNew);
     pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
   }
@@ -380,7 +410,9 @@ namespace dftfe
     d_deltaGq.push_back(r);
     d_deltaGq.pop_front();
     d_deltaXq.push_back(d_deltaXNew);
-    d_deltaGq.pop_front();
+    d_deltaXq.pop_front();
+    d_rhoq.push_back(1.0/internal::dot(r,d_deltaXNew));
+    d_rhoq.pop_front();
     if (d_numPastSteps < d_maxNumPastSteps)
       {
         ++d_numPastSteps;
@@ -416,7 +448,8 @@ namespace dftfe
       }
     else if (d_stepAccepted)
       {
-        double ampfactor =
+        d_trustRadius=d_normDeltaXnew;
+        /*double ampfactor =
           internal::computeLInfNorm(d_deltaX) > d_trustRadius + 1e-8 ? 1.5 :
                                                                        1.1;
 
@@ -438,11 +471,12 @@ namespace dftfe
             std::fill(d_deltaXq[d_maxNumPastSteps - d_numPastSteps].begin(),
                       d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
                       0);
+            d_rhoq[d_maxNumPastSteps - d_numPastSteps]=0.0;
             --d_numPastSteps;
             computeStep();
             d_trustRadius =
               d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
-          }
+          }*/
       }
     else
       {
@@ -461,6 +495,8 @@ namespace dftfe
             std::fill(d_deltaXq[d_maxNumPastSteps - d_numPastSteps].begin(),
                       d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
                       0);
+            d_rhoq[d_maxNumPastSteps - d_numPastSteps]=0.0;
+            pcout<<"DEBUG "<<d_numPastSteps<<" "<<d_maxNumPastSteps<<std::endl;
             --d_numPastSteps;
             d_noHistory = d_numPastSteps == 0;
             computeStep();
@@ -518,13 +554,14 @@ namespace dftfe
     //
     // allocate space for step, gradient and new gradient.
     //
-    d_updateVector.resize(d_numberUnknowns);
-    d_deltaX.resize(d_numberUnknowns);
-    d_deltaXNew.resize(d_numberUnknowns);
-    d_gradient.resize(d_numberUnknowns);
-    d_gradientNew.resize(d_numberUnknowns);
+    d_updateVector.resize(d_numberUnknowns,0.0);
+    d_deltaX.resize(d_numberUnknowns,0.0);
+    d_deltaXNew.resize(d_numberUnknowns,0.0);
+    d_gradient.resize(d_numberUnknowns,0.0);
+    d_gradientNew.resize(d_numberUnknowns,0.0);
     d_deltaGq.resize(d_maxNumPastSteps);
     d_deltaXq.resize(d_maxNumPastSteps);
+    d_rhoq.resize(d_maxNumPastSteps,0.0);
     for (int i = 0; i < d_maxNumPastSteps; ++i)
       {
         d_deltaGq[i].resize(d_numberUnknowns);
@@ -594,12 +631,11 @@ namespace dftfe
           }
         computeStep();
         computeTrustRadius(problem);
-        // figure out exit strategy
 
         computeUpdateStep();
 
         for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
-          pcout << "step: " << d_deltaXNew[i] << std::endl;
+          pcout << "step: " << d_deltaXNew[i] <<" "<<d_updateVector[i]<< std::endl;
         pcout << "DEBUG End Compute step " << std::endl;
         updateSolution(d_updateVector, problem);
         pcout << "DEBUG End update step " << std::endl;

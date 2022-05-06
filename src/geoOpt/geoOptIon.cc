@@ -141,7 +141,7 @@ namespace dftfe
                                   maxDisplacmentInAnyComponent);
     BFGSNonLinearSolver  bfgsSolver(tol, maxIter, debugLevel, mpi_communicator);
     LBFGSNonLinearSolver lbfgsSolver(
-      false, tol, maxIter, 5, debugLevel, mpi_communicator);
+      false, tol, maxIter, 2, debugLevel, mpi_communicator);
 
     CGDescent cg_descent(tol, maxIter);
 
