@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 
   std::cout << "DFT free energy: " << energy << std::endl;
   dftfe::dftfeWrapper::globalHandlesFinalize();
-
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   return 0;
 }
