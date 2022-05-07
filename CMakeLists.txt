@@ -389,7 +389,7 @@ COMMENT "Switch CMAKE_BUILD_TYPE to Release"
 #
 # FIXME: that will not play well with installation
 #
-ADD_DEFINITIONS(-DDFT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+ADD_DEFINITIONS(-DDFTFE_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Enable testing and descent into tests/ subdirectory:
 # Make sure numdiff is in path before configuring, otherwise due to roundoff

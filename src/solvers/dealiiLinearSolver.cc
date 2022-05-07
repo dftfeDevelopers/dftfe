@@ -41,7 +41,7 @@ namespace dftfe
   dealiiLinearSolver::solve(dealiiLinearSolverProblem &problem,
                             const double               absTolerance,
                             const unsigned int         maxNumberIterations,
-                            const unsigned int         debugLevel,
+                            const int                  debugLevel,
                             bool                       distributeFlag)
   {
     int this_process;

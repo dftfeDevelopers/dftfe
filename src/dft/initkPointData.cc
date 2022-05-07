@@ -163,7 +163,7 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   char                             kPointRuleFile[256];
   sprintf(kPointRuleFile,
           "%s/data/kPointList/%s",
-          DFT_PATH,
+          DFTFE_PATH,
           d_dftParamsPtr->kPointDataFile.c_str());
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
   d_kPointCoordinates.clear();

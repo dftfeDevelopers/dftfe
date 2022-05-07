@@ -1007,7 +1007,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
       char pseudoAtomDataFile[256];
       sprintf(pseudoAtomDataFile,
       "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomData",
-      DFT_PATH.c_str(), atomLocations[iAtom][0]);
+      DFTFE_PATH.c_str(), atomLocations[iAtom][0]);
       //
       std::ifstream readPseudoDataFileNames(pseudoAtomDataFile);
       if(readPseudoDataFileNames.is_open()){
@@ -1025,7 +1025,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
       char denominatorDataFileName[256];
       sprintf(denominatorDataFileName,
       "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s",
-      DFT_PATH.c_str(),atomLocations[iAtom][0],
+      DFTFE_PATH.c_str(),atomLocations[iAtom][0],
       tempDenominatorDataFileName.c_str());
 
       //

@@ -110,11 +110,12 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::dftClass(
-    const MPI_Comm &mpi_comm_parent,
-    const MPI_Comm &mpi_comm_domain,
-    const MPI_Comm &_interpoolcomm,
-    const MPI_Comm &_interBandGroupComm,
-    dftParameters & dftParams)
+    const MPI_Comm &   mpi_comm_parent,
+    const MPI_Comm &   mpi_comm_domain,
+    const MPI_Comm &   _interpoolcomm,
+    const MPI_Comm &   _interBandGroupComm,
+    const std::string &scratchFolderName,
+    dftParameters &    dftParams)
     : FE(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
@@ -128,6 +129,7 @@ namespace dftfe
     , d_mpiCommParent(mpi_comm_parent)
     , interpoolcomm(_interpoolcomm)
     , interBandGroupComm(_interBandGroupComm)
+    , d_dftfeScratchFolderName(scratchFolderName)
     , d_dftParamsPtr(&dftParams)
     , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
@@ -204,27 +206,6 @@ namespace dftfe
       d_dftParamsPtr->reproducible_output ?
         30.0 :
         (std::max(d_dftParamsPtr->pspCutoffImageCharges, d_pspCutOffTrunc));
-
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-      {
-        d_dftfeScratchFolderName =
-          "dftfeScratch" +
-          std::to_string(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
-          "t" +
-          std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
-                           std::chrono::system_clock::now().time_since_epoch())
-                           .count());
-      }
-
-    int line_size = d_dftfeScratchFolderName.size();
-    MPI_Bcast(&line_size, 1, MPI_INT, 0, d_mpiCommParent);
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) != 0)
-      d_dftfeScratchFolderName.resize(line_size);
-    MPI_Bcast(const_cast<char *>(d_dftfeScratchFolderName.data()),
-              line_size,
-              MPI_CHAR,
-              0,
-              d_mpiCommParent);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -239,12 +220,6 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
-    if (!d_dftParamsPtr->keepScratchFolder &&
-        Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-      {
-        std::string command = "rm -rf " + d_dftfeScratchFolderName;
-        system(command.c_str());
-      }
 
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
@@ -3544,7 +3519,8 @@ namespace dftfe
                                      atomLocations.size(),
                                      lowerBoundKindex,
                                      1,
-                                     true,
+                                     d_dftParamsPtr->verbosity >= 0 ? true :
+                                                                      false,
                                      d_dftParamsPtr->smearedNuclearCharges) :
             energyCalc.computeEnergySpinPolarized(
               d_dofHandlerPRefined,
@@ -3587,7 +3563,7 @@ namespace dftfe
               atomLocations.size(),
               lowerBoundKindex,
               1,
-              true,
+              d_dftParamsPtr->verbosity >= 0 ? true : false,
               d_dftParamsPtr->smearedNuclearCharges);
 
         d_groundStateEnergy = totalEnergy;
@@ -3761,7 +3737,8 @@ namespace dftfe
                                            *rhoOutValues,
                                            *gradRhoOutValues,
                                            d_phiTotRhoIn);
-            forcePtr->printAtomsForces();
+            if (d_dftParamsPtr->verbosity >= 0)
+              forcePtr->printAtomsForces();
             computingTimerStandard.leave_subsection("Ion force computation");
             computing_timer.leave_subsection("Ion force computation");
           }
@@ -3818,7 +3795,8 @@ namespace dftfe
                                     d_hessianRhoCoreAtoms,
                                     d_constraintsPRefined,
                                     d_vselfBinsManager);
-            forcePtr->printStress();
+            if (d_dftParamsPtr->verbosity >= 0)
+              forcePtr->printStress();
             computingTimerStandard.leave_subsection("Cell stress computation");
             computing_timer.leave_subsection("Cell stress computation");
           }

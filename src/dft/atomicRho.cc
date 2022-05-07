@@ -61,7 +61,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
           sprintf(
             densityFile,
             "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp",
-            DFT_PATH,
+            DFTFE_PATH,
             *it);
         }
 

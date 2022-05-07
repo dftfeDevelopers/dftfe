@@ -49,7 +49,7 @@ loadSingleAtomPSIFiles(
           sprintf(
             psiFile,
             "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomDataKB/psi%u%u.inp",
-            DFT_PATH,
+            DFTFE_PATH,
             Z,
             n,
             l);
@@ -59,7 +59,7 @@ loadSingleAtomPSIFiles(
           sprintf(
             psiFile,
             "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp",
-            DFT_PATH,
+            DFTFE_PATH,
             Z,
             n,
             l);
@@ -69,7 +69,7 @@ loadSingleAtomPSIFiles(
     sprintf(
       psiFile,
       "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp",
-      DFT_PATH,
+      DFTFE_PATH,
       Z,
       n,
       l);
