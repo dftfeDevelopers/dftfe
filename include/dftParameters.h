@@ -158,6 +158,10 @@ namespace dftfe
     double       dc_d3cutoffCN;
 
 
+    std::string  bfgsStepMethod;
+    bool         usePreconditioner;
+    unsigned int lbfgsNumPastSteps;
+
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;
     double      MaxWallTime;

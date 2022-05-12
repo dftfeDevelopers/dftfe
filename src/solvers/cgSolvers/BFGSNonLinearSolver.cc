@@ -26,6 +26,8 @@ namespace dftfe
   // Constructor.
   //
   BFGSNonLinearSolver::BFGSNonLinearSolver(
+    const bool         usePreconditioner,
+    const bool         useRFOStep,
     const double       tolerance,
     const unsigned int maxNumberIterations,
     const unsigned int debugLevel,
@@ -35,9 +37,8 @@ namespace dftfe
     const double       trustRadius_minimum)
     : nonLinearSolver(debugLevel, maxNumberIterations, tolerance)
     , mpi_communicator(mpi_comm_parent)
-    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_parent))
-    , this_mpi_process(
-        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , d_usePreconditioner(usePreconditioner)
+    , d_useRFOStep(useRFOStep)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
@@ -58,6 +59,308 @@ namespace dftfe
     //
     return;
   }
+  namespace internalBFGS
+  {
+    //
+    // Compute L2-norm.
+    //
+    double
+    computeL2Norm(std::vector<double> &a)
+    {
+      const unsigned int one = 1;
+      const unsigned int n   = a.size();
+      return dnrm2_(&n, a.data(), &one);
+    }
+
+    //
+    // Compute Weighted L2-norm squarre for symmetric matrix P  and product Pa.
+    //
+    double
+    computePNorm(std::vector<double> &a, std::vector<double> &P)
+    {
+      const unsigned int one   = 1;
+      const char         uplo  = 'U';
+      const double       one_d = 1.0;
+      const unsigned int n     = a.size();
+      if (n * n != P.size())
+        {
+          std::cout << "DEBUG check dimensions Pnorm" << std::endl;
+          return -1;
+        }
+      std::vector<double> Pdx(n, 0.0);
+      dsymv_(&uplo,
+             &n,
+             &one_d,
+             P.data(),
+             &n,
+             a.data(),
+             &one,
+             &one_d,
+             Pdx.data(),
+             &one);
+      double res = ddot_(&n, a.data(), &one, Pdx.data(), &one);
+      a = Pdx;
+      return res;
+    }
+
+    //
+    // Compute Inf-norm.
+    //
+    double
+    computeLInfNorm(std::vector<double> &vec)
+    {
+      double norm = 0.0;
+      for (unsigned int i = 0; i < vec.size(); ++i)
+        {
+          norm = norm > std::abs(vec[i]) ? norm : std::abs(vec[i]);
+        }
+      return norm;
+    }
+
+    //
+    // Compute dot product.
+    //
+    double
+    dot(std::vector<double> &a, std::vector<double> &b)
+    {
+      const unsigned int one = 1;
+      const unsigned int n   = a.size();
+      if (n != b.size())
+        {
+          std::cout << "DEBUG check dimensions dot" << std::endl;
+          return -1;
+        }
+      return ddot_(&n, a.data(), &one, b.data(), &one);
+    }
+
+    //
+    // Compute y=alpha*x+y.
+    //
+    void
+    axpy(double alpha, std::vector<double> &x, std::vector<double> &y)
+    {
+      const unsigned int one = 1;
+      const unsigned int n   = x.size();
+      if (n != y.size())
+        {
+          std::cout << "DEBUG check dimensions axpy" << std::endl;
+        }
+      daxpy_(&n, &alpha, x.data(), &one, y.data(), &one);
+    }
+
+    //
+    // Compute rank one symmetric update  P=P+faa^T.
+    //
+    void
+    computeSymmetricRankOneUpdate(double &f, std::vector<double> &a, std::vector<double> &P)
+    {
+      const unsigned int one   = 1;
+      const char         uplo  = 'U';
+      const unsigned int n     = a.size();
+      if (n * n != P.size())
+        {
+          std::cout << "DEBUG check dimensions Pnorm" << std::endl;
+        }
+        dsyr_(&uplo,
+              &n,
+              &f,
+              a.data(),
+              &one,
+              P.data(),
+              &n);
+    }
+
+
+
+    //
+    // Compute lowest n eigenvalues of symmetric matrix A and corresponding
+    // eigenvectors.
+    //
+    void
+    computeEigenSpectrum(std::vector<double>  A,
+                         const int            n,
+                         std::vector<double> &eigVals,
+                         std::vector<double> &eigVecs)
+    {
+      int                 info;
+      const int           one             = 1;
+      const int           dimensionMatrix = std::sqrt(A.size());
+      std::vector<double> eigenValues(n, 0.0);
+      std::vector<double> eigenVectors(dimensionMatrix * n, 0.0);
+
+      const int lwork = 8 * dimensionMatrix, liwork = 5 * dimensionMatrix;
+      std::vector<int>    iwork(liwork, 0);
+      std::vector<int>    ifail(dimensionMatrix, 0);
+      const char          jobz = 'V', uplo = 'U', range = 'I', cmach = 'S';
+      const double        abstol = 2 * dlamch_(&cmach);
+      std::vector<double> work(lwork);
+      int                 nEigVals;
+
+      dsyevx_(&jobz,
+              &range,
+              &uplo,
+              &dimensionMatrix,
+              A.data(),
+              &dimensionMatrix,
+              NULL,
+              NULL,
+              &one,
+              &n,
+              &abstol,
+              &nEigVals,
+              eigenValues.data(),
+              eigenVectors.data(),
+              &dimensionMatrix,
+              work.data(),
+              &lwork,
+              iwork.data(),
+              ifail.data(),
+              &info);
+
+      //
+      // free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);
+
+      eigVals = eigenValues;
+      eigVecs = eigenVectors;
+    }
+
+    //
+    // Compute lowest n generalized eigenvalues of symmetric GEP Ax=lBx and
+    // corresponding eigenvectors.
+    //
+    void
+    computeEigenSpectrumGeneralized(std::vector<double>  A,
+                                    std::vector<double>  B,
+                                    const int            n,
+                                    std::vector<double> &eigVals,
+                                    std::vector<double> &eigVecs)
+    {
+      int                 info;
+      const int           one             = 1;
+      const int           dimensionMatrix = std::sqrt(A.size());
+      std::vector<double> eigenValues(n, 0.0);
+      std::vector<double> eigenVectors(dimensionMatrix, 0.0);
+      const int lwork = 8 * dimensionMatrix, liwork = 5 * dimensionMatrix;
+      std::vector<int>    iwork(liwork, 0);
+      std::vector<int>    ifail(dimensionMatrix, 0);
+      const char          jobz = 'V', uplo = 'U', range = 'I', cmach = 'S';
+      const double        abstol = 2 * dlamch_(&cmach);
+      std::vector<double> work(lwork);
+      int                 nEigVals;
+
+      dsygvx_(&one,
+              &jobz,
+              &range,
+              &uplo,
+              &dimensionMatrix,
+              A.data(),
+              &dimensionMatrix,
+              B.data(),
+              &dimensionMatrix,
+              NULL,
+              NULL,
+              &one,
+              &n,
+              &abstol,
+              &nEigVals,
+              eigenValues.data(),
+              eigenVectors.data(),
+              &dimensionMatrix,
+              work.data(),
+              &lwork,
+              iwork.data(),
+              ifail.data(),
+              &info);
+
+      //
+      // free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);
+
+      eigVals = eigenValues;
+      eigVecs = eigenVectors;
+    }
+
+
+    //
+    //  Solve Ax=b for symmetric Matrix A
+    //
+    void
+    linearSolve(std::vector<double> A, std::vector<double> &b)
+    {
+      int                 info;
+      const int           one   = 1;
+      const int           lwork = b.size();
+      std::vector<int>    ipiv(b.size(), 0);
+      const char          uplo = 'U';
+      std::vector<double> work(lwork);
+
+      dsysv_(&uplo,
+             &lwork,
+             &one,
+             A.data(),
+             &lwork,
+             ipiv.data(),
+             b.data(),
+             &lwork,
+             work.data(),
+             &lwork,
+             &info);
+    }
+
+
+    //
+    //  compute |A|^(1/n) for a symmetric matrix A
+    //
+    double
+    computeDetNormalizationFactor(std::vector<double> A)
+    {
+      int                 info;
+      const unsigned int  dimensionMatrix = std::sqrt(A.size());
+      std::vector<double> eigenValues(dimensionMatrix, 0.0);
+      const unsigned int  lwork = 1 + 2 * dimensionMatrix, liwork = 1;
+      std::vector<int>    iwork(liwork, 0);
+      const char          jobz = 'N', uplo = 'U';
+      std::vector<double> work(lwork);
+
+      dsyevd_(&jobz,
+              &uplo,
+              &dimensionMatrix,
+              A.data(),
+              &dimensionMatrix,
+              eigenValues.data(),
+              &work[0],
+              &lwork,
+              &iwork[0],
+              &liwork,
+              &info);
+
+      //
+      // free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);
+
+      double detA = 1.0;
+      for (auto i = 0; i < dimensionMatrix; ++i)
+        {
+          detA *= std::pow(std::abs(eigenValues[i]), 1.0 / dimensionMatrix);
+        }
+      return detA;
+    }
+
+  } // namespace internalBFGS
+
 
   //
   // initialize hessian
@@ -66,43 +369,21 @@ namespace dftfe
   BFGSNonLinearSolver::initializeHessian(nonlinearSolverProblem &problem)
   {
     d_hessian.clear();
-    problem.precondition(d_hessian, d_gradient);
-    d_Srfo = d_hessian;
-    int                 info;
-    std::vector<double> eigenValues(d_numberUnknowns, 0.0);
-    const unsigned int  dimensionMatrix = d_numberUnknowns;
-    const unsigned int  lwork = 1 + 2 * dimensionMatrix, liwork = 1;
-    std::vector<int>    iwork(liwork, 0);
-    const char          jobz = 'N', uplo = 'U';
-    std::vector<double> work(lwork);
-
-    dsyevd_(&jobz,
-            &uplo,
-            &dimensionMatrix,
-            d_Srfo.data(),
-            &dimensionMatrix,
-            eigenValues.data(),
-            &work[0],
-            &lwork,
-            &iwork[0],
-            &liwork,
-            &info);
-
-    //
-    // free up memory associated with work
-    //
-    work.clear();
-    iwork.clear();
-    std::vector<double>().swap(work);
-    std::vector<int>().swap(iwork);
-
-    double detS = 1.0;
-    for (auto i = 0; i < d_numberUnknowns; ++i)
+    if (d_usePreconditioner)
       {
-        detS *= std::pow(std::abs(eigenValues[i]), 1.0 / d_numberUnknowns);
+        problem.precondition(d_hessian, d_gradient);
       }
+    else
+      {
+        d_hessian.resize(d_numberUnknowns * d_numberUnknowns, 0.0);
+        for (int i = 0; i < d_numberUnknowns; ++i)
+          {
+            d_hessian[i + i * d_numberUnknowns] = 1.0;
+          }
+      }
+    d_Srfo      = d_hessian;
+    double detS = internalBFGS::computeDetNormalizationFactor(d_Srfo);
     pcout << "DEBUG detS " << detS << std::endl;
-    d_Srfo = d_hessian;
     for (auto i = 0; i < d_Srfo.size(); ++i)
       {
         d_Srfo[i] /= detS;
@@ -132,52 +413,15 @@ namespace dftfe
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
 
-    const char         uplo  = 'U';
-    const double       one_d = 1.0;
-    const unsigned int one   = 1;
-    // z=dg-Hdx, y=dg, s=dx
-
-    std::vector<double> Hdx(d_numberUnknowns, 0.0);
-    dsymv_(&uplo,
-           &d_numberUnknowns,
-           &one_d,
-           d_hessian.data(),
-           &d_numberUnknowns,
-           d_deltaXNew.data(),
-           &one,
-           &one_d,
-           Hdx.data(),
-           &one);
-
-    std::vector<double> dgmHdx(d_numberUnknowns, 0.0);
-    for (auto i = 0; i < d_numberUnknowns; ++i)
-      {
-        dgmHdx[i] = delta_g[i] - Hdx[i];
-      }
-    double dxtHdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Hdx.data(), &one);
-    double dgtdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, delta_g.data(), &one);
-    double ztdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, dgmHdx.data(), &one);
-    double dxnorm = dnrm2_(&d_numberUnknowns, d_deltaXNew.data(), &one);
-    double dgnorm = dnrm2_(&d_numberUnknowns, delta_g.data(), &one);
-    double znorm  = dnrm2_(&d_numberUnknowns, dgmHdx.data(), &one);
-    /*if (ztdx / (znorm * dxnorm) < -0.1 || !d_stepAccepted)
-    {
-      if (std::abs(ztdx)>=1e-6*dxnorm*znorm){
-      pcout << "DEBUG Step SR1 " << std::endl;
-      double factor = 1.0 / ztdx;
-      dsyr_(&uplo,
-            &d_numberUnknowns,
-            &factor,
-            dgmHdx.data(),
-            &one,
-            d_hessian.data(),
-            &d_numberUnknowns);}
-    }
-  else if (dgtdx / (dgnorm * dxnorm) > 0.1)
-    {*/
+    std::vector<double> Hdx    = d_deltaXNew;
+    double              dxtHdx = internalBFGS::computePNorm(Hdx, d_hessian);
+    double              dgtdx  = internalBFGS::dot(d_deltaXNew, delta_g);
+    pcout << "DEBUG Hdx" << std::endl;
+        for (auto j = 0; j < d_numberUnknowns; ++j)
+          {
+            pcout << Hdx[j] << "  ";
+          }
+        pcout << std::endl;
     if (d_stepAccepted)
       {
         double theta =
@@ -192,50 +436,11 @@ namespace dftfe
           {
             r[i] = theta * delta_g[i] + (1.0 - theta) * Hdx[i];
           }
-        double rtdx =
-          ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, r.data(), &one);
-        double factor = 1.0 / rtdx;
-        dsyr_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              r.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
+        double factor = 1.0 / internalBFGS::dot(d_deltaXNew, r);
+        internalBFGS::computeSymmetricRankOneUpdate(factor, r, d_hessian);
         factor = -1.0 / dxtHdx;
-        dsyr_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              Hdx.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
+        internalBFGS::computeSymmetricRankOneUpdate(factor, Hdx, d_hessian);
       }
-    /* }
-   else
-     {
-       if (d_stepAccepted)
-     {
-       pcout << "DEBUG Step PSB " << std::endl;
-       double factor = 1.0 / dxnorm*dxnorm;
-       dsyr2_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              d_deltaXNew.data(),
-              &one,
-              dgmHdx.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
-       factor = -ztdx / (dxnorm * dxnorm*dxnorm * dxnorm);
-       dsyr_(&uplo,
-             &d_numberUnknowns,
-             &factor,
-             d_deltaXNew.data(),
-             &one,
-             d_hessian.data(),
-             &d_numberUnknowns);
-     }}*/
   }
 
   void
@@ -248,29 +453,6 @@ namespace dftfe
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
 
-    const unsigned int one   = 1;
-    const char         uplo  = 'U';
-    const double       one_d = 1.0;
-    // z=dg-Hdx, y=dg, s=dx
-
-    std::vector<double> Hdx(d_numberUnknowns, 0.0);
-    dsymv_(&uplo,
-           &d_numberUnknowns,
-           &one_d,
-           d_hessian.data(),
-           &d_numberUnknowns,
-           d_deltaXNew.data(),
-           &one,
-           &one_d,
-           Hdx.data(),
-           &one);
-
-    double dxtHdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Hdx.data(), &one);
-    double dgtdx =
-      ddot_(&d_numberUnknowns, delta_g.data(), &one, d_deltaXNew.data(), &one);
-    double dgtdg =
-      ddot_(&d_numberUnknowns, delta_g.data(), &one, delta_g.data(), &one);
     pcout << "DEBUG Hessian init" << std::endl;
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
@@ -280,11 +462,12 @@ namespace dftfe
           }
         pcout << std::endl;
       }
-    if (dgtdg > 0)
+    if (internalBFGS::dot(delta_g, d_deltaXNew) > 0)
       {
         for (auto i = 0; i < d_hessian.size(); ++i)
           {
-            d_hessian[i] = d_hessian[i] * dgtdx / dxtHdx;
+            d_hessian[i] = d_hessian[i] * internalBFGS::dot(delta_g, delta_g) /
+                           internalBFGS::dot(delta_g, d_deltaXNew);
           }
         d_hessianScaled = true;
       }
@@ -329,86 +512,33 @@ namespace dftfe
           d_gradient[i];
       }
     augmentedSrfo[(d_numberUnknowns + 2) * d_numberUnknowns] = 1.0;
-    int                 info;
-    const int           one = 1;
     std::vector<double> eigenValues(1, 0.0);
-    std::vector<double> eigenVector(d_numberUnknowns + 1, 0.0);
-    const int           dimensionMatrix = d_numberUnknowns + 1;
-    const int        lwork = 8 * dimensionMatrix, liwork = 5 * dimensionMatrix;
-    std::vector<int> iwork(liwork, 0);
-    std::vector<int> ifail(dimensionMatrix, 0);
-    const char       jobz = 'V', uplo = 'U', range = 'I', cmach = 'S';
-    const double     abstol = 2 * dlamch_(&cmach);
-    std::vector<double> work(lwork);
-    int                 nEigVals;
-
-    dsygvx_(&one,
-            &jobz,
-            &range,
-            &uplo,
-            &dimensionMatrix,
-            augmentedHessian.data(),
-            &dimensionMatrix,
-            augmentedSrfo.data(),
-            &dimensionMatrix,
-            NULL,
-            NULL,
-            &one,
-            &one,
-            &abstol,
-            &nEigVals,
-            eigenValues.data(),
-            eigenVector.data(),
-            &dimensionMatrix,
-            work.data(),
-            &lwork,
-            iwork.data(),
-            ifail.data(),
-            &info);
-
-    //
-    // free up memory associated with work
-    //
-    work.clear();
-    iwork.clear();
-    std::vector<double>().swap(work);
-    std::vector<int>().swap(iwork);
+    std::vector<double> eigenVectors(d_numberUnknowns + 1, 0.0);
+    internalBFGS::computeEigenSpectrumGeneralized(
+      augmentedHessian, augmentedSrfo, 1, eigenValues, eigenVectors);
     d_lambda = eigenValues[0];
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
-        d_deltaXNew[i] = eigenVector[i] / eigenVector[d_numberUnknowns];
+        d_deltaXNew[i] = eigenVectors[i] / eigenVectors[d_numberUnknowns];
       }
-    d_normDeltaXnew = computeLInfNorm(d_deltaXNew);
+    d_normDeltaXnew = internalBFGS::computeLInfNorm(d_deltaXNew);
     pcout << "DEBUG LInf dx init " << d_normDeltaXnew << " " << d_lambda
           << std::endl;
   }
+
+
+
   void
   BFGSNonLinearSolver::computeNewtonStep()
   {
-    int                 info;
-    const int           one   = 1;
-    const int           lwork = d_numberUnknowns;
-    std::vector<int>    ipiv(d_numberUnknowns, 0);
-    const char          uplo = 'U';
-    std::vector<double> work(lwork);
-    std::vector<double> hessian = d_hessian;
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaXNew[i] = -d_gradient[i];
       }
 
-    dsysv_(&uplo,
-           &lwork,
-           &one,
-           hessian.data(),
-           &lwork,
-           ipiv.data(),
-           d_deltaXNew.data(),
-           &lwork,
-           work.data(),
-           &lwork,
-           &info);
-    d_normDeltaXnew = computeLInfNorm(d_deltaXNew);
+    internalBFGS::linearSolve(d_hessian, d_deltaXNew);
+
+    d_normDeltaXnew = internalBFGS::computeLInfNorm(d_deltaXNew);
     pcout << "DEBUG LInf dx init " << d_normDeltaXnew << " " << d_lambda
           << std::endl;
   }
@@ -416,23 +546,13 @@ namespace dftfe
   void
   BFGSNonLinearSolver::computeStep()
   {
-    if (d_iter > 0)
+    for (auto i = 0; i < d_numberUnknowns; ++i)
       {
-        for (auto i = 0; i < d_numberUnknowns; ++i)
-          {
-            /*d_deltaXNew[i] =
-              d_deltaXNew[i] < d_trustRadius ? d_deltaXNew[i] : d_trustRadius;
-            d_deltaXNew[i] =
-              d_deltaXNew[i] > -d_trustRadius ? d_deltaXNew[i] :
-            -d_trustRadius;*/
-            d_deltaXNew[i] *= d_trustRadius / d_normDeltaXnew;
-          }
+        d_deltaXNew[i] *= d_trustRadius / d_normDeltaXnew;
       }
-    pcout << "DEBUG LInf dx scaled " << computeLInfNorm(d_deltaXNew)
+    pcout << "DEBUG LInf dx scaled " << internalBFGS::computeLInfNorm(d_deltaXNew)
           << std::endl;
-    const unsigned int one  = 1;
-    double             gtdx = ddot_(
-      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
+    double             gtdx = internalBFGS::dot(d_deltaXNew,d_gradient);
     pcout << "DEBUG gtdx " << gtdx << std::endl;
     if (d_stepAccepted)
       {
@@ -446,14 +566,13 @@ namespace dftfe
           }
       }
   }
+
+
   void
   BFGSNonLinearSolver::checkWolfe()
   {
-    const unsigned int one  = 1;
-    double             gtdx = ddot_(
-      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
-    double gntdx = ddot_(
-      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradientNew.data(), &one);
+    double             gtdx = internalBFGS::dot(d_deltaXNew,d_gradient);
+    double gntdx = internalBFGS::dot(d_deltaXNew,d_gradientNew);
 
     d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
     d_wolfeCurvature     = std::abs(gntdx) < 0.9 * std::abs(gtdx);
@@ -461,18 +580,20 @@ namespace dftfe
     pcout << "DEBUG WOLFE " << d_wolfeCurvature << " " << d_wolfeSufficientDec
           << " " << d_wolfeSatisfied << " " << std::endl;
   }
+
+
   void
   BFGSNonLinearSolver::computeTrustRadius(nonlinearSolverProblem &problem)
   {
     if (d_iter == 0)
       {
-        d_trustRadius =
-          d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
+        d_trustRadius = d_trustRadiusMax < d_normDeltaXnew ? d_trustRadiusMax :
+                                                             d_normDeltaXnew;
       }
     else if (d_stepAccepted)
       {
         double ampfactor =
-          computeLInfNorm(d_deltaX) > d_trustRadius + 1e-8 ? 1.5 : 1.1;
+          internalBFGS::computeLInfNorm(d_deltaX) > d_trustRadius + 1e-8 ? 1.5 : 1.1;
         if (d_wolfeSatisfied)
           {
             d_trustRadius = 2 * ampfactor * d_trustRadius < d_trustRadiusMax ?
@@ -493,7 +614,14 @@ namespace dftfe
                 pcout << "DEBUG reset history" << std::endl;
                 initializeHessian(problem);
                 d_trustRadius = d_trustRadiusInitial;
-                computeNewtonStep();
+                if (d_useRFOStep)
+                  {
+                    computeRFOStep();
+                  }
+                else
+                  {
+                    computeNewtonStep();
+                  }
                 d_trustRadius = d_trustRadius < d_normDeltaXnew ?
                                   d_trustRadius :
                                   d_normDeltaXnew;
@@ -503,9 +631,7 @@ namespace dftfe
       }
     else
       {
-        const unsigned int one  = 1;
-        double             gtdx = ddot_(
-          &d_numberUnknowns, d_deltaX.data(), &one, d_gradient.data(), &one);
+        double             gtdx = internalBFGS::dot(d_deltaX,d_gradient);
 
         d_trustRadius =
           -0.5 * gtdx * d_trustRadius / ((d_valueNew[0] - d_value[0]) - gtdx);
@@ -514,111 +640,24 @@ namespace dftfe
             pcout << "DEBUG reset history " << d_trustRadius << std::endl;
             initializeHessian(problem);
             d_trustRadius = d_trustRadiusInitial;
-            computeNewtonStep();
+            if (d_useRFOStep)
+              {
+                computeRFOStep();
+              }
+            else
+              {
+                computeNewtonStep();
+              }
             d_trustRadius =
               d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
             d_isBFGSRestartDueToSmallRadius = true;
           }
       }
-
+    d_trustRadius =
+      d_trustRadius < d_trustRadiusMax ? d_trustRadius : d_trustRadiusMax;
     pcout << "DEBUG Trust Radius " << d_trustRadius << std::endl;
   }
 
-  void
-  BFGSNonLinearSolver::computepredDec()
-  {
-    const char         uplo  = 'U';
-    const double       one_d = 1.0;
-    const unsigned int one   = 1;
-
-    std::vector<double> Hdx(d_numberUnknowns, 0.0);
-    dsymv_(&uplo,
-           &d_numberUnknowns,
-           &one_d,
-           d_hessian.data(),
-           &d_numberUnknowns,
-           d_deltaXNew.data(),
-           &one,
-           &one_d,
-           Hdx.data(),
-           &one);
-
-    double dxtHdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Hdx.data(), &one);
-
-    std::vector<double> Sdx(d_numberUnknowns, 0.0);
-    dsymv_(&uplo,
-           &d_numberUnknowns,
-           &one_d,
-           d_Srfo.data(),
-           &d_numberUnknowns,
-           d_deltaXNew.data(),
-           &one,
-           &one_d,
-           Sdx.data(),
-           &one);
-
-    double dxtSdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Sdx.data(), &one);
-
-    double gtdx = ddot_(
-      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
-
-    d_predDec = (gtdx + 0.5 * dxtHdx) / (1 + dxtSdx);
-  }
-
-  //
-  // Compute residual L2-norm.
-  //
-  double
-  BFGSNonLinearSolver::computeL2Norm(std::vector<double> vec) const
-  {
-    // initialize norm
-    //
-    double norm = 0.0;
-
-    //
-    // iterate over unknowns
-    //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
-      {
-        const double factor = d_unknownCountFlag[i];
-        const double val    = vec[i];
-        norm += factor * val * val;
-      }
-
-
-    //
-    // take square root
-    //
-    norm = std::sqrt(norm);
-
-    //
-    //
-    //
-    return norm;
-  }
-  double
-  BFGSNonLinearSolver::computeLInfNorm(std::vector<double> vec) const
-  {
-    // initialize norm
-    //
-    double norm = 0.0;
-
-    //
-    // iterate over unknowns
-    //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
-      {
-        const double factor = d_unknownCountFlag[i];
-        const double val    = vec[i];
-        norm = norm > factor * std::abs(val) ? norm : factor * std::abs(val);
-      }
-    //
-    //
-    //
-    return norm;
-  }
 
   //
   // Update solution x -> x + step.
@@ -712,7 +751,7 @@ namespace dftfe
     // check for convergence
     //
     unsigned int isSuccess = 0;
-    d_gradMax              = computeLInfNorm(d_gradient);
+    d_gradMax              = internalBFGS::computeLInfNorm(d_gradient);
 
     if (d_gradMax < d_tolerance)
       isSuccess = 1;
@@ -741,13 +780,20 @@ namespace dftfe
         //
         // compute L2-norm of the residual (gradient)
         //
-        const double residualNorm = computeL2Norm(d_gradient);
+        const double residualNorm = internalBFGS::computeL2Norm(d_gradient);
 
 
         // Compute the update step
         //
         pcout << "DEBUG Start Compute step " << std::endl;
-        computeNewtonStep();
+        if (d_useRFOStep)
+          {
+            computeRFOStep();
+          }
+        else
+          {
+            computeNewtonStep();
+          }
         computeTrustRadius(problem);
         computeStep();
 
@@ -765,7 +811,7 @@ namespace dftfe
         //
         unsigned int isBreak = 0;
 
-        d_gradMax = computeLInfNorm(d_gradientNew);
+        d_gradMax = internalBFGS::computeLInfNorm(d_gradientNew);
 
         if (d_gradMax < d_tolerance)
           isBreak = 1;
@@ -784,7 +830,6 @@ namespace dftfe
                  !d_hessianScaled))
               {
                 scaleHessian();
-                d_trustRadius                   = d_trustRadiusInitial;
                 d_isBFGSRestartDueToSmallRadius = false;
               }
             updateHessian();

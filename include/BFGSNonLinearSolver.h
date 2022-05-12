@@ -45,7 +45,9 @@ namespace dftfe
      * @param trustRadius_initial Initial trust region radius.
      * @param trustRadius_minimum mimimum trust region radius (will reset BFGS).
      */
-    BFGSNonLinearSolver(const double       tolerance,
+    BFGSNonLinearSolver(const bool         usePreconditioner,
+                        const bool         useRFOStep,
+                        const double       tolerance,
                         const unsigned int maxNumberIterations,
                         const unsigned int debugLevel,
                         const MPI_Comm &   mpi_comm_parent,
@@ -211,12 +213,11 @@ namespace dftfe
     bool d_isBFGSRestartDueToSmallRadius, d_hessianScaled;
 
     ///
-    bool d_useSingleAtomSolutionsInitialGuess;
+    bool       d_useSingleAtomSolutionsInitialGuess;
+    const bool d_useRFOStep, d_usePreconditioner;
 
     // parallel objects
     MPI_Comm                   mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 

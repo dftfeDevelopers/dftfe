@@ -41,19 +41,14 @@ namespace dftfe
      *                   0 - no debug output
      *                   1 - limited debug output
      *                   2 - all debug output.
-     * @param trustRadius_maximum Maximum trust region radius.
-     * @param trustRadius_initial Initial trust region radius.
-     * @param trustRadius_minimum mimimum trust region radius (will reset BFGS).
      */
     LBFGSNonLinearSolver(const bool         usePreconditioner,
                          const double       tolerance,
+                         const double       maxUpdate,
                          const unsigned int maxNumberIterations,
                          const int          maxNumPastSteps,
                          const unsigned int debugLevel,
-                         const MPI_Comm &   mpi_comm_parent,
-                         const double       trustRadius_maximum = 0.5,
-                         const double       trustRadius_initial = 0.02,
-                         const double       trustRadius_minimum = 1.0e-4);
+                         const MPI_Comm &   mpi_comm_parent);
 
     /**
      * @brief Destructor.
@@ -110,10 +105,10 @@ namespace dftfe
     void
     checkWolfe();
     /**
-     * @brief Compute trust radius for the step
+     * @brief Compute scaling factor for the step
      */
     void
-    computeTrustRadius(nonlinearSolverProblem &problem);
+    computeStepScale(nonlinearSolverProblem &problem);
 
     /**
      * @brief Update solution x -> x + \alpha direction.
@@ -151,7 +146,7 @@ namespace dftfe
     std::vector<double> d_gradientNew, d_valueNew;
 
     /// Storage for the predicted decrease
-    double d_predDec;
+    double d_scalingFactor;
     /// storage for the update vector computed in the current bfgs step
     std::vector<double> d_deltaX, d_deltaXNew, d_updateVector, d_preconditioner;
 
@@ -163,16 +158,15 @@ namespace dftfe
 
     /// Storage for history
     std::deque<std::vector<double>> d_deltaGq, d_deltaXq;
-    std::deque<double> d_rhoq;
+    std::deque<double>              d_rhoq;
 
     const int d_maxNumPastSteps;
     int       d_numPastSteps;
     /// storage for inf norm of gradient
-    double d_gradMax, d_normDeltaXnew;
+    double d_gradMax, d_normDeltaXnew, d_maxStepLength;
 
     /// storage for trust region parameters
-    double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin,
-      d_trustRadius;
+    double d_alpha;
 
     /// boolean parameter for step accepteance
     bool d_stepAccepted, d_wolfeCurvature, d_wolfeSufficientDec,
@@ -186,8 +180,6 @@ namespace dftfe
 
     // parallel objects
     MPI_Comm                   mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 

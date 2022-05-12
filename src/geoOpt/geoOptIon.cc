@@ -33,27 +33,24 @@ namespace dftfe
   //
   // constructor
   //
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  geoOptIon<FEOrder, FEOrderElectro>::geoOptIon(
-    dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_parent)
-    : dftPtr(_dftPtr)
+
+  geoOptIon::geoOptIon(dftBase *dftPtr, const MPI_Comm &mpi_comm_parent)
+    : d_dftPtr(dftPtr)
     , mpi_communicator(mpi_comm_parent)
     , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
-             !_dftPtr->getParametersObject().reproducible_output))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   //
   //
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::init()
+  geoOptIon::init()
   {
-    const int numberGlobalAtoms = dftPtr->atomLocations.size();
-    if (dftPtr->getParametersObject().ionRelaxFlagsFile != "")
+    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
+    d_atomLocationsInitial      = d_dftPtr->getAtomLocationsCart();
+    if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
       {
         std::vector<std::vector<int>>    tempRelaxFlagsData;
         std::vector<std::vector<double>> tempForceData;
@@ -61,7 +58,7 @@ namespace dftfe
           6,
           tempRelaxFlagsData,
           tempForceData,
-          dftPtr->getParametersObject().ionRelaxFlagsFile);
+          d_dftPtr->getParametersObject().ionRelaxFlagsFile);
         AssertThrow(tempRelaxFlagsData.size() == numberGlobalAtoms,
                     ExcMessage(
                       "Incorrect number of entries in relaxationFlags file"));
@@ -111,25 +108,29 @@ namespace dftfe
       }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   int
-  geoOptIon<FEOrder, FEOrderElectro>::run()
+  geoOptIon::run()
   {
     const double tol =
-      dftPtr->getParametersObject().forceRelaxTol; //(units: Hatree/Bohr)
+      d_dftPtr->getParametersObject().forceRelaxTol; //(units: Hatree/Bohr)
     const unsigned int maxIter = 300;
     const double       lineSearchTol =
       1e-4; // Dummy parameter for CGPRP, the actual stopping criteria are the
             // Wolfe conditions and maxLineSearchIter
     const double       lineSearchDampingParameter = 0.8;
     const unsigned int maxLineSearchIter =
-      dftPtr->getParametersObject().maxLineSearchIterCGPRP;
+      d_dftPtr->getParametersObject().maxLineSearchIterCGPRP;
     const double       maxDisplacmentInAnyComponent = 0.5; // Bohr
     const unsigned int debugLevel =
       Utilities::MPI::this_mpi_process(mpi_communicator) == 0 ?
-        dftPtr->getParametersObject().verbosity :
+        d_dftPtr->getParametersObject().verbosity :
         0;
-
+    const bool usePreconditioner =
+      d_dftPtr->getParametersObject().usePreconditioner;
+    const bool useRFO = d_dftPtr->getParametersObject().bfgsStepMethod == "RFO";
+    const unsigned int lbfgsHistory =
+      d_dftPtr->getParametersObject().lbfgsNumPastSteps;
     d_totalUpdateCalls = 0;
     cgPRPNonLinearSolver cgSolver(tol,
                                   maxIter,
@@ -139,21 +140,34 @@ namespace dftfe
                                   maxLineSearchIter,
                                   lineSearchDampingParameter,
                                   maxDisplacmentInAnyComponent);
-    BFGSNonLinearSolver  bfgsSolver(tol, maxIter, debugLevel, mpi_communicator);
-    LBFGSNonLinearSolver lbfgsSolver(
-      false, tol, maxIter, 2, debugLevel, mpi_communicator);
+
+    BFGSNonLinearSolver bfgsSolver(usePreconditioner,
+                                   useRFO,
+                                   tol,
+                                   maxIter,
+                                   debugLevel,
+                                   mpi_communicator,
+                                   maxDisplacmentInAnyComponent);
+
+    LBFGSNonLinearSolver lbfgsSolver(usePreconditioner,
+                                     tol,
+                                     maxDisplacmentInAnyComponent,
+                                     maxIter,
+                                     lbfgsHistory,
+                                     debugLevel,
+                                     mpi_communicator);
 
     CGDescent cg_descent(tol, maxIter);
 
 
-    if (dftPtr->getParametersObject().chkType >= 1 &&
-        dftPtr->getParametersObject().restartFromChk)
+    if (d_dftPtr->getParametersObject().chkType >= 1 &&
+        d_dftPtr->getParametersObject().restartFromChk)
       pcout << "Re starting Ion force relaxation using nonlinear CG solver... "
             << std::endl;
     else
       pcout << "Starting Ion force relaxation using nonlinear CG solver... "
             << std::endl;
-    if (dftPtr->getParametersObject().verbosity >= 2)
+    if (d_dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
         pcout << "      stopping tol: " << tol << std::endl;
@@ -170,17 +184,17 @@ namespace dftfe
         nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
         bool                             cgSuccess;
 
-        if (dftPtr->getParametersObject().chkType >= 1 &&
-            dftPtr->getParametersObject().restartFromChk &&
-            dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+        if (d_dftPtr->getParametersObject().chkType >= 1 &&
+            d_dftPtr->getParametersObject().restartFromChk &&
+            d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this, std::string("ionRelaxCG.chk"), true);
-        else if (dftPtr->getParametersObject().chkType >= 1 &&
-                 !dftPtr->getParametersObject().restartFromChk &&
-                 dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 !d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this, std::string("ionRelaxCG.chk"));
-        else if (dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this);
-        else if (dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
           {
             cg_descent.set_step(0.8);
             cg_descent.set_lbfgs(true);
@@ -194,11 +208,11 @@ namespace dftfe
             cg_descent.set_memory(memory);
             cgSuccess = cg_descent.run(*this);
           }
-        else if (dftPtr->getParametersObject().ionOptSolver == "BFGS")
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
           {
             cgReturn = bfgsSolver.solve(*this);
           }
-        else if (dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
           {
             cgReturn = lbfgsSolver.solve(*this);
           }
@@ -221,7 +235,7 @@ namespace dftfe
           {
             pcout
               << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
-              << dftPtr->getParametersObject().forceRelaxTol
+              << d_dftPtr->getParametersObject().forceRelaxTol
               << ", total number of ion position updates: "
               << d_totalUpdateCalls << std::endl;
 
@@ -234,31 +248,32 @@ namespace dftfe
             pcout
               << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
               << std::endl;
-            for (int i = 0; i < dftPtr->d_domainBoundingVectors.size(); ++i)
+            for (int i = 0; i < d_dftPtr->getCell().size(); ++i)
               {
-                pcout << "v" << i + 1 << " : "
-                      << dftPtr->d_domainBoundingVectors[i][0] << " "
-                      << dftPtr->d_domainBoundingVectors[i][1] << " "
-                      << dftPtr->d_domainBoundingVectors[i][2] << std::endl;
+                pcout << "v" << i + 1 << " : " << d_dftPtr->getCell()[i][0]
+                      << " " << d_dftPtr->getCell()[i][1] << " "
+                      << d_dftPtr->getCell()[i][2] << std::endl;
               }
             pcout
               << "-----------------------------------------------------------------------------------------"
               << std::endl;
 
-            if (dftPtr->getParametersObject().periodicX ||
-                dftPtr->getParametersObject().periodicY ||
-                dftPtr->getParametersObject().periodicZ)
+            if (d_dftPtr->getParametersObject().periodicX ||
+                d_dftPtr->getParametersObject().periodicY ||
+                d_dftPtr->getParametersObject().periodicZ)
               {
                 pcout
                   << "-------------------Fractional coordinates of atoms----------------------"
                   << std::endl;
-                for (unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
-                  pcout << (unsigned int)dftPtr->atomLocationsFractional[i][0]
+                for (unsigned int i = 0;
+                     i < d_dftPtr->getAtomLocationsCart().size();
+                     ++i)
+                  pcout << (unsigned int)d_dftPtr->getAtomLocationsFrac()[i][0]
                         << " "
-                        << (unsigned int)dftPtr->atomLocationsFractional[i][1]
-                        << " " << dftPtr->atomLocationsFractional[i][2] << " "
-                        << dftPtr->atomLocationsFractional[i][3] << " "
-                        << dftPtr->atomLocationsFractional[i][4] << "\n";
+                        << (unsigned int)d_dftPtr->getAtomLocationsFrac()[i][1]
+                        << " " << d_dftPtr->getAtomLocationsFrac()[i][2] << " "
+                        << d_dftPtr->getAtomLocationsFrac()[i][3] << " "
+                        << d_dftPtr->getAtomLocationsFrac()[i][4] << "\n";
                 pcout
                   << "-----------------------------------------------------------------------------------------"
                   << std::endl;
@@ -271,13 +286,17 @@ namespace dftfe
                 pcout
                   << "------------Cartesian coordinates of atoms (origin at center of domain)------------------"
                   << std::endl;
-                for (unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
+                for (unsigned int i = 0;
+                     i < d_dftPtr->getAtomLocationsCart().size();
+                     ++i)
                   {
-                    pcout << (unsigned int)dftPtr->atomLocations[i][0] << " "
-                          << (unsigned int)dftPtr->atomLocations[i][1] << " "
-                          << dftPtr->atomLocations[i][2] << " "
-                          << dftPtr->atomLocations[i][3] << " "
-                          << dftPtr->atomLocations[i][4] << "\n";
+                    pcout
+                      << (unsigned int)d_dftPtr->getAtomLocationsCart()[i][0]
+                      << " "
+                      << (unsigned int)d_dftPtr->getAtomLocationsCart()[i][1]
+                      << " " << d_dftPtr->getAtomLocationsCart()[i][2] << " "
+                      << d_dftPtr->getAtomLocationsCart()[i][3] << " "
+                      << d_dftPtr->getAtomLocationsCart()[i][4] << "\n";
                   }
                 pcout
                   << "-----------------------------------------------------------------------------------------"
@@ -287,7 +306,7 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------"
               << std::endl;
 
-            dftPtr->writeDomainAndAtomCoordinates();
+            d_dftPtr->writeDomainAndAtomCoordinates();
           }
         else if (cgReturn == nonLinearSolver::FAILURE || !cgSuccess)
           {
@@ -303,9 +322,9 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   unsigned int
-  geoOptIon<FEOrder, FEOrderElectro>::getNumberUnknowns() const
+  geoOptIon::getNumberUnknowns() const
   {
     unsigned int count = 0;
     for (unsigned int i = 0; i < d_relaxationFlags.size(); ++i)
@@ -315,25 +334,25 @@ namespace dftfe
     return count;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::value(std::vector<double> &functionValue)
+  geoOptIon::value(std::vector<double> &functionValue)
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
 
     // Relative to initial free energy supressed in case of CGPRP
     // as that would not work in case of restarted CGPRP
-    functionValue.push_back(dftPtr->d_groundStateEnergy);
+    functionValue.push_back(d_dftPtr->getInternalEnergy());
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::gradient(std::vector<double> &gradient)
+  geoOptIon::gradient(std::vector<double> &gradient)
   {
     gradient.clear();
-    const int                 numberGlobalAtoms = dftPtr->atomLocations.size();
-    const std::vector<double> tempGradient = dftPtr->forcePtr->getAtomsForces();
+    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
+    const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
     AssertThrow(tempGradient.size() == numberGlobalAtoms * 3,
                 ExcMessage("Atom forces have wrong size"));
     for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
@@ -358,13 +377,12 @@ namespace dftfe
       }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::precondition(
-    std::vector<double> &      s,
-    const std::vector<double> &gradient) const
+  geoOptIon::precondition(std::vector<double> &      s,
+                          const std::vector<double> &gradient) const
   {
-    const int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
     double    rCutNNList        = 1.0;
     std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
     bool                             allAtomsHaveNN = false;
@@ -377,10 +395,10 @@ namespace dftfe
                 double rij = 0;
                 for (int k = 2; k < 5; ++k)
                   {
-                    rij += (dftPtr->atomLocations[i][k] -
-                            dftPtr->atomLocations[j][k]) *
-                           (dftPtr->atomLocations[i][k] -
-                            dftPtr->atomLocations[j][k]);
+                    rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                            d_dftPtr->getAtomLocationsCart()[j][k]) *
+                           (d_dftPtr->getAtomLocationsCart()[i][k] -
+                            d_dftPtr->getAtomLocationsCart()[j][k]);
                   }
                 rij = std::sqrt(rij);
                 if (rij <= rCutNNList)
@@ -419,9 +437,10 @@ namespace dftfe
             double rij = 0;
             for (int k = 2; k < 5; ++k)
               {
-                rij +=
-                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]) *
-                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]);
+                rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                        d_dftPtr->getAtomLocationsCart()[j][k]) *
+                       (d_dftPtr->getAtomLocationsCart()[i][k] -
+                        d_dftPtr->getAtomLocationsCart()[j][k]);
               }
             rij = std::sqrt(rij);
             if ((riMin > rij && i != j) || j == 0)
@@ -444,9 +463,10 @@ namespace dftfe
             double rij = 0;
             for (int k = 2; k < 5; ++k)
               {
-                rij +=
-                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]) *
-                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]);
+                rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                        d_dftPtr->getAtomLocationsCart()[j][k]) *
+                       (d_dftPtr->getAtomLocationsCart()[i][k] -
+                        d_dftPtr->getAtomLocationsCart()[j][k]);
               }
             rij = std::sqrt(rij);
             if (rij < rCut)
@@ -495,9 +515,7 @@ namespace dftfe
                         if (d_relaxationFlags[j * 3 + l] == 1)
                           {
                             s[icount * getNumberUnknowns() + jcount] =
-                              k == l ? 0.0102908099018465 *
-                                         L[i * numberGlobalAtoms + j] :
-                                       0.0;
+                              k == l ? L[i * numberGlobalAtoms + j] : 0.0;
                             ++jcount;
                           }
                       }
@@ -508,14 +526,14 @@ namespace dftfe
       }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::update(
-    const std::vector<double> &solution,
-    const bool                 computeForces,
-    const bool                 useSingleAtomSolutionsInitialGuess)
+  geoOptIon::update(const std::vector<double> &solution,
+                    const bool                 computeForces,
+                    const bool useSingleAtomSolutionsInitialGuess)
   {
-    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const unsigned int numberGlobalAtoms =
+      d_dftPtr->getAtomLocationsCart().size();
     std::vector<Tensor<1, 3, double>> globalAtomsDisplacements(
       numberGlobalAtoms);
     int count = 0;
@@ -541,7 +559,7 @@ namespace dftfe
                   mpi_communicator);
       }
 
-    if (dftPtr->getParametersObject().verbosity >= 1)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       pcout << "  Maximum force component to be relaxed: "
             << d_maximumAtomForceToBeRelaxed << std::endl;
 
@@ -554,64 +572,63 @@ namespace dftfe
     else if (d_maximumAtomForceToBeRelaxed < 1e-04)
       factor = 1.15;
 
-    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,
-                                           factor,
-                                           useSingleAtomSolutionsInitialGuess);
+    d_dftPtr->updateAtomPositionsAndMoveMesh(
+      globalAtomsDisplacements, factor, useSingleAtomSolutionsInitialGuess);
     d_totalUpdateCalls += 1;
 
 
     /*if(d_maximumAtomForceToBeRelaxed >= 1e-02)
-      dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-03;
+      d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-03;
       else if(d_maximumAtomForceToBeRelaxed >= 1e-03)
-      dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-04;
+      d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-04;
       else if(d_maximumAtomForceToBeRelaxed >= 1e-04)
-      dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-05;
+      d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 1e-05;
       else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
-      dftPtr->getParametersObject().selfConsistentSolverTolerance = 5e-06;*/
+      d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 5e-06;*/
 
-    dftPtr->solve(computeForces, false);
+    d_dftPtr->solve(computeForces, false);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::save()
+  geoOptIon::save()
   {
-    dftPtr->writeDomainAndAtomCoordinates();
+    d_dftPtr->writeDomainAndAtomCoordinates();
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   const MPI_Comm &
-  geoOptIon<FEOrder, FEOrderElectro>::getMPICommunicator()
+  geoOptIon::getMPICommunicator()
   {
     return mpi_communicator;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptIon<FEOrder, FEOrderElectro>::solution(std::vector<double> &solution)
+  geoOptIon::solution(std::vector<double> &solution)
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     solution.clear();
-    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const unsigned int numberGlobalAtoms =
+      d_dftPtr->getAtomLocationsCart().size();
     for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
           {
             if (d_relaxationFlags[3 * i + j] == 1)
               {
-                solution.push_back(dftPtr->atomLocations[i][j + 2] -
-                                   dftPtr->d_atomLocationsInitial[i][j + 2]);
+                solution.push_back(d_dftPtr->getAtomLocationsCart()[i][j + 2] -
+                                   d_atomLocationsInitial[i][j + 2]);
               }
           }
       }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   std::vector<unsigned int>
-  geoOptIon<FEOrder, FEOrderElectro>::getUnknownCountFlag() const
+  geoOptIon::getUnknownCountFlag() const
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
 
-#include "geoOptIon.inst.cc"
 } // namespace dftfe
