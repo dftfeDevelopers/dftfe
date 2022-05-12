@@ -63,7 +63,7 @@ namespace dftfe
     solve(dealiiLinearSolverProblem &problem,
           const double               absTolerance,
           const unsigned int         maxNumberIterations,
-          const unsigned int         debugLevel     = 0,
+          const int                  debugLevel     = 0,
           bool                       distributeFlag = true);
 
   private:

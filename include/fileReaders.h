@@ -62,6 +62,16 @@ namespace dftfe
                       const MPI_Comm &                        mpi_comm_parent);
 
     /**
+     * @brief Write data into file containing only double data in rows and columns.
+     *
+     * @param[in] data input double data in [rows][columns] format
+     * @param[in] fileName
+     */
+    void
+    writeDataIntoFile(const std::vector<std::vector<double>> &data,
+                      const std::string &                     fileName);
+
+    /**
      * @brief Read from file containing only integer data in columns.
      */
     void

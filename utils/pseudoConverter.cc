@@ -74,7 +74,6 @@ namespace dftfe
 
       while (input_file >> z >> toParse)
         {
-          mkdir(dftfeScratchFolderName.c_str(), ACCESSPERMS);
           std::string newFolder = dftfeScratchFolderName + "/" + "z" + z;
           mkdir(newFolder.c_str(), ACCESSPERMS);
           AssertThrow(
@@ -92,7 +91,7 @@ namespace dftfe
               int         errorFlag;
               if (pseudoTestsFlag)
                 {
-                  std::string dftPath = DFT_PATH;
+                  std::string dftPath = DFTFE_PATH;
 #ifdef USE_COMPLEX
                   std::string newPath =
                     dftPath + "/tests/dft/pseudopotential/complex/" + toParse;

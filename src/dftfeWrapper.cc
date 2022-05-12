@@ -36,24 +36,42 @@
 #include <list>
 #include <sstream>
 #include <sys/stat.h>
+#include <chrono>
+#include <sys/time.h>
+#include <ctime>
 
 #include "dft.h"
 #include "dftParameters.h"
 #include "cudaHelpers.h"
 #include "dftUtils.h"
 #include "dftfeWrapper.h"
-
+#include "fileReaders.h"
+#include "PeriodicTable.h"
 
 namespace dftfe
 {
-  namespace
+  namespace internalWrapper
   {
+    int
+    divisor_closest(int totalSize, int desiredDivisor)
+    {
+      int i;
+      for (i = desiredDivisor; i >= 1; --i)
+        {
+          if (totalSize % i == 0 && i <= desiredDivisor)
+            return i;
+        }
+      return 1;
+    }
+
+
     template <int n1, int n2>
     void
     create_dftfe(const MPI_Comm &      mpi_comm_parent,
                  const MPI_Comm &      mpi_comm_domain,
                  const MPI_Comm &      interpoolcomm,
                  const MPI_Comm &      interBandGroupComm,
+                 const std::string &   scratchFolderName,
                  dftfe::dftParameters &dftParams,
                  dftBase **            dftfeBaseDoublePtr)
     {
@@ -61,6 +79,7 @@ namespace dftfe
                                                         mpi_comm_domain,
                                                         interpoolcomm,
                                                         interBandGroupComm,
+                                                        scratchFolderName,
                                                         dftParams);
     }
 
@@ -75,6 +94,7 @@ namespace dftfe
                               const MPI_Comm &      mpi_comm_domain,
                               const MPI_Comm &      interpoolcomm,
                               const MPI_Comm &      interBandGroupComm,
+                              const std::string &   scratchFolderName,
                               dftfe::dftParameters &dftParams,
                               dftBase **            dftBaseDoublePtr);
 
@@ -107,7 +127,7 @@ namespace dftfe
       create_dftfe<8, 15>, create_dftfe<8, 16>
 #endif
     };
-  } // namespace
+  } // namespace internalWrapper
 
   void
   dftfeWrapper::globalHandlesInitialize()
@@ -125,6 +145,7 @@ namespace dftfe
         fprintf(stderr, "Error: ELPA API version not supported.");
         exit(1);
       }
+    dealii::MultithreadInfo::set_thread_limit(1);
   }
 
   void
@@ -151,12 +172,57 @@ namespace dftfe
                              const bool        setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
+    , d_isGPUToMPITaskBindingSetInternally(false)
   {
     reinit(parameter_file,
            mpi_comm_parent,
            printParams,
            setGPUToMPITaskBindingInternally);
   }
+
+
+  //
+  // constructor
+  //
+  dftfeWrapper::dftfeWrapper(
+    const MPI_Comm &                       mpi_comm_parent,
+    const bool                             useGPU,
+    const std::vector<std::vector<double>> atomicPositionsCart,
+    const std::vector<unsigned int>        atomicNumbers,
+    const std::vector<std::vector<double>> cell,
+    const std::vector<bool>                pbc,
+    const std::vector<unsigned int>        mpGrid,
+    const std::vector<bool>                mpGridShift,
+    const bool                             spinPolarizedDFT,
+    const double                           startMagnetization,
+    const double                           fermiDiracSmearingTemp,
+    const unsigned int                     npkpt,
+    const double                           meshSize,
+    const int                              verbosity,
+    const bool                             setGPUToMPITaskBindingInternally)
+    : d_dftfeBasePtr(nullptr)
+    , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
+    , d_isGPUToMPITaskBindingSetInternally(false)
+  {
+    reinit(mpi_comm_parent,
+           useGPU,
+           atomicPositionsCart,
+           atomicNumbers,
+           cell,
+           pbc,
+           mpGrid,
+           mpGridShift,
+           spinPolarizedDFT,
+           startMagnetization,
+           fermiDiracSmearingTemp,
+           npkpt,
+           meshSize,
+           verbosity,
+           setGPUToMPITaskBindingInternally);
+  }
+
 
   dftfeWrapper::~dftfeWrapper()
   {
@@ -170,20 +236,397 @@ namespace dftfe
                        const bool        setGPUToMPITaskBindingInternally)
   {
     clear();
-    d_mpi_comm_parent = mpi_comm_parent;
     if (mpi_comm_parent != MPI_COMM_NULL)
+      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+
+    createScratchFolder();
+
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file,
-                                           mpi_comm_parent,
+                                           d_mpi_comm_parent,
                                            printParams);
+      }
+    initialize(setGPUToMPITaskBindingInternally);
+  }
 
+
+  void
+  dftfeWrapper::reinit(
+    const MPI_Comm &                       mpi_comm_parent,
+    const bool                             useGPU,
+    const std::vector<std::vector<double>> atomicPositionsCart,
+    const std::vector<unsigned int>        atomicNumbers,
+    const std::vector<std::vector<double>> cell,
+    const std::vector<bool>                pbc,
+    const std::vector<unsigned int>        mpGrid,
+    const std::vector<bool>                mpGridShift,
+    const bool                             spinPolarizedDFT,
+    const double                           startMagnetization,
+    const double                           fermiDiracSmearingTemp,
+    const unsigned int                     npkpt,
+    const double                           meshSize,
+    const int                              verbosity,
+    const bool                             setGPUToMPITaskBindingInternally)
+  {
+    clear();
+    if (mpi_comm_parent != MPI_COMM_NULL)
+      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+
+    createScratchFolder();
+
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        const int totalMPIProcesses =
+          Utilities::MPI::n_mpi_processes(d_mpi_comm_parent);
+
+        std::string parameter_file_path =
+          d_scratchFolderName + "/parameterFile.prm";
+
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+          {
+            AssertThrow(
+              atomicPositionsCart.size() == atomicNumbers.size(),
+              dealii::ExcMessage(
+                "DFT-FE Error:  Mismatch in sizes of atomicPositionsCart and atomicNumbers."));
+            //
+            // write pseudo.inp
+            //
+            std::set<unsigned int> atomicNumbersSet;
+            for (unsigned int i = 0; i < atomicNumbers.size(); i++)
+              atomicNumbersSet.insert(atomicNumbers[i]);
+
+            std::vector<unsigned int> atomicNumbersUniqueVec(
+              atomicNumbersSet.size());
+            std::copy(atomicNumbersSet.begin(),
+                      atomicNumbersSet.end(),
+                      atomicNumbersUniqueVec.begin());
+
+
+            const std::string dftfePspPath(getenv("DFTFE_PSP_PATH"));
+
+            pseudoUtils::PeriodicTable periodicTable;
+            const std::string          dftfePseudoFileName =
+              d_scratchFolderName + "/pseudo.inp";
+            std::ofstream dftfePseudoFile(dftfePseudoFileName);
+            if (dftfePseudoFile.is_open())
+              {
+                for (unsigned int irow = 0;
+                     irow < atomicNumbersUniqueVec.size();
+                     ++irow)
+                  {
+                    const std::string upffilePath =
+                      dftfePspPath + "/" +
+                      periodicTable.symbol(atomicNumbersUniqueVec[irow]) +
+                      ".upf";
+
+                    dftfePseudoFile
+                      << std::to_string(atomicNumbersUniqueVec[irow]);
+                    dftfePseudoFile << " ";
+                    dftfePseudoFile << upffilePath;
+                    dftfePseudoFile << "\n";
+                  }
+
+                dftfePseudoFile.close();
+              }
+
+            //
+            // write coordinates.inp
+            //
+            std::map<unsigned int, unsigned int> atomicNumberToValenceNumberMap;
+
+            for (unsigned int i = 0; i < atomicNumbersUniqueVec.size(); i++)
+              {
+                const std::string upffilePath =
+                  dftfePspPath + "/" +
+                  periodicTable.symbol(atomicNumbersUniqueVec[i]) + ".upf";
+                std::ifstream upffile(upffilePath);
+                double        valenceNumber = 0;
+                std::string   line;
+                while (getline(upffile, line))
+                  {
+                    if (line.find("z_valence=") == std::string::npos)
+                      continue;
+                    std::istringstream ss(line);
+                    std::string        dummy1;
+                    std::string        dummy2;
+                    ss >> dummy1 >> valenceNumber >> dummy2;
+                    break;
+                  }
+                atomicNumberToValenceNumberMap[atomicNumbersUniqueVec[i]] =
+                  std::round(valenceNumber);
+              }
+
+            std::vector<std::vector<double>> dftfeCoordinates(
+              atomicPositionsCart.size(), std::vector<double>(5, 0));
+
+            std::vector<double> cellVectorsFlattened(9, 0.0);
+            for (unsigned int idim = 0; idim < 3; idim++)
+              for (unsigned int jdim = 0; jdim < 3; jdim++)
+                cellVectorsFlattened[3 * idim + jdim] = cell[idim][jdim];
+
+            if (pbc[0] == false && pbc[1] == false && pbc[2] == false)
+              {
+                std::vector<double> shift(3, 0.0);
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  {
+                    shift[idim] = 0;
+                    for (unsigned int jdim = 0; jdim < 3; jdim++)
+                      shift[idim] -= cell[jdim][idim] / 2.0;
+                  }
+                for (unsigned int i = 0; i < dftfeCoordinates.size(); i++)
+                  {
+                    dftfeCoordinates[i][0] = atomicNumbers[i];
+                    dftfeCoordinates[i][1] =
+                      atomicNumberToValenceNumberMap[atomicNumbers[i]];
+
+                    std::vector<double> coord(3, 0.0);
+                    coord[0] = atomicPositionsCart[i][0];
+                    coord[1] = atomicPositionsCart[i][1];
+                    coord[2] = atomicPositionsCart[i][2];
+
+                    std::vector<double> frac =
+                      dftUtils::getFractionalCoordinates(cellVectorsFlattened,
+                                                         coord);
+                    for (unsigned int idim = 0; idim < 3; idim++)
+                      AssertThrow(
+                        frac[idim] > 1e-7 && frac[idim] < (1.0 - 1e-7),
+                        dealii::ExcMessage(
+                          "DFT-FE Error: all coordinates are not inside the cell. Please check input atomicPositionsCart."));
+
+                    dftfeCoordinates[i][2] =
+                      atomicPositionsCart[i][0] + shift[0];
+                    dftfeCoordinates[i][3] =
+                      atomicPositionsCart[i][1] + shift[1];
+                    dftfeCoordinates[i][4] =
+                      atomicPositionsCart[i][2] + shift[2];
+                  }
+              }
+            else
+              {
+                for (unsigned int i = 0; i < dftfeCoordinates.size(); i++)
+                  {
+                    dftfeCoordinates[i][0] = atomicNumbers[i];
+                    dftfeCoordinates[i][1] =
+                      atomicNumberToValenceNumberMap[atomicNumbers[i]];
+                    std::vector<double> coord(3, 0.0);
+                    coord[0] = atomicPositionsCart[i][0];
+                    coord[1] = atomicPositionsCart[i][1];
+                    coord[2] = atomicPositionsCart[i][2];
+
+                    std::vector<double> frac =
+                      dftUtils::getFractionalCoordinates(cellVectorsFlattened,
+                                                         coord);
+                    for (unsigned int idim = 0; idim < 3; idim++)
+                      AssertThrow(
+                        frac[idim] > -1e-7 && frac[idim] < (1.0 + 1e-7),
+                        dealii::ExcMessage(
+                          "DFT-FE Error: fractional coordinates doesn't lie in [0,1]. Please check input atomicPositionsCart."));
+
+                    dftfeCoordinates[i][2] = frac[0];
+                    dftfeCoordinates[i][3] = frac[1];
+                    dftfeCoordinates[i][4] = frac[2];
+                  }
+              }
+
+            const std::string dftfeCoordsFileName =
+              d_scratchFolderName + "/coordinates.inp";
+            dftUtils::writeDataIntoFile(dftfeCoordinates, dftfeCoordsFileName);
+            //
+            // write domainVectors.inp
+            //
+            const std::string dftfeCellFileName =
+              d_scratchFolderName + "/domainVectors.inp";
+            dftUtils::writeDataIntoFile(cell, dftfeCellFileName);
+
+
+
+            std::string dftfePath = DFTFE_PATH;
+            std::string sourceFilePath =
+              dftfePath + "/helpers/parameterFile.prm";
+
+            std::string cmd;
+
+            cmd = std::string("cp '") + sourceFilePath + "' '" +
+                  parameter_file_path + "'";
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set NATOMS=.*/set NATOMS=" +
+                  std::to_string(atomicPositionsCart.size()) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set NATOM TYPES=.*/set NATOM TYPES=" +
+                  std::to_string(atomicNumbersUniqueVec.size()) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string dftfeCoordsFileNameForSed =
+              d_scratchFolderName + "\\\/coordinates.inp";
+            cmd =
+              "sed -i 's/set ATOMIC COORDINATES FILE=.*/set ATOMIC COORDINATES FILE=" +
+              dftfeCoordsFileNameForSed + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string dftfeCellFileNameForSed =
+              d_scratchFolderName + "\\\/domainVectors.inp";
+            cmd =
+              "sed -i 's/set DOMAIN VECTORS FILE=.*/set DOMAIN VECTORS FILE=" +
+              dftfeCellFileNameForSed + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string dftfePseudoFileNameForSed =
+              d_scratchFolderName + "\\\/pseudo.inp";
+            cmd =
+              "sed -i 's/set PSEUDOPOTENTIAL FILE NAMES LIST=.*/set PSEUDOPOTENTIAL FILE NAMES LIST=" +
+              dftfePseudoFileNameForSed + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            if (pbc[0] == false && pbc[1] == false && pbc[2] == false)
+              {
+                const std::string option = "false";
+                cmd = "sed -i 's/set CELL STRESS=.*/set CELL STRESS=" + option +
+                      "/g' " + parameter_file_path;
+                system(cmd.c_str());
+              }
+
+            const std::string pbc1 = pbc[0] ? "true" : "false";
+            cmd = "sed -i 's/set PERIODIC1=.*/set PERIODIC1=" + pbc1 + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string pbc2 = pbc[1] ? "true" : "false";
+            cmd = "sed -i 's/set PERIODIC2=.*/set PERIODIC2=" + pbc2 + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const std::string pbc3 = pbc[2] ? "true" : "false";
+            cmd = "sed -i 's/set PERIODIC3=.*/set PERIODIC3=" + pbc3 + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING POINTS 1=.*/set SAMPLING POINTS 1=" +
+                  std::to_string(mpGrid[0]) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING POINTS 2=.*/set SAMPLING POINTS 2=" +
+                  std::to_string(mpGrid[1]) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING POINTS 3=.*/set SAMPLING POINTS 3=" +
+                  std::to_string(mpGrid[2]) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING SHIFT 1=.*/set SAMPLING SHIFT 1=" +
+                  std::to_string(mpGridShift[0] ? 1 : 0) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING SHIFT 2=.*/set SAMPLING SHIFT 2=" +
+                  std::to_string(mpGridShift[1] ? 1 : 0) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set SAMPLING SHIFT 3=.*/set SAMPLING SHIFT 3=" +
+                  std::to_string(mpGridShift[2] ? 1 : 0) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const int spin = spinPolarizedDFT ? 1 : 0;
+            cmd = "sed -i 's/set SPIN POLARIZATION=.*/set SPIN POLARIZATION=" +
+                  std::to_string(spin) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd =
+              "sed -i 's/set START MAGNETIZATION=.*/set START MAGNETIZATION=" +
+              std::to_string(startMagnetization) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set TEMPERATURE=.*/set TEMPERATURE=" +
+                  std::to_string(fermiDiracSmearingTemp) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            const int totalIrreducibleKpt =
+              mpGrid[0] * mpGrid[1] * mpGrid[2] / 2;
+            const int npkptSet =
+              npkpt > 0 ? 1 :
+                          internalWrapper::divisor_closest(totalMPIProcesses,
+                                                           totalIrreducibleKpt);
+            cmd =
+              "sed -i 's/set NPKPT=.*/set NPKPT=" + std::to_string(npkptSet) +
+              "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+
+            cmd =
+              "sed -i 's/set MESH SIZE AROUND ATOM=.*/set MESH SIZE AROUND ATOM=" +
+              std::to_string(meshSize) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set VERBOSITY=.*/set VERBOSITY=" +
+                  std::to_string(verbosity) + "/g' " + parameter_file_path;
+            system(cmd.c_str());
+          }
+        MPI_Barrier(d_mpi_comm_parent);
+        d_dftfeParamsPtr = new dftfe::dftParameters;
+        d_dftfeParamsPtr->parse_parameters(parameter_file_path,
+                                           d_mpi_comm_parent);
+      }
+    initialize(setGPUToMPITaskBindingInternally);
+  }
+
+
+  void
+  dftfeWrapper::createScratchFolder()
+  {
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+          {
+            d_scratchFolderName =
+              "dftfeScratch" +
+              std::to_string(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
+              "t" +
+              std::to_string(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::system_clock::now().time_since_epoch())
+                  .count());
+          }
+
+        int line_size = d_scratchFolderName.size();
+        MPI_Bcast(&line_size, 1, MPI_INT, 0, d_mpi_comm_parent);
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) != 0)
+          d_scratchFolderName.resize(line_size);
+        MPI_Bcast(const_cast<char *>(d_scratchFolderName.data()),
+                  line_size,
+                  MPI_CHAR,
+                  0,
+                  d_mpi_comm_parent);
+
+        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+          mkdir(d_scratchFolderName.c_str(), ACCESSPERMS);
+
+        MPI_Barrier(d_mpi_comm_parent);
+      }
+  }
+
+  void
+  dftfeWrapper::initialize(const bool setGPUToMPITaskBindingInternally)
+  {
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
 #ifdef DFTFE_WITH_GPU
-        if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally)
-          dftfe::cudaUtils::setupGPU();
+        if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally &&
+            !d_isGPUToMPITaskBindingSetInternally)
+          {
+            dftfe::cudaUtils::setupGPU();
+            d_isGPUToMPITaskBindingSetInternally = true;
+          }
 #endif
 
-        dftfe::dftUtils::Pool kPointPool(mpi_comm_parent,
+        dftfe::dftUtils::Pool kPointPool(d_mpi_comm_parent,
                                          d_dftfeParamsPtr->npool,
                                          d_dftfeParamsPtr->verbosity);
         dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(),
@@ -197,12 +640,13 @@ namespace dftfe
           {
             dealii::ConditionalOStream pcout(
               std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
+              (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) ==
+               0));
             pcout
               << "=================================MPI Parallelization========================================="
               << std::endl;
             pcout << "Total number of MPI tasks: "
-                  << Utilities::MPI::n_mpi_processes(mpi_comm_parent)
+                  << Utilities::MPI::n_mpi_processes(d_mpi_comm_parent)
                   << std::endl;
             pcout << "k-point parallelization processor groups: "
                   << Utilities::MPI::n_mpi_processes(
@@ -288,11 +732,13 @@ namespace dftfe
               listIndex++;
           }
 #endif
-        create_fn create = order_list[listIndex - 1];
-        create(mpi_comm_parent,
+        internalWrapper::create_fn create =
+          internalWrapper::order_list[listIndex - 1];
+        create(d_mpi_comm_parent,
                bandGroupsPool.get_intrapool_comm(),
                kPointPool.get_interpool_comm(),
                bandGroupsPool.get_interpool_comm(),
+               d_scratchFolderName,
                *d_dftfeParamsPtr,
                &d_dftfeBasePtr);
         d_dftfeBasePtr->set();
@@ -306,9 +752,20 @@ namespace dftfe
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         if (d_dftfeBasePtr != nullptr)
-          delete d_dftfeBasePtr;
+          {
+            delete d_dftfeBasePtr;
+
+            if (!d_dftfeParamsPtr->keepScratchFolder &&
+                Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+              {
+                std::string command = "rm -rf " + d_scratchFolderName;
+                system(command.c_str());
+              }
+            MPI_Barrier(d_mpi_comm_parent);
+          }
         if (d_dftfeParamsPtr != nullptr)
           delete d_dftfeParamsPtr;
+        MPI_Comm_free(&d_mpi_comm_parent);
       }
   }
 
@@ -323,13 +780,14 @@ namespace dftfe
   }
 
   double
-  dftfeWrapper::computeDFTFreeEnergy()
+  dftfeWrapper::computeDFTFreeEnergy(const bool computeIonForces,
+                                     const bool computeCellStress)
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,
       dealii::ExcMessage(
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
-    d_dftfeBasePtr->solve(true, true, false);
+    d_dftfeBasePtr->solve(computeIonForces, computeCellStress);
     return d_dftfeBasePtr->getFreeEnergy();
   }
 
@@ -389,7 +847,7 @@ namespace dftfe
   }
 
   void
-  dftfeWrapper::deformDomain(
+  dftfeWrapper::deformCell(
     const std::vector<std::vector<double>> deformationGradient)
   {
     AssertThrow(
@@ -404,25 +862,36 @@ namespace dftfe
   }
 
   std::vector<std::vector<double>>
-  dftfeWrapper::getAtomLocationsCart() const
+  dftfeWrapper::getAtomPositionsCart() const
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,
       dealii::ExcMessage(
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    // dftfe stores cell centered coordinates
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsCart();
     std::vector<std::vector<double>> atomLocationsCart(
       d_dftfeBasePtr->getAtomLocationsCart().size(),
       std::vector<double>(3, 0.0));
+
+    std::vector<std::vector<double>> cell = d_dftfeBasePtr->getCell();
+    std::vector<double>              shift(3, 0.0);
+    for (unsigned int idim = 0; idim < 3; idim++)
+      {
+        shift[idim] = 0;
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
+          shift[idim] += cell[jdim][idim] / 2.0;
+      }
+
     for (unsigned int i = 0; i < atomLocationsCart.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        atomLocationsCart[i][j] = temp[i][j + 2];
+        atomLocationsCart[i][j] = temp[i][j + 2] + shift[j];
     return atomLocationsCart;
   }
 
   std::vector<std::vector<double>>
-  dftfeWrapper::getAtomLocationsFrac() const
+  dftfeWrapper::getAtomPositionsFrac() const
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,
