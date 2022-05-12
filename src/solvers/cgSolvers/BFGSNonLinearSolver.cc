@@ -99,7 +99,7 @@ namespace dftfe
              Pdx.data(),
              &one);
       double res = ddot_(&n, a.data(), &one, Pdx.data(), &one);
-      a = Pdx;
+      a          = Pdx;
       return res;
     }
 
@@ -152,22 +152,18 @@ namespace dftfe
     // Compute rank one symmetric update  P=P+faa^T.
     //
     void
-    computeSymmetricRankOneUpdate(double &f, std::vector<double> &a, std::vector<double> &P)
+    computeSymmetricRankOneUpdate(double &             f,
+                                  std::vector<double> &a,
+                                  std::vector<double> &P)
     {
-      const unsigned int one   = 1;
-      const char         uplo  = 'U';
-      const unsigned int n     = a.size();
+      const unsigned int one  = 1;
+      const char         uplo = 'U';
+      const unsigned int n    = a.size();
       if (n * n != P.size())
         {
           std::cout << "DEBUG check dimensions Pnorm" << std::endl;
         }
-        dsyr_(&uplo,
-              &n,
-              &f,
-              a.data(),
-              &one,
-              P.data(),
-              &n);
+      dsyr_(&uplo, &n, &f, a.data(), &one, P.data(), &n);
     }
 
 
@@ -417,11 +413,11 @@ namespace dftfe
     double              dxtHdx = internalBFGS::computePNorm(Hdx, d_hessian);
     double              dgtdx  = internalBFGS::dot(d_deltaXNew, delta_g);
     pcout << "DEBUG Hdx" << std::endl;
-        for (auto j = 0; j < d_numberUnknowns; ++j)
-          {
-            pcout << Hdx[j] << "  ";
-          }
-        pcout << std::endl;
+    for (auto j = 0; j < d_numberUnknowns; ++j)
+      {
+        pcout << Hdx[j] << "  ";
+      }
+    pcout << std::endl;
     if (d_stepAccepted)
       {
         double theta =
@@ -550,9 +546,9 @@ namespace dftfe
       {
         d_deltaXNew[i] *= d_trustRadius / d_normDeltaXnew;
       }
-    pcout << "DEBUG LInf dx scaled " << internalBFGS::computeLInfNorm(d_deltaXNew)
-          << std::endl;
-    double             gtdx = internalBFGS::dot(d_deltaXNew,d_gradient);
+    pcout << "DEBUG LInf dx scaled "
+          << internalBFGS::computeLInfNorm(d_deltaXNew) << std::endl;
+    double gtdx = internalBFGS::dot(d_deltaXNew, d_gradient);
     pcout << "DEBUG gtdx " << gtdx << std::endl;
     if (d_stepAccepted)
       {
@@ -571,8 +567,8 @@ namespace dftfe
   void
   BFGSNonLinearSolver::checkWolfe()
   {
-    double             gtdx = internalBFGS::dot(d_deltaXNew,d_gradient);
-    double gntdx = internalBFGS::dot(d_deltaXNew,d_gradientNew);
+    double gtdx  = internalBFGS::dot(d_deltaXNew, d_gradient);
+    double gntdx = internalBFGS::dot(d_deltaXNew, d_gradientNew);
 
     d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
     d_wolfeCurvature     = std::abs(gntdx) < 0.9 * std::abs(gtdx);
@@ -593,7 +589,8 @@ namespace dftfe
     else if (d_stepAccepted)
       {
         double ampfactor =
-          internalBFGS::computeLInfNorm(d_deltaX) > d_trustRadius + 1e-8 ? 1.5 : 1.1;
+          internalBFGS::computeLInfNorm(d_deltaX) > d_trustRadius + 1e-8 ? 1.5 :
+                                                                           1.1;
         if (d_wolfeSatisfied)
           {
             d_trustRadius = 2 * ampfactor * d_trustRadius < d_trustRadiusMax ?
@@ -631,7 +628,7 @@ namespace dftfe
       }
     else
       {
-        double             gtdx = internalBFGS::dot(d_deltaX,d_gradient);
+        double gtdx = internalBFGS::dot(d_deltaX, d_gradient);
 
         d_trustRadius =
           -0.5 * gtdx * d_trustRadius / ((d_valueNew[0] - d_value[0]) - gtdx);

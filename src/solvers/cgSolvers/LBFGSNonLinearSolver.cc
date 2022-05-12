@@ -262,7 +262,8 @@ namespace dftfe
       }
 
     double mu = internalLBFGS::dot(delta_g, testDisplacment) /
-                internalLBFGS::computePNorm(testDisplacment, d_preconditioner);*/
+                internalLBFGS::computePNorm(testDisplacment,
+    d_preconditioner);*/
     double mu = 1 / 0.21;
     pcout << "DEBUG mu " << mu << std::endl;
     if (mu > 1)
@@ -320,10 +321,11 @@ namespace dftfe
       {
         for (int i = 0; i < d_numberUnknowns; ++i)
           {
-            gradient[i] *= internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                         d_deltaGq[d_maxNumPastSteps - 1]) /
-                           internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                         d_deltaGq[d_maxNumPastSteps - 1]);
+            gradient[i] *=
+              internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]);
           }
       }
     pcout << "DEBUG gradient scaled" << std::endl;
@@ -365,8 +367,8 @@ namespace dftfe
             d_deltaXNew[i] *= d_alpha;
           }
       }
-    pcout << "DEBUG LInf dx scaled " << internalLBFGS::computeLInfNorm(d_deltaXNew)
-          << std::endl;
+    pcout << "DEBUG LInf dx scaled "
+          << internalLBFGS::computeLInfNorm(d_deltaXNew) << std::endl;
     pcout << "DEBUG gtdx " << internalLBFGS::dot(d_deltaXNew, d_gradient)
           << std::endl;
     if (d_stepAccepted)
