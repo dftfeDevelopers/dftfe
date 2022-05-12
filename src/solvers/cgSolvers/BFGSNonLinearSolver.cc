@@ -43,6 +43,7 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
     d_isBFGSRestartDueToSmallRadius      = false;
+    d_isReset                            = 0;
     d_useSingleAtomSolutionsInitialGuess = false;
     d_trustRadiusInitial                 = trustRadius_initial;
     d_trustRadiusMax                     = trustRadius_maximum;
@@ -397,7 +398,8 @@ namespace dftfe
   }
 
   //
-  // Update Hessian according to damped BFGS rule: Procedure 18.2 of Nocedal and Wright.
+  // Update Hessian according to damped BFGS rule: Procedure 18.2 of Nocedal and
+  // Wright.
   //
   void
   BFGSNonLinearSolver::updateHessian()
@@ -439,10 +441,10 @@ namespace dftfe
       }
   }
 
-//
-// Scale hessian according to eqn 6.20 of Nocedal and Wright.
-// TODO : Figure out the proper scaling of the preconditoner
-//
+  //
+  // Scale hessian according to eqn 6.20 of Nocedal and Wright.
+  // TODO : Figure out the proper scaling of the preconditoner
+  //
   void
   BFGSNonLinearSolver::scaleHessian()
   {
@@ -546,7 +548,8 @@ namespace dftfe
   }
 
   //
-  // Compute the final update step using the trust radius and whether or not the previous step was accepted.
+  // Compute the final update step using the trust radius and whether or not the
+  // previous step was accepted.
   //
   void
   BFGSNonLinearSolver::computeStep()
@@ -572,10 +575,10 @@ namespace dftfe
       }
   }
 
-//
-// Check if the step satifies the Strong Wolfe conditons
-// TODO : Allow user to change wolfe conditon parameters?
-//
+  //
+  // Check if the step satifies the Strong Wolfe conditons
+  // TODO : Allow user to change wolfe conditon parameters?
+  //
   void
   BFGSNonLinearSolver::checkWolfe()
   {
@@ -589,10 +592,10 @@ namespace dftfe
           << " " << d_wolfeSatisfied << " " << std::endl;
   }
 
-//
-// Estimate the trust radius for the next step based on the previous step.
-// Check for trust radius max/min conditons and reset BFGS if needed
-//
+  //
+  // Estimate the trust radius for the next step based on the previous step.
+  // Check for trust radius max/min conditons and reset BFGS if needed
+  //
   void
   BFGSNonLinearSolver::computeTrustRadius(nonlinearSolverProblem &problem)
   {
@@ -638,6 +641,7 @@ namespace dftfe
                                   d_trustRadius :
                                   d_normDeltaXnew;
                 d_isBFGSRestartDueToSmallRadius = true;
+                d_isReset                       = d_isReset == 1 ? 2 : 1;
               }
           }
       }
@@ -663,6 +667,7 @@ namespace dftfe
             d_trustRadius =
               d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
             d_isBFGSRestartDueToSmallRadius = true;
+            d_isReset                       = d_isReset == 1 ? 2 : 1;
           }
       }
     d_trustRadius =
@@ -807,6 +812,10 @@ namespace dftfe
             computeNewtonStep();
           }
         computeTrustRadius(problem);
+        MPI_Bcast(&(d_isReset), 1, MPI_INT, 0, mpi_communicator);
+        if (d_isReset == 2)
+          break;
+
         computeStep();
 
         /*for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
@@ -867,6 +876,8 @@ namespace dftfe
 
     if (d_iter == d_maxNumberIterations)
       returnValue = MAX_ITER_REACHED;
+    if (d_isReset == 2)
+      returnValue = FAILURE;
 
     //
     // final output
