@@ -73,7 +73,7 @@ namespace dftfe
     }
 
     //
-    // Compute Weighted L2-norm squarre for symmetric matrix P  and product Pa.
+    // Compute Weighted L2-norm square a^TPa  and product Pa.
     //
     double
     computePNorm(std::vector<double> &a, std::vector<double> &P)
@@ -359,7 +359,7 @@ namespace dftfe
 
 
   //
-  // initialize hessian
+  // initialize hessian, either preconditioner or identity matrix
   //
   void
   BFGSNonLinearSolver::initializeHessian(nonlinearSolverProblem &problem)
@@ -384,7 +384,7 @@ namespace dftfe
       {
         d_Srfo[i] /= detS;
       }
-    pcout << "DEBUG Hessian init" << std::endl;
+    /*pcout << "DEBUG Hessian init" << std::endl;
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         for (auto j = 0; j < d_numberUnknowns; ++j)
@@ -392,12 +392,12 @@ namespace dftfe
             pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
           }
         pcout << std::endl;
-      }
+      }*/
     d_hessian = d_Srfo;
   }
 
   //
-  // Update Hessian.
+  // Update Hessian according to damped BFGS rule: Procedure 18.2 of Nocedal and Wright.
   //
   void
   BFGSNonLinearSolver::updateHessian()
@@ -412,12 +412,12 @@ namespace dftfe
     std::vector<double> Hdx    = d_deltaXNew;
     double              dxtHdx = internalBFGS::computePNorm(Hdx, d_hessian);
     double              dgtdx  = internalBFGS::dot(d_deltaXNew, delta_g);
-    pcout << "DEBUG Hdx" << std::endl;
+    /*pcout << "DEBUG Hdx" << std::endl;
     for (auto j = 0; j < d_numberUnknowns; ++j)
       {
         pcout << Hdx[j] << "  ";
       }
-    pcout << std::endl;
+    pcout << std::endl;*/
     if (d_stepAccepted)
       {
         double theta =
@@ -439,6 +439,10 @@ namespace dftfe
       }
   }
 
+//
+// Scale hessian according to eqn 6.20 of Nocedal and Wright.
+// TODO : Figure out the proper scaling of the preconditoner
+//
   void
   BFGSNonLinearSolver::scaleHessian()
   {
@@ -449,7 +453,7 @@ namespace dftfe
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
 
-    pcout << "DEBUG Hessian init" << std::endl;
+    /*pcout << "DEBUG Hessian init" << std::endl;
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         for (auto j = 0; j < d_numberUnknowns; ++j)
@@ -457,7 +461,7 @@ namespace dftfe
             pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
           }
         pcout << std::endl;
-      }
+      }*/
     if (internalBFGS::dot(delta_g, d_deltaXNew) > 0)
       {
         for (auto i = 0; i < d_hessian.size(); ++i)
@@ -467,7 +471,7 @@ namespace dftfe
           }
         d_hessianScaled = true;
       }
-    pcout << "DEBUG Hessian scaled" << std::endl;
+    /*pcout << "DEBUG Hessian scaled" << std::endl;
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         for (auto j = 0; j < d_numberUnknowns; ++j)
@@ -475,11 +479,11 @@ namespace dftfe
             pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
           }
         pcout << std::endl;
-      }
+      }*/
   }
 
   //
-  // Compute step
+  // Compute step using the Rational Function Method
   //
   void
   BFGSNonLinearSolver::computeRFOStep()
@@ -523,7 +527,9 @@ namespace dftfe
   }
 
 
-
+  //
+  // Compute the Quasi-Newton Step
+  //
   void
   BFGSNonLinearSolver::computeNewtonStep()
   {
@@ -539,6 +545,9 @@ namespace dftfe
           << std::endl;
   }
 
+  //
+  // Compute the final update step using the trust radius and whether or not the previous step was accepted.
+  //
   void
   BFGSNonLinearSolver::computeStep()
   {
@@ -563,7 +572,10 @@ namespace dftfe
       }
   }
 
-
+//
+// Check if the step satifies the Strong Wolfe conditons
+// TODO : Allow user to change wolfe conditon parameters?
+//
   void
   BFGSNonLinearSolver::checkWolfe()
   {
@@ -577,7 +589,10 @@ namespace dftfe
           << " " << d_wolfeSatisfied << " " << std::endl;
   }
 
-
+//
+// Estimate the trust radius for the next step based on the previous step.
+// Check for trust radius max/min conditons and reset BFGS if needed
+//
   void
   BFGSNonLinearSolver::computeTrustRadius(nonlinearSolverProblem &problem)
   {
@@ -738,7 +753,7 @@ namespace dftfe
         pcout << "DEBUG Compute H0 " << std::endl;
       }
     else
-      // NEED TO UPDATE
+      // TODO : Implement restart
       {
         // load(checkpointFileName);
         MPI_Barrier(mpi_communicator);
@@ -794,8 +809,8 @@ namespace dftfe
         computeTrustRadius(problem);
         computeStep();
 
-        for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
-          pcout << "step: " << d_deltaXNew[i] << std::endl;
+        /*for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
+          pcout << "step: " << d_deltaXNew[i] << std::endl;*/
         pcout << "DEBUG End Compute step " << std::endl;
         updateSolution(d_updateVector, problem);
         pcout << "DEBUG End update step " << std::endl;
