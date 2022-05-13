@@ -39,6 +39,12 @@ namespace dftfe
   void
   geometryOptimizationClass::runOpt()
   {
+    AssertThrow(
+      d_dftPtr->getParametersObject().isIonOpt ||
+        d_dftPtr->getParametersObject().isCellOpt,
+      ExcMessage(
+        "DFT-FE Error: DFT-FE SOLVER MODE is set to OPT but ION OPT and CELL OPT are set to FALSE."));
+
     if (!(d_dftPtr->getParametersObject().chkType == 1 &&
           d_dftPtr->getParametersObject().restartFromChk))
       {
