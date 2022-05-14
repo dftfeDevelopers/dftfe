@@ -24,10 +24,9 @@
 namespace dftfe
 {
   /**
-   * @brief Concrete class implementing Polak-Ribiere-Polyak Conjugate Gradient non-linear
-   * algebraic solver.
+   * @brief Class implementing a modified BFGS optimization scheme
    *
-   * @author Sambit Das
+   * @author Nikhil Kodali
    */
   class BFGSNonLinearSolver : public nonLinearSolver
   {
@@ -35,12 +34,15 @@ namespace dftfe
     /**
      * @brief Constructor.
      *
-     * @param tolerance Tolerance (relative) required for convergence.
+     * @param usePreconditioner Boolean parameter specifying whether or not to use the preconditioner.
+     * @param useRFOStep Boolean parameter specifying whether or not the RFO step is used.
+     * @param tolerance Tolerance on gradient required for convergence.
      * @param maxNumberIterations Maximum number of iterations.
      * @param debugLevel Debug output level:
      *                   0 - no debug output
      *                   1 - limited debug output
      *                   2 - all debug output.
+     * @param mpi_comm_parent The mpi communicator used.
      * @param trustRadius_maximum Maximum trust region radius.
      * @param trustRadius_initial Initial trust region radius.
      * @param trustRadius_minimum mimimum trust region radius (will reset BFGS).
@@ -61,7 +63,7 @@ namespace dftfe
     ~BFGSNonLinearSolver();
 
     /**
-     * @brief Solve non-linear problem using Polak-Ribiere-Polyak nonlinar conjugate gradient method.
+     * @brief Solve non-linear problem using a modified BFGS method.
      *
      * @param problem[in] nonlinearSolverProblem object.
      * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
@@ -79,64 +81,58 @@ namespace dftfe
 
   private:
     /**
-     * @brief Initialize Hessian.
+     * @brief initialize hessian, either preconditioner or identity matrix.
      */
     void
     initializeHessian(nonlinearSolverProblem &problem);
 
     /**
-     * @brief Update Hessian.
+     * @brief Update Hessian according to damped BFGS rule: Procedure 18.2 of Nocedal and Wright.
      */
     void
     updateHessian();
+
+    /**
+     * @brief Scale hessian according to eqn 6.20 of Nocedal and Wright.
+     */
     void
     scaleHessian();
 
     /**
-     * @brief Compute Lambda.
-     */
-    void
-    computeLambda();
-    /**
-     * @brief Compute Step.
+     * @brief Check if the step satifies the Strong Wolfe conditons.
      */
     void
     checkWolfe();
+
+    /**
+     * @brief Compute step using the Rational Function Method.
+     */
     void
     computeRFOStep();
+
+    /**
+     * @brief Compute the Quasi-Newton Step.
+     */
     void
     computeNewtonStep();
+
+    /**
+     * @brief Compute the final update step using the trust radius and whether or not the previous step was accepted.
+     */
     void
     computeStep();
-    void
-    computepredDec();
+
+    /**
+     * @brief Estimate the trust radius for the next step based on the previous step and check for trust radius max/min conditons and reset BFGS if needed.
+     */
     void
     computeTrustRadius(nonlinearSolverProblem &problem);
-    /**
-     * @brief Compute L2-norm.
-     *
-     * @return Value of the L2-norm.
-     */
-    double
-    computeL2Norm(std::vector<double> vec) const;
 
-    double
-    computeLInfNorm(std::vector<double> vec) const;
 
     /**
-     * @brief Compute the total number of unknowns in all
-     * processors.
+     * @brief Update solution x -> x + step.
      *
-     * @return Number of unknowns in all processors.
-     */
-    unsigned int
-    computeTotalNumberUnknowns() const;
-
-    /**
-     * @brief Update solution x -> x + \alpha direction.
-     *
-     * @param alpha Scalar value.
-     * @param direction Direction vector.
+     * @param step update step vector.
      * @param problem nonlinearSolverProblem object.
      *
      * @return bool true if valid update and false if increment bound exceeded
@@ -147,73 +143,67 @@ namespace dftfe
                    nonlinearSolverProblem &   problem);
 
     /**
-     * @brief Create checkpoint file for current state of the cg solver.
+     * @brief Create checkpoint file for current state of the BFGS solver.
      *
      */
     void
     save(const std::string &checkpointFileName);
 
     /**
-     * @brief Load cg solver state from checkpoint file.
+     * @brief Load BFGS solver state from checkpoint file.
      *
      */
-    // void
-    // load(const std::string &checkpointFileName);
+    void
+    load(const std::string &checkpointFileName);
 
     /// storage for the value and gradient of the nonlinear problem in the
-    /// current bfgs step
+    /// current bfgs step.
     std::vector<double> d_gradient, d_value;
 
     /// storage for the value and gradient of the nonlinear problem evaluated at
-    /// the end of the current bfgs step
+    /// the end of the current bfgs step.
     std::vector<double> d_gradientNew, d_valueNew;
 
-    /// Storage for the predicted decrease
-    double d_predDec;
-    /// storage for the update vector computed in the current bfgs step
+    /// storage for the step taken in last BFGS step, step computed in the
+    /// corrent BFGS step and the update vector computed in the current bfgs
+    /// step.
     std::vector<double> d_deltaX, d_deltaXNew, d_updateVector;
 
-    /// storage for number of unknowns to be solved for in the nonlinear problem
+    /// storage for number of unknowns to be solved for in the nonlinear
+    /// problem.
     unsigned int d_numberUnknowns;
 
     /// storage for current bfgs iteration count
     unsigned int d_iter;
 
-    /// storage for the S matrix in RFO framework, initialized to starting
+    /// storage for the S matrix in RFO framework, initialized to starting.
     /// Hessian Guess
     std::vector<double> d_Srfo;
 
-    /// storage for the hessian in current bfgs step
+    /// storage for the hessian in current bfgs step.
     std::vector<double> d_hessian;
 
-    /// storage for the rfo update parameter
-    double d_lambda;
-
-    /// storage for inf norm of gradient
+    /// storage for inf norm of gradient and the update step.
     double d_gradMax, d_normDeltaXnew;
 
-    /// storage for trust region parameters
+    /// storage for trust region parameters.
     double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin,
       d_trustRadius;
 
-    /// boolean parameter for step accepteance
+    /// boolean parameter for step accepteance and Wolfe conditions.
     bool d_stepAccepted, d_wolfeCurvature, d_wolfeSufficientDec,
       d_wolfeSatisfied;
-    /**
-     * Storage for vector of flags (0 or 1) with size equal to the size of the
-     * solution vector of the nonlinear problem. If the flag value is 1 for an
-     * index in the vector, the corresponding entry in the solution vector is
-     * allowed to be updated and vice-versa if flag value is 0 for an index.
-     */
-    std::vector<unsigned int> d_unknownCountFlag;
 
-
-    /// flag which restarts bfgs if increment to the solution vector
-    /// is too small
-    bool d_isBFGSRestartDueToSmallRadius, d_hessianScaled;
-    int  d_isReset;
-
+    /// flag which restarts bfgs if increment to the solution vector is too
+    /// small and a flag to check if hessian is scaled.
     ///
+    bool d_isBFGSRestartDueToSmallRadius, d_hessianScaled;
+
+    /// Flag to store the reset state, 0 if step is accepted, 1 if reset occured
+    /// and no steps are accepted, 2 if two resets occur without step being
+    /// accepted (failure of BFGS).
+    int d_isReset;
+
     bool       d_useSingleAtomSolutionsInitialGuess;
     const bool d_useRFOStep, d_usePreconditioner;
 

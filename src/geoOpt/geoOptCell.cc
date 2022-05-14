@@ -237,12 +237,47 @@ namespace dftfe
 
     if (d_dftPtr->getParametersObject().chkType >= 1 &&
         d_dftPtr->getParametersObject().restartFromChk)
-      pcout
-        << " Re starting Cell stress relaxation using nonlinear CG solver... "
-        << std::endl;
+      {
+        if (d_dftPtr->getParametersObject().cellOptSolver == "CGPRP")
+          {
+            pcout
+              << " Re starting Cell stress relaxation using nonlinear CG solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
+          {
+            pcout
+              << " Re starting Cell stress relaxation using nonlinear BFGS solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().cellOptSolver == "LBFGSv2")
+          {
+            pcout
+              << " Re starting Cell stress relaxation using nonlinear LBFGS solver... "
+              << std::endl;
+          }
+      }
     else
-      pcout << " Starting Cell stress relaxation using nonlinear CG solver... "
-            << std::endl;
+      {
+        if (d_dftPtr->getParametersObject().cellOptSolver == "CGPRP")
+          {
+            pcout
+              << " Starting Cell stress relaxation using nonlinear CG solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
+          {
+            pcout
+              << " Starting Cell stress relaxation using nonlinear BFGS solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().cellOptSolver == "LBFGSv2")
+          {
+            pcout
+              << " Starting Cell stress relaxation using nonlinear LBFGS solver... "
+              << std::endl;
+          }
+      }
     if (d_dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
@@ -270,9 +305,28 @@ namespace dftfe
           cgReturn = cgSolver.solve(*this, std::string("cellRelaxCG.chk"));
         else if (d_dftPtr->getParametersObject().cellOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this);
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
+          cgReturn =
+            bfgsSolver.solve(*this, std::string("cellRelaxBFGS.chk"), true);
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 !d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
+          cgReturn = bfgsSolver.solve(*this, std::string("cellRelaxBFGS.chk"));
         else if (d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
           cgReturn = bfgsSolver.solve(*this);
-        else
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().cellOptSolver == "LBFGSv2")
+          cgReturn =
+            lbfgsSolver.solve(*this, std::string("cellRelaxLBFGS.chk"), true);
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 !d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().cellOptSolver == "LBFGSv2")
+          cgReturn =
+            lbfgsSolver.solve(*this, std::string("cellRelaxLBFGS.chk"));
+        else if (d_dftPtr->getParametersObject().cellOptSolver == "LBFGSv2")
           cgReturn = lbfgsSolver.solve(*this);
         if (cgReturn == nonLinearSolver::SUCCESS)
           {

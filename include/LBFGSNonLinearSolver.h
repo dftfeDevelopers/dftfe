@@ -24,10 +24,9 @@
 namespace dftfe
 {
   /**
-   * @brief Concrete class implementing Polak-Ribiere-Polyak Conjugate Gradient non-linear
-   * algebraic solver.
+   * @brief Class implementing LBFGS optimzation method.
    *
-   * @author Sambit Das
+   * @author Nikhil Kodali
    */
   class LBFGSNonLinearSolver : public nonLinearSolver
   {
@@ -35,12 +34,16 @@ namespace dftfe
     /**
      * @brief Constructor.
      *
-     * @param tolerance Tolerance (relative) required for convergence.
+     * @param usePreconditioner Boolean parameter specifying whether or not to use the preconditioner.
+     * @param tolerance Tolerance on gradient required for convergence.
+     * @param maxUpdate Maximum allowed step length in any direction.
      * @param maxNumberIterations Maximum number of iterations.
+     * @param maxNumPastSteps Number of previous steps stored by the LBFGS solver.
      * @param debugLevel Debug output level:
      *                   0 - no debug output
      *                   1 - limited debug output
      *                   2 - all debug output.
+     * @param mpi_comm_parent The mpi communicator used.
      */
     LBFGSNonLinearSolver(const bool         usePreconditioner,
                          const double       tolerance,
@@ -56,7 +59,7 @@ namespace dftfe
     ~LBFGSNonLinearSolver();
 
     /**
-     * @brief Solve non-linear problem using Polak-Ribiere-Polyak nonlinar conjugate gradient method.
+     * @brief Solve non-linear problem using LBFGS method.
      *
      * @param problem[in] nonlinearSolverProblem object.
      * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
@@ -84,36 +87,41 @@ namespace dftfe
      */
     void
     scalePreconditioner(nonlinearSolverProblem &problem);
+
     /**
-     * @brief Compute LBFGS step
+     * @brief Compute LBFGS step.
      */
     void
     computeStep();
+
     /**
-     * @brief Compute Update Vector
+     * @brief Compute Update Vector.
      */
     void
     computeUpdateStep();
+
     /**
-     * @brief Update the stored history, damped LBFGS
+     * @brief Update the stored history, damped LBFGS.
      */
     void
     updateHistory();
+
     /**
-     * @brief Test if the step satisfies strong Wolfe conditions
+     * @brief Test if the step satisfies strong Wolfe conditions.
      */
     void
     checkWolfe();
+
     /**
-     * @brief Compute scaling factor for the step
+     * @brief Compute scaling factor for the step.
      */
     void
     computeStepScale(nonlinearSolverProblem &problem);
 
     /**
-     * @brief Update solution x -> x + \alpha direction.
+     * @brief Update solution x -> x + step.
      *
-     * @param step the update step.
+     * @param step update step vector.
      * @param problem nonlinearSolverProblem object.
      *
      * @return bool true if valid update and false if increment bound exceeded
@@ -124,18 +132,18 @@ namespace dftfe
                    nonlinearSolverProblem &   problem);
 
     /**
-     * @brief Create checkpoint file for current state of the cg solver.
+     * @brief Create checkpoint file for current state of the LBFGS solver.
      *
      */
     void
     save(const std::string &checkpointFileName);
 
     /**
-     * @brief Load cg solver state from checkpoint file.
+     * @brief Load LBFGS solver state from checkpoint file.
      *
      */
-    // void
-    // load(const std::string &checkpointFileName);
+    void
+    load(const std::string &checkpointFileName);
 
     /// storage for the value and gradient of the nonlinear problem in the
     /// current bfgs step
@@ -145,37 +153,47 @@ namespace dftfe
     /// the end of the current bfgs step
     std::vector<double> d_gradientNew, d_valueNew;
 
-    /// Storage for the predicted decrease
-    double d_scalingFactor;
-    /// storage for the update vector computed in the current bfgs step
-    std::vector<double> d_deltaX, d_deltaXNew, d_updateVector, d_preconditioner;
+    /// storage for the step taken in last BFGS step, step computed in the
+    /// corrent BFGS step and the update vector computed in the current bfgs
+    /// step.
+    std::vector<double> d_deltaX, d_deltaXNew, d_updateVector;
 
-    /// storage for number of unknowns to be solved for in the nonlinear problem
+    /// storage for the preconditioner.
+    std::vector<double> d_preconditioner;
+
+    /// storage for number of unknowns to be solved for in the nonlinear
+    /// problem.
     unsigned int d_numberUnknowns;
 
-    /// storage for current bfgs iteration count
+    /// storage for current bfgs iteration count.
     unsigned int d_iter;
 
-    /// Storage for history
+    /// storage for history.
     std::deque<std::vector<double>> d_deltaGq, d_deltaXq;
     std::deque<double>              d_rhoq;
 
+    /// storage for the maximum number of past steps to be stored.
     const int d_maxNumPastSteps;
-    int       d_numPastSteps;
-    /// storage for inf norm of gradient
-    double d_gradMax, d_normDeltaXnew, d_maxStepLength;
 
-    /// storage for trust region parameters
+    /// storage for the number of past steps currently stored.
+    int d_numPastSteps;
+
+    /// storage for inf norms of gradient and the update step.
+    double d_gradMax, d_normDeltaXnew;
+
+    /// storage for the maximum allowed step length.
+    double d_maxStepLength;
+
+    /// storage for backtracking line search parameter.
     double d_alpha;
 
-    /// boolean parameter for step accepteance
+    /// boolean parameter for step accepteance and Wolfe conditions.
     bool d_stepAccepted, d_wolfeCurvature, d_wolfeSufficientDec,
       d_wolfeSatisfied;
 
     /// flag for using the preconditioner
     const bool d_usePreconditioner;
 
-    ///
     bool d_useSingleAtomSolutionsInitialGuess, d_noHistory;
 
     // parallel objects

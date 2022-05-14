@@ -162,11 +162,51 @@ namespace dftfe
 
     if (d_dftPtr->getParametersObject().chkType >= 1 &&
         d_dftPtr->getParametersObject().restartFromChk)
-      pcout << "Re starting Ion force relaxation using nonlinear CG solver... "
-            << std::endl;
+      {
+        if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP" ||
+            d_dftPtr->getParametersObject().ionOptSolver == "CGDESCENT")
+          {
+            pcout
+              << " Re starting Ion force relaxation using nonlinear CG solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+          {
+            pcout
+              << " Re starting Ion force relaxation using nonlinear BFGS solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2" ||
+                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+          {
+            pcout
+              << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
+              << std::endl;
+          }
+      }
     else
-      pcout << "Starting Ion force relaxation using nonlinear CG solver... "
-            << std::endl;
+      {
+        if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP" ||
+            d_dftPtr->getParametersObject().ionOptSolver == "CGDESCENT")
+          {
+            pcout
+              << " Starting Ion force relaxation using nonlinear CG solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+          {
+            pcout
+              << " Starting Ion force relaxation using nonlinear BFGS solver... "
+              << std::endl;
+          }
+        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2" ||
+                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+          {
+            pcout
+              << " Starting Ion force relaxation using nonlinear LBFGS solver... "
+              << std::endl;
+          }
+      }
     if (d_dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
@@ -208,9 +248,36 @@ namespace dftfe
             cg_descent.set_memory(memory);
             cgSuccess = cg_descent.run(*this);
           }
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+          {
+            cgReturn =
+              bfgsSolver.solve(*this, std::string("ionRelaxBFGS.chk"), true);
+          }
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 !d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+          {
+            cgReturn = bfgsSolver.solve(*this, std::string("ionRelaxBFGS.chk"));
+          }
         else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
           {
             cgReturn = bfgsSolver.solve(*this);
+          }
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
+          {
+            cgReturn =
+              lbfgsSolver.solve(*this, std::string("ionRelaxLBFGS.chk"), true);
+          }
+        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
+                 !d_dftPtr->getParametersObject().restartFromChk &&
+                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
+          {
+            cgReturn =
+              lbfgsSolver.solve(*this, std::string("ionRelaxLBFGS.chk"));
           }
         else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
           {
@@ -383,51 +450,7 @@ namespace dftfe
                           const std::vector<double> &gradient) const
   {
     const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
-    double    rCutNNList        = 1.0;
     std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
-    bool                             allAtomsHaveNN = false;
-    /*while (!allAtomsHaveNN)
-      {
-        for (int i = 0; i < numberGlobalAtoms; ++i)
-          {
-            for (int j = i + 1; j < numberGlobalAtoms; ++j)
-              {
-                double rij = 0;
-                for (int k = 2; k < 5; ++k)
-                  {
-                    rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
-                            d_dftPtr->getAtomLocationsCart()[j][k]) *
-                           (d_dftPtr->getAtomLocationsCart()[i][k] -
-                            d_dftPtr->getAtomLocationsCart()[j][k]);
-                  }
-                rij = std::sqrt(rij);
-                if (rij <= rCutNNList)
-                  {
-                    NNdistances[i].push_back(rij);
-                    NNdistances[j].push_back(rij);
-                  }
-              }
-          }
-        allAtomsHaveNN = true;
-        for (int i = 0; i < numberGlobalAtoms; ++i)
-          {
-            if (NNdistances[i].size() == 0)
-              {
-                allAtomsHaveNN = false;
-                rCutNNList *= (1.0 + std::sqrt(5.0)) / 2.0;
-              }
-          }
-      }
-    double rNN = 0;
-    for (int i = 0; i < numberGlobalAtoms; ++i)
-      {
-        double rijMin = NNdistances[i][0];
-        for (int j = 1; j < NNdistances[i].size(); ++j)
-          {
-            rijMin = rijMin < NNdistances[i][j] ? rijMin : NNdistances[i][j];
-          }
-        rNN = rNN > rijMin ? rNN : rijMin;
-      }*/
     double rNN = 0;
     for (int i = 0; i < numberGlobalAtoms; ++i)
       {

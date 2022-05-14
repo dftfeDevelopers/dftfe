@@ -520,6 +520,118 @@ namespace dftfe
     return true;
   }
 
+  //
+  // save checkpoint files.
+  //
+  void
+  LBFGSNonLinearSolver::save(const std::string &checkpointFileName)
+  {
+    std::vector<std::vector<double>> data;
+    for (unsigned int i = 0; i < d_deltaX.size(); ++i)
+      data.push_back(std::vector<double>(1, d_deltaX[i]));
+    for (unsigned int i = 0; i < d_gradient.size(); ++i)
+      data.push_back(std::vector<double>(1, d_gradient[i]));
+    for (unsigned int i = 0; i < d_deltaXq.size(); ++i)
+      {
+        for (unsigned int j = 0; j < d_deltaXq[i].size(); ++j)
+          {
+            data.push_back(std::vector<double>(1, d_deltaXq[i][j]));
+          }
+      }
+    for (unsigned int i = 0; i < d_deltaGq.size(); ++i)
+      {
+        for (unsigned int j = 0; j < d_deltaGq[i].size(); ++j)
+          {
+            data.push_back(std::vector<double>(1, d_deltaGq[i][j]));
+          }
+      }
+    for (unsigned int i = 0; i < d_deltaGq.size(); ++i)
+      {
+        data.push_back(std::vector<double>(1, d_rhoq[i]));
+      }
+
+    data.push_back(d_value);
+    data.push_back(std::vector<double>(1, d_alpha));
+    data.push_back(std::vector<double>(1, d_iter));
+    data.push_back(std::vector<double>(1, (double)d_stepAccepted));
+
+
+    dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
+  }
+
+
+  //
+  // load from checkpoint files.
+  //
+  void
+  LBFGSNonLinearSolver::load(const std::string &checkpointFileName)
+  {
+    std::vector<std::vector<double>> data;
+    dftUtils::readFile(1, data, checkpointFileName);
+    AssertThrow(
+      data.size() ==
+        (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+         d_maxNumPastSteps + 4),
+      dealii::ExcMessage(std::string(
+        "DFT-FE Error: data size of lbfgs solver checkpoint file is incorrect.")));
+
+    d_deltaX.resize(d_numberUnknowns, 0.0);
+    d_gradient.resize(d_numberUnknowns, 0.0);
+    d_deltaGq.resize(d_maxNumPastSteps);
+    d_deltaXq.resize(d_maxNumPastSteps);
+    d_rhoq.resize(d_maxNumPastSteps, 0.0);
+    d_value.resize(1);
+    for (int i = 0; i < d_maxNumPastSteps; ++i)
+      {
+        d_deltaGq[i].resize(d_numberUnknowns);
+        d_deltaXq[i].resize(d_numberUnknowns);
+      }
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      d_deltaX[i] = data[i][0];
+
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      d_gradient[i] = data[i + d_numberUnknowns][0];
+
+    for (unsigned int i = 0; i < d_deltaXq.size(); ++i)
+      {
+        for (unsigned int j = 0; j < d_deltaXq[i].size(); ++j)
+          {
+            d_deltaXq[i][j] =
+              data[j + i * d_deltaXq[i].size() + 2 * d_numberUnknowns][0];
+          }
+      }
+
+    for (unsigned int i = 0; i < d_deltaGq.size(); ++i)
+      {
+        for (unsigned int j = 0; j < d_deltaGq[i].size(); ++j)
+          {
+            d_deltaGq[i][j] = data[j + i * d_deltaGq[i].size() +
+                                   d_numberUnknowns * d_maxNumPastSteps +
+                                   2 * d_numberUnknowns][0];
+          }
+      }
+    for (unsigned int i = 0; i < d_rhoq.size(); ++i)
+      {
+        d_rhoq[i] = data[i + 2 * d_numberUnknowns * d_maxNumPastSteps +
+                         2 * d_numberUnknowns][0];
+      }
+
+    d_value[0] =
+      data[2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+           d_maxNumPastSteps][0];
+
+    d_alpha =
+      data[1 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+           d_maxNumPastSteps][0];
+
+    d_iter = (int)
+      data[2 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+           d_maxNumPastSteps][0];
+
+    d_stepAccepted =
+      data[3 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+           d_maxNumPastSteps][0] == 1.0;
+  }
 
   //
   // Perform problem minimization.
@@ -577,7 +689,7 @@ namespace dftfe
     else
       // NEED TO UPDATE
       {
-        // load(checkpointFileName);
+        load(checkpointFileName);
         MPI_Barrier(mpi_communicator);
         d_useSingleAtomSolutionsInitialGuess = true;
       }
@@ -659,6 +771,12 @@ namespace dftfe
             pcout << "DEBUG step rejected " << d_valueNew[0] - d_value[0]
                   << std::endl;
             d_deltaX = d_deltaXNew;
+          }
+        if (!checkpointFileName.empty())
+          {
+            MPI_Barrier(mpi_communicator);
+            save(checkpointFileName);
+            problem.save();
           }
       }
 

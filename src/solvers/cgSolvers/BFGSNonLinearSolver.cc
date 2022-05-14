@@ -360,7 +360,7 @@ namespace dftfe
 
 
   //
-  // initialize hessian, either preconditioner or identity matrix
+  // initialize hessian, either preconditioner or identity matrix.
   //
   void
   BFGSNonLinearSolver::initializeHessian(nonlinearSolverProblem &problem)
@@ -485,7 +485,7 @@ namespace dftfe
   }
 
   //
-  // Compute step using the Rational Function Method
+  // Compute step using the Rational Function Method.
   //
   void
   BFGSNonLinearSolver::computeRFOStep()
@@ -518,19 +518,17 @@ namespace dftfe
     std::vector<double> eigenVectors(d_numberUnknowns + 1, 0.0);
     internalBFGS::computeEigenSpectrumGeneralized(
       augmentedHessian, augmentedSrfo, 1, eigenValues, eigenVectors);
-    d_lambda = eigenValues[0];
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaXNew[i] = eigenVectors[i] / eigenVectors[d_numberUnknowns];
       }
     d_normDeltaXnew = internalBFGS::computeLInfNorm(d_deltaXNew);
-    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << " " << d_lambda
-          << std::endl;
+    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
   }
 
 
   //
-  // Compute the Quasi-Newton Step
+  // Compute the Quasi-Newton Step.
   //
   void
   BFGSNonLinearSolver::computeNewtonStep()
@@ -543,8 +541,7 @@ namespace dftfe
     internalBFGS::linearSolve(d_hessian, d_deltaXNew);
 
     d_normDeltaXnew = internalBFGS::computeLInfNorm(d_deltaXNew);
-    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << " " << d_lambda
-          << std::endl;
+    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
   }
 
   //
@@ -576,7 +573,7 @@ namespace dftfe
   }
 
   //
-  // Check if the step satifies the Strong Wolfe conditons
+  // Check if the step satifies the Strong Wolfe conditons.
   // TODO : Allow user to change wolfe conditon parameters?
   //
   void
@@ -704,6 +701,75 @@ namespace dftfe
     return true;
   }
 
+  //
+  // save checkpoint files.
+  //
+  void
+  BFGSNonLinearSolver::save(const std::string &checkpointFileName)
+  {
+    std::vector<std::vector<double>> data;
+    for (unsigned int i = 0; i < d_deltaX.size(); ++i)
+      data.push_back(std::vector<double>(1, d_deltaX[i]));
+    for (unsigned int i = 0; i < d_gradient.size(); ++i)
+      data.push_back(std::vector<double>(1, d_gradient[i]));
+    for (unsigned int i = 0; i < d_hessian.size(); ++i)
+      data.push_back(std::vector<double>(1, d_hessian[i]));
+    for (unsigned int i = 0; i < d_Srfo.size(); ++i)
+      data.push_back(std::vector<double>(1, d_Srfo[i]));
+    data.push_back(d_value);
+    data.push_back(std::vector<double>(1, d_trustRadius));
+    data.push_back(std::vector<double>(1, d_iter));
+    data.push_back(std::vector<double>(1, (double)d_stepAccepted));
+
+
+    dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
+  }
+
+
+  //
+  // load from checkpoint files.
+  //
+  void
+  BFGSNonLinearSolver::load(const std::string &checkpointFileName)
+  {
+    std::vector<std::vector<double>> data;
+    dftUtils::readFile(1, data, checkpointFileName);
+    AssertThrow(
+      data.size() ==
+        (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_numberUnknowns + 4),
+      dealii::ExcMessage(std::string(
+        "DFT-FE Error: data size of bfgs solver checkpoint file is incorrect.")));
+
+    d_deltaX.resize(d_numberUnknowns);
+    d_gradient.resize(d_numberUnknowns);
+    d_hessian.resize(d_numberUnknowns * d_numberUnknowns);
+    d_Srfo.resize(d_numberUnknowns * d_numberUnknowns);
+    d_value.resize(1);
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      d_deltaX[i] = data[i][0];
+
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      d_gradient[i] = data[i + d_numberUnknowns][0];
+
+    for (unsigned int i = 0; i < d_numberUnknowns * d_numberUnknowns; ++i)
+      d_hessian[i] = data[i + 2 * d_numberUnknowns][0];
+
+    for (unsigned int i = 0; i < d_numberUnknowns * d_numberUnknowns; ++i)
+      d_Srfo[i] =
+        data[i + 2 * d_numberUnknowns + d_numberUnknowns * d_numberUnknowns][0];
+
+    d_value[0] =
+      data[2 * d_numberUnknowns + 2 * d_numberUnknowns * d_numberUnknowns][0];
+
+    d_trustRadius = data[1 + 2 * d_numberUnknowns +
+                         2 * d_numberUnknowns * d_numberUnknowns][0];
+
+    d_iter = (int)data[2 + 2 * d_numberUnknowns +
+                       2 * d_numberUnknowns * d_numberUnknowns][0];
+
+    d_stepAccepted = data[3 + 2 * d_numberUnknowns +
+                          2 * d_numberUnknowns * d_numberUnknowns][0] == 1.0;
+  }
 
   //
   // Perform problem minimization.
@@ -722,11 +788,6 @@ namespace dftfe
     // get total number of unknowns in the problem.
     //
     d_numberUnknowns = problem.getNumberUnknowns();
-
-    //
-    // resize d_unknownCountFlag with numberUnknown and initialize to 1
-    //
-    d_unknownCountFlag.resize(d_numberUnknowns, 1);
 
     //
     // allocate space for step, gradient and new gradient.
@@ -760,7 +821,7 @@ namespace dftfe
     else
       // TODO : Implement restart
       {
-        // load(checkpointFileName);
+        load(checkpointFileName);
         MPI_Barrier(mpi_communicator);
         d_useSingleAtomSolutionsInitialGuess = true;
       }
@@ -866,6 +927,12 @@ namespace dftfe
             pcout << "DEBUG step rejected " << d_valueNew[0] - d_value[0]
                   << std::endl;
             d_deltaX = d_deltaXNew;
+          }
+        if (!checkpointFileName.empty())
+          {
+            MPI_Barrier(mpi_communicator);
+            save(checkpointFileName);
+            problem.save();
           }
       }
 
