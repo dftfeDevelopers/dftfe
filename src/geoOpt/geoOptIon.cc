@@ -451,7 +451,7 @@ namespace dftfe
   {
     const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
     std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
-    double rNN = 0;
+    double                           rNN = 0;
     for (int i = 0; i < numberGlobalAtoms; ++i)
       {
         double riMin = 0;
@@ -477,7 +477,8 @@ namespace dftfe
           }
       }
     double rCut = 2 * rNN;
-    pcout << "DEBUG rcut" << rCut << std::endl;
+    if (d_dftPtr->getParametersObject().verbosity >= 2)
+      pcout << "Cutoff radius for preconditoner:" << rCut << std::endl;
     std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
     for (int i = 0; i < numberGlobalAtoms; ++i)
       {
@@ -510,15 +511,6 @@ namespace dftfe
               }
           }
         L[i * numberGlobalAtoms + i] += 0.1;
-      }
-    pcout << "DEBUG Laplacian" << std::endl;
-    for (auto i = 0; i < numberGlobalAtoms; ++i)
-      {
-        for (auto j = 0; j < numberGlobalAtoms; ++j)
-          {
-            pcout << L[i * numberGlobalAtoms + j] << "  ";
-          }
-        pcout << std::endl;
       }
 
     s.clear();

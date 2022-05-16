@@ -194,10 +194,10 @@ namespace dftfe
     bool d_stepAccepted, d_wolfeCurvature, d_wolfeSufficientDec,
       d_wolfeSatisfied;
 
-    /// flag which restarts bfgs if increment to the solution vector is too
-    /// small and a flag to check if hessian is scaled.
     ///
-    bool d_isBFGSRestartDueToSmallRadius, d_hessianScaled;
+    /// flag to check if hessian is scaled.
+    ///
+    bool d_hessianScaled;
 
     /// Flag to store the reset state, 0 if step is accepted, 1 if reset occured
     /// and no steps are accepted, 2 if two resets occur without step being

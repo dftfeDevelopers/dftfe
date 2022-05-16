@@ -233,11 +233,14 @@ namespace dftfe
   LBFGSNonLinearSolver::initializePreconditioner(
     nonlinearSolverProblem &problem)
   {
+    if (d_debugLevel >= 1)
+      pcout << "Using preconditioner for LBFGS." << std::endl;
     d_preconditioner.clear();
     problem.precondition(d_preconditioner, d_gradient);
   }
 
   //
+  // TODO : Figure out if this is needed ever.
   // Scale preconditioner
   //
   void
@@ -281,43 +284,18 @@ namespace dftfe
   void
   LBFGSNonLinearSolver::computeStep()
   {
-    /*pcout<<"DEBUG gradient history"<<std::endl;
-    for(int i=0;i<d_maxNumPastSteps;++i){
-      for(int j=0;j<d_numberUnknowns;++j){
-        pcout<<d_deltaGq[i][j]<<" ";
-      }
-      pcout<<std::endl;
-    }
-    pcout<<"DEBUG step history"<<std::endl;
-    for(int i=0;i<d_maxNumPastSteps;++i){
-      for(int j=0;j<d_numberUnknowns;++j){
-        pcout<<d_deltaXq[i][j]<<" ";
-      }
-      pcout<<std::endl;
-    }
-    pcout<<"DEBUG rho history"<<std::endl;
-    for(int i=0;i<d_maxNumPastSteps;++i){
-        pcout<<d_rhoq[i]<<std::endl;
-    }*/
     std::vector<double> gradient = d_gradient;
     std::vector<double> alpha(d_maxNumPastSteps, 0.0);
     for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
       {
         alpha[j] = internalLBFGS::dot(d_deltaXq[j], gradient) * d_rhoq[j];
         internalLBFGS::axpy(-alpha[j], d_deltaGq[j], gradient);
-
-        pcout << "DEBUG gradient loop1 " << j << std::endl;
-        for (int j = 0; j < d_numberUnknowns; ++j)
-          {
-            pcout << gradient[j] << " ";
-          }
-        pcout << std::endl;
       }
     if (d_usePreconditioner)
       {
         internalLBFGS::linearSolve(d_preconditioner, gradient);
       }
-    if (d_iter > 0)
+    if (d_numPastSteps > 0)
       {
         for (int i = 0; i < d_numberUnknowns; ++i)
           {
@@ -328,30 +306,19 @@ namespace dftfe
                                  d_deltaGq[d_maxNumPastSteps - 1]);
           }
       }
-    pcout << "DEBUG gradient scaled" << std::endl;
-    for (int j = 0; j < d_numberUnknowns; ++j)
-      {
-        pcout << gradient[j] << " ";
-      }
-    pcout << std::endl;
     for (int j = 0; j < d_maxNumPastSteps; ++j)
       {
         double beta = internalLBFGS::dot(d_deltaGq[j], gradient) * d_rhoq[j];
         internalLBFGS::axpy(alpha[j] - beta, d_deltaXq[j], gradient);
       }
-    pcout << "DEBUG gradient loop2" << std::endl;
-    for (int j = 0; j < d_numberUnknowns; ++j)
-      {
-        pcout << gradient[j] << " ";
-      }
-    pcout << std::endl;
-
     for (int i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaXNew[i] = -gradient[i];
       }
     d_normDeltaXnew = internalLBFGS::computeLInfNorm(d_deltaXNew);
-    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
+    if (d_debugLevel >= 1)
+      pcout << "Computed LBFGS Step, max norm of step: " << d_normDeltaXnew
+            << std::endl;
   }
 
   //
@@ -367,10 +334,9 @@ namespace dftfe
             d_deltaXNew[i] *= d_alpha;
           }
       }
-    pcout << "DEBUG LInf dx scaled "
-          << internalLBFGS::computeLInfNorm(d_deltaXNew) << std::endl;
-    pcout << "DEBUG gtdx " << internalLBFGS::dot(d_deltaXNew, d_gradient)
-          << std::endl;
+    if (d_debugLevel >= 2)
+      pcout << "Step scaled for line search, scaling coefficient: " << d_alpha
+            << std::endl;
     if (d_stepAccepted)
       {
         d_updateVector = d_deltaXNew;
@@ -407,10 +373,10 @@ namespace dftfe
       {
         theta = 3 * sBs / (sy - sBs);
       }
-    pcout << "DEBUG Step BFGS theta " << theta << " " << sy / sBs << std::endl;
-    if (theta != 1)
+    if (theta != 1 && d_debugLevel >= 2)
       {
-        pcout << "DEBUG BFGS Damped " << std::endl;
+        pcout << "Using damped LBFGS update with theta = " << theta
+              << std::endl;
       }
     std::vector<double> r(d_numberUnknowns, 0.0);
     for (auto i = 0; i < d_numberUnknowns; ++i)
@@ -441,8 +407,13 @@ namespace dftfe
     d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
     d_wolfeCurvature     = std::abs(gntdx) < 0.1 * std::abs(gtdx);
     d_wolfeSatisfied     = d_wolfeSufficientDec && d_wolfeCurvature;
-    pcout << "DEBUG WOLFE " << d_wolfeCurvature << " " << d_wolfeSufficientDec
-          << " " << d_wolfeSatisfied << " " << std::endl;
+    if (d_debugLevel >= 1)
+      {
+        if (d_wolfeSatisfied)
+          pcout << "Wolfe conditions satisfied." << std::endl;
+        else if (d_wolfeSufficientDec)
+          pcout << "Only Armijo condition satisfied." << std::endl;
+      }
   }
 
   //
@@ -451,17 +422,15 @@ namespace dftfe
   void
   LBFGSNonLinearSolver::computeStepScale(nonlinearSolverProblem &problem)
   {
-    if (d_iter == 0)
+    if (d_iter == 0 || d_stepAccepted)
       {
         d_alpha = d_normDeltaXnew > d_maxStepLength ?
                     d_maxStepLength / d_normDeltaXnew :
                     1.0;
-      }
-    else if (d_stepAccepted)
-      {
-        d_alpha = d_normDeltaXnew > d_maxStepLength ?
-                    d_maxStepLength / d_normDeltaXnew :
-                    1.0;
+        if (d_debugLevel >= 1 && d_normDeltaXnew > d_maxStepLength)
+          pcout
+            << "Step length exceeded the maximul allowed limit, scaling the step by: "
+            << d_alpha << std::endl;
       }
     else
       {
@@ -469,7 +438,10 @@ namespace dftfe
         d_alpha = -0.5 * gtdx * d_alpha / ((d_valueNew[0] - d_value[0]) - gtdx);
         if (d_alpha < 0.1)
           {
-            pcout << "DEBUG reset history " << d_alpha << std::endl;
+            if (d_debugLevel >= 1)
+              pcout
+                << "Removing oldest step from LBFGS history as backtracking line search failed."
+                << std::endl;
             if (d_usePreconditioner)
               initializePreconditioner(problem);
             d_alpha = 1.0;
@@ -480,15 +452,16 @@ namespace dftfe
                       d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
                       0);
             d_rhoq[d_maxNumPastSteps - d_numPastSteps] = 0.0;
-            pcout << "DEBUG " << d_numPastSteps << " " << d_maxNumPastSteps
-                  << std::endl;
             --d_numPastSteps;
+            if (d_debugLevel >= 2)
+              pcout << "Number of past steps currently stored: "
+                    << d_numPastSteps << std::endl;
             d_noHistory = d_numPastSteps == 0;
             computeStep();
           }
       }
-
-    pcout << "DEBUG Scale Radius " << d_alpha << std::endl;
+    if (d_debugLevel >= 2)
+      pcout << "Trying step size (scaling factor): " << d_alpha << std::endl;
   }
 
 
@@ -526,6 +499,10 @@ namespace dftfe
   void
   LBFGSNonLinearSolver::save(const std::string &checkpointFileName)
   {
+    if (d_debugLevel >= 2)
+      {
+        pcout << "Saving LBFGS data to " << checkpointFileName << std::endl;
+      }
     std::vector<std::vector<double>> data;
     for (unsigned int i = 0; i < d_deltaX.size(); ++i)
       data.push_back(std::vector<double>(1, d_deltaX[i]));
@@ -551,6 +528,7 @@ namespace dftfe
       }
 
     data.push_back(d_value);
+    data.push_back(d_valueNew);
     data.push_back(std::vector<double>(1, d_alpha));
     data.push_back(std::vector<double>(1, d_iter));
     data.push_back(std::vector<double>(1, (double)d_stepAccepted));
@@ -566,12 +544,16 @@ namespace dftfe
   void
   LBFGSNonLinearSolver::load(const std::string &checkpointFileName)
   {
+    if (d_debugLevel >= 1)
+      {
+        pcout << "Loading LBFGS data from " << checkpointFileName << std::endl;
+      }
     std::vector<std::vector<double>> data;
     dftUtils::readFile(1, data, checkpointFileName);
     AssertThrow(
       data.size() ==
         (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
-         d_maxNumPastSteps + 4),
+         d_maxNumPastSteps + 5),
       dealii::ExcMessage(std::string(
         "DFT-FE Error: data size of lbfgs solver checkpoint file is incorrect.")));
 
@@ -581,6 +563,7 @@ namespace dftfe
     d_deltaXq.resize(d_maxNumPastSteps);
     d_rhoq.resize(d_maxNumPastSteps, 0.0);
     d_value.resize(1);
+    d_valueNew.resize(1);
     for (int i = 0; i < d_maxNumPastSteps; ++i)
       {
         d_deltaGq[i].resize(d_numberUnknowns);
@@ -620,16 +603,22 @@ namespace dftfe
       data[2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0];
 
-    d_alpha =
+    d_valueNew[0] =
       data[1 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0];
 
-    d_iter = (int)
+    d_alpha =
       data[2 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0];
 
+    d_iter =
+      (int)
+        data[3 + 2 * d_numberUnknowns +
+             2 * d_numberUnknowns * d_maxNumPastSteps + d_maxNumPastSteps][0] +
+      1;
+
     d_stepAccepted =
-      data[3 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+      data[4 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0] == 1.0;
   }
 
@@ -673,18 +662,14 @@ namespace dftfe
         //
         // compute initial values of problem and problem gradient
         //
-        pcout << "DEBUG START LBFGS " << std::endl;
         problem.gradient(d_gradient);
         problem.value(d_value);
-        pcout << "DEBUG Compute g0 " << std::endl;
 
         if (d_usePreconditioner)
           {
             initializePreconditioner(problem);
             scalePreconditioner(problem);
           }
-
-        pcout << "DEBUG Compute H0 " << std::endl;
       }
     else
       // NEED TO UPDATE
@@ -710,34 +695,78 @@ namespace dftfe
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
       {
-        pcout << "BFGS Step no. " << d_iter + 1 << std::endl;
+        if (d_debugLevel >= 1)
+          pcout << "LBFGS Step no. " << d_iter + 1 << std::endl;
         if (d_debugLevel >= 2)
           for (unsigned int i = 0; i < d_gradient.size(); ++i)
             pcout << "d_gradient: " << d_gradient[i] << std::endl;
 
-        // Compute the update step
         //
-        pcout << "DEBUG Start Compute step " << std::endl;
+        // If history is all deleted then fail
+        //
         if (d_noHistory)
           {
+            if (d_debugLevel >= 1)
+              pcout
+                << "Backtracking line search failed for steepest descent step, exiting with failure."
+                << std::endl;
             break;
           }
-        computeStep();
-        computeStepScale(problem);
 
+        //
+        // Compute LBFGS step
+        //
+        computeStep();
+        //
+        // Backtracking line search if needed
+        //
+        computeStepScale(problem);
+        //
+        // Compute the update vector
+        //
         computeUpdateStep();
 
-        for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
-          pcout << "step: " << d_deltaXNew[i] << " " << d_updateVector[i]
-                << std::endl;
-        pcout << "DEBUG End Compute step " << std::endl;
         updateSolution(d_updateVector, problem);
-        pcout << "DEBUG End update step " << std::endl;
+
         //
-        // evaluate gradient
+        // get gradient and value
         //
         problem.gradient(d_gradientNew);
         problem.value(d_valueNew);
+
+        //
+        // update trust radius and hessian
+        //
+        checkWolfe();
+        d_stepAccepted = d_wolfeSufficientDec;
+        if (d_stepAccepted)
+          {
+            updateHistory();
+
+            d_deltaX   = d_deltaXNew;
+            d_value[0] = d_valueNew[0];
+            d_gradient = d_gradientNew;
+          }
+        else
+          {
+            if (d_debugLevel >= 1)
+              pcout << "Step rejected as Armijo condition was not satisfied."
+                    << std::endl;
+
+            d_deltaX = d_deltaXNew;
+          }
+
+        //
+        // Save the last step
+        //
+        if (!checkpointFileName.empty())
+          {
+            MPI_Barrier(mpi_communicator);
+            save(checkpointFileName);
+            problem.save();
+          }
+
+        //
         // check for convergence
         //
         unsigned int isBreak = 0;
@@ -749,35 +778,6 @@ namespace dftfe
         MPI_Bcast(&(isBreak), 1, MPI_INT, 0, mpi_communicator);
         if (isBreak == 1)
           break;
-
-        //
-        // update trust radius and hessian
-        //
-        checkWolfe();
-        d_stepAccepted = d_wolfeSufficientDec;
-        if (d_stepAccepted)
-          {
-            updateHistory();
-            pcout << "DEBUG step accepted " << d_valueNew[0] - d_value[0]
-                  << std::endl;
-
-            d_deltaX   = d_deltaXNew;
-            d_value[0] = d_valueNew[0];
-            d_gradient = d_gradientNew;
-          }
-        else
-          {
-            --d_iter;
-            pcout << "DEBUG step rejected " << d_valueNew[0] - d_value[0]
-                  << std::endl;
-            d_deltaX = d_deltaXNew;
-          }
-        if (!checkpointFileName.empty())
-          {
-            MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
-            problem.save();
-          }
       }
 
     //
@@ -797,13 +797,21 @@ namespace dftfe
       {
         if (returnValue == SUCCESS)
           {
-            pcout << "BFGS solver converged after " << d_iter + 1
+            pcout << "LBFGS solver converged after " << d_iter + 1
+                  << " iterations." << std::endl;
+          }
+        else if (MAX_ITER_REACHED)
+          {
+            pcout << "LBFGS solver failed to converge after " << d_iter
                   << " iterations." << std::endl;
           }
         else
           {
-            pcout << "BFGS solver failed to converge after " << d_iter
+            pcout << "LBFGS solver failed to converge after " << d_iter
                   << " iterations." << std::endl;
+            pcout
+              << "The accuracy of computed forces seems to be inadequate, try using finer mesh and/or turning on Higher-Quad-PSP."
+              << std::endl;
           }
       }
 

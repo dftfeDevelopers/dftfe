@@ -42,7 +42,6 @@ namespace dftfe
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
-    d_isBFGSRestartDueToSmallRadius      = false;
     d_isReset                            = 0;
     d_useSingleAtomSolutionsInitialGuess = false;
     d_trustRadiusInitial                 = trustRadius_initial;
@@ -368,10 +367,16 @@ namespace dftfe
     d_hessian.clear();
     if (d_usePreconditioner)
       {
+        if (d_debugLevel >= 1)
+          pcout << "Using preconditioner for initial Hessian guess."
+                << std::endl;
         problem.precondition(d_hessian, d_gradient);
       }
     else
       {
+        if (d_debugLevel >= 1)
+          pcout << "Using Identity matrix for initial Hessian guess."
+                << std::endl;
         d_hessian.resize(d_numberUnknowns * d_numberUnknowns, 0.0);
         for (int i = 0; i < d_numberUnknowns; ++i)
           {
@@ -380,20 +385,12 @@ namespace dftfe
       }
     d_Srfo      = d_hessian;
     double detS = internalBFGS::computeDetNormalizationFactor(d_Srfo);
-    pcout << "DEBUG detS " << detS << std::endl;
+    if (d_debugLevel >= 2)
+      pcout << "Normalizing factor for Hessian matrix: " << detS << std::endl;
     for (auto i = 0; i < d_Srfo.size(); ++i)
       {
         d_Srfo[i] /= detS;
       }
-    /*pcout << "DEBUG Hessian init" << std::endl;
-    for (auto i = 0; i < d_numberUnknowns; ++i)
-      {
-        for (auto j = 0; j < d_numberUnknowns; ++j)
-          {
-            pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
-          }
-        pcout << std::endl;
-      }*/
     d_hessian = d_Srfo;
   }
 
@@ -414,20 +411,14 @@ namespace dftfe
     std::vector<double> Hdx    = d_deltaXNew;
     double              dxtHdx = internalBFGS::computePNorm(Hdx, d_hessian);
     double              dgtdx  = internalBFGS::dot(d_deltaXNew, delta_g);
-    /*pcout << "DEBUG Hdx" << std::endl;
-    for (auto j = 0; j < d_numberUnknowns; ++j)
-      {
-        pcout << Hdx[j] << "  ";
-      }
-    pcout << std::endl;*/
     if (d_stepAccepted)
       {
         double theta =
           dgtdx >= 0.2 * dxtHdx ? 1 : 0.8 * dxtHdx / (dxtHdx - dgtdx);
-        pcout << "DEBUG Step BFGS theta " << theta << std::endl;
-        if (theta != 1)
+        if (theta != 1 && d_debugLevel >= 2)
           {
-            pcout << "DEBUG BFGS Damped " << std::endl;
+            pcout << "Using damped BFGS update with theta = " << theta
+                  << std::endl;
           }
         std::vector<double> r(d_numberUnknowns, 0.0);
         for (auto i = 0; i < d_numberUnknowns; ++i)
@@ -455,33 +446,21 @@ namespace dftfe
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
 
-    /*pcout << "DEBUG Hessian init" << std::endl;
-    for (auto i = 0; i < d_numberUnknowns; ++i)
-      {
-        for (auto j = 0; j < d_numberUnknowns; ++j)
-          {
-            pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
-          }
-        pcout << std::endl;
-      }*/
     if (internalBFGS::dot(delta_g, d_deltaXNew) > 0)
       {
+        double scalingFactor = internalBFGS::dot(delta_g, delta_g) /
+                               internalBFGS::dot(delta_g, d_deltaXNew);
+        if (d_debugLevel >= 2)
+          {
+            pcout << "Scaling Hessian with scaling factor: " << scalingFactor
+                  << std::endl;
+          }
         for (auto i = 0; i < d_hessian.size(); ++i)
           {
-            d_hessian[i] = d_hessian[i] * internalBFGS::dot(delta_g, delta_g) /
-                           internalBFGS::dot(delta_g, d_deltaXNew);
+            d_hessian[i] = d_hessian[i] * scalingFactor;
           }
         d_hessianScaled = true;
       }
-    /*pcout << "DEBUG Hessian scaled" << std::endl;
-    for (auto i = 0; i < d_numberUnknowns; ++i)
-      {
-        for (auto j = 0; j < d_numberUnknowns; ++j)
-          {
-            pcout << d_hessian[i * d_numberUnknowns + j] << "  ";
-          }
-        pcout << std::endl;
-      }*/
   }
 
   //
@@ -523,7 +502,9 @@ namespace dftfe
         d_deltaXNew[i] = eigenVectors[i] / eigenVectors[d_numberUnknowns];
       }
     d_normDeltaXnew = internalBFGS::computeLInfNorm(d_deltaXNew);
-    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
+    if (d_debugLevel >= 1)
+      pcout << "Computed RFO Step, max norm of step: " << d_normDeltaXnew
+            << std::endl;
   }
 
 
@@ -541,7 +522,9 @@ namespace dftfe
     internalBFGS::linearSolve(d_hessian, d_deltaXNew);
 
     d_normDeltaXnew = internalBFGS::computeLInfNorm(d_deltaXNew);
-    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
+    if (d_debugLevel >= 1)
+      pcout << "Computed Quasi-Newton Step, max norm of step: "
+            << d_normDeltaXnew << std::endl;
   }
 
   //
@@ -555,10 +538,9 @@ namespace dftfe
       {
         d_deltaXNew[i] *= d_trustRadius / d_normDeltaXnew;
       }
-    pcout << "DEBUG LInf dx scaled "
-          << internalBFGS::computeLInfNorm(d_deltaXNew) << std::endl;
-    double gtdx = internalBFGS::dot(d_deltaXNew, d_gradient);
-    pcout << "DEBUG gtdx " << gtdx << std::endl;
+    if (d_debugLevel >= 2)
+      pcout << "Step scaled to trust radius, max norm of step: "
+            << internalBFGS::computeLInfNorm(d_deltaXNew) << std::endl;
     if (d_stepAccepted)
       {
         d_updateVector = d_deltaXNew;
@@ -585,8 +567,14 @@ namespace dftfe
     d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
     d_wolfeCurvature     = std::abs(gntdx) < 0.9 * std::abs(gtdx);
     d_wolfeSatisfied     = d_wolfeSufficientDec && d_wolfeCurvature;
-    pcout << "DEBUG WOLFE " << d_wolfeCurvature << " " << d_wolfeSufficientDec
-          << " " << d_wolfeSatisfied << " " << std::endl;
+
+    if (d_debugLevel >= 1)
+      {
+        if (d_wolfeSatisfied)
+          pcout << "Wolfe conditions satisfied." << std::endl;
+        else if (d_wolfeSufficientDec)
+          pcout << "Only Armijo condition satisfied." << std::endl;
+      }
   }
 
   //
@@ -623,7 +611,10 @@ namespace dftfe
                                                                d_trustRadiusMax;
             if (d_trustRadius < d_trustRadiusMin)
               {
-                pcout << "DEBUG reset history" << std::endl;
+                if (d_debugLevel >= 1)
+                  pcout
+                    << "Resetting BFGS Hessian as trust radius is below allowed threshold."
+                    << std::endl;
                 initializeHessian(problem);
                 d_trustRadius = d_trustRadiusInitial;
                 if (d_useRFOStep)
@@ -637,8 +628,8 @@ namespace dftfe
                 d_trustRadius = d_trustRadius < d_normDeltaXnew ?
                                   d_trustRadius :
                                   d_normDeltaXnew;
-                d_isBFGSRestartDueToSmallRadius = true;
-                d_isReset                       = d_isReset == 1 ? 2 : 1;
+                d_hessianScaled = false;
+                d_isReset       = d_isReset == 1 ? 2 : 1;
               }
           }
       }
@@ -650,7 +641,10 @@ namespace dftfe
           -0.5 * gtdx * d_trustRadius / ((d_valueNew[0] - d_value[0]) - gtdx);
         if (d_trustRadius < d_trustRadiusMin)
           {
-            pcout << "DEBUG reset history " << d_trustRadius << std::endl;
+            if (d_debugLevel >= 1)
+              pcout
+                << "Resetting BFGS Hessian as trust radius is below allowed threshold."
+                << std::endl;
             initializeHessian(problem);
             d_trustRadius = d_trustRadiusInitial;
             if (d_useRFOStep)
@@ -663,13 +657,14 @@ namespace dftfe
               }
             d_trustRadius =
               d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
-            d_isBFGSRestartDueToSmallRadius = true;
-            d_isReset                       = d_isReset == 1 ? 2 : 1;
+            d_hessianScaled = false;
+            d_isReset       = d_isReset == 1 ? 2 : 1;
           }
       }
     d_trustRadius =
       d_trustRadius < d_trustRadiusMax ? d_trustRadius : d_trustRadiusMax;
-    pcout << "DEBUG Trust Radius " << d_trustRadius << std::endl;
+    if (d_debugLevel >= 1)
+      pcout << "Estimated trust radius: " << d_trustRadius << std::endl;
   }
 
 
@@ -707,6 +702,10 @@ namespace dftfe
   void
   BFGSNonLinearSolver::save(const std::string &checkpointFileName)
   {
+    if (d_debugLevel >= 2)
+      {
+        pcout << "Saving BFGS data to " << checkpointFileName << std::endl;
+      }
     std::vector<std::vector<double>> data;
     for (unsigned int i = 0; i < d_deltaX.size(); ++i)
       data.push_back(std::vector<double>(1, d_deltaX[i]));
@@ -717,6 +716,7 @@ namespace dftfe
     for (unsigned int i = 0; i < d_Srfo.size(); ++i)
       data.push_back(std::vector<double>(1, d_Srfo[i]));
     data.push_back(d_value);
+    data.push_back(d_valueNew);
     data.push_back(std::vector<double>(1, d_trustRadius));
     data.push_back(std::vector<double>(1, d_iter));
     data.push_back(std::vector<double>(1, (double)d_stepAccepted));
@@ -732,11 +732,15 @@ namespace dftfe
   void
   BFGSNonLinearSolver::load(const std::string &checkpointFileName)
   {
+    if (d_debugLevel >= 1)
+      {
+        pcout << "Loading BFGS data from " << checkpointFileName << std::endl;
+      }
     std::vector<std::vector<double>> data;
     dftUtils::readFile(1, data, checkpointFileName);
     AssertThrow(
       data.size() ==
-        (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_numberUnknowns + 4),
+        (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_numberUnknowns + 5),
       dealii::ExcMessage(std::string(
         "DFT-FE Error: data size of bfgs solver checkpoint file is incorrect.")));
 
@@ -745,6 +749,7 @@ namespace dftfe
     d_hessian.resize(d_numberUnknowns * d_numberUnknowns);
     d_Srfo.resize(d_numberUnknowns * d_numberUnknowns);
     d_value.resize(1);
+    d_valueNew.resize(1);
     for (unsigned int i = 0; i < d_numberUnknowns; ++i)
       d_deltaX[i] = data[i][0];
 
@@ -761,13 +766,17 @@ namespace dftfe
     d_value[0] =
       data[2 * d_numberUnknowns + 2 * d_numberUnknowns * d_numberUnknowns][0];
 
-    d_trustRadius = data[1 + 2 * d_numberUnknowns +
+    d_valueNew[0] = data[1 + 2 * d_numberUnknowns +
                          2 * d_numberUnknowns * d_numberUnknowns][0];
 
-    d_iter = (int)data[2 + 2 * d_numberUnknowns +
-                       2 * d_numberUnknowns * d_numberUnknowns][0];
+    d_trustRadius = data[2 + 2 * d_numberUnknowns +
+                         2 * d_numberUnknowns * d_numberUnknowns][0];
 
-    d_stepAccepted = data[3 + 2 * d_numberUnknowns +
+    d_iter = (int)data[3 + 2 * d_numberUnknowns +
+                       2 * d_numberUnknowns * d_numberUnknowns][0] +
+             1;
+
+    d_stepAccepted = data[4 + 2 * d_numberUnknowns +
                           2 * d_numberUnknowns * d_numberUnknowns][0] == 1.0;
   }
 
@@ -810,13 +819,10 @@ namespace dftfe
         //
         // compute initial values of problem and problem gradient
         //
-        pcout << "DEBUG START BFGS " << std::endl;
         problem.gradient(d_gradient);
         problem.value(d_value);
-        pcout << "DEBUG Compute g0 " << std::endl;
 
         initializeHessian(problem);
-        pcout << "DEBUG Compute H0 " << std::endl;
       }
     else
       // TODO : Implement restart
@@ -840,30 +846,18 @@ namespace dftfe
 
 
 
-    for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
+    for (d_iter = d_iter > 0 ? d_iter : 0; d_iter < d_maxNumberIterations;
+         ++d_iter)
       {
-        /* if (d_isBFGSRestartDueToSmallRadius)
-           {
-             pcout << "DEBUG reset history" << std::endl;
-             initializeHessian(problem);
-             d_trustRadius                   = d_trustRadiusInitial;
-             d_isBFGSRestartDueToSmallRadius = false;
-           }*/
-        pcout << "BFGS Step no. " << d_iter + 1 << std::endl;
+        if (d_debugLevel >= 1)
+          pcout << "BFGS Step no. " << d_iter + 1 << std::endl;
         if (d_debugLevel >= 2)
           for (unsigned int i = 0; i < d_gradient.size(); ++i)
             pcout << "d_gradient: " << d_gradient[i] << std::endl;
 
 
-        //
-        // compute L2-norm of the residual (gradient)
-        //
-        const double residualNorm = internalBFGS::computeL2Norm(d_gradient);
-
-
         // Compute the update step
         //
-        pcout << "DEBUG Start Compute step " << std::endl;
         if (d_useRFOStep)
           {
             computeRFOStep();
@@ -879,16 +873,42 @@ namespace dftfe
 
         computeStep();
 
-        /*for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
-          pcout << "step: " << d_deltaXNew[i] << std::endl;*/
-        pcout << "DEBUG End Compute step " << std::endl;
         updateSolution(d_updateVector, problem);
-        pcout << "DEBUG End update step " << std::endl;
         //
         // evaluate gradient
         //
         problem.gradient(d_gradientNew);
         problem.value(d_valueNew);
+        //
+        // update trust radius and hessian
+        //
+        checkWolfe();
+        d_stepAccepted = d_wolfeSufficientDec;
+        if (d_stepAccepted)
+          {
+            if ((d_iter == 0 || !d_hessianScaled))
+              {
+                scaleHessian();
+              }
+            updateHessian();
+
+            d_deltaX   = d_deltaXNew;
+            d_value[0] = d_valueNew[0];
+            d_gradient = d_gradientNew;
+          }
+        else
+          {
+            if (d_debugLevel >= 1)
+              pcout << "Step rejected as Armijo condition was not satisfied."
+                    << std::endl;
+            d_deltaX = d_deltaXNew;
+          }
+        if (!checkpointFileName.empty())
+          {
+            MPI_Barrier(mpi_communicator);
+            save(checkpointFileName);
+            problem.save();
+          }
         // check for convergence
         //
         unsigned int isBreak = 0;
@@ -900,40 +920,6 @@ namespace dftfe
         MPI_Bcast(&(isBreak), 1, MPI_INT, 0, mpi_communicator);
         if (isBreak == 1)
           break;
-
-        //
-        // update trust radius and hessian
-        //
-        checkWolfe();
-        d_stepAccepted = d_wolfeSufficientDec;
-        if (d_stepAccepted)
-          {
-            if ((d_iter == 0 || d_isBFGSRestartDueToSmallRadius ||
-                 !d_hessianScaled))
-              {
-                scaleHessian();
-                d_isBFGSRestartDueToSmallRadius = false;
-              }
-            updateHessian();
-            pcout << "DEBUG step accepted " << d_valueNew[0] - d_value[0]
-                  << std::endl;
-
-            d_deltaX   = d_deltaXNew;
-            d_value[0] = d_valueNew[0];
-            d_gradient = d_gradientNew;
-          }
-        else
-          {
-            pcout << "DEBUG step rejected " << d_valueNew[0] - d_value[0]
-                  << std::endl;
-            d_deltaX = d_deltaXNew;
-          }
-        if (!checkpointFileName.empty())
-          {
-            MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
-            problem.save();
-          }
       }
 
     //
@@ -956,10 +942,18 @@ namespace dftfe
             pcout << "BFGS solver converged after " << d_iter + 1
                   << " iterations." << std::endl;
           }
+        else if (MAX_ITER_REACHED)
+          {
+            pcout << "BFGS solver failed to converge after " << d_iter
+                  << " iterations." << std::endl;
+          }
         else
           {
             pcout << "BFGS solver failed to converge after " << d_iter
                   << " iterations." << std::endl;
+            pcout
+              << "The accuracy of computed forces seems to be inadequate, try using finer mesh and/or turning on Higher-Quad-PSP."
+              << std::endl;
           }
       }
 
