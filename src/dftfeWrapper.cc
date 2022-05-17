@@ -185,6 +185,30 @@ namespace dftfe
   //
   // constructor
   //
+  dftfeWrapper::dftfeWrapper(const std::string parameter_file,
+                             const std::string restartCoordsFile,
+                             const std::string restartDomainVectorsFile,
+                             const MPI_Comm &  mpi_comm_parent,
+                             const bool        printParams,
+                             const bool        setGPUToMPITaskBindingInternally)
+    : d_dftfeBasePtr(nullptr)
+    , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
+    , d_isGPUToMPITaskBindingSetInternally(false)
+  {
+    reinit(parameter_file,
+           restartCoordsFile,
+           restartDomainVectorsFile,
+           mpi_comm_parent,
+           printParams,
+           setGPUToMPITaskBindingInternally);
+  }
+
+
+
+  //
+  // constructor
+  //
   dftfeWrapper::dftfeWrapper(
     const MPI_Comm &                       mpi_comm_parent,
     const bool                             useGPU,
@@ -247,6 +271,33 @@ namespace dftfe
         d_dftfeParamsPtr->parse_parameters(parameter_file,
                                            d_mpi_comm_parent,
                                            printParams);
+      }
+    initialize(setGPUToMPITaskBindingInternally);
+  }
+
+
+  void
+  dftfeWrapper::reinit(const std::string parameter_file,
+                       const std::string restartCoordsFile,
+                       const std::string restartDomainVectorsFile,
+                       const MPI_Comm &  mpi_comm_parent,
+                       const bool        printParams,
+                       const bool        setGPUToMPITaskBindingInternally)
+  {
+    clear();
+    if (mpi_comm_parent != MPI_COMM_NULL)
+      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+
+    createScratchFolder();
+
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        d_dftfeParamsPtr = new dftfe::dftParameters;
+        d_dftfeParamsPtr->parse_parameters(parameter_file,
+                                           d_mpi_comm_parent,
+                                           printParams);
+        d_dftfeParamsPtr->coordinatesFile           = restartCoordsFile;
+        d_dftfeParamsPtr->domainBoundingVectorsFile = restartDomainVectorsFile;
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
