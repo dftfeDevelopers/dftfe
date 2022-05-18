@@ -38,8 +38,7 @@ namespace dftfe
      *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
-    molecularDynamicsClass(dftfeWrapper &  dftfeWrapper,
-                           const MPI_Comm &mpi_comm_parent);
+    molecularDynamicsClass(const MPI_Comm &mpi_comm_parent, bool restart);
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
     const double haToeV              = 27.211386245988;
@@ -59,6 +58,12 @@ namespace dftfe
     void
     runMD();
     // ~molecularDynamicsClass();
+    
+    void
+    set(dftfeWrapper &  dftfeWrapper);
+
+    void
+    init(std::string & coordinatesFile, std::string & domainVectorsFile);
 
   private:
     // pointer to dft class
@@ -425,7 +430,7 @@ namespace dftfe
      *
      */
     int
-    checkRestart();
+    checkRestart(std::string & coordinatesFile, std::string domainVectorsFile );
 
     /**
      * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *

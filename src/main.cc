@@ -120,23 +120,30 @@ main(int argc, char *argv[])
     {
       if(!runParams.restart)
       {
-      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+
+        dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, false);
+        std::string coordinatesFile,domainVectorFile;
+        mdClass.init(coordinatesFile,domainVectorFile);
+        dftfe::dftfeWrapper dftfeWrapped(parameter_file,
                                        MPI_COMM_WORLD,
                                        true,
                                        true);
-
-      dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
-      mdClass.runMD();
+        mdClass.set(dftfeWrapped);
+        mdClass.runMD();
       }
       else
       {
-      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+        dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, true);  
+        std::string coordinatesFile,domainVectorFile;
+        mdClass.init(coordinatesFile,domainVectorFile);      
+        dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                      coordinatesFile,
+                                      domainVectorFile,
                                        MPI_COMM_WORLD,
                                        true,
                                        true);
-
-      dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
-      mdClass.runMD();        
+        mdClass.set(dftfeWrapped);
+        mdClass.runMD();        
       }
     }
 

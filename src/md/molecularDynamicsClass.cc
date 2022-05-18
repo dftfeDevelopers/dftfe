@@ -39,29 +39,34 @@
 namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
-    dftfeWrapper &  dftfeWrapper,
-    const MPI_Comm &mpi_comm_parent)
-    : d_dftPtr(dftfeWrapper.getDftfeBasePtr())
-    , d_mpiCommParent(mpi_comm_parent)
+    const MPI_Comm &mpi_comm_parent , bool restart)
+    : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
     MPI_Barrier(d_mpiCommParent);
     d_MDstartWallTime  = MPI_Wtime();
     d_TimeIndex        = 0;
-    d_startingTimeStep = checkRestart();
+    d_restartFlag = restart ? 1 : 0;
+
+  }
+
+
+
+  void
+  molecularDynamicsClass::set(dftfeWrapper &  dftfeWrapper)
+  {
+    d_dftPtr = dftfeWrapper.getDftfeBasePtr();
     d_TimeStep =
       d_dftPtr->getParametersObject().timeStepBOMD *
       0.09822694541304546435; // Conversion factor from femteseconds:
                               // 0.09822694541304546435 based on NIST constants
     d_numberofSteps = d_dftPtr->getParametersObject().numberStepsBOMD;
-
     d_startingTemperature = d_dftPtr->getParametersObject().startingTempBOMD;
     d_ThermostatTimeConstant =
       d_dftPtr->getParametersObject().thermostatTimeConstantBOMD;
     d_ThermostatType = d_dftPtr->getParametersObject().tempControllerTypeBOMD;
     d_numberGlobalCharges = d_dftPtr->getParametersObject().natoms;
-
     d_MaxWallTime = d_dftPtr->getParametersObject().MaxWallTime;
     pcout
       << "----------------------Starting Initialization of BOMD-------------------------"
@@ -87,10 +92,16 @@ namespace dftfe
         pcout << "--$ Domain Length$ --" << std::endl;
         pcout << "Lx:= " << d_domainLength[0] << " Ly:=" << d_domainLength[1]
               << " Lz:=" << d_domainLength[2] << std::endl;
-      }
+      }    
   }
 
+  void
+  molecularDynamicsClass::init(std::string & coordinatesFile, std::string & domainVectorsFile )
+  {
+    d_startingTimeStep = checkRestart(coordinatesFile,domainVectorsFile);
 
+  
+  }
 
   void
   molecularDynamicsClass::runMD()
@@ -137,12 +148,7 @@ namespace dftfe
     std::vector<double> TotalEnergyVector(d_numberofSteps, 0.0);
     double              totMass = 0.0;
     double              velocityDistribution;
-    /*  d_restartFlag = ((d_dftPtr->getParametersObject().chkType == 1 ||
-     d_dftPtr->getParametersObject().chkType
-     == 3) && d_dftPtr->getParametersObject().restartMdFromChk) ?        1 : 0;
-     // 1;
-     //0;//1;*/
-    d_restartFlag = d_dftPtr->getParametersObject().restartMdFromChk ? 1 : 0;
+    //d_restartFlag = d_dftPtr->getParametersObject().restartMdFromChk ? 1 : 0;
     pcout << "RestartFlag: " << d_restartFlag << std::endl;
     if (d_restartFlag == 0)
       {
@@ -1812,11 +1818,11 @@ namespace dftfe
   }
 
   int
-  molecularDynamicsClass::checkRestart()
+  molecularDynamicsClass::checkRestart(std::string & coordinatesFile, std::string domainVectorsFile )
   {
     int time1 = 0;
 
-    if (d_dftPtr->getParametersObject().restartMdFromChk)
+    if (d_restartFlag == 1)
       {
         std::vector<std::vector<double>> t1;
         pcout << " MD is in Restart Mode" << std::endl;
@@ -1834,6 +1840,7 @@ namespace dftfe
             std::string   file1 = path + "/atomsFracCoordCurrent.chk";
             std::string   file2 = path + "/velocity.chk";
             std::string   file3 = path + "/NHCThermostat.chk";
+            std::string   file4 = path +"/domainBoundingVectorsCurrent.chk";
             std::ifstream readFile1(file1.c_str());
             std::ifstream readFile2(file2.c_str());
             std::ifstream readFile3(file3.c_str());
@@ -1850,8 +1857,10 @@ namespace dftfe
             if (!readFile1.fail() && !readFile2.fail() && NHCflag)
               {
                 flag                                            = true;
-                d_dftPtr->getParametersObject().coordinatesFile = file1;
+                coordinatesFile = file1;
+                domainVectorsFile = file4;
                 pcout << " Restart files are found in: " << path << std::endl;
+                break;
               }
 
             else
@@ -1859,7 +1868,9 @@ namespace dftfe
                     << std::endl
                     << "Switching to time: " << --time1 << " ----" << std::endl;
           }
+
       }
+
     return (time1);
   }
   void
