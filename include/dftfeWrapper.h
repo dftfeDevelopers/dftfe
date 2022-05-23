@@ -57,6 +57,17 @@ namespace dftfe
                  const bool        setGPUToMPITaskBindingInternally = false);
 
     /**
+     * @brief constructor based on input parameter_file and restart
+     * coordinates and domain vectors file paths
+     */
+    dftfeWrapper(const std::string parameter_file,
+                 const std::string restartCoordsFile,
+                 const std::string restartDomainVectorsFile,
+                 const MPI_Comm &  mpi_comm_parent,
+                 const bool        printParams                      = false,
+                 const bool        setGPUToMPITaskBindingInternally = false);
+
+    /**
      * @brief constructor based on input list of atomic coordinates,
      * list of atomic numbers,cell, boundary conditions,
      * Monkhorst-Pack k-point grid, and other optional parameters.
@@ -136,6 +147,18 @@ namespace dftfe
      */
     void
     reinit(const std::string parameter_file,
+           const MPI_Comm &  mpi_comm_parent,
+           const bool        printParams                      = false,
+           const bool        setGPUToMPITaskBindingInternally = false);
+
+    /**
+     * @brief clear and reinitialize based on input parameter_file and restart
+     * coordinates and domain vectors file paths
+     */
+    void
+    reinit(const std::string parameter_file,
+           const std::string restartCoordsFile,
+           const std::string restartDomainVectorsFile,
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
            const bool        setGPUToMPITaskBindingInternally = false);
