@@ -1,6 +1,6 @@
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
-set DFT-FE SOLVER MODE              = MD
+set SOLVER MODE              = MD
 subsection Geometry
   set NATOMS=50
   set NATOM TYPES=4
