@@ -44,11 +44,6 @@ namespace dftfe
         Patterns::Bool(),
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
-      prm.declare_entry(
-        "SOLVER MODE",
-        "GS",
-        Patterns::Selection("GS|MD|NEB"),
-        "[Standard] SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
 
 
       prm.declare_entry(
@@ -64,12 +59,16 @@ namespace dftfe
         "[Advanced] If set to true this option does not delete the dftfeScratch folder when the dftfe object is destroyed. This is useful for debugging and code development. Default: false.");
 
       prm.declare_entry(
+        "SOLVER MODE",
+        "GS",
+        Patterns::Selection("GS|MD|NEB"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
+
+      prm.declare_entry(
         "RESTART",
         "false",
         Patterns::Bool(),
-        "[Standard] If set to true solvermode triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
-
-
+        "[Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
 
 
       prm.enter_subsection("GPU");
@@ -1221,7 +1220,7 @@ namespace dftfe
 
     // New paramter for selecting mode and NEB parameters
     TotalImages = 1;
-    solvermode  = "";
+
 
     dc_dispersioncorrectiontype = 0;
     dc_d3dampingtype            = 2;
@@ -1246,8 +1245,6 @@ namespace dftfe
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
-    restart                    = prm.get_bool("RESTART");
-    solvermode                = prm.get("SOLVER MODE");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
 
     prm.enter_subsection("GPU");
