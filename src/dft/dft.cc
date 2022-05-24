@@ -1328,10 +1328,6 @@ namespace dftfe
 
             d_rhoInNodalValues.update_ghost_values();
           }
-        else
-          {
-            initRho();
-          }
       }
 
     MPI_Barrier(d_mpiCommParent);
