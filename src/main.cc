@@ -120,12 +120,16 @@ main(int argc, char *argv[])
     {
       if (!runParams.restart)
         {
-          dftfe::molecularDynamicsClass mdClass(parameter_file,MPI_COMM_WORLD, false);
+          dftfe::molecularDynamicsClass mdClass(parameter_file,
+                                                MPI_COMM_WORLD,
+                                                false);
           mdClass.runMD();
         }
       else
         {
-          dftfe::molecularDynamicsClass mdClass(parameter_file,MPI_COMM_WORLD, true); 
+          dftfe::molecularDynamicsClass mdClass(parameter_file,
+                                                MPI_COMM_WORLD,
+                                                true);
           mdClass.runMD();
         }
     }

@@ -41,8 +41,8 @@ namespace dftfe
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
     molecularDynamicsClass(const std::string parameter_file,
-                          const MPI_Comm &mpi_comm_parent, 
-                          const bool restart);
+                           const MPI_Comm &  mpi_comm_parent,
+                           const bool        restart);
 
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
@@ -62,8 +62,8 @@ namespace dftfe
      */
     void
     runMD();
-    
-   
+
+
 
     void
     set();
@@ -77,7 +77,7 @@ namespace dftfe
   private:
     // pointer to dft class
     std::unique_ptr<dftfeWrapper> d_dftfeWrapper;
-    dftBase *d_dftPtr;
+    dftBase *                     d_dftPtr;
 
     // parallel communication objects
     const MPI_Comm     d_mpiCommParent;
