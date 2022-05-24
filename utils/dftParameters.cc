@@ -196,7 +196,7 @@ namespace dftfe
         prm.declare_entry(
           "CHK TYPE",
           "0",
-          Patterns::Integer(0, 3),
+          Patterns::Integer(0, 2),
           "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
         prm.declare_entry(

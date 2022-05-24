@@ -58,12 +58,12 @@ namespace dftfe
     void
     runMD();
     // ~molecularDynamicsClass();
-    
-    void
-    set(dftfeWrapper &  dftfeWrapper);
 
     void
-    init(std::string & coordinatesFile, std::string & domainVectorsFile);
+    set(dftfeWrapper &dftfeWrapper);
+
+    void
+    init(std::string &coordinatesFile, std::string &domainVectorsFile);
 
     void
     init();
@@ -433,7 +433,7 @@ namespace dftfe
      *
      */
     int
-    checkRestart(std::string & coordinatesFile, std::string domainVectorsFile );
+    checkRestart(std::string &coordinatesFile, std::string domainVectorsFile);
 
     /**
      * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *

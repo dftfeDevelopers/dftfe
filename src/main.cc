@@ -118,32 +118,31 @@ main(int argc, char *argv[])
 
   if (runParams.solvermode == "MD")
     {
-      if(!runParams.restart)
-      {
-
-        dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, false);
-        mdClass.init();
-        dftfe::dftfeWrapper dftfeWrapped(parameter_file,
-                                       MPI_COMM_WORLD,
-                                       true,
-                                       true);
-        mdClass.set(dftfeWrapped);
-        mdClass.runMD();
-      }
+      if (!runParams.restart)
+        {
+          dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, false);
+          mdClass.init();
+          dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                           MPI_COMM_WORLD,
+                                           true,
+                                           true);
+          mdClass.set(dftfeWrapped);
+          mdClass.runMD();
+        }
       else
-      {
-        dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, true);  
-        std::string coordinatesFile,domainVectorFile;
-        mdClass.init(coordinatesFile,domainVectorFile);      
-        dftfe::dftfeWrapper dftfeWrapped(parameter_file,
-                                      coordinatesFile,
-                                      domainVectorFile,
-                                       MPI_COMM_WORLD,
-                                       true,
-                                       true);
-        mdClass.set(dftfeWrapped);
-        mdClass.runMD();        
-      }
+        {
+          dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, true);
+          std::string                   coordinatesFile, domainVectorFile;
+          mdClass.init(coordinatesFile, domainVectorFile);
+          dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                           coordinatesFile,
+                                           domainVectorFile,
+                                           MPI_COMM_WORLD,
+                                           true,
+                                           true);
+          mdClass.set(dftfeWrapped);
+          mdClass.runMD();
+        }
     }
 
   else if (runParams.solvermode == "NEB")

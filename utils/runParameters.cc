@@ -1066,7 +1066,7 @@ namespace dftfe
 
     verbosity  = prm.get_integer("VERBOSITY");
     solvermode = prm.get("SOLVER MODE");
-    restart = prm.get_bool("RESTART");
+    restart    = prm.get_bool("RESTART");
   }
 
 } // namespace dftfe
