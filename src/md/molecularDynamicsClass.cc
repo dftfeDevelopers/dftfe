@@ -53,7 +53,7 @@ namespace dftfe
     if(d_restartFlag == 0)
       {
          init(); 
-         d_dftfeWrapper = new dftfe::dftfeWrapper(parameter_file,
+         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                            MPI_COMM_WORLD,
                                            true,
                                            true);
@@ -63,7 +63,7 @@ namespace dftfe
       {
           std::string coordinatesFile, domainVectorFile;
           init(coordinatesFile, domainVectorFile);
-          d_dftfeWrapper = new dftfe::dftfeWrapper(parameter_file,
+          d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                            coordinatesFile,
                                            domainVectorFile,
                                            MPI_COMM_WORLD,
@@ -1998,10 +1998,7 @@ namespace dftfe
         d_dftPtr->resetRhoNodalSplitIn(d_extrapDensity_tp1);
       }
   }
-  molecularDynamicsClass::~molecularDynamicsClass()
-  {
-    delete d_dftfeWrapper;
-  }
+
 
 
 } // namespace dftfe
