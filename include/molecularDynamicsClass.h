@@ -22,8 +22,10 @@
 #include "constants.h"
 #include "headers.h"
 #include <vector>
+#include <memory>
 #include "dftBase.h"
 #include "dftfeWrapper.h"
+
 
 namespace dftfe
 {
@@ -38,7 +40,10 @@ namespace dftfe
      *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
-    molecularDynamicsClass(const MPI_Comm &mpi_comm_parent, const bool restart);
+    molecularDynamicsClass(const std::string parameter_file,
+                          const MPI_Comm &mpi_comm_parent, 
+                          const bool restart);
+
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
     const double haToeV              = 27.211386245988;
@@ -57,10 +62,11 @@ namespace dftfe
      */
     void
     runMD();
-    // ~molecularDynamicsClass();
+    
+   
 
     void
-    set(dftfeWrapper &dftfeWrapper);
+    set();
 
     void
     init(std::string &coordinatesFile, std::string &domainVectorsFile);
@@ -70,6 +76,7 @@ namespace dftfe
 
   private:
     // pointer to dft class
+    std::unique_ptr<dftfeWrapper> d_dftfeWrapper;
     dftBase *d_dftPtr;
 
     // parallel communication objects

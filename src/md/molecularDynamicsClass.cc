@@ -39,6 +39,7 @@
 namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
+    const std::string parameter_file,
     const MPI_Comm &mpi_comm_parent,
     const bool      restart)
     : d_mpiCommParent(mpi_comm_parent)
@@ -49,14 +50,39 @@ namespace dftfe
     d_MDstartWallTime = MPI_Wtime();
     d_TimeIndex       = 0;
     d_restartFlag     = restart ? 1 : 0;
+    if(d_restartFlag == 0)
+      {
+         init(); 
+         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                           MPI_COMM_WORLD,
+                                           true,
+                                           true);
+                                          
+      }
+    else
+      {
+          std::string coordinatesFile, domainVectorFile;
+          init(coordinatesFile, domainVectorFile);
+          d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                           coordinatesFile,
+                                           domainVectorFile,
+                                           MPI_COMM_WORLD,
+                                           true,
+                                           true);
+
+      }  
+      
+      set();
+  
+  
   }
 
 
 
   void
-  molecularDynamicsClass::set(dftfeWrapper &dftfeWrapper)
+  molecularDynamicsClass::set()
   {
-    d_dftPtr = dftfeWrapper.getDftfeBasePtr();
+    d_dftPtr = d_dftfeWrapper->getDftfeBasePtr();
     d_TimeStep =
       d_dftPtr->getParametersObject().timeStepBOMD *
       0.09822694541304546435; // Conversion factor from femteseconds:
@@ -1972,5 +1998,7 @@ namespace dftfe
         d_dftPtr->resetRhoNodalSplitIn(d_extrapDensity_tp1);
       }
   }
+
+
 
 } // namespace dftfe
