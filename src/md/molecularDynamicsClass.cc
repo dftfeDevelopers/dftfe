@@ -39,7 +39,7 @@
 namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
-    const MPI_Comm &mpi_comm_parent , bool restart)
+    const MPI_Comm &mpi_comm_parent , const bool restart)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
@@ -98,10 +98,19 @@ namespace dftfe
   void
   molecularDynamicsClass::init(std::string & coordinatesFile, std::string & domainVectorsFile )
   {
-    d_startingTimeStep = checkRestart(coordinatesFile,domainVectorsFile);
+    if(d_restartFlag == 1)
+      d_startingTimeStep = checkRestart(coordinatesFile,domainVectorsFile);
+    else
+       d_startingTimeStep = 0; 
 
   
   }
+
+  void
+  molecularDynamicsClass::init()
+  {
+       d_startingTimeStep = 0;  
+  }  
 
   void
   molecularDynamicsClass::runMD()

@@ -38,7 +38,7 @@ namespace dftfe
      *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
-    molecularDynamicsClass(const MPI_Comm &mpi_comm_parent, bool restart);
+    molecularDynamicsClass(const MPI_Comm &mpi_comm_parent, const bool restart);
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
     const double haToeV              = 27.211386245988;
@@ -64,6 +64,9 @@ namespace dftfe
 
     void
     init(std::string & coordinatesFile, std::string & domainVectorsFile);
+
+    void
+    init();
 
   private:
     // pointer to dft class

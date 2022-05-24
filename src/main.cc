@@ -122,8 +122,7 @@ main(int argc, char *argv[])
       {
 
         dftfe::molecularDynamicsClass mdClass(MPI_COMM_WORLD, false);
-        std::string coordinatesFile,domainVectorFile;
-        mdClass.init(coordinatesFile,domainVectorFile);
+        mdClass.init();
         dftfe::dftfeWrapper dftfeWrapped(parameter_file,
                                        MPI_COMM_WORLD,
                                        true,
