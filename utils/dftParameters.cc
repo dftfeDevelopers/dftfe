@@ -1134,7 +1134,6 @@ namespace dftfe
     chkType                   = 0;
     restartSpinFromNoSpin     = false;
     restartFromChk            = false;
-    restartMdFromChk          = false;
     reproducible_output       = false;
     electrostaticsHRefinement = false;
     meshAdaption              = false;
@@ -1517,7 +1516,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    if ((restartFromChk == true || restartMdFromChk) &&
+    if ((restartFromChk == true ) &&
         (chkType == 1 || chkType == 3))
       {
         if (periodicX || periodicY || periodicZ)

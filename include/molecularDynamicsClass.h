@@ -65,8 +65,7 @@ namespace dftfe
 
 
 
-    void
-    set();
+
 
 
 
@@ -449,7 +448,8 @@ namespace dftfe
     DensityExtrapolation(int TimeStep);
 
     /**
-     * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
+     * @brief  DensityExtrapolation calculates the t+dt density as a second order extrapolation of density from t, t-dt and t-2dt
+     * 
      *
      *
      *
@@ -457,6 +457,18 @@ namespace dftfe
      */
     void
     DensitySplitExtrapolation(int TimeStep);
+
+
+    /**
+     * @brief  set() initalises all the private datamembers of mdclass object from the parameters declared by user.    
+     *
+     *
+     *
+     *
+     */
+    void
+    set();
+
   };
 } // namespace dftfe
 #endif
