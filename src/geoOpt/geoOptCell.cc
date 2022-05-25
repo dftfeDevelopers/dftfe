@@ -574,6 +574,12 @@ namespace dftfe
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
 
+  void
+  geoOptCell::trialstep(std::vector<double> &step)
+  {
+    AssertThrow(false, dftUtils::ExcNotImplementedYet());
+  }
+
 
   std::vector<unsigned int>
   geoOptCell::getUnknownCountFlag() const

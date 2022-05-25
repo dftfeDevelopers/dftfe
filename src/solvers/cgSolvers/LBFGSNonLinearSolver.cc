@@ -98,6 +98,38 @@ namespace dftfe
     }
 
     //
+    // Compute Weighted L2-norm for symmetric matrix P.
+    //
+    double
+    computePdot(std::vector<double> &a,
+                std::vector<double> &b,
+                std::vector<double> &P)
+    {
+      const unsigned int one   = 1;
+      const char         uplo  = 'U';
+      const double       one_d = 1.0;
+      const unsigned int n     = a.size();
+      if (n * n != P.size())
+        {
+          std::cout << "DEBUG check dimensions Pnorm" << std::endl;
+          return -1;
+        }
+      std::vector<double> Pdx(n, 0.0);
+      dsymv_(&uplo,
+             &n,
+             &one_d,
+             P.data(),
+             &n,
+             a.data(),
+             &one,
+             &one_d,
+             Pdx.data(),
+             &one);
+
+      return ddot_(&n, b.data(), &one, Pdx.data(), &one);
+    }
+
+    //
     // Compute Inf-norm.
     //
     double
@@ -224,6 +256,48 @@ namespace dftfe
              &info);
     }
 
+    //
+    //  compute |A|^(1/n) (geometric mean of eigenvalues) for a symmetric matrix
+    //  A
+    //
+    double
+    computeDetNormalizationFactor(std::vector<double> A)
+    {
+      int                 info;
+      const unsigned int  dimensionMatrix = std::sqrt(A.size());
+      std::vector<double> eigenValues(dimensionMatrix, 0.0);
+      const unsigned int  lwork = 1 + 2 * dimensionMatrix, liwork = 1;
+      std::vector<int>    iwork(liwork, 0);
+      const char          jobz = 'N', uplo = 'U';
+      std::vector<double> work(lwork);
+
+      dsyevd_(&jobz,
+              &uplo,
+              &dimensionMatrix,
+              A.data(),
+              &dimensionMatrix,
+              eigenValues.data(),
+              &work[0],
+              &lwork,
+              &iwork[0],
+              &liwork,
+              &info);
+
+      //
+      // free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);
+
+      double detA = 1.0;
+      for (auto i = 0; i < dimensionMatrix; ++i)
+        {
+          detA *= std::pow(std::abs(eigenValues[i]), 1.0 / dimensionMatrix);
+        }
+      return detA;
+    }
   } // namespace internalLBFGS
 
   //
@@ -237,6 +311,15 @@ namespace dftfe
       pcout << "Using preconditioner for LBFGS." << std::endl;
     d_preconditioner.clear();
     problem.precondition(d_preconditioner, d_gradient);
+    double mu = 1/internalLBFGS::computeDetNormalizationFactor(d_preconditioner);
+    if (d_debugLevel >= 1)
+      pcout << "Scaling factor for the preconditioner. "
+            << mu
+            << std::endl;
+    for (auto i = 0; i < d_preconditioner.size(); ++i)
+      {
+        d_preconditioner[i] *= mu;
+      }
   }
 
   //
@@ -246,17 +329,19 @@ namespace dftfe
   void
   LBFGSNonLinearSolver::scalePreconditioner(nonlinearSolverProblem &problem)
   {
-    /*std::vector<double> testDisplacment, eigenvalue;
-    internalLBFGS::computeEigenSpectrum(d_preconditioner,
-                                   1,
-                                   eigenvalue,
-                                   testDisplacment);
-    testDisplacment[0]=0.1*std::sin(-1.3/40);
-    testDisplacment[1]=0.1*std::sin(1.3/40);
-        for (unsigned int i = 0; i < testDisplacment.size(); ++i)
-          pcout << "step: " << testDisplacment[i] << std::endl;
+    if (d_debugLevel >= 1)
+      pcout << "Scaling preconditioner using a trial step." << std::endl;
+    std::vector<double> testDisplacment;
+    problem.trialstep(testDisplacment);
+    for (auto i = 0; i < d_numberUnknowns; ++i)
+      {
+        testDisplacment[i] *=
+          1e-2; // internalBFGS::computeLInfNorm(testDisplacment);;
+      }
+    for (unsigned int i = 0; i < testDisplacment.size(); ++i)
+      pcout << "testDisplacment: " << testDisplacment[i] << std::endl;
     updateSolution(testDisplacment, problem);
-    problem.gradient(d_gradientNew);*
+    problem.gradient(d_gradientNew);
     std::vector<double> delta_g(d_numberUnknowns, 0.0);
 
     for (auto i = 0; i < d_numberUnknowns; ++i)
@@ -265,17 +350,23 @@ namespace dftfe
       }
 
     double mu = internalLBFGS::dot(delta_g, testDisplacment) /
-                internalLBFGS::computePNorm(testDisplacment,
-    d_preconditioner);*/
-    double mu = 1 / 0.21;
-    pcout << "DEBUG mu " << mu << std::endl;
-    if (mu > 1)
+                internalLBFGS::computePNorm(testDisplacment, d_preconditioner);
+    if (d_debugLevel >= 1)
+      pcout << "Scaling factor for the preconditioner. dgdx/(dxPdx) " << mu
+            << std::endl;
+    if (d_debugLevel >= 1)
+      pcout << "Scaling factor for the preconditioner. dgdg/(dgPdx) "
+            << internalLBFGS::dot(delta_g, delta_g) /
+                 internalLBFGS::computePdot(testDisplacment,
+                                            delta_g,
+                                            d_preconditioner)
+            << std::endl;
+    for (auto i = 0; i < d_preconditioner.size(); ++i)
       {
-        for (auto i = 0; i < d_preconditioner.size(); ++i)
-          {
-            d_preconditioner[i] *= mu;
-          }
+        d_preconditioner[i] *= mu;
       }
+    problem.gradient(d_gradient);
+    problem.value(d_value);
   }
 
   //
@@ -291,11 +382,38 @@ namespace dftfe
         alpha[j] = internalLBFGS::dot(d_deltaXq[j], gradient) * d_rhoq[j];
         internalLBFGS::axpy(-alpha[j], d_deltaGq[j], gradient);
       }
+    pcout<<"DEBUG mu pc1 "<<internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                              d_deltaXq[d_maxNumPastSteps - 1]) /
+                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                     d_deltaXq[d_maxNumPastSteps - 1])<<std::endl;
+    pcout<<"DEBUG mu pc2 "<<internalLBFGS::computePNorm(d_deltaXq[d_maxNumPastSteps - 1],
+                                              d_preconditioner) /
+                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                     d_deltaXq[d_maxNumPastSteps - 1])<<std::endl;
+    pcout<<"DEBUG mu nw1 "<<internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1])<<std::endl;
+    pcout<<"DEBUG mu nw2 "<<internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1],d_preconditioner) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1])<<std::endl;
     if (d_usePreconditioner)
       {
         internalLBFGS::linearSolve(d_preconditioner, gradient);
+        if (d_numPastSteps > 0)
+          {
+            for (int i = 0; i < d_numberUnknowns; ++i)
+              {
+                gradient[i] *=
+                  internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1],d_preconditioner) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]);
+              }
+          }
       }
-    if (d_numPastSteps > 0)
+    else if (d_numPastSteps > 0)
       {
         for (int i = 0; i < d_numberUnknowns; ++i)
           {
@@ -365,15 +483,15 @@ namespace dftfe
     double sBs   = -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha;
     double sy    = internalLBFGS::dot(delta_g, d_deltaXNew);
     double theta = 1.0;
-    if (sy / sBs < 0.4)
+    if (sy / sBs < 0.2)
       {
-        theta = 0.6 * sBs / (sBs - sy);
+        theta = 0.8 * sBs / (sBs - sy);
       }
-    else if (sy / sBs > 4)
+    /*else if (sy / sBs > 4)
       {
         theta = 3 * sBs / (sy - sBs);
-      }
-    if (theta != 1 && d_debugLevel >= 2)
+      }*/
+    if (theta != 1 && d_debugLevel >= 1)
       {
         pcout << "Using damped LBFGS update with theta = " << theta
               << std::endl;
@@ -392,6 +510,7 @@ namespace dftfe
     if (d_numPastSteps < d_maxNumPastSteps)
       {
         ++d_numPastSteps;
+        d_noHistory = false;
       }
   }
 
@@ -405,7 +524,7 @@ namespace dftfe
     double gntdx = internalLBFGS::dot(d_deltaXNew, d_gradientNew);
 
     d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
-    d_wolfeCurvature     = std::abs(gntdx) < 0.1 * std::abs(gtdx);
+    d_wolfeCurvature     = std::abs(gntdx) < 0.9 * std::abs(gtdx);
     d_wolfeSatisfied     = d_wolfeSufficientDec && d_wolfeCurvature;
     if (d_debugLevel >= 1)
       {
@@ -429,7 +548,7 @@ namespace dftfe
                     1.0;
         if (d_debugLevel >= 1 && d_normDeltaXnew > d_maxStepLength)
           pcout
-            << "Step length exceeded the maximul allowed limit, scaling the step by: "
+            << "Step length exceeded the maximum allowed limit, scaling the step by: "
             << d_alpha << std::endl;
       }
     else
@@ -668,7 +787,7 @@ namespace dftfe
         if (d_usePreconditioner)
           {
             initializePreconditioner(problem);
-            scalePreconditioner(problem);
+            // scalePreconditioner(problem);
           }
       }
     else

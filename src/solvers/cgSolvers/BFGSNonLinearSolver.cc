@@ -371,6 +371,36 @@ namespace dftfe
           pcout << "Using preconditioner for initial Hessian guess."
                 << std::endl;
         problem.precondition(d_hessian, d_gradient);
+        if (d_debugLevel >= 1)
+          pcout << "Scaling preconditioner using a trial step." << std::endl;
+        std::vector<double> testDisplacment;
+        problem.trialstep(testDisplacment);
+        for (auto i = 0; i < d_numberUnknowns; ++i)
+          {
+            testDisplacment[i] *=
+              1e-2; // internalBFGS::computeLInfNorm(testDisplacment);;
+          }
+        for (unsigned int i = 0; i < testDisplacment.size(); ++i)
+          pcout << "testDisplacment: " << testDisplacment[i] << std::endl;
+        updateSolution(testDisplacment, problem);
+        problem.gradient(d_gradientNew);
+        std::vector<double> delta_g(d_numberUnknowns, 0.0);
+
+        for (auto i = 0; i < d_numberUnknowns; ++i)
+          {
+            delta_g[i] = d_gradientNew[i] - d_gradient[i];
+          }
+
+        double mu = internalBFGS::dot(delta_g, testDisplacment) /
+                    internalBFGS::computePNorm(testDisplacment, d_hessian);
+        if (d_debugLevel >= 1)
+          pcout << "Scaling factor for the preconditioner. " << mu << std::endl;
+        for (auto i = 0; i < d_hessian.size(); ++i)
+          {
+            d_hessian[i] *= mu;
+          }
+        problem.gradient(d_gradient);
+        problem.value(d_value);
       }
     else
       {
@@ -391,7 +421,7 @@ namespace dftfe
       {
         d_Srfo[i] /= detS;
       }
-    d_hessian = d_Srfo;
+    //    d_hessian = d_Srfo;
   }
 
   //
@@ -886,7 +916,7 @@ namespace dftfe
         d_stepAccepted = d_wolfeSufficientDec;
         if (d_stepAccepted)
           {
-            if ((d_iter == 0 || !d_hessianScaled))
+            if ((d_iter == 0 || !d_hessianScaled) && !d_usePreconditioner)
               {
                 scaleHessian();
               }

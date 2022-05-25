@@ -638,6 +638,42 @@ namespace dftfe
           }
       }
   }
+  void
+  geoOptIon::trialstep(std::vector<double> &step)
+  {
+    // AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    step.clear();
+    const unsigned int numberGlobalAtoms =
+      d_dftPtr->getAtomLocationsCart().size();
+    Tensor<2, 3, double> domainVectors;
+    for (unsigned int i = 0; i < 3; ++i)
+      {
+        for (unsigned int j = 0; j < 3; ++j)
+          {
+            domainVectors[j][i] = d_dftPtr->getCell()[i][j];
+          }
+      }
+    Tensor<2, 3, double> domainVectorsInverted = invert(domainVectors);
+    for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        std::vector<double> atomCoordFrac(3, 0.0);
+        for (unsigned int l = 0; l < 3; ++l)
+          {
+            for (unsigned int m = 0; m < 3; ++m)
+              {
+                atomCoordFrac[l] += domainVectorsInverted[l][m] *
+                                    d_dftPtr->getAtomLocationsCart()[i][m + 2];
+              }
+          }
+        for (unsigned int j = 0; j < 3; ++j)
+          {
+            if (d_relaxationFlags[3 * i + j] == 1)
+              {
+                step.push_back(std::sin(atomCoordFrac[j]));
+              }
+          }
+      }
+  }
 
 
   std::vector<unsigned int>
