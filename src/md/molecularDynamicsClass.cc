@@ -52,7 +52,8 @@ namespace dftfe
     d_restartFlag     = restart ? 1 : 0;
     if (d_restartFlag == 0)
       {
-        init();
+
+        d_startingTimeStep = 0;
         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                                MPI_COMM_WORLD,
                                                                true,
@@ -60,11 +61,11 @@ namespace dftfe
       }
     else
       {
-        std::string coordinatesFile, domainVectorFile;
-        init(coordinatesFile, domainVectorFile);
+        std::string coordinatesFile, domainVectorsFile;
+        d_startingTimeStep = checkRestart(coordinatesFile, domainVectorsFile);
         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                                coordinatesFile,
-                                                               domainVectorFile,
+                                                               domainVectorsFile,
                                                                MPI_COMM_WORLD,
                                                                true,
                                                                true);
@@ -117,21 +118,7 @@ namespace dftfe
       }
   }
 
-  void
-  molecularDynamicsClass::init(std::string &coordinatesFile,
-                               std::string &domainVectorsFile)
-  {
-    if (d_restartFlag == 1)
-      d_startingTimeStep = checkRestart(coordinatesFile, domainVectorsFile);
-    else
-      d_startingTimeStep = 0;
-  }
 
-  void
-  molecularDynamicsClass::init()
-  {
-    d_startingTimeStep = 0;
-  }
 
   void
   molecularDynamicsClass::runMD()

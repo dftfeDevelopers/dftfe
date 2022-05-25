@@ -68,11 +68,7 @@ namespace dftfe
     void
     set();
 
-    void
-    init(std::string &coordinatesFile, std::string &domainVectorsFile);
 
-    void
-    init();
 
   private:
     // pointer to dft class

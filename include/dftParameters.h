@@ -72,7 +72,6 @@ namespace dftfe
     unsigned int chkType;
     bool         restartSpinFromNoSpin;
     bool         restartFromChk;
-    bool         restartMdFromChk;
     bool         electrostaticsHRefinement;
 
     bool reproducible_output;
