@@ -40,8 +40,8 @@ namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
     const std::string parameter_file,
-    const MPI_Comm &mpi_comm_parent,
-    const bool      restart)
+    const MPI_Comm &  mpi_comm_parent,
+    const bool        restart)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
@@ -50,31 +50,27 @@ namespace dftfe
     d_MDstartWallTime = MPI_Wtime();
     d_TimeIndex       = 0;
     d_restartFlag     = restart ? 1 : 0;
-    if(d_restartFlag == 0)
+    if (d_restartFlag == 0)
       {
-         init(); 
-         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                           MPI_COMM_WORLD,
-                                           true,
-                                           true);
-                                          
+        init();
+        d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                               MPI_COMM_WORLD,
+                                                               true,
+                                                               true);
       }
     else
       {
-          std::string coordinatesFile, domainVectorFile;
-          init(coordinatesFile, domainVectorFile);
-          d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                           coordinatesFile,
-                                           domainVectorFile,
-                                           MPI_COMM_WORLD,
-                                           true,
-                                           true);
+        std::string coordinatesFile, domainVectorFile;
+        init(coordinatesFile, domainVectorFile);
+        d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                               coordinatesFile,
+                                                               domainVectorFile,
+                                                               MPI_COMM_WORLD,
+                                                               true,
+                                                               true);
+      }
 
-      }  
-      
-      set();
-  
-  
+    set();
   }
 
 
