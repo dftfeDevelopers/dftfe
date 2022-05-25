@@ -1853,7 +1853,7 @@ namespace dftfe
 
   int
   molecularDynamicsClass::checkRestart(std::string &coordinatesFile,
-                                       std::string  domainVectorsFile)
+                                       std::string  &domainVectorsFile)
   {
     int time1 = 0;
 
