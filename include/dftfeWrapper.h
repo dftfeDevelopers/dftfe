@@ -98,9 +98,9 @@ namespace dftfe
      * total number of MPI tasks. Default value of 0 internally sets npkt to an
      * heuristically determined value.
      * @param[in] meshSize Finite-element mesh size around the atoms in Bohr
-     * units. The default value of 1.0 is sufficient to achieve chemical
+     * units. The default value of 0.8 is sufficient to achieve chemical
      * accuracy in energy (0.1 mHa/atom discretization error) and forces (0.1
-     * mHa/Bohr discretization error) for most of the ONCV pseudo-dojo
+     * mHa/Bohr discretization error) for the ONCV pseudo-dojo
      * pseudopotentials. Note that this function assumes a sixth order
      * finite-element interpolating polynomial
      * @param[in] verbosity printing verbosity. Default value is -1: no printing
@@ -124,7 +124,7 @@ namespace dftfe
                  const double            startMagnetization     = 0.0,
                  const double            fermiDiracSmearingTemp = 500.0,
                  const unsigned int      npkpt                  = 0,
-                 const double            meshSize               = 1.0,
+                 const double            meshSize               = 0.8,
                  const int               verbosity              = -1,
                  const bool setGPUToMPITaskBindingInternally    = false);
 
@@ -156,7 +156,7 @@ namespace dftfe
            const double            startMagnetization = 0.0,
            const double            fermiDiracSmearingTemp           = 500.0,
            const unsigned int      npkpt                            = 0,
-           const double            meshSize                         = 1.0,
+           const double            meshSize                         = 0.8,
            const int               verbosity                        = -1,
            const bool              setGPUToMPITaskBindingInternally = false);
 
