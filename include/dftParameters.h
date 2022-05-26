@@ -121,6 +121,7 @@ namespace dftfe
     unsigned int numberStepsBOMD;
     unsigned int TotalImages;
     std::string  solvermode;
+    bool         restart;
     double       gaussianConstantForce;
     double       gaussianOrderForce;
     double       gaussianOrderMoveMeshToAtoms;

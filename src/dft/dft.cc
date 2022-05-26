@@ -1236,7 +1236,7 @@ namespace dftfe
 
         noRemeshRhoDataInit();
 
-        if (d_dftParamsPtr->reuseDensityGeoOpt >= 1)
+        if (d_dftParamsPtr->reuseDensityGeoOpt >= 1 && !d_dftParamsPtr->isBOMD)
           {
             if (d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
                 d_dftParamsPtr->spinPolarized != 1)
