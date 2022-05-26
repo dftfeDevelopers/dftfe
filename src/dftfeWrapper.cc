@@ -573,8 +573,7 @@ namespace dftfe
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file_path,
                                            d_mpi_comm_parent);
-        if (useGPU)
-          d_dftfeParamsPtr->useGPU = true;
+        d_dftfeParamsPtr->useGPU = useGPU;
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
