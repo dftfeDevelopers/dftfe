@@ -1581,13 +1581,6 @@ namespace dftfe
                 << " present in file StepDisplacement.chk.old #" << std::endl;
         MPI_Barrier(d_mpiCommParent);
 
-
-        // std::string newFolder3 = tempfolder + "/" + "time.chk";
-        dftUtils::writeDataIntoFile(
-          timeIndexData,
-          newFolder3,
-          d_mpiCommParent); // old time == new time then restart files
-                            // were successfully saved
         pcout << "#RESTART NOTE: restart files for TimeStep: " << time
               << " successfully created #" << std::endl;
         std::string newFolder0 =
@@ -1595,6 +1588,13 @@ namespace dftfe
         dftUtils::writeDataIntoFile(d_atomFractionalunwrapped,
                                     newFolder0,
                                     d_mpiCommParent);
+
+        // std::string newFolder3 = tempfolder + "/" + "time.chk";
+        dftUtils::writeDataIntoFile(
+          timeIndexData,
+          newFolder3,
+          d_mpiCommParent); // old time == new time then restart files
+                            // were successfully saved                                    
       }
   }
 
@@ -1862,16 +1862,16 @@ namespace dftfe
             std::ifstream readFile1(file1.c_str());
             std::ifstream readFile2(file2.c_str());
             std::ifstream readFile3(file3.c_str());
-            pcout << " Restart folders:"
-                  << (!readFile1.fail() && !readFile2.fail()) << std::endl;
+            pcout<<"Starting files search"<<std::endl;
             bool NHCflag = true;
             if (d_dftPtr->getParametersObject().tempControllerTypeBOMD ==
-                "NOSE_HOVER_CHAINS")
+                "NOSE_HOVER_CHAINS")              
               {
                 NHCflag = false;
                 if (!readFile3.fail())
                   NHCflag = true;
-              }
+              } 
+            pcout<<"Finishing files search"<<std::endl;  
             if (!readFile1.fail() && !readFile2.fail() && NHCflag)
               {
                 flag              = true;
