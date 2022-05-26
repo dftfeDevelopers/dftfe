@@ -114,6 +114,8 @@ namespace dftfe
      * mHa/Bohr discretization error) for the ONCV pseudo-dojo
      * pseudopotentials. Note that this function assumes a sixth order
      * finite-element interpolating polynomial
+     * @param[in] scfMixingParameter mixing paramter for SCF fixed point
+     * iteration. Currently the Anderson mixing strategy is used.
      * @param[in] verbosity printing verbosity. Default value is -1: no printing
      * @param[in] setGPUToMPITaskBindingInternally This option is only valid for
      * GPU runs. If set to true GPU to MPI task binding is set inside the DFT-FE
@@ -136,6 +138,7 @@ namespace dftfe
                  const double            fermiDiracSmearingTemp = 500.0,
                  const unsigned int      npkpt                  = 0,
                  const double            meshSize               = 0.8,
+                 const double            scfMixingParameter     = 0.2,
                  const int               verbosity              = -1,
                  const bool setGPUToMPITaskBindingInternally    = false);
 
@@ -180,6 +183,7 @@ namespace dftfe
            const double            fermiDiracSmearingTemp           = 500.0,
            const unsigned int      npkpt                            = 0,
            const double            meshSize                         = 0.8,
+           const double            scfMixingParameter               = 0.2,
            const int               verbosity                        = -1,
            const bool              setGPUToMPITaskBindingInternally = false);
 

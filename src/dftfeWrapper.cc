@@ -223,6 +223,7 @@ namespace dftfe
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
+    const double                           scfMixingParameter,
     const int                              verbosity,
     const bool                             setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
@@ -243,6 +244,7 @@ namespace dftfe
            fermiDiracSmearingTemp,
            npkpt,
            meshSize,
+           scfMixingParameter,
            verbosity,
            setGPUToMPITaskBindingInternally);
   }
@@ -318,6 +320,7 @@ namespace dftfe
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
+    const double                           scfMixingParameter,
     const int                              verbosity,
     const bool                             setGPUToMPITaskBindingInternally)
   {
@@ -596,6 +599,11 @@ namespace dftfe
 
             cmd = "sed -i 's/set TEMPERATURE=.*/set TEMPERATURE=" +
                   std::to_string(fermiDiracSmearingTemp) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
+            cmd = "sed -i 's/set MIXING PARAMETER=.*/set MIXING PARAMETER=" +
+                  std::to_string(scfMixingParameter) + "/g' " +
                   parameter_file_path;
             system(cmd.c_str());
 
