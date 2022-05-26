@@ -118,26 +118,26 @@ main(int argc, char *argv[])
 
   if (runParams.solvermode == "MD")
     {
-      if(!runParams.restart)
-      {
-      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
-                                       MPI_COMM_WORLD,
-                                       true,
-                                       true);
+      if (!runParams.restart)
+        {
+          dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                           MPI_COMM_WORLD,
+                                           true,
+                                           true);
 
-      dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
-      mdClass.runMD();
-      }
+          dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
+          mdClass.runMD();
+        }
       else
-      {
-      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
-                                       MPI_COMM_WORLD,
-                                       true,
-                                       true);
+        {
+          dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                           MPI_COMM_WORLD,
+                                           true,
+                                           true);
 
-      dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
-      mdClass.runMD();        
-      }
+          dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
+          mdClass.runMD();
+        }
     }
 
   else if (runParams.solvermode == "NEB")

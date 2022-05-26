@@ -71,7 +71,6 @@ namespace dftfe
 
 
 
-
       prm.enter_subsection("GPU");
       {
         prm.declare_entry("USE GPU",
@@ -1246,7 +1245,7 @@ namespace dftfe
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
-    restart                    = prm.get_bool("RESTART");
+    restart                   = prm.get_bool("RESTART");
     solvermode                = prm.get("SOLVER MODE");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
 
