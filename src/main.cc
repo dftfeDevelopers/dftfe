@@ -118,20 +118,12 @@ main(int argc, char *argv[])
 
   if (runParams.solvermode == "MD")
     {
-      if (!runParams.restart)
-        {
-          dftfe::molecularDynamicsClass mdClass(parameter_file,
+
+        dftfe::molecularDynamicsClass mdClass(parameter_file,
                                                 MPI_COMM_WORLD,
-                                                false);
-          mdClass.runMD();
-        }
-      else
-        {
-          dftfe::molecularDynamicsClass mdClass(parameter_file,
-                                                MPI_COMM_WORLD,
-                                                true);
-          mdClass.runMD();
-        }
+                                                runParams.restart);
+        mdClass.runMD();
+        
     }
 
   else if (runParams.solvermode == "NEB")
