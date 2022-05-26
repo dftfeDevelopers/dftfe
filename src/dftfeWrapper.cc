@@ -843,6 +843,17 @@ namespace dftfe
     return d_dftfeBasePtr->getFreeEnergy();
   }
 
+  double
+  dftfeWrapper::getElectronicEntropicEnergy() const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    return d_dftfeBasePtr->getEntropicEnergy();
+  }
+
+
   std::vector<std::vector<double>>
   dftfeWrapper::getForcesAtoms() const
   {

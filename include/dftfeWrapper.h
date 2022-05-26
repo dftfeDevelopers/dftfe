@@ -200,11 +200,17 @@ namespace dftfe
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
 
+    /**
+     * @brief Get electronic entropic energy (in Hartree units). This function can
+     * only be called after calling computeDFTFreeEnergy
+     */
+    double
+    getElectronicEntropicEnergy() const;
 
     /**
      * @brief Get ionic forces: negative of gradient of DFT free energy with
-     * respect to ionic positions (in Hartree/Bohr units). This function should
-     * be only be called after calling computeDFTFreeEnergy
+     * respect to ionic positions (in Hartree/Bohr units). This function can
+     * only be called after calling computeDFTFreeEnergy
      *
      *  @return vector of forces on each atom
      */
@@ -214,7 +220,7 @@ namespace dftfe
     /**
      * @brief Get cell stress: negative of gradient of DFT free energy
      * with respect to affine strain components scaled by volume
-     * (Hartree/Bohr^3) units. This function should be only
+     * (Hartree/Bohr^3) units. This function can only
      * be called after calling computeDFTFreeEnergy
      *
      * @return cell stress 3 \times 3 matrix given by
