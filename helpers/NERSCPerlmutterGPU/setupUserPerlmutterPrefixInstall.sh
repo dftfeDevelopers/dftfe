@@ -76,7 +76,7 @@ function cmake_real() {
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/global/common/software/m3916/softwareDFTFE/dftfe/installReal \
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/global/common/software/m3916/softwareDFTFE/dftfe/installComplex \
         -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
