@@ -1508,6 +1508,16 @@ namespace dftfe
         std::vector<std::vector<double>> IEData(1, std::vector<double>(1, 0.0));
         std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
 
+        std::vector<std::vector<double>> mdData(1, std::vector<double>(1, 0.0));
+        if(d_ThermostatType == "NO_CONTROL")
+          mdData[0][0] = 0.0;
+        else if(d_ThermostatType == "RESCALE")  
+          mdData[0][0] = 1.0;
+        else if(d_ThermostatType == "NOSE_HOVER_CHAINS") 
+          mdData[0][0] = 2.0;
+        else if(d_ThermostatType == "CSVR")   
+          mdData[0][0] = 3.0;
+
 
         timeIndexData[0][0]    = double(time);
         std::string Folder     = "mdRestart/Step";
@@ -1515,6 +1525,8 @@ namespace dftfe
         mkdir(tempfolder.c_str(), ACCESSPERMS);
         Folder                 = "mdRestart";
         std::string newFolder3 = Folder + "/" + "time.chk";
+        std::string newFolder_0 = Folder + "/"+ "moleculardynamics.dat";
+        dftUtils::writeDataIntoFile(mdData, newFolder_0, d_mpiCommParent);
         dftUtils::writeDataIntoFile(timeIndexData, newFolder3, d_mpiCommParent);
         KEData[0][0] = KineticEnergyVector[time - d_startingTimeStep];
         IEData[0][0] = InternalEnergyVector[time - d_startingTimeStep];
@@ -1842,9 +1854,9 @@ namespace dftfe
 
     if (d_restartFlag == 1)
       {
-        std::vector<std::vector<double>> t1;
+        std::vector<std::vector<double>> t1, mdData;
         pcout << " MD is in Restart Mode" << std::endl;
-
+        dftfe::dftUtils::readFile(1, mdData, "mdRestart/moleculardynamics.dat");
         dftfe::dftUtils::readFile(1, t1, "mdRestart/time.chk");
         time1                  = t1[0][0];
         std::string tempfolder = "mdRestart/Step";
@@ -1864,8 +1876,7 @@ namespace dftfe
             std::ifstream readFile3(file3.c_str());
             pcout<<"Starting files search"<<std::endl;
             bool NHCflag = true;
-            if (d_dftPtr->getParametersObject().tempControllerTypeBOMD ==
-                "NOSE_HOVER_CHAINS")              
+            if (mdData[0][0] ==2.0)              
               {
                 NHCflag = false;
                 if (!readFile3.fail())
