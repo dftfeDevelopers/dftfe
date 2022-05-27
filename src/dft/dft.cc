@@ -3363,9 +3363,12 @@ namespace dftfe
           solveLinearizedKS))
       {
         if (scfIter == d_dftParamsPtr->numSCFIterations)
-          pcout
-            << "DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "
-            << scfIter << " iterations." << std::endl;
+          {
+            if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+              std::cout
+                << "DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "
+                << scfIter << " iterations." << std::endl;
+          }
         else
           pcout << "SCF iterations converged to the specified tolerance after: "
                 << scfIter << " iterations." << std::endl;

@@ -70,7 +70,6 @@ namespace dftfe
         Patterns::Bool(),
         "[Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
 
-
       prm.enter_subsection("GPU");
       {
         prm.declare_entry("USE GPU",
@@ -1240,6 +1239,11 @@ namespace dftfe
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
+<<<<<<< HEAD
+=======
+    restart                   = prm.get_bool("RESTART");
+    solvermode                = prm.get("SOLVER MODE");
+>>>>>>> 4528cbc12747d99f05113dd3358cbcd97cafa22b
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
 
     prm.enter_subsection("GPU");

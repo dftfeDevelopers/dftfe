@@ -223,6 +223,7 @@ namespace dftfe
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
+    const double                           scfMixingParameter,
     const int                              verbosity,
     const bool                             setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
@@ -243,6 +244,7 @@ namespace dftfe
            fermiDiracSmearingTemp,
            npkpt,
            meshSize,
+           scfMixingParameter,
            verbosity,
            setGPUToMPITaskBindingInternally);
   }
@@ -318,6 +320,7 @@ namespace dftfe
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
+    const double                           scfMixingParameter,
     const int                              verbosity,
     const bool                             setGPUToMPITaskBindingInternally)
   {
@@ -599,6 +602,11 @@ namespace dftfe
                   parameter_file_path;
             system(cmd.c_str());
 
+            cmd = "sed -i 's/set MIXING PARAMETER=.*/set MIXING PARAMETER=" +
+                  std::to_string(scfMixingParameter) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
             const int totalIrreducibleKpt =
               mpGrid[0] * mpGrid[1] * mpGrid[2] / 2;
             const int npkptSet =
@@ -624,6 +632,7 @@ namespace dftfe
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file_path,
                                            d_mpi_comm_parent);
+        d_dftfeParamsPtr->useGPU = useGPU;
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -841,6 +850,17 @@ namespace dftfe
     d_dftfeBasePtr->solve(computeIonForces, computeCellStress);
     return d_dftfeBasePtr->getFreeEnergy();
   }
+
+  double
+  dftfeWrapper::getElectronicEntropicEnergy() const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    return d_dftfeBasePtr->getEntropicEnergy();
+  }
+
 
   std::vector<std::vector<double>>
   dftfeWrapper::getForcesAtoms() const

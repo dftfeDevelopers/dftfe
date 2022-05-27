@@ -1,0 +1,48 @@
+# This is a basic workflow to help you get started with Actions
+
+name: clone scrapper
+
+# Controls when the workflow will run
+on:
+  schedule:
+    - cron: '0 14 * * 1'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+permissions: write-all
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          
+jobs:
+  scrapper:
+    runs-on: ubuntu-latest
+
+  
+    strategy:
+      matrix:
+        # Run in all these versions of Python
+        python-version: [3.6]
+
+    steps:
+      - name: Set Up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}    
+
+        
+      - name: config and run script
+        run: |
+          git clone https://github.com/dftfeDevelopers/dftfe dftfeDevelopers/clone-scrapper
+          cd dftfeDevelopers/clone-scrapper
+          git checkout cloneScrapper
+          pip install -r requirements.txt
+          python gh_traffic_python.py dsambit
+  
+      - name: after success
+        run: |
+          git commit -a --message "updated stats file"
+          git remote add origin-upload https://${{ secrets.GITHUB_TOKEN }}@github.com/dftfeDevelopers/dftfe> /dev/null 2>&1
+          git push origin-upload cloneScrapper
