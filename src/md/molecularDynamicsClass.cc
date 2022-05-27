@@ -52,7 +52,6 @@ namespace dftfe
     d_restartFlag     = restart ? 1 : 0;
     if (d_restartFlag == 0)
       {
-
         d_startingTimeStep = 0;
         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                                MPI_COMM_WORLD,
@@ -63,12 +62,13 @@ namespace dftfe
       {
         std::string coordinatesFile, domainVectorsFile;
         d_startingTimeStep = checkRestart(coordinatesFile, domainVectorsFile);
-        d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                               coordinatesFile,
-                                                               domainVectorsFile,
-                                                               MPI_COMM_WORLD,
-                                                               true,
-                                                               true);
+        d_dftfeWrapper =
+          std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                coordinatesFile,
+                                                domainVectorsFile,
+                                                MPI_COMM_WORLD,
+                                                true,
+                                                true);
       }
 
     set();
@@ -1508,24 +1508,25 @@ namespace dftfe
         std::vector<std::vector<double>> IEData(1, std::vector<double>(1, 0.0));
         std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
 
-        std::vector<std::vector<double>> mdData(1, std::vector<double>(1, 0.0));
-        if(d_ThermostatType == "NO_CONTROL")
+        std::vector<std::vector<double>> mdData(1, std::vector<double>(4, 0.0));
+        if (d_ThermostatType == "NO_CONTROL")
           mdData[0][0] = 0.0;
-        else if(d_ThermostatType == "RESCALE")  
+        else if (d_ThermostatType == "RESCALE")
           mdData[0][0] = 1.0;
-        else if(d_ThermostatType == "NOSE_HOVER_CHAINS") 
+        else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
           mdData[0][0] = 2.0;
-        else if(d_ThermostatType == "CSVR")   
+        else if (d_ThermostatType == "CSVR")
           mdData[0][0] = 3.0;
-
-
+        mdData[1][0]           = d_numberGlobalCharges;
+        mdData[2][0]           = d_TimeStep;
+        mdData[3][0]           = d_TimeIndex;
         timeIndexData[0][0]    = double(time);
         std::string Folder     = "mdRestart/Step";
         std::string tempfolder = Folder + std::to_string(time);
         mkdir(tempfolder.c_str(), ACCESSPERMS);
-        Folder                 = "mdRestart";
-        std::string newFolder3 = Folder + "/" + "time.chk";
-        std::string newFolder_0 = Folder + "/"+ "moleculardynamics.dat";
+        Folder                  = "mdRestart";
+        std::string newFolder3  = Folder + "/" + "time.chk";
+        std::string newFolder_0 = Folder + "/" + "moleculardynamics.dat";
         dftUtils::writeDataIntoFile(mdData, newFolder_0, d_mpiCommParent);
         dftUtils::writeDataIntoFile(timeIndexData, newFolder3, d_mpiCommParent);
         KEData[0][0] = KineticEnergyVector[time - d_startingTimeStep];
@@ -1606,7 +1607,7 @@ namespace dftfe
           timeIndexData,
           newFolder3,
           d_mpiCommParent); // old time == new time then restart files
-                            // were successfully saved                                    
+                            // were successfully saved
       }
   }
 
@@ -1803,11 +1804,6 @@ namespace dftfe
                         << "  " << fileDisplacementData[iCharge][0] << "  "
                         << fileDisplacementData[iCharge][1] << "  "
                         << fileDisplacementData[iCharge][2] << std::endl;
-                /* temp[0][0] = atomLocations[iCharge][0];
-                temp[0][1] = atomLocations[iCharge][1];
-                temp[0][2] = fileDisplacementData[iCharge][0];
-                temp[0][3] = fileDisplacementData[iCharge][1];
-                temp[0][4] = fileDisplacementData[iCharge][2];*/
               }
             outfile.close();
           }
@@ -1848,7 +1844,7 @@ namespace dftfe
 
   int
   molecularDynamicsClass::checkRestart(std::string &coordinatesFile,
-                                       std::string  &domainVectorsFile)
+                                       std::string &domainVectorsFile)
   {
     int time1 = 0;
 
@@ -1874,15 +1870,15 @@ namespace dftfe
             std::ifstream readFile1(file1.c_str());
             std::ifstream readFile2(file2.c_str());
             std::ifstream readFile3(file3.c_str());
-            pcout<<"Starting files search"<<std::endl;
+            pcout << "Starting files search" << std::endl;
             bool NHCflag = true;
-            if (mdData[0][0] ==2.0)              
+            if (mdData[0][0] == 2.0)
               {
                 NHCflag = false;
                 if (!readFile3.fail())
                   NHCflag = true;
-              } 
-            pcout<<"Finishing files search"<<std::endl;  
+              }
+            pcout << "Finishing files search" << std::endl;
             if (!readFile1.fail() && !readFile2.fail() && NHCflag)
               {
                 flag              = true;

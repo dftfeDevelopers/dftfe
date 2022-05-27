@@ -209,8 +209,6 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
-
-
       }
       prm.leave_subsection();
 
@@ -1281,7 +1279,6 @@ namespace dftfe
       chkType               = prm.get_integer("CHK TYPE");
       restartFromChk        = prm.get_bool("RESTART FROM CHK") && chkType != 0;
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-
     }
     prm.leave_subsection();
 
@@ -1515,8 +1512,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    if ((restartFromChk == true ) &&
-        (chkType == 1 || chkType == 3))
+    if ((restartFromChk == true) && (chkType == 1 || chkType == 3))
       {
         if (periodicX || periodicY || periodicZ)
           coordinatesFile = floatingNuclearCharges ?

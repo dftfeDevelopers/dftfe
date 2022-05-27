@@ -209,8 +209,6 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
-
-
       }
       prm.leave_subsection();
 

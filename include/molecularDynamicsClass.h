@@ -65,10 +65,6 @@ namespace dftfe
 
 
 
-
-
-
-
   private:
     // pointer to dft class
     std::unique_ptr<dftfeWrapper> d_dftfeWrapper;
@@ -449,7 +445,7 @@ namespace dftfe
 
     /**
      * @brief  DensityExtrapolation calculates the t+dt density as a second order extrapolation of density from t, t-dt and t-2dt
-     * 
+     *
      *
      *
      *
@@ -460,7 +456,7 @@ namespace dftfe
 
 
     /**
-     * @brief  set() initalises all the private datamembers of mdclass object from the parameters declared by user.    
+     * @brief  set() initalises all the private datamembers of mdclass object from the parameters declared by user.
      *
      *
      *
@@ -468,7 +464,6 @@ namespace dftfe
      */
     void
     set();
-
   };
 } // namespace dftfe
 #endif
