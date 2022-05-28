@@ -51,10 +51,6 @@ subsection Molecular Dynamics
 end 
 
 
-subsection Checkpointing and Restart
-  set RESTART MD FROM CHK               = false
-
-end
 
 subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 4000
