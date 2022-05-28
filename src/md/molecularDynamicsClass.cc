@@ -446,39 +446,6 @@ namespace dftfe
     if (d_ThermostatType == "NO_CONTROL")
       {
         int status = mdNVE(KineticEnergyVector,
-              InternalEnergyVector,
-              EntropicEnergyVector,
-              TotalEnergyVector,
-              displacements,
-              velocity,
-              force,
-              massAtoms);
-      }
-    else if (d_ThermostatType == "RESCALE")
-      {
-        int status = mdNVTrescaleThermostat(KineticEnergyVector,
-                               InternalEnergyVector,
-                               EntropicEnergyVector,
-                               TotalEnergyVector,
-                               displacements,
-                               velocity,
-                               force,
-                               massAtoms);
-      }
-    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
-      {
-        int status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
-                                       InternalEnergyVector,
-                                       EntropicEnergyVector,
-                                       TotalEnergyVector,
-                                       displacements,
-                                       velocity,
-                                       force,
-                                       massAtoms);
-      }
-    else if (d_ThermostatType == "CSVR")
-      {
-        int status = mdNVTsvrThermostat(KineticEnergyVector,
                            InternalEnergyVector,
                            EntropicEnergyVector,
                            TotalEnergyVector,
@@ -487,9 +454,42 @@ namespace dftfe
                            force,
                            massAtoms);
       }
+    else if (d_ThermostatType == "RESCALE")
+      {
+        int status = mdNVTrescaleThermostat(KineticEnergyVector,
+                                            InternalEnergyVector,
+                                            EntropicEnergyVector,
+                                            TotalEnergyVector,
+                                            displacements,
+                                            velocity,
+                                            force,
+                                            massAtoms);
+      }
+    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
+      {
+        int status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
+                                                    InternalEnergyVector,
+                                                    EntropicEnergyVector,
+                                                    TotalEnergyVector,
+                                                    displacements,
+                                                    velocity,
+                                                    force,
+                                                    massAtoms);
+      }
+    else if (d_ThermostatType == "CSVR")
+      {
+        int status = mdNVTsvrThermostat(KineticEnergyVector,
+                                        InternalEnergyVector,
+                                        EntropicEnergyVector,
+                                        TotalEnergyVector,
+                                        displacements,
+                                        velocity,
+                                        force,
+                                        massAtoms);
+      }
 
     pcout << "MD run completed" << std::endl;
-    return(1);
+    return (1);
   }
 
 
@@ -612,13 +612,13 @@ namespace dftfe
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
-        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
-        {
-          pcout<<"Wall Time exceeded"<<std::endl;
-          return(0);
-        }  
+        if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+          {
+            pcout << "Wall Time exceeded" << std::endl;
+            return (0);
+          }
       }
-      return(1);
+    return (1);
   }
 
 
@@ -752,13 +752,13 @@ namespace dftfe
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
-        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
-        {
-          pcout<<"Wall Time exceeded"<<std::endl;
-          return(0);
-        } 
+        if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+          {
+            pcout << "Wall Time exceeded" << std::endl;
+            return (0);
+          }
       }
-      return(1);
+    return (1);
   }
 
   int
@@ -956,13 +956,13 @@ namespace dftfe
         MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
-        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
-        {
-          pcout<<"Wall Time exceeded"<<std::endl;
-          return(0);
-        } 
+        if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+          {
+            pcout << "Wall Time exceeded" << std::endl;
+            return (0);
+          }
       }
-      return(1);
+    return (1);
   }
 
 
@@ -1096,14 +1096,13 @@ namespace dftfe
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
-        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
-        {
-          pcout<<"Wall Time exceeded"<<std::endl;
-          return(0);
-        } 
-
+        if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+          {
+            pcout << "Wall Time exceeded" << std::endl;
+            return (0);
+          }
       }
-      return(1);
+    return (1);
   }
 
 
@@ -1686,20 +1685,20 @@ namespace dftfe
     KE[0] = KE0[0][0];
     IE[0] = IE0[0][0];
     TE[0] = TE0[0][0];
-   /* std::string                      fileName3  = "force.chk";
-    std::string                      newFolder3 = tempfolder + "/" + fileName3;
-    std::vector<std::vector<double>> fileForceData;
-    dftUtils::readFile(3, fileForceData, newFolder3);
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-      {
-        force[iCharge][0] = fileForceData[iCharge][0];
-        force[iCharge][1] = fileForceData[iCharge][1];
-        force[iCharge][2] = fileForceData[iCharge][2];
-      }
-      */
+    /* std::string                      fileName3  = "force.chk";
+     std::string                      newFolder3 = tempfolder + "/" + fileName3;
+     std::vector<std::vector<double>> fileForceData;
+     dftUtils::readFile(3, fileForceData, newFolder3);
+     for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+       {
+         force[iCharge][0] = fileForceData[iCharge][0];
+         force[iCharge][1] = fileForceData[iCharge][1];
+         force[iCharge][2] = fileForceData[iCharge][2];
+       }
+       */
     d_dftPtr->solve(true, false, false, false);
     force = d_dftPtr->getForceonAtoms();
-    
+
     if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
         d_dftPtr->getParametersObject().spinPolarized != 1)
       DensityExtrapolation(0);
