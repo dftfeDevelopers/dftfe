@@ -120,7 +120,7 @@ namespace dftfe
 
 
 
-  void
+  int
   molecularDynamicsClass::runMD()
   {
     std::vector<double> massAtoms(d_numberGlobalCharges);
@@ -445,7 +445,7 @@ namespace dftfe
     //----------------------------------------------//
     if (d_ThermostatType == "NO_CONTROL")
       {
-        mdNVE(KineticEnergyVector,
+        int status = mdNVE(KineticEnergyVector,
               InternalEnergyVector,
               EntropicEnergyVector,
               TotalEnergyVector,
@@ -456,7 +456,7 @@ namespace dftfe
       }
     else if (d_ThermostatType == "RESCALE")
       {
-        mdNVTrescaleThermostat(KineticEnergyVector,
+        int status = mdNVTrescaleThermostat(KineticEnergyVector,
                                InternalEnergyVector,
                                EntropicEnergyVector,
                                TotalEnergyVector,
@@ -467,7 +467,7 @@ namespace dftfe
       }
     else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
       {
-        mdNVTnosehoverchainsThermostat(KineticEnergyVector,
+        int status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
                                        InternalEnergyVector,
                                        EntropicEnergyVector,
                                        TotalEnergyVector,
@@ -478,7 +478,7 @@ namespace dftfe
       }
     else if (d_ThermostatType == "CSVR")
       {
-        mdNVTsvrThermostat(KineticEnergyVector,
+        int status = mdNVTsvrThermostat(KineticEnergyVector,
                            InternalEnergyVector,
                            EntropicEnergyVector,
                            TotalEnergyVector,
@@ -489,10 +489,11 @@ namespace dftfe
       }
 
     pcout << "MD run completed" << std::endl;
+    return(1);
   }
 
 
-  void
+  int
   molecularDynamicsClass::mdNVE(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
@@ -611,14 +612,17 @@ namespace dftfe
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
-        AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
-                    ExcMessage(
-                      "DFT-FE Exit: Max Wall Time exceeded User Limit"));
+        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+        {
+          pcout<<"Wall Time exceeded"<<std::endl;
+          return(0);
+        }  
       }
+      return(1);
   }
 
 
-  void
+  int
   molecularDynamicsClass::mdNVTrescaleThermostat(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
@@ -748,13 +752,16 @@ namespace dftfe
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
-        AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
-                    ExcMessage(
-                      "DFT-FE Exit: Max Wall Time exceeded User Limit"));
+        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+        {
+          pcout<<"Wall Time exceeded"<<std::endl;
+          return(0);
+        } 
       }
+      return(1);
   }
 
-  void
+  int
   molecularDynamicsClass::mdNVTnosehoverchainsThermostat(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
@@ -949,17 +956,17 @@ namespace dftfe
         MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
-        AssertThrow(
-          (d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
-          ExcMessage(
-            "DFT-FE Exit: Max Wall Time exceeded User Limit")); // Determine
-                                                                // Exit sequence
-                                                                // ..
+        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+        {
+          pcout<<"Wall Time exceeded"<<std::endl;
+          return(0);
+        } 
       }
+      return(1);
   }
 
 
-  void
+  int
   molecularDynamicsClass::mdNVTsvrThermostat(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
@@ -1089,10 +1096,14 @@ namespace dftfe
         curr_time = MPI_Wtime() - d_MDstartWallTime;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
-        AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
-                    ExcMessage(
-                      "DFT-FE Exit: Max Wall Time exceeded User Limit"));
+        if(d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
+        {
+          pcout<<"Wall Time exceeded"<<std::endl;
+          return(0);
+        } 
+
       }
+      return(1);
   }
 
 
@@ -1508,7 +1519,7 @@ namespace dftfe
         std::vector<std::vector<double>> IEData(1, std::vector<double>(1, 0.0));
         std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
 
-        std::vector<std::vector<double>> mdData(1, std::vector<double>(4, 0.0));
+        std::vector<std::vector<double>> mdData(4, std::vector<double>(4, 0.0));
         if (d_ThermostatType == "NO_CONTROL")
           mdData[0][0] = 0.0;
         else if (d_ThermostatType == "RESCALE")
@@ -1675,10 +1686,20 @@ namespace dftfe
     KE[0] = KE0[0][0];
     IE[0] = IE0[0][0];
     TE[0] = TE0[0][0];
-
-
+   /* std::string                      fileName3  = "force.chk";
+    std::string                      newFolder3 = tempfolder + "/" + fileName3;
+    std::vector<std::vector<double>> fileForceData;
+    dftUtils::readFile(3, fileForceData, newFolder3);
+    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+      {
+        force[iCharge][0] = fileForceData[iCharge][0];
+        force[iCharge][1] = fileForceData[iCharge][1];
+        force[iCharge][2] = fileForceData[iCharge][2];
+      }
+      */
     d_dftPtr->solve(true, false, false, false);
     force = d_dftPtr->getForceonAtoms();
+    
     if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
         d_dftPtr->getParametersObject().spinPolarized != 1)
       DensityExtrapolation(0);

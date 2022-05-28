@@ -1512,7 +1512,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    if ((restartFromChk == true) && (chkType == 1 || chkType == 3))
+    if ((restartFromChk == true) && (chkType == 1))
       {
         if (periodicX || periodicY || periodicZ)
           coordinatesFile = floatingNuclearCharges ?

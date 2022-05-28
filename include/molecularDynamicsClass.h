@@ -60,7 +60,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     runMD();
 
 
@@ -113,7 +113,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     mdNVE(std::vector<double> &                      KineticEnergyVector,
           std::vector<double> &                      InternalEnergyVector,
           std::vector<double> &                      EntropicEnergyVector,
@@ -142,7 +142,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     mdNVTnosehoverchainsThermostat(
       std::vector<double> &                      KineticEnergyVector,
       std::vector<double> &                      InternalEnergyVector,
@@ -175,7 +175,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     mdNVTrescaleThermostat(
       std::vector<double> &                      KineticEnergyVector,
       std::vector<double> &                      InternalEnergyVector,
@@ -204,7 +204,7 @@ namespace dftfe
     TimeStep
      *
      */
-    void
+    int
     mdNVTsvrThermostat(std::vector<double> &KineticEnergyVector,
                        std::vector<double> &InternalEnergyVector,
                        std::vector<double> &EntropicEnergyVector,
