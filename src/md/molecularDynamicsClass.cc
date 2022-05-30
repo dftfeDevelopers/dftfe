@@ -1636,7 +1636,7 @@ namespace dftfe
       {
         std::vector<std::vector<double>> atomLocations;
         atomLocations = d_dftPtr->getAtomLocationsCart();
-        pcout << "Atom Locations from Restart " << std::endl;
+        pcout << "Cartesian Atom Locations from Restart " << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             pcout << "Charge Id: " << iCharge << " "
