@@ -256,7 +256,9 @@ namespace dftfe
                 {
                   for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
                     {
-                      outFile << std::setprecision(16) << data[irow][icol];
+                      outFile << std::setprecision(
+                                   std::numeric_limits<double>::max_digits10)
+                              << data[irow][icol];
                       if (icol < data[irow].size() - 1)
                         outFile << " ";
                     }
@@ -282,7 +284,9 @@ namespace dftfe
             {
               for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
                 {
-                  outFile << std::setprecision(16) << data[irow][icol];
+                  outFile << std::setprecision(
+                               std::numeric_limits<double>::max_digits10)
+                          << data[irow][icol];
                   if (icol < data[irow].size() - 1)
                     outFile << " ";
                 }

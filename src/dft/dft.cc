@@ -991,8 +991,7 @@ namespace dftfe
     // optimization is on as well as reuse wfcs and density from previous ionic
     // step is on, or if serial constraints generation is on.
     //
-    if ((d_dftParamsPtr->chkType == 2 || d_dftParamsPtr->chkType == 3) &&
-        (d_dftParamsPtr->restartFromChk || d_dftParamsPtr->restartMdFromChk))
+    if (d_dftParamsPtr->chkType == 2 && d_dftParamsPtr->restartFromChk)
       {
         d_mesh.generateCoarseMeshesForRestart(
           atomLocations,
@@ -1098,8 +1097,7 @@ namespace dftfe
         d_isAtomsGaussianDisplacementsReadFromFile = false;
       }
 
-    if ((d_dftParamsPtr->chkType == 2 || d_dftParamsPtr->chkType == 3) &&
-        d_dftParamsPtr->restartFromChk)
+    if (d_dftParamsPtr->chkType == 2 && d_dftParamsPtr->restartFromChk)
       {
         if (d_dftParamsPtr->verbosity >= 1)
           pcout
@@ -2704,8 +2702,7 @@ namespace dftfe
 
                 const double filterPassTol =
                   (scfIter == 0 && isRestartGroundStateCalcFromChk &&
-                   (d_dftParamsPtr->chkType == 2 ||
-                    d_dftParamsPtr->chkType == 3)) ?
+                   (d_dftParamsPtr->chkType == 2)) ?
                     1.0e-8 :
                     ((scfIter == 0 &&
                       adaptiveChebysevFilterPassesTol > firstScfChebyTol) ?
@@ -3009,8 +3006,7 @@ namespace dftfe
 
                 const double filterPassTol =
                   (scfIter == 0 && isRestartGroundStateCalcFromChk &&
-                   (d_dftParamsPtr->chkType == 2 ||
-                    d_dftParamsPtr->chkType == 3)) ?
+                   (d_dftParamsPtr->chkType == 2)) ?
                     1.0e-8 :
                     ((scfIter == 0 &&
                       adaptiveChebysevFilterPassesTol > firstScfChebyTol) ?
@@ -3631,12 +3627,6 @@ namespace dftfe
     computing_timer.leave_subsection("scf solve");
     computingTimerStandard.leave_subsection("Total scf solve");
 
-    if (d_dftParamsPtr->chkType == 3 &&
-        !(d_dftParamsPtr->isBOMD && d_dftParamsPtr->isXLBOMD))
-      {
-        writeDomainAndAtomCoordinates();
-        saveTriaInfoAndRhoNodalData();
-      }
 
 #ifdef DFTFE_WITH_GPU
     if (d_dftParamsPtr->useGPU &&
