@@ -57,6 +57,17 @@ namespace dftfe
                  const bool        setGPUToMPITaskBindingInternally = false);
 
     /**
+     * @brief constructor based on input parameter_file and restart
+     * coordinates and domain vectors file paths
+     */
+    dftfeWrapper(const std::string parameter_file,
+                 const std::string restartCoordsFile,
+                 const std::string restartDomainVectorsFile,
+                 const MPI_Comm &  mpi_comm_parent,
+                 const bool        printParams                      = false,
+                 const bool        setGPUToMPITaskBindingInternally = false);
+
+    /**
      * @brief constructor based on input list of atomic coordinates,
      * list of atomic numbers,cell, boundary conditions,
      * Monkhorst-Pack k-point grid, and other optional parameters.
@@ -98,11 +109,13 @@ namespace dftfe
      * total number of MPI tasks. Default value of 0 internally sets npkt to an
      * heuristically determined value.
      * @param[in] meshSize Finite-element mesh size around the atoms in Bohr
-     * units. The default value of 1.0 is sufficient to achieve chemical
+     * units. The default value of 0.8 is sufficient to achieve chemical
      * accuracy in energy (0.1 mHa/atom discretization error) and forces (0.1
-     * mHa/Bohr discretization error) for most of the ONCV pseudo-dojo
+     * mHa/Bohr discretization error) for the ONCV pseudo-dojo
      * pseudopotentials. Note that this function assumes a sixth order
      * finite-element interpolating polynomial
+     * @param[in] scfMixingParameter mixing paramter for SCF fixed point
+     * iteration. Currently the Anderson mixing strategy is used.
      * @param[in] verbosity printing verbosity. Default value is -1: no printing
      * @param[in] setGPUToMPITaskBindingInternally This option is only valid for
      * GPU runs. If set to true GPU to MPI task binding is set inside the DFT-FE
@@ -124,7 +137,8 @@ namespace dftfe
                  const double            startMagnetization     = 0.0,
                  const double            fermiDiracSmearingTemp = 500.0,
                  const unsigned int      npkpt                  = 0,
-                 const double            meshSize               = 1.0,
+                 const double            meshSize               = 0.8,
+                 const double            scfMixingParameter     = 0.2,
                  const int               verbosity              = -1,
                  const bool setGPUToMPITaskBindingInternally    = false);
 
@@ -136,6 +150,18 @@ namespace dftfe
      */
     void
     reinit(const std::string parameter_file,
+           const MPI_Comm &  mpi_comm_parent,
+           const bool        printParams                      = false,
+           const bool        setGPUToMPITaskBindingInternally = false);
+
+    /**
+     * @brief clear and reinitialize based on input parameter_file and restart
+     * coordinates and domain vectors file paths
+     */
+    void
+    reinit(const std::string parameter_file,
+           const std::string restartCoordsFile,
+           const std::string restartDomainVectorsFile,
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
            const bool        setGPUToMPITaskBindingInternally = false);
@@ -156,7 +182,8 @@ namespace dftfe
            const double            startMagnetization = 0.0,
            const double            fermiDiracSmearingTemp           = 500.0,
            const unsigned int      npkpt                            = 0,
-           const double            meshSize                         = 1.0,
+           const double            meshSize                         = 0.8,
+           const double            scfMixingParameter               = 0.2,
            const int               verbosity                        = -1,
            const bool              setGPUToMPITaskBindingInternally = false);
 
@@ -177,11 +204,17 @@ namespace dftfe
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
 
+    /**
+     * @brief Get electronic entropic energy (in Hartree units). This function can
+     * only be called after calling computeDFTFreeEnergy
+     */
+    double
+    getElectronicEntropicEnergy() const;
 
     /**
      * @brief Get ionic forces: negative of gradient of DFT free energy with
-     * respect to ionic positions (in Hartree/Bohr units). This function should
-     * be only be called after calling computeDFTFreeEnergy
+     * respect to ionic positions (in Hartree/Bohr units). This function can
+     * only be called after calling computeDFTFreeEnergy
      *
      *  @return vector of forces on each atom
      */
@@ -191,7 +224,7 @@ namespace dftfe
     /**
      * @brief Get cell stress: negative of gradient of DFT free energy
      * with respect to affine strain components scaled by volume
-     * (Hartree/Bohr^3) units. This function should be only
+     * (Hartree/Bohr^3) units. This function can only
      * be called after calling computeDFTFreeEnergy
      *
      * @return cell stress 3 \times 3 matrix given by

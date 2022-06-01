@@ -119,13 +119,10 @@ main(int argc, char *argv[])
 
   if (runParams.solvermode == "MD")
     {
-      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
-                                       MPI_COMM_WORLD,
-                                       true,
-                                       true);
-
-      dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
-      mdClass.runMD();
+      dftfe::molecularDynamicsClass mdClass(parameter_file,
+                                            MPI_COMM_WORLD,
+                                            runParams.restart);
+      int                           status = mdClass.runMD();
     }
 
   else if (runParams.solvermode == "NEB")

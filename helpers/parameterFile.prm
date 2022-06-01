@@ -52,4 +52,5 @@ end
 subsection SCF parameters
   set TEMPERATURE=500
   set TOLERANCE=1e-5
+  set MIXING PARAMETER=0.2
 end

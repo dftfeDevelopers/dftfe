@@ -44,11 +44,6 @@ namespace dftfe
         Patterns::Bool(),
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
-      prm.declare_entry(
-        "DFT-FE SOLVER MODE",
-        "GS",
-        Patterns::Selection("GS|MD|NEB|OPT"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If OPT: performs an ion and/or cell optimization calculation.");
 
 
       prm.declare_entry(
@@ -62,6 +57,18 @@ namespace dftfe
         "false",
         Patterns::Bool(),
         "[Advanced] If set to true this option does not delete the dftfeScratch folder when the dftfe object is destroyed. This is useful for debugging and code development. Default: false.");
+
+      prm.declare_entry(
+        "SOLVER MODE",
+        "GS",
+        Patterns::Selection("GS|MD|NEB"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If OPT: performs an ion and/or cell optimization calculation.");
+
+      prm.declare_entry(
+        "RESTART",
+        "false",
+        Patterns::Bool(),
+        "[Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
 
       prm.enter_subsection("GPU");
       {
@@ -188,7 +195,7 @@ namespace dftfe
         prm.declare_entry(
           "CHK TYPE",
           "0",
-          Patterns::Integer(0, 3),
+          Patterns::Integer(0, 2),
           "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
         prm.declare_entry(
@@ -202,12 +209,6 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
-
-        prm.declare_entry(
-          "RESTART MD FROM CHK",
-          "false",
-          Patterns::Bool(),
-          "[Developer] Boolean parameter specifying if the current job reads from a MD checkpoint (in development).");
       }
       prm.leave_subsection();
 
@@ -1153,7 +1154,6 @@ namespace dftfe
     chkType                   = 0;
     restartSpinFromNoSpin     = false;
     restartFromChk            = false;
-    restartMdFromChk          = false;
     reproducible_output       = false;
     electrostaticsHRefinement = false;
     meshAdaption              = false;
@@ -1235,7 +1235,7 @@ namespace dftfe
 
     // New paramter for selecting mode and NEB parameters
     TotalImages = 1;
-    solvermode  = "";
+
 
     dc_dispersioncorrectiontype = 0;
     dc_d3dampingtype            = 2;
@@ -1264,7 +1264,6 @@ namespace dftfe
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
-    solvermode                = prm.get("DFT-FE SOLVER MODE");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
 
     prm.enter_subsection("GPU");
@@ -1307,7 +1306,6 @@ namespace dftfe
       chkType               = prm.get_integer("CHK TYPE");
       restartFromChk        = prm.get_bool("RESTART FROM CHK") && chkType != 0;
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-      restartMdFromChk = prm.get_bool("RESTART MD FROM CHK"); //&& chkType != 0;
     }
     prm.leave_subsection();
 
@@ -1544,8 +1542,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    if ((restartFromChk == true || restartMdFromChk) &&
-        (chkType == 1 || chkType == 3))
+    if ((restartFromChk == true) && (chkType == 1))
       {
         if (periodicX || periodicY || periodicZ)
           coordinatesFile = floatingNuclearCharges ?

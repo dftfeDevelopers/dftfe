@@ -185,6 +185,30 @@ namespace dftfe
   //
   // constructor
   //
+  dftfeWrapper::dftfeWrapper(const std::string parameter_file,
+                             const std::string restartCoordsFile,
+                             const std::string restartDomainVectorsFile,
+                             const MPI_Comm &  mpi_comm_parent,
+                             const bool        printParams,
+                             const bool        setGPUToMPITaskBindingInternally)
+    : d_dftfeBasePtr(nullptr)
+    , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
+    , d_isGPUToMPITaskBindingSetInternally(false)
+  {
+    reinit(parameter_file,
+           restartCoordsFile,
+           restartDomainVectorsFile,
+           mpi_comm_parent,
+           printParams,
+           setGPUToMPITaskBindingInternally);
+  }
+
+
+
+  //
+  // constructor
+  //
   dftfeWrapper::dftfeWrapper(
     const MPI_Comm &                       mpi_comm_parent,
     const bool                             useGPU,
@@ -199,6 +223,7 @@ namespace dftfe
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
+    const double                           scfMixingParameter,
     const int                              verbosity,
     const bool                             setGPUToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
@@ -219,6 +244,7 @@ namespace dftfe
            fermiDiracSmearingTemp,
            npkpt,
            meshSize,
+           scfMixingParameter,
            verbosity,
            setGPUToMPITaskBindingInternally);
   }
@@ -253,6 +279,33 @@ namespace dftfe
 
 
   void
+  dftfeWrapper::reinit(const std::string parameter_file,
+                       const std::string restartCoordsFile,
+                       const std::string restartDomainVectorsFile,
+                       const MPI_Comm &  mpi_comm_parent,
+                       const bool        printParams,
+                       const bool        setGPUToMPITaskBindingInternally)
+  {
+    clear();
+    if (mpi_comm_parent != MPI_COMM_NULL)
+      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+
+    createScratchFolder();
+
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        d_dftfeParamsPtr = new dftfe::dftParameters;
+        d_dftfeParamsPtr->parse_parameters(parameter_file,
+                                           d_mpi_comm_parent,
+                                           printParams);
+        d_dftfeParamsPtr->coordinatesFile           = restartCoordsFile;
+        d_dftfeParamsPtr->domainBoundingVectorsFile = restartDomainVectorsFile;
+      }
+    initialize(setGPUToMPITaskBindingInternally);
+  }
+
+
+  void
   dftfeWrapper::reinit(
     const MPI_Comm &                       mpi_comm_parent,
     const bool                             useGPU,
@@ -267,6 +320,7 @@ namespace dftfe
     const double                           fermiDiracSmearingTemp,
     const unsigned int                     npkpt,
     const double                           meshSize,
+    const double                           scfMixingParameter,
     const int                              verbosity,
     const bool                             setGPUToMPITaskBindingInternally)
   {
@@ -548,6 +602,11 @@ namespace dftfe
                   parameter_file_path;
             system(cmd.c_str());
 
+            cmd = "sed -i 's/set MIXING PARAMETER=.*/set MIXING PARAMETER=" +
+                  std::to_string(scfMixingParameter) + "/g' " +
+                  parameter_file_path;
+            system(cmd.c_str());
+
             const int totalIrreducibleKpt =
               mpGrid[0] * mpGrid[1] * mpGrid[2] / 2;
             const int npkptSet =
@@ -573,6 +632,7 @@ namespace dftfe
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file_path,
                                            d_mpi_comm_parent);
+        d_dftfeParamsPtr->useGPU = useGPU;
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -790,6 +850,17 @@ namespace dftfe
     d_dftfeBasePtr->solve(computeIonForces, computeCellStress);
     return d_dftfeBasePtr->getFreeEnergy();
   }
+
+  double
+  dftfeWrapper::getElectronicEntropicEnergy() const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    return d_dftfeBasePtr->getEntropicEnergy();
+  }
+
 
   std::vector<std::vector<double>>
   dftfeWrapper::getForcesAtoms() const

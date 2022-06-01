@@ -22,8 +22,10 @@
 #include "constants.h"
 #include "headers.h"
 #include <vector>
+#include <memory>
 #include "dftBase.h"
 #include "dftfeWrapper.h"
+
 
 namespace dftfe
 {
@@ -38,8 +40,10 @@ namespace dftfe
      *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
-    molecularDynamicsClass(dftfeWrapper &  dftfeWrapper,
-                           const MPI_Comm &mpi_comm_parent);
+    molecularDynamicsClass(const std::string parameter_file,
+                           const MPI_Comm &  mpi_comm_parent,
+                           const bool        restart);
+
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
     const double haToeV              = 27.211386245988;
@@ -56,13 +60,15 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     runMD();
-    // ~molecularDynamicsClass();
+
+
 
   private:
     // pointer to dft class
-    dftBase *d_dftPtr;
+    std::unique_ptr<dftfeWrapper> d_dftfeWrapper;
+    dftBase *                     d_dftPtr;
 
     // parallel communication objects
     const MPI_Comm     d_mpiCommParent;
@@ -107,7 +113,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     mdNVE(std::vector<double> &                      KineticEnergyVector,
           std::vector<double> &                      InternalEnergyVector,
           std::vector<double> &                      EntropicEnergyVector,
@@ -136,7 +142,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     mdNVTnosehoverchainsThermostat(
       std::vector<double> &                      KineticEnergyVector,
       std::vector<double> &                      InternalEnergyVector,
@@ -169,7 +175,7 @@ namespace dftfe
      *
      *
      */
-    void
+    int
     mdNVTrescaleThermostat(
       std::vector<double> &                      KineticEnergyVector,
       std::vector<double> &                      InternalEnergyVector,
@@ -198,7 +204,7 @@ namespace dftfe
     TimeStep
      *
      */
-    void
+    int
     mdNVTsvrThermostat(std::vector<double> &KineticEnergyVector,
                        std::vector<double> &InternalEnergyVector,
                        std::vector<double> &EntropicEnergyVector,
@@ -425,7 +431,7 @@ namespace dftfe
      *
      */
     int
-    checkRestart();
+    checkRestart(std::string &coordinatesFile, std::string &domainVectorsFile);
 
     /**
      * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
@@ -438,7 +444,8 @@ namespace dftfe
     DensityExtrapolation(int TimeStep);
 
     /**
-     * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
+     * @brief  DensityExtrapolation calculates the t+dt density as a second order extrapolation of density from t, t-dt and t-2dt
+     *
      *
      *
      *
@@ -446,6 +453,17 @@ namespace dftfe
      */
     void
     DensitySplitExtrapolation(int TimeStep);
+
+
+    /**
+     * @brief  set() initalises all the private datamembers of mdclass object from the parameters declared by user.
+     *
+     *
+     *
+     *
+     */
+    void
+    set();
   };
 } // namespace dftfe
 #endif

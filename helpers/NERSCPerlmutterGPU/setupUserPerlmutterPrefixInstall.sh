@@ -16,15 +16,17 @@ SRC=`dirname $0` # location of source directory
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
 
-#Paths for external libraries
-dealiiDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealiiDevCustomized/installGcc8.3CUDA11.1.1Mklscalapack"
-alglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/alglib/cpp/src"
-libxcDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/libxc/installGcc8.3.0Libxc5.1.3"
-spglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/spglib/installGcc8.3.0"
-xmlIncludeDir="/usr/include/libxml2"
-xmlLibDir="/usr/lib64"
-ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/install-elpa-2021.05.002-cuda"
-NCCL_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/nccl/build"
+#Paths for required external libraries
+dealiiDir="/global/common/software/m3916/softwareDFTFE/dealii/install"
+alglibDir="/global/common/software/m3916/softwareDFTFE/alglib/alglib-cpp/src"
+libxcDir="/global/common/software/m3916/softwareDFTFE/libxc/install"
+spglibDir="/global/common/software/m3916/softwareDFTFE/spglib/install"
+xmlIncludeDir="/global/common/software/m3916/softwareDFTFE/libxml2/install/include/libxml2"
+xmlLibDir="/global/common/software/m3916/softwareDFTFE/libxml2/install/lib"
+ELPA_PATH="/global/common/software/m3916/softwareDFTFE/elpa/install_elpa-2021.05.002_gcc11"
+
+#Paths for optional external libraries
+NCCL_PATH="$NCCL_DIR"
 
 #Toggle GPU compilation
 withGPU=ON
@@ -33,9 +35,9 @@ withGPU=ON
 withNCCL=ON
 
 #Compiler options and flags
-cxx_compiler=mpic++
-cxx_flagsRelease="-O2 -fPIC"
-
+cxx_compiler=CC
+cxx_flagsRelease="-O2 -fPIC -target-accel=nvidia80"
+cuda_flags="-I$MPICH_DIR/include -L$MPICH_DIR/lib -lmpich -arch=sm_80" #only applicable for withGPU=ON
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
@@ -43,8 +45,9 @@ withHigherQuadPSP=OFF
 
 # build type: "Release" or "Debug"
 build_type=Release
+
 testing=OFF
-minimal_compile=OFF
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -58,28 +61,30 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
-  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/global/common/software/m3916/softwareDFTFE/dftfe/installReal \
+        -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir\
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
+	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
-  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/global/common/software/m3916/softwareDFTFE/dftfe/installComplex \
+        -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
-	-DWITH_COMPLEX=ON \
+  -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
+	-DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
@@ -98,11 +103,11 @@ fi
 cd $out
 
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j8
+cmake_real "$SRC" && make -j8 && make install
 cd ..
 
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j8
+cmake_cplx "$SRC" && make -j8 && make install
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"

@@ -16,16 +16,16 @@ module load cuda11gcc9.2
 module load mkl/2021.2.0 ​
 
 ​
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_0.prm > output_MD_0
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_1.prm > output_MD_1
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_2.prm > output_MD_2
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_1.prm > outputMg2x_1
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_2.prm > outputMg2x_2
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_3.prm > outputMg2x_3
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_4.prm > outputMg2x_4
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_5.prm > outputMg2x_5
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_6.prm > outputMg2x_6
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_7.prm > outputMg2x_7
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_12.prm > outputMg2x_12
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_13.prm > outputMg2x_13 
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe Input_MD_0.prm > output_MD_0
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe Input_MD_1.prm > output_MD_1
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe Input_MD_2.prm > output_MD_2
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_2.prm > outputMg2x_2
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_3.prm > outputMg2x_3
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_4.prm > outputMg2x_4
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_5.prm > outputMg2x_5
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_6.prm > outputMg2x_6
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_7.prm > outputMg2x_7
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_12.prm > outputMg2x_12
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/RestartFixes/build/release/real/dftfe parameterFileMg2x_13.prm > outputMg2x_13 

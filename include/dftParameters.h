@@ -72,7 +72,6 @@ namespace dftfe
     unsigned int chkType;
     bool         restartSpinFromNoSpin;
     bool         restartFromChk;
-    bool         restartMdFromChk;
     bool         electrostaticsHRefinement;
 
     bool reproducible_output;
@@ -120,7 +119,6 @@ namespace dftfe
     double       timeStepBOMD;
     unsigned int numberStepsBOMD;
     unsigned int TotalImages;
-    std::string  solvermode;
     double       gaussianConstantForce;
     double       gaussianOrderForce;
     double       gaussianOrderMoveMeshToAtoms;
