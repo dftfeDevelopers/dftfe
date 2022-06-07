@@ -81,6 +81,12 @@ namespace dftfe
                   {
                     coordinatesFile   = file1;
                     domainVectorsFile = file2;
+                    tmp.clear();
+                    tmp.resize(1, std::vector<double>(1, lastSavedStep));
+                    dftUtils::writeDataIntoFile(tmp,
+                                                tempfolder + ".chk",
+                                                d_mpiCommParent);
+
                     pcout << "Geometry restart files are found in: " << path
                           << std::endl;
                     restartFilesFound = true;
@@ -200,7 +206,7 @@ namespace dftfe
               }
             else
               {
-                isConverged = geoOptStatus == 0 && d_cycle!=0;
+                isConverged = geoOptStatus == 0 && d_cycle != 0;
                 if (isConverged)
                   break;
                 d_status = 1;

@@ -101,10 +101,11 @@ namespace dftfe
         std::vector<std::vector<double>> tmp, ionOptData;
         dftUtils::readFile(1, ionOptData, d_restartPath + "/ionOpt.dat");
         dftUtils::readFile(1, tmp, d_restartPath + "/step.chk");
-        int  solver                   = ionOptData[0][0];
-        bool usePreconditioner        = ionOptData[1][0] > 1e-6;
-        d_totalUpdateCalls            = tmp[0][0];
-        d_maximumAtomForceToBeRelaxed = tmp[1][0];
+        int  solver            = ionOptData[0][0];
+        bool usePreconditioner = ionOptData[1][0] > 1e-6;
+        d_totalUpdateCalls     = tmp[0][0];
+        dftUtils::readFile(1, tmp, d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
+        d_maximumAtomForceToBeRelaxed = tmp[0][0];
         d_relaxationFlags.resize(numberGlobalAtoms * 3);
         bool relaxationFlagsMatch = true;
         for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
@@ -623,17 +624,20 @@ namespace dftfe
   void
   geoOptIon::save()
   {
-    std::vector<std::vector<double>> tmpData(2, std::vector<double>(1, 0.0));
+    std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
+    std::string                      savePath =
+      d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
+    mkdir(savePath.c_str(), ACCESSPERMS);
+    tmpData[0][0] = d_maximumAtomForceToBeRelaxed;
+    dftUtils::writeDataIntoFile(tmpData,
+                                savePath + "/maxForce.chk",
+                                mpi_communicator);
+    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/");
+    d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
     tmpData[0][0] = d_totalUpdateCalls;
-    tmpData[1][0] = d_maximumAtomForceToBeRelaxed;
     dftUtils::writeDataIntoFile(tmpData,
                                 d_restartPath + "/step.chk",
                                 mpi_communicator);
-    std::string savePath =
-      d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
-    mkdir(savePath.c_str(), ACCESSPERMS);
-    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
-    d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
   }
 
 

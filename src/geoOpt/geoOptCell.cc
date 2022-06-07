@@ -613,15 +613,15 @@ namespace dftfe
   geoOptCell::save()
   {
     std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
-    tmpData[0][0] = d_totalUpdateCalls;
-    dftUtils::writeDataIntoFile(tmpData,
-                                d_restartPath + "/step.chk",
-                                mpi_communicator);
-    std::string savePath =
+    std::string                      savePath =
       d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
     mkdir(savePath.c_str(), ACCESSPERMS);
     d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
     d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
+    tmpData[0][0] = d_totalUpdateCalls;
+    dftUtils::writeDataIntoFile(tmpData,
+                                d_restartPath + "/step.chk",
+                                mpi_communicator);
   }
 
 
