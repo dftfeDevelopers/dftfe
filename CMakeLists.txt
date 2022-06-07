@@ -34,7 +34,6 @@ SET(TARGET_SRC
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
   ./src/solvers/cgSolvers/BFGSNonLinearSolver.cc
   ./src/solvers/cgSolvers/LBFGSNonLinearSolver.cc
-  ./src/solvers/cgSolvers/cg_descent.cc
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc

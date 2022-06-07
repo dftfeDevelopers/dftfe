@@ -39,9 +39,13 @@ namespace dftfe
      *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
-    geometryOptimizationClass(dftfeWrapper &  dftfeWrapper,
-                              const MPI_Comm &mpi_comm_parent);
+    geometryOptimizationClass(const std::string parameter_file,
+                              const MPI_Comm &  mpi_comm_parent,
+                              const bool        restart);
 
+
+    void
+    init(const std::string parameter_file);
 
     /**
      * @brief runOpt:
@@ -52,11 +56,17 @@ namespace dftfe
     runOpt();
 
   private:
-    // pointer to dft class
-    dftBase *   d_dftPtr;
-    geoOptIon * geoOptIonPtr;
-    geoOptCell *geoOptCellPtr;
+    // pointers to dft class and optimization classes
+    std::unique_ptr<dftfeWrapper> d_dftfeWrapper;
+    std::unique_ptr<geoOptIon>    d_geoOptIonPtr;
+    std::unique_ptr<geoOptCell>   d_geoOptCellPtr;
+    dftBase *                     d_dftPtr;
 
+    // restart parameters
+    const bool d_isRestart;
+
+    // status parameters
+    int d_status, d_cycle, d_optMode;
     // parallel communication objects
     const MPI_Comm d_mpiCommParent;
 

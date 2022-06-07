@@ -129,12 +129,9 @@ main(int argc, char *argv[])
     {}
   else if (runParams.solvermode == "OPT")
     {
-      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
-                                       MPI_COMM_WORLD,
-                                       true,
-                                       true);
-
-      dftfe::geometryOptimizationClass geoOpt(dftfeWrapped, MPI_COMM_WORLD);
+      dftfe::geometryOptimizationClass geoOpt(parameter_file,
+                                              MPI_COMM_WORLD,
+                                              runParams.restart);
       geoOpt.runOpt();
     }
   else

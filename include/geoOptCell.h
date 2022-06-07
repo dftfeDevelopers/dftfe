@@ -18,6 +18,7 @@
 #define geoOptCell_H_
 #include "constants.h"
 #include "nonlinearSolverProblem.h"
+#include "nonLinearSolver.h"
 #include "dftBase.h"
 #include "dftfeWrapper.h"
 
@@ -38,14 +39,16 @@ namespace dftfe
      *  @param _dftPtr pointer to dftClass
      *  @param mpi_comm_parent parent mpi_communicator
      */
-    geoOptCell(dftBase *dftPtr, const MPI_Comm &mpi_comm_replica);
+    geoOptCell(dftBase *       dftPtr,
+               const MPI_Comm &mpi_comm_parent,
+               const bool      restart = false);
 
     /**
      * @brief initializes the data member d_relaxationFlags.
      *
      */
     void
-    init();
+    init(const std::string &restartPath);
 
     /**
      * @brief calls the cell stress relaxation solver.
@@ -134,14 +137,20 @@ namespace dftfe
     //  constraint type.
     std::vector<unsigned int> d_relaxationFlags;
 
+    std::string d_restartPath;
+    std::string d_solverRestartPath;
+    bool        d_isRestart;
+    bool        d_solverRestart;
+    int         d_solver;
     /// total number of calls to update()
-    unsigned int d_totalUpdateCalls;
-    double       d_domainVolumeInitial;
+    int    d_totalUpdateCalls;
+    double d_domainVolumeInitial;
     /// current strain tensor applied on the domain
     Tensor<2, 3, double> d_strainEpsilon;
 
     /// pointer to dft class
-    dftBase *d_dftPtr;
+    dftBase *                        d_dftPtr;
+    std::unique_ptr<nonLinearSolver> d_nonLinearSolverPtr;
 
     /// parallel communication objects
     const MPI_Comm     mpi_communicator;

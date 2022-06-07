@@ -311,11 +311,10 @@ namespace dftfe
       pcout << "Using preconditioner for LBFGS." << std::endl;
     d_preconditioner.clear();
     problem.precondition(d_preconditioner, d_gradient);
-    double mu = 1/internalLBFGS::computeDetNormalizationFactor(d_preconditioner);
+    double mu =
+      1 / internalLBFGS::computeDetNormalizationFactor(d_preconditioner);
     if (d_debugLevel >= 1)
-      pcout << "Scaling factor for the preconditioner. "
-            << mu
-            << std::endl;
+      pcout << "Scaling factor for the preconditioner. " << mu << std::endl;
     for (auto i = 0; i < d_preconditioner.size(); ++i)
       {
         d_preconditioner[i] *= mu;
@@ -382,22 +381,31 @@ namespace dftfe
         alpha[j] = internalLBFGS::dot(d_deltaXq[j], gradient) * d_rhoq[j];
         internalLBFGS::axpy(-alpha[j], d_deltaGq[j], gradient);
       }
-    pcout<<"DEBUG mu pc1 "<<internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                              d_deltaXq[d_maxNumPastSteps - 1]) /
-                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                     d_deltaXq[d_maxNumPastSteps - 1])<<std::endl;
-    pcout<<"DEBUG mu pc2 "<<internalLBFGS::computePNorm(d_deltaXq[d_maxNumPastSteps - 1],
-                                              d_preconditioner) /
-                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                     d_deltaXq[d_maxNumPastSteps - 1])<<std::endl;
-    pcout<<"DEBUG mu nw1 "<<internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1]) /
-              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1])<<std::endl;
-    pcout<<"DEBUG mu nw2 "<<internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1],d_preconditioner) /
-              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1])<<std::endl;
+    /*pcout << "DEBUG mu pc1 "
+          << internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                d_deltaXq[d_maxNumPastSteps - 1]) /
+               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                  d_deltaXq[d_maxNumPastSteps - 1])
+          << std::endl;
+    pcout << "DEBUG mu pc2 "
+          << internalLBFGS::computePNorm(d_deltaXq[d_maxNumPastSteps - 1],
+                                         d_preconditioner) /
+               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                  d_deltaXq[d_maxNumPastSteps - 1])
+          << std::endl;
+    pcout << "DEBUG mu nw1 "
+          << internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                d_deltaGq[d_maxNumPastSteps - 1]) /
+               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                  d_deltaGq[d_maxNumPastSteps - 1])
+          << std::endl;
+    pcout << "DEBUG mu nw2 "
+          << internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                        d_deltaGq[d_maxNumPastSteps - 1],
+                                        d_preconditioner) /
+               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                  d_deltaGq[d_maxNumPastSteps - 1])
+          << std::endl;*/
     if (d_usePreconditioner)
       {
         internalLBFGS::linearSolve(d_preconditioner, gradient);
@@ -407,9 +415,10 @@ namespace dftfe
               {
                 gradient[i] *=
                   internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1],d_preconditioner) /
-              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1]);
+                                             d_deltaGq[d_maxNumPastSteps - 1],
+                                             d_preconditioner) /
+                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                     d_deltaGq[d_maxNumPastSteps - 1]);
               }
           }
       }
@@ -651,6 +660,7 @@ namespace dftfe
     data.push_back(std::vector<double>(1, d_alpha));
     data.push_back(std::vector<double>(1, d_iter));
     data.push_back(std::vector<double>(1, (double)d_stepAccepted));
+    data.push_back(std::vector<double>(1, d_numPastSteps));
 
 
     dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
@@ -672,7 +682,7 @@ namespace dftfe
     AssertThrow(
       data.size() ==
         (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
-         d_maxNumPastSteps + 5),
+         d_maxNumPastSteps + 6),
       dealii::ExcMessage(std::string(
         "DFT-FE Error: data size of lbfgs solver checkpoint file is incorrect.")));
 
@@ -739,6 +749,12 @@ namespace dftfe
     d_stepAccepted =
       data[4 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0] == 1.0;
+
+    d_numPastSteps =
+      data[5 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+           d_maxNumPastSteps][0];
+
+    d_noHistory = d_alpha < 0.1 && d_numPastSteps == 0;
   }
 
   //
@@ -778,6 +794,8 @@ namespace dftfe
       {
         d_stepAccepted = true;
         d_numPastSteps = 0;
+        d_iter         = 0;
+        d_noHistory    = false;
         //
         // compute initial values of problem and problem gradient
         //
@@ -797,6 +815,14 @@ namespace dftfe
         MPI_Barrier(mpi_communicator);
         d_useSingleAtomSolutionsInitialGuess = true;
       }
+
+    if (!checkpointFileName.empty())
+      {
+        MPI_Barrier(mpi_communicator);
+        // save(checkpointFileName);
+        problem.save();
+      }
+
     //
     // check for convergence
     //
@@ -812,7 +838,8 @@ namespace dftfe
 
 
 
-    for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
+    for (d_iter = d_iter > 0 ? d_iter : 0; d_iter < d_maxNumberIterations;
+         ++d_iter)
       {
         if (d_debugLevel >= 1)
           pcout << "LBFGS Step no. " << d_iter + 1 << std::endl;
@@ -881,7 +908,7 @@ namespace dftfe
         if (!checkpointFileName.empty())
           {
             MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
+            // save(checkpointFileName);
             problem.save();
           }
 

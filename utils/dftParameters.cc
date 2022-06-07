@@ -61,7 +61,7 @@ namespace dftfe
       prm.declare_entry(
         "SOLVER MODE",
         "GS",
-        Patterns::Selection("GS|MD|NEB"),
+        Patterns::Selection("GS|MD|NEB|OPT"),
         "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If OPT: performs an ion and/or cell optimization calculation.");
 
       prm.declare_entry(
@@ -268,14 +268,32 @@ namespace dftfe
         prm.declare_entry(
           "ION OPT SOLVER",
           "CGPRP",
-          Patterns::Selection("CGDESCENT|LBFGS|CGPRP|BFGS|LBFGSv2"),
+          Patterns::Selection("BFGS|LBFGS|CGPRP"),
           "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
         prm.declare_entry(
           "CELL OPT SOLVER",
           "CGPRP",
-          Patterns::Selection("BFGS|CGPRP|LBFGSv2"),
+          Patterns::Selection("BFGS|LBFGS|CGPRP"),
           "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+
+        prm.declare_entry(
+          "MAXIMUM OPTIMIZATION STEPS",
+          "300",
+          Patterns::Integer(1, 1000),
+          "[Standard] Sets the maximum number of optimization steps to be performed.");
+
+        prm.declare_entry(
+          "MAXIMUM STAGGERED CYCLES",
+          "300",
+          Patterns::Integer(1, 1000),
+          "[Standard] Sets the maximum number of staggered ion/cell optimization cycles to be performed.");
+
+        prm.declare_entry(
+          "MAXIMUM UPDATE STEP",
+          "0.5",
+          Patterns::Double(0, 5.0),
+          "[Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.");
 
         prm.declare_entry(
           "MAX LINE SEARCH ITER",
@@ -1246,9 +1264,12 @@ namespace dftfe
     dc_d3cutoff3                = 40.0;
     dc_d3cutoffCN               = 40.0;
 
-    bfgsStepMethod    = "QN";
-    usePreconditioner = false;
-    lbfgsNumPastSteps = 5;
+    bfgsStepMethod     = "QN";
+    usePreconditioner  = false;
+    lbfgsNumPastSteps  = 5;
+    maxOptIter         = 300;
+    maxStaggeredCycles = 100;
+    maxUpdateStep      = 0.5;
   }
 
 
@@ -1337,6 +1358,9 @@ namespace dftfe
       bfgsStepMethod         = prm.get("BFGS STEP METHOD");
       usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
       lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
+      maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+      maxStaggeredCycles     = prm.get_integer("MAXIMUM STAGGERED CYCLES");
+      maxUpdateStep          = prm.get_double("MAXIMUM UPDATE STEP");
     }
     prm.leave_subsection();
 

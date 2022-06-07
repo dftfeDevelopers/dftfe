@@ -79,6 +79,14 @@ namespace dftfe
           const std::string       checkpointFileName = "",
           const bool              restart            = false);
 
+
+    /**
+     * @brief Create checkpoint file for current state of the BFGS solver.
+     *
+     */
+    void
+    save(const std::string &checkpointFileName);
+
   private:
     /**
      * @brief initialize hessian, either preconditioner or identity matrix.
@@ -142,12 +150,6 @@ namespace dftfe
     updateSolution(const std::vector<double> &step,
                    nonlinearSolverProblem &   problem);
 
-    /**
-     * @brief Create checkpoint file for current state of the BFGS solver.
-     *
-     */
-    void
-    save(const std::string &checkpointFileName);
 
     /**
      * @brief Load BFGS solver state from checkpoint file.

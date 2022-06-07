@@ -75,6 +75,16 @@ namespace dftfe
           const std::string       checkpointFileName = "",
           const bool              restart            = false);
 
+
+
+    /**
+     * @brief Create checkpoint file for current state of the LBFGS solver.
+     *
+     */
+    void
+    save(const std::string &checkpointFileName);
+
+
   private:
     /**
      * @brief Initialize preconditioner.
@@ -130,13 +140,6 @@ namespace dftfe
     bool
     updateSolution(const std::vector<double> &step,
                    nonlinearSolverProblem &   problem);
-
-    /**
-     * @brief Create checkpoint file for current state of the LBFGS solver.
-     *
-     */
-    void
-    save(const std::string &checkpointFileName);
 
     /**
      * @brief Load LBFGS solver state from checkpoint file.

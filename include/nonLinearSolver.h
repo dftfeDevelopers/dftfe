@@ -73,6 +73,9 @@ namespace dftfe
           const std::string       checkpointFileName = "",
           const bool              restart            = false) = 0;
 
+    virtual void
+    save(const std::string &checkpointFileName) = 0;
+
 
   protected:
     /**

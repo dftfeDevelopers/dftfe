@@ -20,12 +20,12 @@
 #include <cgPRPNonLinearSolver.h>
 #include <BFGSNonLinearSolver.h>
 #include <LBFGSNonLinearSolver.h>
-#include <cg_descent_wrapper.h>
 #include <dft.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <force.h>
 #include <geoOptIon.h>
+#include <sys/stat.h>
 
 
 namespace dftfe
@@ -34,22 +34,32 @@ namespace dftfe
   // constructor
   //
 
-  geoOptIon::geoOptIon(dftBase *dftPtr, const MPI_Comm &mpi_comm_parent)
+  geoOptIon::geoOptIon(dftBase *       dftPtr,
+                       const MPI_Comm &mpi_comm_parent,
+                       const bool      restart)
     : d_dftPtr(dftPtr)
     , mpi_communicator(mpi_comm_parent)
     , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_isRestart(restart)
   {}
 
   //
   //
 
   void
-  geoOptIon::init()
+  geoOptIon::init(const std::string &restartPath)
   {
+    d_restartPath   = restartPath + "/ionRelax";
+    d_solverRestart = d_isRestart;
+    if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+      d_solver = 0;
+    else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+      d_solver = 1;
+    else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+      d_solver = 2;
     const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
-    d_atomLocationsInitial      = d_dftPtr->getAtomLocationsCart();
     if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
       {
         std::vector<std::vector<int>>    tempRelaxFlagsData;
@@ -72,17 +82,6 @@ namespace dftfe
                 d_externalForceOnAtom.push_back(tempForceData[i][j]);
               }
           }
-        // print relaxation flags
-        pcout << " --------------Ion force relaxation flags----------------"
-              << std::endl;
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
-          {
-            pcout << tempRelaxFlagsData[i][0] << "  "
-                  << tempRelaxFlagsData[i][1] << "  "
-                  << tempRelaxFlagsData[i][2] << std::endl;
-          }
-        pcout << " --------------------------------------------------"
-              << std::endl;
       }
     else
       {
@@ -96,88 +95,182 @@ namespace dftfe
                 d_externalForceOnAtom.push_back(0.0);
               }
           }
-        // print relaxation flags
-        pcout << " --------------Ion force relaxation flags----------------"
-              << std::endl;
+      }
+    if (d_isRestart)
+      {
+        std::vector<std::vector<double>> tmp, ionOptData;
+        dftUtils::readFile(1, ionOptData, d_restartPath + "/ionOpt.dat");
+        dftUtils::readFile(1, tmp, d_restartPath + "/step.chk");
+        int  solver                   = ionOptData[0][0];
+        bool usePreconditioner        = ionOptData[1][0] > 1e-6;
+        d_totalUpdateCalls            = tmp[0][0];
+        d_maximumAtomForceToBeRelaxed = tmp[1][0];
+        d_relaxationFlags.resize(numberGlobalAtoms * 3);
+        bool relaxationFlagsMatch = true;
         for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
           {
-            pcout << 1.0 << "  " << 1.0 << "  " << 1.0 << std::endl;
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                relaxationFlagsMatch = (d_relaxationFlags[i * 3 + j] ==
+                                        (int)ionOptData[i * 3 + j + 2][0]) &&
+                                       relaxationFlagsMatch;
+              }
           }
-        pcout << " --------------------------------------------------"
-              << std::endl;
+        if (solver != d_solver ||
+            usePreconditioner !=
+              d_dftPtr->getParametersObject().usePreconditioner)
+          pcout
+            << "Solver has changed since last save, the newly set solver will start from scratch."
+            << std::endl;
+        if (!relaxationFlagsMatch)
+          pcout
+            << "Relaxations flags have changed since last save, the solver will be reset to work with the new flags."
+            << std::endl;
+        d_solverRestart = (relaxationFlagsMatch) && (solver == d_solver) &&
+                          (usePreconditioner ==
+                           d_dftPtr->getParametersObject().usePreconditioner);
+        d_solverRestartPath =
+          d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
       }
-  }
-
-
-  int
-  geoOptIon::run()
-  {
-    const double tol =
-      d_dftPtr->getParametersObject().forceRelaxTol; //(units: Hatree/Bohr)
-    const unsigned int maxIter = 300;
-    const double       lineSearchTol =
-      1e-4; // Dummy parameter for CGPRP, the actual stopping criteria are the
-            // Wolfe conditions and maxLineSearchIter
-    const double       lineSearchDampingParameter = 0.8;
-    const unsigned int maxLineSearchIter =
-      d_dftPtr->getParametersObject().maxLineSearchIterCGPRP;
-    const double       maxDisplacmentInAnyComponent = 0.5; // Bohr
-    const unsigned int debugLevel =
-      Utilities::MPI::this_mpi_process(mpi_communicator) == 0 ?
-        d_dftPtr->getParametersObject().verbosity :
-        0;
-    const bool usePreconditioner =
-      d_dftPtr->getParametersObject().usePreconditioner;
-    const bool useRFO = d_dftPtr->getParametersObject().bfgsStepMethod == "RFO";
-    const unsigned int lbfgsHistory =
-      d_dftPtr->getParametersObject().lbfgsNumPastSteps;
-    d_totalUpdateCalls = 0;
-    cgPRPNonLinearSolver cgSolver(tol,
-                                  maxIter,
-                                  debugLevel,
-                                  mpi_communicator,
-                                  lineSearchTol,
-                                  maxLineSearchIter,
-                                  lineSearchDampingParameter,
-                                  maxDisplacmentInAnyComponent);
-
-    BFGSNonLinearSolver bfgsSolver(usePreconditioner,
-                                   useRFO,
-                                   tol,
-                                   maxIter,
-                                   debugLevel,
-                                   mpi_communicator,
-                                   maxDisplacmentInAnyComponent);
-
-    LBFGSNonLinearSolver lbfgsSolver(usePreconditioner,
-                                     tol,
-                                     maxDisplacmentInAnyComponent,
-                                     maxIter,
-                                     lbfgsHistory,
-                                     debugLevel,
-                                     mpi_communicator);
-
-    CGDescent cg_descent(tol, maxIter);
-
-
-    if (d_dftPtr->getParametersObject().chkType >= 1 &&
-        d_dftPtr->getParametersObject().restartFromChk)
+    else
       {
-        if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP" ||
-            d_dftPtr->getParametersObject().ionOptSolver == "CGDESCENT")
+        d_totalUpdateCalls = 0;
+        mkdir(d_restartPath.c_str(), ACCESSPERMS);
+        std::vector<std::vector<double>> ionOptData(2 + numberGlobalAtoms * 3,
+                                                    std::vector<double>(1,
+                                                                        0.0));
+        ionOptData[0][0] = d_solver;
+        ionOptData[1][0] =
+          d_dftPtr->getParametersObject().usePreconditioner ? 1 : 0;
+        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                ionOptData[i * 3 + j + 2][0] = d_relaxationFlags[i * 3 + j];
+              }
+          }
+
+        dftUtils::writeDataIntoFile(ionOptData,
+                                    d_restartPath + "/ionOpt.dat",
+                                    mpi_communicator);
+      }
+    if (d_solver == 0)
+      d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
+        d_dftPtr->getParametersObject().usePreconditioner,
+        d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
+        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().verbosity,
+        mpi_communicator,
+        d_dftPtr->getParametersObject().maxUpdateStep);
+    else if (d_solver == 1)
+      d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
+        d_dftPtr->getParametersObject().usePreconditioner,
+        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().maxUpdateStep,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().lbfgsNumPastSteps,
+        d_dftPtr->getParametersObject().verbosity,
+        mpi_communicator);
+    else
+      d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
+        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().verbosity,
+        mpi_communicator,
+        1e-4,
+        d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
+        0.8,
+        d_dftPtr->getParametersObject().maxUpdateStep);
+    // print relaxation flags
+    pcout << " --------------Ion force relaxation flags----------------"
+          << std::endl;
+    for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        pcout << d_relaxationFlags[i * 3] << "  "
+              << d_relaxationFlags[i * 3 + 1] << "  "
+              << d_relaxationFlags[i * 3 + 2] << std::endl;
+      }
+    pcout << " --------------------------------------------------------"
+          << std::endl;
+    if (d_dftPtr->getParametersObject().verbosity >= 2)
+      {
+        if (d_solver == 0)
+          {
+            pcout << "   ---Non-linear BFGS Parameters-----------  "
+                  << std::endl;
+            pcout << "      stopping tol: "
+                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+
+            pcout << "      maxIter: "
+                  << d_dftPtr->getParametersObject().maxOptIter << std::endl;
+
+            pcout << "      preconditioner: "
+                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << std::endl;
+
+            pcout << "      step method: "
+                  << d_dftPtr->getParametersObject().bfgsStepMethod
+                  << std::endl;
+
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+
+
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+        if (d_solver == 1)
+          {
+            pcout << "   ---Non-linear LBFGS Parameters----------  "
+                  << std::endl;
+            pcout << "      stopping tol: "
+                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+            pcout << "      maxIter: "
+                  << d_dftPtr->getParametersObject().maxOptIter << std::endl;
+            pcout << "      preconditioner: "
+                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << std::endl;
+            pcout << "      lbfgs history: "
+                  << d_dftPtr->getParametersObject().lbfgsNumPastSteps
+                  << std::endl;
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+        if (d_solver == 2)
+          {
+            pcout << "   ---Non-linear CG Parameters--------------  "
+                  << std::endl;
+            pcout << "      stopping tol: "
+                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+            pcout << "      maxIter: "
+                  << d_dftPtr->getParametersObject().maxOptIter << std::endl;
+            pcout << "      lineSearch tol: " << 1e-4 << std::endl;
+            pcout << "      lineSearch maxIter: "
+                  << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
+                  << std::endl;
+            pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+      }
+    if (d_isRestart)
+      {
+        if (d_solver == 2)
           {
             pcout
               << " Re starting Ion force relaxation using nonlinear CG solver... "
               << std::endl;
           }
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+        else if (d_solver == 0)
           {
             pcout
               << " Re starting Ion force relaxation using nonlinear BFGS solver... "
               << std::endl;
           }
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2" ||
-                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+        else if (d_solver == 1)
           {
             pcout
               << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
@@ -186,119 +279,40 @@ namespace dftfe
       }
     else
       {
-        if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP" ||
-            d_dftPtr->getParametersObject().ionOptSolver == "CGDESCENT")
+        if (d_solver == 2)
           {
             pcout
               << " Starting Ion force relaxation using nonlinear CG solver... "
               << std::endl;
           }
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+        else if (d_solver == 0)
           {
             pcout
               << " Starting Ion force relaxation using nonlinear BFGS solver... "
               << std::endl;
           }
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2" ||
-                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+        else if (d_solver == 1)
           {
             pcout
               << " Starting Ion force relaxation using nonlinear LBFGS solver... "
               << std::endl;
           }
       }
-    if (d_dftPtr->getParametersObject().verbosity >= 2)
-      {
-        pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
-        pcout << "      stopping tol: " << tol << std::endl;
-        pcout << "      maxIter: " << maxIter << std::endl;
-        pcout << "      lineSearch tol: " << lineSearchTol << std::endl;
-        pcout << "      lineSearch maxIter: " << maxLineSearchIter << std::endl;
-        pcout << "      lineSearch damping parameter: "
-              << lineSearchDampingParameter << std::endl;
-        pcout << "   ------------------------------  " << std::endl;
-      }
+    d_isRestart = false;
+  }
 
+
+  int
+  geoOptIon::run()
+  {
     if (getNumberUnknowns() > 0)
       {
-        nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
-        bool                             cgSuccess;
+        nonLinearSolver::ReturnValueType solverReturn =
+          d_nonLinearSolverPtr->solve(*this,
+                                      d_solverRestartPath + "/ionRelax.chk",
+                                      d_solverRestart);
 
-        if (d_dftPtr->getParametersObject().chkType >= 1 &&
-            d_dftPtr->getParametersObject().restartFromChk &&
-            d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
-          cgReturn = cgSolver.solve(*this, std::string("ionRelaxCG.chk"), true);
-        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
-                 !d_dftPtr->getParametersObject().restartFromChk &&
-                 d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
-          cgReturn = cgSolver.solve(*this, std::string("ionRelaxCG.chk"));
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
-          cgReturn = cgSolver.solve(*this);
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
-          {
-            cg_descent.set_step(0.8);
-            cg_descent.set_lbfgs(true);
-            if (this_mpi_process == 0)
-              cg_descent.set_PrintLevel(2);
-
-            unsigned int memory =
-              std::min((unsigned int)100, getNumberUnknowns());
-            if (memory <= 2)
-              memory = 0;
-            cg_descent.set_memory(memory);
-            cgSuccess = cg_descent.run(*this);
-          }
-        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
-                 d_dftPtr->getParametersObject().restartFromChk &&
-                 d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
-          {
-            cgReturn =
-              bfgsSolver.solve(*this, std::string("ionRelaxBFGS.chk"), true);
-          }
-        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
-                 !d_dftPtr->getParametersObject().restartFromChk &&
-                 d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
-          {
-            cgReturn = bfgsSolver.solve(*this, std::string("ionRelaxBFGS.chk"));
-          }
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
-          {
-            cgReturn = bfgsSolver.solve(*this);
-          }
-        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
-                 d_dftPtr->getParametersObject().restartFromChk &&
-                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
-          {
-            cgReturn =
-              lbfgsSolver.solve(*this, std::string("ionRelaxLBFGS.chk"), true);
-          }
-        else if (d_dftPtr->getParametersObject().chkType >= 1 &&
-                 !d_dftPtr->getParametersObject().restartFromChk &&
-                 d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
-          {
-            cgReturn =
-              lbfgsSolver.solve(*this, std::string("ionRelaxLBFGS.chk"));
-          }
-        else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGSv2")
-          {
-            cgReturn = lbfgsSolver.solve(*this);
-          }
-        else
-          {
-            cg_descent.set_step(0.8);
-            if (this_mpi_process == 0)
-              cg_descent.set_PrintLevel(2);
-            cg_descent.set_AWolfe(true);
-
-            unsigned int memory =
-              std::min((unsigned int)100, getNumberUnknowns());
-            if (memory <= 2)
-              memory = 0;
-            cg_descent.set_memory(memory);
-            cgSuccess = cg_descent.run(*this);
-          }
-
-        if (cgReturn == nonLinearSolver::SUCCESS || cgSuccess)
+        if (solverReturn == nonLinearSolver::SUCCESS)
           {
             pcout
               << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
@@ -373,15 +387,17 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------"
               << std::endl;
 
-            d_dftPtr->writeDomainAndAtomCoordinates();
+            d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges("./");
           }
-        else if (cgReturn == nonLinearSolver::FAILURE || !cgSuccess)
+        else if (solverReturn == nonLinearSolver::FAILURE)
           {
             pcout << " ...Ion force relaxation failed " << std::endl;
+            d_totalUpdateCalls = -1;
           }
-        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
+        else if (solverReturn == nonLinearSolver::MAX_ITER_REACHED)
           {
             pcout << " ...Maximum iterations reached " << std::endl;
+            d_totalUpdateCalls = -2;
           }
       }
 
@@ -393,12 +409,9 @@ namespace dftfe
   unsigned int
   geoOptIon::getNumberUnknowns() const
   {
-    unsigned int count = 0;
-    for (unsigned int i = 0; i < d_relaxationFlags.size(); ++i)
-      {
-        count += d_relaxationFlags[i];
-      }
-    return count;
+    return std::accumulate(d_relaxationFlags.begin(),
+                           d_relaxationFlags.end(),
+                           0);
   }
 
 
@@ -587,8 +600,10 @@ namespace dftfe
     else if (d_maximumAtomForceToBeRelaxed < 1e-04)
       factor = 1.15;
 
+    pcout << "  starting updateAtomPositionsAndMoveMesh " << std::endl;
     d_dftPtr->updateAtomPositionsAndMoveMesh(
       globalAtomsDisplacements, factor, useSingleAtomSolutionsInitialGuess);
+    pcout << "  ended updateAtomPositionsAndMoveMesh " << std::endl;
     d_totalUpdateCalls += 1;
 
 
@@ -608,7 +623,17 @@ namespace dftfe
   void
   geoOptIon::save()
   {
-    d_dftPtr->writeDomainAndAtomCoordinates();
+    std::vector<std::vector<double>> tmpData(2, std::vector<double>(1, 0.0));
+    tmpData[0][0] = d_totalUpdateCalls;
+    tmpData[1][0] = d_maximumAtomForceToBeRelaxed;
+    dftUtils::writeDataIntoFile(tmpData,
+                                d_restartPath + "/step.chk",
+                                mpi_communicator);
+    std::string savePath =
+      d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
+    mkdir(savePath.c_str(), ACCESSPERMS);
+    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
+    d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
   }
 
 
@@ -622,21 +647,7 @@ namespace dftfe
   void
   geoOptIon::solution(std::vector<double> &solution)
   {
-    // AssertThrow(false,dftUtils::ExcNotImplementedYet());
-    solution.clear();
-    const unsigned int numberGlobalAtoms =
-      d_dftPtr->getAtomLocationsCart().size();
-    for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
-      {
-        for (unsigned int j = 0; j < 3; ++j)
-          {
-            if (d_relaxationFlags[3 * i + j] == 1)
-              {
-                solution.push_back(d_dftPtr->getAtomLocationsCart()[i][j + 2] -
-                                   d_atomLocationsInitial[i][j + 2]);
-              }
-          }
-      }
+    AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
   void
   geoOptIon::trialstep(std::vector<double> &step)

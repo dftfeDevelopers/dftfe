@@ -846,6 +846,7 @@ namespace dftfe
         d_normDeltaXnew = d_trustRadiusInitial;
         d_stepAccepted  = true;
         d_hessianScaled = false;
+        d_iter          = 0;
         //
         // compute initial values of problem and problem gradient
         //
@@ -861,6 +862,14 @@ namespace dftfe
         MPI_Barrier(mpi_communicator);
         d_useSingleAtomSolutionsInitialGuess = true;
       }
+
+    if (!checkpointFileName.empty())
+      {
+        MPI_Barrier(mpi_communicator);
+        // save(checkpointFileName);
+        problem.save();
+      }
+
     //
     // check for convergence
     //
@@ -936,7 +945,7 @@ namespace dftfe
         if (!checkpointFileName.empty())
           {
             MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
+            // save(checkpointFileName);
             problem.save();
           }
         // check for convergence

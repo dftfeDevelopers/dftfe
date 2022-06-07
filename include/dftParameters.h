@@ -159,6 +159,9 @@ namespace dftfe
     std::string  bfgsStepMethod;
     bool         usePreconditioner;
     unsigned int lbfgsNumPastSteps;
+    unsigned int maxOptIter;
+    unsigned int maxStaggeredCycles;
+    double       maxUpdateStep;
 
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;

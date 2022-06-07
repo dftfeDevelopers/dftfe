@@ -28,8 +28,6 @@
 #include <dftd.h>
 #include <fileReaders.h>
 #include <force.h>
-#include <geoOptCell.h>
-#include <geoOptIon.h>
 #include <kohnShamDFTOperator.h>
 #include <linalg.h>
 #include <linearAlgebraOperations.h>
