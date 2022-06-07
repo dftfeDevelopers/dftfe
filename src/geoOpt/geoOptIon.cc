@@ -104,7 +104,12 @@ namespace dftfe
         int  solver            = ionOptData[0][0];
         bool usePreconditioner = ionOptData[1][0] > 1e-6;
         d_totalUpdateCalls     = tmp[0][0];
-        dftUtils::readFile(1, tmp, d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
+        tmp.clear();
+        dftUtils::readFile(1,
+                           tmp,
+                           d_restartPath + "/step" +
+                             std::to_string(d_totalUpdateCalls) +
+                             "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
         d_relaxationFlags.resize(numberGlobalAtoms * 3);
         bool relaxationFlagsMatch = true;
