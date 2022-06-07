@@ -243,129 +243,129 @@ namespace dftfe
           "",
           Patterns::Anything(),
           "[Standard] Domain vectors input file name. Domain vectors are the vectors bounding the three edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2y v2y v2z (row2), v3z v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
-      }
-      prm.leave_subsection();
-      prm.enter_subsection("Optimization");
-      {
-        prm.declare_entry(
-          "ION FORCE",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Boolean parameter specifying if atomic forces are to be computed. Automatically set to true if ION OPT is true.");
+        prm.enter_subsection("Optimization");
+        {
+          prm.declare_entry(
+            "ION FORCE",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying if atomic forces are to be computed. Automatically set to true if ION OPT is true.");
 
-        prm.declare_entry(
-          "NON SELF CONSISTENT FORCE",
-          "false",
-          Patterns::Bool(),
-          "[Developer] Boolean parameter specifying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
+          prm.declare_entry(
+            "NON SELF CONSISTENT FORCE",
+            "false",
+            Patterns::Bool(),
+            "[Developer] Boolean parameter specifying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
 
-        prm.declare_entry(
-          "ION OPT",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
+          prm.declare_entry(
+            "ION OPT",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
 
-        prm.declare_entry(
-          "ION OPT SOLVER",
-          "CGPRP",
-          Patterns::Selection("BFGS|LBFGS|CGPRP"),
-          "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+          prm.declare_entry(
+            "ION OPT SOLVER",
+            "CGPRP",
+            Patterns::Selection("BFGS|LBFGS|CGPRP"),
+            "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
-        prm.declare_entry(
-          "CELL OPT SOLVER",
-          "CGPRP",
-          Patterns::Selection("BFGS|LBFGS|CGPRP"),
-          "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+          prm.declare_entry(
+            "CELL OPT SOLVER",
+            "CGPRP",
+            Patterns::Selection("BFGS|LBFGS|CGPRP"),
+            "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
-        prm.declare_entry(
-          "MAXIMUM OPTIMIZATION STEPS",
-          "300",
-          Patterns::Integer(1, 1000),
-          "[Standard] Sets the maximum number of optimization steps to be performed.");
+          prm.declare_entry(
+            "MAXIMUM OPTIMIZATION STEPS",
+            "300",
+            Patterns::Integer(1, 1000),
+            "[Standard] Sets the maximum number of optimization steps to be performed.");
 
-        prm.declare_entry(
-          "MAXIMUM STAGGERED CYCLES",
-          "300",
-          Patterns::Integer(1, 1000),
-          "[Standard] Sets the maximum number of staggered ion/cell optimization cycles to be performed.");
+          prm.declare_entry(
+            "MAXIMUM STAGGERED CYCLES",
+            "300",
+            Patterns::Integer(1, 1000),
+            "[Standard] Sets the maximum number of staggered ion/cell optimization cycles to be performed.");
 
-        prm.declare_entry(
-          "MAXIMUM UPDATE STEP",
-          "0.5",
-          Patterns::Double(0, 5.0),
-          "[Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.");
+          prm.declare_entry(
+            "MAXIMUM UPDATE STEP",
+            "0.5",
+            Patterns::Double(0, 5.0),
+            "[Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.");
 
-        prm.declare_entry(
-          "MAX LINE SEARCH ITER",
-          "5",
-          Patterns::Integer(1, 100),
-          "[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
+          prm.declare_entry(
+            "MAX LINE SEARCH ITER",
+            "5",
+            Patterns::Integer(1, 100),
+            "[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
 
-        prm.declare_entry(
-          "FORCE TOL",
-          "1e-4",
-          Patterns::Double(0, 1.0),
-          "[Standard] Sets the tolerance on the maximum force (in a.u.) on an atom during atomic relaxation, when the atoms are considered to be relaxed.");
+          prm.declare_entry(
+            "FORCE TOL",
+            "1e-4",
+            Patterns::Double(0, 1.0),
+            "[Standard] Sets the tolerance on the maximum force (in a.u.) on an atom during atomic relaxation, when the atoms are considered to be relaxed.");
 
-        prm.declare_entry(
-          "ION RELAX FLAGS FILE",
-          "",
-          Patterns::Anything(),
-          "[Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.");
+          prm.declare_entry(
+            "ION RELAX FLAGS FILE",
+            "",
+            Patterns::Anything(),
+            "[Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.");
 
-        prm.declare_entry(
-          "CELL STRESS",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Boolean parameter specifying if cell stress needs to be computed. Automatically set to true if CELL OPT is true.");
+          prm.declare_entry(
+            "CELL STRESS",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying if cell stress needs to be computed. Automatically set to true if CELL OPT is true.");
 
-        prm.declare_entry(
-          "CELL OPT",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Boolean parameter specifying if cell needs to be relaxed to achieve zero stress");
+          prm.declare_entry(
+            "CELL OPT",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying if cell needs to be relaxed to achieve zero stress");
 
-        prm.declare_entry(
-          "STRESS TOL",
-          "1e-6",
-          Patterns::Double(0, 1.0),
-          "[Standard] Sets the tolerance of the cell stress (in a.u.) during cell-relaxation.");
+          prm.declare_entry(
+            "STRESS TOL",
+            "1e-6",
+            Patterns::Double(0, 1.0),
+            "[Standard] Sets the tolerance of the cell stress (in a.u.) during cell-relaxation.");
 
-        prm.declare_entry(
-          "CELL CONSTRAINT TYPE",
-          "12",
-          Patterns::Integer(1, 13),
-          "[Standard] Cell relaxation constraint type, 1 (isotropic shape-fixed volume optimization), 2 (volume-fixed shape optimization), 3 (relax along domain vector component v1x), 4 (relax along domain vector component v2y), 5 (relax along domain vector component v3z), 6 (relax along domain vector components v2y and v3z), 7 (relax along domain vector components v1x and v3z), 8 (relax along domain vector components v1x and v2y), 9 (relax along domain vector components v1x, v2y and v3z), 10 (2D - relax along x and y components), 11(2D- relax only x and y components with inplane area fixed), 12(relax all domain vector components), 13 automatically decides the constraints based on boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
+          prm.declare_entry(
+            "CELL CONSTRAINT TYPE",
+            "12",
+            Patterns::Integer(1, 13),
+            "[Standard] Cell relaxation constraint type, 1 (isotropic shape-fixed volume optimization), 2 (volume-fixed shape optimization), 3 (relax along domain vector component v1x), 4 (relax along domain vector component v2y), 5 (relax along domain vector component v3z), 6 (relax along domain vector components v2y and v3z), 7 (relax along domain vector components v1x and v3z), 8 (relax along domain vector components v1x and v2y), 9 (relax along domain vector components v1x, v2y and v3z), 10 (2D - relax along x and y components), 11(2D- relax only x and y components with inplane area fixed), 12(relax all domain vector components), 13 automatically decides the constraints based on boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
 
-        prm.declare_entry(
-          "REUSE WFC",
-          "true",
-          Patterns::Bool(),
-          "[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is true.");
+          prm.declare_entry(
+            "REUSE WFC",
+            "true",
+            Patterns::Bool(),
+            "[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is true.");
 
-        prm.declare_entry(
-          "REUSE DENSITY",
-          "1",
-          Patterns::Integer(0, 2),
-          "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+          prm.declare_entry(
+            "REUSE DENSITY",
+            "1",
+            Patterns::Integer(0, 2),
+            "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
 
-        prm.declare_entry(
-          "BFGS STEP METHOD",
-          "QN",
-          Patterns::Selection("QN|RFO"),
-          "[Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.");
+          prm.declare_entry(
+            "BFGS STEP METHOD",
+            "QN",
+            Patterns::Selection("QN|RFO"),
+            "[Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.");
 
-        prm.declare_entry(
-          "USE PRECONDITIONER",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Boolean parameter specifying if the preconditioner described by JCP 144, 164109 (2016) is to be used.");
+          prm.declare_entry(
+            "USE PRECONDITIONER",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying if the preconditioner described by JCP 144, 164109 (2016) is to be used.");
 
-        prm.declare_entry(
-          "LBFGS HISTORY",
-          "5",
-          Patterns::Integer(1, 20),
-          "[Standard] Number of previous steps to considered for the LBFGS update.");
+          prm.declare_entry(
+            "LBFGS HISTORY",
+            "5",
+            Patterns::Integer(1, 20),
+            "[Standard] Number of previous steps to considered for the LBFGS update.");
+        }
+        prm.leave_subsection();
       }
       prm.leave_subsection();
 
@@ -1337,30 +1337,30 @@ namespace dftfe
       coordinatesFile             = prm.get("ATOMIC COORDINATES FILE");
       coordinatesGaussianDispFile = prm.get("ATOMIC DISP COORDINATES FILE");
       domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
-    }
-    prm.leave_subsection();
-    prm.enter_subsection("Optimization");
-    {
-      isIonOpt               = prm.get_bool("ION OPT");
-      ionOptSolver           = prm.get("ION OPT SOLVER");
-      cellOptSolver          = prm.get("CELL OPT SOLVER");
-      maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
-      nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
-      isIonForce             = isIonOpt || prm.get_bool("ION FORCE");
-      forceRelaxTol          = prm.get_double("FORCE TOL");
-      ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-      isCellOpt              = prm.get_bool("CELL OPT");
-      isCellStress           = isCellOpt || prm.get_bool("CELL STRESS");
-      stressRelaxTol         = prm.get_double("STRESS TOL");
-      cellConstraintType     = prm.get_integer("CELL CONSTRAINT TYPE");
-      reuseWfcGeoOpt         = prm.get_bool("REUSE WFC");
-      reuseDensityGeoOpt     = prm.get_integer("REUSE DENSITY");
-      bfgsStepMethod         = prm.get("BFGS STEP METHOD");
-      usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
-      lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
-      maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
-      maxStaggeredCycles     = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-      maxUpdateStep          = prm.get_double("MAXIMUM UPDATE STEP");
+      prm.enter_subsection("Optimization");
+      {
+        isIonOpt               = prm.get_bool("ION OPT");
+        ionOptSolver           = prm.get("ION OPT SOLVER");
+        cellOptSolver          = prm.get("CELL OPT SOLVER");
+        maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+        nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
+        isIonForce             = isIonOpt || prm.get_bool("ION FORCE");
+        forceRelaxTol          = prm.get_double("FORCE TOL");
+        ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
+        isCellOpt              = prm.get_bool("CELL OPT");
+        isCellStress           = isCellOpt || prm.get_bool("CELL STRESS");
+        stressRelaxTol         = prm.get_double("STRESS TOL");
+        cellConstraintType     = prm.get_integer("CELL CONSTRAINT TYPE");
+        reuseWfcGeoOpt         = prm.get_bool("REUSE WFC");
+        reuseDensityGeoOpt     = prm.get_integer("REUSE DENSITY");
+        bfgsStepMethod         = prm.get("BFGS STEP METHOD");
+        usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
+        lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
+        maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+        maxStaggeredCycles     = prm.get_integer("MAXIMUM STAGGERED CYCLES");
+        maxUpdateStep          = prm.get_double("MAXIMUM UPDATE STEP");
+      }
+      prm.leave_subsection();
     }
     prm.leave_subsection();
 
