@@ -98,7 +98,7 @@ namespace dftfe
     }
 
     //
-    // Compute Weighted L2-norm for symmetric matrix P.
+    // Compute Weighted inner product for symmetric matrix P.
     //
     double
     computePdot(std::vector<double> &a,
@@ -321,52 +321,6 @@ namespace dftfe
       }
   }
 
-  //
-  // TODO : Figure out if this is needed ever.
-  // Scale preconditioner
-  //
-  void
-  LBFGSNonLinearSolver::scalePreconditioner(nonlinearSolverProblem &problem)
-  {
-    if (d_debugLevel >= 1)
-      pcout << "Scaling preconditioner using a trial step." << std::endl;
-    std::vector<double> testDisplacment;
-    problem.trialstep(testDisplacment);
-    for (auto i = 0; i < d_numberUnknowns; ++i)
-      {
-        testDisplacment[i] *=
-          1e-2; // internalBFGS::computeLInfNorm(testDisplacment);;
-      }
-    for (unsigned int i = 0; i < testDisplacment.size(); ++i)
-      pcout << "testDisplacment: " << testDisplacment[i] << std::endl;
-    updateSolution(testDisplacment, problem);
-    problem.gradient(d_gradientNew);
-    std::vector<double> delta_g(d_numberUnknowns, 0.0);
-
-    for (auto i = 0; i < d_numberUnknowns; ++i)
-      {
-        delta_g[i] = d_gradientNew[i] - d_gradient[i];
-      }
-
-    double mu = internalLBFGS::dot(delta_g, testDisplacment) /
-                internalLBFGS::computePNorm(testDisplacment, d_preconditioner);
-    if (d_debugLevel >= 1)
-      pcout << "Scaling factor for the preconditioner. dgdx/(dxPdx) " << mu
-            << std::endl;
-    if (d_debugLevel >= 1)
-      pcout << "Scaling factor for the preconditioner. dgdg/(dgPdx) "
-            << internalLBFGS::dot(delta_g, delta_g) /
-                 internalLBFGS::computePdot(testDisplacment,
-                                            delta_g,
-                                            d_preconditioner)
-            << std::endl;
-    for (auto i = 0; i < d_preconditioner.size(); ++i)
-      {
-        d_preconditioner[i] *= mu;
-      }
-    problem.gradient(d_gradient);
-    problem.value(d_value);
-  }
 
   //
   // Compute LBFGS step
@@ -381,31 +335,6 @@ namespace dftfe
         alpha[j] = internalLBFGS::dot(d_deltaXq[j], gradient) * d_rhoq[j];
         internalLBFGS::axpy(-alpha[j], d_deltaGq[j], gradient);
       }
-    /*pcout << "DEBUG mu pc1 "
-          << internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                d_deltaXq[d_maxNumPastSteps - 1]) /
-               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                  d_deltaXq[d_maxNumPastSteps - 1])
-          << std::endl;
-    pcout << "DEBUG mu pc2 "
-          << internalLBFGS::computePNorm(d_deltaXq[d_maxNumPastSteps - 1],
-                                         d_preconditioner) /
-               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                  d_deltaXq[d_maxNumPastSteps - 1])
-          << std::endl;
-    pcout << "DEBUG mu nw1 "
-          << internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                d_deltaGq[d_maxNumPastSteps - 1]) /
-               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                  d_deltaGq[d_maxNumPastSteps - 1])
-          << std::endl;
-    pcout << "DEBUG mu nw2 "
-          << internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
-                                        d_deltaGq[d_maxNumPastSteps - 1],
-                                        d_preconditioner) /
-               internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                  d_deltaGq[d_maxNumPastSteps - 1])
-          << std::endl;*/
     if (d_usePreconditioner)
       {
         internalLBFGS::linearSolve(d_preconditioner, gradient);
@@ -805,7 +734,6 @@ namespace dftfe
         if (d_usePreconditioner)
           {
             initializePreconditioner(problem);
-            // scalePreconditioner(problem);
           }
       }
     else

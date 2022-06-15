@@ -121,11 +121,6 @@ namespace dftfe
     void
     solution(std::vector<double> &solution);
 
-
-    void
-    trialstep(std::vector<double> &step);
-
-
     /// Not implemented
     std::vector<unsigned int>
     getUnknownCountFlag() const;

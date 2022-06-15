@@ -104,6 +104,38 @@ namespace dftfe
     }
 
     //
+    // Compute Weighted inner product for symmetric matrix P.
+    //
+    double
+    computePdot(std::vector<double> &a,
+                std::vector<double> &b,
+                std::vector<double> &P)
+    {
+      const unsigned int one   = 1;
+      const char         uplo  = 'U';
+      const double       one_d = 1.0;
+      const unsigned int n     = a.size();
+      if (n * n != P.size())
+        {
+          std::cout << "DEBUG check dimensions Pnorm" << std::endl;
+          return -1;
+        }
+      std::vector<double> Pdx(n, 0.0);
+      dsymv_(&uplo,
+             &n,
+             &one_d,
+             P.data(),
+             &n,
+             a.data(),
+             &one,
+             &one_d,
+             Pdx.data(),
+             &one);
+
+      return ddot_(&n, b.data(), &one, Pdx.data(), &one);
+    }
+
+    //
     // Compute Inf-norm.
     //
     double
@@ -371,36 +403,6 @@ namespace dftfe
           pcout << "Using preconditioner for initial Hessian guess."
                 << std::endl;
         problem.precondition(d_hessian, d_gradient);
-        if (d_debugLevel >= 1)
-          pcout << "Scaling preconditioner using a trial step." << std::endl;
-        std::vector<double> testDisplacment;
-        problem.trialstep(testDisplacment);
-        for (auto i = 0; i < d_numberUnknowns; ++i)
-          {
-            testDisplacment[i] *=
-              1e-2; // internalBFGS::computeLInfNorm(testDisplacment);;
-          }
-        for (unsigned int i = 0; i < testDisplacment.size(); ++i)
-          pcout << "testDisplacment: " << testDisplacment[i] << std::endl;
-        updateSolution(testDisplacment, problem);
-        problem.gradient(d_gradientNew);
-        std::vector<double> delta_g(d_numberUnknowns, 0.0);
-
-        for (auto i = 0; i < d_numberUnknowns; ++i)
-          {
-            delta_g[i] = d_gradientNew[i] - d_gradient[i];
-          }
-
-        double mu = internalBFGS::dot(delta_g, testDisplacment) /
-                    internalBFGS::computePNorm(testDisplacment, d_hessian);
-        if (d_debugLevel >= 1)
-          pcout << "Scaling factor for the preconditioner. " << mu << std::endl;
-        for (auto i = 0; i < d_hessian.size(); ++i)
-          {
-            d_hessian[i] *= mu;
-          }
-        problem.gradient(d_gradient);
-        problem.value(d_value);
       }
     else
       {
@@ -421,7 +423,7 @@ namespace dftfe
       {
         d_Srfo[i] /= detS;
       }
-    //    d_hessian = d_Srfo;
+    d_hessian = d_Srfo;
   }
 
   //
@@ -478,9 +480,10 @@ namespace dftfe
 
     if (internalBFGS::dot(delta_g, d_deltaXNew) > 0)
       {
-        double scalingFactor = internalBFGS::dot(delta_g, delta_g) /
-                               internalBFGS::dot(delta_g, d_deltaXNew);
-        if (d_debugLevel >= 2)
+        double scalingFactor =
+          internalBFGS::dot(delta_g, delta_g) /
+          internalBFGS::computePdot(delta_g, d_deltaXNew, d_hessian);
+        if (d_debugLevel >= 1)
           {
             pcout << "Scaling Hessian with scaling factor: " << scalingFactor
                   << std::endl;
@@ -490,6 +493,7 @@ namespace dftfe
             d_hessian[i] = d_hessian[i] * scalingFactor;
           }
         d_hessianScaled = true;
+        d_trustRadius   = d_trustRadiusMax;
       }
   }
 
@@ -925,7 +929,7 @@ namespace dftfe
         d_stepAccepted = d_wolfeSufficientDec;
         if (d_stepAccepted)
           {
-            if ((d_iter == 0 || !d_hessianScaled) && !d_usePreconditioner)
+            if (d_iter == 0 || !d_hessianScaled)
               {
                 scaleHessian();
               }

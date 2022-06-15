@@ -94,14 +94,6 @@ namespace dftfe
     solution(std::vector<double> &solution) = 0;
 
     /**
-     * @brief Obtain a trial step.
-     *
-     * @param step Space for the step.
-     */
-    virtual void
-    trialstep(std::vector<double> &step) = 0;
-
-    /**
      * @brief For each unknown indicate whether that unknown should
      * be accumulated. This functionality is needed in the case of
      * parallel execution when domain decomposition is
