@@ -229,7 +229,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
               s,
               kPoint,
               kohnShamDFTEigenOperatorCUDA,
-              d_elpaScala,
+              *d_elpaScala,
               d_subspaceIterationSolverCUDA);
 #endif
           if (!d_dftParamsPtr->useGPU)
