@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -25,7 +25,6 @@
 #  include <deal.II/base/conditional_ostream.h>
 #  include <deal.II/base/function.h>
 #  include <deal.II/base/logstream.h>
-#  include <deal.II/base/parameter_handler.h>
 #  include <deal.II/base/point.h>
 #  include <deal.II/base/quadrature.h>
 #  include <deal.II/base/quadrature_point_data.h>

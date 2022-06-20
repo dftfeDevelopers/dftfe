@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -28,7 +28,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   dealii::TimerOutput computingTimerStandard(
     mpi_communicator,
     pcout,
-    dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
+    dftPtr->d_dftParamsPtr->reproducible_output ||
+        dftPtr->d_dftParamsPtr->verbosity < 2 ?
       dealii::TimerOutput::never :
       dealii::TimerOutput::every_call,
     dealii::TimerOutput::wall_times);
@@ -46,7 +47,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   if (totalLocallyOwnedCells > 0)
     {
       const unsigned int kpointSpinIndex =
-        (1 + dftParameters::spinPolarized) * kPointIndex + spinIndex;
+        (1 + dftPtr->d_dftParamsPtr->spinPolarized) * kPointIndex + spinIndex;
 
       // inputs to blas
       const char         transA = 'N', transB = 'N';
@@ -66,8 +67,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 
 
-      if ((dftParameters::isPseudopotential ||
-           dftParameters::smearedNuclearCharges) &&
+      if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+           dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
           !d_isStiffnessMatrixExternalPotCorrComputed &&
           !onlyHPrimePartForFirstOrderDensityMatResponse)
         {
@@ -347,7 +348,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       std::vector<double>().swap(NiNj_currentBlock);
 
 
-      if (dftParameters::xcFamilyType == "GGA")
+      if (dftPtr->d_dftParamsPtr->xcFamilyType == "GGA")
         {
           std::vector<double> gradNiNjPlusgradNjNi_currentBlock(
             numberEntriesEachBlock * 3 * numberQuadraturePoints, 0.0);
@@ -809,8 +810,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                 }
             }
 
-          if ((dftParameters::isPseudopotential ||
-              dftParameters::smearedNuclearCharges) &&
+          if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+              dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
                 !onlyHPrimePartForFirstOrderDensityMatResponse)
             {
               count = 0;

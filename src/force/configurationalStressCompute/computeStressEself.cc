@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -113,7 +113,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
               closestAtomLocation[0] = atomLocations[closestAtomId][2];
               closestAtomLocation[1] = atomLocations[closestAtomId][3];
               closestAtomLocation[2] = atomLocations[closestAtomId][4];
-              if (dftParameters::isPseudopotential)
+              if (d_dftParams.isPseudopotential)
                 closestAtomCharge = atomLocations[closestAtomId][1];
               else
                 closestAtomCharge = atomLocations[closestAtomId][0];
@@ -170,7 +170,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
   //
   // Add stress due to smeared charges
   //
-  if (dftParameters::smearedNuclearCharges)
+  if (d_dftParams.smearedNuclearCharges)
     {
       const std::map<int, std::set<int>> &atomImageIdsBins =
         vselfBinsManagerElectro.getAtomImageIdsBins();

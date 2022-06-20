@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -39,8 +39,12 @@ namespace dftfe
       const unsigned int                       localSize,
       const unsigned int                       ghostSize,
       const unsigned int                       numberBins,
-      const MPI_Comm &                         mpiComm,
+      const MPI_Comm &                         mpiCommParent,
+      const MPI_Comm &                         mpiCommDomain,
       double *                                 xH,
+      const int                                verbosity,
+      const unsigned int                       maxLinearSolverIterations,
+      const double                             absLinearSolverTolerance,
       const bool isElectroFEOrderDifferentFromFEOrder = false);
 
     void
@@ -57,10 +61,11 @@ namespace dftfe
              const unsigned int         numberBins,
              const unsigned int         totalLocallyOwnedCells,
              const unsigned int         numberNodesPerElement,
-             const unsigned int         debugLevel,
+             const int                  debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
-             const MPI_Comm &           mpiComm,
+             const MPI_Comm &           mpiCommParent,
+             const MPI_Comm &           mpiCommDomain,
              distributedGPUVec<double> &x);
   } // namespace poissonCUDA
 } // namespace dftfe

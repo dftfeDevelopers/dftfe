@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -63,7 +63,7 @@ dftClass<FEOrder, FEOrderElectro>::calculateNearestAtomDistances()
     }
   d_minDist = *std::min_element(d_nearestAtomDistances.begin(),
                                 d_nearestAtomDistances.end());
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout << "Minimum distance between atoms: " << d_minDist << std::endl;
 
   AssertThrow(
@@ -81,16 +81,19 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   bool                 moveSubdivided)
 {
   dealii::ConditionalOStream pcout_movemesh(
-    std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+    std::cout,
+    (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0));
   dealii::TimerOutput timer_movemesh(mpi_communicator,
                                      pcout_movemesh,
-                                     dftParameters::reproducible_output ||
-                                         dftParameters::verbosity < 4 ?
+                                     d_dftParamsPtr->reproducible_output ||
+                                         d_dftParamsPtr->verbosity < 4 ?
                                        dealii::TimerOutput::never :
                                        dealii::TimerOutput::summary,
                                      dealii::TimerOutput::wall_times);
 
-  meshMovementGaussianClass gaussianMove(mpi_communicator);
+  meshMovementGaussianClass gaussianMove(d_mpiCommParent,
+                                         mpi_communicator,
+                                         *d_dftParamsPtr);
   gaussianMove.init(triangulationMove,
                     triangulationSerial,
                     d_domainBoundingVectors);
@@ -171,11 +174,11 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
     {
       d_flatTopWidthsAutoMeshMove[iAtom] =
-        dftParameters::useFlatTopGenerator ?
+        d_dftParamsPtr->useFlatTopGenerator ?
           std::min(0.5, 0.9 * d_nearestAtomDistances[iAtom] / 2.0 - 0.2) :
           0.0;
       d_gaussianConstantsAutoMesh[iAtom] =
-        dftParameters::reproducible_output ?
+        d_dftParamsPtr->reproducible_output ?
           1 / std::sqrt(0.5) :
           (std::min(0.9 * d_nearestAtomDistances[iAtom] / 2.0, 2.0) -
            d_flatTopWidthsAutoMeshMove[iAtom]);
@@ -232,7 +235,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   if (!reuseClosestTriaVertices)
     d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
 
-  if (dftParameters::verbosity >= 1 && !moveSubdivided)
+  if (d_dftParamsPtr->verbosity >= 1 && !moveSubdivided)
     pcout
       << "Mesh quality check for Auto mesh after mesh movement, maximum jacobian ratio: "
       << meshQualityMetrics.second << std::endl;
@@ -242,12 +245,12 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
 
   for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
     d_gaussianConstantsForce[iAtom] =
-      dftParameters::reproducible_output ?
+      d_dftParamsPtr->reproducible_output ?
         1 / std::sqrt(5.0) :
-        (dftParameters::useFlatTopGenerator ?
+        (d_dftParamsPtr->useFlatTopGenerator ?
            d_generatorFlatTopWidths[iAtom] + 0.4 :
            (std::min(d_nearestAtomDistances[iAtom] / 2.0 - 0.3,
-                     dftParameters::gaussianConstantForce)));
+                     d_dftParamsPtr->gaussianConstantForce)));
 }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -260,7 +263,7 @@ dftClass<FEOrder, FEOrderElectro>::calculateSmearedChargeWidths()
 
   d_smearedChargeWidths.resize(numberGlobalAtoms);
 
-  if (dftParameters::smearedNuclearCharges)
+  if (d_dftParamsPtr->smearedNuclearCharges)
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         d_smearedChargeWidths[iAtom] = 0.7;
@@ -277,7 +280,7 @@ dftClass<FEOrder, FEOrderElectro>::calculateSmearedChargeWidths()
         }
 
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
-        if (dftParameters::verbosity >= 5)
+        if (d_dftParamsPtr->verbosity >= 5)
           pcout << "iAtom: " << iAtom
                 << ", Smeared charge width: " << d_smearedChargeWidths[iAtom]
                 << std::endl;

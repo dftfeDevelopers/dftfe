@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -47,10 +47,10 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   // FIXME: the truncation tolerance can potentially be loosened
   // further for production runs where more accurate meshes are used
   const double truncationTol =
-    dftParameters::reproducible_output ? 1.0e-8 : 1.0e-7;
+    d_dftParamsPtr->reproducible_output ? 1.0e-8 : 1.0e-7;
   const double maxAllowedTail = 8.0001;
   double       maxTail        = 0.0;
-  if (dftParameters::isPseudopotential)
+  if (d_dftParamsPtr->isPseudopotential)
     {
       //
       // loop over atom types
@@ -60,16 +60,12 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
            it++)
         {
           char pseudoFile[256];
-          // if (dftParameters::pseudoProjector==2)
-          // sprintf(pseudoFile,
-          // "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat",
-          // DFT_PATH,*it);
-          sprintf(pseudoFile, "temp/z%u/locPot.dat", *it);
-          // else
-          // sprintf(pseudoFile,
-          // "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat",
-          // DFT_PATH,*it); pcout<<"Reading Local Pseudo-potential data from: "
-          // <<pseudoFile<<std::endl;
+
+          strcpy(pseudoFile,
+                 (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
+                  "/locPot.dat")
+                   .c_str());
+
           dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
           unsigned int        numRows = pseudoPotentialData[*it].size() - 1;
           std::vector<double> xData(numRows), yData(numRows);
@@ -147,7 +143,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   phiExt = 0;
 
   double init_1;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_1 = MPI_Wtime();
 
   const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
@@ -189,7 +185,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
           atomsImagesPositions[iAtom * 3 + 0] = atomLocations[iAtom][2];
           atomsImagesPositions[iAtom * 3 + 1] = atomLocations[iAtom][3];
           atomsImagesPositions[iAtom * 3 + 2] = atomLocations[iAtom][4];
-          if (dftParameters::isPseudopotential)
+          if (d_dftParamsPtr->isPseudopotential)
             atomsImagesCharges[iAtom] = atomLocations[iAtom][1];
           else
             atomsImagesCharges[iAtom] = atomLocations[iAtom][0];
@@ -203,7 +199,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
             d_imagePositions[iImageCharge][1];
           atomsImagesPositions[iAtom * 3 + 2] =
             d_imagePositions[iImageCharge][2];
-          if (dftParameters::isPseudopotential)
+          if (d_dftParamsPtr->isPseudopotential)
             atomsImagesCharges[iAtom] =
               atomLocations[d_imageIds[iImageCharge]][1];
           else
@@ -301,13 +297,13 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   phiExt.update_ghost_values();
   // pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_1 = MPI_Wtime() - init_1;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init1: " << init_1 << std::endl;
 
   double init_2;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_2 = MPI_Wtime();
 
   FEEvaluation<3,
@@ -406,7 +402,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
 
                       if (distanceToAtom <= outerMostDataPoint[atomicNumber])
                         {
-                          if (dftParameters::isPseudopotential)
+                          if (d_dftParamsPtr->isPseudopotential)
                             {
                               value =
                                 alglib::spline1dcalc(pseudoSpline[atomicNumber],
@@ -450,13 +446,13 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         }     // subcell loop
     }         // cell loop
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_2 = MPI_Wtime() - init_2;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init2: " << init_2 << std::endl;
 
   double init_3;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_3 = MPI_Wtime();
 
   std::vector<double>                          pseudoVLocAtom(n_q_points);
@@ -484,7 +480,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                   atom[0] = atomLocations[iAtom][2];
                   atom[1] = atomLocations[iAtom][3];
                   atom[2] = atomLocations[iAtom][4];
-                  if (dftParameters::isPseudopotential)
+                  if (d_dftParamsPtr->isPseudopotential)
                     atomCharge = atomLocations[iAtom][1];
                   else
                     atomCharge = atomLocations[iAtom][0];
@@ -496,7 +492,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                   atom[0] = d_imagePositionsTrunc[iImageCharge][0];
                   atom[1] = d_imagePositionsTrunc[iImageCharge][1];
                   atom[2] = d_imagePositionsTrunc[iImageCharge][2];
-                  if (dftParameters::isPseudopotential)
+                  if (d_dftParamsPtr->isPseudopotential)
                     atomCharge =
                       atomLocations[d_imageIdsTrunc[iImageCharge]][1];
                   else
@@ -526,7 +522,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                   distanceToAtom            = quadPoint.distance(atom);
                   if (distanceToAtom <= cutoff)
                     {
-                      if (dftParameters::isPseudopotential)
+                      if (d_dftParamsPtr->isPseudopotential)
                         {
                           value =
                             alglib::spline1dcalc(pseudoSpline[atomicNumber],
@@ -555,8 +551,8 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         }     // cell locally owned check
     }         // cell loop
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_3 = MPI_Wtime() - init_3;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init3: " << init_3 << std::endl;
 }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -51,11 +51,14 @@
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
 #include <xc.h>
+#include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
 
 #  include <slepceps.h>
 #endif
+
+
 
 namespace dftfe
 {
@@ -87,8 +90,6 @@ namespace dftfe
   class geoOptIon;
   template <unsigned int T1, unsigned int T2>
   class geoOptCell;
-  template <unsigned int T1, unsigned int T2>
-  class molecularDynamics;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -100,7 +101,7 @@ namespace dftfe
    * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
    */
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  class dftClass
+  class dftClass : public dftBase
   {
     friend class kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>;
 
@@ -116,22 +117,27 @@ namespace dftfe
 
     friend class symmetryClass<FEOrder, FEOrderElectro>;
 
-    friend class molecularDynamics<FEOrder, FEOrderElectro>;
-
   public:
     /**
      * @brief dftClass constructor
      *
-     *  @param[in] mpi_comm_replica  mpi_communicator for domain decomposition
+     *  @param[in] mpi_comm_parent parent communicator
+     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
      * parallelization
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
      * points
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
+     *  @param[in] scratchFolderName  scratch folder name
+     *  @param[in] dftParams  dftParameters object containg parameter values
+     * parsed from an input parameter file in dftfeWrapper class
      */
-    dftClass(const MPI_Comm &mpi_comm_replica,
-             const MPI_Comm &interpoolcomm,
-             const MPI_Comm &interBandGroupComm);
+    dftClass(const MPI_Comm &   mpiCommParent,
+             const MPI_Comm &   mpi_comm_domain,
+             const MPI_Comm &   interpoolcomm,
+             const MPI_Comm &   interBandGroupComm,
+             const std::string &scratchFolderName,
+             dftParameters &    dftParams);
 
     /**
      * @brief dftClass destructor
@@ -153,7 +159,7 @@ namespace dftfe
      * @brief Does KSDFT problem pre-processing steps including mesh generation calls.
      */
     void
-    init(const unsigned int usePreviousGroundStateFields = 0);
+    init();
 
     /**
      * @brief Does KSDFT problem pre-processing steps but without remeshing.
@@ -163,6 +169,8 @@ namespace dftfe
                  const bool checkSmearedChargeWidthsForOverlap = true,
                  const bool useSingleAtomSolutionOverride      = false,
                  const bool isMeshDeformed                     = false);
+
+
 
     /**
      * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -178,10 +186,10 @@ namespace dftfe
     /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
      */
+    // double GroundStateEnergyvalue, EntropicEnergyvalue;
     void
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
-          const bool solveLinearizedKS             = false,
           const bool restartGroundStateCalcFromChk = false);
 
 
@@ -204,6 +212,31 @@ namespace dftfe
 
     void
     finalizeKohnShamDFTOperator();
+
+
+    double
+    getInternalEnergy() const;
+
+    double
+    getEntropicEnergy() const;
+
+    double
+    getFreeEnergy() const;
+
+    distributedCPUVec<double>
+    getRhoNodalOut() const;
+
+    distributedCPUVec<double>
+    getRhoNodalSplitOut() const;
+
+    double
+    getTotalChargeforRhoSplit();
+
+    void
+    resetRhoNodalIn(distributedCPUVec<double> &OutDensity);
+
+    virtual void
+    resetRhoNodalSplitIn(distributedCPUVec<double> &OutDensity);
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
@@ -280,10 +313,67 @@ namespace dftfe
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
      * geometry relaxation restart
+
      */
     void
     writeDomainAndAtomCoordinates();
 
+    /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files for
+     * structural optimization and dynamics restarts.simplified version for
+     * floating charges case
+     * @param[in] Path The folder path to store the atom coordinates required
+     * during restart.
+     */
+    void
+    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+
+    /**
+     * @brief Gets the current atom Locations in cartesian form
+     * (origin at center of domain) from dftClass
+     */
+    std::vector<std::vector<double>>
+    getAtomLocationsCart() const;
+
+    /**
+     * @brief Gets the current atom Locations in fractional form
+     * from dftClass (only applicable for periodic and semi-periodic BCs)
+     */
+    std::vector<std::vector<double>>
+    getAtomLocationsFrac() const;
+
+    /**
+     * @brief Gets the current cell lattice vectors
+     *
+     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j]
+     *  corresponds to jth component of ith lattice vector
+     */
+    std::vector<std::vector<double>>
+    getCell() const;
+
+    /**
+     * @brief Gets the current atom types from dftClass
+     */
+    std::set<unsigned int>
+    getAtomTypes() const;
+
+    /**
+     * @brief Gets the current atomic forces from dftClass
+     */
+    std::vector<double>
+    getForceonAtoms() const;
+
+    /**
+     * @brief Gets the current cell stress from dftClass
+     */
+    Tensor<2, 3, double>
+    getCellStress() const;
+
+    /**
+     * @brief Get reference to dftParameters object
+     */
+    dftParameters &
+    getParametersObject() const;
 
   private:
     /**
@@ -293,14 +383,6 @@ namespace dftfe
     void
     initImageChargesUpdateKPoints(bool flag = true);
 
-
-    void
-    interpolateFieldsFromPrevToCurrentMesh(
-      std::vector<distributedCPUVec<double> *> fieldsPrevious,
-      std::vector<distributedCPUVec<double> *> fieldsCurrent,
-      const dealii::FESystem<3> &              FEPrev,
-      const dealii::FESystem<3> &              FECurrent,
-      const dealii::AffineConstraints<double> &constraintsCurrent);
 
     /**
      *@brief project ground state electron density from previous mesh into
@@ -893,6 +975,7 @@ namespace dftfe
     void
     applyPeriodicBCHigherOrderNodes();
 
+
     /// objects for various exchange-correlations (from libxc package)
     xc_func_type funcX, funcC;
 
@@ -1104,6 +1187,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
     GPUCCLWrapper *d_gpucclMpiCommDomainPtr;
 #endif
+    const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     interpoolcomm;
     const MPI_Comm     interBandGroupComm;
     const unsigned int n_mpi_processes;
@@ -1117,13 +1201,12 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<FEOrder, FEOrderElectro> *       forcePtr;
-    symmetryClass<FEOrder, FEOrderElectro> *    symmetryPtr;
-    geoOptIon<FEOrder, FEOrderElectro> *        geoOptIonPtr;
-    geoOptCell<FEOrder, FEOrderElectro> *       geoOptCellPtr;
-    molecularDynamics<FEOrder, FEOrderElectro> *d_mdPtr;
+    forceClass<FEOrder, FEOrderElectro> *   forcePtr;
+    symmetryClass<FEOrder, FEOrderElectro> *symmetryPtr;
+    geoOptIon<FEOrder, FEOrderElectro> *    geoOptIonPtr;
+    geoOptCell<FEOrder, FEOrderElectro> *   geoOptCellPtr;
 
-    elpaScalaManager d_elpaScala;
+    elpaScalaManager *d_elpaScala;
 
     poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
 
@@ -1134,6 +1217,8 @@ namespace dftfe
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       *d_kohnShamDFTOperatorCUDAPtr;
 #endif
+
+    const std::string d_dftfeScratchFolderName;
 
     /**
      * chebyshev subspace iteration solver objects
@@ -1264,8 +1349,8 @@ namespace dftfe
     std::deque<distributedCPUVec<double>> d_fvSpin0containerVals;
     std::deque<distributedCPUVec<double>> d_vSpin1containerVals;
     std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
-    unsigned int                          d_rankCurrent;
-    double                                d_relativeErrorJacInvApproxPrevScf;
+    unsigned int                          d_rankCurrentLRJI;
+    double                                d_relativeErrorJacInvApproxPrevScfLRJI;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
@@ -1482,6 +1567,9 @@ namespace dftfe
 #endif
     );
 
+    /// dftParameters object
+    dftParameters *d_dftParamsPtr;
+
     /// kPoint cartesian coordinates
     std::vector<double> d_kPointCoordinates;
 
@@ -1511,9 +1599,6 @@ namespace dftfe
     double d_freeEnergyInitial;
 
     double d_freeEnergy;
-
-    /// shadow potential energy in extended Lagrangian framework
-    double d_shadowPotentialEnergy;
 
     /// entropic energy
     double d_entropicEnergy;
@@ -1588,7 +1673,7 @@ namespace dftfe
         &                  subspaceIterationSolverCUDA,
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
-      const unsigned int   numberRayleighRitzAvoidanceXLBOMDPasses = 0,
+      const unsigned int   numberRayleighRitzAvoidancePasses = 0,
       const bool           isSpectrumSplit                         = false,
       const bool           useMixedPrec                            = false,
       const bool           isFirstScf                              = false);

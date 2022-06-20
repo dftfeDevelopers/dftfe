@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,6 +17,7 @@
 #ifndef triangulationManager_H_
 #define triangulationManager_H_
 #include "headers.h"
+#include "dftParameters.h"
 
 
 namespace dftfe
@@ -47,14 +48,17 @@ namespace dftfe
   public:
     /** @brief Constructor.
      *
-     * @param mpi_comm_replica mpi_communicator of the current pool
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain domain decomposition mpi communicator
      * @param interpool_comm mpi interpool communicator over k points
      * @param interBandGroupComm mpi interpool communicator over band groups
      */
-    triangulationManager(const MPI_Comm &   mpi_comm_replica,
-                         const MPI_Comm &   interpoolcomm,
-                         const MPI_Comm &   interBandGroupComm,
-                         const unsigned int FEOrder);
+    triangulationManager(const MPI_Comm &     mpi_comm_parent,
+                         const MPI_Comm &     mpi_comm_domain,
+                         const MPI_Comm &     interpoolcomm,
+                         const MPI_Comm &     interBandGroupComm,
+                         const unsigned int   FEOrder,
+                         const dftParameters &dftParams);
 
 
     /**
@@ -431,9 +435,12 @@ namespace dftfe
     /// node constraints
     const unsigned int d_FEOrder;
 
+    const dftParameters &d_dftParams;
+
     //
     // parallel objects
     //
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const MPI_Comm             interpoolcomm;
     const MPI_Comm             interBandGroupComm;

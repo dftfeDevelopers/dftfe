@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -48,7 +48,7 @@ namespace dftfe
   constexpr unsigned int
   C_numCopies1DQuadSmearedCharge()
   {
-    return 2;
+    return 2; // can be changed from 2 to 3
   }
 
   /// 1d quad rule smeared nuclear charge
@@ -79,7 +79,7 @@ namespace dftfe
   constexpr unsigned int
   C_numCopies1DQuadSmearedChargeStress()
   {
-    return 5;
+    return 5; //
   }
 
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
@@ -96,7 +96,7 @@ namespace dftfe
   constexpr unsigned int
   C_num1DQuadNLPSP()
   {
-    return 14;
+    return 14; // Can be changed from 14 to 18 Step 1
   }
 
   /// number of copies 1d quad rule non-local PSP

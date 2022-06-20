@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -20,6 +20,7 @@
 
 #include "headers.h"
 #include "operator.h"
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -52,8 +53,10 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
     std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
     const bool                                     isEvaluateGradRho,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &                               interpoolcomm,
     const MPI_Comm &                               interBandGroupComm,
+    const dftParameters &                          dftParams,
     const bool                                     spectrumSplit,
     const bool                                     useFEOrderRhoPlusOneGLQuad);
 } // namespace dftfe

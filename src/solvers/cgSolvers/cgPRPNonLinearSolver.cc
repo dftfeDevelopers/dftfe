@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -29,7 +29,7 @@ namespace dftfe
     const double       tolerance,
     const unsigned int maxNumberIterations,
     const unsigned int debugLevel,
-    const MPI_Comm &   mpi_comm_replica,
+    const MPI_Comm &   mpi_comm_parent,
     const double       lineSearchTolerance,
     const unsigned int lineSearchMaxIterations,
     const double       lineSearchDampingParameter,
@@ -39,12 +39,12 @@ namespace dftfe
     , d_lineSearchDampingParameter(lineSearchDampingParameter)
     , d_maxSolutionIncrementLinf(maxIncrementSolLinf)
     , nonLinearSolver(debugLevel, maxNumberIterations, tolerance)
-    , mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_replica))
+    , mpi_communicator(mpi_comm_parent)
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_parent))
     , this_mpi_process(
-        dealii::Utilities::MPI::this_mpi_process(mpi_comm_replica))
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
     d_isCGRestartDueToLargeIncrement     = false;
     d_useSingleAtomSolutionsInitialGuess = false;
@@ -231,7 +231,7 @@ namespace dftfe
       data.push_back(
         std::vector<double>(1, d_functionalValueAfterAlphUpdateChk));
 
-    dftUtils::writeDataIntoFile(data, checkpointFileName);
+    dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
   }
 
   //
@@ -374,7 +374,7 @@ namespace dftfe
           isIncrementBoundExceeded = 1;
       }
 
-    MPI_Bcast(&(isIncrementBoundExceeded), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&(isIncrementBoundExceeded), 1, MPI_INT, 0, mpi_communicator);
 
     if (isIncrementBoundExceeded == 1)
       {
@@ -474,7 +474,7 @@ namespace dftfe
 
         if (!checkpointFileName.empty())
           {
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(mpi_communicator);
             save(checkpointFileName);
             problem.save();
           }
@@ -545,7 +545,7 @@ namespace dftfe
 
         if (!checkpointFileName.empty())
           {
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(mpi_communicator);
             save(checkpointFileName);
             problem.save();
           }
@@ -578,7 +578,7 @@ namespace dftfe
                 isSuccess = 1;
               }
 
-            MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
 
             if (isSuccess == 1)
               {
@@ -704,7 +704,7 @@ namespace dftfe
     else
       {
         load(checkpointFileName);
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(mpi_communicator);
         d_useSingleAtomSolutionsInitialGuess = true;
 
         // compute deltaNew
@@ -726,7 +726,7 @@ namespace dftfe
     if (d_gradMax < d_tolerance)
       isSuccess = 1;
 
-    MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
     if (isSuccess == 1)
       return SUCCESS;
 
@@ -798,7 +798,7 @@ namespace dftfe
             isBetaZero                       = 1;
             d_isCGRestartDueToLargeIncrement = false;
           }
-        MPI_Bcast(&(isBetaZero), 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&(isBetaZero), 1, MPI_INT, 0, mpi_communicator);
         if (isBetaZero == 1)
           d_beta = 0;
         //
@@ -827,7 +827,7 @@ namespace dftfe
 
         if (d_gradMax < d_tolerance)
           isBreak = 1;
-        MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
         if (isBreak == 1)
           break;
       }

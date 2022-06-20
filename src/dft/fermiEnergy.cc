@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -24,7 +24,8 @@ namespace internal
   FermiDiracFunctionValue(const double                            x,
                           const std::vector<std::vector<double>> &eigenValues,
                           const std::vector<double> &             kPointWeights,
-                          const double &                          TVal)
+                          const double &                          TVal,
+                          const dftParameters &                   dftParams)
   {
     int    numberkPoints     = eigenValues.size();
     int    numberEigenValues = eigenValues[0].size();
@@ -40,13 +41,13 @@ namespace internal
             if (temp1 <= 0.0)
               {
                 temp2 = 1.0 / (1.0 + exp(temp1));
-                functionValue += (2.0 - dftParameters::spinPolarized) *
+                functionValue += (2.0 - dftParams.spinPolarized) *
                                  kPointWeights[kPoint] * temp2;
               }
             else
               {
                 temp2 = 1.0 / (1.0 + exp(-temp1));
-                functionValue += (2.0 - dftParameters::spinPolarized) *
+                functionValue += (2.0 - dftParams.spinPolarized) *
                                  kPointWeights[kPoint] * exp(-temp1) * temp2;
               }
           }
@@ -60,7 +61,8 @@ namespace internal
     const double                            x,
     const std::vector<std::vector<double>> &eigenValues,
     const std::vector<double> &             kPointWeights,
-    const double &                          TVal)
+    const double &                          TVal,
+    const dftParameters &                   dftParams)
   {
     int    numberkPoints      = eigenValues.size();
     int    numberEigenValues  = eigenValues[0].size();
@@ -76,14 +78,14 @@ namespace internal
               {
                 temp2 = 1.0 / (1.0 + exp(temp1));
                 functionDerivative +=
-                  (2.0 - dftParameters::spinPolarized) * kPointWeights[kPoint] *
+                  (2.0 - dftParams.spinPolarized) * kPointWeights[kPoint] *
                   (exp(temp1) / (C_kb * TVal)) * temp2 * temp2;
               }
             else
               {
                 temp2 = 1.0 / (1.0 + exp(-temp1));
                 functionDerivative +=
-                  (2.0 - dftParameters::spinPolarized) * kPointWeights[kPoint] *
+                  (2.0 - dftParams.spinPolarized) * kPointWeights[kPoint] *
                   (exp(-temp1) / (C_kb * TVal)) * temp2 * temp2;
               }
           }
@@ -102,8 +104,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
   const double                            numElectronsInput)
 {
   int    count = std::ceil(static_cast<double>(numElectronsInput) /
-                        (2.0 - dftParameters::spinPolarized));
-  double TVal  = dftParameters::TVal;
+                        (2.0 - d_dftParamsPtr->spinPolarized));
+  double TVal  = d_dftParamsPtr->TVal;
 
 
   std::vector<double> eigenValuesAllkPoints;
@@ -145,19 +147,15 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
 
   for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
-      double yRightLocal = internal::FermiDiracFunctionValue(xRight,
-                                                             eigenValuesInput,
-                                                             d_kPointWeights,
-                                                             TVal);
+      double yRightLocal = internal::FermiDiracFunctionValue(
+        xRight, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
 
       double yRight = Utilities::MPI::sum(yRightLocal, interpoolcomm);
 
       yRight -= (double)numElectrons;
 
-      double yLeftLocal = internal::FermiDiracFunctionValue(xLeft,
-                                                            eigenValuesInput,
-                                                            d_kPointWeights,
-                                                            TVal);
+      double yLeftLocal = internal::FermiDiracFunctionValue(
+        xLeft, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
 
       double yLeft = Utilities::MPI::sum(yLeftLocal, interpoolcomm);
 
@@ -172,7 +170,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
       double xBisected = (xLeft + xRight) / 2.0;
 
       double yBisectedLocal = internal::FermiDiracFunctionValue(
-        xBisected, eigenValuesInput, d_kPointWeights, TVal);
+        xBisected, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
       double yBisected = Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
       yBisected -= (double)numElectrons;
 
@@ -189,7 +187,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
           break;
         }
     }
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "Fermi energy constraint residual (bisection): " << R << std::endl;
 #else
   fe = eigenValuesAllkPoints[d_kPointWeights.size() * count - 1];
@@ -206,14 +204,12 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
          (iter < maxNumberFermiEnergySolveIterations))
     {
       double functionValueLocal = internal::FermiDiracFunctionValue(
-        fe, eigenValuesInput, d_kPointWeights, TVal);
+        fe, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
       functionValue = Utilities::MPI::sum(functionValueLocal, interpoolcomm);
 
       double functionDerivativeValueLocal =
-        internal::FermiDiracFunctionDerivativeValue(fe,
-                                                    eigenValuesInput,
-                                                    d_kPointWeights,
-                                                    TVal);
+        internal::FermiDiracFunctionDerivativeValue(
+          fe, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
 
       functionDerivativeValue =
         Utilities::MPI::sum(functionDerivativeValueLocal, interpoolcomm);
@@ -235,11 +231,11 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
   // set Fermi energy
   fermiEnergy = fe;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "Fermi energy constraint residual (Newton-Raphson): "
           << std::abs(R) << std::endl;
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout << "Fermi energy                                     : "
           << fermiEnergy << std::endl;
 }
@@ -253,7 +249,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy_constraintMagnetization(
   int countDown = numElectronsDown;
   //
   const unsigned int nk =
-    dftParameters::nkx * dftParameters::nky * dftParameters::nkz;
+    d_dftParamsPtr->nkx * d_dftParamsPtr->nky * d_dftParamsPtr->nkz;
   //
   std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
   for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -283,7 +279,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy_constraintMagnetization(
   //
   fermiEnergy = std::max(fermiEnergyUp, fermiEnergyDown);
   //
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     {
       pcout << " This is a constrained magnetization calculation " << std::endl;
       pcout << "Fermi energy for spin up                                    : "

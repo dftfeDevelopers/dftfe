@@ -122,7 +122,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_localizationLength(
   //
   // output the localization lengths in a file
   //
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::ofstream outFile(locLengthFileName.c_str());
       outFile.setf(std::ios_base::fixed);

@@ -1,0 +1,72 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set SOLVER MODE              = MD
+subsection Geometry
+  set NATOMS=50
+  set NATOM TYPES=4
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/LGPSMD_coordinates.inp          
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/LGPSMD_domainBoundingVectors.inp 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 1.4
+    set ATOM BALL RADIUS = 10
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/LGPSMD_pseudo.inp
+  set PSEUDO TESTS FLAG               = true
+end
+
+subsection SCF parameters
+  set TEMPERATURE                      = 1400
+  set TOLERANCE                        = 1e-5
+  set MIXING METHOD                     =ANDERSON
+  set STARTING WFC=ATOMIC
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS =  85
+      set CHEBYSHEV FILTER TOLERANCE=1e-3      
+  end
+end
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
+  end
+end
+subsection Parallelization
+set NPKPT                    = 2
+end
+subsection Molecular Dynamics
+    set BOMD                            = true
+    set ATOMIC MASSES FILE              = @SOURCE_DIR@/Mass.inp
+    set STARTING TEMPERATURE            = 1400
+    set TEMPERATURE CONTROLLER TYPE     = NO_CONTROL 
+    set TIME STEP                       = 1
+    set NUMBER OF STEPS                 = 3
+    set THERMOSTAT TIME CONSTANT        = 10
+end 
+
+
+
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 4000
+  set TOLERANCE          = 1e-10
+end
+set H REFINED ELECTROSTATICS=false

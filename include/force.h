@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,15 +17,16 @@
 
 #ifndef force_H_
 #define force_H_
-#include <vselfBinsManager.h>
+#include "vselfBinsManager.h"
+#include "dftParameters.h"
 
 #include "constants.h"
 #include "headers.h"
 #include "meshMovementGaussian.h"
 #ifdef DFTFE_WITH_GPU
-#  include <kohnShamDFTOperatorCUDA.h>
+#  include "kohnShamDFTOperatorCUDA.h"
 #endif
-
+#include <dftd.h>
 
 using namespace dealii;
 
@@ -55,10 +56,13 @@ namespace dftfe
     /** @brief Constructor.
      *
      *  @param _dftPtr pointer to dftClass
-     *  @param mpi_comm_replica mpi_communicator of the current pool
+     *  @param mpi_comm_parent parent mpi_communicator
+     *  @param mpi_comm_domain domain decomposition mpi_communicator
      */
     forceClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-               const MPI_Comm &                   mpi_comm_replica);
+               const MPI_Comm &                   mpi_comm_parent,
+               const MPI_Comm &                   mpi_comm_domain,
+               const dftParameters &              dftParams);
 
     /** @brief initializes data structures inside forceClass assuming unmoved triangulation.
      *
@@ -129,6 +133,7 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -205,6 +210,7 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -892,6 +898,8 @@ namespace dftfe
     /// Storage for configurational stress tensor
     Tensor<2, 3, double> d_stress;
 
+
+
     /* Part of the stress tensor which is summed over k points.
      * It is a temporary data structure required for stress evaluation
      * (d_stress) when parallization over k points is on.
@@ -1058,8 +1066,13 @@ namespace dftfe
     // std::map<dealii::CellId,std::set<unsigned int>>
     // d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
-    /// mpi_communicator in the current pool
+    /// domain decomposition mpi_communicator
+    const MPI_Comm d_mpiCommParent;
+
+    /// domain decomposition mpi_communicator
     const MPI_Comm mpi_communicator;
+
+    const dftParameters &d_dftParams;
 
     /// number of mpi processes in the current pool
     const unsigned int n_mpi_processes;

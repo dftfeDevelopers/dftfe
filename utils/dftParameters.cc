@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,9 +17,8 @@
 // @author Phani Motamarri, Sambit Das
 //
 #include <deal.II/base/data_out_base.h>
-
+#include <deal.II/base/parameter_handler.h>
 #include <dftParameters.h>
-
 #include <fstream>
 #include <iostream>
 
@@ -27,141 +26,8 @@ using namespace dealii;
 
 namespace dftfe
 {
-  namespace dftParameters
+  namespace internalDftParameters
   {
-    unsigned int finiteElementPolynomialOrder               = 1,
-                 finiteElementPolynomialOrderElectrostatics = 1,
-                 n_refinement_steps = 1, numberEigenValues = 1, xc_id = 1,
-                 spinPolarized = 0, nkx = 1, nky = 1, nkz = 1, offsetFlagX = 0,
-                 offsetFlagY = 0, offsetFlagZ = 0;
-    unsigned int chebyshevOrder = 1, numPass = 1, numSCFIterations = 1,
-                 maxLinearSolverIterations = 1, mixingHistory = 1, npool = 1,
-                 maxLinearSolverIterationsHelmholtz = 1;
-
-    double radiusAtomBall = 0.0, mixingParameter = 0.5;
-    double absLinearSolverTolerance      = 1e-10,
-           selfConsistentSolverTolerance = 1e-10, TVal = 500,
-           start_magnetization = 0.0, absLinearSolverToleranceHelmholtz = 1e-10;
-    double      chebyshevTolerance                  = 1e-02;
-    double      chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
-    std::string mixingMethod                        = "";
-    std::string ionOptSolver                        = "";
-
-    bool isPseudopotential = false, periodicX = false, periodicY = false,
-         periodicZ = false, useSymm = false, timeReversal = false,
-         pseudoTestsFlag = false, constraintMagnetization = false,
-         writeDosFile = false, writeLdosFile = false, writePdosFile = false,
-         writeLocalizationLengths = false;
-    std::string coordinatesFile = "", domainBoundingVectorsFile = "",
-                kPointDataFile = "", ionRelaxFlagsFile = "", orthogType = "",
-                algoType = "", pseudoPotentialFile = "";
-
-    std::string coordinatesGaussianDispFile = "";
-
-    double outerAtomBallRadius = 2.5, innerAtomBallRadius = 0.0,
-           meshSizeOuterDomain     = 10.0;
-    double       meshSizeInnerBall = 1.0, meshSizeOuterBall = 1.0;
-    unsigned int numLevels = 1, numberWaveFunctionsForEstimate = 5;
-    double       topfrac         = 0.1;
-    double       kerkerParameter = 0.05;
-
-    bool isIonOpt = false, isCellOpt = false, isIonForce = false,
-         isCellStress = false, isBOMD = false, isXLBOMD = false;
-    bool         nonSelfConsistentForce = false;
-    double       forceRelaxTol          = 1e-4; // Hartree/Bohr
-    double       stressRelaxTol         = 1e-6; // Hartree/Bohr^3
-    double       toleranceKinetic       = 1e-03;
-    unsigned int cellConstraintType = 12; // all cell components to be relaxed
-
-    unsigned int verbosity                 = 0;
-    unsigned int chkType                   = 0;
-    bool         restartSpinFromNoSpin     = false;
-    bool         restartFromChk            = false;
-    bool         restartMdFromChk          = false;
-    bool         reproducible_output       = false;
-    bool         electrostaticsHRefinement = false;
-    bool         meshAdaption              = false;
-    bool         pinnedNodeForPBC          = true;
-    bool         HXOptimFlag               = false;
-
-    std::string  startingWFCType                                = "";
-    bool         writeWfcSolutionFields                         = false;
-    bool         writeDensitySolutionFields                     = false;
-    unsigned int wfcBlockSize                                   = 400;
-    unsigned int chebyWfcBlockSize                              = 400;
-    unsigned int subspaceRotDofsBlockSize                       = 2000;
-    unsigned int nbandGrps                                      = 1;
-    bool         computeEnergyEverySCF                          = true;
-    unsigned int scalapackParalProcs                            = 0;
-    unsigned int scalapackBlockSize                             = 50;
-    unsigned int natoms                                         = 0;
-    unsigned int natomTypes                                     = 0;
-    unsigned int numCoreWfcRR                                   = 0;
-    bool         reuseWfcGeoOpt                                 = false;
-    unsigned int reuseDensityGeoOpt                             = 0;
-    double       mpiAllReduceMessageBlockSizeMB                 = 2.0;
-    bool         useMixedPrecCGS_SR                             = false;
-    bool         useMixedPrecCGS_O                              = false;
-    bool         useMixedPrecXTHXSpectrumSplit                  = false;
-    bool         useMixedPrecSubspaceRotRR                      = false;
-    unsigned int spectrumSplitStartingScfIter                   = 1;
-    bool         useELPA                                        = false;
-    bool         constraintsParallelCheck                       = true;
-    bool         createConstraintsFromSerialDofhandler          = true;
-    bool         bandParalOpt                                   = true;
-    bool         autoAdaptBaseMeshSize                          = true;
-    bool         readWfcForPdosPspFile                          = false;
-    bool         useGPU                                         = false;
-    bool         gpuFineGrainedTimings                          = false;
-    bool         allowFullCPUMemSubspaceRot                     = true;
-    bool         useMixedPrecCheby                              = false;
-    bool         overlapComputeCommunCheby                      = false;
-    bool         overlapComputeCommunOrthoRR                    = false;
-    bool         autoGPUBlockSizes                              = true;
-    double       maxJacobianRatioFactorForMD                    = 1.5;
-    double       chebyshevFilterTolXLBOMD                       = 1e-8;
-    double       timeStepBOMD                                   = 0.5;
-    unsigned int numberStepsBOMD                                = 1000;
-    double       startingTempBOMDNVE                            = 300.0;
-    double       gaussianConstantForce                          = 0.75;
-    double       gaussianOrderForce                             = 4.0;
-    double       gaussianOrderMoveMeshToAtoms                   = 4.0;
-    bool         useFlatTopGenerator                            = false;
-    double       diracDeltaKernelScalingConstant                = 0.1;
-    unsigned int kernelUpdateRankXLBOMD                         = 0;
-    unsigned int kmaxXLBOMD                                     = 8;
-    bool         useAtomicRhoXLBOMD                             = true;
-    bool         useMeshSizesFromAtomsFile                      = false;
-    bool         chebyCommunAvoidanceAlgo                       = false;
-    double       chebyshevFilterPolyDegreeFirstScfScalingFactor = 1.34;
-    unsigned int numberPassesRRSkippedXLBOMD                    = 0;
-    double       xlbomdRestartChebyTol                          = 1e-9;
-    bool         useDensityMatrixPerturbationRankUpdates        = false;
-    double       xlbomdKernelRankUpdateFDParameter              = 1e-2;
-    bool         smearedNuclearCharges                          = false;
-    bool         floatingNuclearCharges                         = false;
-    bool         nonLinearCoreCorrection                        = false;
-    unsigned int maxLineSearchIterCGPRP                         = 5;
-    std::string  atomicMassesFile                               = "";
-    bool         useGPUDirectAllReduce                          = false;
-    double       pspCutoffImageCharges                          = 15.0;
-    bool         reuseLanczosUpperBoundFromFirstCall            = false;
-    bool         allowMultipleFilteringPassesAfterFirstScf      = true;
-    bool         useELPAGPUKernel                               = false;
-    std::string  xcFamilyType                                   = "";
-    bool         gpuMemOptMode                                  = false;
-
-    /** parameters for LRJI preconditioner **/
-    double      startingNormLRJILargeDamping  = 2.0;
-    double      mixingParameterLRJI           = 0.5;
-    double      adaptiveRankRelTolLRJI        = 0.3;
-    std::string methodSubTypeLRJI             = "";
-    double      factorAdapAccumClearLRJI      = 2.0;
-    double      absPoissonSolverToleranceLRJI = 1.0e-6;
-    bool        singlePrecLRJI                = false;
-    bool        estimateJacCondNoFinalSCFIter = false;
-    /*****************************************/
-
     void
     declare_parameters(ParameterHandler &prm)
     {
@@ -179,11 +45,30 @@ namespace dftfe
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
 
+
       prm.declare_entry(
         "VERBOSITY",
         "1",
-        Patterns::Integer(0, 5),
-        "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
+        Patterns::Integer(-1, 5),
+        "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.");
+
+      prm.declare_entry(
+        "KEEP SCRATCH FOLDER",
+        "false",
+        Patterns::Bool(),
+        "[Advanced] If set to true this option does not delete the dftfeScratch folder when the dftfe object is destroyed. This is useful for debugging and code development. Default: false.");
+
+      prm.declare_entry(
+        "SOLVER MODE",
+        "GS",
+        Patterns::Selection("GS|MD|NEB"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
+
+      prm.declare_entry(
+        "RESTART",
+        "false",
+        Patterns::Bool(),
+        "[Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
 
       prm.enter_subsection("GPU");
       {
@@ -310,7 +195,7 @@ namespace dftfe
         prm.declare_entry(
           "CHK TYPE",
           "0",
-          Patterns::Integer(0, 3),
+          Patterns::Integer(0, 2),
           "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
         prm.declare_entry(
@@ -324,12 +209,6 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
-
-        prm.declare_entry(
-          "RESTART MD FROM CHK",
-          "false",
-          Patterns::Bool(),
-          "[Developer] Boolean parameter specifying if the current job reads from a MD checkpoint (in development).");
       }
       prm.leave_subsection();
 
@@ -442,9 +321,9 @@ namespace dftfe
 
           prm.declare_entry(
             "REUSE DENSITY",
-            "0",
+            "1",
             Patterns::Integer(0, 2),
-            "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+            "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 1.");
         }
         prm.leave_subsection();
       }
@@ -721,6 +600,14 @@ namespace dftfe
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
         prm.declare_entry(
+          "NUMBER OF IMAGES",
+          "1",
+          Patterns::Integer(1, 50),
+          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");
+
+
+
+        prm.declare_entry(
           "START MAGNETIZATION",
           "0.0",
           Patterns::Double(-0.5, 0.5),
@@ -731,6 +618,50 @@ namespace dftfe
           "15.0",
           Patterns::Double(),
           "[Standard] Distance from the domain till which periodic images will be considered for the local part of the pseudopotential. Units in a.u. ");
+        prm.enter_subsection("Dispersion Correction");
+        {
+          prm.declare_entry(
+            "DISPERSION CORRECTION TYPE",
+            "0",
+            Patterns::Integer(0, 2),
+            "[Standard] The dispersion correction type to be included post scf convergence: 0 for none, 1 for DFT-D3[JCP 132, 154104 (2010)][JCC 32, 1456 (2011)], 2 for DFT-D4 [JCP 147, 034112 (2017)][JCP 150, 154122 (2019)][PCCP 22, 8499-8512 (2020)].");
+          prm.declare_entry(
+            "D3 DAMPING TYPE",
+            "3",
+            Patterns::Integer(0, 4),
+            "[Standard] The damping used for DFTD3, 0 for zero damping, 1 for BJ damping, 2 for D3M variant, 3 for BJM variant (default) and 4 for the OP variant.");
+          prm.declare_entry(
+            "D3 ATM",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying whether or not the triple dipole correction in DFTD3 is to be included (ignored if DAMPING PARAMETERS FILE is specified).");
+          prm.declare_entry(
+            "D4 MBD",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying whether or not the MBD correction in DFTD4 is to be included (ignored if DAMPING PARAMETERS FILE is specified).");
+          prm.declare_entry(
+            "DAMPING PARAMETERS FILE",
+            "",
+            Patterns::Anything(),
+            "[Advanced] Name of the file containing custom damping parameters, for ZERO damping 6 parameters are expected (s6, s8, s9, sr6, sr8, alpha), for BJ anf BJM damping 6 parameters are expected (s6, s8, s9, a1, a2, alpha), for ZEROM damping 7 parameters are expected (s6, s8, s9, sr6, sr8, alpha, beta) and for optimized power damping 7 parameters are expected (s6, s8, s9, a1, a2, alpha, beta).");
+          prm.declare_entry(
+            "TWO BODY CUTOFF",
+            "94.8683298050514",
+            Patterns::Double(0.0),
+            "[Advanced] Cutoff in a.u. for computing 2 body interactions terms in D3 correction");
+          prm.declare_entry(
+            "THREE BODY CUTOFF",
+            "40.0",
+            Patterns::Double(0.0),
+            "[Advanced] Cutoff in a.u. for computing 3 body interactions terms in D3 correction");
+          prm.declare_entry(
+            "CN CUTOFF",
+            "40.0",
+            Patterns::Double(0.0),
+            "[Advanced] Cutoff in a.u. for computing coordination number in D3 correction");
+        }
+        prm.leave_subsection();
       }
       prm.leave_subsection();
 
@@ -887,7 +818,7 @@ namespace dftfe
             "CHEBYSHEV FILTER TOLERANCE",
             "5e-02",
             Patterns::Double(1e-10),
-            "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
+            "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Please note that Kerker and LRJI preconditioners require tighter FILTER TOLERANCE between 2e-3 to 1e-2.");
 
           prm.declare_entry(
             "ENABLE HAMILTONIAN TIMES VECTOR OPTIM",
@@ -1053,28 +984,10 @@ namespace dftfe
           "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
 
         prm.declare_entry(
-          "XL BOMD",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD",
-          "1e-6",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD RANK UPDATES FD",
-          "1e-7",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD RESTART",
-          "1e-9",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
+          "EXTRAPOLATE DENSITY",
+          "0",
+          Patterns::Integer(0, 2),
+          "[Standard] Parameter controlling the reuse of ground-state density during molecular dynamics. The options are 0 default setting where superposition of atomic densities is the initial rho, 1 (second order extrapolation of density), and 2 (extrapolation of split density and the atomic densities are added) Option 2 is not enabled for spin-polarized case. Default setting is 0.");
 
         prm.declare_entry(
           "MAX JACOBIAN RATIO FACTOR",
@@ -1083,10 +996,22 @@ namespace dftfe
           "[Developer] Maximum scaling factor for maximum jacobian ratio of FEM mesh when mesh is deformed.");
 
         prm.declare_entry(
-          "STARTING TEMP NVE",
+          "STARTING TEMPERATURE",
           "300.0",
           Patterns::Double(0.0),
-          "[Developer] Starting temperature in K for NVE simulation.");
+          "[Standard] Starting temperature in K for MD simulation.");
+
+        prm.declare_entry(
+          "THERMOSTAT TIME CONSTANT",
+          "100",
+          Patterns::Double(0.0),
+          "[Standard] Ratio of Time constant of thermostat and MD timestep. ");
+
+        prm.declare_entry(
+          "TEMPERATURE CONTROLLER TYPE",
+          "NO_CONTROL",
+          Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
+          "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
 
         prm.declare_entry("TIME STEP",
                           "0.5",
@@ -1097,811 +1022,835 @@ namespace dftfe
                           "1000",
                           Patterns::Integer(0, 200000),
                           "[Standard] Number of time steps.");
+        prm.declare_entry("TRACKING ATOMIC NO",
+                          "0",
+                          Patterns::Integer(0, 200000),
+                          "[Standard] The atom Number to track.");
 
-        prm.declare_entry(
-          "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
-          "0.1",
-          Patterns::Double(0.0),
-          "[Developer] Dirac delta scaling kernel constant for XL BOMD.");
+        prm.declare_entry("MAX WALL TIME",
+                          "2592000.0",
+                          Patterns::Double(0.0),
+                          "[Standard] Maximum Wall Time in seconds");
 
-        prm.declare_entry(
-          "KERNEL RANK XL BOMD",
-          "0",
-          Patterns::Integer(0, 10),
-          "[Standard] Maximum rank for low rank kernel update in XL BOMD.");
-
-        prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD",
-                          "8",
-                          Patterns::Integer(1, 8),
-                          "[Standard] Number of dissipation terms in XL BOMD.");
-
-        prm.declare_entry(
-          "NUMBER PASSES RR SKIPPED XL BOMD",
-          "0",
-          Patterns::Integer(0),
-          "[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
-
-        prm.declare_entry("USE ATOMIC RHO XL BOMD",
-                          "true",
-                          Patterns::Bool(),
-                          "[Standard] Use atomic rho xl bomd.");
-
-        prm.declare_entry(
-          "DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Use density matrix perturbation theory for rank updates.");
-
-        prm.declare_entry(
-          "XL BOMD KERNEL RANK UPDATE FD PARAMETER",
-          "1e-2",
-          Patterns::Double(0.0),
-          "[Standard] Finite difference perturbation parameter.");
       }
       prm.leave_subsection();
     }
+  } // namespace internalDftParameters
 
-    void
-    parse_parameters(ParameterHandler &prm)
+  dftParameters::dftParameters()
+  {
+    finiteElementPolynomialOrder               = 1;
+    finiteElementPolynomialOrderElectrostatics = 1;
+    n_refinement_steps                         = 1;
+    numberEigenValues                          = 1;
+    xc_id                                      = 1;
+    spinPolarized                              = 0;
+    nkx                                        = 1;
+    nky                                        = 1;
+    nkz                                        = 1;
+    offsetFlagX                                = 0;
+    offsetFlagY                                = 0;
+    offsetFlagZ                                = 0;
+    chebyshevOrder                             = 1;
+    numPass                                    = 1;
+    numSCFIterations                           = 1;
+    maxLinearSolverIterations                  = 1;
+    mixingHistory                              = 1;
+    npool                                      = 1;
+    maxLinearSolverIterationsHelmholtz         = 1;
+
+    radiusAtomBall                      = 0.0;
+    mixingParameter                     = 0.5;
+    absLinearSolverTolerance            = 1e-10;
+    selfConsistentSolverTolerance       = 1e-10;
+    TVal                                = 500;
+    start_magnetization                 = 0.0;
+    absLinearSolverToleranceHelmholtz   = 1e-10;
+    chebyshevTolerance                  = 1e-02;
+    mixingMethod                        = "";
+    ionOptSolver                        = "";
+
+    isPseudopotential           = false;
+    periodicX                   = false;
+    periodicY                   = false;
+    periodicZ                   = false;
+    useSymm                     = false;
+    timeReversal                = false;
+    pseudoTestsFlag             = false;
+    constraintMagnetization     = false;
+    writeDosFile                = false;
+    writeLdosFile               = false;
+    writePdosFile               = false;
+    writeLocalizationLengths    = false;
+    std::string coordinatesFile = "";
+    domainBoundingVectorsFile   = "";
+    kPointDataFile              = "";
+    ionRelaxFlagsFile           = "";
+    orthogType                  = "";
+    algoType                    = "";
+    pseudoPotentialFile         = "";
+
+    std::string coordinatesGaussianDispFile = "";
+
+    outerAtomBallRadius            = 2.5;
+    innerAtomBallRadius            = 0.0;
+    meshSizeOuterDomain            = 10.0;
+    meshSizeInnerBall              = 1.0;
+    meshSizeOuterBall              = 1.0;
+    numLevels                      = 1;
+    numberWaveFunctionsForEstimate = 5;
+    topfrac                        = 0.1;
+    kerkerParameter                = 0.05;
+
+    isIonOpt               = false;
+    isCellOpt              = false;
+    isIonForce             = false;
+    isCellStress           = false;
+    isBOMD                 = false;
+    nonSelfConsistentForce = false;
+    forceRelaxTol          = 1e-4; // Hartree/Bohr
+    stressRelaxTol         = 1e-6; // Hartree/Bohr^3
+    toleranceKinetic       = 1e-03;
+    cellConstraintType     = 12; // all cell components to be relaxed
+
+    verbosity                 = 0;
+    keepScratchFolder         = false;
+    chkType                   = 0;
+    restartSpinFromNoSpin     = false;
+    restartFromChk            = false;
+    reproducible_output       = false;
+    electrostaticsHRefinement = false;
+    meshAdaption              = false;
+    pinnedNodeForPBC          = true;
+    HXOptimFlag               = false;
+
+    startingWFCType                                = "";
+    writeWfcSolutionFields                         = false;
+    writeDensitySolutionFields                     = false;
+    wfcBlockSize                                   = 400;
+    chebyWfcBlockSize                              = 400;
+    subspaceRotDofsBlockSize                       = 2000;
+    nbandGrps                                      = 1;
+    computeEnergyEverySCF                          = true;
+    scalapackParalProcs                            = 0;
+    scalapackBlockSize                             = 50;
+    natoms                                         = 0;
+    natomTypes                                     = 0;
+    numCoreWfcRR                                   = 0;
+    reuseWfcGeoOpt                                 = false;
+    reuseDensityGeoOpt                             = 0;
+    mpiAllReduceMessageBlockSizeMB                 = 2.0;
+    useMixedPrecCGS_SR                             = false;
+    useMixedPrecCGS_O                              = false;
+    useMixedPrecXTHXSpectrumSplit                  = false;
+    useMixedPrecSubspaceRotRR                      = false;
+    spectrumSplitStartingScfIter                   = 1;
+    useELPA                                        = false;
+    constraintsParallelCheck                       = true;
+    createConstraintsFromSerialDofhandler          = true;
+    bandParalOpt                                   = true;
+    autoAdaptBaseMeshSize                          = true;
+    readWfcForPdosPspFile                          = false;
+    useGPU                                         = false;
+    gpuFineGrainedTimings                          = false;
+    allowFullCPUMemSubspaceRot                     = true;
+    useMixedPrecCheby                              = false;
+    overlapComputeCommunCheby                      = false;
+    overlapComputeCommunOrthoRR                    = false;
+    autoGPUBlockSizes                              = true;
+    maxJacobianRatioFactorForMD                    = 1.5;
+    reuseDensityMD                                 = 0;
+    timeStepBOMD                                   = 0.5;
+    numberStepsBOMD                                = 1000;
+    gaussianConstantForce                          = 0.75;
+    gaussianOrderForce                             = 4.0;
+    gaussianOrderMoveMeshToAtoms                   = 4.0;
+    useFlatTopGenerator                            = false;
+    diracDeltaKernelScalingConstant                = 0.1;
+    useMeshSizesFromAtomsFile                      = false;
+    chebyshevFilterPolyDegreeFirstScfScalingFactor = 1.34;
+    useDensityMatrixPerturbationRankUpdates        = false;
+    smearedNuclearCharges                          = false;
+    floatingNuclearCharges                         = false;
+    nonLinearCoreCorrection                        = false;
+    maxLineSearchIterCGPRP                         = 5;
+    atomicMassesFile                               = "";
+    useGPUDirectAllReduce                          = false;
+    pspCutoffImageCharges                          = 15.0;
+    reuseLanczosUpperBoundFromFirstCall            = false;
+    allowMultipleFilteringPassesAfterFirstScf      = true;
+    useELPAGPUKernel                               = false;
+    xcFamilyType                                   = "";
+    gpuMemOptMode                                  = false;
+    // New Paramters for moleculardyynamics class
+    startingTempBOMD           = 300;
+    thermostatTimeConstantBOMD = 100;
+    MaxWallTime                = 2592000.0;
+    tempControllerTypeBOMD     = "";
+    MDTrack                    = 0;
+
+
+    // New paramter for selecting mode and NEB parameters
+    TotalImages = 1;
+
+
+    dc_dispersioncorrectiontype = 0;
+    dc_d3dampingtype            = 2;
+    dc_d3ATM                    = false;
+    dc_d4MBD                    = false;
+    dc_dampingParameterFilename = "";
+    dc_d3cutoff2                = 94.8683298050514;
+    dc_d3cutoff3                = 40.0;
+    dc_d3cutoffCN               = 40.0;
+
+    /** parameters for LRJI preconditioner **/
+    startingNormLRJILargeDamping  = 2.0;
+    mixingParameterLRJI           = 0.5;
+    adaptiveRankRelTolLRJI        = 0.3;
+    std::string methodSubTypeLRJI = "";
+    factorAdapAccumClearLRJI      = 2.0;
+    absPoissonSolverToleranceLRJI = 1.0e-6;
+    singlePrecLRJI                = false;
+    estimateJacCondNoFinalSCFIter = false;
+    /*****************************************/
+  }
+
+
+  void
+  dftParameters::parse_parameters(const std::string &parameter_file,
+                                  const MPI_Comm &   mpi_comm_parent,
+                                  const bool         printParams)
+  {
+    ParameterHandler prm;
+    internalDftParameters::declare_parameters(prm);
+    prm.parse_input(parameter_file);
+
+    verbosity                 = prm.get_integer("VERBOSITY");
+    reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
+    keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
+    electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
+
+    prm.enter_subsection("GPU");
     {
-      dftParameters::verbosity           = prm.get_integer("VERBOSITY");
-      dftParameters::reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
-      dftParameters::electrostaticsHRefinement =
-        prm.get_bool("H REFINED ELECTROSTATICS");
+      useGPU                     = prm.get_bool("USE GPU");
+      gpuFineGrainedTimings      = prm.get_bool("FINE GRAINED GPU TIMINGS");
+      allowFullCPUMemSubspaceRot = prm.get_bool("SUBSPACE ROT FULL CPU MEM");
+      autoGPUBlockSizes          = prm.get_bool("AUTO GPU BLOCK SIZES");
+      useGPUDirectAllReduce      = prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
+      useELPAGPUKernel           = prm.get_bool("USE ELPA GPU KERNEL");
+      gpuMemOptMode              = prm.get_bool("GPU MEM OPT MODE");
+    }
+    prm.leave_subsection();
 
-      prm.enter_subsection("GPU");
+    prm.enter_subsection("Postprocessing");
+    {
+      writeWfcSolutionFields     = prm.get_bool("WRITE WFC");
+      writeDensitySolutionFields = prm.get_bool("WRITE DENSITY");
+      writeDosFile               = prm.get_bool("WRITE DENSITY OF STATES");
+      writeLdosFile            = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+      writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
+      readWfcForPdosPspFile =
+        prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
+      writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("Parallelization");
+    {
+      npool        = prm.get_integer("NPKPT");
+      nbandGrps    = prm.get_integer("NPBAND");
+      bandParalOpt = prm.get_bool("BAND PARAL OPT");
+      mpiAllReduceMessageBlockSizeMB =
+        prm.get_double("MPI ALLREDUCE BLOCK SIZE");
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("Checkpointing and Restart");
+    {
+      chkType               = prm.get_integer("CHK TYPE");
+      restartFromChk        = prm.get_bool("RESTART FROM CHK") && chkType != 0;
+      restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("Geometry");
+    {
+      natoms                      = prm.get_integer("NATOMS");
+      natomTypes                  = prm.get_integer("NATOM TYPES");
+      coordinatesFile             = prm.get("ATOMIC COORDINATES FILE");
+      coordinatesGaussianDispFile = prm.get("ATOMIC DISP COORDINATES FILE");
+      domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
+
+      prm.enter_subsection("Optimization");
       {
-        dftParameters::useGPU = prm.get_bool("USE GPU");
-        dftParameters::gpuFineGrainedTimings =
-          prm.get_bool("FINE GRAINED GPU TIMINGS");
-        dftParameters::allowFullCPUMemSubspaceRot =
-          prm.get_bool("SUBSPACE ROT FULL CPU MEM");
-        dftParameters::autoGPUBlockSizes = prm.get_bool("AUTO GPU BLOCK SIZES");
-        dftParameters::useGPUDirectAllReduce =
-          prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
-        dftParameters::useELPAGPUKernel = prm.get_bool("USE ELPA GPU KERNEL");
-        dftParameters::gpuMemOptMode    = prm.get_bool("GPU MEM OPT MODE");
+        isIonOpt               = prm.get_bool("ION OPT");
+        ionOptSolver           = prm.get("ION OPT SOLVER");
+        maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+        nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
+        isIonForce             = isIonOpt || prm.get_bool("ION FORCE");
+        forceRelaxTol          = prm.get_double("FORCE TOL");
+        ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
+        isCellOpt              = prm.get_bool("CELL OPT");
+        isCellStress           = isCellOpt || prm.get_bool("CELL STRESS");
+        stressRelaxTol         = prm.get_double("STRESS TOL");
+        cellConstraintType     = prm.get_integer("CELL CONSTRAINT TYPE");
+        reuseWfcGeoOpt         = prm.get_bool("REUSE WFC");
+        reuseDensityGeoOpt     = prm.get_integer("REUSE DENSITY");
+      }
+      prm.leave_subsection();
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("Boundary conditions");
+    {
+      radiusAtomBall           = prm.get_double("SELF POTENTIAL RADIUS");
+      periodicX                = prm.get_bool("PERIODIC1");
+      periodicY                = prm.get_bool("PERIODIC2");
+      periodicZ                = prm.get_bool("PERIODIC3");
+      constraintsParallelCheck = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
+      createConstraintsFromSerialDofhandler =
+        prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
+      pinnedNodeForPBC       = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
+      smearedNuclearCharges  = prm.get_bool("SMEARED NUCLEAR CHARGES");
+      floatingNuclearCharges = prm.get_bool("FLOATING NUCLEAR CHARGES");
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("Finite element mesh parameters");
+    {
+      finiteElementPolynomialOrder = prm.get_integer("POLYNOMIAL ORDER");
+      finiteElementPolynomialOrderElectrostatics =
+        prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS") == 0 ?
+          prm.get_integer("POLYNOMIAL ORDER") :
+          prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");
+      prm.enter_subsection("Auto mesh generation parameters");
+      {
+        outerAtomBallRadius   = prm.get_double("ATOM BALL RADIUS");
+        innerAtomBallRadius   = prm.get_double("INNER ATOM BALL RADIUS");
+        meshSizeOuterDomain   = prm.get_double("BASE MESH SIZE");
+        meshSizeInnerBall     = prm.get_double("MESH SIZE AT ATOM");
+        meshSizeOuterBall     = prm.get_double("MESH SIZE AROUND ATOM");
+        meshAdaption          = prm.get_bool("MESH ADAPTION");
+        autoAdaptBaseMeshSize = prm.get_bool("AUTO ADAPT BASE MESH SIZE");
+        topfrac               = prm.get_double("TOP FRAC");
+        numLevels             = prm.get_double("NUM LEVELS");
+        numberWaveFunctionsForEstimate =
+          prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
+        toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
+        gaussianConstantForce =
+          prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
+        gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
+        gaussianOrderMoveMeshToAtoms =
+          prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
+        useFlatTopGenerator = prm.get_bool("USE FLAT TOP GENERATOR");
+        useMeshSizesFromAtomsFile =
+          prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
+      }
+      prm.leave_subsection();
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("Brillouin zone k point sampling options");
+    {
+      prm.enter_subsection("Monkhorst-Pack (MP) grid generation");
+      {
+        nkx         = prm.get_integer("SAMPLING POINTS 1");
+        nky         = prm.get_integer("SAMPLING POINTS 2");
+        nkz         = prm.get_integer("SAMPLING POINTS 3");
+        offsetFlagX = prm.get_integer("SAMPLING SHIFT 1");
+        offsetFlagY = prm.get_integer("SAMPLING SHIFT 2");
+        offsetFlagZ = prm.get_integer("SAMPLING SHIFT 3");
       }
       prm.leave_subsection();
 
-      prm.enter_subsection("Postprocessing");
+      useSymm        = prm.get_bool("USE GROUP SYMMETRY");
+      timeReversal   = prm.get_bool("USE TIME REVERSAL SYMMETRY");
+      kPointDataFile = prm.get("kPOINT RULE FILE");
+    }
+    prm.leave_subsection();
+
+    prm.enter_subsection("DFT functional parameters");
+    {
+      prm.enter_subsection("Dispersion Correction");
       {
-        dftParameters::writeWfcSolutionFields = prm.get_bool("WRITE WFC");
-        dftParameters::writeDensitySolutionFields =
-          prm.get_bool("WRITE DENSITY");
-        dftParameters::writeDosFile = prm.get_bool("WRITE DENSITY OF STATES");
-        dftParameters::writeLdosFile =
-          prm.get_bool("WRITE LOCAL DENSITY OF STATES");
-        dftParameters::writeLocalizationLengths =
-          prm.get_bool("WRITE LOCALIZATION LENGTHS");
-        dftParameters::readWfcForPdosPspFile =
-          prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
-        dftParameters::writeLocalizationLengths =
-          prm.get_bool("WRITE LOCALIZATION LENGTHS");
+        dc_dispersioncorrectiontype =
+          prm.get_integer("DISPERSION CORRECTION TYPE");
+        dc_d3dampingtype            = prm.get_integer("D3 DAMPING TYPE");
+        dc_d3ATM                    = prm.get_bool("D3 ATM");
+        dc_d4MBD                    = prm.get_bool("D4 MBD");
+        dc_dampingParameterFilename = prm.get("DAMPING PARAMETERS FILE");
+        dc_d3cutoff2                = prm.get_double("TWO BODY CUTOFF");
+        dc_d3cutoff3                = prm.get_double("THREE BODY CUTOFF");
+        dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
+      isPseudopotential     = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag       = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      xc_id                 = prm.get_integer("EXCHANGE CORRELATION TYPE");
+      spinPolarized         = prm.get_integer("SPIN POLARIZATION");
+      start_magnetization   = prm.get_double("START MAGNETIZATION");
+      pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
+      TotalImages           = prm.get_integer("NUMBER OF IMAGES");
+    }
+    prm.leave_subsection();
 
-      prm.enter_subsection("Parallelization");
+    prm.enter_subsection("SCF parameters");
+    {
+      TVal                          = prm.get_double("TEMPERATURE");
+      numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
+      selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
+      mixingHistory                 = prm.get_integer("MIXING HISTORY");
+      mixingParameter               = prm.get_double("MIXING PARAMETER");
+      kerkerParameter               = prm.get_double("KERKER MIXING PARAMETER");
+      mixingMethod                  = prm.get("MIXING METHOD");
+      constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
+      startingWFCType               = prm.get("STARTING WFC");
+      computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
+
+
+      prm.enter_subsection("Eigen-solver parameters");
       {
-        dftParameters::npool        = prm.get_integer("NPKPT");
-        dftParameters::nbandGrps    = prm.get_integer("NPBAND");
-        dftParameters::bandParalOpt = prm.get_bool("BAND PARAL OPT");
-        dftParameters::mpiAllReduceMessageBlockSizeMB =
-          prm.get_double("MPI ALLREDUCE BLOCK SIZE");
+        numberEigenValues =
+          prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+        numCoreWfcRR = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+        spectrumSplitStartingScfIter =
+          prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
+        chebyshevOrder = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+        useELPA        = prm.get_bool("USE ELPA");
+        HXOptimFlag    = prm.get_bool("ENABLE HAMILTONIAN TIMES VECTOR OPTIM");
+        orthogType     = prm.get("ORTHOGONALIZATION TYPE");
+        chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+        wfcBlockSize       = prm.get_integer("WFC BLOCK SIZE");
+        chebyWfcBlockSize  = prm.get_integer("CHEBY WFC BLOCK SIZE");
+        subspaceRotDofsBlockSize =
+          prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
+        scalapackParalProcs = prm.get_integer("SCALAPACKPROCS");
+        scalapackBlockSize  = prm.get_integer("SCALAPACK BLOCK SIZE");
+        useMixedPrecCGS_SR  = prm.get_bool("USE MIXED PREC CGS SR");
+        useMixedPrecCGS_O   = prm.get_bool("USE MIXED PREC CGS O");
+        useMixedPrecXTHXSpectrumSplit =
+          prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
+        useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
+        useMixedPrecCheby         = prm.get_bool("USE MIXED PREC CHEBY");
+        overlapComputeCommunCheby =
+          prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
+        overlapComputeCommunOrthoRR =
+          prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
+        algoType                                       = prm.get("ALGO");
+        chebyshevFilterPolyDegreeFirstScfScalingFactor = prm.get_double(
+          "CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
+        reuseLanczosUpperBoundFromFirstCall =
+          prm.get_bool("REUSE LANCZOS UPPER BOUND");
+        ;
+        allowMultipleFilteringPassesAfterFirstScf =
+          prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
       }
       prm.leave_subsection();
+    }
+    prm.leave_subsection();
 
-      prm.enter_subsection("Checkpointing and Restart");
-      {
-        chkType        = prm.get_integer("CHK TYPE");
-        restartFromChk = prm.get_bool("RESTART FROM CHK") && chkType != 0;
-        restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-        restartMdFromChk = prm.get_bool("RESTART MD FROM CHK") && chkType != 0;
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("Geometry");
-      {
-        dftParameters::natoms          = prm.get_integer("NATOMS");
-        dftParameters::natomTypes      = prm.get_integer("NATOM TYPES");
-        dftParameters::coordinatesFile = prm.get("ATOMIC COORDINATES FILE");
-        dftParameters::coordinatesGaussianDispFile =
-          prm.get("ATOMIC DISP COORDINATES FILE");
-        dftParameters::domainBoundingVectorsFile =
-          prm.get("DOMAIN VECTORS FILE");
-
-        prm.enter_subsection("Optimization");
-        {
-          dftParameters::isIonOpt     = prm.get_bool("ION OPT");
-          dftParameters::ionOptSolver = prm.get("ION OPT SOLVER");
-          dftParameters::maxLineSearchIterCGPRP =
-            prm.get_integer("MAX LINE SEARCH ITER");
-          dftParameters::nonSelfConsistentForce =
-            prm.get_bool("NON SELF CONSISTENT FORCE");
-          dftParameters::isIonForce =
-            dftParameters::isIonOpt || prm.get_bool("ION FORCE");
-          dftParameters::forceRelaxTol     = prm.get_double("FORCE TOL");
-          dftParameters::ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
-          dftParameters::isCellOpt         = prm.get_bool("CELL OPT");
-          dftParameters::isCellStress =
-            dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
-          dftParameters::stressRelaxTol = prm.get_double("STRESS TOL");
-          dftParameters::cellConstraintType =
-            prm.get_integer("CELL CONSTRAINT TYPE");
-          dftParameters::reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
-          dftParameters::reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
-        }
-        prm.leave_subsection();
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("Boundary conditions");
-      {
-        dftParameters::radiusAtomBall = prm.get_double("SELF POTENTIAL RADIUS");
-        dftParameters::periodicX      = prm.get_bool("PERIODIC1");
-        dftParameters::periodicY      = prm.get_bool("PERIODIC2");
-        dftParameters::periodicZ      = prm.get_bool("PERIODIC3");
-        dftParameters::constraintsParallelCheck =
-          prm.get_bool("CONSTRAINTS PARALLEL CHECK");
-        dftParameters::createConstraintsFromSerialDofhandler =
-          prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
-        dftParameters::pinnedNodeForPBC =
-          prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
-        dftParameters::smearedNuclearCharges =
-          prm.get_bool("SMEARED NUCLEAR CHARGES");
-        dftParameters::floatingNuclearCharges =
-          prm.get_bool("FLOATING NUCLEAR CHARGES");
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("Finite element mesh parameters");
-      {
-        dftParameters::finiteElementPolynomialOrder =
-          prm.get_integer("POLYNOMIAL ORDER");
-        dftParameters::finiteElementPolynomialOrderElectrostatics =
-          prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS") == 0 ?
-            prm.get_integer("POLYNOMIAL ORDER") :
-            prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");
-        prm.enter_subsection("Auto mesh generation parameters");
-        {
-          dftParameters::outerAtomBallRadius =
-            prm.get_double("ATOM BALL RADIUS");
-          dftParameters::innerAtomBallRadius =
-            prm.get_double("INNER ATOM BALL RADIUS");
-          dftParameters::meshSizeOuterDomain = prm.get_double("BASE MESH SIZE");
-          dftParameters::meshSizeInnerBall =
-            prm.get_double("MESH SIZE AT ATOM");
-          dftParameters::meshSizeOuterBall =
-            prm.get_double("MESH SIZE AROUND ATOM");
-          dftParameters::meshAdaption = prm.get_bool("MESH ADAPTION");
-          dftParameters::autoAdaptBaseMeshSize =
-            prm.get_bool("AUTO ADAPT BASE MESH SIZE");
-          dftParameters::topfrac   = prm.get_double("TOP FRAC");
-          dftParameters::numLevels = prm.get_double("NUM LEVELS");
-          dftParameters::numberWaveFunctionsForEstimate =
-            prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
-          dftParameters::toleranceKinetic =
-            prm.get_double("TOLERANCE FOR MESH ADAPTION");
-          dftParameters::gaussianConstantForce =
-            prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
-          dftParameters::gaussianOrderForce =
-            prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
-          dftParameters::gaussianOrderMoveMeshToAtoms =
-            prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
-          dftParameters::useFlatTopGenerator =
-            prm.get_bool("USE FLAT TOP GENERATOR");
-          dftParameters::useMeshSizesFromAtomsFile =
-            prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
-        }
-        prm.leave_subsection();
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("Brillouin zone k point sampling options");
-      {
-        prm.enter_subsection("Monkhorst-Pack (MP) grid generation");
-        {
-          dftParameters::nkx         = prm.get_integer("SAMPLING POINTS 1");
-          dftParameters::nky         = prm.get_integer("SAMPLING POINTS 2");
-          dftParameters::nkz         = prm.get_integer("SAMPLING POINTS 3");
-          dftParameters::offsetFlagX = prm.get_integer("SAMPLING SHIFT 1");
-          dftParameters::offsetFlagY = prm.get_integer("SAMPLING SHIFT 2");
-          dftParameters::offsetFlagZ = prm.get_integer("SAMPLING SHIFT 3");
-        }
-        prm.leave_subsection();
-
-        dftParameters::useSymm = prm.get_bool("USE GROUP SYMMETRY");
-        dftParameters::timeReversal =
-          prm.get_bool("USE TIME REVERSAL SYMMETRY");
-        dftParameters::kPointDataFile = prm.get("kPOINT RULE FILE");
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("DFT functional parameters");
-      {
-        dftParameters::isPseudopotential =
-          prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-        dftParameters::pseudoTestsFlag = prm.get_bool("PSEUDO TESTS FLAG");
-        dftParameters::pseudoPotentialFile =
-          prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-        dftParameters::xc_id = prm.get_integer("EXCHANGE CORRELATION TYPE");
-        dftParameters::spinPolarized = prm.get_integer("SPIN POLARIZATION");
-        dftParameters::start_magnetization =
-          prm.get_double("START MAGNETIZATION");
-        dftParameters::pspCutoffImageCharges =
-          prm.get_double("PSP CUTOFF IMAGE CHARGES");
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("SCF parameters");
-      {
-        dftParameters::TVal             = prm.get_double("TEMPERATURE");
-        dftParameters::numSCFIterations = prm.get_integer("MAXIMUM ITERATIONS");
-        dftParameters::selfConsistentSolverTolerance =
-          prm.get_double("TOLERANCE");
-        dftParameters::mixingHistory   = prm.get_integer("MIXING HISTORY");
-        dftParameters::mixingParameter = prm.get_double("MIXING PARAMETER");
-        dftParameters::kerkerParameter =
-          prm.get_double("KERKER MIXING PARAMETER");
-        dftParameters::mixingMethod = prm.get("MIXING METHOD");
-        dftParameters::constraintMagnetization =
-          prm.get_bool("CONSTRAINT MAGNETIZATION");
-        dftParameters::startingWFCType = prm.get("STARTING WFC");
-        dftParameters::computeEnergyEverySCF =
-          prm.get_bool("COMPUTE ENERGY EACH ITER");
 
         prm.enter_subsection("LOW RANK JACINV PRECOND");
         {
-          dftParameters::mixingParameterLRJI =
+          mixingParameterLRJI =
             prm.get_double("MIXING PARAMETER");
-          dftParameters::methodSubTypeLRJI = prm.get("METHOD SUB TYPE");
-          dftParameters::startingNormLRJILargeDamping =
+          methodSubTypeLRJI = prm.get("METHOD SUB TYPE");
+          startingNormLRJILargeDamping =
             prm.get_double("STARTING NORM LARGE DAMPING");
-          dftParameters::adaptiveRankRelTolLRJI =
+          adaptiveRankRelTolLRJI =
             prm.get_double("ADAPTIVE RANK REL TOL");
-          dftParameters::factorAdapAccumClearLRJI =
+          factorAdapAccumClearLRJI =
             prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
-          dftParameters::absPoissonSolverToleranceLRJI =
+          absPoissonSolverToleranceLRJI =
             prm.get_double("POISSON SOLVER ABS TOL");
-          dftParameters::singlePrecLRJI =
+          singlePrecLRJI =
             prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
-          dftParameters::estimateJacCondNoFinalSCFIter =
+          estimateJacCondNoFinalSCFIter =
             prm.get_bool("ESTIMATE JAC CONDITION NO");
         }
         prm.leave_subsection();
-
-        prm.enter_subsection("Eigen-solver parameters");
-        {
-          dftParameters::numberEigenValues =
-            prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-          dftParameters::numCoreWfcRR =
-            prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
-          dftParameters::spectrumSplitStartingScfIter =
-            prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-          dftParameters::chebyshevOrder =
-            prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-          dftParameters::useELPA = prm.get_bool("USE ELPA");
-          dftParameters::HXOptimFlag =
-            prm.get_bool("ENABLE HAMILTONIAN TIMES VECTOR OPTIM");
-          dftParameters::orthogType = prm.get("ORTHOGONALIZATION TYPE");
-          dftParameters::chebyshevTolerance =
-            prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-          dftParameters::wfcBlockSize = prm.get_integer("WFC BLOCK SIZE");
-          dftParameters::chebyWfcBlockSize =
-            prm.get_integer("CHEBY WFC BLOCK SIZE");
-          dftParameters::subspaceRotDofsBlockSize =
-            prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
-          dftParameters::scalapackParalProcs =
-            prm.get_integer("SCALAPACKPROCS");
-          dftParameters::scalapackBlockSize =
-            prm.get_integer("SCALAPACK BLOCK SIZE");
-          dftParameters::useMixedPrecCGS_SR =
-            prm.get_bool("USE MIXED PREC CGS SR");
-          dftParameters::useMixedPrecCGS_O =
-            prm.get_bool("USE MIXED PREC CGS O");
-          dftParameters::useMixedPrecXTHXSpectrumSplit =
-            prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
-          dftParameters::useMixedPrecSubspaceRotRR =
-            prm.get_bool("USE MIXED PREC RR_SR");
-          dftParameters::useMixedPrecCheby =
-            prm.get_bool("USE MIXED PREC CHEBY");
-          dftParameters::overlapComputeCommunCheby =
-            prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
-          dftParameters::overlapComputeCommunOrthoRR =
-            prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
-          dftParameters::algoType = prm.get("ALGO");
-          dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor =
-            prm.get_double(
-              "CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
-          dftParameters::reuseLanczosUpperBoundFromFirstCall =
-            prm.get_bool("REUSE LANCZOS UPPER BOUND");
-          ;
-          dftParameters::allowMultipleFilteringPassesAfterFirstScf =
-            prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
-        }
-        prm.leave_subsection();
-      }
-      prm.leave_subsection();
-
-
-      prm.enter_subsection("Poisson problem parameters");
-      {
-        dftParameters::maxLinearSolverIterations =
-          prm.get_integer("MAXIMUM ITERATIONS");
-        dftParameters::absLinearSolverTolerance = prm.get_double("TOLERANCE");
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("Helmholtz problem parameters");
-      {
-        dftParameters::maxLinearSolverIterationsHelmholtz =
-          prm.get_integer("MAXIMUM ITERATIONS HELMHOLTZ");
-        dftParameters::absLinearSolverToleranceHelmholtz =
-          prm.get_double("ABSOLUTE TOLERANCE HELMHOLTZ");
-      }
-      prm.leave_subsection();
-
-      prm.enter_subsection("Molecular Dynamics");
-      {
-        dftParameters::atomicMassesFile = prm.get("ATOMIC MASSES FILE");
-        dftParameters::isBOMD           = prm.get_bool("BOMD");
-        dftParameters::maxJacobianRatioFactorForMD =
-          prm.get_double("MAX JACOBIAN RATIO FACTOR");
-        dftParameters::isXLBOMD = prm.get_bool("XL BOMD");
-        dftParameters::chebyshevFilterTolXLBOMD =
-          prm.get_double("CHEBY TOL XL BOMD");
-        dftParameters::chebyshevFilterTolXLBOMDRankUpdates =
-          prm.get_double("CHEBY TOL XL BOMD RANK UPDATES FD");
-        dftParameters::timeStepBOMD    = prm.get_double("TIME STEP");
-        dftParameters::numberStepsBOMD = prm.get_integer("NUMBER OF STEPS");
-        dftParameters::startingTempBOMDNVE =
-          prm.get_double("STARTING TEMP NVE");
-        dftParameters::diracDeltaKernelScalingConstant =
-          prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD");
-        dftParameters::kernelUpdateRankXLBOMD =
-          prm.get_integer("KERNEL RANK XL BOMD");
-        dftParameters::kmaxXLBOMD =
-          prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
-        dftParameters::numberPassesRRSkippedXLBOMD =
-          prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
-        dftParameters::useAtomicRhoXLBOMD =
-          prm.get_bool("USE ATOMIC RHO XL BOMD");
-        dftParameters::xlbomdRestartChebyTol =
-          prm.get_double("CHEBY TOL XL BOMD RESTART");
-        dftParameters::useDensityMatrixPerturbationRankUpdates =
-          prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");
-        dftParameters::xlbomdKernelRankUpdateFDParameter =
-          prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
-      }
-      prm.leave_subsection();
-
-      if ((restartFromChk == true || dftParameters::restartMdFromChk) &&
-          (chkType == 1 || chkType == 3))
-        {
-          if (dftParameters::periodicX || dftParameters::periodicY ||
-              dftParameters::periodicZ)
-            dftParameters::coordinatesFile =
-              dftParameters::floatingNuclearCharges ?
-                "atomsFracCoordCurrent.chk" :
-                "atomsFracCoordAutomesh.chk";
-          else
-            dftParameters::coordinatesFile =
-              dftParameters::floatingNuclearCharges ?
-                "atomsCartCoordCurrent.chk" :
-                "atomsCartCoordAutomesh.chk";
-
-          dftParameters::domainBoundingVectorsFile =
-            "domainBoundingVectorsCurrent.chk";
-
-          if (!dftParameters::floatingNuclearCharges)
-            dftParameters::coordinatesGaussianDispFile =
-              "atomsGaussianDispCoord.chk";
-        }
-
-      //
-      check_print_parameters(prm);
-      setAutoParameters();
-      setXCFamilyType();
-    }
-
-
-
-    void
-    check_print_parameters(const dealii::ParameterHandler &prm)
+    
+    prm.enter_subsection("Poisson problem parameters");
     {
-      if (dftParameters::verbosity >= 1 &&
-          Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-        {
-          std::cout
-            << "=========================================================================================================="
-            << std::endl;
-          std::cout
-            << "=========================================================================================================="
-            << std::endl;
-          std::cout
-            << "			Welcome to the Open Source program DFT-FE version	1.1.0-pre		        "
-            << std::endl;
-          std::cout
-            << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory."
-            << std::endl;
-          std::cout
-            << "This is a real-space code for periodic, semi-periodic and non-periodic pseudopotential"
-            << std::endl;
-          std::cout
-            << "and all-electron calculations, and is based on adaptive finite-element discretization."
-            << std::endl;
-          std::cout
-            << "For further details, and citing, please refer to our website: https://sites.google.com/umich.edu/dftfe"
-            << std::endl;
-          std::cout
-            << "=========================================================================================================="
-            << std::endl;
-          std::cout
-            << " DFT-FE Principal developers and Mentors (alphabetically) :									"
-            << std::endl;
-          std::cout << "														" << std::endl;
-          std::cout << " Sambit Das               - University of Michigan, USA"
-                    << std::endl;
-          std::cout << " Vikram Gavini (Mentor)   - University of Michigan, USA"
-                    << std::endl;
-          std::cout << " Krishnendu Ghosh         - Intel Corporation, USA"
-                    << std::endl;
-          std::cout
-            << " Phani Motamarri          - Indian Institute of Science, India"
-            << std::endl;
-          std::cout
-            << " Shiva Rudraraju          - University of Wisconsin-Madison  "
-            << std::endl;
-          std::cout
-            << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"
-            << std::endl;
-          std::cout
-            << "=========================================================================================================="
-            << std::endl;
-          std::cout
-            << " 	     Copyright (c) 2017-2021 The Regents of the University of Michigan and DFT-FE authors         "
-            << std::endl;
-          std::cout
-            << " 			DFT-FE is published under [LGPL v2.1 or newer] 				"
-            << std::endl;
-          std::cout
-            << "=========================================================================================================="
-            << std::endl;
-          std::cout
-            << "=========================================================================================================="
-            << std::endl;
-        }
+      maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
+      absLinearSolverTolerance  = prm.get_double("TOLERANCE");
+    }
+    prm.leave_subsection();
 
-      const bool printParametersToFile = false;
-      if (printParametersToFile &&
-          Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-        {
-          prm.print_parameters(std::cout, ParameterHandler::OutputStyle::LaTeX);
-          exit(0);
-        }
+    prm.enter_subsection("Helmholtz problem parameters");
+    {
+      maxLinearSolverIterationsHelmholtz =
+        prm.get_integer("MAXIMUM ITERATIONS HELMHOLTZ");
+      absLinearSolverToleranceHelmholtz =
+        prm.get_double("ABSOLUTE TOLERANCE HELMHOLTZ");
+    }
+    prm.leave_subsection();
 
-      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 &&
-          dftParameters::verbosity >= 1)
-        {
-          prm.print_parameters(std::cout, ParameterHandler::ShortText);
-        }
+    prm.enter_subsection("Molecular Dynamics");
+    {
+      atomicMassesFile            = prm.get("ATOMIC MASSES FILE");
+      reuseDensityMD              = prm.get_integer("EXTRAPOLATE DENSITY");
+      isBOMD                      = prm.get_bool("BOMD");
+      maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
+      timeStepBOMD               = prm.get_double("TIME STEP");
+      numberStepsBOMD            = prm.get_integer("NUMBER OF STEPS");
+      MDTrack                    = prm.get_integer("TRACKING ATOMIC NO");
+      startingTempBOMD           = prm.get_double("STARTING TEMPERATURE");
+      thermostatTimeConstantBOMD = prm.get_double("THERMOSTAT TIME CONSTANT");
+      MaxWallTime                = prm.get_double("MAX WALL TIME");
 
+
+
+      tempControllerTypeBOMD = prm.get("TEMPERATURE CONTROLLER TYPE");
+    }
+    prm.leave_subsection();
+
+    if ((restartFromChk == true) && (chkType == 1))
+      {
+        if (periodicX || periodicY || periodicZ)
+          coordinatesFile = floatingNuclearCharges ?
+                              "atomsFracCoordCurrent.chk" :
+                              "atomsFracCoordAutomesh.chk";
+        else
+          coordinatesFile = floatingNuclearCharges ?
+                              "atomsCartCoordCurrent.chk" :
+                              "atomsCartCoordAutomesh.chk";
+
+        domainBoundingVectorsFile = "domainBoundingVectorsCurrent.chk";
+
+        if (!floatingNuclearCharges)
+          coordinatesGaussianDispFile = "atomsGaussianDispCoord.chk";
+      }
+
+    check_parameters(mpi_comm_parent);
+
+    const bool printParametersToFile = false;
+    if (printParametersToFile &&
+        Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+      {
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::LaTeX);
+        exit(0);
+      }
+
+    if (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
+        verbosity >= 1 && printParams)
+      {
+        prm.print_parameters(std::cout, ParameterHandler::ShortText);
+      }
+
+    //
+    setAutoParameters(mpi_comm_parent);
+    setXCFamilyType();
+  }
+
+
+
+  void
+  dftParameters::check_parameters(const MPI_Comm &mpi_comm_parent) const
+  {
+    AssertThrow(
+      !((periodicX || periodicY || periodicZ) &&
+        (writeLdosFile || writePdosFile)),
+      ExcMessage(
+        "DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
+
+    if (floatingNuclearCharges)
       AssertThrow(
-        !((dftParameters::periodicX || dftParameters::periodicY ||
-           dftParameters::periodicZ) &&
-          (dftParameters::writeLdosFile || dftParameters::writePdosFile)),
+        smearedNuclearCharges,
         ExcMessage(
-          "DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
-
-      if (floatingNuclearCharges)
-        AssertThrow(
-          smearedNuclearCharges,
-          ExcMessage(
-            "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
+          "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
 
 #ifdef USE_COMPLEX
-      if (dftParameters::isIonForce || dftParameters::isCellStress)
-        AssertThrow(
-          !dftParameters::useSymm,
-          ExcMessage(
-            "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+    if (isIonForce || isCellStress)
+      AssertThrow(
+        !useSymm,
+        ExcMessage(
+          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 #else
-      AssertThrow(
-        dftParameters::nkx == 1 && dftParameters::nky == 1 &&
-          dftParameters::nkz == 1 && dftParameters::offsetFlagX == 0 &&
-          dftParameters::offsetFlagY == 0 && dftParameters::offsetFlagZ == 0,
-        ExcMessage(
-          "DFT-FE Error: Real executable cannot be used for non-zero k point."));
+    AssertThrow(
+      nkx == 1 && nky == 1 && nkz == 1 && offsetFlagX == 0 &&
+        offsetFlagY == 0 && offsetFlagZ == 0,
+      ExcMessage(
+        "DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
+    AssertThrow(
+      !(chkType == 2 && (isIonOpt || isCellOpt)),
+      ExcMessage(
+        "DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
+
+    AssertThrow(
+      !(chkType == 1 && (isIonOpt && isCellOpt)),
+      ExcMessage(
+        "DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
+
+    if (numberEigenValues != 0)
       AssertThrow(
-        !(dftParameters::chkType == 2 &&
-          (dftParameters::isIonOpt || dftParameters::isCellOpt)),
+        nbandGrps <= numberEigenValues,
         ExcMessage(
-          "DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
+          "DFT-FE Error: NPBAND is greater than NUMBER OF KOHN-SHAM WAVEFUNCTIONS."));
 
+    if (nonSelfConsistentForce)
       AssertThrow(
-        !(dftParameters::chkType == 1 &&
-          (dftParameters::isIonOpt && dftParameters::isCellOpt)),
+        false,
         ExcMessage(
-          "DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
+          "DFT-FE Error: Implementation of this feature is not completed yet."));
 
-      if (dftParameters::numberEigenValues != 0)
-        AssertThrow(
-          dftParameters::nbandGrps <= dftParameters::numberEigenValues,
-          ExcMessage(
-            "DFT-FE Error: NPBAND is greater than NUMBER OF KOHN-SHAM WAVEFUNCTIONS."));
+    if (spinPolarized == 1 && mixingMethod == "ANDERSON_WITH_KERKER")
+      AssertThrow(
+        false,
+        ExcMessage(
+          "DFT-FE Error: Implementation of this feature is not completed yet."));
+    if (spinPolarized == 1 && (reuseDensityMD >= 1 || reuseDensityGeoOpt == 2))
+      AssertThrow(
+        false,
+        ExcMessage(
+          "DFT-FE Error: Implementation of this feature is not completed yet."));
 
-      if (dftParameters::nonSelfConsistentForce)
-        AssertThrow(
-          false,
-          ExcMessage(
-            "DFT-FE Error: Implementation of this feature is not completed yet."));
+    AssertThrow(!coordinatesFile.empty(),
+                ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
 
-      if (dftParameters::spinPolarized == 1 &&
-          dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
-        AssertThrow(
-          false,
-          ExcMessage(
-            "DFT-FE Error: Implementation of this feature is not completed yet."));
+    AssertThrow(!domainBoundingVectorsFile.empty(),
+                ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
-      AssertThrow(!dftParameters::coordinatesFile.empty(),
-                  ExcMessage(
-                    "DFT-FE Error: ATOMIC COORDINATES FILE not given."));
+    if (isPseudopotential)
+      AssertThrow(
+        !pseudoPotentialFile.empty(),
+        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
 
-      AssertThrow(!dftParameters::domainBoundingVectorsFile.empty(),
-                  ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
+    if (spinPolarized == 0)
+      AssertThrow(
+        !constraintMagnetization,
+        ExcMessage(
+          "DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
 
-      if (dftParameters::isPseudopotential)
-        AssertThrow(
-          !dftParameters::pseudoPotentialFile.empty(),
-          ExcMessage(
-            "DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
+    if (spinPolarized == 1 && !constraintMagnetization)
+      AssertThrow(
+        std::abs(std::abs(start_magnetization) - 0.5) > 1e-6,
+        ExcMessage(
+          "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
 
-      if (dftParameters::spinPolarized == 0)
-        AssertThrow(
-          !dftParameters::constraintMagnetization,
-          ExcMessage(
-            "DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
+    if (verbosity >= 1 &&
+        Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+      if (constraintMagnetization)
+        std::cout
+          << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
+          << std::endl;
 
-      if (dftParameters::spinPolarized == 1 &&
-          !dftParameters::constraintMagnetization)
-        AssertThrow(
-          std::abs(std::abs(dftParameters::start_magnetization) - 0.5) > 1e-6,
-          ExcMessage(
-            "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
+    AssertThrow(
+      natoms != 0,
+      ExcMessage(
+        "DFT-FE Error: Number of atoms not specified or given a value of zero, which is not allowed."));
 
-      if (dftParameters::verbosity >= 1 &&
-          Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-        if (dftParameters::constraintMagnetization)
+    AssertThrow(
+      natomTypes != 0,
+      ExcMessage(
+        "DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
+
+    if (meshAdaption)
+      AssertThrow(
+        !(isIonOpt && isCellOpt),
+        ExcMessage(
+          "DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
+
+    if (nbandGrps > 1)
+      AssertThrow(
+        wfcBlockSize == chebyWfcBlockSize,
+        ExcMessage(
+          "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
+  }
+
+
+  void
+  dftParameters::setAutoParameters(const MPI_Comm &mpi_comm_parent)
+  {
+    //
+    // Automated choice of mesh related parameters
+    //
+
+    if (isBOMD)
+      isIonForce = true;
+
+    if (!isPseudopotential)
+      {
+        if (!reproducible_output)
+          smearedNuclearCharges = false;
+        floatingNuclearCharges = false;
+      }
+
+    if (meshSizeOuterDomain < 1.0e-6)
+      if (periodicX || periodicY || periodicZ)
+        meshSizeOuterDomain = 4.0;
+      else
+        meshSizeOuterDomain = 13.0;
+
+    if (meshSizeInnerBall < 1.0e-6)
+      if (isPseudopotential)
+        meshSizeInnerBall = 10.0 * meshSizeOuterBall;
+      else
+        meshSizeInnerBall = 0.1 * meshSizeOuterBall;
+
+    if (outerAtomBallRadius < 1.0e-6)
+      {
+        if (isPseudopotential)
+          {
+            if (!floatingNuclearCharges)
+              outerAtomBallRadius = 2.5;
+            else
+              {
+                if (!(periodicX || periodicY || periodicZ))
+                  outerAtomBallRadius = 6.0;
+                else
+                  outerAtomBallRadius = 10.0;
+              }
+          }
+        else
+          outerAtomBallRadius = 2.0;
+      }
+
+    if (!(periodicX || periodicY || periodicZ) && !reproducible_output)
+      {
+        constraintsParallelCheck              = false;
+        createConstraintsFromSerialDofhandler = false;
+      }
+    else if (reproducible_output)
+      createConstraintsFromSerialDofhandler = true;
+
+    if (reproducible_output)
+      {
+        gaussianOrderMoveMeshToAtoms = 4.0;
+      }
+
+    //
+    // Automated choice of eigensolver parameters
+    //
+    if (isPseudopotential && orthogType == "Auto")
+      {
+        if (verbosity >= 1 &&
+            Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
           std::cout
-            << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
+            << "Setting ORTHOGONALIZATION TYPE=CGS for pseudopotential calculations "
             << std::endl;
-
-      AssertThrow(
-        dftParameters::natoms != 0,
-        ExcMessage(
-          "DFT-FE Error: Number of atoms not specified or given a value of zero, which is not allowed."));
-
-      AssertThrow(
-        dftParameters::natomTypes != 0,
-        ExcMessage(
-          "DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
-
-      if (dftParameters::meshAdaption)
-        AssertThrow(
-          !(dftParameters::isIonOpt && dftParameters::isCellOpt),
-          ExcMessage(
-            "DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
-
-      if (dftParameters::nbandGrps > 1)
-        AssertThrow(
-          dftParameters::wfcBlockSize == dftParameters::chebyWfcBlockSize,
-          ExcMessage(
-            "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
-    }
-
-
-    void
-    setAutoParameters()
-    {
-      //
-      // Automated choice of mesh related parameters
-      //
-
-      if (dftParameters::isBOMD)
-        dftParameters::isIonForce = true;
-
-      if (!dftParameters::isPseudopotential)
-        {
-          if (!dftParameters::reproducible_output)
-            dftParameters::smearedNuclearCharges = false;
-          dftParameters::floatingNuclearCharges = false;
-        }
-
-      if (dftParameters::meshSizeOuterDomain < 1.0e-6)
-        if (dftParameters::periodicX || dftParameters::periodicY ||
-            dftParameters::periodicZ)
-          dftParameters::meshSizeOuterDomain = 4.0;
-        else
-          dftParameters::meshSizeOuterDomain = 13.0;
-
-      if (dftParameters::meshSizeInnerBall < 1.0e-6)
-        if (dftParameters::isPseudopotential)
-          dftParameters::meshSizeInnerBall =
-            10.0 * dftParameters::meshSizeOuterBall;
-        else
-          dftParameters::meshSizeInnerBall =
-            0.1 * dftParameters::meshSizeOuterBall;
-
-      if (dftParameters::outerAtomBallRadius < 1.0e-6)
-        {
-          if (dftParameters::isPseudopotential)
-            {
-              if (!dftParameters::floatingNuclearCharges)
-                dftParameters::outerAtomBallRadius = 2.5;
-              else
-                {
-                  if (!(dftParameters::periodicX || dftParameters::periodicY ||
-                        dftParameters::periodicZ))
-                    dftParameters::outerAtomBallRadius = 6.0;
-                  else
-                    dftParameters::outerAtomBallRadius = 10.0;
-                }
-            }
-          else
-            dftParameters::outerAtomBallRadius = 2.0;
-        }
-
-      if (!(dftParameters::periodicX || dftParameters::periodicY ||
-            dftParameters::periodicZ) &&
-          !dftParameters::reproducible_output)
-        {
-          dftParameters::constraintsParallelCheck              = false;
-          dftParameters::createConstraintsFromSerialDofhandler = false;
-        }
-      else if (dftParameters::reproducible_output)
-        dftParameters::createConstraintsFromSerialDofhandler = true;
-
-      if (dftParameters::reproducible_output)
-        {
-          dftParameters::gaussianOrderMoveMeshToAtoms = 4.0;
-        }
-
-      //
-      // Automated choice of eigensolver parameters
-      //
-      if (dftParameters::isPseudopotential &&
-          dftParameters::orthogType == "Auto")
-        {
-          if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-            std::cout
-              << "Setting ORTHOGONALIZATION TYPE=CGS for pseudopotential calculations "
-              << std::endl;
-          dftParameters::orthogType = "CGS";
-        }
-      else if (!dftParameters::isPseudopotential &&
-               dftParameters::orthogType == "Auto" && !dftParameters::useGPU)
-        {
+        orthogType = "CGS";
+      }
+    else if (!isPseudopotential && orthogType == "Auto" && !useGPU)
+      {
 #ifdef USE_PETSC;
-          if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-            std::cout
-              << "Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations as DFT-FE is linked to dealii with Petsc and Slepc"
-              << std::endl;
+        if (verbosity >= 1 &&
+            Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+          std::cout
+            << "Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations as DFT-FE is linked to dealii with Petsc and Slepc"
+            << std::endl;
 
-          dftParameters::orthogType = "GS";
+        orthogType = "GS";
 #else
-          if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-            std::cout
-              << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
-              << std::endl;
+        if (verbosity >= 1 &&
+            Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+          std::cout
+            << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
+            << std::endl;
 
-          dftParameters::orthogType = "CGS";
+        orthogType = "CGS";
 #endif
-        }
-      else if (dftParameters::orthogType == "GS" && !dftParameters::useGPU)
-        {
+      }
+    else if (orthogType == "GS" && !useGPU)
+      {
 #ifndef USE_PETSC;
-          AssertThrow(
-            dftParameters::orthogType != "GS",
-            ExcMessage(
-              "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be CGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
+        AssertThrow(
+          orthogType != "GS",
+          ExcMessage(
+            "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be CGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
 #endif
-        }
-      else if (!dftParameters::isPseudopotential &&
-               dftParameters::orthogType == "Auto" && dftParameters::useGPU)
-        {
-          if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-            std::cout
-              << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations on GPUs "
-              << std::endl;
-          dftParameters::orthogType = "CGS";
-        }
-      else if (dftParameters::orthogType == "GS" && dftParameters::useGPU)
-        {
-          AssertThrow(
-            false,
-            ExcMessage(
-              "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
-        }
+      }
+    else if (!isPseudopotential && orthogType == "Auto" && useGPU)
+      {
+        if (verbosity >= 1 &&
+            Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+          std::cout
+            << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations on GPUs "
+            << std::endl;
+        orthogType = "CGS";
+      }
+    else if (orthogType == "GS" && useGPU)
+      {
+        AssertThrow(
+          false,
+          ExcMessage(
+            "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
+      }
 
 
-      if (dftParameters::algoType == "FAST")
-        {
-          dftParameters::useMixedPrecCGS_O                   = true;
-          dftParameters::useMixedPrecCGS_SR                  = true;
-          dftParameters::useMixedPrecXTHXSpectrumSplit       = true;
-          dftParameters::useMixedPrecCheby                   = true;
-          dftParameters::reuseLanczosUpperBoundFromFirstCall = true;
-        }
+    if (algoType == "FAST")
+      {
+        useMixedPrecCGS_O                   = true;
+        useMixedPrecCGS_SR                  = true;
+        useMixedPrecXTHXSpectrumSplit       = true;
+        useMixedPrecCheby                   = true;
+        reuseLanczosUpperBoundFromFirstCall = true;
+      }
 #ifdef USE_COMPLEX
-      dftParameters::HXOptimFlag = false;
+    HXOptimFlag = false;
 #endif
 
 
 #ifdef DFTFE_WITH_GPU
-      if (!dftParameters::isPseudopotential && dftParameters::useGPU)
-        {
-          dftParameters::overlapComputeCommunCheby = false;
-        }
+    if (!isPseudopotential && useGPU)
+      {
+        overlapComputeCommunCheby = false;
+      }
 #endif
 
 
 #ifndef DFTFE_WITH_GPU
-      dftParameters::useGPU           = false;
-      dftParameters::useELPAGPUKernel = false;
+    useGPU           = false;
+    useELPAGPUKernel = false;
 #endif
 
-      if (dftParameters::scalapackBlockSize == 0)
-        {
-          if (dftParameters::useELPAGPUKernel)
-            dftParameters::scalapackBlockSize = 16;
-          else
-            dftParameters::scalapackBlockSize = 32;
-        }
+    if (scalapackBlockSize == 0)
+      {
+        if (useELPAGPUKernel)
+          scalapackBlockSize = 16;
+        else
+          scalapackBlockSize = 32;
+      }
 
 #ifndef DFTFE_WITH_NCCL
-      dftParameters::useGPUDirectAllReduce = false;
+    useGPUDirectAllReduce = false;
 #endif
 
-      if (dftParameters::useMixedPrecCheby)
-        AssertThrow(
-          dftParameters::useELPA,
-          ExcMessage(
-            "DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
+    if (useMixedPrecCheby)
+      AssertThrow(
+        useELPA,
+        ExcMessage(
+          "DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
 
-      if (dftParameters::verbosity >= 5)
-        dftParameters::computeEnergyEverySCF = true;
-    }
+    if (verbosity >= 5)
+      computeEnergyEverySCF = true;
+  }
 
-    void
-    setXCFamilyType()
-    {
-      if (dftParameters::xc_id == 1)
-        {
-          dftParameters::xcFamilyType = "LDA";
-        }
-      else if (dftParameters::xc_id == 2)
-        {
-          dftParameters::xcFamilyType = "LDA";
-        }
-      else if (dftParameters::xc_id == 3)
-        {
-          dftParameters::xcFamilyType = "LDA";
-        }
-      else if (dftParameters::xc_id == 4)
-        {
-          dftParameters::xcFamilyType = "GGA";
-        }
-      else if (dftParameters::xc_id == 5)
-        {
-          dftParameters::xcFamilyType = "GGA";
-        }
-    }
-
-  } // namespace dftParameters
+  void
+  dftParameters::setXCFamilyType()
+  {
+    if (xc_id == 1)
+      {
+        xcFamilyType = "LDA";
+      }
+    else if (xc_id == 2)
+      {
+        xcFamilyType = "LDA";
+      }
+    else if (xc_id == 3)
+      {
+        xcFamilyType = "LDA";
+      }
+    else if (xc_id == 4)
+      {
+        xcFamilyType = "GGA";
+      }
+    else if (xc_id == 5)
+      {
+        xcFamilyType = "GGA";
+      }
+  }
 
 } // namespace dftfe

@@ -1,0 +1,475 @@
+number of atoms: 32
+number of atoms types: 1
+Z:13
+=============================================================================================================================
+number of electrons: 96
+number of eigen values: 85
+=============================================================================================================================
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 1.528258459999999985e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 1.528258459999999985e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 1.528258459999999985e+01
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  2.500000000000000000e-01 2.500000000000000000e-01 0.000000000000000000e+00
+AtomId 2:  0.000000000000000000e+00 2.500000000000000000e-01 2.500000000000000000e-01
+AtomId 3:  2.500000000000000000e-01 0.000000000000000000e+00 2.500000000000000000e-01
+AtomId 4:  0.000000000000000000e+00 0.000000000000000000e+00 5.000000000000000000e-01
+AtomId 5:  2.500000000000000000e-01 2.500000000000000000e-01 5.000000000000000000e-01
+AtomId 6:  0.000000000000000000e+00 2.500000000000000000e-01 7.500000000000000000e-01
+AtomId 7:  2.500000000000000000e-01 0.000000000000000000e+00 7.500000000000000000e-01
+AtomId 8:  0.000000000000000000e+00 5.000000000000000000e-01 0.000000000000000000e+00
+AtomId 9:  2.500000000000000000e-01 7.500000000000000000e-01 0.000000000000000000e+00
+AtomId 10:  0.000000000000000000e+00 7.500000000000000000e-01 2.500000000000000000e-01
+AtomId 11:  2.500000000000000000e-01 5.000000000000000000e-01 2.500000000000000000e-01
+AtomId 12:  0.000000000000000000e+00 5.000000000000000000e-01 5.000000000000000000e-01
+AtomId 13:  2.500000000000000000e-01 7.500000000000000000e-01 5.000000000000000000e-01
+AtomId 14:  0.000000000000000000e+00 7.500000000000000000e-01 7.500000000000000000e-01
+AtomId 15:  2.500000000000000000e-01 5.000000000000000000e-01 7.500000000000000000e-01
+AtomId 16:  5.000000000000000000e-01 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 17:  7.500000000000000000e-01 2.500000000000000000e-01 0.000000000000000000e+00
+AtomId 18:  5.000000000000000000e-01 2.500000000000000000e-01 2.500000000000000000e-01
+AtomId 19:  7.500000000000000000e-01 0.000000000000000000e+00 2.500000000000000000e-01
+AtomId 20:  5.000000000000000000e-01 0.000000000000000000e+00 5.000000000000000000e-01
+AtomId 21:  7.500000000000000000e-01 2.500000000000000000e-01 5.000000000000000000e-01
+AtomId 22:  5.000000000000000000e-01 2.500000000000000000e-01 7.500000000000000000e-01
+AtomId 23:  7.500000000000000000e-01 0.000000000000000000e+00 7.500000000000000000e-01
+AtomId 24:  5.000000000000000000e-01 5.000000000000000000e-01 0.000000000000000000e+00
+AtomId 25:  7.500000000000000000e-01 7.500000000000000000e-01 0.000000000000000000e+00
+AtomId 26:  5.000000000000000000e-01 7.500000000000000000e-01 2.500000000000000000e-01
+AtomId 27:  7.500000000000000000e-01 5.000000000000000000e-01 2.500000000000000000e-01
+AtomId 28:  5.000000000000000000e-01 5.000000000000000000e-01 5.000000000000000000e-01
+AtomId 29:  7.500000000000000000e-01 7.500000000000000000e-01 5.000000000000000000e-01
+AtomId 30:  5.000000000000000000e-01 7.500000000000000000e-01 7.500000000000000000e-01
+AtomId 31:  7.500000000000000000e-01 5.000000000000000000e-01 7.500000000000000000e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  2477
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+----------------------Starting Initialization of BOMD-------------------------
+Starting Temperature from Input 1.400000000000000000e+03
+RestartFlag: 0
+Initialising Velocities of species no: 0 mass in amu: 2.698153900000000149e+01Velocity Deviation6.686781056205393092e-02
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 93 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.51498554
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.000001,0.000000,0.000000
+AtomId    1:  0.000000,0.000001,0.000000
+AtomId    2:  0.000000,0.000001,0.000000
+AtomId    3:  0.000000,0.000000,0.000001
+AtomId    4:  0.000000,0.000000,0.000001
+AtomId    5:  0.000001,0.000003,0.000000
+AtomId    6:  0.000000,0.000000,0.000000
+AtomId    7:  0.000000,0.000000,0.000001
+AtomId    8:  0.000000,0.000001,0.000000
+AtomId    9:  0.000000,0.000000,0.000000
+AtomId   10:  0.000000,0.000001,0.000000
+AtomId   11:  0.000000,0.000000,0.000002
+AtomId   12:  0.000001,0.000001,0.000000
+AtomId   13:  0.000000,0.000003,0.000001
+AtomId   14:  0.000000,0.000001,0.000001
+AtomId   15:  0.000000,0.000001,0.000003
+AtomId   16:  0.000002,0.000000,0.000000
+AtomId   17:  0.000000,0.000002,0.000000
+AtomId   18:  0.000000,0.000000,0.000000
+AtomId   19:  0.000000,0.000000,0.000002
+AtomId   20:  0.000001,0.000001,0.000001
+AtomId   21:  0.000000,0.000001,0.000000
+AtomId   22:  0.000000,0.000001,0.000000
+AtomId   23:  0.000000,0.000000,0.000001
+AtomId   24:  0.000000,0.000001,0.000000
+AtomId   25:  0.000000,0.000001,0.000000
+AtomId   26:  0.000000,0.000001,0.000001
+AtomId   27:  0.000000,0.000000,0.000001
+AtomId   28:  0.000000,0.000002,0.000001
+AtomId   29:  0.000001,0.000002,0.000001
+AtomId   30:  0.000000,0.000002,0.000002
+AtomId   31:  0.000000,0.000001,0.000002
+--------------------------------------------------------------------------------------------
+---------------MD STEP 0 ------------------ 
+ Temperature from velocities: 1400.00
+ Total Energy in Ha at timeIndex -73.34631
+---------------MDNVE() called------------------ 
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 11 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.51450048
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.000712,0.000469,0.001079
+AtomId    1:  0.000425,0.000142,0.000103
+AtomId    2:  0.000525,0.000439,0.000124
+AtomId    3:  0.000255,0.000567,0.000072
+AtomId    4:  0.000748,0.000600,0.000212
+AtomId    5:  0.000046,0.000329,0.000792
+AtomId    6:  0.000412,0.000772,0.000020
+AtomId    7:  0.000682,0.000741,0.000354
+AtomId    8:  0.000284,0.000419,0.000609
+AtomId    9:  0.000132,0.000128,0.000188
+AtomId   10:  0.000344,0.000107,0.000582
+AtomId   11:  0.000665,0.000877,0.000232
+AtomId   12:  0.000196,0.000235,0.000311
+AtomId   13:  0.000076,0.001089,0.000416
+AtomId   14:  0.000017,0.000018,0.000686
+AtomId   15:  0.000065,0.000421,0.000524
+AtomId   16:  0.000115,0.000112,0.000966
+AtomId   17:  0.000244,0.000228,0.000641
+AtomId   18:  0.000543,0.000425,0.000147
+AtomId   19:  0.000815,0.000586,0.000083
+AtomId   20:  0.000003,0.000545,0.000359
+AtomId   21:  0.000783,0.000521,0.000459
+AtomId   22:  0.000884,0.001001,0.000062
+AtomId   23:  0.000842,0.000784,0.000452
+AtomId   24:  0.000251,0.000181,0.001246
+AtomId   25:  0.000456,0.000814,0.000216
+AtomId   26:  0.000523,0.000253,0.000020
+AtomId   27:  0.000463,0.000009,0.000431
+AtomId   28:  0.000779,0.000241,0.000553
+AtomId   29:  0.000153,0.000463,0.000186
+AtomId   30:  0.000495,0.000009,0.000662
+AtomId   31:  0.000272,0.000047,0.000746
+--------------------------------------------------------------------------------------------
+---------------MD STEP 1 ------------------ 
+ Temperature from velocities: 1398.16
+ Total Energy in Ha at timeIndex -73.34604
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 11 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.51348148
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.001429,0.000920,0.002145
+AtomId    1:  0.000842,0.000268,0.000222
+AtomId    2:  0.001058,0.000890,0.000271
+AtomId    3:  0.000529,0.001133,0.000135
+AtomId    4:  0.001479,0.001243,0.000358
+AtomId    5:  0.000102,0.000667,0.001583
+AtomId    6:  0.000849,0.001545,0.000072
+AtomId    7:  0.001396,0.001554,0.000692
+AtomId    8:  0.000571,0.000817,0.001226
+AtomId    9:  0.000252,0.000249,0.000380
+AtomId   10:  0.000673,0.000178,0.001131
+AtomId   11:  0.001343,0.001734,0.000410
+AtomId   12:  0.000391,0.000458,0.000601
+AtomId   13:  0.000190,0.002154,0.000832
+AtomId   14:  0.000046,0.000042,0.001360
+AtomId   15:  0.000084,0.000822,0.001019
+AtomId   16:  0.000272,0.000209,0.001953
+AtomId   17:  0.000508,0.000483,0.001275
+AtomId   18:  0.001115,0.000856,0.000294
+AtomId   19:  0.001634,0.001167,0.000190
+AtomId   20:  0.000017,0.001092,0.000715
+AtomId   21:  0.001553,0.001010,0.000920
+AtomId   22:  0.001797,0.002052,0.000138
+AtomId   23:  0.001654,0.001552,0.000927
+AtomId   24:  0.000541,0.000345,0.002493
+AtomId   25:  0.000883,0.001618,0.000370
+AtomId   26:  0.001031,0.000461,0.000043
+AtomId   27:  0.000922,0.000008,0.000881
+AtomId   28:  0.001559,0.000532,0.001121
+AtomId   29:  0.000287,0.000929,0.000358
+AtomId   30:  0.000979,0.000046,0.001303
+AtomId   31:  0.000539,0.000085,0.001476
+--------------------------------------------------------------------------------------------
+Using Extrapolated Density for init
+---------------MD STEP 2 ------------------ 
+ Temperature from velocities: 1392.67
+ Total Energy in Ha at timeIndex -73.34567
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 6 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.51233442
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.002156,0.001358,0.003204
+AtomId    1:  0.001252,0.000374,0.000364
+AtomId    2:  0.001600,0.001348,0.000442
+AtomId    3:  0.000815,0.001699,0.000183
+AtomId    4:  0.002208,0.001937,0.000446
+AtomId    5:  0.000168,0.001018,0.002373
+AtomId    6:  0.001305,0.002316,0.000149
+AtomId    7:  0.002154,0.002445,0.001018
+AtomId    8:  0.000861,0.001193,0.001842
+AtomId    9:  0.000355,0.000364,0.000572
+AtomId   10:  0.000985,0.000212,0.001649
+AtomId   11:  0.002034,0.002577,0.000537
+AtomId   12:  0.000580,0.000674,0.000878
+AtomId   13:  0.000349,0.003205,0.001255
+AtomId   14:  0.000090,0.000075,0.002028
+AtomId   15:  0.000056,0.001206,0.001486
+AtomId   16:  0.000481,0.000285,0.002978
+AtomId   17:  0.000792,0.000760,0.001905
+AtomId   18:  0.001713,0.001296,0.000442
+AtomId   19:  0.002461,0.001742,0.000322
+AtomId   20:  0.000040,0.001641,0.001074
+AtomId   21:  0.002309,0.001468,0.001380
+AtomId   22:  0.002750,0.003167,0.000233
+AtomId   23:  0.002452,0.002307,0.001439
+AtomId   24:  0.000874,0.000496,0.003743
+AtomId   25:  0.001283,0.002412,0.000472
+AtomId   26:  0.001518,0.000632,0.000069
+AtomId   27:  0.001375,0.000002,0.001356
+AtomId   28:  0.002348,0.000874,0.001713
+AtomId   29:  0.000405,0.001399,0.000514
+AtomId   30:  0.001455,0.000102,0.001930
+AtomId   31:  0.000801,0.000112,0.002187
+--------------------------------------------------------------------------------------------
+Using Extrapolated Density for init
+---------------MD STEP 3 ------------------ 
+ Temperature from velocities: 1383.52
+ Total Energy in Ha at timeIndex -73.34560
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 6 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.51088504
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.002895,0.001783,0.004253
+AtomId    1:  0.001656,0.000457,0.000531
+AtomId    2:  0.002155,0.001813,0.000636
+AtomId    3:  0.001108,0.002264,0.000211
+AtomId    4:  0.002939,0.002685,0.000479
+AtomId    5:  0.000241,0.001380,0.003168
+AtomId    6:  0.001777,0.003081,0.000253
+AtomId    7:  0.002962,0.003416,0.001334
+AtomId    8:  0.001153,0.001549,0.002455
+AtomId    9:  0.000439,0.000471,0.000763
+AtomId   10:  0.001282,0.000204,0.002131
+AtomId   11:  0.002734,0.003406,0.000611
+AtomId   12:  0.000759,0.000883,0.001144
+AtomId   13:  0.000558,0.004244,0.001688
+AtomId   14:  0.000157,0.000119,0.002693
+AtomId   15:  0.000016,0.001578,0.001924
+AtomId   16:  0.000750,0.000339,0.004050
+AtomId   17:  0.001094,0.001054,0.002531
+AtomId   18:  0.002336,0.001751,0.000590
+AtomId   19:  0.003301,0.002312,0.000482
+AtomId   20:  0.000070,0.002192,0.001447
+AtomId   21:  0.003052,0.001899,0.001837
+AtomId   22:  0.003747,0.004352,0.000347
+AtomId   23:  0.003242,0.003040,0.001995
+AtomId   24:  0.001247,0.000634,0.004995
+AtomId   25:  0.001657,0.003197,0.000525
+AtomId   26:  0.001982,0.000770,0.000096
+AtomId   27:  0.001823,0.000012,0.001857
+AtomId   28:  0.003141,0.001263,0.002320
+AtomId   29:  0.000509,0.001871,0.000652
+AtomId   30:  0.001926,0.000174,0.002543
+AtomId   31:  0.001051,0.000129,0.002883
+--------------------------------------------------------------------------------------------
+Using Extrapolated Density for init
+---------------MD STEP 4 ------------------ 
+ Temperature from velocities: 1370.75
+ Total Energy in Ha at timeIndex -73.34566
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 6 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.50900532
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.003647,0.002193,0.005290
+AtomId    1:  0.002059,0.000516,0.000732
+AtomId    2:  0.002724,0.002279,0.000853
+AtomId    3:  0.001408,0.002826,0.000214
+AtomId    4:  0.003681,0.003492,0.000465
+AtomId    5:  0.000329,0.001751,0.003965
+AtomId    6:  0.002254,0.003839,0.000377
+AtomId    7:  0.003832,0.004472,0.001646
+AtomId    8:  0.001446,0.001886,0.003058
+AtomId    9:  0.000501,0.000571,0.000947
+AtomId   10:  0.001558,0.000151,0.002579
+AtomId   11:  0.003441,0.004222,0.000634
+AtomId   12:  0.000923,0.001088,0.001402
+AtomId   13:  0.000819,0.005270,0.002135
+AtomId   14:  0.000252,0.000179,0.003354
+AtomId   15:  0.000127,0.001941,0.002334
+AtomId   16:  0.001084,0.000365,0.005179
+AtomId   17:  0.001411,0.001362,0.003157
+AtomId   18:  0.002982,0.002222,0.000741
+AtomId   19:  0.004151,0.002876,0.000670
+AtomId   20:  0.000105,0.002742,0.001839
+AtomId   21:  0.003773,0.002302,0.002281
+AtomId   22:  0.004802,0.005623,0.000486
+AtomId   23:  0.004039,0.003753,0.002606
+AtomId   24:  0.001662,0.000761,0.006242
+AtomId   25:  0.002006,0.003969,0.000538
+AtomId   26:  0.002415,0.000879,0.000121
+AtomId   27:  0.002264,0.000030,0.002388
+AtomId   28:  0.003946,0.001698,0.002947
+AtomId   29:  0.000600,0.002342,0.000769
+AtomId   30:  0.002389,0.000253,0.003141
+AtomId   31:  0.001292,0.000130,0.003555
+--------------------------------------------------------------------------------------------
+Using Extrapolated Density for init
+---------------MD STEP 5 ------------------ 
+ Temperature from velocities: 1354.38
+ Total Energy in Ha at timeIndex -73.34573
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 1728
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 6 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -73.50668580
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.004415,0.002595,0.006319
+AtomId    1:  0.002462,0.000550,0.000969
+AtomId    2:  0.003306,0.002742,0.001094
+AtomId    3:  0.001707,0.003384,0.000187
+AtomId    4:  0.004449,0.004366,0.000406
+AtomId    5:  0.000429,0.002132,0.004765
+AtomId    6:  0.002731,0.004582,0.000518
+AtomId    7:  0.004774,0.005619,0.001953
+AtomId    8:  0.001739,0.002202,0.003645
+AtomId    9:  0.000542,0.000665,0.001121
+AtomId   10:  0.001810,0.000054,0.002987
+AtomId   11:  0.004154,0.005026,0.000608
+AtomId   12:  0.001067,0.001289,0.001660
+AtomId   13:  0.001139,0.006292,0.002601
+AtomId   14:  0.000377,0.000254,0.004015
+AtomId   15:  0.000274,0.002295,0.002713
+AtomId   16:  0.001493,0.000357,0.006380
+AtomId   17:  0.001740,0.001678,0.003784
+AtomId   18:  0.003645,0.002716,0.000894
+AtomId   19:  0.005013,0.003435,0.000889
+AtomId   20:  0.000145,0.003290,0.002255
+AtomId   21:  0.004471,0.002681,0.002711
+AtomId   22:  0.005925,0.006990,0.000651
+AtomId   23:  0.004859,0.004442,0.003283
+AtomId   24:  0.002123,0.000879,0.007488
+AtomId   25:  0.002330,0.004729,0.000514
+AtomId   26:  0.002815,0.000962,0.000141
+AtomId   27:  0.002698,0.000052,0.002952
+AtomId   28:  0.004764,0.002176,0.003594
+AtomId   29:  0.000681,0.002810,0.000863
+AtomId   30:  0.002847,0.000333,0.003731
+AtomId   31:  0.001520,0.000117,0.004201
+--------------------------------------------------------------------------------------------
+Using Extrapolated Density for init
+---------------MD STEP 6 ------------------ 
+ Temperature from velocities: 1334.44
+ Total Energy in Ha at timeIndex -73.34579
+MD run completed

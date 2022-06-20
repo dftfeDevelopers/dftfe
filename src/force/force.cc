@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -68,7 +68,9 @@ namespace dftfe
     initUnmoved(const Triangulation<3, 3> &             triangulation,
                 const Triangulation<3, 3> &             serialTriangulation,
                 const std::vector<std::vector<double>> &domainBoundingVectors,
+                const MPI_Comm &                        mpi_comm_parent,
                 const MPI_Comm &                        mpi_comm,
+                const dftParameters &                   dftParams,
                 DoFHandler<3> &                         dofHandlerForce,
                 FESystem<3> &                           FEForce,
                 dealii::AffineConstraints<double> &     constraintsForce,
@@ -117,9 +119,9 @@ namespace dftfe
         GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
         periodicity_vectorForce;
 
-      const std::array<int, 3> periodic = {dftParameters::periodicX,
-                                           dftParameters::periodicY,
-                                           dftParameters::periodicZ};
+      const std::array<int, 3> periodic = {dftParams.periodicX,
+                                           dftParams.periodicY,
+                                           dftParams.periodicZ};
 
 
       std::vector<int> periodicDirectionVector;
@@ -148,16 +150,21 @@ namespace dftfe
         periodicity_vectorForce, constraintsForce);
       constraintsForce.close();
 
-      if (dftParameters::createConstraintsFromSerialDofhandler)
+      if (dftParams.createConstraintsFromSerialDofhandler)
         {
           dealii::AffineConstraints<double> dummy;
           vectorTools::createParallelConstraintMatrixFromSerial(
             serialTriangulation,
             dofHandlerForce,
+            mpi_comm_parent,
             mpi_comm,
             domainBoundingVectors,
             constraintsForce,
-            dummy);
+            dummy,
+            dftParams.verbosity,
+            dftParams.periodicX,
+            dftParams.periodicY,
+            dftParams.periodicZ);
         }
     }
   } // namespace internalForce
@@ -168,14 +175,17 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   forceClass<FEOrder, FEOrderElectro>::forceClass(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica)
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain,
+    const dftParameters &              dftParams)
     : dftPtr(_dftPtr)
     , FEForce(FE_Q<3>(QGaussLobatto<1>(2)), 3)
-    , // linear shape function
-    mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
+    , d_dftParams(dftParams)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   //
@@ -193,7 +203,9 @@ namespace dftfe
       internalForce::initUnmoved(triangulation,
                                  serialTriangulation,
                                  domainBoundingVectors,
+                                 d_mpiCommParent,
                                  mpi_communicator,
+                                 d_dftParams,
                                  d_dofHandlerForceElectro,
                                  FEForce,
                                  d_constraintsNoneForceElectro,
@@ -203,7 +215,9 @@ namespace dftfe
       internalForce::initUnmoved(triangulation,
                                  serialTriangulation,
                                  domainBoundingVectors,
+                                 d_mpiCommParent,
                                  mpi_communicator,
+                                 d_dftParams,
                                  d_dofHandlerForce,
                                  FEForce,
                                  d_constraintsNoneForce,
@@ -230,7 +244,7 @@ namespace dftfe
 
         d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size() - 1;
 
-        if (!dftParameters::floatingNuclearCharges)
+        if (!d_dftParams.floatingNuclearCharges)
           locateAtomCoreNodesForce(d_dofHandlerForceElectro,
                                    d_locally_owned_dofsForceElectro,
                                    d_atomsForceDofsElectro);
@@ -243,7 +257,7 @@ namespace dftfe
         d_forceDofHandlerIndex = dofHandlerVectorMatrixFree.size() - 1;
         constraintsVectorMatrixFree.push_back(&d_constraintsNoneForce);
 
-        if (!dftParameters::floatingNuclearCharges)
+        if (!d_dftParams.floatingNuclearCharges)
           locateAtomCoreNodesForce(d_dofHandlerForce,
                                    d_locally_owned_dofsForce,
                                    d_atomsForceDofs);
@@ -268,7 +282,7 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro>::initPseudoData()
   {
-    // if(dftParameters::isPseudopotential)
+    // if(d_dftParams.isPseudopotential)
     //	computeElementalNonLocalPseudoOVDataForce();
   }
 
@@ -281,6 +295,7 @@ namespace dftfe
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator,
 #endif
+    const dispersionCorrection &     dispersionCorr,
     const unsigned int               eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
@@ -357,18 +372,31 @@ namespace dftfe
                                           phiRhoMinusApproxRho,
                                           shadowPotentialForce);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     double gaussian_time = MPI_Wtime();
 
-    if (dftParameters::floatingNuclearCharges)
+    if (d_dftParams.floatingNuclearCharges)
       computeFloatingAtomsForces();
     else
       computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     gaussian_time = MPI_Wtime() - gaussian_time;
 
-    if (this_mpi_process == 0 && dftParameters::verbosity >= 4)
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
+      {
+        for (unsigned int iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+          {
+            for (unsigned int idim = 0; idim < 3; idim++)
+              {
+                d_globalAtomsForces[iAtom * 3 + idim] +=
+                  dispersionCorr.getForceCorrection(iAtom, idim);
+              }
+          }
+      }
+
+
+    if (this_mpi_process == 0 && d_dftParams.verbosity >= 4)
       std::cout
         << "Time for contraction of nodal foces with gaussian generator: "
         << gaussian_time << std::endl;
@@ -528,7 +556,7 @@ namespace dftfe
     // configurational force contribution from nuclear self energy. This is
     // handled separately as it involves
     // a surface integral over the vself ball surface
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     double vselfforce_time = MPI_Wtime();
 
     if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm) ==
@@ -541,10 +569,10 @@ namespace dftfe
 
     configForceLinFEFinalize();
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     vselfforce_time = MPI_Wtime() - vselfforce_time;
 
-    if (this_mpi_process == 0 && dftParameters::verbosity >= 4)
+    if (this_mpi_process == 0 && d_dftParams.verbosity >= 4)
       std::cout
         << "Time for configurational force computation of Eself contribution and configForceLinFEFinalize(): "
         << vselfforce_time << std::endl;
@@ -556,14 +584,14 @@ namespace dftfe
       {
         const std::pair<unsigned int, unsigned int> &atomIdPair   = it->first;
         const unsigned int                           atomForceDof = it->second;
-        if (dftParameters::verbosity == 2)
+        if (d_dftParams.verbosity == 2)
           std::cout << "procid: " << this_mpi_process
                     << " atomId: " << atomIdPair.first
                     << ", force component: " << atomIdPair.second
                     << ", force: " << d_configForceVectorLinFE[atomForceDof]
                     << std::endl;
 #  ifdef USE_COMPLEX
-        if (dftParameters::verbosity == 2)
+        if (d_dftParams.verbosity == 2)
           std::cout << "procid: " << this_mpi_process
                     << " atomId: " << atomIdPair.first
                     << ", force component: " << atomIdPair.second
@@ -601,7 +629,7 @@ namespace dftfe
      void  forceClass<FEOrder>::updateGaussianConstant(const double
      newGaussianConstant)
      {
-     if (!dftParameters::reproducible_output)
+     if (!d_dftParams.reproducible_output)
      d_gaussianConstant=newGaussianConstant;
      }
    */

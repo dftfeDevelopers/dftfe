@@ -21,6 +21,7 @@
 
 #include "headers.h"
 #include "operator.h"
+#include "dftParameters.h"
 
 #if defined(DFTFE_WITH_GPU)
 #  include "operatorCUDA.h"
@@ -50,8 +51,10 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters &                          dftParams);
 
   template <typename NumberType, typename NumberTypeLowPrec>
   void
@@ -74,8 +77,10 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters &                          dftParams);
 
 
 #if defined(DFTFE_WITH_GPU)
@@ -100,8 +105,10 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters &                          dftParams);
 #endif
 } // namespace dftfe
 #endif

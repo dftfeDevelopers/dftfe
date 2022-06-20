@@ -27,7 +27,9 @@ loadSingleAtomPSIFiles(
   std::map<unsigned int,
            std::map<unsigned int,
                     std::map<unsigned int, alglib::spline1dinterpolant *>>>
-    &radValues)
+    &                  radValues,
+  const MPI_Comm &     mpiCommParent,
+  const dftParameters &dftParams)
 {
   if (radValues[Z][n].count(l) > 0)
     {
@@ -40,14 +42,14 @@ loadSingleAtomPSIFiles(
   //
   char psiFile[256];
 
-  if (dftParameters::isPseudopotential)
+  if (dftParams.isPseudopotential)
     {
-      if (dftParameters::readWfcForPdosPspFile && Z == 78)
+      if (dftParams.readWfcForPdosPspFile && Z == 78)
         {
           sprintf(
             psiFile,
             "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomDataKB/psi%u%u.inp",
-            DFT_PATH,
+            DFTFE_PATH,
             Z,
             n,
             l);
@@ -57,7 +59,7 @@ loadSingleAtomPSIFiles(
           sprintf(
             psiFile,
             "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp",
-            DFT_PATH,
+            DFTFE_PATH,
             Z,
             n,
             l);
@@ -67,7 +69,7 @@ loadSingleAtomPSIFiles(
     sprintf(
       psiFile,
       "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp",
-      DFT_PATH,
+      DFTFE_PATH,
       Z,
       n,
       l);
@@ -84,9 +86,9 @@ loadSingleAtomPSIFiles(
     {
       double       maxTruncationRadius = 0.0;
       unsigned int truncRowId          = 0;
-      if (!dftParameters::reproducible_output)
+      if (!dftParams.reproducible_output)
         {
-          if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          if (Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
             std::cout << "reading data from file: " << psiFile << std::endl;
         }
 
@@ -153,7 +155,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
 
   double totalEigenValues  = eigenValuesAllkPoints.size();
   double intervalSize      = 0.001;
-  double sigma             = C_kb * dftParameters::TVal;
+  double sigma             = C_kb * d_dftParamsPtr->TVal;
   double lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
   double upperBoundEpsilon = eigenValuesAllkPoints[totalEigenValues - 1] * 1.5;
   unsigned int numberIntervals =
@@ -162,7 +164,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
   std::vector<double> densityOfStates, densityOfStatesUp, densityOfStatesDown;
 
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       densityOfStatesUp.resize(numberIntervals, 0.0);
       densityOfStatesDown.resize(numberIntervals, 0.0);
@@ -172,7 +174,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
           for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
             {
               for (unsigned int spinType = 0;
-                   spinType < 1 + dftParameters::spinPolarized;
+                   spinType < 1 + d_dftParamsPtr->spinPolarized;
                    ++spinType)
                 {
                   for (unsigned int statesIter = 0;
@@ -216,14 +218,14 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
         }
     }
 
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::ofstream outFile(dosFileName.c_str());
       outFile.setf(std::ios_base::fixed);
 
       if (outFile.is_open())
         {
-          if (dftParameters::spinPolarized == 1)
+          if (d_dftParamsPtr->spinPolarized == 1)
             {
               for (unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
                 {
@@ -275,7 +277,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
 
   double totalEigenValues  = eigenValuesAllkPoints.size();
   double intervalSize      = 0.001;
-  double sigma             = C_kb * dftParameters::TVal;
+  double sigma             = C_kb * d_dftParamsPtr->TVal;
   double lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
   double upperBoundEpsilon = eigenValuesAllkPoints[totalEigenValues - 1] * 1.5;
   unsigned int numberIntervals =
@@ -315,7 +317,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
   std::vector<double> localDensityOfStates, localDensityOfStatesUp,
     localDensityOfStatesDown;
   localDensityOfStates.resize(numberGlobalAtoms * numberIntervals, 0.0);
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       localDensityOfStatesUp.resize(numberGlobalAtoms * numberIntervals, 0.0);
       localDensityOfStatesDown.resize(numberGlobalAtoms * numberIntervals, 0.0);
@@ -331,7 +333,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
 
 
   const unsigned int blockSize =
-    std::min(dftParameters::wfcBlockSize, d_numEigenValues);
+    std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues);
 
   std::vector<double> tempContribution(blockSize, 0.0);
   std::vector<double> tempQuadPointValues(n_q_points);
@@ -339,9 +341,9 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
   const unsigned int localVectorSize =
     d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
   std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
-    (1 + dftParameters::spinPolarized) * d_kPointWeights.size());
+    (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
   std::vector<distributedCPUVec<dataTypes::number>> eigenVectorsFlattenedBlock(
-    (1 + dftParameters::spinPolarized) * d_kPointWeights.size());
+    (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
 
   for (unsigned int ivec = 0; ivec < d_numEigenValues; ivec += blockSize)
     {
@@ -352,7 +354,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
         {
           for (unsigned int kPoint = 0;
                kPoint <
-               (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+               (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
                ++kPoint)
             {
               eigenVectors[kPoint].resize(currentBlockSize);
@@ -376,7 +378,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
 
       std::vector<std::vector<double>> blockedEigenValues(
         d_kPointWeights.size(),
-        std::vector<double>((1 + dftParameters::spinPolarized) *
+        std::vector<double>((1 + d_dftParamsPtr->spinPolarized) *
                               currentBlockSize,
                             0.0));
       for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -384,13 +386,14 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
           {
             blockedEigenValues[kPoint][iWave] =
               eigenValues[kPoint][ivec + iWave];
-            if (dftParameters::spinPolarized == 1)
+            if (d_dftParamsPtr->spinPolarized == 1)
               blockedEigenValues[kPoint][currentBlockSize + iWave] =
                 eigenValues[kPoint][d_numEigenValues + ivec + iWave];
           }
 
       for (unsigned int kPoint = 0;
-           kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+           kPoint <
+           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
           for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
@@ -434,7 +437,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
 #endif
         }
 
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParamsPtr->spinPolarized == 1)
         {
           for (unsigned int spinType = 0; spinType < 2; ++spinType)
             {
@@ -555,7 +558,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
         }
     } // ivec loop
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       dealii::Utilities::MPI::sum(localDensityOfStatesUp,
                                   mpi_communicator,
@@ -573,14 +576,14 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
     }
 
   double checkSum = 0;
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::ofstream outFile(ldosFileName.c_str());
       outFile.setf(std::ios_base::fixed);
 
       if (outFile.is_open())
         {
-          if (dftParameters::spinPolarized == 1)
+          if (d_dftParamsPtr->spinPolarized == 1)
             {
               for (unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
                 {
@@ -632,7 +635,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
             }
         }
     }
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << "Absolute sum of all ldos values: " << checkSum << std::endl;
 
   computing_timer.leave_subsection("LDOS computation");
@@ -784,8 +787,14 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
               //
               // load PSI files
               //
-              loadSingleAtomPSIFiles(
-                Z, n, l, fileReadFlag, wfcInitTruncation, radValues);
+              loadSingleAtomPSIFiles(Z,
+                                     n,
+                                     l,
+                                     fileReadFlag,
+                                     wfcInitTruncation,
+                                     radValues,
+                                     d_mpiCommParent,
+                                     *d_dftParamsPtr);
 
               if (fileReadFlag > 0)
                 {
@@ -833,7 +842,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
 
   double totalEigenValues  = eigenValuesAllkPoints.size();
   double intervalSize      = 0.001;
-  double sigma             = C_kb * dftParameters::TVal;
+  double sigma             = C_kb * d_dftParamsPtr->TVal;
   double lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
   double upperBoundEpsilon = eigenValuesAllkPoints[totalEigenValues - 1] * 1.5;
 
@@ -853,7 +862,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
 
 
   const unsigned int blockSize =
-    std::min(dftParameters::wfcBlockSize, d_numEigenValues);
+    std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues);
 
   std::vector<std::vector<double>> tempQuadPointValuesForWaveFunctions(
     blockSize);
@@ -862,9 +871,9 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
   const unsigned int localVectorSize =
     d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
   std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
-    (1 + dftParameters::spinPolarized) * d_kPointWeights.size());
+    (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
   std::vector<distributedCPUVec<dataTypes::number>> eigenVectorsFlattenedBlock(
-    (1 + dftParameters::spinPolarized) * d_kPointWeights.size());
+    (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
   // std::vector<double>
   // innerProductWaveFunctionSingAtom(d_numEigenValues*5,0.0);
   // std::vector<double> tempContribution(blockSize*,0.0);
@@ -880,7 +889,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
         {
           for (unsigned int kPoint = 0;
                kPoint <
-               (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+               (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
                ++kPoint)
             {
               eigenVectors[kPoint].resize(currentBlockSize);
@@ -904,7 +913,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
 
       std::vector<std::vector<double>> blockedEigenValues(
         d_kPointWeights.size(),
-        std::vector<double>((1 + dftParameters::spinPolarized) *
+        std::vector<double>((1 + d_dftParamsPtr->spinPolarized) *
                               currentBlockSize,
                             0.0));
 
@@ -913,14 +922,15 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
           {
             blockedEigenValues[kPoint][iWave] =
               eigenValues[kPoint][ivec + iWave];
-            if (dftParameters::spinPolarized == 1)
+            if (d_dftParamsPtr->spinPolarized == 1)
               blockedEigenValues[kPoint][currentBlockSize + iWave] =
                 eigenValues[kPoint][d_numEigenValues + ivec + iWave];
           }
 
 
       for (unsigned int kPoint = 0;
-           kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+           kPoint <
+           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
           for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
@@ -963,7 +973,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
 #endif
         }
 
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParamsPtr->spinPolarized == 1)
         {
           AssertThrow(false,
                       ExcMessage(
@@ -1130,7 +1140,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
     }
 
 
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::string tempFolder = "pdosOutputFolder";
       mkdir(tempFolder.c_str(), ACCESSPERMS);
@@ -1143,7 +1153,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
           outputFile.setf(std::ios_base::fixed);
           if (outputFile.is_open())
             {
-              if (dftParameters::spinPolarized == 1)
+              if (d_dftParamsPtr->spinPolarized == 1)
                 {
                   AssertThrow(
                     false,

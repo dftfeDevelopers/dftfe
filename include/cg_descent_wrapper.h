@@ -41,8 +41,11 @@ namespace
     for (unsigned int i = 0; i < xPrev.size(); ++i)
       solutionInc[i] = *(x + i) - xPrev[i];
 
-    MPI_Bcast(
-      &solutionInc[0], solutionInc.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&solutionInc[0],
+              solutionInc.size(),
+              MPI_DOUBLE,
+              0,
+              functionToBeMinimized->getMPICommunicator());
 
     double sumAbsDisp = 0.0;
     for (unsigned int i = 0; i < solutionInc.size(); ++i)
@@ -78,8 +81,11 @@ namespace
     for (unsigned int i = 0; i < xPrev.size(); ++i)
       solutionInc[i] = *(x + i) - xPrev[i];
 
-    MPI_Bcast(
-      &solutionInc[0], solutionInc.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&solutionInc[0],
+              solutionInc.size(),
+              MPI_DOUBLE,
+              0,
+              functionToBeMinimized->getMPICommunicator());
 
     double sumAbsDisp = 0.0;
     for (unsigned int i = 0; i < solutionInc.size(); ++i)
@@ -117,8 +123,11 @@ namespace
     for (unsigned int i = 0; i < xPrev.size(); ++i)
       solutionInc[i] = *(x + i) - xPrev[i];
 
-    MPI_Bcast(
-      &solutionInc[0], solutionInc.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&solutionInc[0],
+              solutionInc.size(),
+              MPI_DOUBLE,
+              0,
+              functionToBeMinimized->getMPICommunicator());
 
     double sumAbsDisp = 0.0;
     for (unsigned int i = 0; i < solutionInc.size(); ++i)

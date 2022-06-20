@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,7 +17,6 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 
@@ -31,18 +30,22 @@ namespace dftfe
     createParallelConstraintMatrixFromSerial(
       const dealii::Triangulation<3, 3> &     serTria,
       const dealii::DoFHandler<3> &           dofHandlerPar,
-      const MPI_Comm &                        mpi_comm,
+      const MPI_Comm &                        mpi_comm_parent,
+      const MPI_Comm &                        mpi_comm_domain,
       const std::vector<std::vector<double>> &domainBoundingVectors,
       dealii::AffineConstraints<double> &     periodicHangingConstraints,
-      dealii::AffineConstraints<double> &     onlyHangingConstraints)
+      dealii::AffineConstraints<double> &     onlyHangingConstraints,
+      const int                               verbosity,
+      const bool                              periodicX,
+      const bool                              periodicY,
+      const bool                              periodicZ)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-      dealii::TimerOutput computing_timer(mpi_comm,
+        (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
+      dealii::TimerOutput computing_timer(mpi_comm_domain,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -103,12 +106,12 @@ namespace dftfe
                     numGlobalDofs,
                     DEAL_II_DOF_INDEX_MPI_TYPE,
                     MPI_SUM,
-                    mpi_comm);
+                    mpi_comm_domain);
 
       dofHandlerSer.renumber_dofs(newDofNumbers);
 
-      if (dftParameters::verbosity >= 4)
-        dftUtils::printCurrentMemoryUsage(mpi_comm,
+      if (verbosity >= 4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm_domain,
                                           "Renumbered serial dofHandler");
 
       dealii::AffineConstraints<double> constraintsHangingSer;
@@ -118,9 +121,9 @@ namespace dftfe
         dofHandlerPar,
         cellIdToCellIterMapSer,
         constraintsHangingSer);
-      if (dftParameters::verbosity >= 4)
+      if (verbosity >= 4)
         dftUtils::printCurrentMemoryUsage(
-          mpi_comm, "Created hanging node constraints serial");
+          mpi_comm_domain, "Created hanging node constraints serial");
 
       dealii::AffineConstraints<double> constraintsPeriodicHangingSer;
       constraintsPeriodicHangingSer.merge(
@@ -148,9 +151,7 @@ namespace dftfe
         periodicity_vector2;
 
       std::vector<int>         periodicDirectionVector;
-      const std::array<int, 3> periodic = {dftParameters::periodicX,
-                                           dftParameters::periodicY,
-                                           dftParameters::periodicZ};
+      const std::array<int, 3> periodic = {periodicX, periodicY, periodicZ};
       for (unsigned int d = 0; d < 3; ++d)
         if (periodic[d] == 1)
           periodicDirectionVector.push_back(d);
@@ -172,9 +173,9 @@ namespace dftfe
 
       constraintsPeriodicHangingSer.close();
 
-      if (dftParameters::verbosity >= 4)
+      if (verbosity >= 4)
         dftUtils::printCurrentMemoryUsage(
-          mpi_comm, "Created periodic constraints serial");
+          mpi_comm_domain, "Created periodic constraints serial");
 
       periodicHangingConstraints.clear();
       periodicHangingConstraints.reinit(locally_relevant_dofs_par);

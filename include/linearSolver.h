@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -49,7 +49,7 @@ namespace dftfe
     solve(dealiiLinearSolverProblem &problem,
           const double               relTolerance,
           const unsigned int         maxNumberIterations,
-          const unsigned int         debugLevel     = 0,
+          const int                  debugLevel     = 0,
           bool                       distributeFlag = true) = 0;
 
   private:

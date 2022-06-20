@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -18,7 +18,6 @@
 //
 
 #ifdef DFTFE_WITH_GPU
-#  include <dftParameters.h>
 #  include <solveVselfInBinsCUDA.h>
 #  include <vectorUtilities.h>
 
@@ -399,12 +398,16 @@ namespace dftfe
       const unsigned int                       localSize,
       const unsigned int                       ghostSize,
       const unsigned int                       numberBins,
-      const MPI_Comm &                         mpiComm,
+      const MPI_Comm &                         mpiCommParent,
+      const MPI_Comm &                         mpiCommDomain,
       double *                                 xH,
+      const int                                verbosity,
+      const unsigned int                       maxLinearSolverIterations,
+      const double                             absLinearSolverTolerance,
       const bool isElectroFEOrderDifferentFromFEOrder)
     {
       int this_process;
-      MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+      MPI_Comm_rank(mpiCommParent, &this_process);
 
       const unsigned int blockSize = numberBins;
       const unsigned int totalLocallyOwnedCells =
@@ -414,7 +417,7 @@ namespace dftfe
 
       distributedGPUVec<double> xD;
 
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       double time = MPI_Wtime();
 
       xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
@@ -425,9 +428,9 @@ namespace dftfe
                  localSize * numberBins * sizeof(double),
                  cudaMemcpyHostToDevice);
 
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
-      if (dftParameters::verbosity >= 2 && this_process == 0)
+      if (verbosity >= 2 && this_process == 0)
         std::cout << " poissonCUDA::solveVselfInBins: time for creating xD: "
                   << time << std::endl;
 
@@ -452,7 +455,7 @@ namespace dftfe
       constraintsMatrixDataInfoCUDA.set_zero(xD, blockSize);
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       time = MPI_Wtime();
 
       thrust::device_vector<double> bD(localSize * numberBins, 0.0);
@@ -486,9 +489,9 @@ namespace dftfe
                  cudaMemcpyHostToDevice);
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
-      if (dftParameters::verbosity >= 2 && this_process == 0)
+      if (verbosity >= 2 && this_process == 0)
         std::cout << " poissonCUDA::solveVselfInBins: time for mem allocation: "
                   << time << std::endl;
 
@@ -506,10 +509,11 @@ namespace dftfe
                numberBins,
                totalLocallyOwnedCells,
                numberNodesPerElement,
-               dftParameters::verbosity,
-               dftParameters::maxLinearSolverIterations,
-               dftParameters::absLinearSolverTolerance,
-               mpiComm,
+               verbosity,
+               maxLinearSolverIterations,
+               absLinearSolverTolerance,
+               mpiCommParent,
+               mpiCommDomain,
                xD);
 
       cudaMemcpy(xH,
@@ -532,17 +536,18 @@ namespace dftfe
              const unsigned int         numberBins,
              const unsigned int         totalLocallyOwnedCells,
              const unsigned int         numberNodesPerElement,
-             const unsigned int         debugLevel,
+             const int                  debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
-             const MPI_Comm &           mpiComm,
+             const MPI_Comm &           mpiCommParent,
+             const MPI_Comm &           mpiCommDomain,
              distributedGPUVec<double> &x)
     {
       int this_process;
-      MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+      MPI_Comm_rank(mpiCommParent, &this_process);
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       double start_time = MPI_Wtime();
 
       // initialize certain variables
@@ -612,7 +617,7 @@ namespace dftfe
       temp.reinit(x);
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       double gpu_time = MPI_Wtime() - start_time;
       if (debugLevel >= 2 && this_process == 0)
         std::cout
@@ -620,7 +625,7 @@ namespace dftfe
           << gpu_time << std::endl;
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       start_time = MPI_Wtime();
 
       computeAX(handle,
@@ -692,8 +697,12 @@ namespace dftfe
                  cudaMemcpyDeviceToHost);
 
 
-      MPI_Allreduce(
-        MPI_IN_PLACE, &delta_newH[0], numberBins, MPI_DOUBLE, MPI_SUM, mpiComm);
+      MPI_Allreduce(MPI_IN_PLACE,
+                    &delta_newH[0],
+                    numberBins,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpiCommDomain);
 
       cudaMemcpy(thrust::raw_pointer_cast(&delta_newD[0]),
                  &delta_newH[0],
@@ -739,7 +748,7 @@ namespace dftfe
                     numberBins,
                     MPI_DOUBLE,
                     MPI_SUM,
-                    mpiComm);
+                    mpiCommDomain);
 
       if (debugLevel >= 2 && this_process == 0)
         {
@@ -802,7 +811,7 @@ namespace dftfe
                         numberBins,
                         MPI_DOUBLE,
                         MPI_SUM,
-                        mpiComm);
+                        mpiCommDomain);
 
           // for (unsigned int i=0;i <numberBins; i++)
           //   std::cout<< "scalar "<<scalarH[i]<<std::endl;
@@ -945,7 +954,7 @@ namespace dftfe
                         numberBins,
                         MPI_DOUBLE,
                         MPI_SUM,
-                        mpiComm);
+                        mpiCommDomain);
 
 
           // for (unsigned int i=0;i <numberBins; i++)
@@ -1043,7 +1052,7 @@ namespace dftfe
                     numberBins,
                     MPI_DOUBLE,
                     MPI_SUM,
-                    mpiComm);
+                    mpiCommDomain);
 
       // residualNorm = std::sqrt(residualNorm);
 
@@ -1081,7 +1090,7 @@ namespace dftfe
       x.updateGhostValues();
       constraintsMatrixDataInfoCUDA.distribute(x, numberBins);
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - start_time;
       if (debugLevel >= 2 && this_process == 0)
         std::cout

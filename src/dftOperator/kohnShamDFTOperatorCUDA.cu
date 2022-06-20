@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -575,7 +575,8 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     kohnShamDFTOperatorCUDAClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                                 const MPI_Comm &mpi_comm_replica)
+                                 const MPI_Comm &mpi_comm_parent,
+                                 const MPI_Comm &mpi_comm_domain)
     : dftPtr(_dftPtr)
     , d_kPointIndex(0)
     , d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell())
@@ -586,15 +587,16 @@ namespace dftfe
           .size())
     , d_isStiffnessMatrixExternalPotCorrComputed(false)
     , d_isMallocCalled(false)
-    , mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , computing_timer(mpi_comm_replica,
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , computing_timer(mpi_comm_domain,
                       pcout,
                       TimerOutput::never,
                       TimerOutput::wall_times)
-    , operatorDFTCUDAClass(mpi_comm_replica,
+    , operatorDFTCUDAClass(mpi_comm_domain,
                            _dftPtr->getMatrixFreeData(),
                            _dftPtr->constraintsNoneDataInfo,
                            _dftPtr->d_constraintsNoneDataInfoCUDA)
@@ -879,18 +881,18 @@ namespace dftfe
     size_t free_t, total_t;
 
     cudaMemGetInfo(&free_t, &total_t);
-    if (dftParameters::verbosity >= 2)
+    if (dftPtr->d_dftParamsPtr->verbosity >= 2)
       pcout << "starting free mem: " << free_t << ", total mem: " << total_t
             << std::endl;
 
     const unsigned int BVec =
-      std::min(dftParameters::chebyWfcBlockSize, numberWaveFunctions);
+      std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, numberWaveFunctions);
     d_parallelChebyBlockVectorDevice.reinit(
       dftPtr->matrix_free_data.get_vector_partitioner(
         dftPtr->d_densityDofHandlerIndex),
       BVec);
 
-    if (dftParameters::mixingMethod == "LOW_RANK_JACINV_PRECOND")
+    if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
       d_parallelChebyBlockVector2Device.reinit(
         d_parallelChebyBlockVectorDevice);
 
@@ -981,10 +983,10 @@ namespace dftfe
     d_cellHamiltonianMatrixFlattenedDevice.resize(
       d_numLocallyOwnedCells * d_numberNodesPerElement *
         d_numberNodesPerElement * dftPtr->d_kPointWeights.size() *
-        (1 + dftParameters::spinPolarized),
+        (1 + dftPtr->d_dftParamsPtr->spinPolarized),
       dataTypes::numberThrustGPU(0.0));
 
-    if (dftParameters::isPseudopotential)
+    if (dftPtr->d_dftParamsPtr->isPseudopotential)
       d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.resize(
         d_numLocallyOwnedCells * d_numberNodesPerElement *
           d_numberNodesPerElement,
@@ -1002,7 +1004,7 @@ namespace dftfe
                                             numberWaveFunctions,
                                           0.0);
 
-    if (dftParameters::isPseudopotential)
+    if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
         d_parallelProjectorKetTimesBlockVectorDevice.reinit(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
@@ -1322,7 +1324,7 @@ namespace dftfe
       }
 
     cudaMemGetInfo(&free_t, &total_t);
-    if (dftParameters::verbosity >= 2)
+    if (dftPtr->d_dftParamsPtr->verbosity >= 2)
       pcout << "free mem after reinit allocations: " << free_t
             << ", total mem: " << total_t << std::endl;
   }
@@ -1434,7 +1436,7 @@ namespace dftfe
     d_kPointIndex = kPointIndex;
     d_spinIndex   = spinIndex;
 
-    if (dftParameters::isPseudopotential)
+    if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
         for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
           {
@@ -1486,7 +1488,7 @@ namespace dftfe
           std::vector<double> densityValue =
             (*rhoValues).find(cellPtr->id())->second;
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
             {
               const std::vector<double> &temp2 =
                 rhoCoreValues.find(cellPtr->id())->second;
@@ -1520,8 +1522,8 @@ namespace dftfe
         }
 
     d_vEffJxWDevice = d_vEffJxW;
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -1572,7 +1574,7 @@ namespace dftfe
           std::vector<double> gradDensityValue =
             (*gradRhoValues).find(cellPtr->id())->second;
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
             {
               const std::vector<double> &temp2 =
                 rhoCoreValues.find(cellPtr->id())->second;
@@ -1651,8 +1653,8 @@ namespace dftfe
     d_vEffJxWDevice                        = d_vEffJxW;
     d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -1696,7 +1698,7 @@ namespace dftfe
           const std::vector<double> &tempPhi =
             phiValues.find(cellPtr->id())->second;
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
             {
               const std::vector<double> &temp2 =
                 rhoCoreValues.find(cellPtr->id())->second;
@@ -1732,8 +1734,8 @@ namespace dftfe
 
     d_vEffJxWDevice = d_vEffJxW;
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -1789,7 +1791,7 @@ namespace dftfe
             phiValues.find(cellPtr->id())->second;
 
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
             {
               const std::vector<double> &temp2 =
                 rhoCoreValues.find(cellPtr->id())->second;
@@ -1893,8 +1895,8 @@ namespace dftfe
     d_vEffJxWDevice                        = d_vEffJxW;
     d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -2003,7 +2005,7 @@ namespace dftfe
           std::vector<double> gradDensityPrimeValue =
             (gradRhoPrimeValues).find(cellPtr->id())->second;
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
             {
               const std::vector<double> &temp2 =
                 rhoCoreValues.find(cellPtr->id())->second;
@@ -2199,7 +2201,7 @@ namespace dftfe
               (gradRhoValues).find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2348,7 +2350,7 @@ namespace dftfe
             const std::vector<double> &tempPhiPrime =
               phiPrimeValues.find(cellPtr->id())->second;
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2488,7 +2490,7 @@ namespace dftfe
               (gradRhoValues).find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2635,7 +2637,7 @@ namespace dftfe
             const std::vector<double> &tempPhiPrime =
               phiPrimeValues.find(cellPtr->id())->second;
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2866,7 +2868,7 @@ namespace dftfe
       onlyHPrimePartForFirstOrderDensityMatResponse);
 
     // H^{nloc}*M^{-1/2}*X
-    if (dftParameters::isPseudopotential &&
+    if (dftPtr->d_dftParamsPtr->isPseudopotential &&
         (dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) &&
         !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
@@ -2995,7 +2997,7 @@ namespace dftfe
       onlyHPrimePartForFirstOrderDensityMatResponse);
 
     // H^{nloc}*M^{-1/2}*X
-    if (dftParameters::isPseudopotential &&
+    if (dftPtr->d_dftParamsPtr->isPseudopotential &&
         (dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) &&
         !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
@@ -3114,7 +3116,7 @@ namespace dftfe
 
 
     // H^{nloc}*M^{-1/2}*X
-    if (dftParameters::isPseudopotential &&
+    if (dftPtr->d_dftParamsPtr->isPseudopotential &&
         dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
       {
         computeNonLocalHamiltonianTimesX(src.begin(),
@@ -3205,7 +3207,7 @@ namespace dftfe
 
 
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::wfcBlockSize, N);
+      std::min(dftPtr->d_dftParamsPtr->wfcBlockSize, N);
 
     dataTypes::number *projHamBlockHost;
     cudaMallocHost((void **)&projHamBlockHost,
@@ -3229,7 +3231,7 @@ namespace dftfe
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
             const unsigned int chebyBlockSize =
-              std::min(dftParameters::chebyWfcBlockSize, N);
+              std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, N);
 
             for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
               {
@@ -3400,7 +3402,7 @@ namespace dftfe
 
 
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::wfcBlockSize, N);
+      std::min(dftPtr->d_dftParamsPtr->wfcBlockSize, N);
     const unsigned int numberBlocks = N / vectorsBlockSize;
 
     // create separate CUDA streams for GPU->CPU copy and computation
@@ -3461,7 +3463,7 @@ namespace dftfe
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
             const unsigned int chebyBlockSize =
-              std::min(dftParameters::chebyWfcBlockSize, N);
+              std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, N);
 
             const dataTypes::number alpha = dataTypes::number(1.0),
                                     beta  = dataTypes::number(0.0);
@@ -3607,7 +3609,7 @@ namespace dftfe
                                           streamCompute));
               }
 
-            if (dftParameters::useGPUDirectAllReduce)
+            if (dftPtr->d_dftParamsPtr->useGPUDirectAllReduce)
               {
                 // Sum local projHamBlock across domain decomposition processors
                 if (std::is_same<dataTypes::number,
@@ -3649,7 +3651,7 @@ namespace dftfe
             if (cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
               {
                 // Sum local projHamBlock across domain decomposition processors
-                if (!dftParameters::useGPUDirectAllReduce)
+                if (!dftPtr->d_dftParamsPtr->useGPUDirectAllReduce)
                   MPI_Allreduce(MPI_IN_PLACE,
                                 projHamBlockHost,
                                 D * B,
@@ -3771,7 +3773,7 @@ namespace dftfe
 
 
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::wfcBlockSize, N);
+      std::min(dftPtr->d_dftParamsPtr->wfcBlockSize, N);
 
     const unsigned int numberBlocks = N / vectorsBlockSize;
 
@@ -3863,7 +3865,7 @@ namespace dftfe
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
             const unsigned int chebyBlockSize =
-              std::min(dftParameters::chebyWfcBlockSize, N);
+              std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, N);
 
             const dataTypes::number alpha         = dataTypes::number(1.0),
                                     beta          = dataTypes::number(0.0);
@@ -4120,7 +4122,7 @@ namespace dftfe
                                           streamCompute));
               }
 
-            if (dftParameters::useGPUDirectAllReduce)
+            if (dftPtr->d_dftParamsPtr->useGPUDirectAllReduce)
               {
                 if (jvec + B > Noc)
                   {
@@ -4196,7 +4198,7 @@ namespace dftfe
                   {
                     // Sum local projHamBlock across domain decomposition
                     // processors
-                    if (!dftParameters::useGPUDirectAllReduce)
+                    if (!dftPtr->d_dftParamsPtr->useGPUDirectAllReduce)
                       MPI_Allreduce(MPI_IN_PLACE,
                                     projHamBlockHost,
                                     D * B,
@@ -4228,7 +4230,7 @@ namespace dftfe
                   {
                     // Sum local projHamBlock across domain decomposition
                     // processors
-                    if (!dftParameters::useGPUDirectAllReduce)
+                    if (!dftPtr->d_dftParamsPtr->useGPUDirectAllReduce)
                       MPI_Allreduce(MPI_IN_PLACE,
                                     projHamBlockHostFP32,
                                     D * B,

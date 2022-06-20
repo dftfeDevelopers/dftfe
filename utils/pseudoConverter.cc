@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -50,11 +50,13 @@ namespace dftfe
 
 
     int
-    convert(std::string &fileName)
+    convert(const std::string &fileName,
+            const std::string &dftfeScratchFolderName,
+            const int          verbosity,
+            const unsigned int natomTypes,
+            const bool         pseudoTestsFlag)
     {
-      dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+      dealii::ConditionalOStream pcout(std::cout);
 
       xmlTodftfeParser xmlParse;
 
@@ -72,9 +74,7 @@ namespace dftfe
 
       while (input_file >> z >> toParse)
         {
-          std::string tempFolder = "temp";
-          mkdir(tempFolder.c_str(), ACCESSPERMS);
-          std::string newFolder = tempFolder + "/" + "z" + z;
+          std::string newFolder = dftfeScratchFolderName + "/" + "z" + z;
           mkdir(newFolder.c_str(), ACCESSPERMS);
           AssertThrow(
             isupf(toParse),
@@ -89,9 +89,9 @@ namespace dftfe
               // toParse.find(".upf"));
               std::string xmlFileName = newFolder + "/" + "z" + z + ".xml";
               int         errorFlag;
-              if (dftParameters::pseudoTestsFlag)
+              if (pseudoTestsFlag)
                 {
-                  std::string dftPath = DFT_PATH;
+                  std::string dftPath = DFTFE_PATH;
 #ifdef USE_COMPLEX
                   std::string newPath =
                     dftPath + "/tests/dft/pseudopotential/complex/" + toParse;
@@ -101,15 +101,18 @@ namespace dftfe
 #endif
 
                   unsigned int nlccFlag = 0;
-                  errorFlag = upfToxml(newPath, xmlFileName, nlccFlag);
+                  errorFlag =
+                    upfToxml(newPath, xmlFileName, verbosity, nlccFlag);
+                  nlccSum += nlccFlag;
                 }
               else
                 {
                   unsigned int nlccFlag = 0;
-                  errorFlag = upfToxml(toParse, xmlFileName, nlccFlag);
+                  errorFlag =
+                    upfToxml(toParse, xmlFileName, verbosity, nlccFlag);
                   nlccSum += nlccFlag;
 
-                  if (dftParameters::verbosity >= 1)
+                  if (verbosity >= 1)
                     {
                       if (nlccFlag > 0)
                         pcout << " Reading Pseudopotential File: " << toParse
@@ -141,7 +144,7 @@ namespace dftfe
 
 
       AssertThrow(
-        atomTypes.size() == dftParameters::natomTypes,
+        atomTypes.size() == natomTypes,
         dealii::ExcMessage(
           "Number of atom types in your pseudopotential file does not match with that given in the parameter file"));
 

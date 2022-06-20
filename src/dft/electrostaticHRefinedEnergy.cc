@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -29,7 +29,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 {
   computing_timer.enter_subsection("h refinement electrostatics");
   computingTimerStandard.enter_subsection("h refinement electrostatics");
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout
       << std::endl
       << "-----------------Re computing electrostatics on h globally refined mesh--------------"
@@ -81,7 +81,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   //
   // compute the total charge using rho nodal field for debugging purposes
   //
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     {
       const double integralRhoValue =
         totalCharge(d_matrixFreeDataPRefined.get_dof_handler(
@@ -133,7 +133,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   //
   // print refined mesh details
   //
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     {
       pcout << std::endl
             << "Finite element mesh information after subdividing the mesh"
@@ -185,9 +185,9 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   std::vector<dealii::GridTools::PeriodicFacePair<
     typename dealii::DoFHandler<3>::cell_iterator>>
                                     periodicity_vector2;
-  const std::array<unsigned int, 3> periodic = {dftParameters::periodicX,
-                                                dftParameters::periodicY,
-                                                dftParameters::periodicZ};
+  const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                d_dftParamsPtr->periodicY,
+                                                d_dftParamsPtr->periodicZ};
 
   std::vector<int> periodicDirectionVector;
   for (unsigned int d = 0; d < 3; ++d)
@@ -235,7 +235,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   dealii::parallel::distributed::Triangulation<3> &electrostaticsTriaDisp =
     d_mesh.getElectrostaticsMeshDisp();
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     {
       //
       // move the refined mesh so that it forms exact subdivison of coarse moved
@@ -265,7 +265,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
         }
     }
 
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     d_mesh.resetMesh(electrostaticsTriaDisp, electrostaticsTriaRho);
 
   dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
@@ -346,7 +346,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   //
   // compute total charge using rhoNodalRefined field
   //
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     {
       pcout
         << "Value of total charge computed on moved subdivided mesh after solution transfer: "
@@ -365,7 +365,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   dealii::AffineConstraints<double> constraintsForTotalPotential;
   constraintsForTotalPotential.reinit(locallyRelevantDofs);
 
-  if (dftParameters::pinnedNodeForPBC)
+  if (d_dftParamsPtr->pinnedNodeForPBC)
     locatePeriodicPinnedNodes(dofHandlerHRefined,
                               constraintsHRefined,
                               constraintsForTotalPotential);
@@ -392,7 +392,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   // with atoms belonging to a given bin
 
   vselfBinsManager<FEOrder, FEOrderElectro> vselfBinsManagerHRefined(
-    mpi_communicator);
+    d_mpiCommParent, mpi_communicator, *d_dftParamsPtr);
   vselfBinsManagerHRefined.createAtomBins(
     matrixFreeConstraintsInputVector,
     onlyHangingNodeConstraints,
@@ -404,7 +404,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     d_imageChargesTrunc,
     d_vselfBinsManager.getStoredAdaptiveBallRadius());
 
-  if (dftParameters::constraintsParallelCheck)
+  if (d_dftParamsPtr->constraintsParallelCheck)
     {
       IndexSet locally_active_dofs_debug;
       DoFTools::extract_locally_active_dofs(dofHandlerHRefined,
@@ -472,7 +472,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   std::map<dealii::types::global_dof_index, double>
     atomHRefinedNodeIdToChargeMap;
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     locateAtomCoreNodes(dofHandlerHRefined, atomHRefinedNodeIdToChargeMap);
 
 
@@ -481,7 +481,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   distributedCPUVec<double>        phiExtHRefined;
   matrixFreeDataHRefined.initialize_dof_vector(phiExtHRefined,
                                                phiExtDofHandlerIndexHRefined);
-  if (dftParameters::verbosity == 2)
+  if (d_dftParamsPtr->verbosity == 2)
     pcout
       << std::endl
       << "Solving for nuclear charge self potential in bins on h refined mesh: ";
@@ -504,7 +504,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     d_smearedChargeWidths,
     d_smearedChargeScaling,
     1,
-    dftParameters::smearedNuclearCharges);
+    d_dftParamsPtr->smearedNuclearCharges);
 
   //
   // solve the Poisson problem for total rho
@@ -513,7 +513,9 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,
                                                phiTotDofHandlerIndexHRefined);
 
-  dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+  dealiiLinearSolver                            dealiiCGSolver(d_mpiCommParent,
+                                    mpi_communicator,
+                                    dealiiLinearSolver::CG);
   poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
     mpi_communicator);
 
@@ -529,18 +531,18 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     1,
     rhoOutHRefinedQuadValues,
     true,
-    dftParameters::periodicX && dftParameters::periodicY &&
-      dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
-    dftParameters::smearedNuclearCharges);
+    d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
+      d_dftParamsPtr->periodicZ && !d_dftParamsPtr->pinnedNodeForPBC,
+    d_dftParamsPtr->smearedNuclearCharges);
 
-  if (dftParameters::verbosity == 2)
+  if (d_dftParamsPtr->verbosity == 2)
     pcout
       << std::endl
       << "Solving for total electrostatic potential (rhoIn+b) on h refined mesh: ";
   dealiiCGSolver.solve(phiTotalSolverProblem,
-                       dftParameters::absLinearSolverTolerance,
-                       dftParameters::maxLinearSolverIterations,
-                       dftParameters::verbosity);
+                       d_dftParamsPtr->absLinearSolverTolerance,
+                       d_dftParamsPtr->maxLinearSolverIterations,
+                       d_dftParamsPtr->verbosity);
 
   std::map<dealii::CellId, std::vector<double>> pseudoVLocHRefined;
   std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
@@ -550,7 +552,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
                                        dofHandlerHRefined,
                                        supportPointsHRef);
-  if (dftParameters::isPseudopotential)
+  if (d_dftParamsPtr->isPseudopotential)
     initLocalPseudoPotential(dofHandlerHRefined,
                              2,
                              matrixFreeDataHRefined,
@@ -562,12 +564,21 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                              pseudoVLocHRefined,
                              pseudoVLocAtomsHRefined);
 
-  energyCalculator energyCalcHRefined(mpi_communicator,
+  energyCalculator energyCalcHRefined(d_mpiCommParent,
+                                      mpi_communicator,
                                       interpoolcomm,
-                                      interBandGroupComm);
+                                      interBandGroupComm,
+                                      *d_dftParamsPtr);
+
+  dispersionCorrection dispersionCorrHRefined(d_mpiCommParent,
+                                              mpi_communicator,
+                                              interpoolcomm,
+                                              interBandGroupComm,
+                                              *d_dftParamsPtr);
+
 
   const double totalEnergy =
-    dftParameters::spinPolarized == 0 ?
+    d_dftParamsPtr->spinPolarized == 0 ?
       energyCalcHRefined.computeEnergy(dofHandlerHRefined,
                                        dofHandler,
                                        quadrature,
@@ -579,6 +590,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                                        fermiEnergy,
                                        funcX,
                                        funcC,
+                                       dispersionCorrHRefined,
                                        d_phiInValues,
                                        phiTotRhoOutHRefined,
                                        *rhoInValues,
@@ -600,7 +612,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                                        lowerBoundKindex,
                                        1,
                                        true,
-                                       dftParameters::smearedNuclearCharges) :
+                                       d_dftParamsPtr->smearedNuclearCharges) :
       energyCalcHRefined.computeEnergySpinPolarized(
         dofHandlerHRefined,
         dofHandler,
@@ -615,6 +627,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
         fermiEnergyDown,
         funcX,
         funcC,
+        dispersionCorrHRefined,
         d_phiInValues,
         phiTotRhoOutHRefined,
         *rhoInValues,
@@ -640,10 +653,10 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
         lowerBoundKindex,
         1,
         true,
-        dftParameters::smearedNuclearCharges);
+        d_dftParamsPtr->smearedNuclearCharges);
 
   d_groundStateEnergy = totalEnergy;
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout << "Entropic energy: " << d_entropicEnergy << std::endl;
 
 

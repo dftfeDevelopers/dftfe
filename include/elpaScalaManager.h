@@ -1,7 +1,7 @@
 //
 // -------------------------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -22,6 +22,7 @@
 
 #include "headers.h"
 #include "process_grid.h"
+#include "dftParameters.h"
 
 #include <vector>
 extern "C"
@@ -82,13 +83,11 @@ namespace dftfe
     getProcessGridDftfeScalaWrapper() const;
 
     void
-    processGridELPASetup(const unsigned int na,
-                         const unsigned int nev,
-                         const MPI_Comm &   mpi_comm_interband,
-                         const MPI_Comm &   mpi_comm_interpool);
-
+    processGridELPASetup(const unsigned int   na,
+                         const unsigned int   nev,
+                         const dftParameters &dftParams);
     void
-    elpaDeallocateHandles(const unsigned int na, const unsigned int nev);
+    elpaDeallocateHandles(const dftParameters &dftParams);
 
     elpa_t &
     getElpaHandle();

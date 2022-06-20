@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -36,7 +36,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
   for (auto it = rhoOutVals.cbegin(); it != rhoOutVals.cend(); it++)
     cellQuadDataContainerIn.push_back(&(*it));
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       for (auto it = gradRhoInVals.cbegin(); it != gradRhoInVals.cend(); it++)
         cellQuadDataContainerIn.push_back(&(*it));
@@ -45,7 +45,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
         cellQuadDataContainerIn.push_back(&(*it));
     }
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       for (auto it = rhoInValsSpinPolarized.cbegin();
            it != rhoInValsSpinPolarized.cend();
@@ -58,7 +58,8 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
         cellQuadDataContainerIn.push_back(&(*it));
     }
 
-  if (dftParameters::xcFamilyType == "GGA" && dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+      d_dftParamsPtr->spinPolarized == 1)
     {
       for (auto it = gradRhoInValsSpinPolarized.cbegin();
            it != gradRhoInValsSpinPolarized.cend();
@@ -78,7 +79,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
   // write size of current mixing history into an additional .txt file
   const std::string extraInfoFileName = "rhoDataExtraInfo.chk";
   if (std::ifstream(extraInfoFileName) &&
-      Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     dftUtils::moveFile(extraInfoFileName, extraInfoFileName + ".old");
   std::ofstream extraInfoFile(extraInfoFileName);
   if (extraInfoFile.is_open())
@@ -138,7 +139,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoNodalData()
 
   distributedCPUVec<double> rhoNodalFieldSpin0;
   distributedCPUVec<double> rhoNodalFieldSpin1;
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       rhoNodalFieldSpin0.reinit(rhoNodalField);
       rhoNodalFieldSpin0 = 0;
@@ -189,7 +190,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoNodalData()
   tempVec.update_ghost_values();
   solutionVectors.push_back(&tempVec);
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       tempVecSpin0.reinit(tempVec);
       tempVecSpin1.reinit(tempVec);
@@ -268,7 +269,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
         std::map<dealii::CellId, std::vector<double>>());
     }
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -284,7 +285,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
         }
     }
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -300,7 +301,8 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
         }
     }
 
-  if (dftParameters::xcFamilyType == "GGA" && dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+      d_dftParamsPtr->spinPolarized == 1)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -336,7 +338,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
     }
   rhoOutValues = &(rhoOutVals.back());
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -352,7 +354,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
       gradRhoOutValues = &(gradRhoOutVals.back());
     }
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -368,7 +370,8 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
       rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
     }
 
-  if (dftParameters::xcFamilyType == "GGA" && dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+      d_dftParamsPtr->spinPolarized == 1)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -399,8 +402,8 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoNodalData()
 
   solutionVectors.push_back(&d_rhoInNodalValuesRead);
 
-  if (dftParameters::spinPolarized == 1 &&
-      !dftParameters::restartSpinFromNoSpin)
+  if (d_dftParamsPtr->spinPolarized == 1 &&
+      !d_dftParamsPtr->restartSpinFromNoSpin)
     {
       solutionVectors.push_back(&d_rhoInSpin0NodalValuesRead);
       solutionVectors.push_back(&d_rhoInSpin1NodalValuesRead);
@@ -411,7 +414,8 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoNodalData()
 
   pcout << "...Reading from checkpoint done." << std::endl;
 
-  if (dftParameters::spinPolarized == 1 && dftParameters::restartSpinFromNoSpin)
+  if (d_dftParamsPtr->spinPolarized == 1 &&
+      d_dftParamsPtr->restartSpinFromNoSpin)
     {
       d_rhoInSpin0NodalValuesRead.reinit(d_rhoInNodalValuesRead);
       d_rhoInSpin1NodalValuesRead.reinit(d_rhoInNodalValuesRead);
@@ -422,10 +426,10 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoNodalData()
       for (unsigned int i = 0; i < d_rhoInNodalValuesRead.local_size(); i++)
         {
           d_rhoInSpin0NodalValuesRead.local_element(i) =
-            (0.5 - dftParameters::start_magnetization) *
+            (0.5 - d_dftParamsPtr->start_magnetization) *
             d_rhoInNodalValuesRead.local_element(i);
           d_rhoInSpin1NodalValuesRead.local_element(i) =
-            (0.5 + dftParameters::start_magnetization) *
+            (0.5 + d_dftParamsPtr->start_magnetization) *
             d_rhoInNodalValuesRead.local_element(i);
         }
     }
@@ -436,11 +440,12 @@ void
 dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
-                              "domainBoundingVectorsCurrent.chk");
+                              "domainBoundingVectorsCurrent.chk",
+                              d_mpiCommParent);
 
   std::vector<std::vector<double>> atomLocationsFractionalCurrent;
-  if (dftParameters::periodicX || dftParameters::periodicY ||
-      dftParameters::periodicZ)
+  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+      d_dftParamsPtr->periodicZ)
     {
       atomLocationsFractionalCurrent = atomLocationsFractional;
       const int                        numberGlobalAtoms = atomLocations.size();
@@ -459,11 +464,11 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         }
 
       std::vector<bool> periodicBc(3, false);
-      periodicBc[0] = dftParameters::periodicX;
-      periodicBc[1] = dftParameters::periodicY;
-      periodicBc[2] = dftParameters::periodicZ;
+      periodicBc[0] = d_dftParamsPtr->periodicX;
+      periodicBc[1] = d_dftParamsPtr->periodicY;
+      periodicBc[2] = d_dftParamsPtr->periodicZ;
 
-      if (!dftParameters::floatingNuclearCharges)
+      if (!d_dftParamsPtr->floatingNuclearCharges)
         {
           for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
             {
@@ -479,7 +484,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
                                                     latticeVectorsFlattened,
                                                     periodicBc);
               // for synchrozination
-              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
               atomLocationsFractional[iAtom][2] = newFracCoord[0];
               atomLocationsFractional[iAtom][3] = newFracCoord[1];
@@ -502,7 +507,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
                                                     latticeVectorsFlattened,
                                                     periodicBc);
               // for synchrozination
-              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
               atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
               atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
@@ -512,7 +517,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
     }
 
   std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     for (unsigned int iAtom = 0; iAtom < d_atomLocationsAutoMesh.size();
          iAtom++)
       {
@@ -521,37 +526,44 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         atomLocationsAutoMesh[iAtom][4] = d_atomLocationsAutoMesh[iAtom][2];
       }
 #ifdef USE_COMPLEX
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     dftUtils::writeDataIntoFile(atomLocationsFractional,
-                                "atomsFracCoordAutomesh.chk");
+                                "atomsFracCoordAutomesh.chk",
+                                d_mpiCommParent);
 
   dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                              "atomsFracCoordCurrent.chk");
+                              "atomsFracCoordCurrent.chk",
+                              d_mpiCommParent);
 #else
-  if (dftParameters::periodicX || dftParameters::periodicY ||
-      dftParameters::periodicZ)
+  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+      d_dftParamsPtr->periodicZ)
     {
-      if (!dftParameters::floatingNuclearCharges)
+      if (!d_dftParamsPtr->floatingNuclearCharges)
         dftUtils::writeDataIntoFile(atomLocationsFractional,
-                                    "atomsFracCoordAutomesh.chk");
+                                    "atomsFracCoordAutomesh.chk",
+                                    d_mpiCommParent);
 
       dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                                  "atomsFracCoordCurrent.chk");
+                                  "atomsFracCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
   else
     {
-      if (!dftParameters::floatingNuclearCharges)
+      if (!d_dftParamsPtr->floatingNuclearCharges)
         dftUtils::writeDataIntoFile(atomLocationsAutoMesh,
-                                    "atomsCartCoordAutomesh.chk");
+                                    "atomsCartCoordAutomesh.chk",
+                                    d_mpiCommParent);
 
-      dftUtils::writeDataIntoFile(atomLocations, "atomsCartCoordCurrent.chk");
+      dftUtils::writeDataIntoFile(atomLocations,
+                                  "atomsCartCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
 #endif
 
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     {
-      if (dftParameters::periodicX || dftParameters::periodicY ||
-          dftParameters::periodicZ)
+      if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+          d_dftParamsPtr->periodicZ)
         {
           atomLocationsFractional = atomLocationsFractionalCurrent;
         }
@@ -567,6 +579,81 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
             d_gaussianMovementAtomsNetDisplacements[i][j];
 
       dftUtils::writeDataIntoFile(atomsDisplacementsGaussian,
-                                  "atomsGaussianDispCoord.chk");
+                                  "atomsGaussianDispCoord.chk",
+                                  d_mpiCommParent);
+    }
+}
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinatesFloatingCharges(
+  const std::string Path) const
+{
+  dftUtils::writeDataIntoFile(d_domainBoundingVectors,
+                              Path + "domainBoundingVectorsCurrent.chk",
+                              d_mpiCommParent);
+
+  std::vector<std::vector<double>> atomLocationsFractionalCurrent;
+  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+      d_dftParamsPtr->periodicZ)
+    {
+      atomLocationsFractionalCurrent = atomLocationsFractional;
+      const int                        numberGlobalAtoms = atomLocations.size();
+      std::vector<double>              latticeVectorsFlattened(9, 0.0);
+      std::vector<std::vector<double>> atomFractionalCoordinates;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
+          latticeVectorsFlattened[3 * idim + jdim] =
+            d_domainBoundingVectors[idim][jdim];
+      Point<3> corner;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        {
+          corner[idim] = 0;
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
+            corner[idim] -= d_domainBoundingVectors[jdim][idim] / 2.0;
+        }
+
+      std::vector<bool> periodicBc(3, false);
+      periodicBc[0] = d_dftParamsPtr->periodicX;
+      periodicBc[1] = d_dftParamsPtr->periodicY;
+      periodicBc[2] = d_dftParamsPtr->periodicZ;
+
+
+
+      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        {
+          Point<3> atomCoor;
+          int      atomId = iAtom;
+          atomCoor[0]     = atomLocations[iAtom][2];
+          atomCoor[1]     = atomLocations[iAtom][3];
+          atomCoor[2]     = atomLocations[iAtom][4];
+
+          std::vector<double> newFracCoord =
+            internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+                                                corner,
+                                                latticeVectorsFlattened,
+                                                periodicBc);
+          // for synchrozination
+          MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
+
+          atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
+          atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
+          atomLocationsFractionalCurrent[iAtom][4] = newFracCoord[2];
+        }
+    }
+
+
+  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+      d_dftParamsPtr->periodicZ)
+    {
+      dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
+                                  Path + "atomsFracCoordCurrent.chk",
+                                  d_mpiCommParent);
+    }
+  else
+    {
+      dftUtils::writeDataIntoFile(atomLocations,
+                                  Path + "atomsCartCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
 }

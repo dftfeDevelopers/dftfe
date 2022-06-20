@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -24,6 +24,7 @@
 #define fileReaders_H_
 #include <string>
 #include <vector>
+#include <mpi.h>
 
 namespace dftfe
 {
@@ -53,6 +54,18 @@ namespace dftfe
      *
      * @param[in] data input double data in [rows][columns] format
      * @param[in] fileName
+     * @param[in] mpi_comm_parent parent communicator
+     */
+    void
+    writeDataIntoFile(const std::vector<std::vector<double>> &data,
+                      const std::string &                     fileName,
+                      const MPI_Comm &                        mpi_comm_parent);
+
+    /**
+     * @brief Write data into file containing only double data in rows and columns.
+     *
+     * @param[in] data input double data in [rows][columns] format
+     * @param[in] fileName
      */
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
@@ -72,6 +85,12 @@ namespace dftfe
      */
     void
     moveFile(const std::string &old_name, const std::string &new_name);
+
+    /**
+     * @brief copy file.
+     */
+    void
+    copyFile(const std::string &pathold, const std::string &pathnew);
 
     /**
      * @brief Verify if checkpoint file exists.

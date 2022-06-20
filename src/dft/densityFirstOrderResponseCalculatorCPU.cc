@@ -100,12 +100,14 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm)
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters & dftParams)
   {
     int this_process;
-    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Comm_rank(mpiCommParent, &this_process);
+    MPI_Barrier(mpiCommParent);
     double cpu_time = MPI_Wtime();
 
     // band group parallelization data structures
@@ -118,11 +120,11 @@ namespace dftfe
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int BVec = std::min(dftParameters::chebyWfcBlockSize,
+    const unsigned int BVec = std::min(dftParams.chebyWfcBlockSize,
                                        bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
-      (dftParameters::spinPolarized == 1) ? 1.0 : 2.0;
+      (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
     std::vector<T> wfcQuads(numQuadPoints * BVec, T(0.0));
     std::vector<T> wfcPrimeQuads(numQuadPoints * BVec, T(0.0));
@@ -162,7 +164,7 @@ namespace dftfe
                     (rhoResponseValuesFermiEnergy)[cellid].end(),
                     0.0);
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               std::fill((rhoResponseValuesHamSpinPolarized)[cellid].begin(),
                         (rhoResponseValuesHamSpinPolarized)[cellid].end(),
@@ -188,7 +190,7 @@ namespace dftfe
       totalLocallyOwnedCells * numQuadPoints * 2, 0.0);
 
     for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParameters::spinPolarized);
+         spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         std::vector<double> rhoResponseContributionHam(totalLocallyOwnedCells *
@@ -200,13 +202,13 @@ namespace dftfe
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
           {
             const std::vector<T> &XCurrentKPoint =
-              X[(dftParameters::spinPolarized + 1) * kPoint + spinIndex];
+              X[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             const std::vector<T> &XPrimeCurrentKPoint =
-              XPrime[(dftParameters::spinPolarized + 1) * kPoint + spinIndex];
+              XPrime[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             const std::vector<double> &densityMatDerFermiEnergyVec =
-              densityMatDerFermiEnergy[(dftParameters::spinPolarized + 1) *
+              densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) *
                                          kPoint +
                                        spinIndex];
 
@@ -357,7 +359,7 @@ namespace dftfe
                                                    iquad];
             }
 
-        if (dftParameters::spinPolarized == 1)
+        if (dftParams.spinPolarized == 1)
           {
             for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
               for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
@@ -389,7 +391,7 @@ namespace dftfe
                                 interpoolcomm,
                                 rhoResponseFermiEnergy);
 
-    if (dftParameters::spinPolarized == 1)
+    if (dftParams.spinPolarized == 1)
       {
         dealii::Utilities::MPI::sum(rhoResponseHamSpinPolarized,
                                     interBandGroupComm,
@@ -428,7 +430,7 @@ namespace dftfe
               temp2Quads[q] = rhoResponseFermiEnergy[iElem * numQuadPoints + q];
             }
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               std::vector<double> &temp3Quads =
                 (rhoResponseValuesHamSpinPolarized)[cellid];
@@ -459,10 +461,10 @@ namespace dftfe
         }
 
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mpiCommParent);
     cpu_time = MPI_Wtime() - cpu_time;
 
-    if (this_process == 0 && dftParameters::verbosity >= 2)
+    if (this_process == 0 && dftParams.verbosity >= 2)
       std::cout << "Time for compute rhoprime on CPU: " << cpu_time
                 << std::endl;
   }
@@ -489,12 +491,14 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm)
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters & dftParams)
   {
     int this_process;
-    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Comm_rank(mpiCommParent, &this_process);
+    MPI_Barrier(mpiCommParent);
     double cpu_time = MPI_Wtime();
 
     // band group parallelization data structures
@@ -507,11 +511,11 @@ namespace dftfe
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int BVec = std::min(dftParameters::chebyWfcBlockSize,
+    const unsigned int BVec = std::min(dftParams.chebyWfcBlockSize,
                                        bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
-      (dftParameters::spinPolarized == 1) ? 1.0 : 2.0;
+      (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
     std::vector<TLowPrec> wfcQuads(numQuadPoints * BVec, TLowPrec(0.0));
     std::vector<TLowPrec> wfcPrimeQuads(numQuadPoints * BVec, TLowPrec(0.0));
@@ -553,7 +557,7 @@ namespace dftfe
                     (rhoResponseValuesFermiEnergy)[cellid].end(),
                     0.0);
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               std::fill((rhoResponseValuesHamSpinPolarized)[cellid].begin(),
                         (rhoResponseValuesHamSpinPolarized)[cellid].end(),
@@ -582,7 +586,7 @@ namespace dftfe
       operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap();
 
     for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParameters::spinPolarized);
+         spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         std::vector<double> rhoResponseContributionHam(totalLocallyOwnedCells *
@@ -594,13 +598,13 @@ namespace dftfe
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
           {
             const std::vector<T> &XCurrentKPoint =
-              X[(dftParameters::spinPolarized + 1) * kPoint + spinIndex];
+              X[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             const std::vector<T> &XPrimeCurrentKPoint =
-              XPrime[(dftParameters::spinPolarized + 1) * kPoint + spinIndex];
+              XPrime[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             const std::vector<double> &densityMatDerFermiEnergyVec =
-              densityMatDerFermiEnergy[(dftParameters::spinPolarized + 1) *
+              densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) *
                                          kPoint +
                                        spinIndex];
 
@@ -753,7 +757,7 @@ namespace dftfe
                                                    iquad];
             }
 
-        if (dftParameters::spinPolarized == 1)
+        if (dftParams.spinPolarized == 1)
           {
             for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
               for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
@@ -785,7 +789,7 @@ namespace dftfe
                                 interpoolcomm,
                                 rhoResponseFermiEnergy);
 
-    if (dftParameters::spinPolarized == 1)
+    if (dftParams.spinPolarized == 1)
       {
         dealii::Utilities::MPI::sum(rhoResponseHamSpinPolarized,
                                     interBandGroupComm,
@@ -824,7 +828,7 @@ namespace dftfe
               temp2Quads[q] = rhoResponseFermiEnergy[iElem * numQuadPoints + q];
             }
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               std::vector<double> &temp3Quads =
                 (rhoResponseValuesHamSpinPolarized)[cellid];
@@ -855,10 +859,10 @@ namespace dftfe
         }
 
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mpiCommParent);
     cpu_time = MPI_Wtime() - cpu_time;
 
-    if (this_process == 0 && dftParameters::verbosity >= 2)
+    if (this_process == 0 && dftParams.verbosity >= 2)
       std::cout << "Time for compute rhoprime on CPU: " << cpu_time
                 << std::endl;
   }
@@ -884,8 +888,10 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters & dftParams);
 
   template void
   computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
@@ -908,7 +914,9 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters & dftParams);
 
 } // namespace dftfe

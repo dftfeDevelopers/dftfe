@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -58,13 +58,14 @@ namespace dftfe
       const dealii::ConditionalOStream &             pcout,
       const MPI_Comm &                               mpi_comm,
       const MPI_Comm &                               interpool_comm1,
-      const MPI_Comm &                               interpool_comm2)
+      const MPI_Comm &                               interpool_comm2,
+      const dftParameters &                          dftParams)
 
     {
       //
       // compute some adaptive mesh metrics
       //
-      double       minElemLength        = dftParameters::meshSizeOuterDomain;
+      double       minElemLength        = dftParams.meshSizeOuterDomain;
       unsigned int numLocallyOwnedCells = 0;
       typename parallel::distributed::Triangulation<3>::active_cell_iterator
         cell,
@@ -86,7 +87,7 @@ namespace dftfe
       //
       // print out adaptive mesh metrics
       //
-      if (dftParameters::verbosity >= 4)
+      if (dftParams.verbosity >= 4)
         {
           pcout << printCommand << std::endl
                 << " num elements: "
@@ -207,9 +208,9 @@ namespace dftfe
 
     std::vector<double> numberIntervalsEachDirection;
 
-    double largestMeshSizeAroundAtom = dftParameters::meshSizeOuterBall;
+    double largestMeshSizeAroundAtom = d_dftParams.meshSizeOuterBall;
 
-    if (dftParameters::useMeshSizesFromAtomsFile)
+    if (d_dftParams.useMeshSizesFromAtomsFile)
       {
         largestMeshSizeAroundAtom = 1e-6;
         for (unsigned int n = 0; n < d_atomPositions.size(); n++)
@@ -219,11 +220,11 @@ namespace dftfe
           }
       }
 
-    if (dftParameters::autoAdaptBaseMeshSize)
+    if (d_dftParams.autoAdaptBaseMeshSize)
       {
         double baseMeshSize1, baseMeshSize2, baseMeshSize3;
-        if (dftParameters::periodicX || dftParameters::periodicY ||
-            dftParameters::periodicZ)
+        if (d_dftParams.periodicX || d_dftParams.periodicY ||
+            d_dftParams.periodicZ)
           {
             const double targetBaseMeshSize =
               (std::min(std::min(domainBoundingVectorMag1,
@@ -275,12 +276,12 @@ namespace dftfe
       }
     else
       {
-        numberIntervalsEachDirection.push_back(
-          domainBoundingVectorMag1 / dftParameters::meshSizeOuterDomain);
-        numberIntervalsEachDirection.push_back(
-          domainBoundingVectorMag2 / dftParameters::meshSizeOuterDomain);
-        numberIntervalsEachDirection.push_back(
-          domainBoundingVectorMag3 / dftParameters::meshSizeOuterDomain);
+        numberIntervalsEachDirection.push_back(domainBoundingVectorMag1 /
+                                               d_dftParams.meshSizeOuterDomain);
+        numberIntervalsEachDirection.push_back(domainBoundingVectorMag2 /
+                                               d_dftParams.meshSizeOuterDomain);
+        numberIntervalsEachDirection.push_back(domainBoundingVectorMag3 /
+                                               d_dftParams.meshSizeOuterDomain);
       }
 
     Point<3> vector1(d_domainBoundingVectors[0][0],
@@ -325,9 +326,11 @@ namespace dftfe
     // boundary conditions later
     //
     meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,
-                                                 d_domainBoundingVectors);
+                                                 d_domainBoundingVectors,
+                                                 d_mpiCommParent,
+                                                 d_dftParams);
 
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       pcout << std::endl
             << "Coarse triangulation number of elements: "
             << parallelTriangulation.n_global_active_cells() << std::endl;
@@ -378,9 +381,9 @@ namespace dftfe
     unsigned int                           locallyOwnedCount = 0;
 
     bool   isAnyCellRefined           = false;
-    double smallestMeshSizeAroundAtom = dftParameters::meshSizeOuterBall;
+    double smallestMeshSizeAroundAtom = d_dftParams.meshSizeOuterBall;
 
-    if (dftParameters::useMeshSizesFromAtomsFile)
+    if (d_dftParams.useMeshSizesFromAtomsFile)
       {
         smallestMeshSizeAroundAtom = 1e+6;
         for (unsigned int n = 0; n < d_atomPositions.size(); n++)
@@ -406,13 +409,13 @@ namespace dftfe
             atomIdsLocal.push_back(iAtom);
 
             meshSizeAroundAtomLocalAtoms.push_back(
-              dftParameters::useMeshSizesFromAtomsFile ?
+              d_dftParams.useMeshSizesFromAtomsFile ?
                 d_atomPositions[iAtom][5] :
-                dftParameters::meshSizeOuterBall);
+                d_dftParams.meshSizeOuterBall);
             outerAtomBallRadiusLocalAtoms.push_back(
-              dftParameters::useMeshSizesFromAtomsFile ?
+              d_dftParams.useMeshSizesFromAtomsFile ?
                 d_atomPositions[iAtom][6] :
-                dftParameters::outerAtomBallRadius);
+                d_dftParams.outerAtomBallRadius);
           }
         else
           {
@@ -424,13 +427,13 @@ namespace dftfe
             atomIdsLocal.push_back(imageChargeId);
 
             meshSizeAroundAtomLocalAtoms.push_back(
-              dftParameters::useMeshSizesFromAtomsFile ?
+              d_dftParams.useMeshSizesFromAtomsFile ?
                 d_atomPositions[imageChargeId][5] :
-                dftParameters::meshSizeOuterBall);
+                d_dftParams.meshSizeOuterBall);
             outerAtomBallRadiusLocalAtoms.push_back(
-              dftParameters::useMeshSizesFromAtomsFile ?
+              d_dftParams.useMeshSizesFromAtomsFile ?
                 d_atomPositions[imageChargeId][6] :
-                dftParameters::outerAtomBallRadius);
+                d_dftParams.outerAtomBallRadius);
           }
       }
 
@@ -488,7 +491,7 @@ namespace dftfe
                   }
               }
 
-            if (dftParameters::autoAdaptBaseMeshSize)
+            if (d_dftParams.autoAdaptBaseMeshSize)
               {
                 bool inOuterAtomBall = false;
 
@@ -503,11 +506,11 @@ namespace dftfe
 
                 bool inInnerAtomBall = false;
 
-                if (distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
+                if (distanceToClosestAtom <= d_dftParams.innerAtomBallRadius)
                   inInnerAtomBall = true;
 
                 if (inInnerAtomBall &&
-                    currentMeshSize > 1.2 * dftParameters::meshSizeInnerBall)
+                    currentMeshSize > 1.2 * d_dftParams.meshSizeInnerBall)
                   cellRefineFlag = true;
               }
             else
@@ -524,17 +527,17 @@ namespace dftfe
 
                 bool inInnerAtomBall = false;
 
-                if (distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
+                if (distanceToClosestAtom <= d_dftParams.innerAtomBallRadius)
                   inInnerAtomBall = true;
 
                 if (inInnerAtomBall &&
-                    currentMeshSize > dftParameters::meshSizeInnerBall)
+                    currentMeshSize > d_dftParams.meshSizeInnerBall)
                   cellRefineFlag = true;
               }
 
             /*
-            if (dftParameters::autoAdaptBaseMeshSize  &&
-            !dftParameters::reproducible_output)
+            if (d_dftParams.autoAdaptBaseMeshSize  &&
+            !d_dftParams.reproducible_output)
             {
               bool inBiggerAtomBall = false;
 
@@ -554,7 +557,7 @@ namespace dftfe
                 double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
                 if (dist < 1e-08 &&
-                    ((currentMeshSize > dftParameters::meshSizeInnerBall) ||
+                    ((currentMeshSize > d_dftParams.meshSizeInnerBall) ||
                      (currentMeshSize >
                       1.2 * meshSizeAroundAtomLocalAtoms[closestId])))
                   cellRefineFlag = true;
@@ -623,7 +626,7 @@ namespace dftfe
               {
                 if (cell->at_boundary() &&
                     cell->minimum_vertex_distance() >
-                      (dftParameters::autoAdaptBaseMeshSize ? 1.5 : 1) *
+                      (d_dftParams.autoAdaptBaseMeshSize ? 1.5 : 1) *
                         smootheningFactor * smallestMeshSizeAroundAtom &&
                     !cell->refine_flag_set())
                   for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
@@ -828,9 +831,9 @@ namespace dftfe
           }
       }
 
-    const std::array<int, 3> periodic = {dftParameters::periodicX,
-                                         dftParameters::periodicY,
-                                         dftParameters::periodicZ};
+    const std::array<int, 3> periodic = {d_dftParams.periodicX,
+                                         d_dftParams.periodicY,
+                                         d_dftParams.periodicZ};
 
     std::vector<int> periodicDirectionVector;
     for (unsigned int d = 0; d < 3; ++d)
@@ -869,7 +872,7 @@ namespace dftfe
       locally_owned_dofs_debug,
       locally_active_dofs_debug,
       mpi_communicator,
-      !dftParameters::reproducible_output);
+      !d_dftParams.reproducible_output);
   }
 
   //
@@ -883,7 +886,7 @@ namespace dftfe
     const unsigned int                            FEOrder,
     const bool                                    generateElectrostaticsTria)
   {
-    double topfrac    = dftParameters::topfrac;
+    double topfrac    = d_dftParams.topfrac;
     double bottomfrac = 0.0;
 
     //
@@ -919,7 +922,7 @@ namespace dftfe
     //
     // print certain error metrics of each cell
     //
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       {
         double maxErrorIndicator =
           *std::max_element(errorInEachCell.begin(), errorInEachCell.end());
@@ -962,7 +965,8 @@ namespace dftfe
                                  pcout,
                                  mpi_communicator,
                                  interpoolcomm,
-                                 interBandGroupComm);
+                                 interBandGroupComm,
+                                 d_dftParams);
 
     if (generateElectrostaticsTria)
       {
@@ -1002,7 +1006,8 @@ namespace dftfe
                                      pcout,
                                      mpi_communicator,
                                      interpoolcomm,
-                                     interBandGroupComm);
+                                     interBandGroupComm,
+                                     d_dftParams);
 
         std::string printCommand2 =
           "A-posteriori Electrostatics Disp Triangulation Summary";
@@ -1011,7 +1016,8 @@ namespace dftfe
                                      pcout,
                                      mpi_communicator,
                                      interpoolcomm,
-                                     interBandGroupComm);
+                                     interBandGroupComm,
+                                     d_dftParams);
 
 
         std::string printCommand3 =
@@ -1021,7 +1027,8 @@ namespace dftfe
                                      pcout,
                                      mpi_communicator,
                                      interpoolcomm,
-                                     interBandGroupComm);
+                                     interBandGroupComm,
+                                     d_dftParams);
       }
   }
 
@@ -1120,7 +1127,7 @@ namespace dftfe
           {
             if (numLevels < d_max_refinement_steps)
               {
-                if (dftParameters::verbosity >= 4)
+                if (d_dftParams.verbosity >= 4)
                   pcout << "refinement in progress, level: " << numLevels
                         << std::endl;
 
@@ -1170,8 +1177,8 @@ namespace dftfe
           }
       }
 
-    if (!dftParameters::reproducible_output &&
-        !dftParameters::createConstraintsFromSerialDofhandler)
+    if (!d_dftParams.reproducible_output &&
+        !d_dftParams.createConstraintsFromSerialDofhandler)
       {
         //
         // STAGE1: This stage is only activated if combined periodic and hanging
@@ -1272,7 +1279,7 @@ namespace dftfe
                   {
                     if (numLevels < d_max_refinement_steps)
                       {
-                        if (dftParameters::verbosity >= 4)
+                        if (d_dftParams.verbosity >= 4)
                           pcout
                             << "refinement in progress, level: " << numLevels
                             << std::endl;
@@ -1432,7 +1439,7 @@ namespace dftfe
                   {
                     if (numLevels < d_max_refinement_steps)
                       {
-                        if (dftParameters::verbosity >= 4)
+                        if (d_dftParams.verbosity >= 4)
                           pcout
                             << "refinement in progress, level: " << numLevels
                             << std::endl;
@@ -1593,7 +1600,7 @@ namespace dftfe
                   {
                     if (numLevels < d_max_refinement_steps)
                       {
-                        if (dftParameters::verbosity >= 4)
+                        if (d_dftParams.verbosity >= 4)
                           pcout
                             << "refinement in progress, level: " << numLevels
                             << std::endl;
@@ -1650,20 +1657,20 @@ namespace dftfe
 
         if (checkConstraintsConsistency(parallelTriangulation))
           {
-            if (dftParameters::verbosity >= 4)
+            if (d_dftParams.verbosity >= 4)
               pcout
                 << "Hanging node and periodic constraints parallel consistency achieved."
                 << std::endl;
           }
         else
           {
-            if (dftParameters::verbosity >= 4)
+            if (d_dftParams.verbosity >= 4)
               pcout
                 << "Hanging node and periodic constraints parallel consistency not achieved."
                 << std::endl;
 
             AssertThrow(
-              dftParameters::createConstraintsFromSerialDofhandler,
+              d_dftParams.createConstraintsFromSerialDofhandler,
               ExcMessage(
                 "DFT-FE error: this is due to a known issue related to hanging node constraints in dealii. Please set CONSTRAINTS FROM SERIAL DOFHANDLER = true under the Boundary conditions subsection in the input parameters file to circumvent this issue."));
           }
@@ -1672,7 +1679,7 @@ namespace dftfe
     //
     // compute some adaptive mesh metrics
     //
-    double minElemLength = dftParameters::meshSizeOuterDomain;
+    double minElemLength = d_dftParams.meshSizeOuterDomain;
     double maxElemLength = 0.0;
     typename parallel::distributed::Triangulation<3>::active_cell_iterator cell,
       endc, cellDisp, cellForce;
@@ -1699,7 +1706,7 @@ namespace dftfe
     // print out adaptive mesh metrics and check mesh generation synchronization
     // across pools
     //
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       {
         pcout << "Triangulation generation summary: " << std::endl
               << " num elements: "
@@ -1721,7 +1728,7 @@ namespace dftfe
         const unsigned int numberGlobalCellsSerial =
           serialTriangulation.n_global_active_cells();
 
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           pcout << " numParallelCells: " << numberGlobalCellsParallel
                 << ", numSerialCells: " << numberGlobalCellsSerial << std::endl;
 
@@ -1735,7 +1742,7 @@ namespace dftfe
         const unsigned int numberGlobalCellsParallel =
           parallelTriangulation.n_global_active_cells();
 
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           pcout << " numParallelCells: " << numberGlobalCellsParallel
                 << std::endl;
       }
@@ -1744,9 +1751,9 @@ namespace dftfe
     if (generateElectrostaticsTria)
       {
         numLocallyOwnedCells      = 0;
-        double minElemLengthRho   = dftParameters::meshSizeOuterDomain;
-        double minElemLengthDisp  = dftParameters::meshSizeOuterDomain;
-        double minElemLengthForce = dftParameters::meshSizeOuterDomain;
+        double minElemLengthRho   = d_dftParams.meshSizeOuterDomain;
+        double minElemLengthDisp  = d_dftParams.meshSizeOuterDomain;
+        double minElemLengthForce = d_dftParams.meshSizeOuterDomain;
 
         cell      = electrostaticsTriangulationRho.begin_active();
         endc      = electrostaticsTriangulationRho.end();
@@ -1777,7 +1784,7 @@ namespace dftfe
         //
         // print out adaptive electrostatics mesh metrics
         //
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           {
             pcout << "Electrostatics Triangulation generation summary: "
                   << std::endl

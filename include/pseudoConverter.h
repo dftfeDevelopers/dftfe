@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -40,7 +40,11 @@ namespace dftfe
   namespace pseudoUtils
   {
     int
-    convert(std::string &file);
+    convert(const std::string &file,
+            const std::string &dftfeScratchFolderName,
+            const int          verbosity,
+            const unsigned     natomTypes,
+            const bool         pseudoTestsFlag);
   }
 } // namespace dftfe
 #endif

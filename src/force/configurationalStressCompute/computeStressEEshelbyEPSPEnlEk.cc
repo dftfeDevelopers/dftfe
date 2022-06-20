@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -53,16 +53,16 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
 {
   int this_process;
-  MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Comm_rank(d_mpiCommParent, &this_process);
+  MPI_Barrier(d_mpiCommParent);
   double forcetotal_time = MPI_Wtime();
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double init_time = MPI_Wtime();
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 
-  const bool isPseudopotential = dftParameters::isPseudopotential;
+  const bool isPseudopotential = d_dftParams.isPseudopotential;
 
   FEEvaluation<3,
                1,
@@ -112,10 +112,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
 
   const double spinPolarizedFactor =
-    (dftParameters::spinPolarized == 1) ? 0.5 : 1.0;
+    (d_dftParams.spinPolarized == 1) ? 0.5 : 1.0;
   const VectorizedArray<double> spinPolarizedFactorVect =
-    (dftParameters::spinPolarized == 1) ? make_vectorized_array(0.5) :
-                                          make_vectorized_array(1.0);
+    (d_dftParams.spinPolarized == 1) ? make_vectorized_array(0.5) :
+                                       make_vectorized_array(1.0);
 
   const unsigned int numQuadPoints    = forceEval.n_q_points;
   const unsigned int numQuadPointsNLP = forceEvalNLP.n_q_points;
@@ -211,8 +211,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                                              numEigenVectors,
                                              bandGroupLowHighPlusOneIndices);
 
-  const unsigned int blockSize = std::min(dftParameters::chebyWfcBlockSize,
-                                          bandGroupLowHighPlusOneIndices[1]);
+  const unsigned int blockSize =
+    std::min(d_dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
   const unsigned int localVectorSize =
     dftPtr->d_eigenVectorsFlattenedSTL[0].size() / numEigenVectors;
@@ -465,10 +465,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   std::vector<std::vector<double>> partialOccupancies(
     dftPtr->d_kPointWeights.size(),
-    std::vector<double>((1 + dftParameters::spinPolarized) * numEigenVectors,
+    std::vector<double>((1 + d_dftParams.spinPolarized) * numEigenVectors,
                         0.0));
-  for (unsigned int spinIndex = 0;
-       spinIndex < (1 + dftParameters::spinPolarized);
+  for (unsigned int spinIndex = 0; spinIndex < (1 + d_dftParams.spinPolarized);
        ++spinIndex)
     for (unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size();
          ++kPoint)
@@ -480,9 +479,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             dftUtils::getPartialOccupancy(eigenValue,
                                           dftPtr->fermiEnergy,
                                           C_kb,
-                                          dftParameters::TVal);
+                                          d_dftParams.TVal);
 
-          if (dftParameters::constraintMagnetization)
+          if (d_dftParams.constraintMagnetization)
             {
               partialOccupancies[kPoint][numEigenVectors * spinIndex + iWave] =
                 1.0;
@@ -501,11 +500,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             }
         }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_time = MPI_Wtime() - init_time;
 
-  for (unsigned int spinIndex = 0;
-       spinIndex < (1 + dftParameters::spinPolarized);
+  for (unsigned int spinIndex = 0; spinIndex < (1 + d_dftParams.spinPolarized);
        ++spinIndex)
     {
 #if defined(DFTFE_WITH_GPU)
@@ -552,9 +550,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 #endif
 
 #if defined(DFTFE_WITH_GPU)
-      if (dftParameters::useGPU)
+      if (d_dftParams.useGPU)
         {
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           double gpu_time = MPI_Wtime();
 
           for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
@@ -563,7 +561,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
               forceCUDA::gpuPortedForceKernelsAllH(
                 kohnShamDFTEigenOperator,
                 dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
-                  ((1 + dftParameters::spinPolarized) * kPoint + spinIndex) *
+                  ((1 + d_dftParams.spinPolarized) * kPoint + spinIndex) *
                     localVectorSize * numEigenVectors,
                 &dftPtr->eigenValues[kPoint][spinIndex * numEigenVectors],
                 &partialOccupancies[kPoint][spinIndex * numEigenVectors],
@@ -591,16 +589,18 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                   [kPoint * nonTrivialNonLocalIdsAllCells.size() *
                    numQuadPointsNLP],
 #  endif
+                d_mpiCommParent,
                 dftPtr->interBandGroupComm,
                 isPseudopotential,
                 false,
-                true);
+                true,
+                d_dftParams);
             }
 
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           gpu_time = MPI_Wtime() - gpu_time;
 
-          if (this_process == 0 && dftParameters::verbosity >= 4)
+          if (this_process == 0 && d_dftParams.verbosity >= 4)
             std::cout << "Time for gpuPortedForceKernelsAllH: " << gpu_time
                       << std::endl;
         }
@@ -677,7 +677,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                           eigenVectorsFlattenedBlock[kPoint].local_element(
                             iNode * currentBlockSize + iWave) =
                             dftPtr->d_eigenVectorsFlattenedSTL
-                              [(dftParameters::spinPolarized + 1) * kPoint +
+                              [(d_dftParams.spinPolarized + 1) * kPoint +
                                spinIndex]
                               [iNode * numEigenVectors + ivec + iWave];
 
@@ -1026,7 +1026,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                                 dftPtr->d_kPointWeights,
                                 blockedEigenValues,
                                 dftPtr->fermiEnergy,
-                                dftParameters::TVal);
+                                d_dftParams.TVal);
 
                           EKPoints += eshelbyTensor::getEKStress(
                             psiQuads.begin() +
@@ -1037,7 +1037,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             dftPtr->d_kPointWeights,
                             blockedEigenValues,
                             dftPtr->fermiEnergy,
-                            dftParameters::TVal);
+                            d_dftParams.TVal);
 #else
                         Tensor<2, 3, VectorizedArray<double>> EKPoints =
                           eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic(
@@ -1069,7 +1069,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
         }
 
 #if defined(DFTFE_WITH_GPU)
-      if (dftParameters::useGPU)
+      if (d_dftParams.useGPU)
         {
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
@@ -1306,14 +1306,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
           }
     } // spin index
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double enowfc_time = MPI_Wtime();
 
   /////////// Compute contribution independent of wavefunctions
   ////////////////////
   if (bandGroupTaskId == 0)
     {
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParams.spinPolarized == 1)
         {
           dealii::AlignedVector<VectorizedArray<double>> rhoXCQuadsVect(
             numQuadPoints, make_vectorized_array(0.0));
@@ -1416,7 +1416,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       rhoXCQuadsVect[q][iSubCell] = temp[q];
                     }
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       const std::vector<double> &temp2 =
                         rhoCoreValues.find(subCellId)->second;
@@ -1428,7 +1428,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       const std::vector<double> &temp3 =
                         (*dftPtr->gradRhoOutValuesSpinPolarized)
@@ -1447,7 +1447,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               temp3[6 * q + 3 + idim];
                           }
 
-                      if (dftParameters::nonLinearCoreCorrection)
+                      if (d_dftParams.nonLinearCoreCorrection)
                         {
                           const std::vector<double> &temp4 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1462,7 +1462,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
@@ -1562,7 +1562,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      if (dftParameters::nonLinearCoreCorrection == true)
+                      if (d_dftParams.nonLinearCoreCorrection == true)
                         {
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1571,7 +1571,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
-                          if (dftParameters::xcFamilyType == "GGA")
+                          if (d_dftParams.xcFamilyType == "GGA")
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -1604,7 +1604,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
               if (isPseudopotential)
                 {
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     addENonlinearCoreCorrectionStressContributionSpinPolarized(
                       forceEval,
                       matrixFreeData,
@@ -1615,7 +1615,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       derExchCorrEnergyWithGradRhoOutSpin1Quads,
                       gradRhoCoreAtoms,
                       hessianRhoCoreAtoms,
-                      dftParameters::xcFamilyType == "GGA");
+                      d_dftParams.xcFamilyType == "GGA");
                 }
 
               for (unsigned int iSubCell = 0; iSubCell < numSubCells;
@@ -1715,7 +1715,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       rhoXCQuads[q][iSubCell] = temp1[q];
                     }
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       const std::vector<double> &temp2 =
                         rhoCoreValues.find(subCellId)->second;
@@ -1726,7 +1726,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       const std::vector<double> &temp3 =
                         gradRhoOutValues.find(subCellId)->second;
@@ -1738,7 +1738,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               temp3[3 * q + idim];
                           }
 
-                      if (dftParameters::nonLinearCoreCorrection)
+                      if (d_dftParams.nonLinearCoreCorrection)
                         {
                           const std::vector<double> &temp4 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1751,7 +1751,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();
@@ -1820,7 +1820,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      if (dftParameters::nonLinearCoreCorrection == true)
+                      if (d_dftParams.nonLinearCoreCorrection == true)
                         {
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1829,7 +1829,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim];
 
-                          if (dftParameters::xcFamilyType == "GGA")
+                          if (d_dftParams.xcFamilyType == "GGA")
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -1860,7 +1860,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
               if (isPseudopotential)
                 {
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     addENonlinearCoreCorrectionStressContribution(
                       forceEval,
                       matrixFreeData,
@@ -1896,17 +1896,17 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                                           vselfBinsManagerElectro);
     }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   enowfc_time = MPI_Wtime() - enowfc_time;
 
   forcetotal_time = MPI_Wtime() - forcetotal_time;
 
-  if (this_process == 0 && dftParameters::verbosity >= 4)
+  if (this_process == 0 && d_dftParams.verbosity >= 4)
     std::cout
       << "Total time for configurational stress computation except Eself contribution: "
       << forcetotal_time << std::endl;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParams.verbosity >= 4)
     {
       pcout << " Time taken for initialization in stress: " << init_time
             << std::endl;
@@ -2028,7 +2028,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
       const unsigned int numSubCells =
         matrixFreeDataElectro.n_components_filled(cell);
 
-      if (dftParameters::smearedNuclearCharges)
+      if (d_dftParams.smearedNuclearCharges)
         for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr =
@@ -2047,7 +2047,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
       phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
       phiTotEvalElectro.evaluate(true, true);
 
-      if (dftParameters::smearedNuclearCharges &&
+      if (d_dftParams.smearedNuclearCharges &&
           nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
         {
           forceEvalSmearedCharge.reinit(cell);
@@ -2087,8 +2087,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
               rhoOutValuesElectro.find(subCellId)->second[q];
 
 
-          if (dftParameters::isPseudopotential ||
-              dftParameters::smearedNuclearCharges)
+          if (d_dftParams.isPseudopotential ||
+              d_dftParams.smearedNuclearCharges)
             {
               const std::vector<double> &tempPseudoVal =
                 pseudoVLocElectro.find(subCellId)->second;
@@ -2109,7 +2109,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                 }
             }
 
-          if (dftParameters::smearedNuclearCharges &&
+          if (d_dftParams.smearedNuclearCharges &&
               nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
             {
               const std::vector<double> &bQuadValuesCell =
@@ -2121,8 +2121,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
             }
         }
 
-      if (dftParameters::isPseudopotential ||
-          dftParameters::smearedNuclearCharges)
+      if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
         {
           addEPSPStressContribution(
             feVselfValuesElectro,
@@ -2155,8 +2154,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
           EQuadSum += E * forceEvalElectro.JxW(q);
         }
 
-      if (dftParameters::isPseudopotential ||
-          dftParameters::smearedNuclearCharges)
+      if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
         for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
           {
             VectorizedArray<double> phiExtElectro_q =
@@ -2171,7 +2169,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
           for (unsigned int jdim = 0; jdim < 3; ++jdim)
             d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
 
-      if (dftParameters::smearedNuclearCharges &&
+      if (d_dftParams.smearedNuclearCharges &&
           nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
         {
           for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)

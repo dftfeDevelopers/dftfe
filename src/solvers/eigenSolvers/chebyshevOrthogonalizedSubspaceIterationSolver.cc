@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -61,19 +61,22 @@ namespace dftfe
   //
   chebyshevOrthogonalizedSubspaceIterationSolver::
     chebyshevOrthogonalizedSubspaceIterationSolver(
-      const MPI_Comm &mpi_comm,
-      double          lowerBoundWantedSpectrum,
-      double          lowerBoundUnWantedSpectrum,
-      double          upperBoundUnWantedSpectrum)
+      const MPI_Comm &     mpi_comm_parent,
+      const MPI_Comm &     mpi_comm_domain,
+      double               lowerBoundWantedSpectrum,
+      double               lowerBoundUnWantedSpectrum,
+      double               upperBoundUnWantedSpectrum,
+      const dftParameters &dftParams)
     : d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum)
     , d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum)
     , d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum)
+    , d_mpiCommParent(mpi_comm_parent)
+    , d_dftParams(dftParams)
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , computing_timer(mpi_comm,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , computing_timer(mpi_comm_domain,
                       pcout,
-                      dftParameters::reproducible_output ||
-                          dftParameters::verbosity < 4 ?
+                      dftParams.reproducible_output || dftParams.verbosity < 4 ?
                         dealii::TimerOutput::never :
                         dealii::TimerOutput::summary,
                       dealii::TimerOutput::wall_times)
@@ -126,12 +129,12 @@ namespace dftfe
     dealii::TimerOutput computingTimerStandard(
       operatorMatrix.getMPICommunicator(),
       pcout,
-      dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
+      d_dftParams.reproducible_output || d_dftParams.verbosity < 2 ?
         dealii::TimerOutput::never :
         dealii::TimerOutput::every_call,
       dealii::TimerOutput::wall_times);
 
-    unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
+    unsigned int chebyshevOrder = d_dftParams.chebyshevOrder;
     //
     // set Chebyshev order
     //
@@ -140,21 +143,21 @@ namespace dftfe
         chebyshevOrder =
           internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
-        if (dftParameters::orthogType.compare("CGS") == 0 &&
-            !dftParameters::isPseudopotential)
+        if (d_dftParams.orthogType.compare("CGS") == 0 &&
+            !d_dftParams.isPseudopotential)
           chebyshevOrder *= 0.5;
       }
 
     chebyshevOrder =
-      (isFirstScf && dftParameters::isPseudopotential) ?
+      (isFirstScf && d_dftParams.isPseudopotential) ?
         chebyshevOrder *
-          dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor :
+          d_dftParams.chebyshevFilterPolyDegreeFirstScfScalingFactor :
         chebyshevOrder;
 
     //
     // output statements
     //
-    if (dftParameters::verbosity >= 2)
+    if (d_dftParams.verbosity >= 2)
       {
         char buffer[100];
 
@@ -178,7 +181,7 @@ namespace dftfe
     computingTimerStandard.enter_subsection("Chebyshev filtering on CPU");
 
 
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
                                         "Before starting chebyshev filtering");
 
@@ -195,11 +198,10 @@ namespace dftfe
     dftUtils::createBandParallelizationIndices(interBandGroupComm,
                                                totalNumberWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
-    const unsigned int totalNumberBlocks =
-      std::ceil((double)totalNumberWaveFunctions /
-                (double)dftParameters::chebyWfcBlockSize);
+    const unsigned int totalNumberBlocks = std::ceil(
+      (double)totalNumberWaveFunctions / (double)d_dftParams.chebyWfcBlockSize);
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::chebyWfcBlockSize,
+      std::min(d_dftParams.chebyWfcBlockSize,
                bandGroupLowHighPlusOneIndices[1]);
 
 
@@ -250,7 +252,7 @@ namespace dftfe
             computing_timer.leave_subsection(
               "Copy from full to block flattened array");
 
-            if (dftParameters::HXOptimFlag)
+            if (d_dftParams.HXOptimFlag)
               {
                 computing_timer.enter_subsection(
                   "Copy from global-vectors to cellwavefunction array");
@@ -268,7 +270,7 @@ namespace dftfe
             // be filtered and does in-place filtering
             computing_timer.enter_subsection("Chebyshev filtering");
 
-            if (dftParameters::HXOptimFlag)
+            if (d_dftParams.HXOptimFlag)
               {
                 linearAlgebraOperations::chebyshevFilterOpt(
                   operatorMatrix,
@@ -294,7 +296,7 @@ namespace dftfe
             computing_timer.leave_subsection("Chebyshev filtering");
 
 
-            if (dftParameters::HXOptimFlag)
+            if (d_dftParams.HXOptimFlag)
               {
                 computing_timer.enter_subsection(
                   "Copy from cellwavefunction array to global array");
@@ -306,7 +308,7 @@ namespace dftfe
                   "Copy from cellwavefunction array to global array");
               }
 
-            if (dftParameters::verbosity >= 4)
+            if (d_dftParams.verbosity >= 4)
               dftUtils::printCurrentMemoryUsage(
                 operatorMatrix.getMPICommunicator(),
                 "During blocked chebyshev filtering");
@@ -340,13 +342,13 @@ namespace dftfe
 
     if (numberBandGroups > 1)
       {
-        if (!dftParameters::bandParalOpt)
+        if (!d_dftParams.bandParalOpt)
           {
             computing_timer.enter_subsection(
               "MPI All Reduce wavefunctions across all band groups");
             MPI_Barrier(interBandGroupComm);
             const unsigned int blockSize =
-              dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
+              d_dftParams.mpiAllReduceMessageBlockSizeMB * 1e+6 /
               sizeof(dataTypes::number);
             for (unsigned int i = 0;
                  i < totalNumberWaveFunctions * localVectorSize;
@@ -430,10 +432,10 @@ namespace dftfe
       }
 
     computingTimerStandard.leave_subsection("Chebyshev filtering on CPU");
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
 
-    if (dftParameters::orthogType.compare("CGS") == 0)
+    if (d_dftParams.orthogType.compare("CGS") == 0)
       {
         computing_timer.enter_subsection("Rayleigh-Ritz GEP");
         if (eigenValues.size() != totalNumberWaveFunctions)
@@ -445,10 +447,12 @@ namespace dftfe
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
               totalNumberWaveFunctions - eigenValues.size(),
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               useMixedPrec,
-              eigenValues);
+              eigenValues,
+              d_dftParams);
           }
         else
           {
@@ -457,10 +461,12 @@ namespace dftfe
               elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               eigenValues,
-              useMixedPrec);
+              useMixedPrec,
+              d_dftParams);
           }
         computing_timer.leave_subsection("Rayleigh-Ritz GEP");
 
@@ -471,9 +477,11 @@ namespace dftfe
               operatorMatrix,
               eigenVectorsRotFracDensityFlattened,
               eigenValues,
+              d_mpiCommParent,
               operatorMatrix.getMPICommunicator(),
               interBandGroupComm,
-              residualNorms);
+              residualNorms,
+              d_dftParams);
           }
         else
           {
@@ -481,13 +489,15 @@ namespace dftfe
               operatorMatrix,
               eigenVectorsFlattened,
               eigenValues,
+              d_mpiCommParent,
               operatorMatrix.getMPICommunicator(),
               interBandGroupComm,
-              residualNorms);
+              residualNorms,
+              d_dftParams);
           }
         computing_timer.leave_subsection("eigen vectors residuals opt");
       }
-    else if (dftParameters::orthogType.compare("GS") == 0)
+    else if (d_dftParams.orthogType.compare("GS") == 0)
       {
         computing_timer.enter_subsection("Gram-Schmidt Orthogn Opt");
         linearAlgebraOperations::gramSchmidtOrthogonalization(
@@ -496,7 +506,7 @@ namespace dftfe
           operatorMatrix.getMPICommunicator());
         computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           pcout << "Orthogonalization Done: " << std::endl;
 
         computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
@@ -510,10 +520,12 @@ namespace dftfe
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
               totalNumberWaveFunctions - eigenValues.size(),
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               useMixedPrec,
-              eigenValues);
+              eigenValues,
+              d_dftParams);
           }
         else
           {
@@ -522,16 +534,18 @@ namespace dftfe
               elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               eigenValues,
+              d_dftParams,
               false);
           }
 
 
         computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
 
-        if (dftParameters::verbosity >= 4)
+        if (d_dftParams.verbosity >= 4)
           {
             pcout << "Rayleigh-Ritz Done: " << std::endl;
             pcout << std::endl;
@@ -547,30 +561,34 @@ namespace dftfe
                   operatorMatrix,
                   eigenVectorsRotFracDensityFlattened,
                   eigenValues,
+                  d_mpiCommParent,
                   operatorMatrix.getMPICommunicator(),
                   interBandGroupComm,
-                  residualNorms);
+                  residualNorms,
+                  d_dftParams);
               }
             else
               linearAlgebraOperations::computeEigenResidualNorm(
                 operatorMatrix,
                 eigenVectorsFlattened,
                 eigenValues,
+                d_mpiCommParent,
                 operatorMatrix.getMPICommunicator(),
                 interBandGroupComm,
-                residualNorms);
+                residualNorms,
+                d_dftParams);
             computing_timer.leave_subsection("eigen vectors residuals opt");
           }
       }
 
 
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       {
         pcout << "EigenVector Residual Computation Done: " << std::endl;
         pcout << std::endl;
       }
 
-    if (dftParameters::verbosity >= 4)
+    if (d_dftParams.verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
         operatorMatrix.getMPICommunicator(),
         "After all steps of subspace iteration");

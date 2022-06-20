@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -20,6 +20,7 @@
 #define meshMovement_H_
 #include "constants.h"
 #include "headers.h"
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -35,9 +36,12 @@ namespace dftfe
   public:
     /** @brief Constructor
      *
-     *  @param[in] mpi_comm_replica mpi communicator for domain decomposition
+     * @param[in] mpi_comm_parent parent mpi communicator
+     *  @param[in] mpi_comm_domain mpi communicator for domain decomposition
      */
-    meshMovementClass(const MPI_Comm &mpi_comm_replica);
+    meshMovementClass(const MPI_Comm &     mpi_comm_parent,
+                      const MPI_Comm &     mpi_comm_domain,
+                      const dftParameters &dftParams);
 
     virtual ~meshMovementClass()
     {}
@@ -124,7 +128,10 @@ namespace dftfe
                                      d_periodicity_vector;
     std::vector<std::vector<double>> d_domainBoundingVectors;
 
+    const dftParameters &d_dftParams;
+
     // parallel objects
+    MPI_Comm                   d_mpiCommParent;
     MPI_Comm                   mpi_communicator;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;

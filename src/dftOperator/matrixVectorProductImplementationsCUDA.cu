@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -34,7 +34,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     const bool                  onlyHPrimePartForFirstOrderDensityMatResponse)
 {
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
@@ -86,8 +86,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     totalLocallyOwnedCells);
 
 
-  if (!(dftParameters::isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) ||
+  if (!(dftPtr->d_dftParamsPtr->isPseudopotential &&
+        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)  ||
       onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)

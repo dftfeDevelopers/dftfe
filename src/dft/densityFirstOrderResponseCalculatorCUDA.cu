@@ -325,13 +325,15 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &mpiCommParent,      
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm)
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters & dftParams)
   {
     int this_process;
-    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+    MPI_Comm_rank(mpiCommParent, &this_process);
     cudaDeviceSynchronize();
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mpiCommParent);
     double             gpu_time   = MPI_Wtime();
     const unsigned int numKPoints = kPointWeights.size();
 
@@ -346,10 +348,10 @@ namespace dftfe
                                                bandGroupLowHighPlusOneIndices);
 
     const unsigned int BVec =
-      std::min(dftParameters::chebyWfcBlockSize, totalNumWaveFunctions);
+      std::min(dftParams.chebyWfcBlockSize, totalNumWaveFunctions);
 
     const double spinPolarizedFactor =
-      (dftParameters::spinPolarized == 1) ? 1.0 : 2.0;
+      (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
     const NumberTypeLowPrec zero =
       cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(0.0);
@@ -438,7 +440,7 @@ namespace dftfe
                        shapeFunctionValuesInvertedDevice);
 
     for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParameters::spinPolarized);
+         spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
@@ -460,7 +462,7 @@ namespace dftfe
                         *(densityMatDerFermiEnergyVec.begin() + iEigenVec) =
                           cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(
                             densityMatDerFermiEnergy
-                              [(dftParameters::spinPolarized + 1) * kPoint +
+                              [(dftParams.spinPolarized + 1) * kPoint +
                                spinIndex][jvec + iEigenVec]);
                       }
 
@@ -474,7 +476,7 @@ namespace dftfe
                                                256>>>(
                       BVec,
                       X + numLocalDofs * totalNumWaveFunctions *
-                            ((dftParameters::spinPolarized + 1) * kPoint +
+                            ((dftParams.spinPolarized + 1) * kPoint +
                              spinIndex),
                       numLocalDofs,
                       totalNumWaveFunctions,
@@ -492,7 +494,7 @@ namespace dftfe
                                                256>>>(
                       BVec,
                       XPrime + numLocalDofs * totalNumWaveFunctions *
-                                 ((dftParameters::spinPolarized + 1) * kPoint +
+                                 ((dftParams.spinPolarized + 1) * kPoint +
                                   spinIndex),
                       numLocalDofs,
                       totalNumWaveFunctions,
@@ -675,7 +677,7 @@ namespace dftfe
                 }
 
 
-            if (dftParameters::spinPolarized == 1)
+            if (dftParams.spinPolarized == 1)
               {
                 for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
                   for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
@@ -711,7 +713,7 @@ namespace dftfe
                                     interpoolcomm,
                                     rhoResponseValuesFermiEnergyFlattenedHost);
 
-        if (dftParameters::spinPolarized == 1)
+        if (dftParams.spinPolarized == 1)
           {
             dealii::Utilities::MPI::sum(
               rhoResponseValuesSpinPolarizedHamFlattenedHost,
@@ -735,7 +737,7 @@ namespace dftfe
                                     interBandGroupComm,
                                     rhoResponseValuesFermiEnergyFlattenedHost);
 
-        if (dftParameters::spinPolarized == 1)
+        if (dftParams.spinPolarized == 1)
           {
             dealii::Utilities::MPI::sum(
               rhoResponseValuesSpinPolarizedHamFlattenedHost,
@@ -772,7 +774,7 @@ namespace dftfe
                                                           q];
             }
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               std::vector<double> &temp3Quads =
                 (rhoResponseValuesHamSpinPolarized)[cellid];
@@ -802,10 +804,10 @@ namespace dftfe
 
     CUDACHECK(cudaFree(shapeFunctionValuesInvertedDevice));
     cudaDeviceSynchronize();
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mpiCommParent);
     gpu_time = MPI_Wtime() - gpu_time;
 
-    if (this_process == 0 && dftParameters::verbosity >= 2)
+    if (this_process == 0 && dftParams.verbosity >= 2)
       std::cout << "Time for compute rhoprime on GPU: " << gpu_time
                 << std::endl;
   }
@@ -830,8 +832,10 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,  
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters &                          dftParams);
 
   template void
   computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
@@ -854,6 +858,8 @@ namespace dftfe
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
       &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm);
+    const MPI_Comm &interBandGroupComm,
+    const dftParameters &                          dftParams);
 } // namespace dftfe

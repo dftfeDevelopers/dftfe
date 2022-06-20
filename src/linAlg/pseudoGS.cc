@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -28,23 +28,25 @@ namespace dftfe
   {
     template <typename T>
     unsigned int
-    pseudoGramSchmidtOrthogonalization(elpaScalaManager & elpaScala,
-                                       std::vector<T> &   X,
-                                       const unsigned int numberVectors,
-                                       const MPI_Comm &   interBandGroupComm,
-                                       const MPI_Comm &   mpiComm,
-                                       const bool         useMixedPrec)
+    pseudoGramSchmidtOrthogonalization(elpaScalaManager &   elpaScala,
+                                       std::vector<T> &     X,
+                                       const unsigned int   numberVectors,
+                                       const MPI_Comm &     mpiCommParent,
+                                       const MPI_Comm &     interBandGroupComm,
+                                       const MPI_Comm &     mpiComm,
+                                       const bool           useMixedPrec,
+                                       const dftParameters &dftParams)
 
     {
       const unsigned int numLocalDofs = X.size() / numberVectors;
 
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -54,7 +56,8 @@ namespace dftfe
       std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpiComm,
                                               numberVectors,
-                                              processGrid);
+                                              processGrid,
+                                              dftParams);
 
       dftfe::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                               processGrid,
@@ -68,7 +71,7 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
+      if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
           computing_timer.enter_subsection("Fill overlap matrix CGS");
           internal::fillParallelOverlapMatrix(&X[0],
@@ -77,7 +80,8 @@ namespace dftfe
                                               processGrid,
                                               interBandGroupComm,
                                               mpiComm,
-                                              overlapMatPar);
+                                              overlapMatPar,
+                                              dftParams);
           computing_timer.leave_subsection("Fill overlap matrix CGS");
         }
       else
@@ -93,7 +97,8 @@ namespace dftfe
               processGrid,
               interBandGroupComm,
               mpiComm,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
               &X[0],
@@ -102,7 +107,8 @@ namespace dftfe
               processGrid,
               interBandGroupComm,
               mpiComm,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
           computing_timer.leave_subsection(
             "Fill overlap matrix mixed prec CGS");
         }
@@ -112,7 +118,7 @@ namespace dftfe
       computing_timer.enter_subsection(
         "ELPA CGS cholesky, copy, and triangular matrix invert");
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           // For ELPA cholesky only the upper triangular part of the hermitian
           // matrix is required
@@ -209,7 +215,7 @@ namespace dftfe
 
       // X^{T}=LConj^{-1}*X^{T} with X^{T} stored in
       // the column major format
-      if (!(dftParameters::useMixedPrecCGS_SR && useMixedPrec))
+      if (!(dftParams.useMixedPrecCGS_SR && useMixedPrec))
         {
           computing_timer.enter_subsection("Subspace rotation CGS");
           internal::subspaceRotation(&X[0],
@@ -219,6 +225,7 @@ namespace dftfe
                                      interBandGroupComm,
                                      mpiComm,
                                      LMatPar,
+                                     dftParams,
                                      false,
                                      true);
           computing_timer.leave_subsection("Subspace rotation CGS");
@@ -235,6 +242,7 @@ namespace dftfe
               interBandGroupComm,
               mpiComm,
               LMatPar,
+              dftParams,
               false);
           else
             internal::subspaceRotationCGSMixedPrec<T, float>(&X[0],
@@ -244,6 +252,7 @@ namespace dftfe
                                                              interBandGroupComm,
                                                              mpiComm,
                                                              LMatPar,
+                                                             dftParams,
                                                              false);
           computing_timer.leave_subsection("Subspace rotation mixed prec CGS");
         }

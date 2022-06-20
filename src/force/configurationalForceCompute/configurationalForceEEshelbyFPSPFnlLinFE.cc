@@ -63,17 +63,17 @@ forceClass<FEOrder, FEOrderElectro>::
     const bool                       shadowPotentialForce)
 {
   int this_process;
-  MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Comm_rank(d_mpiCommParent, &this_process);
+  MPI_Barrier(d_mpiCommParent);
   double forcetotal_time = MPI_Wtime();
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double init_time = MPI_Wtime();
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   std::map<unsigned int, std::vector<double>> forceContributionFnlGammaAtoms;
 
-  const bool isPseudopotential = dftParameters::isPseudopotential;
+  const bool isPseudopotential = d_dftParams.isPseudopotential;
 
   FEEvaluation<3,
                1,
@@ -155,10 +155,10 @@ forceClass<FEOrder, FEOrderElectro>::
     }
 
   const double spinPolarizedFactor =
-    (dftParameters::spinPolarized == 1) ? 0.5 : 1.0;
+    (d_dftParams.spinPolarized == 1) ? 0.5 : 1.0;
   const VectorizedArray<double> spinPolarizedFactorVect =
-    (dftParameters::spinPolarized == 1) ? make_vectorized_array(0.5) :
-                                          make_vectorized_array(1.0);
+    (d_dftParams.spinPolarized == 1) ? make_vectorized_array(0.5) :
+                                       make_vectorized_array(1.0);
 
   std::map<unsigned int, std::vector<unsigned int>>
     macroIdToNonlocalAtomsSetMap;
@@ -225,8 +225,8 @@ forceClass<FEOrder, FEOrderElectro>::
                                              numEigenVectors,
                                              bandGroupLowHighPlusOneIndices);
 
-  const unsigned int blockSize = std::min(dftParameters::chebyWfcBlockSize,
-                                          bandGroupLowHighPlusOneIndices[1]);
+  const unsigned int blockSize =
+    std::min(d_dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
   const unsigned int localVectorSize =
     dftPtr->d_eigenVectorsFlattenedSTL[0].size() / numEigenVectors;
@@ -448,10 +448,9 @@ forceClass<FEOrder, FEOrderElectro>::
 
   std::vector<std::vector<double>> partialOccupancies(
     numKPoints,
-    std::vector<double>((1 + dftParameters::spinPolarized) * numEigenVectors,
+    std::vector<double>((1 + d_dftParams.spinPolarized) * numEigenVectors,
                         0.0));
-  for (unsigned int spinIndex = 0;
-       spinIndex < (1 + dftParameters::spinPolarized);
+  for (unsigned int spinIndex = 0; spinIndex < (1 + d_dftParams.spinPolarized);
        ++spinIndex)
     for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
       for (unsigned int iWave = 0; iWave < numEigenVectors; ++iWave)
@@ -462,9 +461,9 @@ forceClass<FEOrder, FEOrderElectro>::
             dftUtils::getPartialOccupancy(eigenValue,
                                           dftPtr->fermiEnergy,
                                           C_kb,
-                                          dftParameters::TVal);
+                                          d_dftParams.TVal);
 
-          if (dftParameters::constraintMagnetization)
+          if (d_dftParams.constraintMagnetization)
             {
               partialOccupancies[kPoint][numEigenVectors * spinIndex + iWave] =
                 1.0;
@@ -483,11 +482,10 @@ forceClass<FEOrder, FEOrderElectro>::
             }
         }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_time = MPI_Wtime() - init_time;
 
-  for (unsigned int spinIndex = 0;
-       spinIndex < (1 + dftParameters::spinPolarized);
+  for (unsigned int spinIndex = 0; spinIndex < (1 + d_dftParams.spinPolarized);
        ++spinIndex)
     {
 #if defined(DFTFE_WITH_GPU)
@@ -535,9 +533,9 @@ forceClass<FEOrder, FEOrderElectro>::
 #endif
 
 #if defined(DFTFE_WITH_GPU)
-      if (dftParameters::useGPU)
+      if (d_dftParams.useGPU)
         {
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           double gpu_time = MPI_Wtime();
 
           for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
@@ -547,7 +545,7 @@ forceClass<FEOrder, FEOrderElectro>::
               forceCUDA::gpuPortedForceKernelsAllH(
                 kohnShamDFTEigenOperator,
                 dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
-                  ((1 + dftParameters::spinPolarized) * kPoint + spinIndex) *
+                  ((1 + d_dftParams.spinPolarized) * kPoint + spinIndex) *
                     localVectorSize * numEigenVectors,
                 &dftPtr->eigenValues[kPoint][spinIndex * numEigenVectors],
                 &partialOccupancies[kPoint][spinIndex * numEigenVectors],
@@ -575,16 +573,18 @@ forceClass<FEOrder, FEOrderElectro>::
                   [kPoint * nonTrivialNonLocalIdsAllCells.size() *
                    numQuadPointsNLP],
 #  endif
+                d_mpiCommParent,
                 dftPtr->interBandGroupComm,
                 isPseudopotential,
-                dftParameters::floatingNuclearCharges,
-                false);
+                d_dftParams.floatingNuclearCharges,
+                false,
+                d_dftParams);
             }
 
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           gpu_time = MPI_Wtime() - gpu_time;
 
-          if (this_process == 0 && dftParameters::verbosity >= 4)
+          if (this_process == 0 && d_dftParams.verbosity >= 4)
             std::cout << "Time for gpuPortedForceKernelsAllH: " << gpu_time
                       << std::endl;
         }
@@ -659,7 +659,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           eigenVectorsFlattenedBlock[kPoint].local_element(
                             iNode * currentBlockSize + iWave) =
                             dftPtr->d_eigenVectorsFlattenedSTL
-                              [(dftParameters::spinPolarized + 1) * kPoint +
+                              [(d_dftParams.spinPolarized + 1) * kPoint +
                                spinIndex]
                               [iNode * numEigenVectors + ivec + iWave];
 
@@ -1006,7 +1006,7 @@ forceClass<FEOrder, FEOrderElectro>::
                                 dftPtr->d_kPointWeights,
                                 blockedEigenValues,
                                 dftPtr->fermiEnergy,
-                                dftParameters::TVal);
+                                d_dftParams.TVal);
 #else
                         Tensor<2, 3, VectorizedArray<double>> E =
                           spinPolarizedFactorVect *
@@ -1035,7 +1035,7 @@ forceClass<FEOrder, FEOrderElectro>::
         }
 
 #if defined(DFTFE_WITH_GPU)
-      if (dftParameters::useGPU)
+      if (d_dftParams.useGPU)
         {
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
@@ -1303,7 +1303,7 @@ forceClass<FEOrder, FEOrderElectro>::
   // vector
   if (isPseudopotential)
     {
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParams.spinPolarized == 1)
         for (auto &iter : forceContributionFnlGammaAtoms)
           {
             std::vector<double> &fnlvec = iter.second;
@@ -1311,7 +1311,7 @@ forceClass<FEOrder, FEOrderElectro>::
               fnlvec[i] *= spinPolarizedFactor;
           }
 
-      if (dftParameters::floatingNuclearCharges)
+      if (d_dftParams.floatingNuclearCharges)
         {
 #ifdef USE_COMPLEX
           accumulateForceContributionGammaAtomsFloating(
@@ -1327,14 +1327,14 @@ forceClass<FEOrder, FEOrderElectro>::
     }
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double enowfc_time = MPI_Wtime();
 
   /////////// Compute contribution independent of wavefunctions
   ////////////////////
   if (bandGroupTaskId == 0)
     {
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParams.spinPolarized == 1)
         {
           dealii::AlignedVector<VectorizedArray<double>> rhoXCQuadsVect(
             numQuadPoints, make_vectorized_array(0.0));
@@ -1454,7 +1454,7 @@ forceClass<FEOrder, FEOrderElectro>::
                       rhoXCQuadsVect[q][iSubCell] = temp[q];
                     }
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       const std::vector<double> &temp2 =
                         rhoCoreValues.find(subCellId)->second;
@@ -1466,7 +1466,7 @@ forceClass<FEOrder, FEOrderElectro>::
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       const std::vector<double> &temp3 =
                         (*dftPtr->gradRhoOutValuesSpinPolarized)
@@ -1485,7 +1485,7 @@ forceClass<FEOrder, FEOrderElectro>::
                               temp3[6 * q + 3 + idim];
                           }
 
-                      if (dftParameters::nonLinearCoreCorrection)
+                      if (d_dftParams.nonLinearCoreCorrection)
                         {
                           const std::vector<double> &temp4 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1500,7 +1500,7 @@ forceClass<FEOrder, FEOrderElectro>::
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
@@ -1600,7 +1600,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      if (dftParameters::nonLinearCoreCorrection == true)
+                      if (d_dftParams.nonLinearCoreCorrection == true)
                         {
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1609,7 +1609,7 @@ forceClass<FEOrder, FEOrderElectro>::
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
-                          if (dftParameters::xcFamilyType == "GGA")
+                          if (d_dftParams.xcFamilyType == "GGA")
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -1625,7 +1625,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
                 } // subcell loop
 
-              if (dftParameters::nonLinearCoreCorrection)
+              if (d_dftParams.nonLinearCoreCorrection)
                 {
                   FNonlinearCoreCorrectionGammaAtomsElementalContributionSpinPolarized(
                     forceContributionNonlinearCoreCorrectionGammaAtoms,
@@ -1638,7 +1638,7 @@ forceClass<FEOrder, FEOrderElectro>::
                     derExchCorrEnergyWithGradRhoOutSpin1Quads,
                     gradRhoCoreAtoms,
                     hessianRhoCoreAtoms,
-                    dftParameters::xcFamilyType == "GGA");
+                    d_dftParams.xcFamilyType == "GGA");
                 }
 
               for (unsigned int q = 0; q < numQuadPoints; ++q)
@@ -1656,7 +1656,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
                   Tensor<1, 3, VectorizedArray<double>> F = zeroTensor3;
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     F += eshelbyTensorSP::getFNonlinearCoreCorrection(
                       vxcRhoOutSpin0Quads[q],
                       vxcRhoOutSpin1Quads[q],
@@ -1664,7 +1664,7 @@ forceClass<FEOrder, FEOrderElectro>::
                       derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
                       gradRhoCoreQuads[q],
                       hessianRhoCoreQuads[q],
-                      dftParameters::xcFamilyType == "GGA");
+                      d_dftParams.xcFamilyType == "GGA");
 
                   forceEval.submit_value(F, q);
                   forceEval.submit_gradient(E, q);
@@ -1675,9 +1675,9 @@ forceClass<FEOrder, FEOrderElectro>::
                 d_configForceVectorLinFE); // also takes care of constraints
             }
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (d_dftParams.nonLinearCoreCorrection)
             {
-              if (dftParameters::floatingNuclearCharges)
+              if (d_dftParams.floatingNuclearCharges)
                 accumulateForceContributionGammaAtomsFloating(
                   forceContributionNonlinearCoreCorrectionGammaAtoms,
                   d_forceAtomsFloating);
@@ -1830,7 +1830,7 @@ forceClass<FEOrder, FEOrderElectro>::
                       rhoXCQuads[q][iSubCell] = temp1[q];
                     }
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       const std::vector<double> &temp2 =
                         rhoCoreValues.find(subCellId)->second;
@@ -1841,7 +1841,7 @@ forceClass<FEOrder, FEOrderElectro>::
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       const std::vector<double> &temp3 =
                         gradRhoOutValues.find(subCellId)->second;
@@ -1853,7 +1853,7 @@ forceClass<FEOrder, FEOrderElectro>::
                               temp3[3 * q + idim];
                           }
 
-                      if (dftParameters::nonLinearCoreCorrection)
+                      if (d_dftParams.nonLinearCoreCorrection)
                         {
                           const std::vector<double> &temp4 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -1866,7 +1866,7 @@ forceClass<FEOrder, FEOrderElectro>::
                         }
                     }
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();
@@ -2005,7 +2005,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      if (dftParameters::nonLinearCoreCorrection == true)
+                      if (d_dftParams.nonLinearCoreCorrection == true)
                         {
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
@@ -2014,7 +2014,7 @@ forceClass<FEOrder, FEOrderElectro>::
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim];
 
-                          if (dftParameters::xcFamilyType == "GGA")
+                          if (d_dftParams.xcFamilyType == "GGA")
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -2037,7 +2037,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           // for (unsigned int idim=0; idim<3; idim++)
                           //	gradRhoAtomsQuads[q][idim][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+idim];
 
-                          if (dftParameters::xcFamilyType == "GGA")
+                          if (d_dftParams.xcFamilyType == "GGA")
                             {
                               /*
                               for (unsigned int idim=0; idim<3; idim++)
@@ -2055,7 +2055,7 @@ forceClass<FEOrder, FEOrderElectro>::
                     }
                 } // subcell loop
 
-              if (dftParameters::nonLinearCoreCorrection)
+              if (d_dftParams.nonLinearCoreCorrection)
                 {
                   FNonlinearCoreCorrectionGammaAtomsElementalContribution(
                     forceContributionGradRhoNonlinearCoreCorrectionGammaAtoms,
@@ -2066,7 +2066,7 @@ forceClass<FEOrder, FEOrderElectro>::
                     gradRhoCoreAtoms);
 
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     FNonlinearCoreCorrectionGammaAtomsElementalContribution(
                       forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms,
                       forceEval,
@@ -2111,12 +2111,12 @@ forceClass<FEOrder, FEOrderElectro>::
 
                   Tensor<1, 3, VectorizedArray<double>> F = zeroTensor3;
 
-                  if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
+                  if (shadowPotentialForce)
                     {
                       /*
                       F+=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
 
-                      if(dftParameters::xcFamilyType=="GGA")
+                      if(d_dftParams.xcFamilyType=="GGA")
                       {
                         F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
                         F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoAtomsQuads[q]);
@@ -2125,12 +2125,12 @@ forceClass<FEOrder, FEOrderElectro>::
                       */
                     }
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       F += eshelbyTensor::getFNonlinearCoreCorrection(
                         vxcRhoOutQuads[q], gradRhoCoreQuads[q]);
 
-                      if (dftParameters::xcFamilyType == "GGA")
+                      if (d_dftParams.xcFamilyType == "GGA")
                         F += eshelbyTensor::getFNonlinearCoreCorrection(
                           derExchCorrEnergyWithGradRhoOutQuads[q],
                           hessianRhoCoreQuads[q]);
@@ -2141,9 +2141,7 @@ forceClass<FEOrder, FEOrderElectro>::
                 } // quad point loop
 
 
-              if (shadowPotentialForce &&
-                  (dftParameters::useAtomicRhoXLBOMD ||
-                   dftParameters::nonLinearCoreCorrection))
+              if (shadowPotentialForce && d_dftParams.nonLinearCoreCorrection)
                 {
                   FShadowLocalGammaAtomsElementalContributionElectronic(
                     forceContributionShadowLocalGammaAtoms,
@@ -2159,9 +2157,9 @@ forceClass<FEOrder, FEOrderElectro>::
                     dftPtr->d_hessianRhoAtomsValuesSeparate,
                     gradRhoCoreAtoms,
                     hessianRhoCoreAtoms,
-                    dftParameters::useAtomicRhoXLBOMD,
-                    dftParameters::xcFamilyType == "GGA",
-                    dftParameters::nonLinearCoreCorrection);
+                    true,
+                    d_dftParams.xcFamilyType == "GGA",
+                    d_dftParams.nonLinearCoreCorrection);
                 }
 
               forceEval.integrate(true, true);
@@ -2170,15 +2168,15 @@ forceClass<FEOrder, FEOrderElectro>::
             }                              // cell loop
 
 
-          if (dftParameters::nonLinearCoreCorrection)
+          if (d_dftParams.nonLinearCoreCorrection)
             {
-              if (dftParameters::floatingNuclearCharges)
+              if (d_dftParams.floatingNuclearCharges)
                 {
                   accumulateForceContributionGammaAtomsFloating(
                     forceContributionGradRhoNonlinearCoreCorrectionGammaAtoms,
                     d_forceAtomsFloating);
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     accumulateForceContributionGammaAtomsFloating(
                       forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms,
                       d_forceAtomsFloating);
@@ -2191,7 +2189,7 @@ forceClass<FEOrder, FEOrderElectro>::
                     d_constraintsNoneForce,
                     d_configForceVectorLinFE);
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParams.xcFamilyType == "GGA")
                     distributeForceContributionFPSPLocalGammaAtoms(
                       forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms,
                       d_atomsForceDofs,
@@ -2200,10 +2198,9 @@ forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (shadowPotentialForce && (dftParameters::useAtomicRhoXLBOMD ||
-                                       dftParameters::nonLinearCoreCorrection))
+          if (shadowPotentialForce && d_dftParams.nonLinearCoreCorrection)
             {
-              if (dftParameters::floatingNuclearCharges)
+              if (d_dftParams.floatingNuclearCharges)
                 {
                   accumulateForceContributionGammaAtomsFloating(
                     forceContributionShadowLocalGammaAtoms,
@@ -2237,17 +2234,17 @@ forceClass<FEOrder, FEOrderElectro>::
         shadowPotentialForce);
     }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   enowfc_time = MPI_Wtime() - enowfc_time;
 
   forcetotal_time = MPI_Wtime() - forcetotal_time;
 
-  if (this_process == 0 && dftParameters::verbosity >= 4)
+  if (this_process == 0 && d_dftParams.verbosity >= 4)
     std::cout
       << "Total time for configurational force computation except Eself contribution: "
       << forcetotal_time << std::endl;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParams.verbosity >= 4)
     {
       pcout << " Time taken for initialization in force: " << init_time
             << std::endl;
@@ -2348,8 +2345,7 @@ forceClass<FEOrder, FEOrderElectro>::
     matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro)
       .get_fe(),
     matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
-    dftParameters::floatingNuclearCharges &&
-        dftParameters::smearedNuclearCharges ?
+    d_dftParams.floatingNuclearCharges && d_dftParams.smearedNuclearCharges ?
       (update_values | update_quadrature_points) :
       (update_values | update_gradients | update_quadrature_points));
 
@@ -2410,7 +2406,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
       const unsigned int numSubCells =
         matrixFreeDataElectro.n_components_filled(cell);
-      if (dftParameters::smearedNuclearCharges)
+      if (d_dftParams.smearedNuclearCharges)
         for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr =
@@ -2429,7 +2425,7 @@ forceClass<FEOrder, FEOrderElectro>::
       phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
       phiTotEvalElectro.evaluate(true, true);
 
-      if (dftParameters::smearedNuclearCharges &&
+      if (d_dftParams.smearedNuclearCharges &&
           nonTrivialSmearedChargeAtomIdsMacroCell.size() > 0)
         {
           forceEvalSmearedCharge.reinit(cell);
@@ -2492,8 +2488,8 @@ forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (dftParameters::isPseudopotential ||
-              dftParameters::smearedNuclearCharges)
+          if (d_dftParams.isPseudopotential ||
+              d_dftParams.smearedNuclearCharges)
             {
               const std::vector<double> &tempPseudoVal =
                 pseudoVLocElectro.find(subCellId)->second;
@@ -2514,7 +2510,7 @@ forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (dftParameters::smearedNuclearCharges &&
+          if (d_dftParams.smearedNuclearCharges &&
               nonTrivialSmearedChargeAtomIdsMacroCell.size() > 0)
             {
               const std::vector<double> &bQuadValuesCell =
@@ -2526,8 +2522,7 @@ forceClass<FEOrder, FEOrderElectro>::
             }
         }
 
-      if (dftParameters::isPseudopotential ||
-          dftParameters::smearedNuclearCharges)
+      if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
         {
           FPSPLocalGammaAtomsElementalContribution(
             forceContributionFPSPLocalGammaAtoms,
@@ -2591,8 +2586,7 @@ forceClass<FEOrder, FEOrderElectro>::
           forceEvalElectro.submit_gradient(E, q);
         }
 
-      if (dftParameters::isPseudopotential ||
-          dftParameters::smearedNuclearCharges)
+      if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
         for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
           {
             VectorizedArray<double> phiExtElectro_q =
@@ -2630,15 +2624,14 @@ forceClass<FEOrder, FEOrderElectro>::
       forceEvalElectro.distribute_local_to_global(
         d_configForceVectorLinFEElectro);
 
-      if (dftParameters::isPseudopotential ||
-          dftParameters::smearedNuclearCharges)
+      if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
         {
           forceEvalElectroLpsp.integrate(true, true);
           forceEvalElectroLpsp.distribute_local_to_global(
             d_configForceVectorLinFEElectro);
         }
 
-      if (dftParameters::smearedNuclearCharges &&
+      if (d_dftParams.smearedNuclearCharges &&
           nonTrivialSmearedChargeAtomIdsMacroCell.size() > 0)
         {
           phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
@@ -2688,7 +2681,7 @@ forceClass<FEOrder, FEOrderElectro>::
             smearedbQuads);
         }
 
-      if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
+      if (shadowPotentialForce)
         {
           phiTotEvalElectro.read_dof_values_plain(phiRhoMinusApproxRhoElectro);
           phiTotEvalElectro.evaluate(false, true);
@@ -2712,9 +2705,9 @@ forceClass<FEOrder, FEOrderElectro>::
 
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational
   // force vector
-  if (dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
+  if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
     {
-      if (dftParameters::floatingNuclearCharges)
+      if (d_dftParams.floatingNuclearCharges)
         {
           accumulateForceContributionGammaAtomsFloating(
             forceContributionFPSPLocalGammaAtoms, d_forceAtomsFloating);
@@ -2727,9 +2720,9 @@ forceClass<FEOrder, FEOrderElectro>::
           d_configForceVectorLinFEElectro);
     }
 
-  if (dftParameters::smearedNuclearCharges)
+  if (d_dftParams.smearedNuclearCharges)
     {
-      if (dftParameters::floatingNuclearCharges)
+      if (d_dftParams.floatingNuclearCharges)
         {
           accumulateForceContributionGammaAtomsFloating(
             forceContributionSmearedChargesGammaAtoms, d_forceAtomsFloating);
@@ -2742,9 +2735,9 @@ forceClass<FEOrder, FEOrderElectro>::
           d_configForceVectorLinFEElectro);
     }
 
-  if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
+  if (shadowPotentialForce)
     {
-      if (dftParameters::floatingNuclearCharges)
+      if (d_dftParams.floatingNuclearCharges)
         {
           accumulateForceContributionGammaAtomsFloating(
             forceContributionShadowPotentialElectroGammaAtoms,

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -19,7 +19,6 @@
 
 // source file for force related computations
 #include "constants.h"
-#include "dftParameters.h"
 #include "dftUtils.h"
 #include "forceCUDA.h"
 #include "vectorUtilities.h"
@@ -1095,8 +1094,8 @@ namespace dftfe
         const bool         isFloatingChargeForces,
         const bool         addEk)
       {
-        int this_process;
-        MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+        // int this_process;
+        // MPI_Comm_rank(d_mpiCommParent, &this_process);
 
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
@@ -1110,7 +1109,7 @@ namespace dftfe
 
 
         // cudaDeviceSynchronize();
-        // MPI_Barrier(MPI_COMM_WORLD);
+        // MPI_Barrier(d_mpiCommParent);
         // double kernel1_time = MPI_Wtime();
 
         interpolatePsiComputeELocWfcEshelbyTensorD(operatorMatrix,
@@ -1144,7 +1143,7 @@ namespace dftfe
                                                    addEk);
 
         // cudaDeviceSynchronize();
-        // MPI_Barrier(MPI_COMM_WORLD);
+        // MPI_Barrier(d_mpiCommParent);
         // kernel1_time = MPI_Wtime() - kernel1_time;
 
         // if (this_process==0 && dftParameters::verbosity>=5)
@@ -1155,7 +1154,7 @@ namespace dftfe
         if (isPsp)
           {
             // cudaDeviceSynchronize();
-            // MPI_Barrier(MPI_COMM_WORLD);
+            // MPI_Barrier(d_mpiCommParent);
             // double kernel2_time = MPI_Wtime();
 
             operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(
@@ -1164,7 +1163,7 @@ namespace dftfe
               numPsi);
 
             // cudaDeviceSynchronize();
-            // MPI_Barrier(MPI_COMM_WORLD);
+            // MPI_Barrier(d_mpiCommParent);
             // kernel2_time = MPI_Wtime() - kernel2_time;
 
             // if (this_process==0 && dftParameters::verbosity>=5)
@@ -1172,7 +1171,7 @@ namespace dftfe
             //  inside blocked loop: "<<kernel2_time<<std::endl;
 
             // cudaDeviceSynchronize();
-            // MPI_Barrier(MPI_COMM_WORLD);
+            // MPI_Barrier(d_mpiCommParent);
             // double kernel3_time = MPI_Wtime();
 
             if (totalNonTrivialPseudoWfcs > 0)
@@ -1204,7 +1203,7 @@ namespace dftfe
               }
 
             // cudaDeviceSynchronize();
-            // MPI_Barrier(MPI_COMM_WORLD);
+            // MPI_Barrier(d_mpiCommParent);
             // kernel3_time = MPI_Wtime() - kernel3_time;
 
             // if (this_process==0 && dftParameters::verbosity>=5)
@@ -1241,10 +1240,12 @@ namespace dftfe
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 #endif
-      const MPI_Comm &interBandGroupComm,
-      const bool      isPsp,
-      const bool      isFloatingChargeForces,
-      const bool      addEk)
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const bool           isPsp,
+      const bool           isFloatingChargeForces,
+      const bool           addEk,
+      const dftParameters &dftParams)
     {
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -1256,13 +1257,13 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int blockSize =
-        std::min(dftParameters::chebyWfcBlockSize,
+        std::min(dftParams.chebyWfcBlockSize,
                  bandGroupLowHighPlusOneIndices[1]);
 
       int this_process;
-      MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+      MPI_Comm_rank(mpiCommParent, &this_process);
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       double gpu_time = MPI_Wtime();
 
       distributedGPUVec<dataTypes::numberGPU> &cudaFlattenedArrayBlock =
@@ -1272,10 +1273,10 @@ namespace dftfe
         operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParameters::verbosity >= 2)
+      if (this_process == 0 && dftParams.verbosity >= 2)
         std::cout
           << "Time for creating cuda parallel vectors for force computation: "
           << gpu_time << std::endl;
@@ -1404,7 +1405,7 @@ namespace dftfe
                          cudaMemcpyHostToDevice);
 
               // cudaDeviceSynchronize();
-              // MPI_Barrier(MPI_COMM_WORLD);
+              // MPI_Barrier(d_mpiCommParent);
               // double kernel_time = MPI_Wtime();
 
               gpuPortedForceKernelsAllD(
@@ -1456,7 +1457,7 @@ namespace dftfe
                 addEk);
 
               // cudaDeviceSynchronize();
-              // MPI_Barrier(MPI_COMM_WORLD);
+              // MPI_Barrier(d_mpiCommParent);
               // kernel_time = MPI_Wtime() - kernel_time;
 
               // if (this_process==0 && dftParameters::verbosity>=5)
@@ -1475,10 +1476,10 @@ namespace dftfe
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp));
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParameters::verbosity >= 1)
+      if (this_process == 0 && dftParams.verbosity >= 1)
         std::cout << "Time taken for all gpu kernels force computation: "
                   << gpu_time << std::endl;
     }

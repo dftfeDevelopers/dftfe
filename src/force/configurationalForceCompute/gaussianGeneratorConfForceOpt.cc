@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -494,7 +494,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                   const double r = (nodalCoor - atomCoor).norm();
 
                   double gaussianWeight =
-                    dftParameters::reproducible_output ?
+                    d_dftParams.reproducible_output ?
                       std::exp(-std::pow(
                         r / dftPtr->d_gaussianConstantsForce[atomChargeId],
                         2)) :
@@ -502,7 +502,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                         dftPtr->d_generatorFlatTopWidths[atomChargeId],
                         r,
                         dftPtr->d_gaussianConstantsForce[atomChargeId],
-                        dftParameters::gaussianOrderForce);
+                        d_dftParams.gaussianOrderForce);
 
                   for (unsigned int idim = 0; idim < 3; idim++)
                     {
@@ -573,14 +573,14 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
 
                 const double r = (nodalCoor - atomCoor).norm();
                 double       gaussianWeight =
-                  dftParameters::reproducible_output ?
+                  d_dftParams.reproducible_output ?
                     std::exp(-std::pow(
                       r / dftPtr->d_gaussianConstantsForce[atomChargeId], 2)) :
                     dftUtils::getCompositeGeneratorVal(
                       dftPtr->d_generatorFlatTopWidths[atomChargeId],
                       r,
                       dftPtr->d_gaussianConstantsForce[atomChargeId],
-                      dftParameters::gaussianOrderForce);
+                      d_dftParams.gaussianOrderForce);
                 for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     const unsigned int globalDofIndex =
@@ -657,12 +657,12 @@ void
 forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
 {
   const int numberGlobalAtoms = dftPtr->atomLocations.size();
-  if (!dftParameters::reproducible_output)
+  if (!d_dftParams.reproducible_output)
     pcout << std::endl << "Ion forces (Hartree/Bohr)" << std::endl;
   else
     pcout << std::endl
           << "Absolute values of ion forces (Hartree/Bohr)" << std::endl;
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParams.verbosity >= 2)
     pcout << "Negative of configurational force (Hartree/Bohr) on atoms"
           << std::endl;
 
@@ -678,7 +678,7 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
                                              std::vector<double>(3, 0.0));
   for (unsigned int i = 0; i < numberGlobalAtoms; i++)
     {
-      if (!dftParameters::reproducible_output)
+      if (!d_dftParams.reproducible_output)
         pcout << std::setw(4) << i << "     " << std::scientific
               << -d_globalAtomsForces[3 * i] << "   "
               << -d_globalAtomsForces[3 * i + 1] << "   "
@@ -721,7 +721,7 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
     << "--------------------------------------------------------------------------------------------"
     << std::endl;
 
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParams.verbosity >= 1)
     {
       pcout << " Maximum absolute force atom id: " << maxForceAtomId
             << ", Force vec: " << -d_globalAtomsForces[3 * maxForceAtomId]
@@ -733,6 +733,6 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
             << sumForce[1] << " " << sumForce[2] << std::endl;
     }
 
-  if (!dftParameters::reproducible_output)
-    dftUtils::writeDataIntoFile(forceData, "forces.txt");
+  if (d_dftParams.verbosity >= 1 && !d_dftParams.reproducible_output)
+    dftUtils::writeDataIntoFile(forceData, "forces.txt", d_mpiCommParent);
 }

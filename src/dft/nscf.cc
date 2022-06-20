@@ -23,10 +23,6 @@
 
 #include <fstream>
 
-#include "../../include/dftParameters.h"
-
-
-using namespace dftParameters;
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -71,7 +67,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     eigenValues[kPoint].resize(d_numEigenValues);
   //
-  if (isPseudopotential)
+  if (d_dftParamsPtr->isPseudopotential)
     computeElementalOVProjectorKets();
 
   pcout << " check 0.2 " << std::endl;
@@ -79,7 +75,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   pcout << " check 0.3: " << std::endl;
   readPSI();
   //
-  // MPI_Barrier(MPI_COMM_WORLD) ;
+  // MPI_Barrier(d_mpiCommParent) ;
   pcout << " check 0.4 " << std::endl;
   //
   // -------------------------------------------------------------------------
@@ -89,7 +85,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   char   buffer[100];
   norm = mixing_anderson();
   //
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout << "Anderson mixing: L2 norm of electron-density difference: " << norm
           << std::endl;
   d_phiTotRhoIn = d_phiTotRhoOut;
@@ -97,7 +93,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   //---------------------------------------------------------------------------
   // Get SCF potential --------------------------------------------
   //
-  if (dftParameters::verbosity == 2)
+  if (d_dftParamsPtr->verbosity == 2)
     pcout << std::endl
           << "Poisson solve for total electrostatic potential (rhoIn+b): ";
   computing_timer.enter_subsection("nscf: phiTot solve");
@@ -119,9 +115,9 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   std::map<dealii::CellId, std::vector<double>> phiInValues;
 
   dealiiCGSolver.solve(phiTotalSolverProblem,
-                       dftParameters::absLinearSolverTolerance,
-                       dftParameters::maxLinearSolverIterations,
-                       dftParameters::verbosity);
+                       d_dftParamsPtr->absLinearSolverTolerance,
+                       d_dftParamsPtr->maxLinearSolverIterations,
+                       d_dftParamsPtr->verbosity);
 
   std::map<dealii::CellId, std::vector<double>> dummy2;
   interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
@@ -134,14 +130,14 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
 
   computing_timer.leave_subsection("nscf: phiTot solve");
   //
-  if (dftParameters::xcFamilyType == "LDA")
+  if (d_dftParamsPtr->xcFamilyType == "LDA")
     {
       computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(
         rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
       computing_timer.leave_subsection("nscf: VEff Computation");
     }
-  else if (dftParameters::xcFamilyType == "GGA")
+  else if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(rhoInValues,
@@ -178,12 +174,12 @@ dftClass<FEOrder, FEOrderElectro>::nscf(
       computing_timer.enter_subsection("nscf: Hamiltonian Matrix Computation");
       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint, 0);
       computing_timer.leave_subsection("nscf: Hamiltonian Matrix Computation");
-      // MPI_Barrier(MPI_COMM_WORLD);
+      // MPI_Barrier(d_mpiCommParent);
       //
       computing_timer.enter_subsection("nscf: kohnShamEigenSpaceCompute");
       while (maxRes > adaptiveChebysevFilterPassesTol)
         {
-          if (dftParameters::verbosity >= 2)
+          if (d_dftParamsPtr->verbosity >= 2)
             pcout << "Beginning Chebyshev filter pass " << count << std::endl;
           //
           kohnShamEigenSpaceComputeNSCF(
@@ -196,7 +192,7 @@ dftClass<FEOrder, FEOrderElectro>::nscf(
             count);
           maxRes = residualNormWaveFunctions
             [d_numEigenValues - std::max(10, (int)(d_numEigenValues / 10))];
-          if (dftParameters::verbosity == 2)
+          if (d_dftParamsPtr->verbosity == 2)
             pcout
               << "Maximum residual norm of the highest empty state in the bandstructure "
               << maxRes << std::endl;

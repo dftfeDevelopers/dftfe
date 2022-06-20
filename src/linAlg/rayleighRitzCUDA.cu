@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -16,7 +16,6 @@
 // @author Sambit Das
 
 
-#include "dftParameters.h"
 #include "dftUtils.h"
 #include "linearAlgebraOperationsCUDA.h"
 #include "linearAlgebraOperationsInternal.h"
@@ -37,21 +36,23 @@ namespace dftfe
       distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
       const unsigned int                           M,
       const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
       const MPI_Comm &                             mpiCommDomain,
       GPUCCLWrapper &                              gpucclMpiCommDomain,
       const MPI_Comm &                             interBandGroupComm,
       std::vector<double> &                        eigenValues,
       cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -75,7 +76,7 @@ namespace dftfe
       cudaDeviceSynchronize();
       computing_timer.enter_subsection("Blocked XtHX, RR step");
 
-      if (dftParameters::overlapComputeCommunOrthoRR)
+      if (dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXOverlapComputeCommun(X,
                                                 Xb,
                                                 HXb,
@@ -107,7 +108,7 @@ namespace dftfe
       //
       const unsigned int numberEigenValues = N;
       eigenValues.resize(numberEigenValues);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
@@ -197,7 +198,7 @@ namespace dftfe
                                                                rowsBlockSize);
       projHamParCopy.copy_conjugate_transposed(projHamPar);
 
-      if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
+      if (useMixedPrecOverall && dftParams.useMixedPrecSubspaceRotRR)
         subspaceRotationRRMixedPrecScalapack(X,
                                              M,
                                              N,
@@ -207,6 +208,7 @@ namespace dftfe
                                              gpucclMpiCommDomain,
                                              interBandGroupComm,
                                              projHamParCopy,
+                                             dftParams,
                                              false);
       else
         subspaceRotationScalapack(X,
@@ -218,6 +220,7 @@ namespace dftfe
                                   gpucclMpiCommDomain,
                                   interBandGroupComm,
                                   projHamParCopy,
+                                  dftParams,
                                   false);
       cudaDeviceSynchronize();
       computing_timer.leave_subsection("Blocked subspace rotation, RR step");
@@ -234,21 +237,23 @@ namespace dftfe
       distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
       const unsigned int                           M,
       const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
       const MPI_Comm &                             mpiCommDomain,
       GPUCCLWrapper &                              gpucclMpiCommDomain,
       const MPI_Comm &                             interBandGroupComm,
       std::vector<double> &                        eigenValues,
       cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -261,10 +266,10 @@ namespace dftfe
       // SConj=X^{T}*XConj.
       //
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
           else
@@ -284,9 +289,9 @@ namespace dftfe
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
                 X,
@@ -297,7 +302,8 @@ namespace dftfe
                 gpucclMpiCommDomain,
                 interBandGroupComm,
                 processGrid,
-                overlapMatPar);
+                overlapMatPar,
+                dftParams);
           else
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatMixedPrecScalapack(X,
@@ -308,11 +314,12 @@ namespace dftfe
                                                        gpucclMpiCommDomain,
                                                        interBandGroupComm,
                                                        processGrid,
-                                                       overlapMatPar);
+                                                       overlapMatPar,
+                                                       dftParams);
         }
       else
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
                 X,
@@ -323,7 +330,8 @@ namespace dftfe
                 gpucclMpiCommDomain,
                 interBandGroupComm,
                 processGrid,
-                overlapMatPar);
+                overlapMatPar,
+                dftParams);
           else
             linearAlgebraOperationsCUDA::fillParallelOverlapMatScalapack(
               X,
@@ -334,13 +342,14 @@ namespace dftfe
               gpucclMpiCommDomain,
               interBandGroupComm,
               processGrid,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
           else
@@ -350,13 +359,13 @@ namespace dftfe
       //
       // SConj=LConj*L^{T}
       //
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.enter_subsection(
           "Cholesky and triangular matrix invert, RR GEP step");
 
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           // For ELPA cholesky only the upper triangular part of the hermitian
           // matrix is required
@@ -424,12 +433,12 @@ namespace dftfe
       // compute LConj^{-1}
       LMatPar.invert();
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.leave_subsection(
           "Cholesky and triangular matrix invert, RR GEP step");
 
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection(
@@ -449,7 +458,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParameters::overlapComputeCommunOrthoRR)
+      if (dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXOverlapComputeCommun(X,
                                                 Xb,
                                                 HXb,
@@ -472,14 +481,14 @@ namespace dftfe
                             projHamPar,
                             gpucclMpiCommDomain);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.leave_subsection(
             "HConjProj= X^{T}*HConj*XConj, RR GEP step");
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.enter_subsection(
           "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
@@ -521,7 +530,7 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.leave_subsection(
           "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
@@ -529,9 +538,9 @@ namespace dftfe
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
       const unsigned int numberEigenValues = N;
       eigenValues.resize(numberEigenValues);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.enter_subsection("ELPA eigen decomp, RR GEP step");
           dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
                                                                  processGrid,
@@ -563,17 +572,17 @@ namespace dftfe
 
           eigenVectors.copy_to(projHamPar);
 
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.leave_subsection("ELPA eigen decomp, RR GEP step");
         }
       else
         {
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.enter_subsection(
               "ScaLAPACK eigen decomp, RR GEP step");
           eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, N - 1), true);
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.leave_subsection(
               "ScaLAPACK eigen decomp, RR GEP step");
         }
@@ -593,11 +602,10 @@ namespace dftfe
       // X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, stored in the column major
       // format In the above we use Q^{T}={QConjPrime}^{C}*LConj^{-1}
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (!(dftParameters::useMixedPrecSubspaceRotRR &&
-                useMixedPrecOverall))
+          if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrecOverall))
             computing_timer.enter_subsection(
               "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
           else
@@ -608,7 +616,7 @@ namespace dftfe
       projHamParCopy.copy_conjugate_transposed(projHamPar);
       projHamParCopy.mmult(projHamPar, LMatPar);
 
-      if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
+      if (useMixedPrecOverall && dftParams.useMixedPrecSubspaceRotRR)
         subspaceRotationRRMixedPrecScalapack(X,
                                              M,
                                              N,
@@ -618,6 +626,7 @@ namespace dftfe
                                              gpucclMpiCommDomain,
                                              interBandGroupComm,
                                              projHamPar,
+                                             dftParams,
                                              false);
       else
         subspaceRotationScalapack(X,
@@ -629,13 +638,13 @@ namespace dftfe
                                   gpucclMpiCommDomain,
                                   interBandGroupComm,
                                   projHamPar,
+                                  dftParams,
                                   false);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (!(dftParameters::useMixedPrecSubspaceRotRR &&
-                useMixedPrecOverall))
+          if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrecOverall))
             computing_timer.leave_subsection(
               "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
           else
@@ -657,21 +666,23 @@ namespace dftfe
       const unsigned int                           M,
       const unsigned int                           N,
       const unsigned int                           Noc,
+      const MPI_Comm &                             mpiCommParent,
       const MPI_Comm &                             mpiCommDomain,
       GPUCCLWrapper &                              gpucclMpiCommDomain,
       const MPI_Comm &                             interBandGroupComm,
       std::vector<double> &                        eigenValues,
       cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -683,10 +694,10 @@ namespace dftfe
       //
       // SConj=X^{T}*XConj
       //
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
           else
@@ -707,9 +718,9 @@ namespace dftfe
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
                 X,
@@ -720,7 +731,8 @@ namespace dftfe
                 gpucclMpiCommDomain,
                 interBandGroupComm,
                 processGrid,
-                overlapMatPar);
+                overlapMatPar,
+                dftParams);
           else
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatMixedPrecScalapack(X,
@@ -731,11 +743,12 @@ namespace dftfe
                                                        gpucclMpiCommDomain,
                                                        interBandGroupComm,
                                                        processGrid,
-                                                       overlapMatPar);
+                                                       overlapMatPar,
+                                                       dftParams);
         }
       else
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
                 X,
@@ -746,7 +759,8 @@ namespace dftfe
                 gpucclMpiCommDomain,
                 interBandGroupComm,
                 processGrid,
-                overlapMatPar);
+                overlapMatPar,
+                dftParams);
           else
             linearAlgebraOperationsCUDA::fillParallelOverlapMatScalapack(
               X,
@@ -757,13 +771,14 @@ namespace dftfe
               gpucclMpiCommDomain,
               interBandGroupComm,
               processGrid,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
           else
@@ -771,12 +786,12 @@ namespace dftfe
         }
 
       // Sc=Lc*L^{T}
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.enter_subsection(
           "Cholesky and triangular matrix invert, RR GEP step");
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           // For ELPA cholesky only the upper triangular part of the hermitian
           // matrix is required
@@ -843,17 +858,16 @@ namespace dftfe
 
       // compute LConj^{-1}
       LMatPar.invert();
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.leave_subsection(
           "Cholesky and triangular matrix invert, RR GEP step");
 
 
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecXTHXSpectrumSplit &&
-              useMixedPrecOverall)
+          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
           else
@@ -873,7 +887,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
+      if (useMixedPrecOverall && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
           operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
             X,
@@ -891,7 +905,7 @@ namespace dftfe
         }
       else
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             operatorMatrix.XtHXOverlapComputeCommun(X,
                                                     Xb,
                                                     HXb,
@@ -916,11 +930,10 @@ namespace dftfe
         }
 
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecXTHXSpectrumSplit &&
-              useMixedPrecOverall)
+          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
           else
@@ -928,7 +941,7 @@ namespace dftfe
               "HConjProj=X^{T}*HConj*XConj, RR GEP step");
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.enter_subsection(
           "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
@@ -945,7 +958,7 @@ namespace dftfe
 
 
       projHamParConjTrans.copy_conjugate_transposed(projHamPar);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         projHamPar.add(projHamParConjTrans,
                        dataTypes::number(-1.0),
                        dataTypes::number(-1.0));
@@ -976,7 +989,7 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         computing_timer.leave_subsection(
           "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
@@ -985,9 +998,9 @@ namespace dftfe
       //
       const unsigned int Nfr = N - Noc;
       eigenValues.resize(Nfr);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.enter_subsection("ELPA eigen decomp, RR step");
           std::vector<double>                       allEigenValues(N, 0.0);
           dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
@@ -1055,16 +1068,16 @@ namespace dftfe
 
           eigenVectors.mmult(projHamPar, permutedIdentityMat);
 
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.leave_subsection("ELPA eigen decomp, RR step");
         }
       else
         {
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
           eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(Noc, N - 1), true);
-          if (dftParameters::gpuFineGrainedTimings)
+          if (dftParams.gpuFineGrainedTimings)
             computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
 
@@ -1079,7 +1092,7 @@ namespace dftfe
          interBandGroupComm);
        */
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection(
@@ -1103,19 +1116,20 @@ namespace dftfe
                                              mpiCommDomain,
                                              gpucclMpiCommDomain,
                                              projHamPar,
+                                             dftParams,
                                              false);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.leave_subsection(
             "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
+          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
           else
@@ -1126,7 +1140,7 @@ namespace dftfe
       //
       // X^{T}=LConj^{-1}*X^{T}
       //
-      if (useMixedPrecOverall && dftParameters::useMixedPrecCGS_SR)
+      if (useMixedPrecOverall && dftParams.useMixedPrecCGS_SR)
         subspaceRotationCGSMixedPrecScalapack(X,
                                               M,
                                               N,
@@ -1136,6 +1150,7 @@ namespace dftfe
                                               gpucclMpiCommDomain,
                                               interBandGroupComm,
                                               LMatPar,
+                                              dftParams,
                                               false);
       else
         subspaceRotationScalapack(X,
@@ -1147,13 +1162,14 @@ namespace dftfe
                                   gpucclMpiCommDomain,
                                   interBandGroupComm,
                                   LMatPar,
+                                  dftParams,
                                   false,
                                   true);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
+          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
           else
@@ -1173,6 +1189,7 @@ namespace dftfe
       distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
       const unsigned int                           M,
       const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
       const MPI_Comm &                             mpiCommDomain,
       GPUCCLWrapper &                              gpucclMpiCommDomain,
       const MPI_Comm &                             interBandGroupComm,
@@ -1180,16 +1197,17 @@ namespace dftfe
       const double                                 fermiEnergy,
       std::vector<double> &                        densityMatDerFermiEnergy,
       dftfe::elpaScalaManager &                    elpaScala,
-      cublasHandle_t &                             handle)
+      cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -1203,7 +1221,7 @@ namespace dftfe
                                                                 processGrid,
                                                                 rowsBlockSize);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection("Blocked XtHX, DMFOR step");
@@ -1215,8 +1233,8 @@ namespace dftfe
                     projHamPrimePar.local_m() * projHamPrimePar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParameters::singlePrecLRJI &&
-          dftParameters::overlapComputeCommunOrthoRR)
+      if (dftParams.singlePrecLRJI &&
+          dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
           X,
           Xb,
@@ -1231,7 +1249,7 @@ namespace dftfe
           projHamPrimePar,
           gpucclMpiCommDomain,
           true);
-      else if (dftParameters::overlapComputeCommunOrthoRR)
+      else if (dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXOverlapComputeCommun(X,
                                                 Xb,
                                                 HXb,
@@ -1256,13 +1274,13 @@ namespace dftfe
                             gpucclMpiCommDomain,
                             true);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.leave_subsection("Blocked XtHX, DMFOR step");
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection(
@@ -1270,7 +1288,7 @@ namespace dftfe
         }
 
       const int    m    = 10;
-      const double beta = 1.0 / C_kb / dftParameters::TVal;
+      const double beta = 1.0 / C_kb / dftParams.TVal;
       const double c    = std::pow(2.0, -2.0 - m) * beta;
 
       std::vector<double> H0 = eigenValues;
@@ -1349,7 +1367,7 @@ namespace dftfe
       densityMatDerFermiEnergy = Pmu0;
 
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.leave_subsection(
@@ -1360,7 +1378,7 @@ namespace dftfe
       // subspace transformation Y^{T} = DMP^T*X^{T}, implemented as
       // Y^{T}=DMPc^{C}*X^{T} with X^{T} stored in the column major format
       //
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection(
@@ -1398,7 +1416,7 @@ namespace dftfe
 
       densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
 
-      if (dftParameters::singlePrecLRJI)
+      if (dftParams.singlePrecLRJI)
         subspaceRotationRRMixedPrecScalapack(X,
                                              M,
                                              N,
@@ -1408,6 +1426,7 @@ namespace dftfe
                                              gpucclMpiCommDomain,
                                              interBandGroupComm,
                                              densityMatPrimeParConjTrans,
+                                             dftParams,
                                              false);
       else
         subspaceRotationScalapack(X,
@@ -1419,9 +1438,10 @@ namespace dftfe
                                   gpucclMpiCommDomain,
                                   interBandGroupComm,
                                   densityMatPrimeParConjTrans,
+                                  dftParams,
                                   false);
 
-      if (dftParameters::gpuFineGrainedTimings)
+      if (dftParams.gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.leave_subsection(

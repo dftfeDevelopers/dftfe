@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -339,9 +339,9 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   std::vector<std::vector<int>> &   globalChargeIdToImageIdMap)
 {
   const double tol       = 1e-4;
-  const bool   periodicX = dftParameters::periodicX;
-  const bool   periodicY = dftParameters::periodicY;
-  const bool   periodicZ = dftParameters::periodicZ;
+  const bool   periodicX = d_dftParamsPtr->periodicX;
+  const bool   periodicY = d_dftParamsPtr->periodicY;
+  const bool   periodicZ = d_dftParamsPtr->periodicZ;
 
   //
   // get the magnitude of lattice Vectors
@@ -499,7 +499,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   for (int i = 0; i < numImageCharges; ++i)
     {
       double atomCharge;
-      if (dftParameters::isPseudopotential)
+      if (d_dftParamsPtr->isPseudopotential)
         atomCharge = atomLocations[imageIds[i]][1];
       else
         atomCharge = atomLocations[imageIds[i]][0];

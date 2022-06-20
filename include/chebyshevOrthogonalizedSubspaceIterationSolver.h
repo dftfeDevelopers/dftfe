@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -23,6 +23,7 @@
 #include "eigenSolver.h"
 #include "operator.h"
 #include "elpaScalaManager.h"
+#include "dftParameters.h"
 
 
 namespace dftfe
@@ -39,15 +40,18 @@ namespace dftfe
     /**
      * @brief Constructor.
      *
-     * @param mpi_comm domain decomposition mpi communicator
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain domain decomposition mpi communicator
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
     chebyshevOrthogonalizedSubspaceIterationSolver(
-      const MPI_Comm &mpi_comm,
-      double          lowerBoundWantedSpectrum,
-      double          lowerBoundUnWantedSpectrum,
-      double          upperBoundUnWantedSpectrum);
+      const MPI_Comm &     mpi_comm_parent,
+      const MPI_Comm &     mpi_comm_domain,
+      double               lowerBoundWantedSpectrum,
+      double               lowerBoundUnWantedSpectrum,
+      double               upperBoundUnWantedSpectrum,
+      const dftParameters &dftParams);
 
 
     /**
@@ -90,6 +94,7 @@ namespace dftfe
                          double upperBoundUnWantedSpectrum);
 
   private:
+    const MPI_Comm d_mpiCommParent;
     //
     // stores lower bound of wanted spectrum
     //
@@ -105,6 +110,9 @@ namespace dftfe
     // stores upper bound of unwanted spectrum
     //
     double d_upperBoundUnWantedSpectrum;
+
+
+    const dftParameters &d_dftParams;
 
     //
     // variables for printing out and timing

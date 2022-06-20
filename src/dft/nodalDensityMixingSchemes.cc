@@ -102,15 +102,15 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 
   // solve the Helmholtz system to compute preconditioned residual
   dealiiCGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                       dftParameters::absLinearSolverToleranceHelmholtz,
-                       dftParameters::maxLinearSolverIterationsHelmholtz,
-                       dftParameters::verbosity,
+                       d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                       d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                       d_dftParamsPtr->verbosity,
                        false);
 
 
   // compute rhoIn to being the current SCF iteration using the preconditioned
   // residual
-  double const2 = -dftParameters::mixingParameter;
+  double const2 = -d_dftParamsPtr->mixingParameter;
   d_rhoInNodalValues.add(const2, d_preCondResidualVector);
 
   d_rhoInNodalValues.update_ghost_values();
@@ -142,7 +142,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   }
   }
 
-  if(dftParameters::xcFamilyType=="GGA")
+  if(d_dftParamsPtr->xcFamilyType=="GGA")
   {
   for(unsigned int iSubCell = 0; iSubCell <
   d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
@@ -171,7 +171,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    dftParameters::xcFamilyType == "GGA");
+    d_dftParamsPtr->xcFamilyType == "GGA");
 
   return normValue;
 }
@@ -356,7 +356,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
   // initialize helmholtz solver function object with the quantity required for
   // computing rhs, solution vector and mixing constant
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout
       << "Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "
       << std::endl;
@@ -367,15 +367,15 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
 
   // solve the Helmholtz system to compute preconditioned residual
   dealiiCGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                       dftParameters::absLinearSolverToleranceHelmholtz,
-                       dftParameters::maxLinearSolverIterationsHelmholtz,
-                       dftParameters::verbosity,
+                       d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                       d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                       d_dftParamsPtr->verbosity,
                        false);
 
 
   // rhoIn += mixingScalar*residual for Kerker
   d_rhoInNodalValues = 0.0;
-  double const2      = -dftParameters::mixingParameter;
+  double const2      = -d_dftParamsPtr->mixingParameter;
   d_rhoInNodalValues.add(1.0, rhoInBar, const2, d_preCondResidualVector);
 
   d_rhoInNodalValues.update_ghost_values();
@@ -407,7 +407,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
     }
     }
 
-    if(dftParameters::xcFamilyType=="GGA")
+    if(d_dftParamsPtr->xcFamilyType=="GGA")
     {
     for(unsigned int iSubCell = 0; iSubCell <
     d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
@@ -435,7 +435,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    dftParameters::xcFamilyType == "GGA");
+    d_dftParamsPtr->xcFamilyType == "GGA");
 
 
   return normValue;

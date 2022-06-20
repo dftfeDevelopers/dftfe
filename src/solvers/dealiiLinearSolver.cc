@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -18,19 +18,21 @@
 //
 
 #include <dealiiLinearSolver.h>
-#include <dftParameters.h>
 
 namespace dftfe
 {
   // constructor
-  dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm & mpi_comm,
+  dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm & mpi_comm_parent,
+                                         const MPI_Comm & mpi_comm_domain,
                                          const solverType type)
-    : mpi_communicator(mpi_comm)
+    : d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
     , d_type(type)
-    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
 
@@ -39,7 +41,7 @@ namespace dftfe
   dealiiLinearSolver::solve(dealiiLinearSolverProblem &problem,
                             const double               absTolerance,
                             const unsigned int         maxNumberIterations,
-                            const unsigned int         debugLevel,
+                            const int                  debugLevel,
                             bool                       distributeFlag)
   {
     int this_process;
@@ -55,7 +57,7 @@ namespace dftfe
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
-    if (dftParameters::verbosity >= 4)
+    if (debugLevel >= 4)
       pcout << "Time for compute rhs: " << time - start_time << std::endl;
 
     bool conv = false; // false : converged; true : converged
@@ -185,7 +187,7 @@ namespace dftfe
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime() - time;
 
-    if (dftParameters::verbosity >= 4)
+    if (debugLevel >= 4)
       pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
             << std::endl;
   }

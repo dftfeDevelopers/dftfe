@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,6 +17,7 @@
 
 #include <headers.h>
 #include "constraintMatrixInfo.h"
+#include "dftParameters.h"
 #if defined(DFTFE_WITH_GPU)
 #  include <operatorCUDA.h>
 #endif
@@ -39,9 +40,12 @@ namespace dftfe
     /**
      * @brief Constructor
      *
-     * @param mpi_comm mpi communicator
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain domain decomposition mpi communicator
      */
-    vselfBinsManager(const MPI_Comm &mpi_comm);
+    vselfBinsManager(const MPI_Comm &     mpi_comm_parent,
+                     const MPI_Comm &     mpi_comm_domain,
+                     const dftParameters &dftParams);
 
 
     /**
@@ -341,6 +345,9 @@ namespace dftfe
     /// and reused for subsequent calls
     double d_storedAdaptiveBallRadius;
 
+    const dftParameters &d_dftParams;
+
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

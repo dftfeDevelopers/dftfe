@@ -158,8 +158,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   const unsigned int scfIter)
 {
   int this_process;
-  MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Comm_rank(d_mpiCommParent, &this_process);
+  MPI_Barrier(d_mpiCommParent);
   double total_time = MPI_Wtime();
 
   double normValue = 0.0;
@@ -229,11 +229,11 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  const unsigned int maxRankCurrentSCF = dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE"?15:20;
+  const unsigned int maxRankCurrentSCF = d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE"?15:20;
   const unsigned int maxRankAccum      = 20;
 
-  if (d_rankCurrent >= 1 &&
-      dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+  if (d_rankCurrentLRJI >= 1 &&
+      d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
     {
       const double relativeApproxError =
         internalLowrankJacInv::relativeErrorEstimateSpin(d_fvSpin0containerVals,
@@ -241,26 +241,26 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
                                                          residualRhoSpin0,
                                                          residualRhoSpin1,
                                                          k0);
-      if (d_rankCurrent >= maxRankAccum ||
-          (relativeApproxError > dftParameters::adaptiveRankRelTolLRJI *
-                                   dftParameters::factorAdapAccumClearLRJI) ||
-          relativeApproxError > d_relativeErrorJacInvApproxPrevScf)
+      if (d_rankCurrentLRJI >= maxRankAccum ||
+          (relativeApproxError > d_dftParamsPtr->adaptiveRankRelTolLRJI *
+                                   d_dftParamsPtr->factorAdapAccumClearLRJI) ||
+          relativeApproxError > d_relativeErrorJacInvApproxPrevScfLRJI)
         {
-          if (dftParameters::verbosity >= 4)
+          if (d_dftParamsPtr->verbosity >= 4)
             pcout
               << " Clearing accumulation as relative tolerance metric exceeded "
               << ", relative tolerance current scf: " << relativeApproxError
               << ", relative tolerance prev scf: "
-              << d_relativeErrorJacInvApproxPrevScf << std::endl;
+              << d_relativeErrorJacInvApproxPrevScfLRJI << std::endl;
           d_vSpin0containerVals.clear();
           d_vSpin1containerVals.clear();
           d_fvSpin0containerVals.clear();
           d_fvSpin1containerVals.clear();
-          d_rankCurrent                      = 0;
-          d_relativeErrorJacInvApproxPrevScf = 100.0;
+          d_rankCurrentLRJI                      = 0;
+          d_relativeErrorJacInvApproxPrevScfLRJI = 100.0;
         }
       else
-        d_relativeErrorJacInvApproxPrevScf = relativeApproxError;
+        d_relativeErrorJacInvApproxPrevScfLRJI = relativeApproxError;
     }
   else
     {
@@ -268,157 +268,157 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
       d_vSpin1containerVals.clear();
       d_fvSpin0containerVals.clear();
       d_fvSpin1containerVals.clear();
-      d_rankCurrent = 0;
+      d_rankCurrentLRJI = 0;
     }
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-  while (((rankAddedInThisScf < maxRankThisScf) && d_rankCurrent < maxRankAccum)
-         || ((normValue < dftParameters::selfConsistentSolverTolerance) &&
-              (dftParameters::estimateJacCondNoFinalSCFIter)))
+  while (((rankAddedInThisScf < maxRankThisScf) && d_rankCurrentLRJI < maxRankAccum)
+         || ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
+              (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
     {
       if (rankAddedInThisScf == 0)
         {
           d_vSpin0containerVals.push_back(residualRhoSpin0);
           d_vSpin1containerVals.push_back(residualRhoSpin1);
-          d_vSpin0containerVals[d_rankCurrent] *= k0;
-          d_vSpin1containerVals[d_rankCurrent] *= k0;
+          d_vSpin0containerVals[d_rankCurrentLRJI] *= k0;
+          d_vSpin1containerVals[d_rankCurrentLRJI] *= k0;
         }
       else
         {
           d_vSpin0containerVals.push_back(
-            d_fvSpin0containerVals[d_rankCurrent - 1]);
+            d_fvSpin0containerVals[d_rankCurrentLRJI - 1]);
           d_vSpin1containerVals.push_back(
-            d_fvSpin1containerVals[d_rankCurrent - 1]);
+            d_fvSpin1containerVals[d_rankCurrentLRJI - 1]);
         }
 
       compvecSpin0 = 0;
       compvecSpin1 = 0;
-      for (int jrank = 0; jrank < d_rankCurrent; jrank++)
+      for (int jrank = 0; jrank < d_rankCurrentLRJI; jrank++)
         {
           const double tTvj =
-            d_vSpin0containerVals[d_rankCurrent] *
+            d_vSpin0containerVals[d_rankCurrentLRJI] *
               d_vSpin0containerVals[jrank] +
-            d_vSpin1containerVals[d_rankCurrent] * d_vSpin1containerVals[jrank];
+            d_vSpin1containerVals[d_rankCurrentLRJI] * d_vSpin1containerVals[jrank];
           compvecSpin0.add(tTvj, d_vSpin0containerVals[jrank]);
           compvecSpin1.add(tTvj, d_vSpin1containerVals[jrank]);
         }
-      d_vSpin0containerVals[d_rankCurrent] -= compvecSpin0;
-      d_vSpin1containerVals[d_rankCurrent] -= compvecSpin1;
+      d_vSpin0containerVals[d_rankCurrentLRJI] -= compvecSpin0;
+      d_vSpin1containerVals[d_rankCurrentLRJI] -= compvecSpin1;
 
       const double normvmat = internalLowrankJacInv::frobeniusNormSpin(
-        d_vSpin0containerVals[d_rankCurrent],
-        d_vSpin1containerVals[d_rankCurrent]);
+        d_vSpin0containerVals[d_rankCurrentLRJI],
+        d_vSpin1containerVals[d_rankCurrentLRJI]);
 
 
-      d_vSpin0containerVals[d_rankCurrent] *= 1.0 / normvmat;
-      d_vSpin1containerVals[d_rankCurrent] *= 1.0 / normvmat;
+      d_vSpin0containerVals[d_rankCurrentLRJI] *= 1.0 / normvmat;
+      d_vSpin1containerVals[d_rankCurrentLRJI] *= 1.0 / normvmat;
 
       const double normvmatNormalized =
         internalLowrankJacInv::frobeniusNormSpin(
-          d_vSpin0containerVals[d_rankCurrent],
-          d_vSpin1containerVals[d_rankCurrent]);
+          d_vSpin0containerVals[d_rankCurrentLRJI],
+          d_vSpin1containerVals[d_rankCurrentLRJI]);
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << " Matrix norm of V:  " << normvmatNormalized
-              << ", for rank: " << d_rankCurrent + 1 << std::endl;
+              << ", for rank: " << d_rankCurrentLRJI + 1 << std::endl;
 
       d_fvSpin0containerVals.push_back(residualRhoSpin0);
-      d_fvSpin0containerVals[d_rankCurrent] = 0;
+      d_fvSpin0containerVals[d_rankCurrentLRJI] = 0;
 
       d_fvSpin1containerVals.push_back(residualRhoSpin1);
-      d_fvSpin1containerVals[d_rankCurrent] = 0;
+      d_fvSpin1containerVals[d_rankCurrentLRJI] = 0;
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_vSpin0containerVals[d_rankCurrent].local_element(idof) +
-          d_vSpin1containerVals[d_rankCurrent].local_element(idof);
+          d_vSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
+          d_vSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral V and contraction over spin before scaling:  "
               << charge << std::endl;
 
-      d_vSpin0containerVals[d_rankCurrent].add(-charge / d_domainVolume / 2.0);
-      d_vSpin1containerVals[d_rankCurrent].add(-charge / d_domainVolume / 2.0);
+      d_vSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
+      d_vSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
 
-      // d_constraintsRhoNodal.set_zero(d_vSpin0containerVals[d_rankCurrent]);
-      // d_constraintsRhoNodal.set_zero(d_vSpin1containerVals[d_rankCurrent]);
+      // d_constraintsRhoNodal.set_zero(d_vSpin0containerVals[d_rankCurrentLRJI]);
+      // d_constraintsRhoNodal.set_zero(d_vSpin1containerVals[d_rankCurrentLRJI]);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_vSpin0containerVals[d_rankCurrent].local_element(idof) +
-          d_vSpin1containerVals[d_rankCurrent].local_element(idof);
+          d_vSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
+          d_vSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral V and contraction over spin after scaling:  "
               << charge << std::endl;
 
       computeOutputDensityDirectionalDerivative(
         tempDensityPrimeTotalVec,
-        d_vSpin0containerVals[d_rankCurrent],
-        d_vSpin1containerVals[d_rankCurrent],
+        d_vSpin0containerVals[d_rankCurrentLRJI],
+        d_vSpin1containerVals[d_rankCurrentLRJI],
         dummy,
-        d_fvSpin0containerVals[d_rankCurrent],
-        d_fvSpin1containerVals[d_rankCurrent]);
+        d_fvSpin0containerVals[d_rankCurrentLRJI],
+        d_fvSpin1containerVals[d_rankCurrentLRJI]);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_fvSpin0containerVals[d_rankCurrent].local_element(idof) +
-          d_fvSpin1containerVals[d_rankCurrent].local_element(idof);
+          d_fvSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
+          d_fvSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral fV and contraction over spin before scaling:  "
               << charge << std::endl;
 
-      d_fvSpin0containerVals[d_rankCurrent].add(-charge / d_domainVolume / 2.0);
-      d_fvSpin1containerVals[d_rankCurrent].add(-charge / d_domainVolume / 2.0);
+      d_fvSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
+      d_fvSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_fvSpin0containerVals[d_rankCurrent].local_element(idof) +
-          d_fvSpin1containerVals[d_rankCurrent].local_element(idof);
+          d_fvSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
+          d_fvSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral fV and contraction over spin after scaling:  "
               << charge << std::endl;
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout
           << " Frobenius norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "
           << internalLowrankJacInv::frobeniusNormSpin(
-               d_fvSpin0containerVals[d_rankCurrent],
-               d_fvSpin1containerVals[d_rankCurrent])
-          << " for kernel rank: " << d_rankCurrent + 1 << std::endl;
+               d_fvSpin0containerVals[d_rankCurrentLRJI],
+               d_fvSpin1containerVals[d_rankCurrentLRJI])
+          << " for kernel rank: " << d_rankCurrentLRJI + 1 << std::endl;
 
-      d_fvSpin0containerVals[d_rankCurrent] -=
-        d_vSpin0containerVals[d_rankCurrent];
-      d_fvSpin1containerVals[d_rankCurrent] -=
-        d_vSpin1containerVals[d_rankCurrent];
-      d_fvSpin0containerVals[d_rankCurrent] *= k0;
-      d_fvSpin1containerVals[d_rankCurrent] *= k0;
-      d_rankCurrent++;
+      d_fvSpin0containerVals[d_rankCurrentLRJI] -=
+        d_vSpin0containerVals[d_rankCurrentLRJI];
+      d_fvSpin1containerVals[d_rankCurrentLRJI] -=
+        d_vSpin1containerVals[d_rankCurrentLRJI];
+      d_fvSpin0containerVals[d_rankCurrentLRJI] *= k0;
+      d_fvSpin1containerVals[d_rankCurrentLRJI] *= k0;
+      d_rankCurrentLRJI++;
       rankAddedInThisScf++;
 
-      if (dftParameters::methodSubTypeLRJI == "ADAPTIVE" ||
-          dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+      if (d_dftParamsPtr->methodSubTypeLRJI == "ADAPTIVE" ||
+          d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
         {
           const double relativeApproxError =
             internalLowrankJacInv::relativeErrorEstimateSpin(
@@ -428,11 +428,11 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
               residualRhoSpin1,
               k0);
 
-          if (dftParameters::verbosity >= 4)
+          if (d_dftParamsPtr->verbosity >= 4)
             pcout << " Relative approx error:  " << relativeApproxError
-                  << " for kernel rank: " << d_rankCurrent << std::endl;
+                  << " for kernel rank: " << d_rankCurrentLRJI << std::endl;
 
-          if (relativeApproxError < dftParameters::adaptiveRankRelTolLRJI)
+          if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRJI)
             {
               break;
             }
@@ -440,8 +440,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
     }
 
 
-  if (dftParameters::verbosity >= 4)
-    pcout << " Net accumulated kernel rank:  " << d_rankCurrent
+  if (d_dftParamsPtr->verbosity >= 4)
+    pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRJI
           << " Accumulated in this scf: " << rankAddedInThisScf << std::endl;
 
   internalLowrankJacInv::lowrankKernelApplySpin(d_fvSpin0containerVals,
@@ -464,9 +464,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   // Suggested to use 0.1 for initial steps
   // as well as when normValue is greater than 2.0
   double const2 =
-    (normValue > dftParameters::startingNormLRJILargeDamping || scfIter < 2) ?
+    (normValue > d_dftParamsPtr->startingNormLRJILargeDamping || scfIter < 2) ?
       -0.1 :
-      -dftParameters::mixingParameterLRJI;
+      -d_dftParamsPtr->mixingParameterLRJI;
 
   pcout << " Preconditioned mixing step, mixing constant: " << const2
         << std::endl;
@@ -486,7 +486,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
     *rhoInValuesSpinPolarized,
     *gradRhoInValuesSpinPolarized,
     *gradRhoInValuesSpinPolarized,
-    dftParameters::xcFamilyType == "GGA");
+    d_dftParamsPtr->xcFamilyType == "GGA");
 
   // push the rhoIn to deque storing the history of nodal values
   d_rhoInSpin0NodalVals.push_back(d_rhoInSpin0NodalValues);
@@ -508,18 +508,18 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    dftParameters::xcFamilyType == "GGA");
+    d_dftParamsPtr->xcFamilyType == "GGA");
 
   // push the rhoIn to deque storing the history of nodal values
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   total_time = MPI_Wtime() - total_time;
 
-  if (this_process == 0 && dftParameters::verbosity >= 2)
+  if (this_process == 0 && d_dftParamsPtr->verbosity >= 2)
     std::cout << "Time for low rank jac inv: " << total_time << std::endl;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout << " Norm of residual in spin-polarized case:  "
           << std::sqrt(normValueSpin0 * normValueSpin0 +
                        normValueSpin1 * normValueSpin1)

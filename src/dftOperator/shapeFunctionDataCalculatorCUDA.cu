@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -234,7 +234,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     dftPtr->matrix_free_data.n_physical_cells();
 
   cudaDeviceSynchronize();
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double gpu_time = MPI_Wtime();
 
   QGauss<3>    quadraturePlusOne(FEOrder + 1);
@@ -254,10 +254,10 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     d_cellShapeFunctionGradientIntegralFlattenedDevice);
 
   cudaDeviceSynchronize();
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   gpu_time = MPI_Wtime() - gpu_time;
 
-  if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
+  if (this_mpi_process == 0 && dftPtr->d_dftParamsPtr->verbosity >= 2)
     std::cout
       << "Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrder: "
       << gpu_time << std::endl;
@@ -265,7 +265,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   if (FEOrderElectro != FEOrder)
     {
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       gpu_time = MPI_Wtime();
 
       QGauss<3> quadratureElectroPlusOne(FEOrderElectro + 1);
@@ -286,10 +286,10 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
+      if (this_mpi_process == 0 && dftPtr->d_dftParamsPtr->verbosity >= 2)
         std::cout
           << "Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrderElectro: "
           << gpu_time << std::endl;

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -29,20 +29,22 @@ namespace dftfe
                                        dataTypes::numberGPU *X,
                                        const unsigned int    M,
                                        const unsigned int    N,
+                                       const MPI_Comm &      mpiCommParent,
                                        const MPI_Comm &      mpiCommDomain,
-                                       GPUCCLWrapper & gpucclMpiCommDomain,
-                                       const MPI_Comm &interBandGroupComm,
-                                       cublasHandle_t &handle,
-                                       const bool      useMixedPrecOverall)
+                                       GPUCCLWrapper &      gpucclMpiCommDomain,
+                                       const MPI_Comm &     interBandGroupComm,
+                                       cublasHandle_t &     handle,
+                                       const dftParameters &dftParams,
+                                       const bool           useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -63,9 +65,9 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
                 X,
@@ -76,7 +78,8 @@ namespace dftfe
                 gpucclMpiCommDomain,
                 interBandGroupComm,
                 processGrid,
-                overlapMatPar);
+                overlapMatPar,
+                dftParams);
           else
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatMixedPrecScalapack(X,
@@ -87,11 +90,12 @@ namespace dftfe
                                                        gpucclMpiCommDomain,
                                                        interBandGroupComm,
                                                        processGrid,
-                                                       overlapMatPar);
+                                                       overlapMatPar,
+                                                       dftParams);
         }
       else
         {
-          if (dftParameters::overlapComputeCommunOrthoRR)
+          if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
                 X,
@@ -102,7 +106,8 @@ namespace dftfe
                 gpucclMpiCommDomain,
                 interBandGroupComm,
                 processGrid,
-                overlapMatPar);
+                overlapMatPar,
+                dftParams);
           else
             linearAlgebraOperationsCUDA::fillParallelOverlapMatScalapack(
               X,
@@ -113,12 +118,13 @@ namespace dftfe
               gpucclMpiCommDomain,
               interBandGroupComm,
               processGrid,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
         }
 
       // SConj=LConj*L^{T}
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           // For ELPA cholesky only the upper triangular part of the hermitian
           // matrix is required
@@ -187,7 +193,7 @@ namespace dftfe
 
       // X^{T}=LConj^{-1}*X^{T} with X^{T} stored in
       // the column major format
-      if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
+      if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
         subspaceRotationCGSMixedPrecScalapack(X,
                                               M,
                                               N,
@@ -197,6 +203,7 @@ namespace dftfe
                                               gpucclMpiCommDomain,
                                               interBandGroupComm,
                                               LMatPar,
+                                              dftParams,
                                               false);
       else
         subspaceRotationScalapack(X,
@@ -208,6 +215,7 @@ namespace dftfe
                                   gpucclMpiCommDomain,
                                   interBandGroupComm,
                                   LMatPar,
+                                  dftParams,
                                   false,
                                   true);
     }

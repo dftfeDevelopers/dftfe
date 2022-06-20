@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -41,22 +41,24 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::kohnShamDFTOperatorClass(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica)
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain)
     : dftPtr(_dftPtr)
     , d_kPointIndex(0)
     , d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell(
         dftPtr->d_densityDofHandlerIndex))
     , d_numberCellsLocallyOwned(_dftPtr->matrix_free_data.n_physical_cells())
     , d_isStiffnessMatrixExternalPotCorrComputed(false)
-    , mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , computing_timer(mpi_comm_replica,
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , computing_timer(mpi_comm_domain,
                       pcout,
                       TimerOutput::never,
                       TimerOutput::wall_times)
-    , operatorDFTClass(mpi_comm_replica,
+    , operatorDFTClass(mpi_comm_domain,
                        _dftPtr->getMatrixFreeData(),
                        _dftPtr->constraintsNoneDataInfo)
   {}
@@ -91,7 +93,7 @@ namespace dftfe
 
     d_cellHamiltonianMatrix.clear();
     d_cellHamiltonianMatrix.resize(dftPtr->d_kPointWeights.size() *
-                                   (1 + dftParameters::spinPolarized));
+                                   (1 + dftPtr->d_dftParamsPtr->spinPolarized));
 
 
     vectorTools::classifyInteriorSurfaceNodesInCell(
@@ -129,7 +131,7 @@ namespace dftfe
         numberWaveFunctions,
         flattenedArray);
 
-    if (dftParameters::isPseudopotential)
+    if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
         vectorTools::createDealiiVector<dataTypes::number>(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
@@ -170,7 +172,7 @@ namespace dftfe
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::reinit(
     const unsigned int numberWaveFunctions)
   {
-    if (dftParameters::isPseudopotential)
+    if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
         vectorTools::createDealiiVector<dataTypes::number>(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
@@ -493,7 +495,7 @@ namespace dftfe
               phiValues.find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -523,8 +525,8 @@ namespace dftfe
       }
 
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -594,7 +596,7 @@ namespace dftfe
               phiValues.find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -683,8 +685,8 @@ namespace dftfe
       } // cell loop
 
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -748,7 +750,7 @@ namespace dftfe
     //
     // required if its a pseudopotential calculation and number of nonlocal
     // atoms are greater than zero H^{nloc}*M^{-1/2}*X
-    if (dftParameters::isPseudopotential &&
+    if (dftPtr->d_dftParamsPtr->isPseudopotential &&
         dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0 &&
         !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
@@ -864,7 +866,7 @@ namespace dftfe
     //
     // required if its a pseudopotential calculation and number of nonlocal
     // atoms are greater than zero H^{nloc}*M^{-1/2}*X
-    if (dftParameters::isPseudopotential &&
+    if (dftPtr->d_dftParamsPtr->isPseudopotential &&
         dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0 &&
         !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
@@ -1241,13 +1243,14 @@ namespace dftfe
      */
 
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
+      std::min(dftPtr->d_dftParamsPtr->wfcBlockSize,
+               bandGroupLowHighPlusOneIndices[1]);
 
     std::vector<dataTypes::number> projHamBlock(numberWaveFunctions *
                                                   vectorsBlockSize,
                                                 dataTypes::number(0.0));
 
-    if (dftParameters::verbosity >= 4)
+    if (dftPtr->d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
         mpi_communicator,
         "Inside Blocked XtHX with parallel projected Ham matrix");
@@ -1414,7 +1417,8 @@ namespace dftfe
      */
 
     const unsigned int vectorsBlockSize =
-      std::min(dftParameters::wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
+      std::min(dftPtr->d_dftParamsPtr->wfcBlockSize,
+               bandGroupLowHighPlusOneIndices[1]);
 
     std::vector<dataTypes::numberFP32> projHamBlockSinglePrec(
       N * vectorsBlockSize, 0.0);
@@ -1424,7 +1428,7 @@ namespace dftfe
 
     std::vector<dataTypes::numberFP32> XSinglePrec(&X[0], &X[0] + X.size());
 
-    if (dftParameters::verbosity >= 4)
+    if (dftPtr->d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
         mpi_communicator,
         "Inside Blocked XtHX with parallel projected Ham matrix");
@@ -1647,7 +1651,7 @@ namespace dftfe
               phiValues.find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -1682,8 +1686,8 @@ namespace dftfe
 
 
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -1757,7 +1761,7 @@ namespace dftfe
               phiValues.find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -1884,8 +1888,8 @@ namespace dftfe
 
       } // cell loop
 
-    if ((dftParameters::isPseudopotential ||
-         dftParameters::smearedNuclearCharges) &&
+    if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+         dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
       computeVEffExternalPotCorr(externalPotCorrValues,
                                  externalPotCorrQuadratureId);
@@ -2015,7 +2019,7 @@ namespace dftfe
             const std::vector<double> &tempPhiPrime =
               phiPrimeValues.find(cellPtr->id())->second;
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2228,7 +2232,7 @@ namespace dftfe
               (gradRhoValues).find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2402,7 +2406,7 @@ namespace dftfe
             const std::vector<double> &tempPhiPrime =
               phiPrimeValues.find(cellPtr->id())->second;
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2570,7 +2574,7 @@ namespace dftfe
               (gradRhoValues).find(cellPtr->id())->second;
 
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;
@@ -2745,7 +2749,7 @@ namespace dftfe
             const std::vector<double> &tempPhiPrime =
               phiPrimeValues.find(cellPtr->id())->second;
 
-            if (dftParameters::nonLinearCoreCorrection)
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
                 const std::vector<double> &temp2 =
                   rhoCoreValues.find(cellPtr->id())->second;

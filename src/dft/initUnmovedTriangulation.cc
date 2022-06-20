@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -36,7 +36,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
 
   // initialize affine transformation object (must be done on unmoved
   // triangulation)
-  if (dftParameters::isCellOpt || dftParameters::isCellStress)
+  if (d_dftParamsPtr->isCellOpt || d_dftParamsPtr->isCellStress)
     d_affineTransformMesh.init(triangulation,
                                d_mesh.getSerialMeshUnmoved(),
                                d_domainBoundingVectors);
@@ -47,7 +47,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
                          d_mesh.getSerialMeshUnmoved(),
                          d_domainBoundingVectors);
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(
       mpi_communicator,
       "Inititialization of meshmovement class objects completed");
@@ -61,7 +61,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   dofHandler.distribute_dofs(FE);
   dofHandlerEigen.distribute_dofs(FEEigen);
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "Distributed dofs");
   //
   // extract locally owned dofs
@@ -113,7 +113,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     }
 #endif
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "Extracted indices");
 
   // std::cout<< " procId: "<< this_mpi_process << " ,locallly_owned_dofs:
@@ -162,9 +162,9 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     periodicity_vector2, periodicity_vector2Eigen;
 
   std::vector<int>         periodicDirectionVector;
-  const std::array<int, 3> periodic = {dftParameters::periodicX,
-                                       dftParameters::periodicY,
-                                       dftParameters::periodicZ};
+  const std::array<int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                       d_dftParamsPtr->periodicY,
+                                       d_dftParamsPtr->periodicZ};
   for (unsigned int d = 0; d < 3; ++d)
     {
       if (periodic[d] == 1)
@@ -214,32 +214,47 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   d_noConstraints.close();
   noConstraintsEigen.close();
 
-  if (dftParameters::createConstraintsFromSerialDofhandler)
+  if (d_dftParamsPtr->createConstraintsFromSerialDofhandler)
     {
 #ifdef USE_COMPLEX
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         dofHandler,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         constraintsNone,
-        d_noConstraints);
+        d_noConstraints,
+        d_dftParamsPtr->verbosity,
+        d_dftParamsPtr->periodicX,
+        d_dftParamsPtr->periodicY,
+        d_dftParamsPtr->periodicZ);
 
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         dofHandlerEigen,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         constraintsNoneEigen,
-        noConstraintsEigen);
+        noConstraintsEigen,
+        d_dftParamsPtr->verbosity,
+        d_dftParamsPtr->periodicX,
+        d_dftParamsPtr->periodicY,
+        d_dftParamsPtr->periodicZ);
 #else
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         dofHandler,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         constraintsNone,
-        d_noConstraints);
+        d_noConstraints,
+        d_dftParamsPtr->verbosity,
+        d_dftParamsPtr->periodicX,
+        d_dftParamsPtr->periodicY,
+        d_dftParamsPtr->periodicZ);
       constraintsNoneEigen.clear();
       constraintsNoneEigen.reinit(locally_relevant_dofs);
       constraintsNoneEigen.merge(constraintsNone,
@@ -261,7 +276,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   //
   createpRefinedDofHandler(triangulation);
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Created the basic constraint matrices");
 
@@ -274,14 +289,14 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
                         d_domainBoundingVectors,
                         true);
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "Force initUnmoved");
   //
   // Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
   int isSpinPolarized;
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       isSpinPolarized = XC_POLARIZED;
     }
@@ -289,32 +304,32 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     {
       isSpinPolarized = XC_UNPOLARIZED;
     }
-  if (dftParameters::xc_id == 1)
+  if (d_dftParamsPtr->xc_id == 1)
     {
       exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC, XC_LDA_C_PZ, isSpinPolarized);
     }
-  else if (dftParameters::xc_id == 2)
+  else if (d_dftParamsPtr->xc_id == 2)
     {
       exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC, XC_LDA_C_PW, isSpinPolarized);
     }
-  else if (dftParameters::xc_id == 3)
+  else if (d_dftParamsPtr->xc_id == 3)
     {
       exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC, XC_LDA_C_VWN, isSpinPolarized);
     }
-  else if (dftParameters::xc_id == 4)
+  else if (d_dftParamsPtr->xc_id == 4)
     {
       exceptParamX = xc_func_init(&funcX, XC_GGA_X_PBE, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC, XC_GGA_C_PBE, isSpinPolarized);
     }
-  else if (dftParameters::xc_id == 5)
+  else if (d_dftParamsPtr->xc_id == 5)
     {
       exceptParamX = xc_func_init(&funcX, XC_GGA_X_RPBE, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC, XC_GGA_C_PBE, isSpinPolarized);
     }
-  else if (dftParameters::xc_id > 5)
+  else if (d_dftParamsPtr->xc_id > 5)
     {
       pcout << "-------------------------------------" << std::endl;
       pcout << "Exchange or Correlation Functional not found" << std::endl;

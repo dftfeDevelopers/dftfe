@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,15 +17,16 @@
 // @author Sambit Das(2017) and Phani Motamarri(2019)
 //
 //
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <meshMovementGaussian.h>
 
 namespace dftfe
 {
   meshMovementGaussianClass::meshMovementGaussianClass(
-    const MPI_Comm &mpi_comm_replica)
-    : meshMovementClass(mpi_comm_replica)
+    const MPI_Comm &     mpi_comm_parent,
+    const MPI_Comm &     mpi_comm_domain,
+    const dftParameters &dftParams)
+    : meshMovementClass(mpi_comm_parent, mpi_comm_domain, dftParams)
   {}
 
   std::pair<bool, double>
@@ -38,7 +39,7 @@ namespace dftfe
   {
     // writeMesh("meshUnmoved.vtu");
     MPI_Barrier(mpi_communicator);
-    if (dftParameters::verbosity == 2)
+    if (d_dftParams.verbosity == 2)
       pcout
         << "Computing triangulation displacement increment caused by gaussian generator displacements..."
         << std::endl;
@@ -49,7 +50,7 @@ namespace dftfe
                      gaussianWidthParameter,
                      flatTopWidthParameter);
     finalizeIncrementField();
-    if (dftParameters::verbosity == 2)
+    if (d_dftParams.verbosity == 2)
       pcout << "...Computed triangulation displacement increment" << std::endl;
     if (moveSubdivided)
       moveSubdividedMesh();
@@ -76,7 +77,7 @@ namespace dftfe
   {
     // writeMesh("meshUnmoved.vtu");
     MPI_Barrier(mpi_communicator);
-    if (dftParameters::verbosity == 2)
+    if (d_dftParams.verbosity == 2)
       pcout
         << "Computing triangulation displacement increment caused by gaussian generator displacements..."
         << std::endl;
@@ -90,7 +91,7 @@ namespace dftfe
                             controllingParameterCurrentMove,
                             flatTopWidthParameter);
     finalizeIncrementField();
-    if (dftParameters::verbosity == 2)
+    if (d_dftParams.verbosity == 2)
       pcout << "...Computed triangulation displacement increment" << std::endl;
     if (moveSubdivided)
       moveSubdividedMesh();
@@ -178,7 +179,7 @@ namespace dftfe
                   (nodalCoor - controlPointLocationsInitialMove[iControl])
                     .norm();
                 const double gaussianWeight =
-                  dftParameters::reproducible_output ?
+                  d_dftParams.reproducible_output ?
                     std::exp(
                       -std::pow(r / controllingParameterInitialMove[iControl],
                                 2)) :
@@ -186,7 +187,7 @@ namespace dftfe
                       flatTopWidthParameter[iControl],
                       r,
                       controllingParameterInitialMove[iControl],
-                      dftParameters::gaussianOrderMoveMeshToAtoms);
+                      d_dftParams.gaussianOrderMoveMeshToAtoms);
 
                 for (unsigned int idim = 0; idim < 3; idim++)
                   {
@@ -252,7 +253,7 @@ namespace dftfe
                                   controlPointLocationsCurrentMove[iControl])
                                    .norm();
                 const double gaussianWeight =
-                  dftParameters::reproducible_output ?
+                  d_dftParams.reproducible_output ?
                     std::exp(
                       -std::pow(r / controllingParameterCurrentMove[iControl],
                                 2)) :
@@ -260,7 +261,7 @@ namespace dftfe
                       flatTopWidthParameter[iControl],
                       r,
                       controllingParameterCurrentMove[iControl],
-                      dftParameters::gaussianOrderForce);
+                      d_dftParams.gaussianOrderForce);
 
                 for (unsigned int idim = 0; idim < 3; idim++)
                   {
@@ -334,14 +335,14 @@ namespace dftfe
                 const double r =
                   (nodalCoor - controlPointLocations[iControl]).norm();
                 const double gaussianWeight =
-                  dftParameters::reproducible_output ?
+                  d_dftParams.reproducible_output ?
                     std::exp(
                       -std::pow(r / gaussianWidthParameter[iControl], 2)) :
                     dftUtils::getCompositeGeneratorVal(
                       flatTopWidthParameter[iControl],
                       r,
                       gaussianWidthParameter[iControl],
-                      dftParameters::gaussianOrderMoveMeshToAtoms);
+                      d_dftParams.gaussianOrderMoveMeshToAtoms);
                 for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     const unsigned int globalDofIndex =

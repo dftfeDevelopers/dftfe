@@ -43,18 +43,18 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     matrix_free_data.get_quadrature(d_densityQuadratureId);
 
 #ifdef DFTFE_WITH_GPU
-  if (dftParameters::useGPU)
+  if (d_dftParamsPtr->useGPU)
     cudaUtils::copyCUDAVecToCUDAVec(
       d_eigenVectorsFlattenedCUDA.begin(),
       d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
       d_eigenVectorsFlattenedCUDA.size());
 #endif
-  if (!dftParameters::useGPU)
+  if (!d_dftParamsPtr->useGPU)
     d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
 
 
   // set up linear solver
-  dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
 
   std::map<dealii::CellId, std::vector<double>> charge;
   std::map<dealii::CellId, std::vector<double>> dummy;
@@ -89,9 +89,9 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     false);
 
   dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                       dftParameters::absPoissonSolverToleranceLRJI,
-                       dftParameters::maxLinearSolverIterations,
-                       dftParameters::verbosity);
+                       d_dftParamsPtr->absPoissonSolverToleranceLRJI,
+                       d_dftParamsPtr->maxLinearSolverIterations,
+                       d_dftParamsPtr->verbosity);
 
 
   std::map<dealii::CellId, std::vector<double>> electrostaticPotPrimeValues;
@@ -114,12 +114,12 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     rhoPrimeValues,
     gradRhoPrimeValues,
     dummy,
-    dftParameters::xcFamilyType == "GGA");
+    d_dftParamsPtr->xcFamilyType == "GGA");
 
   std::map<dealii::CellId, std::vector<double>> rhoPrimeValuesSpinPolarized;
   std::map<dealii::CellId, std::vector<double>> gradRhoPrimeValuesSpinPolarized;
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       vSpin0.update_ghost_values();
       vSpin1.update_ghost_values();
@@ -132,21 +132,21 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         rhoPrimeValuesSpinPolarized,
         gradRhoPrimeValuesSpinPolarized,
         dummy,
-        dftParameters::xcFamilyType == "GGA");
+        d_dftParamsPtr->xcFamilyType == "GGA");
     }
 
-  for (unsigned int s = 0; s < (1 + dftParameters::spinPolarized); ++s)
+  for (unsigned int s = 0; s < (1 + d_dftParamsPtr->spinPolarized); ++s)
     {
-      if (dftParameters::xcFamilyType == "LDA")
+      if (d_dftParamsPtr->xcFamilyType == "LDA")
         {
         }
-      else if (dftParameters::xcFamilyType == "GGA")
+      else if (d_dftParamsPtr->xcFamilyType == "GGA")
         {
           computing_timer.enter_subsection("VEffPrime Computation");
 #ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
+          if (d_dftParamsPtr->useGPU)
             {
-              if (dftParameters::spinPolarized == 1)
+              if (d_dftParamsPtr->spinPolarized == 1)
                 kohnShamDFTEigenOperatorCUDA.computeVEffPrimeSpinPolarized(
                   *rhoInValuesSpinPolarized,
                   rhoPrimeValuesSpinPolarized,
@@ -167,9 +167,9 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                   d_gradRhoCore);
             }
 #endif
-          if (!dftParameters::useGPU)
+          if (!d_dftParamsPtr->useGPU)
             {
-              if (dftParameters::spinPolarized == 1)
+              if (d_dftParamsPtr->spinPolarized == 1)
                 kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
                   *rhoInValuesSpinPolarized,
                   rhoPrimeValuesSpinPolarized,
@@ -198,21 +198,21 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
           if (kPoint == 0)
             {
 #ifdef DFTFE_WITH_GPU
-              if (dftParameters::useGPU)
+              if (d_dftParamsPtr->useGPU)
                 kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint, s);
 #endif
-              if (!dftParameters::useGPU)
+              if (!d_dftParamsPtr->useGPU)
                 kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
 
               computing_timer.enter_subsection(
                 "Hamiltonian matrix prime computation");
 #ifdef DFTFE_WITH_GPU
-              if (dftParameters::useGPU)
+              if (d_dftParamsPtr->useGPU)
                 kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,
                                                                       s,
                                                                       true);
 #endif
-              if (!dftParameters::useGPU)
+              if (!d_dftParamsPtr->useGPU)
                 kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
                                                                   s,
                                                                   true);
@@ -222,7 +222,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
             }
 
 #ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
+          if (d_dftParamsPtr->useGPU)
             kohnShamEigenSpaceFirstOrderDensityMatResponse(
               s,
               kPoint,
@@ -230,9 +230,9 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
               d_elpaScala,
               d_subspaceIterationSolverCUDA);
 #endif
-          if (!dftParameters::useGPU)
+          if (!d_dftParamsPtr->useGPU)
             kohnShamEigenSpaceFirstOrderDensityMatResponse(
-              s, kPoint, kohnShamDFTEigenOperator, d_elpaScala);
+              s, kPoint, kohnShamDFTEigenOperator, *d_elpaScala);
         }
     }
 
@@ -280,7 +280,7 @@ dftClass<FEOrder, FEOrderElectro>::
   distributedCPUVec<double> fvHamSpin0, fvHamSpin1, fvFermiEnergySpin0,
     fvFermiEnergySpin1;
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       fvHamSpin0.reinit(fv);
       fvHamSpin1.reinit(fv);
@@ -349,7 +349,7 @@ dftClass<FEOrder, FEOrderElectro>::
           rhoResponseFermiEnergyPRefinedNodalData[cellId] =
             std::vector<double>(numQuadPoints, 0.0);
 
-          if (dftParameters::spinPolarized == 1)
+          if (d_dftParamsPtr->spinPolarized == 1)
             {
               const dealii::CellId cellId = cell->id();
               rhoResponseHamPRefinedNodalDataSpinPolarized[cellId] =
@@ -364,9 +364,9 @@ dftClass<FEOrder, FEOrderElectro>::
     // compute first order density response at nodal locations of 2p DoFHandler
     // nodes in each cell
 #ifdef DFTFE_WITH_GPU
-  if (dftParameters::useGPU)
+  if (d_dftParamsPtr->useGPU)
     {
-      if (dftParameters::singlePrecLRJI)
+      if (d_dftParamsPtr->singlePrecLRJI)
         computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
                                         dataTypes::numberFP32GPU>(
           d_eigenVectorsFlattenedCUDA.begin(),
@@ -385,8 +385,10 @@ dftClass<FEOrder, FEOrderElectro>::
           rhoResponseFermiEnergyPRefinedNodalData,
           rhoResponseHamPRefinedNodalDataSpinPolarized,
           rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          d_mpiCommParent,
           interpoolcomm,
-          interBandGroupComm);
+          interBandGroupComm,
+          *d_dftParamsPtr);
       else
         computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
                                         dataTypes::numberGPU>(
@@ -406,13 +408,15 @@ dftClass<FEOrder, FEOrderElectro>::
           rhoResponseFermiEnergyPRefinedNodalData,
           rhoResponseHamPRefinedNodalDataSpinPolarized,
           rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          d_mpiCommParent,
           interpoolcomm,
-          interBandGroupComm);
+          interBandGroupComm,
+          *d_dftParamsPtr);
     }
 #endif
-  if (!dftParameters::useGPU)
+  if (!d_dftParamsPtr->useGPU)
     {
-      if (dftParameters::singlePrecLRJI)
+      if (d_dftParamsPtr->singlePrecLRJI)
         computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
                                                  dataTypes::numberFP32>(
           d_eigenVectorsFlattenedSTL,
@@ -431,8 +435,10 @@ dftClass<FEOrder, FEOrderElectro>::
           rhoResponseFermiEnergyPRefinedNodalData,
           rhoResponseHamPRefinedNodalDataSpinPolarized,
           rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          d_mpiCommParent,
           interpoolcomm,
-          interBandGroupComm);
+          interBandGroupComm,
+          *d_dftParamsPtr);
       else
         computeRhoFirstOrderResponseCPU(
           d_eigenVectorsFlattenedSTL,
@@ -451,8 +457,10 @@ dftClass<FEOrder, FEOrderElectro>::
           rhoResponseFermiEnergyPRefinedNodalData,
           rhoResponseHamPRefinedNodalDataSpinPolarized,
           rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          d_mpiCommParent,
           interpoolcomm,
-          interBandGroupComm);
+          interBandGroupComm,
+          *d_dftParamsPtr);
     }
 
   // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
@@ -507,7 +515,7 @@ dftClass<FEOrder, FEOrderElectro>::
       fvHam.local_element(i) +
       firstOrderResponseFermiEnergy * fvFermiEnergy.local_element(i);
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
       cellP = d_dofHandlerRhoNodal.begin_active();

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <sys/stat.h>
 
 namespace dftfe
 {
@@ -197,6 +198,31 @@ namespace dftfe
     }
 
     void
+    copyFile(const std::string &pathold, const std::string &pathnew)
+    {
+      // std::filesystem::copy_file(pathold,pathnew);
+      int error = system(("cp -f " + pathold + " " + pathnew).c_str());
+      if (error != 0)
+        {
+          std::cout << "Copy failed: " << error << " From: " << pathold
+                    << "  To: " << pathnew << std::endl;
+          /*  AssertThrow(error == 0,
+                  dealii::ExcMessage(
+                    std::string("Unable to Copy files: ") + pathold +
+                    " -> " + pathnew + ". The error code is " +
+                    dealii::Utilities::to_string(error) + ".")); */
+        }
+      else
+        std::cout << "*Successful copy: "
+                  << "From: " << pathold << "  To: " << pathnew << std::endl;
+
+      // If the above call failed, e.g. because there is no command-line
+      // available, try with internal functions.
+    }
+
+
+
+    void
     verifyCheckpointFileExists(const std::string &filename)
     {
       std::ifstream in(filename);
@@ -215,9 +241,10 @@ namespace dftfe
 
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
-                      const std::string &                     fileName)
+                      const std::string &                     fileName,
+                      const MPI_Comm &                        mpi_comm_parent)
     {
-      if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
         {
           if (std::ifstream(fileName))
             moveFile(fileName, fileName + ".old");
@@ -229,7 +256,9 @@ namespace dftfe
                 {
                   for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
                     {
-                      outFile << std::setprecision(14) << data[irow][icol];
+                      outFile << std::setprecision(
+                                   std::numeric_limits<double>::max_digits10)
+                              << data[irow][icol];
                       if (icol < data[irow].size() - 1)
                         outFile << " ";
                     }
@@ -238,6 +267,33 @@ namespace dftfe
 
               outFile.close();
             }
+        }
+    }
+
+    void
+    writeDataIntoFile(const std::vector<std::vector<double>> &data,
+                      const std::string &                     fileName)
+    {
+      if (std::ifstream(fileName))
+        moveFile(fileName, fileName + ".old");
+
+      std::ofstream outFile(fileName);
+      if (outFile.is_open())
+        {
+          for (unsigned int irow = 0; irow < data.size(); ++irow)
+            {
+              for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
+                {
+                  outFile << std::setprecision(
+                               std::numeric_limits<double>::max_digits10)
+                          << data[irow][icol];
+                  if (icol < data[irow].size() - 1)
+                    outFile << " ";
+                }
+              outFile << "\n";
+            }
+
+          outFile.close();
         }
     }
 

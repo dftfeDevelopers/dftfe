@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -54,9 +54,12 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
        it++)
     {
       char coreDensityFile[256];
-      if (dftParameters::isPseudopotential)
+      if (d_dftParamsPtr->isPseudopotential)
         {
-          sprintf(coreDensityFile, "temp/z%u/coreDensity.inp", *it);
+          strcpy(coreDensityFile,
+                 (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
+                  "/coreDensity.inp")
+                   .c_str());
         }
 
       unsigned int fileReadFlag =
@@ -66,7 +69,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
 
       atomTypeNLCCFlagMap[*it] = fileReadFlag;
 
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Atomic number: " << *it << " NLCC flag: " << fileReadFlag
               << std::endl;
 
@@ -111,7 +114,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
           if (outerMostPointCoreDen[*it] > maxCoreRhoTail)
             maxCoreRhoTail = outerMostPointCoreDen[*it];
 
-          if (dftParameters::verbosity >= 4)
+          if (d_dftParamsPtr->verbosity >= 4)
             pcout << " Atomic number: " << *it
                   << " Outermost Point Core Den: " << outerMostPointCoreDen[*it]
                   << std::endl;
@@ -171,7 +174,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
 
           std::vector<double> &hessianRhoCoreQuadValues =
             d_hessianRhoCore[cell->id()];
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             hessianRhoCoreQuadValues.resize(n_q_points * 9, 0.0);
 
           std::vector<Tensor<1, 3, double>> gradRhoCoreAtom(n_q_points,
@@ -201,10 +204,10 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                   Tensor<1, 3, double> diff = quadPoint - atom;
                   double distanceToAtom     = quadPoint.distance(atom);
 
-                  if (dftParameters::floatingNuclearCharges &&
+                  if (d_dftParamsPtr->floatingNuclearCharges &&
                       distanceToAtom < 1.0e-4)
                     {
-                      if (dftParameters::verbosity >= 4)
+                      if (d_dftParamsPtr->verbosity >= 4)
                         std::cout
                           << "Atom close to quad point, iatom: " << iAtom
                           << std::endl;
@@ -243,7 +246,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                   gradRhoCoreQuadValues[3 * q + 1] += gradRhoCoreAtom[q][1];
                   gradRhoCoreQuadValues[3 * q + 2] += gradRhoCoreAtom[q][2];
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     {
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         {
@@ -275,7 +278,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
 
                   std::vector<double> &hessianRhoCoreAtomCell =
                     d_hessianRhoCoreAtoms[iAtom][cell->id()];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     hessianRhoCoreAtomCell.resize(n_q_points * 9, 0.0);
 
                   for (unsigned int q = 0; q < n_q_points; ++q)
@@ -284,7 +287,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                       gradRhoCoreAtomCell[3 * q + 1] = gradRhoCoreAtom[q][1];
                       gradRhoCoreAtomCell[3 * q + 2] = gradRhoCoreAtom[q][2];
 
-                      if (dftParameters::xcFamilyType == "GGA")
+                      if (d_dftParamsPtr->xcFamilyType == "GGA")
                         {
                           for (unsigned int iDim = 0; iDim < 3; ++iDim)
                             {
@@ -324,7 +327,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                   Tensor<1, 3, double> diff = quadPoint - imageAtom;
                   double distanceToAtom     = quadPoint.distance(imageAtom);
 
-                  if (dftParameters::floatingNuclearCharges &&
+                  if (d_dftParamsPtr->floatingNuclearCharges &&
                       distanceToAtom < 1.0e-4)
                     {
                       distanceToAtom = 1.0e-4;
@@ -361,7 +364,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                   gradRhoCoreQuadValues[3 * q + 1] += gradRhoCoreAtom[q][1];
                   gradRhoCoreQuadValues[3 * q + 2] += gradRhoCoreAtom[q][2];
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     {
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         {
@@ -394,7 +397,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                   std::vector<double> &hessianRhoCoreAtomCell =
                     d_hessianRhoCoreAtoms[numberGlobalCharges + iImageCharge]
                                          [cell->id()];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     hessianRhoCoreAtomCell.resize(n_q_points * 9);
 
                   for (unsigned int q = 0; q < n_q_points; ++q)
@@ -403,7 +406,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                       gradRhoCoreAtomCell[3 * q + 1] = gradRhoCoreAtom[q][1];
                       gradRhoCoreAtomCell[3 * q + 2] = gradRhoCoreAtom[q][2];
 
-                      if (dftParameters::xcFamilyType == "GGA")
+                      if (d_dftParamsPtr->xcFamilyType == "GGA")
                         {
                           for (unsigned int iDim = 0; iDim < 3; ++iDim)
                             {

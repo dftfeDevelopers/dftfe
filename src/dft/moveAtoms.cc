@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -85,7 +85,7 @@ namespace internal
       getFractionalCoordinates(latticeVectors, cellCenteredCoord, corner);
 
 
-    // if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+    // if(Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     // std::cout<<"Fractional Coordinates before wrapping: "<<fracCoord[0]<<"
     // "<<fracCoord[1]<<" "<<fracCoord[2]<<std::endl;
 
@@ -100,7 +100,7 @@ namespace internal
             else if (fracCoord[i] > 1.0 + tol)
               fracCoord[i] -= 1.0;
 
-            // if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+            // if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
             //  std::cout << fracCoord[i] << " ";
 
             AssertThrow(
@@ -110,7 +110,7 @@ namespace internal
           }
       }
 
-    // if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+    // if(Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     // std::cout<<std::endl;
 
     return fracCoord;
@@ -147,9 +147,9 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
         corner[idim] -= d_domainBoundingVectors[jdim][idim] / 2.0;
     }
   std::vector<bool> periodicBc(3, false);
-  periodicBc[0] = dftParameters::periodicX;
-  periodicBc[1] = dftParameters::periodicY;
-  periodicBc[2] = dftParameters::periodicZ;
+  periodicBc[0] = d_dftParamsPtr->periodicX;
+  periodicBc[1] = d_dftParamsPtr->periodicY;
+  periodicBc[2] = d_dftParamsPtr->periodicZ;
 
   std::vector<Point<3>>             controlPointLocationsInitialMove;
   std::vector<Tensor<1, 3, double>> controlPointDisplacementsInitialMove;
@@ -165,7 +165,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   std::vector<Tensor<1, 3, double>> tempGaussianMovementAtomsNetDisplacements;
 
   double maxDispAtom = -1;
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       {
         d_gaussianMovementAtomsNetDisplacements[iAtom] +=
@@ -178,7 +178,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
       }
 
   double maxCurrentDispAtom = -1;
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
@@ -193,7 +193,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     }
 
 
-  if (dftParameters::floatingNuclearCharges)
+  if (d_dftParamsPtr->floatingNuclearCharges)
     for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       for (unsigned int idim = 0; idim < 3; idim++)
         {
@@ -207,7 +207,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   double maxFloatingDispComponentMag = 0.0;
   double maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps =
     0.0;
-  if (dftParameters::floatingNuclearCharges)
+  if (d_dftParamsPtr->floatingNuclearCharges)
     {
       for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
         for (unsigned int idim = 0; idim < 3; idim++)
@@ -235,22 +235,22 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   const double tol                  = 1e-6;
   const double break1               = 1.0;
 
-  if (maxDispAtom <= (break1 + tol) && !dftParameters::floatingNuclearCharges)
+  if (maxDispAtom <= (break1 + tol) && !d_dftParamsPtr->floatingNuclearCharges)
     useGaussian = 1;
 
   // for synchrozination in case the updateCase are different in different
   // processors due to floating point comparison
-  MPI_Bcast(&(useGaussian), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&(useGaussian), 1, MPI_INT, 0, d_mpiCommParent);
 
   if (useGaussian || (maxFloatingDispComponentMag < 0.5 &&
-                      dftParameters::floatingNuclearCharges))
+                      d_dftParamsPtr->floatingNuclearCharges))
     atomsPeriodicWrapped = 0;
 
-  MPI_Bcast(&(atomsPeriodicWrapped), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&(atomsPeriodicWrapped), 1, MPI_INT, 0, d_mpiCommParent);
 
 
-  if ((dftParameters::periodicX || dftParameters::periodicY ||
-       dftParameters::periodicZ) &&
+  if ((d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+       d_dftParamsPtr->periodicZ) &&
       atomsPeriodicWrapped == 1)
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
@@ -272,15 +272,15 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                                                 latticeVectorsFlattened,
                                                 periodicBc);
           // for synchrozination
-          MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+          MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
           atomLocationsFractional[iAtom][2] = newFracCoord[0];
           atomLocationsFractional[iAtom][3] = newFracCoord[1];
           atomLocationsFractional[iAtom][4] = newFracCoord[2];
         }
     }
-  else if ((dftParameters::periodicX || dftParameters::periodicY ||
-            dftParameters::periodicZ) &&
+  else if ((d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+            d_dftParamsPtr->periodicZ) &&
            atomsPeriodicWrapped == 0)
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
@@ -293,7 +293,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           atomLocations[iAtom][4] += globalAtomsDisplacements[atomId][2];
         }
 
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout
           << "-----------------------------Fractional coordinates of atoms----------------------------"
           << std::endl;
@@ -315,14 +315,14 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           atomLocationsFractional[iAtom][3] = newFracCoord[1];
           atomLocationsFractional[iAtom][4] = newFracCoord[2];
 
-          if (dftParameters::verbosity >= 1)
+          if (d_dftParamsPtr->verbosity >= 1)
             pcout << (unsigned int)atomLocationsFractional[iAtom][0] << " "
                   << (unsigned int)atomLocationsFractional[iAtom][1] << " "
                   << atomLocationsFractional[iAtom][2] << " "
                   << atomLocationsFractional[iAtom][3] << " "
                   << atomLocationsFractional[iAtom][4] << '\n';
         }
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout
           << "-----------------------------------------------------------------------------------------"
           << std::endl;
@@ -353,7 +353,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     }
   else
     {
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout
           << "------------Cartesian coordinates of atoms (origin at center of domain)------------------"
           << std::endl;
@@ -365,22 +365,22 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
           atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
           atomLocations[iAtom][4] += globalAtomsDisplacements[atomId][2];
-          if (dftParameters::verbosity >= 1)
+          if (d_dftParamsPtr->verbosity >= 1)
             pcout << (unsigned int)atomLocations[iAtom][0] << " "
                   << (unsigned int)atomLocations[iAtom][1] << " "
                   << atomLocations[iAtom][2] << " " << atomLocations[iAtom][3]
                   << " " << atomLocations[iAtom][4] << '\n';
         }
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout
           << "-----------------------------------------------------------------------------------------"
           << std::endl;
     }
 
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     {
       double atomsloop_time;
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       atomsloop_time = MPI_Wtime();
 
       std::vector<Point<3>> atomPoints;
@@ -431,41 +431,34 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
       MPI_Barrier(mpi_communicator);
       d_autoMesh = 0;
 
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       atomsloop_time = MPI_Wtime() - atomsloop_time;
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout << "updateAtomPositionsAndMoveMesh: Time taken for atoms loop: "
               << atomsloop_time << std::endl;
 
 
       const bool useHybridMeshUpdateScheme =
-        true; // dftParameters::electrostaticsHRefinement?false:true;
+        true; // d_dftParamsPtr->electrostaticsHRefinement?false:true;
 
       if (!useHybridMeshUpdateScheme) // always remesh
         {
-          if (!dftParameters::reproducible_output)
+          if (!d_dftParamsPtr->reproducible_output)
             pcout
               << "Auto remeshing and reinitialization of dft problem for new atom coordinates"
               << std::endl;
 
-          if (maxDispAtom < 0.2 && dftParameters::isPseudopotential)
-            {
-              init(dftParameters::reuseWfcGeoOpt && maxDispAtom < 0.1 ?
-                     2 :
-                     (dftParameters::reuseDensityGeoOpt ? 1 : 0));
-            }
-          else
-            init(0);
+          init();
 
           // for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
           // d_dispClosestTriaVerticesToAtoms[iAtom]= 0.0;
 
-          if (!dftParameters::reproducible_output)
+          if (!d_dftParamsPtr->reproducible_output)
             pcout << "...Reinitialization end" << std::endl;
 
 
           d_autoMesh = 1;
-          MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, MPI_COMM_WORLD);
+          MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
         }
       else
         {
@@ -477,18 +470,18 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           // to get back the unmoved meshes as Gaussian movement can only be
           // done starting from the unmoved meshes.
           double resetmesh_time;
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           resetmesh_time = MPI_Wtime();
 
-          if (dftParameters::useSymm ||
-              dftParameters::createConstraintsFromSerialDofhandler ||
-              dftParameters::electrostaticsHRefinement)
+          if (d_dftParamsPtr->useSymm ||
+              d_dftParamsPtr->createConstraintsFromSerialDofhandler ||
+              d_dftParamsPtr->electrostaticsHRefinement)
             {
               d_mesh.generateResetMeshes(
                 d_domainBoundingVectors,
-                dftParameters::useSymm ||
-                  dftParameters::createConstraintsFromSerialDofhandler,
-                dftParameters::electrostaticsHRefinement);
+                d_dftParamsPtr->useSymm ||
+                  d_dftParamsPtr->createConstraintsFromSerialDofhandler,
+                d_dftParamsPtr->electrostaticsHRefinement);
 
               // initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 
@@ -540,9 +533,9 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
               //		       d_domainBoundingVectors);
             }
 
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           resetmesh_time = MPI_Wtime() - resetmesh_time;
-          if (dftParameters::verbosity >= 1)
+          if (d_dftParamsPtr->verbosity >= 1)
             pcout
               << "updateAtomPositionsAndMoveMesh: Time taken for reset mesh: "
               << resetmesh_time << std::endl;
@@ -552,32 +545,32 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
 
           if (useGaussian != 1)
             {
-              if (!dftParameters::reproducible_output)
+              if (!d_dftParamsPtr->reproducible_output)
                 pcout
                   << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "
                   << maxDispAtom << " is greater than: " << break1 << " Bohr..."
                   << std::endl;
-              init(0);
+              init();
 
               d_autoMesh = 1;
-              MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, MPI_COMM_WORLD);
+              MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
 
-              if (!dftParameters::reproducible_output)
+              if (!d_dftParamsPtr->reproducible_output)
                 pcout << "...Reinitialization end" << std::endl;
             }
           else
             {
-              if (!dftParameters::reproducible_output)
+              if (!d_dftParamsPtr->reproducible_output)
                 pcout
                   << "Trying to Move using Gaussian with same Gaussian constant for computing the forces as net max displacement magnitude: "
                   << maxDispAtom << " is below " << break1 << " Bohr"
                   << std::endl;
-              if (!dftParameters::reproducible_output)
+              if (!d_dftParamsPtr->reproducible_output)
                 pcout << "Max current disp magnitude: " << maxCurrentDispAtom
                       << " Bohr" << std::endl;
 
               double movemesh_time;
-              MPI_Barrier(MPI_COMM_WORLD);
+              MPI_Barrier(d_mpiCommParent);
               movemesh_time = MPI_Wtime();
 
               const std::pair<bool, double> meshQualityMetrics =
@@ -590,9 +583,9 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                   gaussianConstantsCurrentMove,
                   flatTopWidths);
 
-              MPI_Barrier(MPI_COMM_WORLD);
+              MPI_Barrier(d_mpiCommParent);
               movemesh_time = MPI_Wtime() - movemesh_time;
-              if (dftParameters::verbosity >= 1)
+              if (d_dftParamsPtr->verbosity >= 1)
                 pcout
                   << "updateAtomPositionsAndMoveMesh: Time taken for Gaussian mesh movement: "
                   << movemesh_time << std::endl;
@@ -603,10 +596,10 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                 {
                   d_autoMesh = 1;
                 }
-              MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, MPI_COMM_WORLD);
+              MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
               if (d_autoMesh == 1)
                 {
-                  if (!dftParameters::reproducible_output)
+                  if (!d_dftParamsPtr->reproducible_output)
                     {
                       if (meshQualityMetrics.first)
                         pcout
@@ -621,8 +614,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                           << " after Gaussian mesh movement" << std::endl;
                     }
 
-                  if (dftParameters::periodicX || dftParameters::periodicY ||
-                      dftParameters::periodicZ)
+                  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+                      d_dftParamsPtr->periodicZ)
                     {
                       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
                            iAtom++)
@@ -650,54 +643,54 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                                     3,
                                     MPI_DOUBLE,
                                     0,
-                                    MPI_COMM_WORLD);
+                                    d_mpiCommParent);
 
                           atomLocationsFractional[iAtom][2] = newFracCoord[0];
                           atomLocationsFractional[iAtom][3] = newFracCoord[1];
                           atomLocationsFractional[iAtom][4] = newFracCoord[2];
                         }
                     }
-                  init(0);
+                  init();
 
-                  if (!dftParameters::reproducible_output)
+                  if (!d_dftParamsPtr->reproducible_output)
                     pcout << "...Reinitialization end" << std::endl;
                 }
               else
                 {
-                  if (!dftParameters::reproducible_output)
+                  if (!d_dftParamsPtr->reproducible_output)
                     pcout
                       << " Mesh quality check for Gaussian movement of mesh along with atoms: maximum jacobian ratio after movement: "
                       << meshQualityMetrics.second << std::endl;
-                  if (!dftParameters::reproducible_output)
+                  if (!d_dftParamsPtr->reproducible_output)
                     pcout
                       << "Now Reinitializing all moved triangulation dependent objects..."
                       << std::endl;
 
 
                   double init_time;
-                  MPI_Barrier(MPI_COMM_WORLD);
+                  MPI_Barrier(d_mpiCommParent);
                   init_time = MPI_Wtime();
 
-                  if (dftParameters::isBOMD)
+                  if (d_dftParamsPtr->isBOMD)
                     initNoRemesh(false,
                                  true,
-                                 (!dftParameters::reproducible_output &&
+                                 (!d_dftParamsPtr->reproducible_output &&
                                   maxCurrentDispAtom > 0.2) ||
                                    useSingleAtomSolutionsOverride,
                                  true);
                   else
                     initNoRemesh(false,
                                  true,
-                                 (!dftParameters::reproducible_output &&
+                                 (!d_dftParamsPtr->reproducible_output &&
                                   maxCurrentDispAtom > 0.2) ||
                                    useSingleAtomSolutionsOverride,
                                  true);
-                  if (!dftParameters::reproducible_output)
+                  if (!d_dftParamsPtr->reproducible_output)
                     pcout << "...Reinitialization end" << std::endl;
 
-                  MPI_Barrier(MPI_COMM_WORLD);
+                  MPI_Barrier(d_mpiCommParent);
                   init_time = MPI_Wtime() - init_time;
-                  if (dftParameters::verbosity >= 1)
+                  if (d_dftParamsPtr->verbosity >= 1)
                     pcout
                       << "updateAtomPositionsAndMoveMesh: Time taken for initNoRemesh: "
                       << init_time << std::endl;
@@ -708,10 +701,10 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   else
     {
       double init_time;
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       init_time = MPI_Wtime();
 
-      if (dftParameters::isBOMD)
+      if (d_dftParamsPtr->isBOMD)
         initNoRemesh(
           atomsPeriodicWrapped == 1,
           (maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps >
@@ -729,12 +722,12 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
             true :
             false,
           useSingleAtomSolutionsOverride);
-      if (!dftParameters::reproducible_output)
+      if (!d_dftParamsPtr->reproducible_output)
         pcout << "...Reinitialization end" << std::endl;
 
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       init_time = MPI_Wtime() - init_time;
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout << "updateAtomPositionsAndMoveMesh: Time taken for initNoRemesh: "
               << init_time << std::endl;
     }

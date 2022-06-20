@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -29,7 +29,6 @@
 #include <vectorUtilities.h>
 
 #include "../../include/dft.h"
-#include "../../include/dftParameters.h"
 #include "../../include/symmetry.h"
 //
 namespace dftfe
@@ -58,19 +57,19 @@ namespace dftfe
     dftPtr->rhoOutVals.push_back(
       std::map<dealii::CellId, std::vector<double>>());
     dftPtr->rhoOutValues = &(dftPtr->rhoOutVals.back());
-    if (dftParameters::spinPolarized == 1)
+    if (dftPtr->getParametersObject().spinPolarized == 1)
       {
         dftPtr->rhoOutValsSpinPolarized.push_back(
           std::map<dealii::CellId, std::vector<double>>());
         dftPtr->rhoOutValuesSpinPolarized =
           &(dftPtr->rhoOutValsSpinPolarized.back());
       }
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       {
         dftPtr->gradRhoOutVals.push_back(
           std::map<dealii::CellId, std::vector<double>>());
         dftPtr->gradRhoOutValues = &(dftPtr->gradRhoOutVals.back());
-        if (dftParameters::spinPolarized == 1)
+        if (dftPtr->getParametersObject().spinPolarized == 1)
           {
             dftPtr->gradRhoOutValsSpinPolarized.push_back(
               std::map<dealii::CellId, std::vector<double>>());
@@ -95,7 +94,7 @@ namespace dftfe
             (*(dftPtr->rhoOutValues))[cell->id()] =
               std::vector<double>(num_quad_points);
             std::fill(rhoOut.begin(), rhoOut.end(), 0.0);
-            if (dftParameters::spinPolarized == 1)
+            if (dftPtr->getParametersObject().spinPolarized == 1)
               {
                 (*(dftPtr->rhoOutValuesSpinPolarized))[cell->id()] =
                   std::vector<double>(2 * num_quad_points);
@@ -104,12 +103,12 @@ namespace dftfe
                           0.0);
               }
             //
-            if (dftParameters::xcFamilyType == "GGA")
+            if (dftPtr->getParametersObject().xcFamilyType == "GGA")
               {
                 (*(dftPtr->gradRhoOutValues))[cell->id()] =
                   std::vector<double>(3 * num_quad_points);
                 std::fill(gradRhoOut.begin(), gradRhoOut.end(), 0.0);
-                if (dftParameters::spinPolarized == 1)
+                if (dftPtr->getParametersObject().spinPolarized == 1)
                   {
                     (*(dftPtr->gradRhoOutValuesSpinPolarized))[cell->id()] =
                       std::vector<double>(6 * num_quad_points);
@@ -130,7 +129,7 @@ namespace dftfe
                     const unsigned int point = std::get<2>(
                       mappedGroup[iSymm][globalCellId[cell->id()]][q_point]);
                     //
-                    if (dftParameters::spinPolarized == 1)
+                    if (dftPtr->getParametersObject().spinPolarized == 1)
                       {
                         rhoOutSpinPolarized[2 * q_point] +=
                           rhoRecvd[iSymm][globalCellId[cell->id()]][proc]
@@ -142,9 +141,9 @@ namespace dftfe
                     else
                       rhoOut[q_point] +=
                         rhoRecvd[iSymm][globalCellId[cell->id()]][proc][point];
-                    if (dftParameters::xcFamilyType == "GGA")
+                    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
                       {
-                        if (dftParameters::spinPolarized == 1)
+                        if (dftPtr->getParametersObject().spinPolarized == 1)
                           {
                             for (unsigned int j = 0; j < 6; ++j)
                               gradRhoOutSpinPolarized[6 * q_point + j] +=
@@ -160,7 +159,7 @@ namespace dftfe
                           }
                       }
                   }
-                if (dftParameters::spinPolarized == 1)
+                if (dftPtr->getParametersObject().spinPolarized == 1)
                   {
                     (*(
                       dftPtr
@@ -178,9 +177,9 @@ namespace dftfe
                   (*(dftPtr->rhoOutValues))[cell->id()][q_point] =
                     rhoOut[q_point];
                 //
-                if (dftParameters::xcFamilyType == "GGA")
+                if (dftPtr->getParametersObject().xcFamilyType == "GGA")
                   {
-                    if (dftParameters::spinPolarized == 1)
+                    if (dftPtr->getParametersObject().spinPolarized == 1)
                       {
                         for (unsigned int j = 0; j < 6; ++j)
                           (*dftPtr->gradRhoOutValuesSpinPolarized)
@@ -208,34 +207,35 @@ namespace dftfe
     //			Free up some memory by getting rid of density history beyond what is
     // required by mixing scheme
     //=============================================================================================================================================
-    if ((dftPtr->rhoInVals).size() == dftParameters::mixingHistory)
+    if ((dftPtr->rhoInVals).size() ==
+        dftPtr->getParametersObject().mixingHistory)
       {
         dftPtr->rhoInVals.pop_front();
         dftPtr->rhoOutVals.pop_front();
         //
-        if (dftParameters::spinPolarized)
+        if (dftPtr->getParametersObject().spinPolarized)
           {
             dftPtr->rhoInValsSpinPolarized.pop_front();
             dftPtr->rhoOutValsSpinPolarized.pop_front();
           }
         //
-        if (dftParameters::xcFamilyType == "GGA")
+        if (dftPtr->getParametersObject().xcFamilyType == "GGA")
           {
             dftPtr->gradRhoInVals.pop_front();
             dftPtr->gradRhoOutVals.pop_front();
             //
-            if (dftParameters::spinPolarized)
+            if (dftPtr->getParametersObject().spinPolarized)
               {
                 dftPtr->gradRhoInValsSpinPolarized.pop_front();
                 dftPtr->gradRhoOutValsSpinPolarized.pop_front();
               }
           }
         //
-        if (dftParameters::mixingMethod == "BROYDEN")
+        if (dftPtr->getParametersObject().mixingMethod == "BROYDEN")
           {
             dftPtr->dFBroyden.pop_front();
             dftPtr->uBroyden.pop_front();
-            if (dftParameters::xcFamilyType == "GGA") // GGA
+            if (dftPtr->getParametersObject().xcFamilyType == "GGA") // GGA
               {
                 dftPtr->graddFBroyden.pop_front();
                 dftPtr->gradUBroyden.pop_front();
@@ -255,7 +255,8 @@ namespace dftfe
   symmetryClass<FEOrder, FEOrderElectro>::computeLocalrhoOut()
   {
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
-      (1 + dftParameters::spinPolarized) * dftPtr->d_kPointWeights.size());
+      (1 + dftPtr->getParametersObject().spinPolarized) *
+      dftPtr->d_kPointWeights.size());
 
     const unsigned int localVectorSize =
       dftPtr->d_eigenVectorsFlattenedSTL[0].size() / dftPtr->d_numEigenValues;
@@ -271,8 +272,9 @@ namespace dftfe
       eigenVectorsFlattenedArrayFullBlock.get_partitioner(),
       dftPtr->d_numEigenValues);
 
-    for (unsigned int kPoint = 0; kPoint < (1 + dftParameters::spinPolarized) *
-                                             dftPtr->d_kPointWeights.size();
+    for (unsigned int kPoint = 0;
+         kPoint < (1 + dftPtr->getParametersObject().spinPolarized) *
+                    dftPtr->d_kPointWeights.size();
          ++kPoint)
       {
         eigenVectors[kPoint].resize(dftPtr->d_numEigenValues);
@@ -320,17 +322,17 @@ namespace dftfe
     rhoLocal.resize(totPoints, 0.0);
     rhoTemp.resize(totPoints, 0.0);
     //
-    if (dftParameters::spinPolarized == 1)
+    if (dftPtr->getParametersObject().spinPolarized == 1)
       {
         rhoLocalSpinPolarized.resize(2 * totPoints, 0.0);
         rhoTempSpinPolarized.resize(2 * totPoints, 0.0);
       }
     //
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       {
         gradRhoLocal.resize(3 * totPoints, 0.0);
         gradRhoTemp.resize(3 * totPoints, 0.0);
-        if (dftParameters::spinPolarized)
+        if (dftPtr->getParametersObject().spinPolarized)
           {
             gradRhoLocalSpinPolarized.resize(6 * totPoints, 0.0);
             gradRhoTempSpinPolarized.resize(6 * totPoints, 0.0);
@@ -350,7 +352,7 @@ namespace dftfe
             tempPsiBeta.resize(numPoint);
             quadPointList.resize(numPoint);
             //
-            if (dftParameters::xcFamilyType == "GGA")
+            if (dftPtr->getParametersObject().xcFamilyType == "GGA")
               {
                 tempGradPsi.resize(numPoint);
                 tempGradPsiTempAlpha.resize(numPoint);
@@ -368,7 +370,7 @@ namespace dftfe
                 tempPsiAlpha[iList].reinit(2);
                 tempPsiBeta[iList].reinit(2);
                 //
-                if (dftParameters::xcFamilyType == "GGA")
+                if (dftPtr->getParametersObject().xcFamilyType == "GGA")
                   {
                     tempGradPsi[iList].resize(2);
                     tempGradPsiTempAlpha[iList].resize(2);
@@ -401,26 +403,29 @@ namespace dftfe
                     for (unsigned int i = 0; i < (dftPtr->d_numEigenValues);
                          ++i)
                       {
-                        double factor = ((dftPtr->eigenValues)[kPoint][i] -
-                                         (dftPtr->fermiEnergy)) /
-                                        (C_kb * dftParameters::TVal);
+                        double factor =
+                          ((dftPtr->eigenValues)[kPoint][i] -
+                           (dftPtr->fermiEnergy)) /
+                          (C_kb * dftPtr->getParametersObject().TVal);
                         double partialOccupancyAlpha = getOccupancy(factor);
                         //
                         factor =
-                          ((dftPtr
-                              ->eigenValues)[kPoint]
-                                            [i + dftParameters::spinPolarized *
-                                                   (dftPtr->d_numEigenValues)] -
+                          ((dftPtr->eigenValues)
+                             [kPoint]
+                             [i + dftPtr->getParametersObject().spinPolarized *
+                                    (dftPtr->d_numEigenValues)] -
                            (dftPtr->fermiEnergy)) /
-                          (C_kb * dftParameters::TVal);
+                          (C_kb * dftPtr->getParametersObject().TVal);
                         double partialOccupancyBeta = getOccupancy(factor);
                         //
-                        if (dftParameters::constraintMagnetization)
+                        if (dftPtr->getParametersObject()
+                              .constraintMagnetization)
                           {
                             partialOccupancyAlpha = 1.0,
                             partialOccupancyBeta  = 1.0;
                             if ((dftPtr->eigenValues)
-                                  [kPoint][i + dftParameters::spinPolarized *
+                                  [kPoint][i + dftPtr->getParametersObject()
+                                                   .spinPolarized *
                                                  (dftPtr->d_numEigenValues)] >
                                 (dftPtr->fermiEnergyDown))
                               partialOccupancyBeta = 0.0;
@@ -430,26 +435,30 @@ namespace dftfe
                           }
                         //
                         fe_values.get_function_values(
-                          (eigenVectors[(1 + dftParameters::spinPolarized) *
+                          (eigenVectors[(1 + dftPtr->getParametersObject()
+                                               .spinPolarized) *
                                         kPoint][i]),
                           tempPsiAlpha);
-                        if (dftParameters::spinPolarized == 1)
+                        if (dftPtr->getParametersObject().spinPolarized == 1)
                           fe_values.get_function_values(
-                            (eigenVectors[(1 + dftParameters::spinPolarized) *
+                            (eigenVectors[(1 + dftPtr->getParametersObject()
+                                                 .spinPolarized) *
                                             kPoint +
                                           1][i]),
                             tempPsiBeta);
                         //
-                        if (dftParameters::xcFamilyType == "GGA")
+                        if (dftPtr->getParametersObject().xcFamilyType == "GGA")
                           {
                             fe_values.get_function_gradients(
-                              (eigenVectors[(1 + dftParameters::spinPolarized) *
+                              (eigenVectors[(1 + dftPtr->getParametersObject()
+                                                   .spinPolarized) *
                                             kPoint][i]),
                               tempGradPsiTempAlpha);
-                            if (dftParameters::spinPolarized == 1)
+                            if (dftPtr->getParametersObject().spinPolarized ==
+                                1)
                               fe_values.get_function_gradients(
-                                (eigenVectors[(1 +
-                                               dftParameters::spinPolarized) *
+                                (eigenVectors[(1 + dftPtr->getParametersObject()
+                                                     .spinPolarized) *
                                                 kPoint +
                                               1][i]),
                                 tempGradPsiTempBeta);
@@ -458,7 +467,8 @@ namespace dftfe
                         for (unsigned int iList = 0; iList < numPoint; ++iList)
                           {
                             //
-                            if (dftParameters::spinPolarized == 1)
+                            if (dftPtr->getParametersObject().spinPolarized ==
+                                1)
                               {
                                 rhoTempSpinPolarized[2 *
                                                      (numPointsDone + iList)] +=
@@ -489,7 +499,8 @@ namespace dftfe
                                    tempPsiAlpha[iList](0) +
                                  tempPsiAlpha[iList](1) *
                                    tempPsiAlpha[iList](1));
-                            if (dftParameters::xcFamilyType == "GGA")
+                            if (dftPtr->getParametersObject().xcFamilyType ==
+                                "GGA")
                               {
                                 for (unsigned int j = 0; j < 3; ++j)
                                   {
@@ -508,7 +519,8 @@ namespace dftfe
                                       tempGradPsiTempAlpha[iList][1][2] *
                                         symmMat[iSymm][2][j];
                                   }
-                                if (dftParameters::spinPolarized == 1)
+                                if (dftPtr->getParametersObject()
+                                      .spinPolarized == 1)
                                   {
                                     gradRhoTempSpinPolarized
                                       [6 * (numPointsDone + iList) + 0] +=
@@ -636,14 +648,14 @@ namespace dftfe
     //
     MPI_Allreduce(
       &rhoTemp[0], &rhoLocal[0], totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm);
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       MPI_Allreduce(&gradRhoTemp[0],
                     &gradRhoLocal[0],
                     3 * totPoints,
                     MPI_DOUBLE,
                     MPI_SUM,
                     interpoolcomm);
-    if (dftParameters::spinPolarized == 1)
+    if (dftPtr->getParametersObject().spinPolarized == 1)
       {
         MPI_Allreduce(&rhoTempSpinPolarized[0],
                       &rhoLocalSpinPolarized[0],
@@ -651,7 +663,7 @@ namespace dftfe
                       MPI_DOUBLE,
                       MPI_SUM,
                       interpoolcomm);
-        if (dftParameters::xcFamilyType == "GGA")
+        if (dftPtr->getParametersObject().xcFamilyType == "GGA")
           MPI_Allreduce(&gradRhoTempSpinPolarized[0],
                         &gradRhoLocalSpinPolarized[0],
                         6 * totPoints,
@@ -666,8 +678,9 @@ namespace dftfe
     //                                back to all other processors.from which
     //                                the points came from.
     //================================================================================================================================================
-    sendData.resize((1 + dftParameters::spinPolarized) * totPoints);
-    if (dftParameters::spinPolarized == 1)
+    sendData.resize((1 + dftPtr->getParametersObject().spinPolarized) *
+                    totPoints);
+    if (dftPtr->getParametersObject().spinPolarized == 1)
       sendData = rhoLocalSpinPolarized;
     else
       sendData = rhoLocal;
@@ -713,10 +726,11 @@ namespace dftfe
         recvdData.clear();
       }
     //
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       {
-        sendData.resize(3 * (1 + dftParameters::spinPolarized) * totPoints);
-        if (dftParameters::spinPolarized == 1)
+        sendData.resize(3 * (1 + dftPtr->getParametersObject().spinPolarized) *
+                        totPoints);
+        if (dftPtr->getParametersObject().spinPolarized == 1)
           sendData = gradRhoLocalSpinPolarized;
         else
           sendData = gradRhoLocal;

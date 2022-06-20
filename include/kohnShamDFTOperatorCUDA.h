@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -43,7 +43,8 @@ namespace dftfe
   {
   public:
     kohnShamDFTOperatorCUDAClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                                 const MPI_Comm &mpi_comm_replica);
+                                 const MPI_Comm &mpi_comm_parent,
+                                 const MPI_Comm &mpi_comm_domain);
 
     /**
      * @brief destructor
@@ -650,6 +651,7 @@ namespace dftfe
     std::vector<unsigned int> d_macroCellSubCellMap;
 
     // parallel objects
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

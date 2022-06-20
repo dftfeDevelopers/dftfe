@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -61,7 +61,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
   // create new gradRhoValue tables
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -79,7 +79,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
 
 
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             (*gradRhoInValues)[cell->id()] =
               std::vector<double>(3 * num_quad_points);
 
@@ -94,28 +94,28 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
 
               // Simple mixing scheme
               ((*rhoInValues)[cell->id()][q_point]) =
-                std::abs((1 - dftParameters::mixingParameter) *
+                std::abs((1 - d_dftParamsPtr->mixingParameter) *
                            (rhoInValuesOld)[cell->id()][q_point] +
-                         dftParameters::mixingParameter *
+                         d_dftParamsPtr->mixingParameter *
                            (*rhoOutValues)[cell->id()][q_point]);
 
 
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 {
                   ((*gradRhoInValues)[cell->id()][3 * q_point + 0]) =
-                    ((1 - dftParameters::mixingParameter) *
+                    ((1 - d_dftParamsPtr->mixingParameter) *
                        (gradRhoInValuesOld)[cell->id()][3 * q_point + 0] +
-                     dftParameters::mixingParameter *
+                     d_dftParamsPtr->mixingParameter *
                        (*gradRhoOutValues)[cell->id()][3 * q_point + 0]);
                   ((*gradRhoInValues)[cell->id()][3 * q_point + 1]) =
-                    ((1 - dftParameters::mixingParameter) *
+                    ((1 - d_dftParamsPtr->mixingParameter) *
                        (gradRhoInValuesOld)[cell->id()][3 * q_point + 1] +
-                     dftParameters::mixingParameter *
+                     d_dftParamsPtr->mixingParameter *
                        (*gradRhoOutValues)[cell->id()][3 * q_point + 1]);
                   ((*gradRhoInValues)[cell->id()][3 * q_point + 2]) =
-                    ((1 - dftParameters::mixingParameter) *
+                    ((1 - d_dftParamsPtr->mixingParameter) *
                        (gradRhoInValuesOld)[cell->id()][3 * q_point + 2] +
-                     dftParameters::mixingParameter *
+                     d_dftParamsPtr->mixingParameter *
                        (*gradRhoOutValues)[cell->id()][3 * q_point + 2]);
                 }
             }
@@ -276,8 +276,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
                   rhoInBar += cTotal[i] * rhoInTemp[N - 1 - i][q_point];
                 }
               (*rhoInValues)[cell->id()][q_point] =
-                std::abs((1 - dftParameters::mixingParameter) * rhoInBar +
-                         dftParameters::mixingParameter * rhoOutBar);
+                std::abs((1 - d_dftParamsPtr->mixingParameter) * rhoInBar +
+                         d_dftParamsPtr->mixingParameter * rhoOutBar);
             }
         }
     }
@@ -285,7 +285,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
   // compute gradRho for GGA using mixing constants from rho mixing
 
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
         *gradRhoInValues;
@@ -400,14 +400,14 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
                     }
 
                   (*gradRhoInValues)[cell->id()][3 * q_point + 0] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoXInBar +
-                     dftParameters::mixingParameter * gradRhoXOutBar);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar +
+                     d_dftParamsPtr->mixingParameter * gradRhoXOutBar);
                   (*gradRhoInValues)[cell->id()][3 * q_point + 1] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoYInBar +
-                     dftParameters::mixingParameter * gradRhoYOutBar);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar +
+                     d_dftParamsPtr->mixingParameter * gradRhoYOutBar);
                   (*gradRhoInValues)[cell->id()][3 * q_point + 2] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoZInBar +
-                     dftParameters::mixingParameter * gradRhoZOutBar);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar +
+                     d_dftParamsPtr->mixingParameter * gradRhoZOutBar);
                 }
             }
         }
@@ -436,7 +436,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
   std::map<dealii::CellId, std::vector<double>> delRho, delGradRho;
   dFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
   uBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       graddFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
       gradUBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -462,7 +462,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
           if (N == 1)
             FBroyden[cell->id()] = std::vector<double>(num_quad_points);
           //
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             {
               (graddFBroyden[N - 1])[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -479,7 +479,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
                   FOld = ((rhoOutVals[0])[cell->id()][q_point]) -
                          ((rhoInVals[0])[cell->id()][q_point]);
                   w0Loc += FOld * FOld * fe_values.JxW(q_point);
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     {
                       for (unsigned int dir = 0; dir < 3; ++dir)
                         gradFOld[dir] =
@@ -490,7 +490,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               else
                 {
                   FOld = FBroyden[cell->id()][q_point];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       gradFOld[dir] =
                         gradFBroyden[cell->id()][3 * q_point + dir];
@@ -505,7 +505,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               //
               (dFBroyden[N - 1])[cell->id()][q_point] =
                 FBroyden[cell->id()][q_point] - FOld;
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 {
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     {
@@ -549,7 +549,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
   wtBroyden.push_back(1.0);
   //
   //
-  double G = dftParameters::mixingParameter;
+  double G = d_dftParamsPtr->mixingParameter;
   //
   std::vector<double> c(N, 0.0), invBeta(N * N, 0.0), beta(N * N, 0.0),
     gamma(N, 0.0), cLoc(N, 0.0), invBetaLoc(N * N, 0.0);
@@ -559,7 +559,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
     if (cell->is_locally_owned())
       {
         (uBroyden[N - 1])[cell->id()] = std::vector<double>(num_quad_points);
-        if (dftParameters::xcFamilyType == "GGA")
+        if (d_dftParamsPtr->xcFamilyType == "GGA")
           (gradUBroyden[N - 1])[cell->id()] =
             std::vector<double>(3 * num_quad_points);
         fe_values.reinit(cell);
@@ -572,7 +572,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               G * (dFBroyden[N - 1])[cell->id()][q_point] +
               delRho[cell->id()][q_point];
             //
-            if (dftParameters::xcFamilyType == "GGA")
+            if (d_dftParamsPtr->xcFamilyType == "GGA")
               {
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   {
@@ -634,7 +634,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
   rhoInValues = &(rhoInVals.back());
   //
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -647,7 +647,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
       if (cell->is_locally_owned())
         {
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             (*gradRhoInValues)[cell->id()] =
               std::vector<double>(3 * num_quad_points);
           fe_values.reinit(cell);
@@ -662,7 +662,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               (*rhoInValues)[cell->id()][q_point] =
                 rhoInValuesOld[cell->id()][q_point] +
                 G * FBroyden[cell->id()][q_point];
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   (*gradRhoInValues)[cell->id()][3 * q_point + dir] =
                     gradRhoInValuesOld[cell->id()][3 * q_point + dir] +
@@ -673,7 +673,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
                   (*rhoInValues)[cell->id()][q_point] -=
                     wtBroyden[i] * gamma[i] *
                     (uBroyden[i])[cell->id()][q_point];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       (*gradRhoInValues)[cell->id()][3 * q_point + dir] -=
                         wtBroyden[i] * gamma[i] *
@@ -708,7 +708,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
   std::map<dealii::CellId, std::vector<double>> delRho, delGradRho;
   dFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
   uBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       graddFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
       gradUBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -735,7 +735,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
           if (N == 1)
             FBroyden[cell->id()] = std::vector<double>(2 * num_quad_points);
           //
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             {
               (graddFBroyden[N - 1])[cell->id()] =
                 std::vector<double>(6 * num_quad_points);
@@ -754,7 +754,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
                          ((rhoInValsSpinPolarized[0])[cell->id()][q_point]);
                   // w0Loc += FOld * FOld * fe_values.JxW(q_point) ;
                   // F[cell->id()]=std::vector<double>(num_quad_points);
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     {
                       // gradF[cell->id()]=std::vector<double>(6*num_quad_points);
                       for (unsigned int dir = 0; dir < 3; ++dir)
@@ -769,7 +769,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               else
                 {
                   FOld = FBroyden[cell->id()][q_point];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       gradFOld[dir] =
                         gradFBroyden[cell->id()][3 * q_point + dir];
@@ -784,7 +784,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               //
               (dFBroyden[N - 1])[cell->id()][q_point] =
                 FBroyden[cell->id()][q_point] - FOld;
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 {
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     {
@@ -846,7 +846,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
   // wtBroyden.push_back(wtTemp) ;
   wtBroyden.push_back(1.0);
   //
-  double G = dftParameters::mixingParameter;
+  double G = d_dftParamsPtr->mixingParameter;
   //
   std::vector<double> c(N, 0.0), invBeta(N * N, 0.0), beta(N * N, 0.0),
     gamma(N, 0.0), cLoc(N, 0.0), invBetaLoc(N * N, 0.0);
@@ -857,7 +857,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
       {
         (uBroyden[N - 1])[cell->id()] =
           std::vector<double>(2 * num_quad_points);
-        if (dftParameters::xcFamilyType == "GGA")
+        if (d_dftParamsPtr->xcFamilyType == "GGA")
           (gradUBroyden[N - 1])[cell->id()] =
             std::vector<double>(6 * num_quad_points);
         fe_values.reinit(cell);
@@ -876,7 +876,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               G * (dFBroyden[N - 1])[cell->id()][2 * q_point + 1] +
               delRho[cell->id()][2 * q_point + 1];
             //
-            if (dftParameters::xcFamilyType == "GGA")
+            if (d_dftParamsPtr->xcFamilyType == "GGA")
               {
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   {
@@ -960,7 +960,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
   //
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOldSpinPolarized;
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -980,7 +980,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
           (*rhoInValuesSpinPolarized)[cell->id()] =
             std::vector<double>(2 * num_quad_points);
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             {
               (*gradRhoInValues)[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -1002,7 +1002,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
                 rhoInValuesOldSpinPolarized[cell->id()][2 * q_point + 1] +
                 G * FBroyden[cell->id()][2 * q_point + 1];
               //
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   {
                     (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
@@ -1025,7 +1025,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] -=
                     wtBroyden[i] * gamma[i] *
                     (uBroyden[i])[cell->id()][2 * q_point + 1];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       {
                         (*gradRhoInValuesSpinPolarized)[cell->id()]
@@ -1042,7 +1042,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               (*rhoInValues)[cell->id()][q_point] =
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] +
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1];
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   (*gradRhoInValues)[cell->id()][3 * q_point + dir] =
                     (*gradRhoInValuesSpinPolarized)[cell->id()]
@@ -1088,7 +1088,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOldSpinPolarized;
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -1114,7 +1114,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
           // }
 
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             {
               (*gradRhoInValues)[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -1131,15 +1131,15 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
 
               // Simple mixing scheme
               (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] = std::abs(
-                (1 - dftParameters::mixingParameter) *
+                (1 - d_dftParamsPtr->mixingParameter) *
                   (rhoInValuesOldSpinPolarized)[cell->id()][2 * q_point] +
-                dftParameters::mixingParameter *
+                d_dftParamsPtr->mixingParameter *
                   (*rhoOutValuesSpinPolarized)[cell->id()][2 * q_point]);
               (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] =
                 std::abs(
-                  (1 - dftParameters::mixingParameter) *
+                  (1 - d_dftParamsPtr->mixingParameter) *
                     (rhoInValuesOldSpinPolarized)[cell->id()][2 * q_point + 1] +
-                  dftParameters::mixingParameter *
+                  d_dftParamsPtr->mixingParameter *
                     (*rhoOutValuesSpinPolarized)[cell->id()][2 * q_point + 1]);
 
               (*rhoInValues)[cell->id()][q_point] =
@@ -1151,16 +1151,16 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
                                     2.0) *
                            fe_values.JxW(q_point);
 
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 {
                   for (unsigned int i = 0; i < 6; ++i)
                     {
                       ((*gradRhoInValuesSpinPolarized)[cell->id()]
                                                       [6 * q_point + i]) =
-                        ((1 - dftParameters::mixingParameter) *
+                        ((1 - d_dftParamsPtr->mixingParameter) *
                            (gradRhoInValuesOldSpinPolarized)[cell->id()]
                                                             [6 * q_point + i] +
-                         dftParameters::mixingParameter *
+                         d_dftParamsPtr->mixingParameter *
                            (*gradRhoOutValuesSpinPolarized)[cell->id()]
                                                            [6 * q_point + i]);
                     }
@@ -1364,8 +1364,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
                     cTotal[i] * rhoInSpinPolarizedTemp[N - 1 - i][2 * q_point];
                 }
               (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
-                std::abs((1 - dftParameters::mixingParameter) * rhoInBar1 +
-                         dftParameters::mixingParameter * rhoOutBar1);
+                std::abs((1 - d_dftParamsPtr->mixingParameter) * rhoInBar1 +
+                         d_dftParamsPtr->mixingParameter * rhoOutBar1);
               //
               double rhoOutBar2 =
                 cn * rhoOutSpinPolarizedTemp[N][2 * q_point + 1];
@@ -1383,8 +1383,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
                     rhoInSpinPolarizedTemp[N - 1 - i][2 * q_point + 1];
                 }
               (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] =
-                std::abs((1 - dftParameters::mixingParameter) * rhoInBar2 +
-                         dftParameters::mixingParameter * rhoOutBar2);
+                std::abs((1 - d_dftParamsPtr->mixingParameter) * rhoInBar2 +
+                         d_dftParamsPtr->mixingParameter * rhoOutBar2);
               //
               // if (s==1)
               //   {
@@ -1406,7 +1406,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
   // compute gradRho for GGA using mixing constants from rho mixing
 
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
         *gradRhoInValues;
@@ -1536,23 +1536,23 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
                     }
                   //
                   (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 0] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoXInBar1 +
-                     dftParameters::mixingParameter * gradRhoXOutBar1);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar1 +
+                     d_dftParamsPtr->mixingParameter * gradRhoXOutBar1);
                   (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 1] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoYInBar1 +
-                     dftParameters::mixingParameter * gradRhoYOutBar1);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar1 +
+                     d_dftParamsPtr->mixingParameter * gradRhoYOutBar1);
                   (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 2] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoZInBar1 +
-                     dftParameters::mixingParameter * gradRhoZOutBar1);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar1 +
+                     d_dftParamsPtr->mixingParameter * gradRhoZOutBar1);
                   (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 3] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoXInBar2 +
-                     dftParameters::mixingParameter * gradRhoXOutBar2);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar2 +
+                     d_dftParamsPtr->mixingParameter * gradRhoXOutBar2);
                   (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 4] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoYInBar2 +
-                     dftParameters::mixingParameter * gradRhoYOutBar2);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar2 +
+                     d_dftParamsPtr->mixingParameter * gradRhoYOutBar2);
                   (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 5] =
-                    ((1 - dftParameters::mixingParameter) * gradRhoZInBar2 +
-                     dftParameters::mixingParameter * gradRhoZOutBar2);
+                    ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar2 +
+                     d_dftParamsPtr->mixingParameter * gradRhoZOutBar2);
 
                   ((*gradRhoInValues)[cell->id()][3 * q_point + 0]) =
                     ((*gradRhoInValuesSpinPolarized)[cell->id()]

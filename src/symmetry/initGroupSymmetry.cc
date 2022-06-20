@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -26,7 +26,6 @@
 //================================================================================================================================================
 //
 #include "../../include/dft.h"
-#include "../../include/dftParameters.h"
 #include "../../include/symmetry.h"
 #include "symmetrizeRho.cc"
 //
@@ -38,15 +37,17 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   symmetryClass<FEOrder, FEOrderElectro>::symmetryClass(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica,
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain,
     const MPI_Comm &                   _interpoolcomm)
     : dftPtr(_dftPtr)
     , FE(QGaussLobatto<1>(FEOrder + 1))
-    , mpi_communicator(mpi_comm_replica)
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(_interpoolcomm)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , computing_timer(pcout, TimerOutput::never, TimerOutput::wall_times)
   {}
   //================================================================================================================================================
@@ -67,7 +68,7 @@ namespace dftfe
     recv_buf_size.clear();
     rhoRecvd.clear();
     groupOffsets.clear();
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       gradRhoRecvd.clear();
   }
   //================================================================================================================================================
@@ -125,7 +126,7 @@ namespace dftfe
     recv_buf_size.resize(numSymm);
     rhoRecvd.resize(numSymm);
     groupOffsets.resize(numSymm);
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       gradRhoRecvd.resize(numSymm);
     //
     const parallel::distributed::Triangulation<3> &triangulationSer =
@@ -163,7 +164,7 @@ namespace dftfe
           std::vector<std::vector<std::vector<double>>>(cell_id);
         groupOffsets[iSymm] =
           std::vector<std::vector<std::vector<int>>>(cell_id);
-        if (dftParameters::xcFamilyType == "GGA")
+        if (dftPtr->getParametersObject().xcFamilyType == "GGA")
           gradRhoRecvd[iSymm] =
             std::vector<std::vector<std::vector<double>>>(cell_id);
       }
@@ -486,7 +487,7 @@ namespace dftfe
                     //
                     rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc]
                       .resize(
-                        (1 + dftParameters::spinPolarized) *
+                        (1 + dftPtr->getParametersObject().spinPolarized) *
                         send_buf_size[iSymm][globalCellId_parallel[cell->id()]]
                                      [proc][1]); // to be used later to recv
                                                  // symmetrized rho
@@ -613,12 +614,12 @@ namespace dftfe
                   {
                     recv_size[proc] =
                       recv_size[proc] +
-                      (1 + dftParameters::spinPolarized) *
+                      (1 + dftPtr->getParametersObject().spinPolarized) *
                         send_buf_size[iSymm][globalCellId_parallel[cell->id()]]
                                      [proc][1];
                     rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc]
                       .resize(
-                        (1 + dftParameters::spinPolarized) *
+                        (1 + dftPtr->getParametersObject().spinPolarized) *
                         send_buf_size[iSymm][globalCellId_parallel[cell->id()]]
                                      [proc][1]);
                   }
@@ -628,11 +629,13 @@ namespace dftfe
     //
     for (int i = 0; i < dftPtr->n_mpi_processes; i++)
       {
-        recv_size1[i]   = (1 + dftParameters::spinPolarized) * recv_size1[i];
-        mpi_offsets1[i] = (1 + dftParameters::spinPolarized) * mpi_offsets1[i];
+        recv_size1[i] =
+          (1 + dftPtr->getParametersObject().spinPolarized) * recv_size1[i];
+        mpi_offsets1[i] =
+          (1 + dftPtr->getParametersObject().spinPolarized) * mpi_offsets1[i];
       }
     //
-    if (dftParameters::xcFamilyType == "GGA")
+    if (dftPtr->getParametersObject().xcFamilyType == "GGA")
       {
         cell = (dftPtr->dofHandlerEigen).begin_active();
         for (int i = 0; i < dftPtr->n_mpi_processes; i++)
@@ -651,12 +654,14 @@ namespace dftfe
                       std::vector<std::vector<double>>(dftPtr->n_mpi_processes);
                     for (unsigned int proc = 0; proc < dftPtr->n_mpi_processes;
                          ++proc)
-                      gradRhoRecvd[iSymm][globalCellId_parallel[cell
-                                                                  ->id()]][proc]
-                        .resize((1 + dftParameters::spinPolarized) * 3 *
-                                send_buf_size[iSymm]
-                                             [globalCellId_parallel[cell->id()]]
-                                             [proc][1]);
+                      gradRhoRecvd
+                        [iSymm][globalCellId_parallel[cell->id()]][proc]
+                          .resize(
+                            (1 + dftPtr->getParametersObject().spinPolarized) *
+                            3 *
+                            send_buf_size[iSymm]
+                                         [globalCellId_parallel[cell->id()]]
+                                         [proc][1]);
                   }
               }
           }

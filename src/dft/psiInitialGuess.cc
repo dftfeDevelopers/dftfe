@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -37,15 +37,15 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
   //
   char psiFile[256];
 
-  if (dftParameters::isPseudopotential)
-    // if(dftParameters::pseudoProjector==2)
+  if (d_dftParamsPtr->isPseudopotential)
+    // if(d_dftParamsPtr->pseudoProjector==2)
     // sprintf(psiFile,
     // "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp",
-    // DFT_PATH, Z, n, l); else
+    // DFTFE_PATH, Z, n, l); else
     sprintf(
       psiFile,
       "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp",
-      DFT_PATH,
+      DFTFE_PATH,
       Z,
       n,
       l);
@@ -54,7 +54,7 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
     sprintf(
       psiFile,
       "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp",
-      DFT_PATH,
+      DFTFE_PATH,
       Z,
       n,
       l);
@@ -64,7 +64,7 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
   fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
 
   const double truncationTol =
-    dftParameters::reproducible_output ? 1e-10 : 1e-8;
+    d_dftParamsPtr->reproducible_output ? 1e-10 : 1e-8;
   //
   // spline fitting for single-atom wavefunctions
   //
@@ -72,7 +72,7 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
     {
       double       maxTruncationRadius = 0.0;
       unsigned int truncRowId          = 0;
-      if (!dftParameters::reproducible_output)
+      if (!d_dftParamsPtr->reproducible_output)
         pcout << "reading data from file: " << psiFile << std::endl;
 
       int                 numRows = values.size() - 1;
@@ -309,7 +309,7 @@ dftClass<FEOrder, FEOrderElectro>::determineOrbitalFilling()
   pcout << "number of electrons: " << numElectrons << std::endl;
   pcout << "number of eigen values: " << d_numEigenValues << std::endl;
 
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout
       << "number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: "
       << waveFunctionCount << std::endl;
@@ -319,7 +319,7 @@ dftClass<FEOrder, FEOrderElectro>::determineOrbitalFilling()
       // std::cerr<< "Error: Require single-atom wavefunctions as initial guess
       // for starting the SCF."<< std::endl; std::cerr<< "Error: Could not find
       // single-atom wavefunctions for any atom: "<< std::endl;
-      if (dftParameters::verbosity >= 1)
+      if (d_dftParamsPtr->verbosity >= 1)
         pcout
           << "CAUTION: Could not find single-atom wavefunctions for any atom- the starting guess for all wavefunctions will be random."
           << std::endl;
@@ -341,7 +341,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
   unsigned int numberDofs = locallyOwnedDOFs.size();
 
   for (unsigned int kPoint = 0;
-       kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+       kPoint < (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
        ++kPoint)
     {
       std::fill(d_eigenVectorsFlattenedSTL[kPoint].begin(),
@@ -351,7 +351,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
 
   const unsigned int numberGlobalAtoms = atomLocations.size();
 
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout
       << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : "
       << d_numEigenValues - waveFunctionsVector.size() << std::endl;
@@ -412,7 +412,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
           //
           // loop over wave functions
           //
-          for (int kPoint = 0; kPoint < (1 + dftParameters::spinPolarized) *
+          for (int kPoint = 0; kPoint < (1 + d_dftParamsPtr->spinPolarized) *
                                           d_kPointWeights.size();
                ++kPoint)
             {
@@ -428,8 +428,8 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
                   // contributions have to be included or not) currently not
                   // including
                   std::vector<int> imageIdsList;
-                  if (dftParameters::periodicX || dftParameters::periodicY ||
-                      dftParameters::periodicZ)
+                  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+                      d_dftParamsPtr->periodicZ)
                     {
                       imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
                     }
@@ -552,13 +552,13 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
     }
 
   // for(int kPoint = 0; kPoint <
-  // (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+  // (1+d_dftParamsPtr->spinPolarized)*d_kPointWeights.size(); ++kPoint)
   //{
   //   d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
   //      d_eigenVectorsFlattened[kPoint].update_ghost_values();
   //  }
 
-  if (dftParameters::startingWFCType == "RANDOM")
+  if (d_dftParamsPtr->startingWFCType == "RANDOM")
     {
       pcout
         << "============================================================================================================================="

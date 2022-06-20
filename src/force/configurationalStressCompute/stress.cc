@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -25,6 +25,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
 #endif
+  const dispersionCorrection &     dispersionCorr,
   const unsigned int               eigenDofHandlerIndex,
   const unsigned int               smearedChargeQuadratureId,
   const unsigned int               lpspQuadratureIdElectro,
@@ -122,6 +123,17 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
   d_stress += d_stressKPoints;
 
+  if (d_dftParams.dc_dispersioncorrectiontype != 0)
+    {
+      for (unsigned int irow = 0; irow < 3; irow++)
+        {
+          for (unsigned int icol = 0; icol < 3; icol++)
+            {
+              d_stress[irow][icol] +=
+                dispersionCorr.getStressCorrection(irow, icol);
+            }
+        }
+    }
   // Scale by inverse of domain volume
   d_stress = d_stress * (1.0 / dftPtr->d_domainVolume);
 }
@@ -131,7 +143,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::printStress()
 {
-  if (!dftParameters::reproducible_output)
+  if (!d_dftParams.reproducible_output)
     {
       pcout << std::endl;
       pcout << "Cell stress (Hartree/Bohr^3)" << std::endl;

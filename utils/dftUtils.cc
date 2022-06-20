@@ -8,7 +8,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -31,7 +31,6 @@
  *
  */
 
-#include <dftParameters.h>
 #include <dftUtils.h>
 
 #include <fstream>
@@ -153,6 +152,7 @@ namespace dftfe
     void
     writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> &dofHandler,
                                      const dealii::DataOut<3> &   dataOut,
+                                     const MPI_Comm &             mpiCommParent,
                                      const MPI_Comm &             domainComm,
                                      const MPI_Comm &             kPointComm,
                                      const MPI_Comm &             bandGroupComm,
@@ -192,7 +192,7 @@ namespace dftfe
         }
 
 
-      if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
         {
           std::vector<std::string> filenames;
           for (unsigned int i = 0; i < n_mpi_processes; ++i)
@@ -239,7 +239,9 @@ namespace dftfe
       bandGroupLowHighPlusOneIndices[2 * numberBandGroups - 1] = numBands;
     }
 
-    Pool::Pool(const MPI_Comm &mpi_communicator, const unsigned int npool)
+    Pool::Pool(const MPI_Comm &   mpi_communicator,
+               const unsigned int npool,
+               const int          verbosity)
     {
       const unsigned int n_mpi_processes =
         dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -252,7 +254,7 @@ namespace dftfe
         dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
       // FIXME: any and all terminal output should be optional
-      if (taskId == 0 && dftParameters::verbosity > 4)
+      if (taskId == 0 && verbosity > 4)
         {
           std::cout << "Number of pools: " << npool << std::endl;
           std::cout << "Pool size: " << poolSize << std::endl;
@@ -271,7 +273,7 @@ namespace dftfe
         {
           if (taskId == i)
             {
-              if (dftParameters::verbosity > 4)
+              if (verbosity > 4)
                 std::cout
                   << " My global id is " << taskId << " , pool id is "
                   << dealii::Utilities::MPI::this_mpi_process(interpoolcomm)

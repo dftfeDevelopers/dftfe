@@ -1,0 +1,57 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+
+subsection Geometry
+  set NATOMS=16
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/graphite_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/graphite_domainVectors.inp
+  subsection Optimization
+    set CELL STRESS           = true
+    set ION FORCE             = true
+  end  
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 2
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set BASE MESH SIZE = 10.0
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AROUND ATOM = 1.0
+    set MESH SIZE AT ATOM = 1.0
+  end
+
+end
+
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 0
+    set SAMPLING SHIFT 2  = 0
+    set SAMPLING SHIFT 3  = 0
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudographite.inp
+  set PSEUDO TESTS FLAG = true
+  subsection Dispersion Correction
+     set DISPERSION CORRECTION TYPE = 2
+  end
+end
+
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+end

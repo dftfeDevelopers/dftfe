@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -31,9 +31,12 @@ namespace dftfe
   public:
     /** @brief Constructor
      *
-     *  @param mpi_comm_replica mpi communicator in the current pool
+     *  @param mpi_comm_parent parent mpi communicator
+     *  @param mpi_comm_domain mpi communicator domain decomposition
      */
-    meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica);
+    meshMovementAffineTransform(const MPI_Comm &     mpi_comm_parent,
+                                const MPI_Comm &     mpi_comm_domain,
+                                const dftParameters &dftParams);
 
     /** @brief Performs affine transformation of the triangulation
      *

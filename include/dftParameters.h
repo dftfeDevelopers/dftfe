@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -20,169 +20,179 @@
 #ifndef dftParameters_H_
 #define dftParameters_H_
 
-#include <deal.II/base/parameter_handler.h>
-
 #include <string>
+#include <mpi.h>
 
 namespace dftfe
 {
-  // FIXME: document Parameters
-  // FIXME: this should really be an object, not global values
   /**
    * @brief Namespace which declares the input parameters and the functions to parse them
    *  from the input parameter file
    *
    *  @author Phani Motamarri, Sambit Das
    */
-  namespace dftParameters
+  class dftParameters
   {
-    extern unsigned int finiteElementPolynomialOrder,
+  public:
+    unsigned int finiteElementPolynomialOrder,
       finiteElementPolynomialOrderElectrostatics, n_refinement_steps,
       numberEigenValues, xc_id, spinPolarized, nkx, nky, nkz, offsetFlagX,
       offsetFlagY, offsetFlagZ;
-    extern unsigned int chebyshevOrder, numPass, numSCFIterations,
+    unsigned int chebyshevOrder, numPass, numSCFIterations,
       maxLinearSolverIterations, mixingHistory, npool,
       numberWaveFunctionsForEstimate, numLevels,
       maxLinearSolverIterationsHelmholtz;
 
-    extern double radiusAtomBall, mixingParameter;
-    extern double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
+    double radiusAtomBall, mixingParameter;
+    double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       start_magnetization, absLinearSolverToleranceHelmholtz;
 
-    extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
+    bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
       writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
-    extern std::string coordinatesFile, domainBoundingVectorsFile,
-      kPointDataFile, ionRelaxFlagsFile, orthogType, algoType,
-      pseudoPotentialFile;
 
-    extern std::string coordinatesGaussianDispFile;
-
-    extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
-    extern bool   autoAdaptBaseMeshSize;
-    extern double meshSizeInnerBall, meshSizeOuterBall;
-    extern double chebyshevTolerance, topfrac, kerkerParameter;
-    extern std::string mixingMethod, ionOptSolver;
-
-
-    extern bool isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD, isXLBOMD;
-    extern bool nonSelfConsistentForce, meshAdaption;
-    extern double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
-    extern unsigned int cellConstraintType;
-
-    extern unsigned int verbosity, chkType;
-    extern bool         restartSpinFromNoSpin;
-    extern bool         restartFromChk;
-    extern bool         restartMdFromChk;
-    extern bool         electrostaticsHRefinement;
-
-    extern bool reproducible_output;
-
-    extern bool writeWfcSolutionFields;
-
-    extern bool writeDensitySolutionFields;
-
-    extern std::string  startingWFCType;
-    extern unsigned int numCoreWfcRR;
-    extern unsigned int wfcBlockSize;
-    extern unsigned int chebyWfcBlockSize;
-    extern unsigned int subspaceRotDofsBlockSize;
-    extern unsigned int nbandGrps;
-    extern bool         computeEnergyEverySCF;
-    extern unsigned int scalapackParalProcs;
-    extern unsigned int scalapackBlockSize;
-    extern unsigned int natoms;
-    extern unsigned int natomTypes;
-    extern bool         reuseWfcGeoOpt;
-    extern unsigned int reuseDensityGeoOpt;
-    extern double       mpiAllReduceMessageBlockSizeMB;
-    extern bool         useMixedPrecCGS_SR;
-    extern bool         useMixedPrecCGS_O;
-    extern bool         useMixedPrecXTHXSpectrumSplit;
-    extern bool         useMixedPrecSubspaceRotRR;
-    extern unsigned int spectrumSplitStartingScfIter;
-    extern bool         useELPA;
-    extern bool         constraintsParallelCheck;
-    extern bool         createConstraintsFromSerialDofhandler;
-    extern bool         bandParalOpt;
-    extern bool         useGPU;
-    extern bool         gpuFineGrainedTimings;
-    extern bool         allowFullCPUMemSubspaceRot;
-    extern bool         useMixedPrecCheby;
-    extern bool         overlapComputeCommunCheby;
-    extern bool         overlapComputeCommunOrthoRR;
-    extern bool         autoGPUBlockSizes;
-    extern bool         readWfcForPdosPspFile;
-    extern double       maxJacobianRatioFactorForMD;
-    extern double       chebyshevFilterTolXLBOMD;
-    extern double       chebyshevFilterTolXLBOMDRankUpdates;
-    extern double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
-    extern double       timeStepBOMD;
-    extern unsigned int numberStepsBOMD;
-    extern double       startingTempBOMDNVE;
-    extern double       gaussianConstantForce;
-    extern double       gaussianOrderForce;
-    extern double       gaussianOrderMoveMeshToAtoms;
-    extern bool         useFlatTopGenerator;
-    extern double       diracDeltaKernelScalingConstant;
-    extern unsigned int kernelUpdateRankXLBOMD;
-    extern unsigned int kmaxXLBOMD;
-    extern bool         useAtomicRhoXLBOMD;
-    extern bool         useMeshSizesFromAtomsFile;
-    extern unsigned int numberPassesRRSkippedXLBOMD;
-    extern double       xlbomdRestartChebyTol;
-    extern bool         useDensityMatrixPerturbationRankUpdates;
-    extern double       xlbomdKernelRankUpdateFDParameter;
-    extern bool         smearedNuclearCharges;
-    extern bool         HXOptimFlag;
-    extern bool         floatingNuclearCharges;
-    extern bool         nonLinearCoreCorrection;
-    extern unsigned int maxLineSearchIterCGPRP;
-    extern std::string  atomicMassesFile;
-    extern bool         useGPUDirectAllReduce;
-    extern double       pspCutoffImageCharges;
-    extern bool         reuseLanczosUpperBoundFromFirstCall;
-    extern bool         allowMultipleFilteringPassesAfterFirstScf;
-    extern bool         useELPAGPUKernel;
-    extern std::string  xcFamilyType;
-    extern bool         gpuMemOptMode;
 
     /** parameters for LRJI preconditioner **/
 
-    extern double      startingNormLRJILargeDamping;
-    extern double      mixingParameterLRJI;
-    extern std::string methodSubTypeLRJI;
-    extern double      adaptiveRankRelTolLRJI;
-    extern double      factorAdapAccumClearLRJI;
-    extern double      absPoissonSolverToleranceLRJI;
-    extern bool        singlePrecLRJI;
-    extern bool        estimateJacCondNoFinalSCFIter;
+    double      startingNormLRJILargeDamping;
+    double      mixingParameterLRJI;
+    std::string methodSubTypeLRJI;
+    double      adaptiveRankRelTolLRJI;
+    double      factorAdapAccumClearLRJI;
+    double      absPoissonSolverToleranceLRJI;
+    bool        singlePrecLRJI;
+    bool        estimateJacCondNoFinalSCFIter;
 
-    /*****************************************/
+    /**********************************************/
+ 
+    std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
+      ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
-    /**
-     * Declare parameters.
-     */
-    void
-    declare_parameters(dealii::ParameterHandler &prm);
+    std::string coordinatesGaussianDispFile;
+
+    double      outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
+    bool        autoAdaptBaseMeshSize;
+    double      meshSizeInnerBall, meshSizeOuterBall;
+    double      chebyshevTolerance, topfrac, kerkerParameter;
+    std::string mixingMethod, ionOptSolver;
+
+
+    bool   isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
+    bool   nonSelfConsistentForce, meshAdaption;
+    double forceRelaxTol, stressRelaxTol, toleranceKinetic;
+    unsigned int cellConstraintType;
+
+    int          verbosity;
+    bool         keepScratchFolder;
+    unsigned int chkType;
+    bool         restartSpinFromNoSpin;
+    bool         restartFromChk;
+    bool         electrostaticsHRefinement;
+
+    bool reproducible_output;
+
+    bool writeWfcSolutionFields;
+
+    bool writeDensitySolutionFields;
+
+    std::string  startingWFCType;
+    unsigned int numCoreWfcRR;
+    unsigned int wfcBlockSize;
+    unsigned int chebyWfcBlockSize;
+    unsigned int subspaceRotDofsBlockSize;
+    unsigned int nbandGrps;
+    bool         computeEnergyEverySCF;
+    unsigned int scalapackParalProcs;
+    unsigned int scalapackBlockSize;
+    unsigned int natoms;
+    unsigned int natomTypes;
+    bool         reuseWfcGeoOpt;
+    unsigned int reuseDensityGeoOpt;
+    double       mpiAllReduceMessageBlockSizeMB;
+    bool         useMixedPrecCGS_SR;
+    bool         useMixedPrecCGS_O;
+    bool         useMixedPrecXTHXSpectrumSplit;
+    bool         useMixedPrecSubspaceRotRR;
+    unsigned int spectrumSplitStartingScfIter;
+    bool         useELPA;
+    bool         constraintsParallelCheck;
+    bool         createConstraintsFromSerialDofhandler;
+    bool         bandParalOpt;
+    bool         useGPU;
+    bool         gpuFineGrainedTimings;
+    bool         allowFullCPUMemSubspaceRot;
+    bool         useMixedPrecCheby;
+    bool         overlapComputeCommunCheby;
+    bool         overlapComputeCommunOrthoRR;
+    bool         autoGPUBlockSizes;
+    bool         readWfcForPdosPspFile;
+    double       maxJacobianRatioFactorForMD;
+    double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
+    int          reuseDensityMD;
+    double       timeStepBOMD;
+    unsigned int numberStepsBOMD;
+    unsigned int TotalImages;
+    double       gaussianConstantForce;
+    double       gaussianOrderForce;
+    double       gaussianOrderMoveMeshToAtoms;
+    bool         useFlatTopGenerator;
+    double       diracDeltaKernelScalingConstant;
+    bool         useMeshSizesFromAtomsFile;
+    double       xlbomdRestartChebyTol;
+    bool         useDensityMatrixPerturbationRankUpdates;
+    double       xlbomdKernelRankUpdateFDParameter;
+    bool         smearedNuclearCharges;
+    bool         HXOptimFlag;
+    bool         floatingNuclearCharges;
+    bool         nonLinearCoreCorrection;
+    unsigned int maxLineSearchIterCGPRP;
+    std::string  atomicMassesFile;
+    bool         useGPUDirectAllReduce;
+    double       pspCutoffImageCharges;
+    bool         reuseLanczosUpperBoundFromFirstCall;
+    bool         allowMultipleFilteringPassesAfterFirstScf;
+    bool         useELPAGPUKernel;
+    std::string  xcFamilyType;
+    bool         gpuMemOptMode;
+
+    unsigned int dc_dispersioncorrectiontype;
+    unsigned int dc_d3dampingtype;
+    bool         dc_d3ATM;
+    bool         dc_d4MBD;
+    std::string  dc_dampingParameterFilename;
+    double       dc_d3cutoff2;
+    double       dc_d3cutoff3;
+    double       dc_d3cutoffCN;
+
+
+    // New Paramters for moleculardyynamics class
+    double      startingTempBOMD;
+    double      MaxWallTime;
+    double      thermostatTimeConstantBOMD;
+    std::string tempControllerTypeBOMD;
+    int         MDTrack;
+
+    dftParameters();
 
     /**
      * Parse parameters.
      */
     void
-    parse_parameters(dealii::ParameterHandler &prm);
+    parse_parameters(const std::string &parameter_file,
+                     const MPI_Comm &   mpi_comm_parent,
+                     const bool         printParams = false);
 
     /**
-     * Check and print parameters
+     * Check parameters
      */
     void
-    check_print_parameters(const dealii::ParameterHandler &prm);
+    check_parameters(const MPI_Comm &mpi_comm_parent) const;
 
     /**
      * Set automated choices for parameters
      */
     void
-    setAutoParameters();
+    setAutoParameters(const MPI_Comm &mpi_comm_parent);
 
     /**
      * set family type exchange correlation functional
@@ -190,7 +200,7 @@ namespace dftfe
      */
     void
     setXCFamilyType();
-  }; // namespace dftParameters
+  }; // class dftParameters
 
 } // namespace dftfe
 #endif

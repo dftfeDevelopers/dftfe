@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -21,6 +21,7 @@
 
 #    include "headers.h"
 #    include "operatorCUDA.h"
+#    include "dftParameters.h"
 
 namespace dftfe
 {
@@ -52,10 +53,12 @@ namespace dftfe
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 #    endif
-      const MPI_Comm &interBandGroupComm,
-      const bool      isPsp,
-      const bool      isFloatingChargeForces,
-      const bool      addEk);
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const bool           isPsp,
+      const bool           isFloatingChargeForces,
+      const bool           addEk,
+      const dftParameters &dftParams);
   } // namespace forceCUDA
 } // namespace dftfe
 #  endif

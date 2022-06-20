@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -37,10 +37,10 @@ namespace dftfe
     /** @brief Constructor.
      *
      *  @param _dftPtr pointer to dftClass
-     *  @param mpi_comm_replica mpi_communicator of the current pool
+     *  @param mpi_comm_parent parent mpi_communicator
      */
     geoOptIon(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-              const MPI_Comm &                   mpi_comm_replica);
+              const MPI_Comm &                   mpi_comm_parent);
 
     /**
      * @brief initializes the data member d_relaxationFlags.
@@ -94,6 +94,9 @@ namespace dftfe
      */
     void
     save();
+
+    const MPI_Comm &
+    getMPICommunicator();
 
     /// not implemented
     void

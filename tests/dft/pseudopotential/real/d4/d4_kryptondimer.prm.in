@@ -1,0 +1,47 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/kryptonDimer_coordinates.inp
+  set DOMAIN VECTORS FILE =  @SOURCE_DIR@/kryptonDimer_domainVectors.inp
+  subsection Optimization
+    set FORCE TOL            = 1e-3
+    set ION OPT              = true
+    set ION FORCE            = true
+    set ION RELAX FLAGS FILE = @SOURCE_DIR@/kryptonDimer_relaxationFlags.inp
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoKr.inp
+  set PSEUDO TESTS FLAG = true
+  subsection Dispersion Correction
+     set DISPERSION CORRECTION TYPE = 2
+  end
+end
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set MESH SIZE AROUND ATOM  = 0.7
+    set BASE MESH SIZE = 10.0
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AT ATOM = 0.7
+  end
+end
+

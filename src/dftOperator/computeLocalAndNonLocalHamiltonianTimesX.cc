@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -57,7 +57,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 {
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   //
   // element level matrix-vector multiplications
   //
@@ -100,7 +100,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   // allocate memory for matrix-vector product
   //
-  if (dftParameters::isPseudopotential &&
+  if (dftPtr->d_dftParamsPtr->isPseudopotential &&
       dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
       for (unsigned int iAtom = 0;
@@ -279,7 +279,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &numberWaveFunctions);
 
 
-          if (dftParameters::isPseudopotential &&
+          if (dftPtr->d_dftParamsPtr->isPseudopotential &&
               dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
             {
               for (unsigned int iAtom = 0;
