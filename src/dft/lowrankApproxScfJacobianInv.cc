@@ -520,7 +520,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
   double const2 =
     (normValue > d_dftParamsPtr->startingNormLRJILargeDamping || scfIter < 2) ?
       -0.1 :
-      -d_dftParamsPtr->mixingParameterLRJI;
+      -d_dftParamsPtr->mixingParameter;
 
   if (d_dftParamsPtr->verbosity >= 4)
     pcout << " Preconditioned mixing step, mixing constant: " << const2

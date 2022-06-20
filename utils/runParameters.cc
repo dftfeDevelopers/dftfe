@@ -694,9 +694,9 @@ namespace dftfe
 
         prm.declare_entry(
           "MIXING PARAMETER",
-          "0.2",
-          Patterns::Double(0.0, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.2.");
+          "0.0",
+          Patterns::Double(-1e-12, 1.0),
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRJI.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",
@@ -741,12 +741,7 @@ namespace dftfe
             "STARTING NORM LARGE DAMPING",
             "2.0",
             Patterns::Double(0.0, 10.0),
-            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to 0.1.");
-
-          prm.declare_entry("MIXING PARAMETER",
-                            "0.5",
-                            Patterns::Double(0.0, 1.0),
-                            "[Standard] Mixing parameter.");
+            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::MIXING PARAMETER, otherwise set to 0.1.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL",

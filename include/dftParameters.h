@@ -55,7 +55,6 @@ namespace dftfe
     /** parameters for LRJI preconditioner **/
 
     double      startingNormLRJILargeDamping;
-    double      mixingParameterLRJI;
     std::string methodSubTypeLRJI;
     double      adaptiveRankRelTolLRJI;
     double      factorAdapAccumClearLRJI;

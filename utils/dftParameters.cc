@@ -694,9 +694,9 @@ namespace dftfe
 
         prm.declare_entry(
           "MIXING PARAMETER",
-          "0.2",
-          Patterns::Double(0.0, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.2.");
+          "0.0",
+          Patterns::Double(-1e-12, 1.0),
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRJI.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",
@@ -743,12 +743,8 @@ namespace dftfe
             "STARTING NORM LARGE DAMPING",
             "2.0",
             Patterns::Double(0.0, 10.0),
-            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to 0.1.");
+            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::MIXING PARAMETER, otherwise set to 0.1.");
 
-          prm.declare_entry("MIXING PARAMETER",
-                            "0.5",
-                            Patterns::Double(0.0, 1.0),
-                            "[Standard] Mixing parameter.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL",
@@ -1205,7 +1201,6 @@ namespace dftfe
 
     /** parameters for LRJI preconditioner **/
     startingNormLRJILargeDamping  = 2.0;
-    mixingParameterLRJI           = 0.5;
     adaptiveRankRelTolLRJI        = 0.3;
     std::string methodSubTypeLRJI = "";
     factorAdapAccumClearLRJI      = 2.0;
@@ -1410,8 +1405,7 @@ namespace dftfe
 
       prm.enter_subsection("LOW RANK JACINV PRECOND");
       {
-        mixingParameterLRJI = prm.get_double("MIXING PARAMETER");
-        methodSubTypeLRJI   = prm.get("METHOD SUB TYPE");
+        methodSubTypeLRJI = prm.get("METHOD SUB TYPE");
         startingNormLRJILargeDamping =
           prm.get_double("STARTING NORM LARGE DAMPING");
         adaptiveRankRelTolLRJI = prm.get_double("ADAPTIVE RANK REL TOL");
@@ -1837,6 +1831,16 @@ namespace dftfe
           chebyshevTolerance = 1.0e-2;
         else
           chebyshevTolerance = 5.0e-2;
+      }
+
+    if (std::fabs(mixingParameter - 0.0) < 1.0e-12)
+      {
+        if (mixingMethod == "LOW_RANK_JACINV_PRECOND")
+          mixingParameter = 0.5;
+        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+          mixingParameter = 0.5;
+        else
+          mixingParameter = 0.2;
       }
   }
 

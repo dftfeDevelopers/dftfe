@@ -472,7 +472,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   double const2 =
     (normValue > d_dftParamsPtr->startingNormLRJILargeDamping || scfIter < 2) ?
       -0.1 :
-      -d_dftParamsPtr->mixingParameterLRJI;
+      -d_dftParamsPtr->mixingParameter;
 
   pcout << " Preconditioned mixing step, mixing constant: " << const2
         << std::endl;
