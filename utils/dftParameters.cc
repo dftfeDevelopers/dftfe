@@ -817,9 +817,9 @@ namespace dftfe
 
           prm.declare_entry(
             "CHEBYSHEV FILTER TOLERANCE",
-            "5e-02",
-            Patterns::Double(1e-10),
-            "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Please note that Kerker and LRJI preconditioners require tighter FILTER TOLERANCE between 2e-3 to 1e-2.");
+            "0.0",
+            Patterns::Double(-1.0e-12),
+            "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. For default value of 0.0, we heuristically set the value between 1e-3 and 5e-2 depending on the MIXING METHOD used.");
 
           prm.declare_entry(
             "ENABLE HAMILTONIAN TIMES VECTOR OPTIM",
@@ -1408,6 +1408,22 @@ namespace dftfe
       startingWFCType               = prm.get("STARTING WFC");
       computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
+      prm.enter_subsection("LOW RANK JACINV PRECOND");
+      {
+        mixingParameterLRJI = prm.get_double("MIXING PARAMETER");
+        methodSubTypeLRJI   = prm.get("METHOD SUB TYPE");
+        startingNormLRJILargeDamping =
+          prm.get_double("STARTING NORM LARGE DAMPING");
+        adaptiveRankRelTolLRJI = prm.get_double("ADAPTIVE RANK REL TOL");
+        factorAdapAccumClearLRJI =
+          prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
+        absPoissonSolverToleranceLRJI =
+          prm.get_double("POISSON SOLVER ABS TOL");
+        singlePrecLRJI = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
+        estimateJacCondNoFinalSCFIter =
+          prm.get_bool("ESTIMATE JAC CONDITION NO");
+      }
+      prm.leave_subsection();
 
       prm.enter_subsection("Eigen-solver parameters");
       {
@@ -1450,21 +1466,6 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-
-    prm.enter_subsection("LOW RANK JACINV PRECOND");
-    {
-      mixingParameterLRJI = prm.get_double("MIXING PARAMETER");
-      methodSubTypeLRJI   = prm.get("METHOD SUB TYPE");
-      startingNormLRJILargeDamping =
-        prm.get_double("STARTING NORM LARGE DAMPING");
-      adaptiveRankRelTolLRJI = prm.get_double("ADAPTIVE RANK REL TOL");
-      factorAdapAccumClearLRJI =
-        prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
-      absPoissonSolverToleranceLRJI = prm.get_double("POISSON SOLVER ABS TOL");
-      singlePrecLRJI = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
-      estimateJacCondNoFinalSCFIter = prm.get_bool("ESTIMATE JAC CONDITION NO");
-    }
-    prm.leave_subsection();
 
     prm.enter_subsection("Poisson problem parameters");
     {
@@ -1631,6 +1632,12 @@ namespace dftfe
         std::cout
           << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
           << std::endl;
+
+    if (spinPolarized == 1 && mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      AssertThrow(
+        !constraintMagnetization,
+        ExcMessage(
+          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRJI Preconditioner is not yet supported."));
 
     AssertThrow(
       natoms != 0,
@@ -1821,6 +1828,16 @@ namespace dftfe
 
     if (verbosity >= 5)
       computeEnergyEverySCF = true;
+
+    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
+      {
+        if (mixingMethod == "LOW_RANK_JACINV_PRECOND")
+          chebyshevTolerance = 2.0e-3;
+        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+          chebyshevTolerance = 1.0e-2;
+        else
+          chebyshevTolerance = 5.0e-2;
+      }
   }
 
   void

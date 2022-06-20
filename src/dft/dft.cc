@@ -499,14 +499,24 @@ namespace dftfe
               << std::endl;
           }
         d_numEigenValues =
-          (numElectrons / 2.0) + std::max(0.2 * (numElectrons / 2.0), 20.0);
+          (numElectrons / 2.0) +
+          std::max((d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND" ?
+                      0.22 :
+                      0.2) *
+                     (numElectrons / 2.0),
+                   20.0);
 
-        // start with 17% buffer to leave room for additional modifications due
-        // to block size restrictions
+        // start with 17-20% buffer to leave room for additional modifications
+        // due to block size restrictions
 #ifdef DFTFE_WITH_GPU
         if (d_dftParamsPtr->useGPU && d_dftParamsPtr->autoGPUBlockSizes)
           d_numEigenValues =
-            (numElectrons / 2.0) + std::max(0.17 * (numElectrons / 2.0), 20.0);
+            (numElectrons / 2.0) + std::max((d_dftParamsPtr->mixingMethod ==
+                                                 "LOW_RANK_JACINV_PRECOND" ?
+                                               0.2 :
+                                               0.17) *
+                                              (numElectrons / 2.0),
+                                            20.0);
 #endif
 
         if (d_dftParamsPtr->verbosity >= 1)
