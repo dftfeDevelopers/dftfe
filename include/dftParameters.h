@@ -64,7 +64,7 @@ namespace dftfe
     bool        estimateJacCondNoFinalSCFIter;
 
     /**********************************************/
- 
+
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
       ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
@@ -77,9 +77,9 @@ namespace dftfe
     std::string mixingMethod, ionOptSolver;
 
 
-    bool   isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
-    bool   nonSelfConsistentForce, meshAdaption;
-    double forceRelaxTol, stressRelaxTol, toleranceKinetic;
+    bool         isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
+    bool         nonSelfConsistentForce, meshAdaption;
+    double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
     unsigned int cellConstraintType;
 
     int          verbosity;

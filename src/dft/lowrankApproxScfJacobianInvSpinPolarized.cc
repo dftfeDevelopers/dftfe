@@ -229,8 +229,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  const unsigned int maxRankCurrentSCF = d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE"?15:20;
-  const unsigned int maxRankAccum      = 20;
+  const unsigned int maxRankCurrentSCF =
+    d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
+  const unsigned int maxRankAccum = 20;
 
   if (d_rankCurrentLRJI >= 1 &&
       d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
@@ -273,9 +274,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-  while (((rankAddedInThisScf < maxRankThisScf) && d_rankCurrentLRJI < maxRankAccum)
-         || ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
-              (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
+  while (((rankAddedInThisScf < maxRankThisScf) &&
+          d_rankCurrentLRJI < maxRankAccum) ||
+         ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
+          (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
     {
       if (rankAddedInThisScf == 0)
         {
@@ -296,10 +298,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
       compvecSpin1 = 0;
       for (int jrank = 0; jrank < d_rankCurrentLRJI; jrank++)
         {
-          const double tTvj =
-            d_vSpin0containerVals[d_rankCurrentLRJI] *
-              d_vSpin0containerVals[jrank] +
-            d_vSpin1containerVals[d_rankCurrentLRJI] * d_vSpin1containerVals[jrank];
+          const double tTvj = d_vSpin0containerVals[d_rankCurrentLRJI] *
+                                d_vSpin0containerVals[jrank] +
+                              d_vSpin1containerVals[d_rankCurrentLRJI] *
+                                d_vSpin1containerVals[jrank];
           compvecSpin0.add(tTvj, d_vSpin0containerVals[jrank]);
           compvecSpin1.add(tTvj, d_vSpin1containerVals[jrank]);
         }
@@ -343,8 +345,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
         pcout << "Integral V and contraction over spin before scaling:  "
               << charge << std::endl;
 
-      d_vSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
-      d_vSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
+      d_vSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
+                                                   2.0);
+      d_vSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
+                                                   2.0);
 
       // d_constraintsRhoNodal.set_zero(d_vSpin0containerVals[d_rankCurrentLRJI]);
       // d_constraintsRhoNodal.set_zero(d_vSpin1containerVals[d_rankCurrentLRJI]);
@@ -384,8 +388,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
         pcout << "Integral fV and contraction over spin before scaling:  "
               << charge << std::endl;
 
-      d_fvSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
-      d_fvSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume / 2.0);
+      d_fvSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
+                                                    2.0);
+      d_fvSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
+                                                    2.0);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)

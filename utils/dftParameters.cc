@@ -750,10 +750,11 @@ namespace dftfe
                             Patterns::Double(0.0, 1.0),
                             "[Standard] Mixing parameter.");
 
-          prm.declare_entry("ADAPTIVE RANK REL TOL",
-                            "0.3",
-                            Patterns::Double(0.0, 1.0),
-                            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL",
+            "0.3",
+            Patterns::Double(0.0, 1.0),
+            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
@@ -1031,7 +1032,6 @@ namespace dftfe
                           "2592000.0",
                           Patterns::Double(0.0),
                           "[Standard] Maximum Wall Time in seconds");
-
       }
       prm.leave_subsection();
     }
@@ -1059,16 +1059,16 @@ namespace dftfe
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
 
-    radiusAtomBall                      = 0.0;
-    mixingParameter                     = 0.5;
-    absLinearSolverTolerance            = 1e-10;
-    selfConsistentSolverTolerance       = 1e-10;
-    TVal                                = 500;
-    start_magnetization                 = 0.0;
-    absLinearSolverToleranceHelmholtz   = 1e-10;
-    chebyshevTolerance                  = 1e-02;
-    mixingMethod                        = "";
-    ionOptSolver                        = "";
+    radiusAtomBall                    = 0.0;
+    mixingParameter                   = 0.5;
+    absLinearSolverTolerance          = 1e-10;
+    selfConsistentSolverTolerance     = 1e-10;
+    TVal                              = 500;
+    start_magnetization               = 0.0;
+    absLinearSolverToleranceHelmholtz = 1e-10;
+    chebyshevTolerance                = 1e-02;
+    mixingMethod                      = "";
+    ionOptSolver                      = "";
 
     isPseudopotential           = false;
     periodicX                   = false;
@@ -1451,26 +1451,21 @@ namespace dftfe
     prm.leave_subsection();
 
 
-        prm.enter_subsection("LOW RANK JACINV PRECOND");
-        {
-          mixingParameterLRJI =
-            prm.get_double("MIXING PARAMETER");
-          methodSubTypeLRJI = prm.get("METHOD SUB TYPE");
-          startingNormLRJILargeDamping =
-            prm.get_double("STARTING NORM LARGE DAMPING");
-          adaptiveRankRelTolLRJI =
-            prm.get_double("ADAPTIVE RANK REL TOL");
-          factorAdapAccumClearLRJI =
-            prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
-          absPoissonSolverToleranceLRJI =
-            prm.get_double("POISSON SOLVER ABS TOL");
-          singlePrecLRJI =
-            prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
-          estimateJacCondNoFinalSCFIter =
-            prm.get_bool("ESTIMATE JAC CONDITION NO");
-        }
-        prm.leave_subsection();
-    
+    prm.enter_subsection("LOW RANK JACINV PRECOND");
+    {
+      mixingParameterLRJI = prm.get_double("MIXING PARAMETER");
+      methodSubTypeLRJI   = prm.get("METHOD SUB TYPE");
+      startingNormLRJILargeDamping =
+        prm.get_double("STARTING NORM LARGE DAMPING");
+      adaptiveRankRelTolLRJI = prm.get_double("ADAPTIVE RANK REL TOL");
+      factorAdapAccumClearLRJI =
+        prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
+      absPoissonSolverToleranceLRJI = prm.get_double("POISSON SOLVER ABS TOL");
+      singlePrecLRJI = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
+      estimateJacCondNoFinalSCFIter = prm.get_bool("ESTIMATE JAC CONDITION NO");
+    }
+    prm.leave_subsection();
+
     prm.enter_subsection("Poisson problem parameters");
     {
       maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
@@ -1493,12 +1488,12 @@ namespace dftfe
       reuseDensityMD              = prm.get_integer("EXTRAPOLATE DENSITY");
       isBOMD                      = prm.get_bool("BOMD");
       maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
-      timeStepBOMD               = prm.get_double("TIME STEP");
-      numberStepsBOMD            = prm.get_integer("NUMBER OF STEPS");
-      MDTrack                    = prm.get_integer("TRACKING ATOMIC NO");
-      startingTempBOMD           = prm.get_double("STARTING TEMPERATURE");
-      thermostatTimeConstantBOMD = prm.get_double("THERMOSTAT TIME CONSTANT");
-      MaxWallTime                = prm.get_double("MAX WALL TIME");
+      timeStepBOMD                = prm.get_double("TIME STEP");
+      numberStepsBOMD             = prm.get_integer("NUMBER OF STEPS");
+      MDTrack                     = prm.get_integer("TRACKING ATOMIC NO");
+      startingTempBOMD            = prm.get_double("STARTING TEMPERATURE");
+      thermostatTimeConstantBOMD  = prm.get_double("THERMOSTAT TIME CONSTANT");
+      MaxWallTime                 = prm.get_double("MAX WALL TIME");
 
 
 

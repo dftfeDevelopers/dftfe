@@ -100,7 +100,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
 {
   if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
       d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
-    {  
+    {
 #ifdef DFTFE_WITH_GPU
       computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
                              kohnShamDFTEigenOperatorCPU,
@@ -217,34 +217,34 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           isConsiderSpectrumSplitting &&
             d_numEigenValues != d_numEigenValuesRR);
 #endif
-    if (!d_dftParamsPtr->useGPU)        
-      computeRhoFromPSICPU(
-        d_eigenVectorsFlattenedSTL,
-        d_eigenVectorsRotFracDensityFlattenedSTL,
-        d_numEigenValues,
-        d_numEigenValuesRR,
-        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-        eigenValues,
-        fermiEnergy,
-        fermiEnergyUp,
-        fermiEnergyDown,
-        kohnShamDFTEigenOperatorCPU,
-        dofHandler,
-        matrix_free_data.n_physical_cells(),
-        matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
-        matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
-        d_kPointWeights,
-        rhoOutValues,
-        gradRhoOutValues,
-        rhoOutValuesSpinPolarized,
-        gradRhoOutValuesSpinPolarized,
-        d_dftParamsPtr->xcFamilyType == "GGA",
-        d_mpiCommParent,
-        interpoolcomm,
-        interBandGroupComm,
-        *d_dftParamsPtr,
-        isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
-        false);
+      if (!d_dftParamsPtr->useGPU)
+        computeRhoFromPSICPU(
+          d_eigenVectorsFlattenedSTL,
+          d_eigenVectorsRotFracDensityFlattenedSTL,
+          d_numEigenValues,
+          d_numEigenValuesRR,
+          d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+          eigenValues,
+          fermiEnergy,
+          fermiEnergyUp,
+          fermiEnergyDown,
+          kohnShamDFTEigenOperatorCPU,
+          dofHandler,
+          matrix_free_data.n_physical_cells(),
+          matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+          matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
+          d_kPointWeights,
+          rhoOutValues,
+          gradRhoOutValues,
+          rhoOutValuesSpinPolarized,
+          gradRhoOutValuesSpinPolarized,
+          d_dftParamsPtr->xcFamilyType == "GGA",
+          d_mpiCommParent,
+          interpoolcomm,
+          interBandGroupComm,
+          *d_dftParamsPtr,
+          isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
+          false);
       // normalizeRhoOutQuadValues();
 
       if (isGroundState)
@@ -289,7 +289,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
     {
       if (d_dftParamsPtr->mixingMethod != "ANDERSON_WITH_KERKER" &&
           d_dftParamsPtr->mixingMethod != "LOW_RANK_JACINV_PRECOND")
-        {      
+        {
           std::function<double(
             const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
             const unsigned int                                          q)>

@@ -322,8 +322,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  const unsigned int maxRankCurrentSCF = d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE"?15:20;
-  const unsigned int maxRankAccum      = 20;
+  const unsigned int maxRankCurrentSCF =
+    d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
+  const unsigned int maxRankAccum = 20;
 
   if (d_rankCurrentLRJI >= 1 &&
       d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
@@ -360,9 +361,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-  while (((rankAddedInThisScf < maxRankThisScf) && d_rankCurrentLRJI < maxRankAccum)
-         || ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
-              (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
+  while (((rankAddedInThisScf < maxRankThisScf) &&
+          d_rankCurrentLRJI < maxRankAccum) ||
+         ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
+          (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
     {
       if (rankAddedInThisScf == 0)
         {
@@ -393,8 +395,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
       d_fvcontainerVals[d_rankCurrentLRJI] = 0;
 
       d_vcontainerVals[d_rankCurrentLRJI].update_ghost_values();
-      charge =
-        totalCharge(d_matrixFreeDataPRefined, d_vcontainerVals[d_rankCurrentLRJI]);
+      charge = totalCharge(d_matrixFreeDataPRefined,
+                           d_vcontainerVals[d_rankCurrentLRJI]);
 
 
       if (d_dftParamsPtr->verbosity >= 4)
@@ -403,8 +405,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
       d_vcontainerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume);
 
       d_vcontainerVals[d_rankCurrentLRJI].update_ghost_values();
-      charge =
-        totalCharge(d_matrixFreeDataPRefined, d_vcontainerVals[d_rankCurrentLRJI]);
+      charge = totalCharge(d_matrixFreeDataPRefined,
+                           d_vcontainerVals[d_rankCurrentLRJI]);
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral v after scaling:  " << charge << std::endl;
@@ -418,8 +420,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
         dummy);
 
       d_fvcontainerVals[d_rankCurrentLRJI].update_ghost_values();
-      charge =
-        totalCharge(d_matrixFreeDataPRefined, d_fvcontainerVals[d_rankCurrentLRJI]);
+      charge = totalCharge(d_matrixFreeDataPRefined,
+                           d_fvcontainerVals[d_rankCurrentLRJI]);
 
 
       if (d_dftParamsPtr->verbosity >= 4)
@@ -428,8 +430,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
       d_fvcontainerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume);
 
       d_fvcontainerVals[d_rankCurrentLRJI].update_ghost_values();
-      charge =
-        totalCharge(d_matrixFreeDataPRefined, d_fvcontainerVals[d_rankCurrentLRJI]);
+      charge = totalCharge(d_matrixFreeDataPRefined,
+                           d_fvcontainerVals[d_rankCurrentLRJI]);
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral fv after scaling:  " << charge << std::endl;
 
@@ -439,7 +441,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
           << d_fvcontainerVals[d_rankCurrentLRJI].l2_norm()
           << " for kernel rank: " << d_rankCurrentLRJI + 1 << std::endl;
 
-      d_fvcontainerVals[d_rankCurrentLRJI] -= d_vcontainerVals[d_rankCurrentLRJI];
+      d_fvcontainerVals[d_rankCurrentLRJI] -=
+        d_vcontainerVals[d_rankCurrentLRJI];
       d_fvcontainerVals[d_rankCurrentLRJI] *= k0;
       d_rankCurrentLRJI++;
       rankAddedInThisScf++;

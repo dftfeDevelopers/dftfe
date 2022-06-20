@@ -1233,8 +1233,7 @@ namespace dftfe
                     projHamPrimePar.local_m() * projHamPrimePar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParams.singlePrecLRJI &&
-          dftParams.overlapComputeCommunOrthoRR)
+      if (dftParams.singlePrecLRJI && dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
           X,
           Xb,

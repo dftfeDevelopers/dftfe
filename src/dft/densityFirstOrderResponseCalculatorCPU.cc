@@ -99,11 +99,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters & dftParams)
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -120,8 +120,8 @@ namespace dftfe
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int BVec = std::min(dftParams.chebyWfcBlockSize,
-                                       bandGroupLowHighPlusOneIndices[1]);
+    const unsigned int BVec =
+      std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
@@ -189,8 +189,7 @@ namespace dftfe
     std::vector<double> rhoResponseFermiEnergySpinPolarized(
       totalLocallyOwnedCells * numQuadPoints * 2, 0.0);
 
-    for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParams.spinPolarized);
+    for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         std::vector<double> rhoResponseContributionHam(totalLocallyOwnedCells *
@@ -208,8 +207,7 @@ namespace dftfe
               XPrime[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             const std::vector<double> &densityMatDerFermiEnergyVec =
-              densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) *
-                                         kPoint +
+              densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) * kPoint +
                                        spinIndex];
 
             for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
@@ -490,11 +488,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters & dftParams)
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -511,8 +509,8 @@ namespace dftfe
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int BVec = std::min(dftParams.chebyWfcBlockSize,
-                                       bandGroupLowHighPlusOneIndices[1]);
+    const unsigned int BVec =
+      std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
@@ -585,8 +583,7 @@ namespace dftfe
     const std::vector<dealii::types::global_dof_index> &indexMap =
       operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap();
 
-    for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParams.spinPolarized);
+    for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         std::vector<double> rhoResponseContributionHam(totalLocallyOwnedCells *
@@ -604,8 +601,7 @@ namespace dftfe
               XPrime[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
 
             const std::vector<double> &densityMatDerFermiEnergyVec =
-              densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) *
-                                         kPoint +
+              densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) * kPoint +
                                        spinIndex];
 
             for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
@@ -887,11 +883,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters & dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 
   template void
   computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
@@ -913,10 +909,10 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters & dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 
 } // namespace dftfe

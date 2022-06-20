@@ -3042,7 +3042,7 @@ namespace dftfe
       const double               fermiEnergy,
       std::vector<double> &      densityMatDerFermiEnergy,
       dftfe::elpaScalaManager &  elpaScala,
-      const dftParameters &       dftParams)
+      const dftParameters &      dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -3346,14 +3346,14 @@ namespace dftfe
       operatorDFTClass &              operatorMatrix,
       std::vector<dataTypes::number> &X,
       const unsigned int              N,
-      const MPI_Comm &                mpiCommParent,      
+      const MPI_Comm &                mpiCommParent,
       const MPI_Comm &                mpiCommDomain,
       const MPI_Comm &                interBandGroupComm,
       const std::vector<double> &     eigenValues,
       const double                    fermiEnergy,
       std::vector<double> &           densityMatDerFermiEnergy,
       elpaScalaManager &              elpaScala,
-      const dftParameters &       dftParams);
+      const dftParameters &           dftParams);
 
   } // namespace linearAlgebraOperations
 

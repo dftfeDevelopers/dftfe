@@ -1350,7 +1350,7 @@ namespace dftfe
     std::deque<distributedCPUVec<double>> d_vSpin1containerVals;
     std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
     unsigned int                          d_rankCurrentLRJI;
-    double                                d_relativeErrorJacInvApproxPrevScfLRJI;
+    double d_relativeErrorJacInvApproxPrevScfLRJI;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
@@ -1674,9 +1674,9 @@ namespace dftfe
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
       const unsigned int   numberRayleighRitzAvoidancePasses = 0,
-      const bool           isSpectrumSplit                         = false,
-      const bool           useMixedPrec                            = false,
-      const bool           isFirstScf                              = false);
+      const bool           isSpectrumSplit                   = false,
+      const bool           useMixedPrec                      = false,
+      const bool           isFirstScf                        = false);
 #endif
 
 

@@ -168,14 +168,14 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     }
 #endif
 
-   if (!d_dftParamsPtr->useGPU &&
+  if (!d_dftParamsPtr->useGPU &&
       d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
     {
       d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
     }
 
   if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
-      pcout << std::endl
-            << "net magnetization: "
-            << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;
+    pcout << std::endl
+          << "net magnetization: "
+          << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;
 }

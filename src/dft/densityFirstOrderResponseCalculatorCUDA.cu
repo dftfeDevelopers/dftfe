@@ -324,11 +324,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &mpiCommParent,      
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters & dftParams)
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -439,8 +439,7 @@ namespace dftfe
                        numNodesPerElement * numQuadPoints,
                        shapeFunctionValuesInvertedDevice);
 
-    for (unsigned int spinIndex = 0;
-         spinIndex < (1 + dftParams.spinPolarized);
+    for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
@@ -471,17 +470,16 @@ namespace dftfe
                       densityMatDerFermiEnergyVecDevice.begin(),
                       densityMatDerFermiEnergyVecDevice.size());
 
-                    stridedCopyToBlockKernel<<<(BVec + 255) / 256 *
-                                                 numLocalDofs,
-                                               256>>>(
-                      BVec,
-                      X + numLocalDofs * totalNumWaveFunctions *
-                            ((dftParams.spinPolarized + 1) * kPoint +
-                             spinIndex),
-                      numLocalDofs,
-                      totalNumWaveFunctions,
-                      cudaFlattenedArrayXBlock.begin(),
-                      jvec);
+                    stridedCopyToBlockKernel<<<
+                      (BVec + 255) / 256 * numLocalDofs,
+                      256>>>(BVec,
+                             X + numLocalDofs * totalNumWaveFunctions *
+                                   ((dftParams.spinPolarized + 1) * kPoint +
+                                    spinIndex),
+                             numLocalDofs,
+                             totalNumWaveFunctions,
+                             cudaFlattenedArrayXBlock.begin(),
+                             jvec);
 
 
                     cudaFlattenedArrayXBlock.updateGhostValues();
@@ -493,9 +491,9 @@ namespace dftfe
                                                  numLocalDofs,
                                                256>>>(
                       BVec,
-                      XPrime + numLocalDofs * totalNumWaveFunctions *
-                                 ((dftParams.spinPolarized + 1) * kPoint +
-                                  spinIndex),
+                      XPrime +
+                        numLocalDofs * totalNumWaveFunctions *
+                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
                       numLocalDofs,
                       totalNumWaveFunctions,
                       cudaFlattenedArrayXPrimeBlock.begin(),
@@ -831,11 +829,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,  
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters &                          dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 
   template void
   computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
@@ -857,9 +855,9 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters &                          dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 } // namespace dftfe

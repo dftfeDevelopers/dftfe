@@ -748,10 +748,11 @@ namespace dftfe
                             Patterns::Double(0.0, 1.0),
                             "[Standard] Mixing parameter.");
 
-          prm.declare_entry("ADAPTIVE RANK REL TOL",
-                            "0.3",
-                            Patterns::Double(0.0, 1.0),
-                            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL",
+            "0.3",
+            Patterns::Double(0.0, 1.0),
+            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
@@ -1030,7 +1031,6 @@ namespace dftfe
                           "2592000.0",
                           Patterns::Double(0.0),
                           "[Standard] Maximum Wall Time in seconds");
-
       }
       prm.leave_subsection();
     }

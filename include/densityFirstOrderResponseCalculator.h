@@ -50,11 +50,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters &                          dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 
   template <typename NumberType, typename NumberTypeLowPrec>
   void
@@ -76,11 +76,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters &                          dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 
 
 #if defined(DFTFE_WITH_GPU)
@@ -104,11 +104,11 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       &rhoResponseValuesHamSpinPolarized,
     std::map<dealii::CellId, std::vector<double>>
-      &             rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &interpoolcomm,
-    const MPI_Comm &interBandGroupComm,
-    const dftParameters &                          dftParams);
+      &                  rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 #endif
 } // namespace dftfe
 #endif

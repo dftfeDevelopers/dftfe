@@ -54,7 +54,9 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 
   // set up linear solver
-  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
+  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                    mpi_communicator,
+                                    dealiiLinearSolver::CG);
 
   std::map<dealii::CellId, std::vector<double>> charge;
   std::map<dealii::CellId, std::vector<double>> dummy;

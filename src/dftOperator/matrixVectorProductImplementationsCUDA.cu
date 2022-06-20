@@ -87,7 +87,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
 
 
   if (!(dftPtr->d_dftParamsPtr->isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)  ||
+        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) ||
       onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
