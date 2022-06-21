@@ -386,6 +386,20 @@ namespace dftfe
             std::complex<double> *a,
             const unsigned int *  lda,
             int *                 info);
+
+    // LU decomoposition of a general matrix
+    void
+    dgetrf_(int *M, int *N, double *A, int *lda, int *IPIV, int *INFO);
+
+    // generate inverse of a matrix given its LU decomposition
+    void
+    dgetri_(int *   N,
+            double *A,
+            int *   lda,
+            int *   IPIV,
+            double *WORK,
+            int *   lwork,
+            int *   INFO);
   }
 #endif
 
@@ -507,6 +521,11 @@ namespace dftfe
    */
   namespace linearAlgebraOperations
   {
+    /** @brief Compute inverse of serial matrix using LAPACK LU factorization
+     */
+    void
+    inverse(double *A, int N);
+
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
      *  k-step Lanczos method.
      *
@@ -726,7 +745,7 @@ namespace dftfe
                                     const dftParameters & dftParams);
 
 
-    /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
+    /** @brief Compute residual norm associated with eigenValue problem of the given operator
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in]  X Given subspace as STL vector of dealii vectors
@@ -745,6 +764,25 @@ namespace dftfe
                              const MPI_Comm &           interBandGroupComm,
                              std::vector<double> &      residualNorm,
                              const dftParameters &      dftParams);
+
+    /** @brief Compute first order response in density matrix with respect to perturbation in the Hamiltonian.
+     * Perturbation is computed in the eigenbasis.
+     */
+    template <typename T>
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTClass &         operatorMatrix,
+      std::vector<T> &           X,
+      const unsigned int         N,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      elpaScalaManager &         elpaScala,
+      const dftParameters &      dftParams);
+
 
   } // namespace linearAlgebraOperations
 

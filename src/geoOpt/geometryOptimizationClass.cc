@@ -191,7 +191,7 @@ namespace dftfe
                                     d_mpiCommParent);
         if (d_cycle == 0 && !d_isRestart)
           {
-            d_dftPtr->solve(true, true, false, false);
+            d_dftPtr->solve(true, true, false);
           }
 
         if (d_status == 0)

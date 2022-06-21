@@ -1627,6 +1627,79 @@ namespace dftfe
     return ev;
   }
 
+  template <typename NumberType>
+  void
+  ScaLAPACKMatrix<NumberType>::scale_columns(
+    const std::vector<NumberType> &factors)
+  {
+    if (grid->mpi_process_is_active)
+      {
+        Assert(this->n() == factors.size(),
+               dealii::ExcDimensionMismatch(this->n(), factors.size()));
+
+        for (unsigned int i = 0; i < this->local_n(); ++i)
+          {
+            const NumberType s = factors[this->global_column(i)];
+            for (unsigned int j = 0; j < this->local_m(); ++j)
+              this->local_el(j, i) *= s;
+          }
+      }
+  }
+
+  template <typename NumberType>
+  void
+  ScaLAPACKMatrix<NumberType>::scale_rows(
+    const std::vector<NumberType> &factors)
+  {
+    if (grid->mpi_process_is_active)
+      {
+        Assert(this->m() == factors.size(),
+               dealii::ExcDimensionMismatch(this->m(), factors.size()));
+        for (unsigned int i = 0; i < this->local_m(); ++i)
+          {
+            const NumberType s = factors[this->global_row(i)];
+            for (unsigned int j = 0; j < this->local_n(); ++j)
+              this->local_el(i, j) *= s;
+          }
+      }
+  }
+
+  template <typename NumberType>
+  void
+  ScaLAPACKMatrix<NumberType>::scale_columns_realfactors(
+    const std::vector<double> &factors)
+  {
+    if (grid->mpi_process_is_active)
+      {
+        Assert(this->n() == factors.size(),
+               dealii::ExcDimensionMismatch(this->n(), factors.size()));
+
+        for (unsigned int i = 0; i < this->local_n(); ++i)
+          {
+            const NumberType s = NumberType(factors[this->global_column(i)]);
+            for (unsigned int j = 0; j < this->local_m(); ++j)
+              this->local_el(j, i) *= s;
+          }
+      }
+  }
+
+  template <typename NumberType>
+  void
+  ScaLAPACKMatrix<NumberType>::scale_rows_realfactors(
+    const std::vector<double> &factors)
+  {
+    if (grid->mpi_process_is_active)
+      {
+        Assert(this->m() == factors.size(),
+               dealii::ExcDimensionMismatch(this->m(), factors.size()));
+        for (unsigned int i = 0; i < this->local_m(); ++i)
+          {
+            const NumberType s = NumberType(factors[this->global_row(i)]);
+            for (unsigned int j = 0; j < this->local_n(); ++j)
+              this->local_el(i, j) *= s;
+          }
+      }
+  }
 
   template class ScaLAPACKMatrix<double>;
   template class ScaLAPACKMatrix<std::complex<double>>;

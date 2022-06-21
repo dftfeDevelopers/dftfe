@@ -50,6 +50,20 @@ namespace dftfe
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
       writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
+
+
+    /** parameters for LRJI preconditioner **/
+
+    double      startingNormLRJILargeDamping;
+    std::string methodSubTypeLRJI;
+    double      adaptiveRankRelTolLRJI;
+    double      factorAdapAccumClearLRJI;
+    double      absPoissonSolverToleranceLRJI;
+    bool        singlePrecLRJI;
+    bool        estimateJacCondNoFinalSCFIter;
+
+    /**********************************************/
+
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
       ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
@@ -62,9 +76,9 @@ namespace dftfe
     std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
 
-    bool   isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD, isXLBOMD;
-    bool   nonSelfConsistentForce, meshAdaption;
-    double forceRelaxTol, stressRelaxTol, toleranceKinetic;
+    bool         isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
+    bool         nonSelfConsistentForce, meshAdaption;
+    double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
     unsigned int cellConstraintType;
 
     int          verbosity;
@@ -112,8 +126,6 @@ namespace dftfe
     bool         autoGPUBlockSizes;
     bool         readWfcForPdosPspFile;
     double       maxJacobianRatioFactorForMD;
-    double       chebyshevFilterTolXLBOMD;
-    double       chebyshevFilterTolXLBOMDRankUpdates;
     double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
     int          reuseDensityMD;
     double       timeStepBOMD;
@@ -124,11 +136,7 @@ namespace dftfe
     double       gaussianOrderMoveMeshToAtoms;
     bool         useFlatTopGenerator;
     double       diracDeltaKernelScalingConstant;
-    unsigned int kernelUpdateRankXLBOMD;
-    unsigned int kmaxXLBOMD;
-    bool         useAtomicRhoXLBOMD;
     bool         useMeshSizesFromAtomsFile;
-    unsigned int numberPassesRRSkippedXLBOMD;
     double       xlbomdRestartChebyTol;
     bool         useDensityMatrixPerturbationRankUpdates;
     double       xlbomdKernelRankUpdateFDParameter;
