@@ -86,10 +86,6 @@ namespace dftfe
   class symmetryClass;
   template <unsigned int T1, unsigned int T2>
   class forceClass;
-  template <unsigned int T1, unsigned int T2>
-  class geoOptIon;
-  template <unsigned int T1, unsigned int T2>
-  class geoOptCell;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -110,10 +106,6 @@ namespace dftfe
 #endif
 
     friend class forceClass<FEOrder, FEOrderElectro>;
-
-    friend class geoOptIon<FEOrder, FEOrderElectro>;
-
-    friend class geoOptCell<FEOrder, FEOrderElectro>;
 
     friend class symmetryClass<FEOrder, FEOrderElectro>;
 
@@ -191,6 +183,9 @@ namespace dftfe
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
           const bool restartGroundStateCalcFromChk = false);
+
+    void
+    trivialSolveForStress();
 
 
     void
@@ -350,6 +345,13 @@ namespace dftfe
      */
     std::vector<std::vector<double>>
     getCell() const;
+
+    /**
+     * @brief Gets the current cell volume
+     *
+     */
+    double
+    getCellVolume() const;
 
     /**
      * @brief Gets the current atom types from dftClass
@@ -991,8 +993,7 @@ namespace dftfe
 
     /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
-      d_reciprocalLatticeVectors, d_domainBoundingVectors,
-      d_atomLocationsInitial;
+      d_reciprocalLatticeVectors, d_domainBoundingVectors;
     std::vector<std::vector<double>> d_atomLocationsAutoMesh;
     std::vector<std::vector<double>> d_imagePositionsAutoMesh;
 
@@ -1203,8 +1204,6 @@ namespace dftfe
 
     forceClass<FEOrder, FEOrderElectro> *   forcePtr;
     symmetryClass<FEOrder, FEOrderElectro> *symmetryPtr;
-    geoOptIon<FEOrder, FEOrderElectro> *    geoOptIonPtr;
-    geoOptCell<FEOrder, FEOrderElectro> *   geoOptCellPtr;
 
     elpaScalaManager *d_elpaScala;
 

@@ -18,111 +18,122 @@
 //
 
 #include <cgPRPNonLinearSolver.h>
+#include <BFGSNonLinearSolver.h>
+#include <LBFGSNonLinearSolver.h>
 #include <dft.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <force.h>
 #include <geoOptCell.h>
-#include <geoOptIon.h>
+#include <sys/stat.h>
 
 namespace dftfe
 {
   //
   // constructor
   //
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  geoOptCell<FEOrder, FEOrderElectro>::geoOptCell(
-    dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_parent)
-    : dftPtr(_dftPtr)
+
+  geoOptCell::geoOptCell(dftBase *       dftPtr,
+                         const MPI_Comm &mpi_comm_parent,
+                         const bool      restart)
+    : d_dftPtr(dftPtr)
     , mpi_communicator(mpi_comm_parent)
     , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
-             !_dftPtr->getParametersObject().reproducible_output))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_isRestart(restart)
   {}
 
   //
   //
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::init()
+  geoOptCell::init(const std::string &restartPath)
   {
+    d_restartPath   = restartPath + "/cellRelax";
+    d_solverRestart = d_isRestart;
+    if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+      d_solver = 0;
+    else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+      d_solver = 1;
+    else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+      d_solver = 2;
     // initialize d_strainEpsilon to identity
     d_strainEpsilon = 0;
     for (unsigned int i = 0; i < 3; ++i)
       d_strainEpsilon[i][i] = 1.0;
 
+    d_domainVolumeInitial = d_dftPtr->getCellVolume();
+
     // strain tensor is a symmetric second order with six independent components
     d_relaxationFlags.clear();
     d_relaxationFlags.resize(6, 0);
 
-    if (dftPtr->getParametersObject().cellConstraintType ==
+    if (d_dftPtr->getParametersObject().cellConstraintType ==
         1) //(isotropic shape fixed isotropic volume optimization)
       {
         d_relaxationFlags[0] = 1; //(epsilon_11+epsilon22+epsilon_33)/3
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              2) //(volume fixed shape optimization)
       {
         d_relaxationFlags[1] = 1; // epsilon_12
         d_relaxationFlags[2] = 1; // epsilon_13
         d_relaxationFlags[4] = 1; // epsilon_23
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              3) // (relax only cell component v1_x)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              4) // (relax only cell component v2_y)
       {
         d_relaxationFlags[3] = 1; // epsilon_22
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              5) // (relax only cell component v3_z)
       {
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              6) // (relax only cell components v2_y and v3_z)
       {
         d_relaxationFlags[3] = 1; // epsilon_22
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              7) // (relax only cell components v1_x and v3_z)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              8) // (relax only cell components v1_x and v2_y)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[3] = 1; // epsilon_22
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              9) //(relax v1_x, v2_y and v3_z)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[3] = 1; // epsilon_22
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              10) //(2D only x and y components relaxed)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[1] = 1; // epsilon_12
         d_relaxationFlags[3] = 1; // epsilon_22
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              11) //(2D only x and y shape components- inplane area fixed)
       {
         d_relaxationFlags[1] = 1; // epsilon_12
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              12) // (all cell components relaxed)
       {
         // all six epsilon components
@@ -133,7 +144,7 @@ namespace dftfe
         d_relaxationFlags[4] = 1;
         d_relaxationFlags[5] = 1;
       }
-    else if (dftPtr->getParametersObject().cellConstraintType ==
+    else if (d_dftPtr->getParametersObject().cellConstraintType ==
              13) //(automatically decides constraints based on boundary
                  // conditions)
       {
@@ -144,21 +155,21 @@ namespace dftfe
         d_relaxationFlags[4] = 1;
         d_relaxationFlags[5] = 1;
 
-        if (!dftPtr->getParametersObject().periodicX)
+        if (!d_dftPtr->getParametersObject().periodicX)
           {
             d_relaxationFlags[0] = 0; // epsilon_11
             d_relaxationFlags[1] = 0; // epsilon_12
             d_relaxationFlags[2] = 0; // epsilon_13
           }
 
-        if (!dftPtr->getParametersObject().periodicY)
+        if (!d_dftPtr->getParametersObject().periodicY)
           {
             d_relaxationFlags[1] = 0; // epsilon_12
             d_relaxationFlags[3] = 0; // epsilon_22
             d_relaxationFlags[4] = 0; // epsilon_23
           }
 
-        if (!dftPtr->getParametersObject().periodicZ)
+        if (!d_dftPtr->getParametersObject().periodicZ)
           {
             d_relaxationFlags[2] = 0; // epsilon_13
             d_relaxationFlags[4] = 0; // epsilon_23
@@ -172,8 +183,74 @@ namespace dftfe
           ExcMessage(
             "The given value for CELL CONSTRAINT TYPE doesn't match with any available options (1-13)."));
       }
+    if (d_isRestart)
+      {
+        std::vector<std::vector<double>> tmp, cellOptData;
+        dftUtils::readFile(1, cellOptData, d_restartPath + "/cellOpt.dat");
+        dftUtils::readFile(1, tmp, d_restartPath + "/step.chk");
+        int  solver             = cellOptData[0][0];
+        bool cellConstraintType = cellOptData[1][0];
+        d_totalUpdateCalls      = tmp[0][0];
+        if (solver != d_solver)
+          pcout
+            << "Solver has changed since last save, the newly set solver will start from scratch."
+            << std::endl;
+        if (cellConstraintType !=
+            d_dftPtr->getParametersObject().cellConstraintType)
+          pcout
+            << "Cell constraints have changed since last save, the solver will be reset to work with the new constraints."
+            << std::endl;
+        d_solverRestart =
+          (cellConstraintType ==
+           d_dftPtr->getParametersObject().cellConstraintType) &&
+          (solver == d_solver);
+        d_solverRestartPath =
+          d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
+      }
+    else
+      {
+        d_totalUpdateCalls = 0;
+        mkdir(d_restartPath.c_str(), ACCESSPERMS);
+        std::vector<std::vector<double>> cellOptData(2,
+                                                     std::vector<double>(1,
+                                                                         0.0));
+        cellOptData[0][0] = d_solver;
+        cellOptData[1][0] = d_dftPtr->getParametersObject().cellConstraintType;
 
-    if (dftPtr->getParametersObject().verbosity >= 2)
+        dftUtils::writeDataIntoFile(cellOptData,
+                                    d_restartPath + "/cellOpt.dat",
+                                    mpi_communicator);
+      }
+    if (d_solver == 0)
+      d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
+        d_dftPtr->getParametersObject().usePreconditioner,
+        d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
+        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().verbosity,
+        mpi_communicator,
+        d_dftPtr->getParametersObject().maxUpdateStep);
+    else if (d_solver == 1)
+      d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
+        d_dftPtr->getParametersObject().usePreconditioner,
+        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().maxUpdateStep,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().lbfgsNumPastSteps,
+        d_dftPtr->getParametersObject().verbosity,
+        mpi_communicator);
+    else
+      d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
+        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().verbosity,
+        mpi_communicator,
+        1e-4,
+        d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
+        0.8,
+        d_dftPtr->getParametersObject().maxUpdateStep);
+
+    if (d_dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << " --------------Cell relaxation flags----------------"
               << std::endl;
@@ -185,75 +262,130 @@ namespace dftfe
         pcout << " --------------------------------------------------"
               << std::endl;
       }
+    if (d_dftPtr->getParametersObject().verbosity >= 2)
+      {
+        if (d_solver == 0)
+          {
+            pcout << "   ---Non-linear BFGS Parameters-----------  "
+                  << std::endl;
+            pcout << "      stopping tol: "
+                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+
+            pcout << "      maxIter: "
+                  << d_dftPtr->getParametersObject().maxOptIter << std::endl;
+
+            pcout << "      preconditioner: "
+                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << std::endl;
+
+            pcout << "      step method: "
+                  << d_dftPtr->getParametersObject().bfgsStepMethod
+                  << std::endl;
+
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+
+
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+        if (d_solver == 1)
+          {
+            pcout << "   ---Non-linear LBFGS Parameters----------  "
+                  << std::endl;
+            pcout << "      stopping tol: "
+                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+            pcout << "      maxIter: "
+                  << d_dftPtr->getParametersObject().maxOptIter << std::endl;
+            pcout << "      preconditioner: "
+                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << std::endl;
+            pcout << "      lbfgs history: "
+                  << d_dftPtr->getParametersObject().lbfgsNumPastSteps
+                  << std::endl;
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+        if (d_solver == 2)
+          {
+            pcout << "   ---Non-linear CG Parameters--------------  "
+                  << std::endl;
+            pcout << "      stopping tol: "
+                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+            pcout << "      maxIter: "
+                  << d_dftPtr->getParametersObject().maxOptIter << std::endl;
+            pcout << "      lineSearch tol: " << 1e-4 << std::endl;
+            pcout << "      lineSearch maxIter: "
+                  << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
+                  << std::endl;
+            pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+      }
+    if (d_isRestart)
+      {
+        if (d_solver == 2)
+          {
+            pcout
+              << " Re starting Ion force relaxation using nonlinear CG solver... "
+              << std::endl;
+          }
+        else if (d_solver == 0)
+          {
+            pcout
+              << " Re starting Ion force relaxation using nonlinear BFGS solver... "
+              << std::endl;
+          }
+        else if (d_solver == 1)
+          {
+            pcout
+              << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
+              << std::endl;
+          }
+      }
+    else
+      {
+        if (d_solver == 2)
+          {
+            pcout
+              << " Starting Ion force relaxation using nonlinear CG solver... "
+              << std::endl;
+          }
+        else if (d_solver == 0)
+          {
+            pcout
+              << " Starting Ion force relaxation using nonlinear BFGS solver... "
+              << std::endl;
+          }
+        else if (d_solver == 1)
+          {
+            pcout
+              << " Starting Ion force relaxation using nonlinear LBFGS solver... "
+              << std::endl;
+          }
+      }
+    d_isRestart = false;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   int
-  geoOptCell<FEOrder, FEOrderElectro>::run()
+  geoOptCell::run()
   {
-    const double       tol     = dftPtr->getParametersObject().stressRelaxTol;
-    const unsigned int maxIter = 300;
-    const double       lineSearchTol =
-      tol * 2.0; // Dummy parameter for CGPRP, the actual stopping criteria are
-                 // the Wolfe conditions and maxLineSearchIter
-    const double       lineSearchDampingParameter = 0.5;
-    const double       maxUpdateInAnyComponent    = 0.2;
-    const unsigned int maxLineSearchIter =
-      dftPtr->getParametersObject().maxLineSearchIterCGPRP;
-    const unsigned int debugLevel =
-      Utilities::MPI::this_mpi_process(mpi_communicator) == 0 ?
-        dftPtr->getParametersObject().verbosity :
-        0;
-
-    d_totalUpdateCalls = 0;
-    cgPRPNonLinearSolver cgSolver(tol,
-                                  maxIter,
-                                  debugLevel,
-                                  mpi_communicator,
-                                  lineSearchTol,
-                                  maxLineSearchIter,
-                                  lineSearchDampingParameter,
-                                  maxUpdateInAnyComponent);
-
-    if (dftPtr->getParametersObject().chkType >= 1 &&
-        dftPtr->getParametersObject().restartFromChk)
-      pcout
-        << " Re starting Cell stress relaxation using nonlinear CG solver... "
-        << std::endl;
-    else
-      pcout << " Starting Cell stress relaxation using nonlinear CG solver... "
-            << std::endl;
-    if (dftPtr->getParametersObject().verbosity >= 2)
-      {
-        pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
-        pcout << "      stopping tol: " << tol << std::endl;
-        pcout << "      maxIter: " << maxIter << std::endl;
-        pcout << "      lineSearch tol: " << lineSearchTol << std::endl;
-        pcout << "      lineSearch maxIter: " << maxLineSearchIter << std::endl;
-        pcout << "      lineSearch damping parameter: "
-              << lineSearchDampingParameter << std::endl;
-        pcout << "   ------------------------------  " << std::endl;
-      }
-
     if (getNumberUnknowns() > 0)
       {
-        nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
+        nonLinearSolver::ReturnValueType solverReturn =
+          d_nonLinearSolverPtr->solve(*this,
+                                      d_solverRestartPath + "/cellRelax.chk",
+                                      d_solverRestart);
 
-        if (dftPtr->getParametersObject().chkType >= 1 &&
-            dftPtr->getParametersObject().restartFromChk)
-          cgReturn =
-            cgSolver.solve(*this, std::string("cellRelaxCG.chk"), true);
-        else if (dftPtr->getParametersObject().chkType >= 1 &&
-                 !dftPtr->getParametersObject().restartFromChk)
-          cgReturn = cgSolver.solve(*this, std::string("cellRelaxCG.chk"));
-        else
-          cgReturn = cgSolver.solve(*this);
-
-        if (cgReturn == nonLinearSolver::SUCCESS)
+        if (solverReturn == nonLinearSolver::SUCCESS)
           {
             pcout
               << " ...Cell stress relaxation completed as maximum stress magnitude is less than STRESS TOL: "
-              << dftPtr->getParametersObject().stressRelaxTol
+              << d_dftPtr->getParametersObject().stressRelaxTol
               << ", total number of cell geometry updates: "
               << d_totalUpdateCalls << std::endl;
 
@@ -266,29 +398,30 @@ namespace dftfe
             pcout
               << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
               << std::endl;
-            for (int i = 0; i < dftPtr->d_domainBoundingVectors.size(); ++i)
+            for (int i = 0; i < d_dftPtr->getCell().size(); ++i)
               {
-                pcout << "v" << i + 1 << " : "
-                      << dftPtr->d_domainBoundingVectors[i][0] << " "
-                      << dftPtr->d_domainBoundingVectors[i][1] << " "
-                      << dftPtr->d_domainBoundingVectors[i][2] << std::endl;
+                pcout << "v" << i + 1 << " : " << d_dftPtr->getCell()[i][0]
+                      << " " << d_dftPtr->getCell()[i][1] << " "
+                      << d_dftPtr->getCell()[i][2] << std::endl;
               }
             pcout
               << "-----------------------------------------------------------------------------------------"
               << std::endl;
 
-            if (dftPtr->getParametersObject().periodicX ||
-                dftPtr->getParametersObject().periodicY ||
-                dftPtr->getParametersObject().periodicZ)
+            if (d_dftPtr->getParametersObject().periodicX ||
+                d_dftPtr->getParametersObject().periodicY ||
+                d_dftPtr->getParametersObject().periodicZ)
               {
                 pcout
                   << "------------------Fractional coordinates of atoms--------------------"
                   << std::endl;
-                for (unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
+                for (unsigned int i = 0;
+                     i < d_dftPtr->getAtomLocationsCart().size();
+                     ++i)
                   pcout << "AtomId " << i << ":  "
-                        << dftPtr->atomLocationsFractional[i][2] << " "
-                        << dftPtr->atomLocationsFractional[i][3] << " "
-                        << dftPtr->atomLocationsFractional[i][4] << "\n";
+                        << d_dftPtr->getAtomLocationsFrac()[i][2] << " "
+                        << d_dftPtr->getAtomLocationsFrac()[i][3] << " "
+                        << d_dftPtr->getAtomLocationsFrac()[i][4] << "\n";
                 pcout
                   << "-----------------------------------------------------------------------------------------"
                   << std::endl;
@@ -301,12 +434,14 @@ namespace dftfe
                 pcout
                   << "------------Cartesian coordinates of atoms (origin at center of domain)------------------"
                   << std::endl;
-                for (unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
+                for (unsigned int i = 0;
+                     i < d_dftPtr->getAtomLocationsCart().size();
+                     ++i)
                   {
                     pcout << "AtomId " << i << ":  "
-                          << dftPtr->atomLocations[i][2] << " "
-                          << dftPtr->atomLocations[i][3] << " "
-                          << dftPtr->atomLocations[i][4] << "\n";
+                          << d_dftPtr->getAtomLocationsCart()[i][2] << " "
+                          << d_dftPtr->getAtomLocationsCart()[i][3] << " "
+                          << d_dftPtr->getAtomLocationsCart()[i][4] << "\n";
                   }
                 pcout
                   << "-----------------------------------------------------------------------------------------"
@@ -316,15 +451,17 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------"
               << std::endl;
 
-            dftPtr->writeDomainAndAtomCoordinates();
+            d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges("./");
           }
-        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
+        else if (solverReturn == nonLinearSolver::MAX_ITER_REACHED)
           {
             pcout << " ...Maximum iterations reached " << std::endl;
+            d_totalUpdateCalls = -2;
           }
-        else if (cgReturn == nonLinearSolver::FAILURE)
+        else if (solverReturn == nonLinearSolver::FAILURE)
           {
             pcout << " ...Cell stress relaxation failed " << std::endl;
+            d_totalUpdateCalls = -1;
           }
       }
 
@@ -332,30 +469,32 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   unsigned int
-  geoOptCell<FEOrder, FEOrderElectro>::getNumberUnknowns() const
+  geoOptCell::getNumberUnknowns() const
   {
     return std::accumulate(d_relaxationFlags.begin(),
                            d_relaxationFlags.end(),
                            0);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::value(std::vector<double> &functionValue)
+  geoOptCell::value(std::vector<double> &functionValue)
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
-    functionValue.push_back(dftPtr->d_freeEnergy / dftPtr->d_domainVolume);
+    functionValue.push_back(d_dftPtr->getInternalEnergy());
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::gradient(std::vector<double> &gradient)
+  geoOptCell::gradient(std::vector<double> &gradient)
   {
     gradient.clear();
-    const Tensor<2, 3, double> tempGradient = dftPtr->forcePtr->getStress();
+    const Tensor<2, 3, double> tempGradient =
+      (d_dftPtr->getCellVolume() / d_domainVolumeInitial) *
+      (d_dftPtr->getCellStress() * invert(d_strainEpsilon));
 
     if (d_relaxationFlags[0] == 1)
       gradient.push_back(tempGradient[0][0]);
@@ -370,7 +509,7 @@ namespace dftfe
     if (d_relaxationFlags[5] == 1)
       gradient.push_back(tempGradient[2][2]);
 
-    if (dftPtr->getParametersObject().cellConstraintType ==
+    if (d_dftPtr->getParametersObject().cellConstraintType ==
         1) // isotropic (shape fixed isotropic volume optimization)
       {
         gradient[0] =
@@ -379,21 +518,23 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::precondition(
-    std::vector<double> &      s,
-    const std::vector<double> &gradient) const
+  geoOptCell::precondition(std::vector<double> &      s,
+                           const std::vector<double> &gradient) const
   {
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
+    s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
+    for (auto i = 0; i < getNumberUnknowns(); ++i)
+      {
+        s[i + i * getNumberUnknowns()] = 1.0;
+      }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::update(
-    const std::vector<double> &solution,
-    const bool                 computeStress,
-    const bool                 useSingleAtomSolutionsInitialGuess)
+  geoOptCell::update(const std::vector<double> &solution,
+                     const bool                 computeStress,
+                     const bool useSingleAtomSolutionsInitialGuess)
   {
     std::vector<double> bcastSolution(solution.size());
     for (unsigned int i = 0; i < solution.size(); ++i)
@@ -446,7 +587,7 @@ namespace dftfe
       }
 
 
-    if (dftPtr->getParametersObject().cellConstraintType ==
+    if (d_dftPtr->getParametersObject().cellConstraintType ==
         1) // isotropic (shape fixed isotropic volume optimization)
       {
         strainEpsilonNew[1][1] = strainEpsilonNew[0][0];
@@ -461,39 +602,47 @@ namespace dftfe
 
     // deform fem mesh and reinit
     d_totalUpdateCalls += 1;
-    dftPtr->deformDomain(deformationGradient);
+    d_dftPtr->deformDomain(deformationGradient);
 
 
-    dftPtr->solve(true, computeStress);
+    d_dftPtr->solve(true, computeStress);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::save()
+  geoOptCell::save()
   {
-    dftPtr->writeDomainAndAtomCoordinates();
+    std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
+    std::string                      savePath =
+      d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
+    mkdir(savePath.c_str(), ACCESSPERMS);
+    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
+    d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
+    tmpData[0][0] = d_totalUpdateCalls;
+    dftUtils::writeDataIntoFile(tmpData,
+                                d_restartPath + "/step.chk",
+                                mpi_communicator);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   const MPI_Comm &
-  geoOptCell<FEOrder, FEOrderElectro>::getMPICommunicator()
+  geoOptCell::getMPICommunicator()
   {
     return mpi_communicator;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  geoOptCell<FEOrder, FEOrderElectro>::solution(std::vector<double> &solution)
+  geoOptCell::solution(std::vector<double> &solution)
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   std::vector<unsigned int>
-  geoOptCell<FEOrder, FEOrderElectro>::getUnknownCountFlag() const
+  geoOptCell::getUnknownCountFlag() const
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
 
-#include "geoOptCell.inst.cc"
 } // namespace dftfe

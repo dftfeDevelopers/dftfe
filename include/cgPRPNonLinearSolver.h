@@ -78,6 +78,15 @@ namespace dftfe
           const std::string       checkpointFileName = "",
           const bool              restart            = false);
 
+
+    /**
+     * @brief Create checkpoint file for current state of the cg solver.
+     *
+     */
+    void
+    save(const std::string &checkpointFileName);
+
+
   private:
     /**
      * @brief Initialize direction.
@@ -167,13 +176,6 @@ namespace dftfe
     updateSolution(const double               alpha,
                    const std::vector<double> &direction,
                    nonlinearSolverProblem &   problem);
-
-    /**
-     * @brief Create checkpoint file for current state of the cg solver.
-     *
-     */
-    void
-    save(const std::string &checkpointFileName);
 
     /**
      * @brief Load cg solver state from checkpoint file.

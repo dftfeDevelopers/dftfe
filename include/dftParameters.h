@@ -73,7 +73,7 @@ namespace dftfe
     bool        autoAdaptBaseMeshSize;
     double      meshSizeInnerBall, meshSizeOuterBall;
     double      chebyshevTolerance, topfrac, kerkerParameter;
-    std::string mixingMethod, ionOptSolver;
+    std::string mixingMethod, ionOptSolver, cellOptSolver;
 
 
     bool         isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
@@ -163,6 +163,13 @@ namespace dftfe
     double       dc_d3cutoff3;
     double       dc_d3cutoffCN;
 
+
+    std::string  bfgsStepMethod;
+    bool         usePreconditioner;
+    unsigned int lbfgsNumPastSteps;
+    unsigned int maxOptIter;
+    unsigned int maxStaggeredCycles;
+    double       maxUpdateStep;
 
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;

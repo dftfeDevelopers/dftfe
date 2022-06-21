@@ -18,19 +18,21 @@
 #define geoOptIon_H_
 #include "constants.h"
 #include "nonlinearSolverProblem.h"
+#include "nonLinearSolver.h"
+#include "dftBase.h"
+#include "dftfeWrapper.h"
 
 namespace dftfe
 {
   using namespace dealii;
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  class dftClass;
+
 
   /**
    * @brief problem class for atomic force relaxation solver.
    *
    * @author Sambit Das
    */
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   class geoOptIon : public nonlinearSolverProblem
   {
   public:
@@ -39,15 +41,16 @@ namespace dftfe
      *  @param _dftPtr pointer to dftClass
      *  @param mpi_comm_parent parent mpi_communicator
      */
-    geoOptIon(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-              const MPI_Comm &                   mpi_comm_parent);
+    geoOptIon(dftBase *       dftPtr,
+              const MPI_Comm &mpi_comm_parent,
+              const bool      restart = false);
 
     /**
      * @brief initializes the data member d_relaxationFlags.
      *
      */
     void
-    init();
+    init(const std::string &restartPath);
 
     /**
      * @brief calls the atomic force relaxation solver.
@@ -119,17 +122,23 @@ namespace dftfe
     /// storage for relaxation flags and external force components for each
     /// global atom. each atom has three flags corresponding to three components
     /// (0- no relax, 1- relax) and three external force components
-    std::vector<unsigned int> d_relaxationFlags;
-    std::vector<double>       d_externalForceOnAtom;
-
+    std::vector<unsigned int>        d_relaxationFlags;
+    std::vector<double>              d_externalForceOnAtom;
+    std::vector<std::vector<double>> d_atomLocationsInitial;
+    std::string                      d_restartPath;
+    std::string                      d_solverRestartPath;
+    bool                             d_isRestart;
+    bool                             d_solverRestart;
+    int                              d_solver;
     /// maximum force component to be relaxed
     double d_maximumAtomForceToBeRelaxed;
 
     /// total number of calls to update()
-    unsigned int d_totalUpdateCalls;
+    int d_totalUpdateCalls;
 
     /// pointer to dft class
-    dftClass<FEOrder, FEOrderElectro> *dftPtr;
+    dftBase *                        d_dftPtr;
+    std::unique_ptr<nonLinearSolver> d_nonLinearSolverPtr;
 
     /// parallel communication objects
     const MPI_Comm     mpi_communicator;

@@ -475,7 +475,7 @@ namespace dftfe
         if (!checkpointFileName.empty())
           {
             MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
+            // save(checkpointFileName);
             problem.save();
           }
 
@@ -546,7 +546,7 @@ namespace dftfe
         if (!checkpointFileName.empty())
           {
             MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
+            // save(checkpointFileName);
             problem.save();
           }
 

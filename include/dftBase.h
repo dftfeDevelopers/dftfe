@@ -68,6 +68,9 @@ namespace dftfe
           const bool computeStress                   = true,
           const bool isRestartGroundStateCalcFromChk = false) = 0;
 
+    virtual void
+    trivialSolveForStress() = 0;
+
     virtual double
     getInternalEnergy() const = 0;
 
@@ -115,6 +118,13 @@ namespace dftfe
      */
     virtual std::vector<std::vector<double>>
     getCell() const = 0;
+
+    /**
+     * @brief Gets the current cell volume
+     *
+     */
+    virtual double
+    getCellVolume() const = 0;
 
     /**
      * @brief Gets the current atom types from dftClass

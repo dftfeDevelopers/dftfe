@@ -47,8 +47,8 @@ namespace dftfe
       prm.declare_entry(
         "SOLVER MODE",
         "GS",
-        Patterns::Selection("GS|MD|NEB"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
+        Patterns::Selection("GS|MD|NEB|OPT"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If OPT: performs an ion and/or cell optimization calculation.");
 
 
       prm.declare_entry(
@@ -226,7 +226,6 @@ namespace dftfe
           Patterns::Anything(),
           "[Standard] Atomic displacement coordinates input file name. The FEM mesh is deformed using Gaussian functions attached to the atoms. File format (example for two atoms): delx1 dely1 delz1 (row1), delx2 dely2 delz2 (row2). The number of rows must be equal to NATOMS. Units in a.u.");
 
-
         prm.declare_entry(
           "NATOMS",
           "0",
@@ -244,7 +243,6 @@ namespace dftfe
           "",
           Patterns::Anything(),
           "[Standard] Domain vectors input file name. Domain vectors are the vectors bounding the three edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2y v2y v2z (row2), v3z v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
-
         prm.enter_subsection("Optimization");
         {
           prm.declare_entry(
@@ -268,8 +266,32 @@ namespace dftfe
           prm.declare_entry(
             "ION OPT SOLVER",
             "CGPRP",
-            Patterns::Selection("CGDESCENT|LBFGS|CGPRP"),
+            Patterns::Selection("BFGS|LBFGS|CGPRP"),
             "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+
+          prm.declare_entry(
+            "CELL OPT SOLVER",
+            "CGPRP",
+            Patterns::Selection("BFGS|LBFGS|CGPRP"),
+            "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+
+          prm.declare_entry(
+            "MAXIMUM OPTIMIZATION STEPS",
+            "300",
+            Patterns::Integer(1, 1000),
+            "[Standard] Sets the maximum number of optimization steps to be performed.");
+
+          prm.declare_entry(
+            "MAXIMUM STAGGERED CYCLES",
+            "300",
+            Patterns::Integer(1, 1000),
+            "[Standard] Sets the maximum number of staggered ion/cell optimization cycles to be performed.");
+
+          prm.declare_entry(
+            "MAXIMUM UPDATE STEP",
+            "0.5",
+            Patterns::Double(0, 5.0),
+            "[Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.");
 
           prm.declare_entry(
             "MAX LINE SEARCH ITER",
@@ -321,9 +343,27 @@ namespace dftfe
 
           prm.declare_entry(
             "REUSE DENSITY",
-            "0",
+            "1",
             Patterns::Integer(0, 2),
             "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+
+          prm.declare_entry(
+            "BFGS STEP METHOD",
+            "QN",
+            Patterns::Selection("QN|RFO"),
+            "[Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.");
+
+          prm.declare_entry(
+            "USE PRECONDITIONER",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Boolean parameter specifying if the preconditioner specified by JCP 144, 164109 (2016). ");
+
+          prm.declare_entry(
+            "LBFGS HISTORY",
+            "5",
+            Patterns::Integer(1, 20),
+            "[Standard] Number of previous steps to considered for the LBFGS update.");
         }
         prm.leave_subsection();
       }
