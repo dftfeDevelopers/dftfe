@@ -2052,9 +2052,6 @@ namespace dftfe
     const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
-    d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
-                                                    numberQuadraturePoints * 3,
-                                                  0.0);
 
     std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
