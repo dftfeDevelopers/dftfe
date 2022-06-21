@@ -1950,6 +1950,395 @@ namespace dftfe
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffPrime(
     const std::map<dealii::CellId, std::vector<double>> &rhoValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues)
+  {
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3>        fe_values(dftPtr->FE,
+                          quadrature_formula,
+                          update_JxW_values | update_jacobians);
+    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+
+    d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+
+    std::vector<double> der2ExchEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithDensityVal(numberQuadraturePoints);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+
+    //
+    // loop over cell block
+    //
+    unsigned int iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+
+            std::vector<double> densityPrimeValue =
+              (rhoPrimeValues).find(cellPtr->id())->second;
+
+            const std::vector<double> &tempPhiPrime =
+              phiPrimeValues.find(cellPtr->id())->second;
+
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[q] += temp2[q];
+                  }
+              }
+
+
+            xc_lda_fxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &der2ExchEnergyWithDensityVal[0]);
+            xc_lda_fxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &der2CorrEnergyWithDensityVal[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] =
+                  (tempPhiPrime[q] + (der2ExchEnergyWithDensityVal[q] +
+                                      der2CorrEnergyWithDensityVal[q]) *
+                                       densityPrimeValue[q]) *
+                  fe_values.JxW(q);
+              }
+
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+  }
+
+
+  // Fourth order stencil finite difference stencil used
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    computeVEffPrimeSpinPolarized(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const unsigned int                                   spinIndex,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues)
+  {
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3>        fe_values(dftPtr->FE,
+                          quadrature_formula,
+                          update_JxW_values | update_jacobians);
+    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+
+    d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+    d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
+                                                    numberQuadraturePoints * 3,
+                                                  0.0);
+
+    std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+    const double lambda = 1e-2;
+
+    //
+    // loop over cell block
+    //
+    unsigned int iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] += 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] +=
+                  2.0 * lambda * dirperturb1[2 * q + 1];
+              }
+
+
+            xc_lda_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derExchEnergyWithDensityVal[0]);
+
+            xc_lda_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derCorrEnergyWithDensityVal[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] =
+                  -(derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+              }
+
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            const std::vector<double> &tempPhiPrime =
+              phiPrimeValues.find(cellPtr->id())->second;
+
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] += lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] += lambda * dirperturb1[2 * q + 1];
+              }
+
+
+            xc_lda_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derExchEnergyWithDensityVal[0]);
+
+            xc_lda_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derCorrEnergyWithDensityVal[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
+                  8.0 *
+                  (derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                   derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+              }
+
+
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+
+
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+
+
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] -= 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] -=
+                  2.0 * lambda * dirperturb1[2 * q + 1];
+              }
+
+
+            xc_lda_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derExchEnergyWithDensityVal[0]);
+
+            xc_lda_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derCorrEnergyWithDensityVal[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
+                  (derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                   derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+              }
+
+
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+
+
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            const std::vector<double> &tempPhiPrime =
+              phiPrimeValues.find(cellPtr->id())->second;
+
+            if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] -= lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] -= lambda * dirperturb1[2 * q + 1];
+              }
+
+
+
+            xc_lda_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derExchEnergyWithDensityVal[0]);
+
+            xc_lda_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &derCorrEnergyWithDensityVal[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] -=
+                  8.0 *
+                  (derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                   derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] *=
+                  1.0 / 12.0 / lambda;
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
+                  tempPhiPrime[q] * fe_values.JxW(q);
+              }
+
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffPrime(
+    const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
     const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,

@@ -141,6 +141,43 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     {
       if (d_dftParamsPtr->xcFamilyType == "LDA")
         {
+          computing_timer.enter_subsection("VEffPrime Computation");
+#ifdef DFTFE_WITH_GPU
+          if (d_dftParamsPtr->useGPU)
+            {
+              if (d_dftParamsPtr->spinPolarized == 1)
+                kohnShamDFTEigenOperatorCUDA.computeVEffPrimeSpinPolarized(
+                  *rhoInValuesSpinPolarized,
+                  rhoPrimeValuesSpinPolarized,
+                  electrostaticPotPrimeValues,
+                  s,
+                  d_rhoCore);
+              else
+                kohnShamDFTEigenOperatorCUDA.computeVEffPrime(
+                  *rhoInValues,
+                  rhoPrimeValues,
+                  electrostaticPotPrimeValues,
+                  d_rhoCore);
+            }
+#endif
+          if (!d_dftParamsPtr->useGPU)
+            {
+              if (d_dftParamsPtr->spinPolarized == 1)
+                kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
+                  *rhoInValuesSpinPolarized,
+                  rhoPrimeValuesSpinPolarized,
+                  electrostaticPotPrimeValues,
+                  s,
+                  d_rhoCore);
+              else
+                kohnShamDFTEigenOperator.computeVEffPrime(
+                  *rhoInValues,
+                  rhoPrimeValues,
+                  electrostaticPotPrimeValues,
+                  d_rhoCore);
+            }
+
+          computing_timer.leave_subsection("VEffPrime Computation");
         }
       else if (d_dftParamsPtr->xcFamilyType == "GGA")
         {

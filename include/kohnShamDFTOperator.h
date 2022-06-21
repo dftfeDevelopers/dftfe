@@ -247,6 +247,30 @@ node is stored
       const unsigned int externalPotCorrQuadratureId);
 
     /**
+     * @brief Computes directional derivative of effective potential for local density type exchange-correlation functionals
+     *
+     */
+    void
+    computeVEffPrime(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues);
+
+    /**
+     * @brief Computes directional derivative of effective potential for local spin-density type exchange-correlation functionals
+     *
+     */
+    void
+    computeVEffPrimeSpinPolarized(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const unsigned int                                   spinIndex,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues);
+
+
+    /**
      * @brief Computes directional derivative of effective potential for gradient density type exchange-correlation functionals
      *
      */
