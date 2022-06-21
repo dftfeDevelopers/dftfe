@@ -1948,7 +1948,7 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffPrime(
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeVEffPrime(
     const std::map<dealii::CellId, std::vector<double>> &rhoValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
     const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
@@ -2032,7 +2032,7 @@ namespace dftfe
   // Fourth order stencil finite difference stencil used
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     computeVEffPrimeSpinPolarized(
       const std::map<dealii::CellId, std::vector<double>> &rhoValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
@@ -2047,9 +2047,6 @@ namespace dftfe
     const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
-    d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
-                                                    numberQuadraturePoints * 3,
-                                                  0.0);
 
     std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
