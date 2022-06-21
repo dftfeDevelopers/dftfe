@@ -246,6 +246,12 @@ namespace dftfe
         prm.enter_subsection("Optimization");
         {
           prm.declare_entry(
+            "OPTIMIZATION MODE",
+            "ION",
+            Patterns::Selection("ION|CELL|IONCELL"),
+            "[Standard] Specifies whether the ionic coordinates and/or the lattice vectors are relaxed.");
+
+          prm.declare_entry(
             "ION FORCE",
             "false",
             Patterns::Bool(),
@@ -256,12 +262,6 @@ namespace dftfe
             "false",
             Patterns::Bool(),
             "[Developer] Boolean parameter specifying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
-
-          prm.declare_entry(
-            "ION OPT",
-            "false",
-            Patterns::Bool(),
-            "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
 
           prm.declare_entry(
             "ION OPT SOLVER",
@@ -316,12 +316,6 @@ namespace dftfe
             "false",
             Patterns::Bool(),
             "[Standard] Boolean parameter specifying if cell stress needs to be computed. Automatically set to true if CELL OPT is true.");
-
-          prm.declare_entry(
-            "CELL OPT",
-            "false",
-            Patterns::Bool(),
-            "[Standard] Boolean parameter specifying if cell needs to be relaxed to achieve zero stress");
 
           prm.declare_entry(
             "STRESS TOL",
@@ -1120,6 +1114,7 @@ namespace dftfe
     chebyshevTolerance                  = 1e-02;
     chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
     mixingMethod                        = "";
+    optimizationMode                    = "";
     ionOptSolver                        = "";
     cellOptSolver                       = "";
 
@@ -1339,7 +1334,8 @@ namespace dftfe
       domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
       prm.enter_subsection("Optimization");
       {
-        isIonOpt               = prm.get_bool("ION OPT");
+        optimizationMode = prm.get("OPTIMIZATION MODE");
+        isIonOpt = optimizationMode == "ION" || optimizationMode == "IONCELL";
         ionOptSolver           = prm.get("ION OPT SOLVER");
         cellOptSolver          = prm.get("CELL OPT SOLVER");
         maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
@@ -1347,18 +1343,18 @@ namespace dftfe
         isIonForce             = isIonOpt || prm.get_bool("ION FORCE");
         forceRelaxTol          = prm.get_double("FORCE TOL");
         ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-        isCellOpt              = prm.get_bool("CELL OPT");
-        isCellStress           = isCellOpt || prm.get_bool("CELL STRESS");
-        stressRelaxTol         = prm.get_double("STRESS TOL");
-        cellConstraintType     = prm.get_integer("CELL CONSTRAINT TYPE");
-        reuseWfcGeoOpt         = prm.get_bool("REUSE WFC");
-        reuseDensityGeoOpt     = prm.get_integer("REUSE DENSITY");
-        bfgsStepMethod         = prm.get("BFGS STEP METHOD");
-        usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
-        lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
-        maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
-        maxStaggeredCycles     = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-        maxUpdateStep          = prm.get_double("MAXIMUM UPDATE STEP");
+        isCellOpt = optimizationMode == "CELL" || optimizationMode == "IONCELL";
+        isCellStress       = isCellOpt || prm.get_bool("CELL STRESS");
+        stressRelaxTol     = prm.get_double("STRESS TOL");
+        cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
+        reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
+        reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
+        bfgsStepMethod     = prm.get("BFGS STEP METHOD");
+        usePreconditioner  = prm.get_bool("USE PRECONDITIONER");
+        lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
+        maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+        maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
+        maxUpdateStep      = prm.get_double("MAXIMUM UPDATE STEP");
       }
       prm.leave_subsection();
     }

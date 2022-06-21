@@ -59,7 +59,7 @@ namespace dftfe
     bool        autoAdaptBaseMeshSize;
     double      meshSizeInnerBall, meshSizeOuterBall;
     double      chebyshevTolerance, topfrac, kerkerParameter;
-    std::string mixingMethod, ionOptSolver, cellOptSolver;
+    std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
 
     bool   isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD, isXLBOMD;

@@ -129,7 +129,7 @@ namespace dftfe
     else
       {
         d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
-                                                        MPI_COMM_WORLD,
+                                                        d_mpiCommParent,
                                                         true,
                                                         true);
         d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();

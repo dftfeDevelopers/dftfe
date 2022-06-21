@@ -246,6 +246,12 @@ namespace dftfe
         prm.enter_subsection("Optimization");
         {
           prm.declare_entry(
+            "OPTIMIZATION MODE",
+            "ION",
+            Patterns::Selection("ION|CELL|IONCELL"),
+            "[Standard] Specifies whether the ionic coordinates and/or the lattice vectors are relaxed.");
+
+          prm.declare_entry(
             "ION FORCE",
             "false",
             Patterns::Bool(),
@@ -256,12 +262,6 @@ namespace dftfe
             "false",
             Patterns::Bool(),
             "[Developer] Boolean parameter specifying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
-
-          prm.declare_entry(
-            "ION OPT",
-            "false",
-            Patterns::Bool(),
-            "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
 
           prm.declare_entry(
             "ION OPT SOLVER",
@@ -316,12 +316,6 @@ namespace dftfe
             "false",
             Patterns::Bool(),
             "[Standard] Boolean parameter specifying if cell stress needs to be computed. Automatically set to true if CELL OPT is true.");
-
-          prm.declare_entry(
-            "CELL OPT",
-            "false",
-            Patterns::Bool(),
-            "[Standard] Boolean parameter specifying if cell needs to be relaxed to achieve zero stress");
 
           prm.declare_entry(
             "STRESS TOL",
