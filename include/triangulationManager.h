@@ -37,9 +37,6 @@ namespace dftfe
    * mesh (in the meshMovement class) such that the atoms lie on the nodes.
    * However, once the mesh is moved, dealii has issues using that mesh for
    * further refinement, which is why we also carry an unmoved triangulation.
-   *  There are other places where we require an unmoved triangulation, for
-   * example in projection of solution fields from the previous ground state in
-   * stucture optimization.
    *
    *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
    */
@@ -87,28 +84,6 @@ namespace dftfe
       const bool                              generateSerialTria,
       const bool                              generateElectrostaticsTria);
 
-
-
-    /** @brief generates serial and parallel unmoved previous mesh.
-     *
-     *  The function is to be used a update call to update the serial and
-     * parallel unmoved previous mesh after we have used it for the field
-     * projection purposes in structure optimization.
-     *
-     *  @param atomLocations vector containing cartesian coordinates at atoms with
-     *  respect to origin (center of domain).
-     *  @param imageAtomLocations vector containing cartesian coordinates of image
-     *  atoms with respect to origin.
-     *  @param domainBoundingVectors vector of domain bounding vectors (refer to
-     *  description of input parameters.
-     */
-    void
-    generateSerialAndParallelUnmovedPreviousMesh(
-      const std::vector<std::vector<double>> &atomLocations,
-      const std::vector<std::vector<double>> &imageAtomLocations,
-      const std::vector<int> &                imageIds,
-      const std::vector<double> &             nearestAtomDistances,
-      const std::vector<std::vector<double>> &domainBoundingVectors);
 
 
     /** @brief generates the coarse meshes for restart.
@@ -176,24 +151,6 @@ namespace dftfe
      */
     parallel::distributed::Triangulation<3> &
     getParallelMeshUnmoved();
-
-    /**
-     * @brief returns constant reference to parallel unmoved previous triangulation
-     * (triangulation used in the last ground state solve during structure
-     * optimization).
-     *
-     */
-    parallel::distributed::Triangulation<3> &
-    getParallelMeshUnmovedPrevious();
-
-    /**
-     * @brief returns constant reference to serial unmoved previous triangulation
-     * (serial version of the triangulation used in the last ground state solve
-     * during structure optimization).
-     *
-     */
-    parallel::distributed::Triangulation<3> &
-    getSerialMeshUnmovedPrevious();
 
 
     /**
@@ -409,15 +366,11 @@ namespace dftfe
     // data members
     //
     parallel::distributed::Triangulation<3> d_parallelTriangulationUnmoved;
-    parallel::distributed::Triangulation<3>
-                                            d_parallelTriangulationUnmovedPrevious;
     parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsRho;
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsDisp;
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsForce;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
-    parallel::distributed::Triangulation<3>
-                                            d_serialTriangulationUnmovedPrevious;
     parallel::distributed::Triangulation<3> d_serialTriangulationElectrostatics;
 
     std::vector<std::vector<bool>> d_parallelTriaCurrentRefinement;

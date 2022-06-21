@@ -44,7 +44,6 @@ namespace dftfe
     const unsigned int   FEOrder,
     const dftParameters &dftParams)
     : d_parallelTriangulationUnmoved(mpi_comm_domain)
-    , d_parallelTriangulationUnmovedPrevious(mpi_comm_domain)
     , d_parallelTriangulationMoved(mpi_comm_domain)
     , d_triangulationElectrostaticsRho(mpi_comm_domain)
     , d_triangulationElectrostaticsDisp(mpi_comm_domain)
@@ -55,7 +54,6 @@ namespace dftfe
     , interBandGroupComm(interbandgroup_comm)
     , d_dftParams(dftParams)
     , d_serialTriangulationUnmoved(MPI_COMM_SELF)
-    , d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF)
     , d_serialTriangulationElectrostatics(MPI_COMM_SELF)
     , d_FEOrder(FEOrder)
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
@@ -126,55 +124,6 @@ namespace dftfe
                  false);
   }
 
-  //
-  // generate Mesh
-  //
-  void
-  triangulationManager::generateSerialAndParallelUnmovedPreviousMesh(
-    const std::vector<std::vector<double>> &atomLocations,
-    const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int> &                imageIds,
-    const std::vector<double> &             nearestAtomDistances,
-    const std::vector<std::vector<double>> &domainBoundingVectors)
-  {
-    //
-    // set the data members before generating mesh
-    //
-    d_atomPositions         = atomLocations;
-    d_imageAtomPositions    = imageAtomLocations;
-    d_imageIds              = imageIds;
-    d_nearestAtomDistances  = nearestAtomDistances;
-    d_domainBoundingVectors = domainBoundingVectors;
-
-    d_parallelTriangulationUnmovedPrevious.clear();
-    d_serialTriangulationUnmovedPrevious.clear();
-
-
-    generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
-    generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
-
-    for (unsigned int i = 0; i < d_parallelTriaCurrentRefinement.size(); ++i)
-      {
-        d_parallelTriangulationUnmovedPrevious.load_refine_flags(
-          d_parallelTriaCurrentRefinement[i]);
-        d_parallelTriangulationUnmovedPrevious
-          .execute_coarsening_and_refinement();
-
-        d_serialTriangulationUnmovedPrevious.load_refine_flags(
-          d_serialTriaCurrentRefinement[i]);
-        d_serialTriangulationUnmovedPrevious
-          .execute_coarsening_and_refinement();
-      }
-
-    /*
-       generateMesh(d_parallelTriangulationUnmovedPrevious,
-       d_serialTriangulationUnmovedPrevious,
-       d_triangulationElectrostaticsRho,
-       d_triangulationElectrostaticsDisp,
-       d_triangulationElectrostaticsForce,
-       false);
-     */
-  }
 
 
   void
@@ -293,8 +242,6 @@ namespace dftfe
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();
     d_parallelTriangulationMoved.clear();
-    d_parallelTriangulationUnmovedPrevious.clear();
-    d_serialTriangulationUnmovedPrevious.clear();
 
     //
     // generate coarse meshes
@@ -304,11 +251,6 @@ namespace dftfe
 
     generateCoarseMesh(d_parallelTriangulationUnmoved);
     generateCoarseMesh(d_parallelTriangulationMoved);
-    if (d_dftParams.isIonOpt || d_dftParams.isCellOpt)
-      {
-        generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
-        generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
-      }
   }
 
   //
@@ -346,25 +288,6 @@ namespace dftfe
   {
     return d_parallelTriangulationUnmoved;
   }
-
-  //
-  // get unmoved parallel mesh
-  //
-  parallel::distributed::Triangulation<3> &
-  triangulationManager::getParallelMeshUnmovedPrevious()
-  {
-    return d_parallelTriangulationUnmovedPrevious;
-  }
-
-  //
-  // get unmoved serial mesh
-  //
-  parallel::distributed::Triangulation<3> &
-  triangulationManager::getSerialMeshUnmovedPrevious()
-  {
-    return d_serialTriangulationUnmovedPrevious;
-  }
-
 
   //
   // get electrostatics mesh
