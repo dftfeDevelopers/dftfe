@@ -474,8 +474,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
       -0.1 :
       -d_dftParamsPtr->mixingParameter;
 
-  pcout << " Preconditioned mixing step, mixing constant: " << const2
-        << std::endl;
+  if (d_dftParamsPtr->verbosity >= 4)
+    pcout << " Preconditioned mixing step, mixing constant: " << const2
+          << std::endl;
 
   d_rhoInSpin0NodalValues.add(const2, kernelActionSpin0);
   d_rhoInSpin1NodalValues.add(const2, kernelActionSpin1);

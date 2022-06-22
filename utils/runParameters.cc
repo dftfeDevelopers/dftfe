@@ -747,7 +747,8 @@ namespace dftfe
         prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
-          Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER"),
+          Patterns::Selection(
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_JACINV_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
