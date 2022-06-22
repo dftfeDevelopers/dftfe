@@ -153,7 +153,8 @@ namespace dftfe
             d_dftPtr->getParametersObject().isIonForce   = true;
             d_dftPtr->getParametersObject().isCellStress = true;
           }
-        mkdir("optRestart", ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir("optRestart", ACCESSPERMS);
         std::vector<std::vector<double>> optData(2,
                                                  std::vector<double>(1, 0.0));
         optData[0][0] = d_optMode;
@@ -191,7 +192,8 @@ namespace dftfe
                                     d_mpiCommParent);
 
         std::string restartPath = "optRestart/cycle" + std::to_string(d_cycle);
-        mkdir(restartPath.c_str(), ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir(restartPath.c_str(), ACCESSPERMS);
         tmpData[0][0] = d_status;
         dftUtils::writeDataIntoFile(tmpData,
                                     restartPath + "/status.chk",

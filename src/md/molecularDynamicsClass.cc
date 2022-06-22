@@ -170,7 +170,8 @@ namespace dftfe
     if (d_restartFlag == 0)
       {
         std::string tempfolder = "mdRestart";
-        mkdir(tempfolder.c_str(), ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir(tempfolder.c_str(), ACCESSPERMS);
         double KineticEnergy = 0.0, TemperatureFromVelocities = 0.0,
                GroundStateEnergyvalue = 0.0, EntropicEnergyvalue = 0.0;
 
@@ -1533,7 +1534,8 @@ namespace dftfe
         timeIndexData[0][0]    = double(time);
         std::string Folder     = "mdRestart/Step";
         std::string tempfolder = Folder + std::to_string(time);
-        mkdir(tempfolder.c_str(), ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir(tempfolder.c_str(), ACCESSPERMS);
         Folder                  = "mdRestart";
         std::string newFolder3  = Folder + "/" + "time.chk";
         std::string newFolder_0 = Folder + "/" + "moleculardynamics.dat";

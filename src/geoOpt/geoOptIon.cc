@@ -141,7 +141,8 @@ namespace dftfe
     else
       {
         d_totalUpdateCalls = 0;
-        mkdir(d_restartPath.c_str(), ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+          mkdir(d_restartPath.c_str(), ACCESSPERMS);
         std::vector<std::vector<double>> ionOptData(2 + numberGlobalAtoms * 3,
                                                     std::vector<double>(1,
                                                                         0.0));
@@ -634,7 +635,8 @@ namespace dftfe
     std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
     std::string                      savePath =
       d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
-    mkdir(savePath.c_str(), ACCESSPERMS);
+    if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+      mkdir(savePath.c_str(), ACCESSPERMS);
     tmpData[0][0] = d_maximumAtomForceToBeRelaxed;
     dftUtils::writeDataIntoFile(tmpData,
                                 savePath + "/maxForce.chk",
