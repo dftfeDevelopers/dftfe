@@ -61,8 +61,8 @@ namespace dftfe
       prm.declare_entry(
         "SOLVER MODE",
         "GS",
-        Patterns::Selection("GS|MD|NEB|OPT"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If OPT: performs an ion and/or cell optimization calculation.");
+        Patterns::Selection("GS|MD|NEB|GEOOPT"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation.");
 
       prm.declare_entry(
         "RESTART",
@@ -1012,7 +1012,7 @@ namespace dftfe
           "BOMD",
           "false",
           Patterns::Bool(),
-          "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
+          "[Standard] Perform Born-Oppenheimer molecular dynamics.");
 
         prm.declare_entry(
           "EXTRAPOLATE DENSITY",
@@ -1089,18 +1089,18 @@ namespace dftfe
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
 
-    radiusAtomBall                      = 0.0;
-    mixingParameter                     = 0.5;
-    absLinearSolverTolerance            = 1e-10;
-    selfConsistentSolverTolerance       = 1e-10;
-    TVal                                = 500;
-    start_magnetization                 = 0.0;
-    absLinearSolverToleranceHelmholtz   = 1e-10;
-    chebyshevTolerance                  = 1e-02;
-    mixingMethod                        = "";
-    optimizationMode                    = "";
-    ionOptSolver                        = "";
-    cellOptSolver                       = "";
+    radiusAtomBall                    = 0.0;
+    mixingParameter                   = 0.5;
+    absLinearSolverTolerance          = 1e-10;
+    selfConsistentSolverTolerance     = 1e-10;
+    TVal                              = 500;
+    start_magnetization               = 0.0;
+    absLinearSolverToleranceHelmholtz = 1e-10;
+    chebyshevTolerance                = 1e-02;
+    mixingMethod                      = "";
+    optimizationMode                  = "";
+    ionOptSolver                      = "";
+    cellOptSolver                     = "";
 
     isPseudopotential           = false;
     periodicX                   = false;
@@ -1319,27 +1319,27 @@ namespace dftfe
       domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
       prm.enter_subsection("Optimization");
       {
-        optimizationMode = prm.get("OPTIMIZATION MODE");
-        isIonOpt = optimizationMode == "ION" || optimizationMode == "IONCELL";
+        optimizationMode       = prm.get("OPTIMIZATION MODE");
+        isIonOpt               = false;
         ionOptSolver           = prm.get("ION OPT SOLVER");
         cellOptSolver          = prm.get("CELL OPT SOLVER");
         maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
-        isIonForce             = isIonOpt || prm.get_bool("ION FORCE");
+        isIonForce             = prm.get_bool("ION FORCE");
         forceRelaxTol          = prm.get_double("FORCE TOL");
         ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-        isCellOpt = optimizationMode == "CELL" || optimizationMode == "IONCELL";
-        isCellStress       = isCellOpt || prm.get_bool("CELL STRESS");
-        stressRelaxTol     = prm.get_double("STRESS TOL");
-        cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
-        reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
-        reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
-        bfgsStepMethod     = prm.get("BFGS STEP METHOD");
-        usePreconditioner  = prm.get_bool("USE PRECONDITIONER");
-        lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
-        maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
-        maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-        maxUpdateStep      = prm.get_double("MAXIMUM UPDATE STEP");
+        isCellOpt              = false;
+        isCellStress           = prm.get_bool("CELL STRESS");
+        stressRelaxTol         = prm.get_double("STRESS TOL");
+        cellConstraintType     = prm.get_integer("CELL CONSTRAINT TYPE");
+        reuseWfcGeoOpt         = prm.get_bool("REUSE WFC");
+        reuseDensityGeoOpt     = prm.get_integer("REUSE DENSITY");
+        bfgsStepMethod         = prm.get("BFGS STEP METHOD");
+        usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
+        lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
+        maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+        maxStaggeredCycles     = prm.get_integer("MAXIMUM STAGGERED CYCLES");
+        maxUpdateStep          = prm.get_double("MAXIMUM UPDATE STEP");
       }
       prm.leave_subsection();
     }

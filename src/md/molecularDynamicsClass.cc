@@ -54,7 +54,7 @@ namespace dftfe
       {
         d_startingTimeStep = 0;
         d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                               MPI_COMM_WORLD,
+                                                               d_mpiCommParent,
                                                                true,
                                                                true);
       }
@@ -66,7 +66,7 @@ namespace dftfe
           std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                 coordinatesFile,
                                                 domainVectorsFile,
-                                                MPI_COMM_WORLD,
+                                                d_mpiCommParent,
                                                 true,
                                                 true);
       }

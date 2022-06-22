@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 
   else if (runParams.solvermode == "NEB")
     {}
-  else if (runParams.solvermode == "OPT")
+  else if (runParams.solvermode == "GEOOPT")
     {
       dftfe::geometryOptimizationClass geoOpt(parameter_file,
                                               MPI_COMM_WORLD,

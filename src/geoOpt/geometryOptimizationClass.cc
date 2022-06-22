@@ -116,7 +116,7 @@ namespace dftfe
         d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
                                                         coordinatesFile,
                                                         domainVectorsFile,
-                                                        MPI_COMM_WORLD,
+                                                        d_mpiCommParent,
                                                         true,
                                                         true);
         d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
@@ -133,20 +133,26 @@ namespace dftfe
                                                         true,
                                                         true);
         d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
-        if (d_dftPtr->getParametersObject().isIonOpt &&
-            !d_dftPtr->getParametersObject().isCellOpt)
-          d_optMode = 0;
-        else if (!d_dftPtr->getParametersObject().isIonOpt &&
-                 d_dftPtr->getParametersObject().isCellOpt)
-          d_optMode = 1;
-        else if (d_dftPtr->getParametersObject().isIonOpt &&
-                 d_dftPtr->getParametersObject().isCellOpt)
-          d_optMode = 2;
-        else
-          AssertThrow(
-            false,
-            ExcMessage(
-              "DFT-FE Error: SOLVER MODE is set to OPT but ION OPT and CELL OPT are set to FALSE."));
+        if (d_dftPtr->getParametersObject().optimizationMode == "ION")
+          {
+            d_optMode                                  = 0;
+            d_dftPtr->getParametersObject().isIonOpt   = true;
+            d_dftPtr->getParametersObject().isIonForce = true;
+          }
+        else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")
+          {
+            d_optMode                                    = 1;
+            d_dftPtr->getParametersObject().isCellOpt    = true;
+            d_dftPtr->getParametersObject().isCellStress = true;
+          }
+        else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
+          {
+            d_optMode                                    = 2;
+            d_dftPtr->getParametersObject().isIonOpt     = true;
+            d_dftPtr->getParametersObject().isCellOpt    = true;
+            d_dftPtr->getParametersObject().isIonForce   = true;
+            d_dftPtr->getParametersObject().isCellStress = true;
+          }
         mkdir("optRestart", ACCESSPERMS);
         std::vector<std::vector<double>> optData(2,
                                                  std::vector<double>(1, 0.0));
@@ -177,7 +183,8 @@ namespace dftfe
     // Define max cycles?
     while (d_cycle < 100)
       {
-        pcout << "Starting optimization cycle: " << d_cycle << std::endl;
+        if (d_dftPtr->getParametersObject().verbosity >= 1)
+          pcout << "Starting optimization cycle: " << d_cycle << std::endl;
         tmpData[0][0] = d_cycle;
         dftUtils::writeDataIntoFile(tmpData,
                                     "optRestart/cycle.chk",
@@ -196,7 +203,8 @@ namespace dftfe
 
         if (d_status == 0)
           {
-            pcout << "Starting ion optimization" << std::endl;
+            if (d_dftPtr->getParametersObject().verbosity >= 1)
+              pcout << "Starting ion optimization" << std::endl;
             d_geoOptIonPtr->init(restartPath);
             int geoOptStatus = d_geoOptIonPtr->run();
             if (d_optMode == 0)
@@ -222,6 +230,8 @@ namespace dftfe
           }
         if (d_status == 1)
           {
+            if (d_dftPtr->getParametersObject().verbosity >= 1)
+              pcout << "Starting cell optimization" << std::endl;
             d_geoOptCellPtr->init(restartPath);
             int geoOptStatus = d_geoOptCellPtr->run();
             if (d_optMode == 1)

@@ -59,8 +59,8 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   d_rhoInSpin0NodalValues  = 0;
   d_rhoInSpin1NodalValues  = 0;
 
-  if (d_dftParamsPtr->isIonOpt || d_dftParamsPtr->isCellOpt ||
-      (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD == 2))
+  if (d_dftParamsPtr->reuseDensityGeoOpt == 2 ||
+      d_dftParamsPtr->reuseDensityMD == 2)
     {
       initAtomicRho();
     }

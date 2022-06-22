@@ -225,7 +225,7 @@ namespace dftfe
       d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
         d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
-        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().stressRelaxTol,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         mpi_communicator,
@@ -233,7 +233,7 @@ namespace dftfe
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
-        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().stressRelaxTol,
         d_dftPtr->getParametersObject().maxUpdateStep,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
@@ -241,7 +241,7 @@ namespace dftfe
         mpi_communicator);
     else
       d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
-        d_dftPtr->getParametersObject().forceRelaxTol,
+        d_dftPtr->getParametersObject().stressRelaxTol,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         mpi_communicator,
@@ -262,14 +262,15 @@ namespace dftfe
         pcout << " --------------------------------------------------"
               << std::endl;
       }
-    if (d_dftPtr->getParametersObject().verbosity >= 2)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
         if (d_solver == 0)
           {
             pcout << "   ---Non-linear BFGS Parameters-----------  "
                   << std::endl;
             pcout << "      stopping tol: "
-                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+                  << d_dftPtr->getParametersObject().stressRelaxTol
+                  << std::endl;
 
             pcout << "      maxIter: "
                   << d_dftPtr->getParametersObject().maxOptIter << std::endl;
@@ -294,7 +295,8 @@ namespace dftfe
             pcout << "   ---Non-linear LBFGS Parameters----------  "
                   << std::endl;
             pcout << "      stopping tol: "
-                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+                  << d_dftPtr->getParametersObject().stressRelaxTol
+                  << std::endl;
             pcout << "      maxIter: "
                   << d_dftPtr->getParametersObject().maxOptIter << std::endl;
             pcout << "      preconditioner: "
@@ -313,7 +315,8 @@ namespace dftfe
             pcout << "   ---Non-linear CG Parameters--------------  "
                   << std::endl;
             pcout << "      stopping tol: "
-                  << d_dftPtr->getParametersObject().forceRelaxTol << std::endl;
+                  << d_dftPtr->getParametersObject().stressRelaxTol
+                  << std::endl;
             pcout << "      maxIter: "
                   << d_dftPtr->getParametersObject().maxOptIter << std::endl;
             pcout << "      lineSearch tol: " << 1e-4 << std::endl;
@@ -324,47 +327,47 @@ namespace dftfe
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
-      }
-    if (d_isRestart)
-      {
-        if (d_solver == 2)
+        if (d_isRestart)
           {
-            pcout
-              << " Re starting Ion force relaxation using nonlinear CG solver... "
-              << std::endl;
+            if (d_solver == 2)
+              {
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear CG solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 0)
+              {
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear BFGS solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 1)
+              {
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << std::endl;
+              }
           }
-        else if (d_solver == 0)
+        else
           {
-            pcout
-              << " Re starting Ion force relaxation using nonlinear BFGS solver... "
-              << std::endl;
-          }
-        else if (d_solver == 1)
-          {
-            pcout
-              << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
-              << std::endl;
-          }
-      }
-    else
-      {
-        if (d_solver == 2)
-          {
-            pcout
-              << " Starting Ion force relaxation using nonlinear CG solver... "
-              << std::endl;
-          }
-        else if (d_solver == 0)
-          {
-            pcout
-              << " Starting Ion force relaxation using nonlinear BFGS solver... "
-              << std::endl;
-          }
-        else if (d_solver == 1)
-          {
-            pcout
-              << " Starting Ion force relaxation using nonlinear LBFGS solver... "
-              << std::endl;
+            if (d_solver == 2)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear CG solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 0)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear BFGS solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 1)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << std::endl;
+              }
           }
       }
     d_isRestart = false;
@@ -381,7 +384,8 @@ namespace dftfe
                                       d_solverRestartPath + "/cellRelax.chk",
                                       d_solverRestart);
 
-        if (solverReturn == nonLinearSolver::SUCCESS)
+        if (solverReturn == nonLinearSolver::SUCCESS &&
+            d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout
               << " ...Cell stress relaxation completed as maximum stress magnitude is less than STRESS TOL: "

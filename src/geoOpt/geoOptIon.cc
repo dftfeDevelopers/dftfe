@@ -189,17 +189,20 @@ namespace dftfe
         0.8,
         d_dftPtr->getParametersObject().maxUpdateStep);
     // print relaxation flags
-    pcout << " --------------Ion force relaxation flags----------------"
-          << std::endl;
-    for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
-        pcout << d_relaxationFlags[i * 3] << "  "
-              << d_relaxationFlags[i * 3 + 1] << "  "
-              << d_relaxationFlags[i * 3 + 2] << std::endl;
+        pcout << " --------------Ion force relaxation flags----------------"
+              << std::endl;
+        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            pcout << d_relaxationFlags[i * 3] << "  "
+                  << d_relaxationFlags[i * 3 + 1] << "  "
+                  << d_relaxationFlags[i * 3 + 2] << std::endl;
+          }
+        pcout << " --------------------------------------------------------"
+              << std::endl;
       }
-    pcout << " --------------------------------------------------------"
-          << std::endl;
-    if (d_dftPtr->getParametersObject().verbosity >= 2)
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
         if (d_solver == 0)
           {
@@ -261,47 +264,47 @@ namespace dftfe
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
-      }
-    if (d_isRestart)
-      {
-        if (d_solver == 2)
+        if (d_isRestart)
           {
-            pcout
-              << " Re starting Ion force relaxation using nonlinear CG solver... "
-              << std::endl;
+            if (d_solver == 2)
+              {
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear CG solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 0)
+              {
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear BFGS solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 1)
+              {
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << std::endl;
+              }
           }
-        else if (d_solver == 0)
+        else
           {
-            pcout
-              << " Re starting Ion force relaxation using nonlinear BFGS solver... "
-              << std::endl;
-          }
-        else if (d_solver == 1)
-          {
-            pcout
-              << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
-              << std::endl;
-          }
-      }
-    else
-      {
-        if (d_solver == 2)
-          {
-            pcout
-              << " Starting Ion force relaxation using nonlinear CG solver... "
-              << std::endl;
-          }
-        else if (d_solver == 0)
-          {
-            pcout
-              << " Starting Ion force relaxation using nonlinear BFGS solver... "
-              << std::endl;
-          }
-        else if (d_solver == 1)
-          {
-            pcout
-              << " Starting Ion force relaxation using nonlinear LBFGS solver... "
-              << std::endl;
+            if (d_solver == 2)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear CG solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 0)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear BFGS solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 1)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << std::endl;
+              }
           }
       }
     d_isRestart = false;
@@ -318,7 +321,8 @@ namespace dftfe
                                       d_solverRestartPath + "/ionRelax.chk",
                                       d_solverRestart);
 
-        if (solverReturn == nonLinearSolver::SUCCESS)
+        if (solverReturn == nonLinearSolver::SUCCESS &&
+            d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout
               << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
@@ -606,10 +610,8 @@ namespace dftfe
     else if (d_maximumAtomForceToBeRelaxed < 1e-04)
       factor = 1.15;
 
-    pcout << "  starting updateAtomPositionsAndMoveMesh " << std::endl;
     d_dftPtr->updateAtomPositionsAndMoveMesh(
       globalAtomsDisplacements, factor, useSingleAtomSolutionsInitialGuess);
-    pcout << "  ended updateAtomPositionsAndMoveMesh " << std::endl;
     d_totalUpdateCalls += 1;
 
 
