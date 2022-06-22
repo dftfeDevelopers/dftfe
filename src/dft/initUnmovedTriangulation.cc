@@ -42,8 +42,9 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
                                d_domainBoundingVectors);
 
   // initialize meshMovementGaussianClass object (must be done on unmoved
-  // triangulation)
-  d_gaussianMovePar.init(triangulation,
+  // triangulation) when not using floating charges
+  if (!d_dftParamsPtr->floatingNuclearCharges)
+    d_gaussianMovePar.init(triangulation,
                          d_mesh.getSerialMeshUnmoved(),
                          d_domainBoundingVectors);
 
