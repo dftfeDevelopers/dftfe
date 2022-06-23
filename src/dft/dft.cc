@@ -1869,7 +1869,7 @@ namespace dftfe
   // dft solve
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
+  std::tuple<bool,double>
   dftClass<FEOrder, FEOrderElectro>::solve(
     const bool computeForces,
     const bool computeStress,
@@ -3404,6 +3404,7 @@ namespace dftfe
         writeBands();
       }
 #endif
+    return std::make_tuple(scfConverged, norm);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

@@ -199,8 +199,11 @@ namespace dftfe
     /**
      * @brief solve ground-state and return DFT free energy which is sum of internal
      * energy and negative of electronic entropic energy (in Hartree units)
+     *
+     * @return tuple of ground-state energy, boolean flag on whether scf converged,
+     * and L2 norm of residual electron-density of the last SCF iteration
      */
-    double
+    std::tuple<double,bool,double>
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
 

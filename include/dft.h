@@ -165,7 +165,7 @@ namespace dftfe
 
 
     /**
-     * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
+     * @brief FIXME: legacy call, move to main.cc
      */
     void
     run();
@@ -177,9 +177,12 @@ namespace dftfe
     solveNoSCF();
     /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
+     *
+     * @return tuple of boolean flag on whether scf converged,
+     *  and L2 norm of residual electron-density of the last SCF iteration step
+     *
      */
-    // double GroundStateEnergyvalue, EntropicEnergyvalue;
-    void
+    std::tuple<bool,double>
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
           const bool restartGroundStateCalcFromChk = false);
