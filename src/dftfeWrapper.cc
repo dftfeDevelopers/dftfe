@@ -839,7 +839,7 @@ namespace dftfe
     d_dftfeBasePtr->run();
   }
 
-  std::tuple<double,bool,double>
+  std::tuple<double, bool, double>
   dftfeWrapper::computeDFTFreeEnergy(const bool computeIonForces,
                                      const bool computeCellStress)
   {
@@ -847,8 +847,11 @@ namespace dftfe
       d_mpi_comm_parent != MPI_COMM_NULL,
       dealii::ExcMessage(
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
-    std::tuple<bool,double> t=d_dftfeBasePtr->solve(computeIonForces, computeCellStress);
-    return std::make_tuple(d_dftfeBasePtr->getFreeEnergy(),std::get<0>(t),std::get<1>(t));
+    std::tuple<bool, double> t =
+      d_dftfeBasePtr->solve(computeIonForces, computeCellStress);
+    return std::make_tuple(d_dftfeBasePtr->getFreeEnergy(),
+                           std::get<0>(t),
+                           std::get<1>(t));
   }
 
   double

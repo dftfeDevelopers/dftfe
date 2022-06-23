@@ -203,7 +203,7 @@ namespace dftfe
      * @return tuple of ground-state energy, boolean flag on whether scf converged,
      * and L2 norm of residual electron-density of the last SCF iteration
      */
-    std::tuple<double,bool,double>
+    std::tuple<double, bool, double>
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
 

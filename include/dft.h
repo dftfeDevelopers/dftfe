@@ -182,7 +182,7 @@ namespace dftfe
      *  and L2 norm of residual electron-density of the last SCF iteration step
      *
      */
-    std::tuple<bool,double>
+    std::tuple<bool, double>
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
           const bool restartGroundStateCalcFromChk = false);

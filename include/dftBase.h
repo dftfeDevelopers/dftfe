@@ -64,7 +64,7 @@ namespace dftfe
                  const bool print                            = true) = 0;
 
 
-    virtual std::tuple<bool,double>
+    virtual std::tuple<bool, double>
     solve(const bool computeForces                   = true,
           const bool computeStress                   = true,
           const bool isRestartGroundStateCalcFromChk = false) = 0;

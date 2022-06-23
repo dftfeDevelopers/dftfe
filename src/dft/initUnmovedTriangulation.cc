@@ -44,8 +44,8 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   // triangulation) when not using floating charges
   if (!d_dftParamsPtr->floatingNuclearCharges)
     d_gaussianMovePar.init(triangulation,
-                         d_mesh.getSerialMeshUnmoved(),
-                         d_domainBoundingVectors);
+                           d_mesh.getSerialMeshUnmoved(),
+                           d_domainBoundingVectors);
 
   if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(
