@@ -19,6 +19,7 @@
 #define dftBase_H_
 
 #include <vector>
+#include <tuple>
 #include <deal.II/base/tensor_function.h>
 #include "dftParameters.h"
 
@@ -63,7 +64,7 @@ namespace dftfe
                  const bool print                            = true) = 0;
 
 
-    virtual void
+    virtual std::tuple<bool,double>
     solve(const bool computeForces                   = true,
           const bool computeStress                   = true,
           const bool isRestartGroundStateCalcFromChk = false) = 0;
