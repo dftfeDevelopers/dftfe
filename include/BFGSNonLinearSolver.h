@@ -185,8 +185,8 @@ namespace dftfe
     /// storage for the hessian in current bfgs step.
     std::vector<double> d_hessian;
 
-    /// storage for inf norm of gradient and the update step.
-    double d_gradMax, d_normDeltaXnew;
+    /// storage for inf norm of the update step.
+    double d_normDeltaXnew;
 
     /// storage for trust region parameters.
     double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin,

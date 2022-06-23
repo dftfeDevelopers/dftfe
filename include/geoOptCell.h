@@ -105,6 +105,13 @@ namespace dftfe
     void
     save();
 
+    /**
+     * @brief check for convergence.
+     *
+     */
+    bool
+    isConverged() const;
+
     const MPI_Comm &
     getMPICommunicator();
 
@@ -114,8 +121,7 @@ namespace dftfe
 
     /// Not implemented
     void
-    precondition(std::vector<double> &      s,
-                 const std::vector<double> &gradient) const;
+    precondition(std::vector<double> &s, const std::vector<double> &gradient);
 
     /// Not implemented
     void

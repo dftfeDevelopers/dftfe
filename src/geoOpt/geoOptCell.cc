@@ -52,11 +52,11 @@ namespace dftfe
   {
     d_restartPath   = restartPath + "/cellRelax";
     d_solverRestart = d_isRestart;
-    if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+    if (d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
       d_solver = 0;
-    else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+    else if (d_dftPtr->getParametersObject().cellOptSolver == "LBFGS")
       d_solver = 1;
-    else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+    else if (d_dftPtr->getParametersObject().cellOptSolver == "CGPRP")
       d_solver = 2;
     // initialize d_strainEpsilon to identity
     d_strainEpsilon = 0;
@@ -333,19 +333,19 @@ namespace dftfe
             if (d_solver == 2)
               {
                 pcout
-                  << " Re starting Ion force relaxation using nonlinear CG solver... "
+                  << " Re starting Cell relaxation using nonlinear CG solver... "
                   << std::endl;
               }
             else if (d_solver == 0)
               {
                 pcout
-                  << " Re starting Ion force relaxation using nonlinear BFGS solver... "
+                  << " Re starting Cell relaxation using nonlinear BFGS solver... "
                   << std::endl;
               }
             else if (d_solver == 1)
               {
                 pcout
-                  << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << " Re starting Cell relaxation using nonlinear LBFGS solver... "
                   << std::endl;
               }
           }
@@ -354,19 +354,19 @@ namespace dftfe
             if (d_solver == 2)
               {
                 pcout
-                  << " Starting Ion force relaxation using nonlinear CG solver... "
+                  << " Starting Cell relaxation using nonlinear CG solver... "
                   << std::endl;
               }
             else if (d_solver == 0)
               {
                 pcout
-                  << " Starting Ion force relaxation using nonlinear BFGS solver... "
+                  << " Starting Cell relaxation using nonlinear BFGS solver... "
                   << std::endl;
               }
             else if (d_solver == 1)
               {
                 pcout
-                  << " Starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << " Starting Cell relaxation using nonlinear LBFGS solver... "
                   << std::endl;
               }
           }
@@ -498,7 +498,7 @@ namespace dftfe
   {
     gradient.clear();
     const Tensor<2, 3, double> tempGradient =
-      (d_dftPtr->getCellVolume() / d_domainVolumeInitial) *
+      d_dftPtr->getCellVolume() *
       (d_dftPtr->getCellStress() * invert(d_strainEpsilon));
 
     if (d_relaxationFlags[0] == 1)
@@ -526,7 +526,7 @@ namespace dftfe
 
   void
   geoOptCell::precondition(std::vector<double> &      s,
-                           const std::vector<double> &gradient) const
+                           const std::vector<double> &gradient)
   {
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
     for (auto i = 0; i < getNumberUnknowns(); ++i)
@@ -630,6 +630,36 @@ namespace dftfe
                                 mpi_communicator);
   }
 
+  bool
+  geoOptCell::isConverged() const
+  {
+    bool                       converged    = true;
+    const Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
+    std::vector<double>        stress;
+    if (d_relaxationFlags[0] == 1)
+      stress.push_back(tempGradient[0][0]);
+    if (d_relaxationFlags[1] == 1)
+      stress.push_back(tempGradient[0][1]);
+    if (d_relaxationFlags[2] == 1)
+      stress.push_back(tempGradient[0][2]);
+    if (d_relaxationFlags[3] == 1)
+      stress.push_back(tempGradient[1][1]);
+    if (d_relaxationFlags[4] == 1)
+      stress.push_back(tempGradient[1][2]);
+    if (d_relaxationFlags[5] == 1)
+      stress.push_back(tempGradient[2][2]);
+
+    if (d_dftPtr->getParametersObject().cellConstraintType ==
+        1) // isotropic (shape fixed isotropic volume optimization)
+      {
+        stress[0] =
+          (tempGradient[0][0] + tempGradient[1][1] + tempGradient[2][2]) / 3.0;
+      }
+    for (int i = 0; i < stress.size(); ++i)
+      converged = converged && (std::abs(stress[i]) <
+                                d_dftPtr->getParametersObject().stressRelaxTol);
+    return converged;
+  }
 
   const MPI_Comm &
   geoOptCell::getMPICommunicator()

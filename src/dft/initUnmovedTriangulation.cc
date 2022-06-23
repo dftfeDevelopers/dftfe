@@ -37,8 +37,8 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   // initialize affine transformation object (must be done on unmoved
   // triangulation)
   d_affineTransformMesh.init(triangulation,
-                              d_mesh.getSerialMeshUnmoved(),
-                              d_domainBoundingVectors);
+                             d_mesh.getSerialMeshUnmoved(),
+                             d_domainBoundingVectors);
 
   // initialize meshMovementGaussianClass object (must be done on unmoved
   // triangulation)

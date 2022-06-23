@@ -73,7 +73,7 @@ namespace dftfe
      */
     virtual void
     precondition(std::vector<double> &      s,
-                 const std::vector<double> &gradient) const = 0;
+                 const std::vector<double> &gradient) = 0;
 
     /**
      * @brief Update solution.
@@ -106,6 +106,13 @@ namespace dftfe
      */
     virtual std::vector<unsigned int>
     getUnknownCountFlag() const = 0;
+
+    /**
+     * @brief check for convergence.
+     *
+     */
+    virtual bool
+    isConverged() const = 0;
 
     /**
      * @brief create checkpoint for the current state of the problem i.e problem domain and solution.

@@ -181,8 +181,8 @@ namespace dftfe
     /// storage for the number of past steps currently stored.
     int d_numPastSteps;
 
-    /// storage for inf norms of gradient and the update step.
-    double d_gradMax, d_normDeltaXnew;
+    /// storage for inf norm of the update step.
+    double d_normDeltaXnew;
 
     /// storage for the maximum allowed step length.
     double d_maxStepLength;

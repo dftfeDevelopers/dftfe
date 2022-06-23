@@ -878,9 +878,7 @@ namespace dftfe
     // check for convergence
     //
     unsigned int isSuccess = 0;
-    d_gradMax              = internalBFGS::computeLInfNorm(d_gradient);
-
-    if (d_gradMax < d_tolerance)
+    if (problem.isConverged())
       isSuccess = 1;
 
     MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
@@ -956,9 +954,7 @@ namespace dftfe
         //
         unsigned int isBreak = 0;
 
-        d_gradMax = internalBFGS::computeLInfNorm(d_gradientNew);
-
-        if (d_gradMax < d_tolerance)
+        if (problem.isConverged())
           isBreak = 1;
         MPI_Bcast(&(isBreak), 1, MPI_INT, 0, mpi_communicator);
         if (isBreak == 1)

@@ -723,7 +723,7 @@ namespace dftfe
     // check for convergence
     //
     unsigned int isSuccess = 0;
-    if (d_gradMax < d_tolerance)
+    if (problem.isConverged())
       isSuccess = 1;
 
     MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
@@ -825,7 +825,7 @@ namespace dftfe
               d_gradMax = std::abs(d_gradient[i]);
           }
 
-        if (d_gradMax < d_tolerance)
+        if (problem.isConverged())
           isBreak = 1;
         MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
         if (isBreak == 1)

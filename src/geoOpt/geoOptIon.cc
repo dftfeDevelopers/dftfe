@@ -471,97 +471,128 @@ namespace dftfe
 
   void
   geoOptIon::precondition(std::vector<double> &      s,
-                          const std::vector<double> &gradient) const
+                          const std::vector<double> &gradient)
   {
-    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
-    std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
-    double                           rNN = 0;
-    for (int i = 0; i < numberGlobalAtoms; ++i)
+    if (d_solverRestart)
       {
-        double riMin = 0;
-        for (int j = 0; j < numberGlobalAtoms; ++j)
+        std::vector<std::vector<double>> preconData;
+        dftUtils::readFile(1,
+                           preconData,
+                           d_restartPath + "/preconditioner.dat");
+        AssertThrow(
+          preconData.size() == getNumberUnknowns() * getNumberUnknowns(),
+          ExcMessage("Incorrect preconditioner size in preconditioner.dat"));
+        s.clear();
+        s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
+        for (int i = 0; i < preconData.size(); ++i)
           {
-            double rij = 0;
-            for (int k = 2; k < 5; ++k)
-              {
-                rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
-                        d_dftPtr->getAtomLocationsCart()[j][k]) *
-                       (d_dftPtr->getAtomLocationsCart()[i][k] -
-                        d_dftPtr->getAtomLocationsCart()[j][k]);
-              }
-            rij = std::sqrt(rij);
-            if ((riMin > rij && i != j) || j == 0)
-              {
-                riMin = rij;
-              }
+            s[i] = preconData[i][0];
           }
-        if (rNN < riMin)
-          {
-            rNN = riMin;
-          }
+        d_solverRestart = false;
       }
-    double rCut = 2 * rNN;
-    if (d_dftPtr->getParametersObject().verbosity >= 2)
-      pcout << "Cutoff radius for preconditoner:" << rCut << std::endl;
-    std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
-    for (int i = 0; i < numberGlobalAtoms; ++i)
+    else
       {
-        for (int j = i + 1; j < numberGlobalAtoms; ++j)
+        const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
+        std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
+        double                           rNN = 0;
+        for (int i = 0; i < numberGlobalAtoms; ++i)
           {
-            double rij = 0;
-            for (int k = 2; k < 5; ++k)
+            double riMin = 0;
+            for (int j = 0; j < numberGlobalAtoms; ++j)
               {
-                rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
-                        d_dftPtr->getAtomLocationsCart()[j][k]) *
-                       (d_dftPtr->getAtomLocationsCart()[i][k] -
-                        d_dftPtr->getAtomLocationsCart()[j][k]);
-              }
-            rij = std::sqrt(rij);
-            if (rij < rCut)
-              {
-                L[i * numberGlobalAtoms + j] =
-                  -std::exp(-3.0 * (rij / rNN - 1));
-                L[j * numberGlobalAtoms + i] = L[i * numberGlobalAtoms + j];
-              }
-          }
-      }
-    for (int i = 0; i < numberGlobalAtoms; ++i)
-      {
-        for (int j = 0; j < numberGlobalAtoms; ++j)
-          {
-            if (i != j)
-              {
-                L[i * numberGlobalAtoms + i] -= L[i * numberGlobalAtoms + j];
-              }
-          }
-        L[i * numberGlobalAtoms + i] += 0.1;
-      }
-
-    s.clear();
-    s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
-    int icount = 0;
-    for (auto i = 0; i < numberGlobalAtoms; ++i)
-      {
-        for (auto k = 0; k < 3; ++k)
-          {
-            if (d_relaxationFlags[i * 3 + k] == 1)
-              {
-                int jcount = 0;
-                for (auto j = 0; j < numberGlobalAtoms; ++j)
+                double rij = 0;
+                for (int k = 2; k < 5; ++k)
                   {
-                    for (auto l = 0; l < 3; ++l)
+                    rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                            d_dftPtr->getAtomLocationsCart()[j][k]) *
+                           (d_dftPtr->getAtomLocationsCart()[i][k] -
+                            d_dftPtr->getAtomLocationsCart()[j][k]);
+                  }
+                rij = std::sqrt(rij);
+                if ((riMin > rij && i != j) || j == 0)
+                  {
+                    riMin = rij;
+                  }
+              }
+            if (rNN < riMin)
+              {
+                rNN = riMin;
+              }
+          }
+        double rCut = 2 * rNN;
+        if (d_dftPtr->getParametersObject().verbosity >= 2)
+          pcout << "Cutoff radius for preconditoner:" << rCut << std::endl;
+        std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
+        for (int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (int j = i + 1; j < numberGlobalAtoms; ++j)
+              {
+                double rij = 0;
+                for (int k = 2; k < 5; ++k)
+                  {
+                    rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                            d_dftPtr->getAtomLocationsCart()[j][k]) *
+                           (d_dftPtr->getAtomLocationsCart()[i][k] -
+                            d_dftPtr->getAtomLocationsCart()[j][k]);
+                  }
+                rij = std::sqrt(rij);
+                if (rij < rCut)
+                  {
+                    L[i * numberGlobalAtoms + j] =
+                      -std::exp(-3.0 * (rij / rNN - 1));
+                    L[j * numberGlobalAtoms + i] = L[i * numberGlobalAtoms + j];
+                  }
+              }
+          }
+        for (int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (int j = 0; j < numberGlobalAtoms; ++j)
+              {
+                if (i != j)
+                  {
+                    L[i * numberGlobalAtoms + i] -=
+                      L[i * numberGlobalAtoms + j];
+                  }
+              }
+            L[i * numberGlobalAtoms + i] += 0.1;
+          }
+
+        s.clear();
+        s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
+        int icount = 0;
+        for (auto i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (auto k = 0; k < 3; ++k)
+              {
+                if (d_relaxationFlags[i * 3 + k] == 1)
+                  {
+                    int jcount = 0;
+                    for (auto j = 0; j < numberGlobalAtoms; ++j)
                       {
-                        if (d_relaxationFlags[j * 3 + l] == 1)
+                        for (auto l = 0; l < 3; ++l)
                           {
-                            s[icount * getNumberUnknowns() + jcount] =
-                              k == l ? L[i * numberGlobalAtoms + j] : 0.0;
-                            ++jcount;
+                            if (d_relaxationFlags[j * 3 + l] == 1)
+                              {
+                                s[icount * getNumberUnknowns() + jcount] =
+                                  k == l ? L[i * numberGlobalAtoms + j] : 0.0;
+                                ++jcount;
+                              }
                           }
                       }
+                    ++icount;
                   }
-                ++icount;
               }
           }
+        std::vector<std::vector<double>> preconData(getNumberUnknowns() *
+                                                      getNumberUnknowns(),
+                                                    std::vector<double>(1, 0));
+        for (int i = 0; i < preconData.size(); ++i)
+          {
+            preconData[i][0] = s[i];
+          }
+        dftUtils::writeDataIntoFile(preconData,
+                                    d_restartPath + "/preconditioner.dat",
+                                    mpi_communicator);
       }
   }
 
@@ -649,6 +680,28 @@ namespace dftfe
                                 mpi_communicator);
   }
 
+  bool
+  geoOptIon::isConverged() const
+  {
+    bool      converged         = true;
+    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
+    const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
+
+    for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        for (unsigned int j = 0; j < 3; ++j)
+          {
+            if (d_relaxationFlags[3 * i + j] == 1)
+              {
+                converged =
+                  converged && (std::abs(tempGradient[3 * i + j] -
+                                         d_externalForceOnAtom[3 * i + j]) <
+                                d_dftPtr->getParametersObject().forceRelaxTol);
+              }
+          }
+      }
+    return converged;
+  }
 
   const MPI_Comm &
   geoOptIon::getMPICommunicator()

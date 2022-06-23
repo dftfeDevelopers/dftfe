@@ -113,18 +113,28 @@ namespace dftfe
             AssertThrow(
               false, ExcMessage("DFT-FE Error: Unable to find restart files."));
           }
-        d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
+        d_dftfeWrapper  = std::make_unique<dftfeWrapper>(parameter_file,
                                                         coordinatesFile,
                                                         domainVectorsFile,
                                                         d_mpiCommParent,
                                                         true,
                                                         true);
-        d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
+        d_dftPtr        = d_dftfeWrapper->getDftfeBasePtr();
+        bool nlpRestart = true;
+        if (d_dftPtr->getParametersObject().optimizationMode == "ION")
+          nlpRestart = d_optMode == 0;
+        else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")
+          nlpRestart = d_optMode == 1;
+        else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
+          nlpRestart = d_optMode == 2;
         d_geoOptIonPtr =
-          std::make_unique<geoOptIon>(d_dftPtr, d_mpiCommParent, d_status == 0);
-        d_geoOptCellPtr = std::make_unique<geoOptCell>(d_dftPtr,
-                                                       d_mpiCommParent,
-                                                       d_status == 1);
+          std::make_unique<geoOptIon>(d_dftPtr,
+                                      d_mpiCommParent,
+                                      (d_status == 0) && nlpRestart);
+        d_geoOptCellPtr =
+          std::make_unique<geoOptCell>(d_dftPtr,
+                                       d_mpiCommParent,
+                                       (d_status == 1) && nlpRestart);
       }
     else
       {
@@ -134,25 +144,11 @@ namespace dftfe
                                                         true);
         d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
         if (d_dftPtr->getParametersObject().optimizationMode == "ION")
-          {
-            d_optMode                                  = 0;
-            d_dftPtr->getParametersObject().isIonOpt   = true;
-            d_dftPtr->getParametersObject().isIonForce = true;
-          }
+          d_optMode = 0;
         else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")
-          {
-            d_optMode                                    = 1;
-            d_dftPtr->getParametersObject().isCellOpt    = true;
-            d_dftPtr->getParametersObject().isCellStress = true;
-          }
+          d_optMode = 1;
         else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
-          {
-            d_optMode                                    = 2;
-            d_dftPtr->getParametersObject().isIonOpt     = true;
-            d_dftPtr->getParametersObject().isCellOpt    = true;
-            d_dftPtr->getParametersObject().isIonForce   = true;
-            d_dftPtr->getParametersObject().isCellStress = true;
-          }
+          d_optMode = 2;
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir("optRestart", ACCESSPERMS);
         std::vector<std::vector<double>> optData(2,
@@ -172,6 +168,23 @@ namespace dftfe
           std::make_unique<geoOptIon>(d_dftPtr, d_mpiCommParent, d_isRestart);
         d_geoOptCellPtr =
           std::make_unique<geoOptCell>(d_dftPtr, d_mpiCommParent, d_isRestart);
+      }
+    if (d_dftPtr->getParametersObject().optimizationMode == "ION")
+      {
+        d_dftPtr->getParametersObject().isIonOpt   = true;
+        d_dftPtr->getParametersObject().isIonForce = true;
+      }
+    else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")
+      {
+        d_dftPtr->getParametersObject().isCellOpt    = true;
+        d_dftPtr->getParametersObject().isCellStress = true;
+      }
+    else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
+      {
+        d_dftPtr->getParametersObject().isIonOpt     = true;
+        d_dftPtr->getParametersObject().isCellOpt    = true;
+        d_dftPtr->getParametersObject().isIonForce   = true;
+        d_dftPtr->getParametersObject().isCellStress = true;
       }
   }
 
