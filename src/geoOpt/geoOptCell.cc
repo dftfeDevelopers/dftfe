@@ -622,6 +622,19 @@ namespace dftfe
       d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
     if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
       mkdir(savePath.c_str(), ACCESSPERMS);
+    const Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
+    if (tempGradient.norm() != 0)
+      {
+        std::vector<std::vector<double>> stressData(9,
+                                                    std::vector<double>(1,
+                                                                        0.0));
+        for (unsigned int i = 0; i < 3; ++i)
+          for (unsigned int j = 0; j < 3; ++j)
+            stressData[3 * i + j][0] = tempGradient[i][j];
+        dftUtils::writeDataIntoFile(stressData,
+                                    savePath + "/stress.chk",
+                                    mpi_communicator);
+      }
     d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
     d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
     tmpData[0][0] = d_totalUpdateCalls;
@@ -633,9 +646,19 @@ namespace dftfe
   bool
   geoOptCell::isConverged() const
   {
-    bool                       converged    = true;
-    const Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
-    std::vector<double>        stress;
+    bool                 converged    = true;
+    Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
+    if (tempGradient.norm() == 0)
+      {
+        std::vector<std::vector<double>> tmp(0);
+        dftUtils::readFile(1, tmp, d_solverRestartPath + "/stress.chk");
+
+        tempGradient.clear();
+        for (unsigned int i = 0; i < 3; ++i)
+          for (unsigned int j = 0; j < 3; ++j)
+            tempGradient[i][j] = tmp[3 * i + j][0];
+      }
+    std::vector<double> stress;
     if (d_relaxationFlags[0] == 1)
       stress.push_back(tempGradient[0][0]);
     if (d_relaxationFlags[1] == 1)

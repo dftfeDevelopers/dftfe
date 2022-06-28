@@ -108,8 +108,7 @@ namespace dftfe
         dftUtils::readFile(1,
                            tmp,
                            d_restartPath + "/step" +
-                             std::to_string(d_totalUpdateCalls) +
-                             "/maxForce.chk");
+                             std::to_string(d_totalUpdateCalls) + "/force.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
         d_relaxationFlags.resize(numberGlobalAtoms * 3);
         bool relaxationFlagsMatch = true;
@@ -663,17 +662,31 @@ namespace dftfe
   void
   geoOptIon::save()
   {
-    std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
-    std::string                      savePath =
+    std::string savePath =
       d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
     if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
       mkdir(savePath.c_str(), ACCESSPERMS);
-    tmpData[0][0] = d_maximumAtomForceToBeRelaxed;
-    dftUtils::writeDataIntoFile(tmpData,
-                                savePath + "/maxForce.chk",
-                                mpi_communicator);
+    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
+    const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
+    if (tempGradient.size() == numberGlobalAtoms * 3)
+      {
+        std::vector<std::vector<double>> forceData(1 + numberGlobalAtoms * 3,
+                                                   std::vector<double>(1, 0.0));
+        forceData[0][0] = d_maximumAtomForceToBeRelaxed;
+        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                forceData[3 * i + j + 1][0] = tempGradient[3 * i + j];
+              }
+          }
+        dftUtils::writeDataIntoFile(forceData,
+                                    savePath + "/force.chk",
+                                    mpi_communicator);
+      }
     d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/");
     d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
+    std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
     tmpData[0][0] = d_totalUpdateCalls;
     dftUtils::writeDataIntoFile(tmpData,
                                 d_restartPath + "/step.chk",
@@ -683,10 +696,24 @@ namespace dftfe
   bool
   geoOptIon::isConverged() const
   {
-    bool      converged         = true;
-    const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
-    const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
+    bool      converged              = true;
+    const int numberGlobalAtoms      = d_dftPtr->getAtomLocationsCart().size();
+    std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
+    if (tempGradient.size() != numberGlobalAtoms * 3)
+      {
+        std::vector<std::vector<double>> tmp(0);
+        dftUtils::readFile(1, tmp, d_solverRestartPath + "/force.chk");
 
+        tempGradient.clear();
+        tempGradient.resize(numberGlobalAtoms * 3);
+        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                tempGradient[3 * i + j] = tmp[3 * i + j + 1][0];
+              }
+          }
+      }
     for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
