@@ -35,7 +35,6 @@ namespace dftfe
      * @brief Constructor.
      *
      * @param usePreconditioner Boolean parameter specifying whether or not to use the preconditioner.
-     * @param tolerance Tolerance on gradient required for convergence.
      * @param maxUpdate Maximum allowed step length in any direction.
      * @param maxNumberIterations Maximum number of iterations.
      * @param maxNumPastSteps Number of previous steps stored by the LBFGS solver.
@@ -46,7 +45,6 @@ namespace dftfe
      * @param mpi_comm_parent The mpi communicator used.
      */
     LBFGSNonLinearSolver(const bool         usePreconditioner,
-                         const double       tolerance,
                          const double       maxUpdate,
                          const unsigned int maxNumberIterations,
                          const int          maxNumPastSteps,

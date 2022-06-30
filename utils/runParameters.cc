@@ -69,6 +69,10 @@ namespace dftfe
         Patterns::Bool(),
         "[Standard] If set to true solvermode triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
 
+      prm.declare_entry("RESTART FOLDER",
+                        "",
+                        Patterns::Anything(),
+                        "[Standard] Folder to store restart files.");
 
       prm.enter_subsection("GPU");
       {
@@ -1075,9 +1079,10 @@ namespace dftfe
     internalRunParameters::declare_parameters(prm);
     prm.parse_input(parameter_file);
 
-    verbosity  = prm.get_integer("VERBOSITY");
-    solvermode = prm.get("SOLVER MODE");
-    restart    = prm.get_bool("RESTART");
+    verbosity        = prm.get_integer("VERBOSITY");
+    solvermode       = prm.get("SOLVER MODE");
+    restart          = prm.get_bool("RESTART");
+    restartFilesPath = prm.get("RESTART FOLDER");
   }
 
 } // namespace dftfe

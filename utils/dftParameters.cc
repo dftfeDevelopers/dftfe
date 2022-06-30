@@ -70,6 +70,11 @@ namespace dftfe
         Patterns::Bool(),
         "[Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
 
+      prm.declare_entry("RESTART FOLDER",
+                        "",
+                        Patterns::Anything(),
+                        "[Standard] Folder to store restart files.");
+
       prm.enter_subsection("GPU");
       {
         prm.declare_entry("USE GPU",

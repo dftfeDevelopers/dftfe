@@ -35,7 +35,6 @@ namespace dftfe
     /**
      * @brief Constructor.
      *
-     * @param tolerance Tolerance (relative) required for convergence.
      * @param maxNumberIterations Maximum number of iterations.
      * @param debugLevel Debug output level:
      *                   0 - no debug output
@@ -47,8 +46,7 @@ namespace dftfe
      * line search.
      * @param lineSearchDampingParameter scales the initial line search step
      */
-    cgPRPNonLinearSolver(const double       tolerance,
-                         const unsigned int maxNumberIterations,
+    cgPRPNonLinearSolver(const unsigned int maxNumberIterations,
                          const unsigned int debugLevel,
                          const MPI_Comm &   mpi_comm_parent,
                          const double       lineSearchTolerance       = 1.0e-6,

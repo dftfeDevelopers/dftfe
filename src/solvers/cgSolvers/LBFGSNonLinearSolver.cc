@@ -27,13 +27,12 @@ namespace dftfe
   //
   LBFGSNonLinearSolver::LBFGSNonLinearSolver(
     const bool         usePreconditioner,
-    const double       tolerance,
     const double       maxUpdate,
     const unsigned int maxNumberIterations,
     const int          maxNumPastSteps,
     const unsigned int debugLevel,
     const MPI_Comm &   mpi_comm_parent)
-    : nonLinearSolver(debugLevel, maxNumberIterations, tolerance)
+    : nonLinearSolver(debugLevel, maxNumberIterations)
     , d_maxStepLength(maxUpdate)
     , mpi_communicator(mpi_comm_parent)
     , d_maxNumPastSteps(maxNumPastSteps)
@@ -730,9 +729,11 @@ namespace dftfe
         //
         problem.gradient(d_gradient);
         problem.value(d_value);
+
+        MPI_Barrier(mpi_communicator);
+        problem.save();
       }
     else
-      // NEED TO UPDATE
       {
         load(checkpointFileName);
         MPI_Barrier(mpi_communicator);
@@ -742,13 +743,6 @@ namespace dftfe
     if (d_usePreconditioner)
       {
         initializePreconditioner(problem);
-      }
-
-    if (!checkpointFileName.empty())
-      {
-        MPI_Barrier(mpi_communicator);
-        // save(checkpointFileName);
-        problem.save();
       }
 
     //
@@ -832,12 +826,8 @@ namespace dftfe
         //
         // Save the last step
         //
-        if (!checkpointFileName.empty())
-          {
-            MPI_Barrier(mpi_communicator);
-            // save(checkpointFileName);
-            problem.save();
-          }
+        MPI_Barrier(mpi_communicator);
+        problem.save();
 
         //
         // check for convergence

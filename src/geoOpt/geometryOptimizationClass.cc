@@ -29,13 +29,19 @@ namespace dftfe
 {
   geometryOptimizationClass::geometryOptimizationClass(
     const std::string parameter_file,
+    const std::string restartFilesPath,
     const MPI_Comm &  mpi_comm_parent,
     const bool        restart)
     : d_mpiCommParent(mpi_comm_parent)
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
+    , d_restartFilesPath(restartFilesPath)
   {
     init(parameter_file);
+    if (d_restartFilesPath != "")
+      {
+        mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+      }
   }
 
   void
@@ -47,10 +53,13 @@ namespace dftfe
         std::vector<std::vector<double>> tmp, optData;
         pcout << "Restarting Optimization using saved data." << std::endl;
         optData.clear();
-        dftUtils::readFile(1, optData, "optRestart/geometryOptimization.dat");
+        dftUtils::readFile(1,
+                           optData,
+                           d_restartFilesPath +
+                             "/optRestart/geometryOptimization.dat");
         d_optMode              = (int)optData[0][0];
         bool        isPeriodic = optData[1][0] > 1e-6;
-        std::string chkPath    = "optRestart/";
+        std::string chkPath    = d_restartFilesPath + "/optRestart/";
         dftUtils::readFile(1, tmp, chkPath + "/cycle.chk");
         d_cycle = tmp[0][0];
         chkPath += "cycle" + std::to_string(d_cycle);
@@ -60,8 +69,8 @@ namespace dftfe
         bool restartFilesFound = false;
         while (d_cycle >= 0)
           {
-            std::string tempfolder =
-              "optRestart/cycle" + std::to_string(d_cycle);
+            std::string tempfolder = d_restartFilesPath + "/optRestart/cycle" +
+                                     std::to_string(d_cycle);
             tempfolder += d_status == 0 ? "/ionRelax/step" : "/cellRelax/step";
             tmp.clear();
             dftUtils::readFile(1, tmp, tempfolder + ".chk");
@@ -150,7 +159,7 @@ namespace dftfe
         else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
           d_optMode = 2;
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          mkdir("optRestart", ACCESSPERMS);
+          mkdir((d_restartFilesPath + "/optRestart").c_str(), ACCESSPERMS);
         std::vector<std::vector<double>> optData(2,
                                                  std::vector<double>(1, 0.0));
         optData[0][0] = d_optMode;
@@ -160,7 +169,8 @@ namespace dftfe
                           1 :
                           0;
         dftUtils::writeDataIntoFile(optData,
-                                    "optRestart/geometryOptimization.dat",
+                                    d_restartFilesPath +
+                                      "/optRestart/geometryOptimization.dat",
                                     d_mpiCommParent);
         d_cycle  = 0;
         d_status = d_optMode == 1 ? 1 : 0;
@@ -201,10 +211,12 @@ namespace dftfe
           pcout << "Starting optimization cycle: " << d_cycle << std::endl;
         tmpData[0][0] = d_cycle;
         dftUtils::writeDataIntoFile(tmpData,
-                                    "optRestart/cycle.chk",
+                                    d_restartFilesPath +
+                                      "/optRestart/cycle.chk",
                                     d_mpiCommParent);
 
-        std::string restartPath = "optRestart/cycle" + std::to_string(d_cycle);
+        std::string restartPath =
+          d_restartFilesPath + "/optRestart/cycle" + std::to_string(d_cycle);
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir(restartPath.c_str(), ACCESSPERMS);
         tmpData[0][0] = d_status;

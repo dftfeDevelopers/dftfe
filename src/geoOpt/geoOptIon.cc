@@ -108,7 +108,8 @@ namespace dftfe
         dftUtils::readFile(1,
                            tmp,
                            d_restartPath + "/step" +
-                             std::to_string(d_totalUpdateCalls) + "/force.chk");
+                             std::to_string(d_totalUpdateCalls) +
+                             "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
         d_relaxationFlags.resize(numberGlobalAtoms * 3);
         bool relaxationFlagsMatch = true;
@@ -164,7 +165,6 @@ namespace dftfe
       d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
         d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
-        d_dftPtr->getParametersObject().forceRelaxTol,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         mpi_communicator,
@@ -172,7 +172,6 @@ namespace dftfe
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
-        d_dftPtr->getParametersObject().forceRelaxTol,
         d_dftPtr->getParametersObject().maxUpdateStep,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
@@ -180,7 +179,6 @@ namespace dftfe
         mpi_communicator);
     else
       d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
-        d_dftPtr->getParametersObject().forceRelaxTol,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         mpi_communicator,
@@ -643,7 +641,6 @@ namespace dftfe
 
     d_dftPtr->updateAtomPositionsAndMoveMesh(
       globalAtomsDisplacements, factor, useSingleAtomSolutionsInitialGuess);
-    d_totalUpdateCalls += 1;
 
 
     /*if(d_maximumAtomForceToBeRelaxed >= 1e-02)
@@ -656,6 +653,7 @@ namespace dftfe
       d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 5e-06;*/
 
     d_dftPtr->solve(computeForces, false);
+    d_totalUpdateCalls += 1;
   }
 
 
@@ -667,23 +665,12 @@ namespace dftfe
     if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
       mkdir(savePath.c_str(), ACCESSPERMS);
     const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
-    const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
-    if (tempGradient.size() == numberGlobalAtoms * 3)
-      {
-        std::vector<std::vector<double>> forceData(1 + numberGlobalAtoms * 3,
-                                                   std::vector<double>(1, 0.0));
-        forceData[0][0] = d_maximumAtomForceToBeRelaxed;
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                forceData[3 * i + j + 1][0] = tempGradient[3 * i + j];
-              }
-          }
-        dftUtils::writeDataIntoFile(forceData,
-                                    savePath + "/force.chk",
-                                    mpi_communicator);
-      }
+    const std::vector<double>        tempGradient = d_dftPtr->getForceonAtoms();
+    std::vector<std::vector<double>> forceData(1, std::vector<double>(1, 0.0));
+    forceData[0][0] = d_maximumAtomForceToBeRelaxed;
+    dftUtils::writeDataIntoFile(forceData,
+                                savePath + "/maxForce.chk",
+                                mpi_communicator);
     d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/");
     d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
     std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
@@ -701,18 +688,7 @@ namespace dftfe
     std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
     if (tempGradient.size() != numberGlobalAtoms * 3)
       {
-        std::vector<std::vector<double>> tmp(0);
-        dftUtils::readFile(1, tmp, d_solverRestartPath + "/force.chk");
-
-        tempGradient.clear();
-        tempGradient.resize(numberGlobalAtoms * 3);
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                tempGradient[3 * i + j] = tmp[3 * i + j + 1][0];
-              }
-          }
+        return false;
       }
     for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
       {

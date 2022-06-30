@@ -84,7 +84,7 @@ namespace dftfe
      */
     nonLinearSolver(const unsigned int debugLevel,
                     const unsigned int maxNumberIterations,
-                    const double       tolerance);
+                    const double       tolerance = 0);
 
 
   protected:

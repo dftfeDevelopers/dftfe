@@ -35,6 +35,7 @@ namespace dftfe
     int         verbosity;
     std::string solvermode;
     bool        restart;
+    std::string restartFilesPath;
     runParameters() = default;
 
     /**

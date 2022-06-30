@@ -36,7 +36,6 @@ namespace dftfe
      *
      * @param usePreconditioner Boolean parameter specifying whether or not to use the preconditioner.
      * @param useRFOStep Boolean parameter specifying whether or not the RFO step is used.
-     * @param tolerance Tolerance on gradient required for convergence.
      * @param maxNumberIterations Maximum number of iterations.
      * @param debugLevel Debug output level:
      *                   0 - no debug output
@@ -49,7 +48,6 @@ namespace dftfe
      */
     BFGSNonLinearSolver(const bool         usePreconditioner,
                         const bool         useRFOStep,
-                        const double       tolerance,
                         const unsigned int maxNumberIterations,
                         const unsigned int debugLevel,
                         const MPI_Comm &   mpi_comm_parent,

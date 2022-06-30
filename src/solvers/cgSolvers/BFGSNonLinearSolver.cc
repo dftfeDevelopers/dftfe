@@ -28,14 +28,13 @@ namespace dftfe
   BFGSNonLinearSolver::BFGSNonLinearSolver(
     const bool         usePreconditioner,
     const bool         useRFOStep,
-    const double       tolerance,
     const unsigned int maxNumberIterations,
     const unsigned int debugLevel,
     const MPI_Comm &   mpi_comm_parent,
     const double       trustRadius_maximum,
     const double       trustRadius_initial,
     const double       trustRadius_minimum)
-    : nonLinearSolver(debugLevel, maxNumberIterations, tolerance)
+    : nonLinearSolver(debugLevel, maxNumberIterations)
     , mpi_communicator(mpi_comm_parent)
     , d_usePreconditioner(usePreconditioner)
     , d_useRFOStep(useRFOStep)
@@ -823,11 +822,6 @@ namespace dftfe
                              const bool              restart)
   {
     //
-    // method const data
-    //
-    const double toleranceSqr = d_tolerance * d_tolerance;
-
-    //
     // get total number of unknowns in the problem.
     //
     d_numberUnknowns = problem.getNumberUnknowns();
@@ -858,21 +852,16 @@ namespace dftfe
         problem.value(d_value);
 
         initializeHessian(problem);
+        MPI_Barrier(mpi_communicator);
+        problem.save();
       }
     else
-      // TODO : Implement restart
       {
         load(checkpointFileName);
         MPI_Barrier(mpi_communicator);
         d_useSingleAtomSolutionsInitialGuess = true;
       }
 
-    if (!checkpointFileName.empty())
-      {
-        MPI_Barrier(mpi_communicator);
-        // save(checkpointFileName);
-        problem.save();
-      }
 
     //
     // check for convergence
@@ -944,12 +933,8 @@ namespace dftfe
                     << std::endl;
             d_deltaX = d_deltaXNew;
           }
-        if (!checkpointFileName.empty())
-          {
-            MPI_Barrier(mpi_communicator);
-            // save(checkpointFileName);
-            problem.save();
-          }
+        MPI_Barrier(mpi_communicator);
+        problem.save();
         // check for convergence
         //
         unsigned int isBreak = 0;

@@ -40,6 +40,7 @@ namespace dftfe
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
     geometryOptimizationClass(const std::string parameter_file,
+                              const std::string restartFilesPath,
                               const MPI_Comm &  mpi_comm_parent,
                               const bool        restart);
 
@@ -63,8 +64,8 @@ namespace dftfe
     dftBase *                     d_dftPtr;
 
     // restart parameters
-    const bool d_isRestart;
-
+    const bool        d_isRestart;
+    const std::string d_restartFilesPath;
     // status parameters
     int d_status, d_cycle, d_optMode;
     // parallel communication objects

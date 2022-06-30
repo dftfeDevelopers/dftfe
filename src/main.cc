@@ -130,6 +130,7 @@ main(int argc, char *argv[])
   else if (runParams.solvermode == "GEOOPT")
     {
       dftfe::geometryOptimizationClass geoOpt(parameter_file,
+                                              runParams.restartFilesPath,
                                               MPI_COMM_WORLD,
                                               runParams.restart);
       geoOpt.runOpt();
