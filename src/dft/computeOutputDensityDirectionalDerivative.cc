@@ -28,8 +28,6 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   distributedCPUVec<double> &      fvSpin0,
   distributedCPUVec<double> &      fvSpin1)
 {
-  computingTimerStandard.enter_subsection(
-    "Output density direction derivative");
   computing_timer.enter_subsection("Output density direction derivative");
 
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator =
@@ -291,8 +289,6 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 
   computing_timer.leave_subsection("Output density direction derivative");
-  computingTimerStandard.leave_subsection(
-    "Output density direction derivative");
 }
 
 
