@@ -1334,17 +1334,19 @@ namespace dftfe
         forceRelaxTol          = prm.get_double("FORCE TOL");
         ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
         isCellOpt              = false;
-        isCellStress           = prm.get_bool("CELL STRESS");
-        stressRelaxTol         = prm.get_double("STRESS TOL");
-        cellConstraintType     = prm.get_integer("CELL CONSTRAINT TYPE");
-        reuseWfcGeoOpt         = prm.get_bool("REUSE WFC");
-        reuseDensityGeoOpt     = prm.get_integer("REUSE DENSITY");
-        bfgsStepMethod         = prm.get("BFGS STEP METHOD");
-        usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
-        lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
-        maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
-        maxStaggeredCycles     = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-        maxUpdateStep          = prm.get_double("MAXIMUM UPDATE STEP");
+        isCellStress           = prm.get_bool("CELL STRESS") ||
+                       optimizationMode == "CELL" ||
+                       optimizationMode == "IONCELL";
+        stressRelaxTol     = prm.get_double("STRESS TOL");
+        cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
+        reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
+        reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
+        bfgsStepMethod     = prm.get("BFGS STEP METHOD");
+        usePreconditioner  = prm.get_bool("USE PRECONDITIONER");
+        lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
+        maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+        maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
+        maxUpdateStep      = prm.get_double("MAXIMUM UPDATE STEP");
       }
       prm.leave_subsection();
     }
