@@ -708,7 +708,7 @@ namespace dftfe
           "MIXING METHOD",
           "ANDERSON",
           Patterns::Selection(
-            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_JACINV_PRECOND"),
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -730,13 +730,13 @@ namespace dftfe
           Patterns::Bool(),
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
 
-        prm.enter_subsection("LOW RANK JACINV PRECOND");
+        prm.enter_subsection("LOW RANK DIELECM PRECOND");
         {
           prm.declare_entry(
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Advanced] Method subtype for LOW_RANK_JACINV_PRECOND.");
+            "[Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
