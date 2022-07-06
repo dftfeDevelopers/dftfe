@@ -500,7 +500,7 @@ namespace dftfe
           }
         d_numEigenValues =
           (numElectrons / 2.0) +
-          std::max((d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND" ?
+          std::max((d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ?
                       0.22 :
                       0.2) *
                      (numElectrons / 2.0),
@@ -512,7 +512,7 @@ namespace dftfe
         if (d_dftParamsPtr->useGPU && d_dftParamsPtr->autoGPUBlockSizes)
           d_numEigenValues =
             (numElectrons / 2.0) + std::max((d_dftParamsPtr->mixingMethod ==
-                                                 "LOW_RANK_JACINV_PRECOND" ?
+                                                 "LOW_RANK_DIELECM_PRECOND" ?
                                                0.2 :
                                                0.17) *
                                               (numElectrons / 2.0),
@@ -718,7 +718,7 @@ namespace dftfe
     eigenValues.resize(d_kPointWeights.size());
     eigenValuesRRSplit.resize(d_kPointWeights.size());
 
-    if (d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+    if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_densityMatDerFermiEnergy.resize((d_dftParamsPtr->spinPolarized + 1) *
                                         d_kPointWeights.size());
 
@@ -2140,7 +2140,7 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     if (d_dftParamsPtr->mixingMethod ==
-                        "LOW_RANK_JACINV_PRECOND")
+                        "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
                         scfIter);
                     else
@@ -2153,7 +2153,7 @@ namespace dftfe
                         kerkerPreconditionedResidualSolverProblem,
                         dealiiCGSolver);
                     else if (d_dftParamsPtr->mixingMethod ==
-                             "LOW_RANK_JACINV_PRECOND")
+                             "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
                     else
                       norm = mixing_simple();
@@ -2175,7 +2175,7 @@ namespace dftfe
                     else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
                       norm = mixing_broyden_spinPolarized();
                     else if (d_dftParamsPtr->mixingMethod ==
-                             "LOW_RANK_JACINV_PRECOND")
+                             "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
                         scfIter);
                     else if (d_dftParamsPtr->mixingMethod ==
@@ -2197,7 +2197,7 @@ namespace dftfe
                         kerkerPreconditionedResidualSolverProblem,
                         dealiiCGSolver);
                     else if (d_dftParamsPtr->mixingMethod ==
-                             "LOW_RANK_JACINV_PRECOND")
+                             "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
                   }
 

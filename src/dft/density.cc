@@ -26,7 +26,7 @@ dftClass<FEOrder, FEOrderElectro>::popOutRhoInRhoOutVals()
   // pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
 
   if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-      d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       if (d_rhoInNodalVals.size() == d_dftParamsPtr->mixingHistory)
         {
@@ -99,7 +99,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   const bool isGroundState)
 {
   if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-      d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
 #ifdef DFTFE_WITH_GPU
       computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
@@ -288,7 +288,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   else if (d_dftParamsPtr->computeEnergyEverySCF)
     {
       if (d_dftParamsPtr->mixingMethod != "ANDERSON_WITH_KERKER" &&
-          d_dftParamsPtr->mixingMethod != "LOW_RANK_JACINV_PRECOND")
+          d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND")
         {
           std::function<double(
             const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
@@ -457,7 +457,7 @@ dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
         }
 
       if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-          d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+          d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
         {
           d_rhoInNodalValues = d_rhoOutNodalValues;
           d_rhoInNodalValues.update_ghost_values();

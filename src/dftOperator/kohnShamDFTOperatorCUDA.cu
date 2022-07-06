@@ -892,7 +892,7 @@ namespace dftfe
         dftPtr->d_densityDofHandlerIndex),
       BVec);
 
-    if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+    if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_parallelChebyBlockVector2Device.reinit(
         d_parallelChebyBlockVectorDevice);
 

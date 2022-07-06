@@ -168,7 +168,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
   // Kerker for other mixing schemes it is done in density.cc as we need to do
   // this initialization every SCF
   if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-      d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       rhoOutVals.push_back(std::map<dealii::CellId, std::vector<double>>());
       rhoOutValues = &(rhoOutVals.back());
@@ -206,7 +206,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
 
 
   if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-      d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       const IndexSet &locallyOwnedSet =
         d_dofHandlerRhoNodal.locally_owned_dofs();
