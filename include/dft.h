@@ -861,10 +861,11 @@ namespace dftfe
       dealiiLinearSolver &dealiiLinearSolver);
 
     double
-    lowrankApproxScfJacobianInv(const unsigned int scfIter);
+    lowrankApproxScfDielectricMatrixInv(const unsigned int scfIter);
 
     double
-    lowrankApproxScfJacobianInvSpinPolarized(const unsigned int scfIter);
+    lowrankApproxScfDielectricMatrixInvSpinPolarized(
+      const unsigned int scfIter);
 
     /**
      * Re solves the all electrostatics on a h refined mesh, and computes
@@ -1349,8 +1350,8 @@ namespace dftfe
     std::deque<distributedCPUVec<double>> d_fvSpin0containerVals;
     std::deque<distributedCPUVec<double>> d_vSpin1containerVals;
     std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
-    unsigned int                          d_rankCurrentLRJI;
-    double d_relativeErrorJacInvApproxPrevScfLRJI;
+    unsigned int                          d_rankCurrentLRD;
+    double                                d_relativeErrorJacInvApproxPrevScfLRD;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,

@@ -3074,7 +3074,7 @@ namespace dftfe
       // X^{T}*HConjPrime*XConj
       //
       computing_timer.enter_subsection("Compute ProjHamPrime, DMFOR step");
-      if (dftParams.singlePrecLRJI)
+      if (dftParams.singlePrecLRD)
         {
           operatorMatrix.XtHXMixedPrec(
             X, N, N, processGrid, projHamPrimePar, true);
@@ -3188,7 +3188,7 @@ namespace dftfe
 
       densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
 
-      if (dftParams.singlePrecLRJI)
+      if (dftParams.singlePrecLRD)
         {
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationMixedPrec<T, std::complex<float>>(

@@ -52,14 +52,14 @@ namespace dftfe
       writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
 
 
-    /** parameters for LRJI preconditioner **/
+    /** parameters for LRD preconditioner **/
 
-    double      startingNormLRJILargeDamping;
-    std::string methodSubTypeLRJI;
-    double      adaptiveRankRelTolLRJI;
-    double      factorAdapAccumClearLRJI;
-    double      absPoissonSolverToleranceLRJI;
-    bool        singlePrecLRJI;
+    double      startingNormLRDLargeDamping;
+    std::string methodSubTypeLRD;
+    double      adaptiveRankRelTolLRD;
+    double      factorAdapAccumClearLRD;
+    double      absPoissonSolverToleranceLRD;
+    bool        singlePrecLRD;
     bool        estimateJacCondNoFinalSCFIter;
 
     /**********************************************/

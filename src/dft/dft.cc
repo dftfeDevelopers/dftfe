@@ -105,8 +105,8 @@ namespace dftfe
 #include "psiInitialGuess.cc"
 #include "publicMethods.cc"
 #include "restart.cc"
-#include "lowrankApproxScfJacobianInv.cc"
-#include "lowrankApproxScfJacobianInvSpinPolarized.cc"
+#include "lowrankApproxScfDielectricMatrixInv.cc"
+#include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
 #include "computeOutputDensityDirectionalDerivative.cc"
 
   //
@@ -2109,10 +2109,10 @@ namespace dftfe
     //
     // Begin SCF iteration
     //
-    unsigned int scfIter                   = 0;
-    double       norm                      = 1.0;
-    d_rankCurrentLRJI                      = 0;
-    d_relativeErrorJacInvApproxPrevScfLRJI = 100.0;
+    unsigned int scfIter                  = 0;
+    double       norm                     = 1.0;
+    d_rankCurrentLRD                      = 0;
+    d_relativeErrorJacInvApproxPrevScfLRD = 100.0;
     // CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol =
       d_dftParamsPtr->chebyshevTolerance;
@@ -2141,7 +2141,8 @@ namespace dftfe
                   {
                     if (d_dftParamsPtr->mixingMethod ==
                         "LOW_RANK_JACINV_PRECOND")
-                      norm = lowrankApproxScfJacobianInvSpinPolarized(scfIter);
+                      norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
+                        scfIter);
                     else
                       norm = mixing_simple_spinPolarized();
                   }
@@ -2153,7 +2154,7 @@ namespace dftfe
                         dealiiCGSolver);
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_JACINV_PRECOND")
-                      norm = lowrankApproxScfJacobianInv(scfIter);
+                      norm = lowrankApproxScfDielectricMatrixInv(scfIter);
                     else
                       norm = mixing_simple();
                   }
@@ -2175,7 +2176,8 @@ namespace dftfe
                       norm = mixing_broyden_spinPolarized();
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_JACINV_PRECOND")
-                      norm = lowrankApproxScfJacobianInvSpinPolarized(scfIter);
+                      norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
+                        scfIter);
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       AssertThrow(
@@ -2196,7 +2198,7 @@ namespace dftfe
                         dealiiCGSolver);
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_JACINV_PRECOND")
-                      norm = lowrankApproxScfJacobianInv(scfIter);
+                      norm = lowrankApproxScfDielectricMatrixInv(scfIter);
                   }
 
                 if (d_dftParamsPtr->verbosity >= 1)

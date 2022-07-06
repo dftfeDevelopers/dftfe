@@ -89,7 +89,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     false);
 
   dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                       d_dftParamsPtr->absPoissonSolverToleranceLRJI,
+                       d_dftParamsPtr->absPoissonSolverToleranceLRD,
                        d_dftParamsPtr->maxLinearSolverIterations,
                        d_dftParamsPtr->verbosity);
 
@@ -401,7 +401,7 @@ dftClass<FEOrder, FEOrderElectro>::
 #ifdef DFTFE_WITH_GPU
   if (d_dftParamsPtr->useGPU)
     {
-      if (d_dftParamsPtr->singlePrecLRJI)
+      if (d_dftParamsPtr->singlePrecLRD)
         computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
                                         dataTypes::numberFP32GPU>(
           d_eigenVectorsFlattenedCUDA.begin(),
@@ -451,7 +451,7 @@ dftClass<FEOrder, FEOrderElectro>::
 #endif
   if (!d_dftParamsPtr->useGPU)
     {
-      if (d_dftParamsPtr->singlePrecLRJI)
+      if (d_dftParamsPtr->singlePrecLRD)
         computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
                                                  dataTypes::numberFP32>(
           d_eigenVectorsFlattenedSTL,

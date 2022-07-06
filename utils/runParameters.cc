@@ -696,7 +696,7 @@ namespace dftfe
           "MIXING PARAMETER",
           "0.0",
           Patterns::Double(-1e-12, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRJI.");
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",

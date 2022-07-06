@@ -154,8 +154,8 @@ namespace internalLowrankJacInv
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
-dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
-  const unsigned int scfIter)
+dftClass<FEOrder, FEOrderElectro>::
+  lowrankApproxScfDielectricMatrixInvSpinPolarized(const unsigned int scfIter)
 {
   int this_process;
   MPI_Comm_rank(d_mpiCommParent, &this_process);
@@ -230,11 +230,11 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   const unsigned int local_size = residualRho.local_size();
 
   const unsigned int maxRankCurrentSCF =
-    d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
+    d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
   const unsigned int maxRankAccum = 20;
 
-  if (d_rankCurrentLRJI >= 1 &&
-      d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+  if (d_rankCurrentLRD >= 1 &&
+      d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
     {
       const double relativeApproxError =
         internalLowrankJacInv::relativeErrorEstimateSpin(d_fvSpin0containerVals,
@@ -242,26 +242,26 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
                                                          residualRhoSpin0,
                                                          residualRhoSpin1,
                                                          k0);
-      if (d_rankCurrentLRJI >= maxRankAccum ||
-          (relativeApproxError > d_dftParamsPtr->adaptiveRankRelTolLRJI *
-                                   d_dftParamsPtr->factorAdapAccumClearLRJI) ||
-          relativeApproxError > d_relativeErrorJacInvApproxPrevScfLRJI)
+      if (d_rankCurrentLRD >= maxRankAccum ||
+          (relativeApproxError > d_dftParamsPtr->adaptiveRankRelTolLRD *
+                                   d_dftParamsPtr->factorAdapAccumClearLRD) ||
+          relativeApproxError > d_relativeErrorJacInvApproxPrevScfLRD)
         {
           if (d_dftParamsPtr->verbosity >= 4)
             pcout
               << " Clearing accumulation as relative tolerance metric exceeded "
               << ", relative tolerance current scf: " << relativeApproxError
               << ", relative tolerance prev scf: "
-              << d_relativeErrorJacInvApproxPrevScfLRJI << std::endl;
+              << d_relativeErrorJacInvApproxPrevScfLRD << std::endl;
           d_vSpin0containerVals.clear();
           d_vSpin1containerVals.clear();
           d_fvSpin0containerVals.clear();
           d_fvSpin1containerVals.clear();
-          d_rankCurrentLRJI                      = 0;
-          d_relativeErrorJacInvApproxPrevScfLRJI = 100.0;
+          d_rankCurrentLRD                      = 0;
+          d_relativeErrorJacInvApproxPrevScfLRD = 100.0;
         }
       else
-        d_relativeErrorJacInvApproxPrevScfLRJI = relativeApproxError;
+        d_relativeErrorJacInvApproxPrevScfLRD = relativeApproxError;
     }
   else
     {
@@ -269,13 +269,13 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
       d_vSpin1containerVals.clear();
       d_fvSpin0containerVals.clear();
       d_fvSpin1containerVals.clear();
-      d_rankCurrentLRJI = 0;
+      d_rankCurrentLRD = 0;
     }
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
   while (((rankAddedInThisScf < maxRankThisScf) &&
-          d_rankCurrentLRJI < maxRankAccum) ||
+          d_rankCurrentLRD < maxRankAccum) ||
          ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
           (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
     {
@@ -283,59 +283,59 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
         {
           d_vSpin0containerVals.push_back(residualRhoSpin0);
           d_vSpin1containerVals.push_back(residualRhoSpin1);
-          d_vSpin0containerVals[d_rankCurrentLRJI] *= k0;
-          d_vSpin1containerVals[d_rankCurrentLRJI] *= k0;
+          d_vSpin0containerVals[d_rankCurrentLRD] *= k0;
+          d_vSpin1containerVals[d_rankCurrentLRD] *= k0;
         }
       else
         {
           d_vSpin0containerVals.push_back(
-            d_fvSpin0containerVals[d_rankCurrentLRJI - 1]);
+            d_fvSpin0containerVals[d_rankCurrentLRD - 1]);
           d_vSpin1containerVals.push_back(
-            d_fvSpin1containerVals[d_rankCurrentLRJI - 1]);
+            d_fvSpin1containerVals[d_rankCurrentLRD - 1]);
         }
 
       compvecSpin0 = 0;
       compvecSpin1 = 0;
-      for (int jrank = 0; jrank < d_rankCurrentLRJI; jrank++)
+      for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
         {
-          const double tTvj = d_vSpin0containerVals[d_rankCurrentLRJI] *
+          const double tTvj = d_vSpin0containerVals[d_rankCurrentLRD] *
                                 d_vSpin0containerVals[jrank] +
-                              d_vSpin1containerVals[d_rankCurrentLRJI] *
+                              d_vSpin1containerVals[d_rankCurrentLRD] *
                                 d_vSpin1containerVals[jrank];
           compvecSpin0.add(tTvj, d_vSpin0containerVals[jrank]);
           compvecSpin1.add(tTvj, d_vSpin1containerVals[jrank]);
         }
-      d_vSpin0containerVals[d_rankCurrentLRJI] -= compvecSpin0;
-      d_vSpin1containerVals[d_rankCurrentLRJI] -= compvecSpin1;
+      d_vSpin0containerVals[d_rankCurrentLRD] -= compvecSpin0;
+      d_vSpin1containerVals[d_rankCurrentLRD] -= compvecSpin1;
 
       const double normvmat = internalLowrankJacInv::frobeniusNormSpin(
-        d_vSpin0containerVals[d_rankCurrentLRJI],
-        d_vSpin1containerVals[d_rankCurrentLRJI]);
+        d_vSpin0containerVals[d_rankCurrentLRD],
+        d_vSpin1containerVals[d_rankCurrentLRD]);
 
 
-      d_vSpin0containerVals[d_rankCurrentLRJI] *= 1.0 / normvmat;
-      d_vSpin1containerVals[d_rankCurrentLRJI] *= 1.0 / normvmat;
+      d_vSpin0containerVals[d_rankCurrentLRD] *= 1.0 / normvmat;
+      d_vSpin1containerVals[d_rankCurrentLRD] *= 1.0 / normvmat;
 
       const double normvmatNormalized =
         internalLowrankJacInv::frobeniusNormSpin(
-          d_vSpin0containerVals[d_rankCurrentLRJI],
-          d_vSpin1containerVals[d_rankCurrentLRJI]);
+          d_vSpin0containerVals[d_rankCurrentLRD],
+          d_vSpin1containerVals[d_rankCurrentLRD]);
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << " Matrix norm of V:  " << normvmatNormalized
-              << ", for rank: " << d_rankCurrentLRJI + 1 << std::endl;
+              << ", for rank: " << d_rankCurrentLRD + 1 << std::endl;
 
       d_fvSpin0containerVals.push_back(residualRhoSpin0);
-      d_fvSpin0containerVals[d_rankCurrentLRJI] = 0;
+      d_fvSpin0containerVals[d_rankCurrentLRD] = 0;
 
       d_fvSpin1containerVals.push_back(residualRhoSpin1);
-      d_fvSpin1containerVals[d_rankCurrentLRJI] = 0;
+      d_fvSpin1containerVals[d_rankCurrentLRD] = 0;
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_vSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
-          d_vSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
+          d_vSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
+          d_vSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
@@ -345,19 +345,19 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
         pcout << "Integral V and contraction over spin before scaling:  "
               << charge << std::endl;
 
-      d_vSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
-                                                   2.0);
-      d_vSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
-                                                   2.0);
+      d_vSpin0containerVals[d_rankCurrentLRD].add(-charge / d_domainVolume /
+                                                  2.0);
+      d_vSpin1containerVals[d_rankCurrentLRD].add(-charge / d_domainVolume /
+                                                  2.0);
 
-      // d_constraintsRhoNodal.set_zero(d_vSpin0containerVals[d_rankCurrentLRJI]);
-      // d_constraintsRhoNodal.set_zero(d_vSpin1containerVals[d_rankCurrentLRJI]);
+      // d_constraintsRhoNodal.set_zero(d_vSpin0containerVals[d_rankCurrentLRD]);
+      // d_constraintsRhoNodal.set_zero(d_vSpin1containerVals[d_rankCurrentLRD]);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_vSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
-          d_vSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
+          d_vSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
+          d_vSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
@@ -368,17 +368,17 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
 
       computeOutputDensityDirectionalDerivative(
         tempDensityPrimeTotalVec,
-        d_vSpin0containerVals[d_rankCurrentLRJI],
-        d_vSpin1containerVals[d_rankCurrentLRJI],
+        d_vSpin0containerVals[d_rankCurrentLRD],
+        d_vSpin1containerVals[d_rankCurrentLRD],
         dummy,
-        d_fvSpin0containerVals[d_rankCurrentLRJI],
-        d_fvSpin1containerVals[d_rankCurrentLRJI]);
+        d_fvSpin0containerVals[d_rankCurrentLRD],
+        d_fvSpin1containerVals[d_rankCurrentLRD]);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_fvSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
-          d_fvSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
+          d_fvSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
+          d_fvSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
@@ -388,16 +388,16 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
         pcout << "Integral fV and contraction over spin before scaling:  "
               << charge << std::endl;
 
-      d_fvSpin0containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
-                                                    2.0);
-      d_fvSpin1containerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume /
-                                                    2.0);
+      d_fvSpin0containerVals[d_rankCurrentLRD].add(-charge / d_domainVolume /
+                                                   2.0);
+      d_fvSpin1containerVals[d_rankCurrentLRD].add(-charge / d_domainVolume /
+                                                   2.0);
 
       for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
            idof++)
         tempDensityPrimeTotalVec.local_element(idof) =
-          d_fvSpin0containerVals[d_rankCurrentLRJI].local_element(idof) +
-          d_fvSpin1containerVals[d_rankCurrentLRJI].local_element(idof);
+          d_fvSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
+          d_fvSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
       tempDensityPrimeTotalVec.update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
@@ -410,21 +410,21 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
         pcout
           << " Frobenius norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "
           << internalLowrankJacInv::frobeniusNormSpin(
-               d_fvSpin0containerVals[d_rankCurrentLRJI],
-               d_fvSpin1containerVals[d_rankCurrentLRJI])
-          << " for kernel rank: " << d_rankCurrentLRJI + 1 << std::endl;
+               d_fvSpin0containerVals[d_rankCurrentLRD],
+               d_fvSpin1containerVals[d_rankCurrentLRD])
+          << " for kernel rank: " << d_rankCurrentLRD + 1 << std::endl;
 
-      d_fvSpin0containerVals[d_rankCurrentLRJI] -=
-        d_vSpin0containerVals[d_rankCurrentLRJI];
-      d_fvSpin1containerVals[d_rankCurrentLRJI] -=
-        d_vSpin1containerVals[d_rankCurrentLRJI];
-      d_fvSpin0containerVals[d_rankCurrentLRJI] *= k0;
-      d_fvSpin1containerVals[d_rankCurrentLRJI] *= k0;
-      d_rankCurrentLRJI++;
+      d_fvSpin0containerVals[d_rankCurrentLRD] -=
+        d_vSpin0containerVals[d_rankCurrentLRD];
+      d_fvSpin1containerVals[d_rankCurrentLRD] -=
+        d_vSpin1containerVals[d_rankCurrentLRD];
+      d_fvSpin0containerVals[d_rankCurrentLRD] *= k0;
+      d_fvSpin1containerVals[d_rankCurrentLRD] *= k0;
+      d_rankCurrentLRD++;
       rankAddedInThisScf++;
 
-      if (d_dftParamsPtr->methodSubTypeLRJI == "ADAPTIVE" ||
-          d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+      if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE" ||
+          d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
         {
           const double relativeApproxError =
             internalLowrankJacInv::relativeErrorEstimateSpin(
@@ -436,9 +436,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
 
           if (d_dftParamsPtr->verbosity >= 4)
             pcout << " Relative approx error:  " << relativeApproxError
-                  << " for kernel rank: " << d_rankCurrentLRJI << std::endl;
+                  << " for kernel rank: " << d_rankCurrentLRD << std::endl;
 
-          if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRJI)
+          if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD)
             {
               break;
             }
@@ -447,7 +447,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
 
 
   if (d_dftParamsPtr->verbosity >= 4)
-    pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRJI
+    pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRD
           << " Accumulated in this scf: " << rankAddedInThisScf << std::endl;
 
   internalLowrankJacInv::lowrankKernelApplySpin(d_fvSpin0containerVals,
@@ -470,7 +470,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   // Suggested to use 0.1 for initial steps
   // as well as when normValue is greater than 2.0
   double const2 =
-    (normValue > d_dftParamsPtr->startingNormLRJILargeDamping || scfIter < 2) ?
+    (normValue > d_dftParamsPtr->startingNormLRDLargeDamping || scfIter < 2) ?
       -0.1 :
       -d_dftParamsPtr->mixingParameter;
 
