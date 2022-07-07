@@ -25,12 +25,21 @@ dftClass<FEOrder, FEOrderElectro>::popOutRhoInRhoOutVals()
 {
   // pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
 
-  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       if (d_rhoInNodalVals.size() == d_dftParamsPtr->mixingHistory)
         {
           d_rhoInNodalVals.pop_front();
           d_rhoOutNodalVals.pop_front();
+
+          if (d_dftParamsPtr->spinPolarized == 1)
+            {
+              d_rhoInSpin0NodalVals.pop_front();
+              d_rhoOutSpin0NodalVals.pop_front();
+              d_rhoInSpin1NodalVals.pop_front();
+              d_rhoOutSpin1NodalVals.pop_front();
+            }
         }
     }
   else
@@ -89,7 +98,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   const bool isConsiderSpectrumSplitting,
   const bool isGroundState)
 {
-  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
 #ifdef DFTFE_WITH_GPU
       computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
@@ -124,6 +134,30 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
         *gradRhoOutValues,
         *gradRhoOutValues,
         d_dftParamsPtr->xcFamilyType == "GGA");
+
+      if (d_dftParamsPtr->spinPolarized == 1)
+        {
+          d_rhoOutSpin0NodalValues.update_ghost_values();
+          d_rhoOutSpin0NodalValues *= scalingFactor;
+          d_rhoOutSpin0NodalVals.push_back(d_rhoOutSpin0NodalValues);
+
+
+          d_rhoOutSpin1NodalValues.update_ghost_values();
+          d_rhoOutSpin1NodalValues *= scalingFactor;
+          d_rhoOutSpin1NodalVals.push_back(d_rhoOutSpin1NodalValues);
+
+          // interpolate nodal rhoOut data to quadrature data
+          interpolateRhoSpinNodalDataToQuadratureDataGeneral(
+            d_matrixFreeDataPRefined,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_rhoOutSpin0NodalValues,
+            d_rhoOutSpin1NodalValues,
+            *rhoOutValuesSpinPolarized,
+            *gradRhoOutValuesSpinPolarized,
+            *gradRhoOutValuesSpinPolarized,
+            d_dftParamsPtr->xcFamilyType == "GGA");
+        }
 
 
       if (d_dftParamsPtr->verbosity >= 3)
@@ -182,8 +216,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           *d_dftParamsPtr,
           isConsiderSpectrumSplitting &&
             d_numEigenValues != d_numEigenValuesRR);
-
-      else
+#endif
+      if (!d_dftParamsPtr->useGPU)
         computeRhoFromPSICPU(
           d_eigenVectorsFlattenedSTL,
           d_eigenVectorsRotFracDensityFlattenedSTL,
@@ -211,35 +245,6 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           *d_dftParamsPtr,
           isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
           false);
-#else
-      computeRhoFromPSICPU(
-        d_eigenVectorsFlattenedSTL,
-        d_eigenVectorsRotFracDensityFlattenedSTL,
-        d_numEigenValues,
-        d_numEigenValuesRR,
-        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-        eigenValues,
-        fermiEnergy,
-        fermiEnergyUp,
-        fermiEnergyDown,
-        kohnShamDFTEigenOperatorCPU,
-        dofHandler,
-        matrix_free_data.n_physical_cells(),
-        matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
-        matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
-        d_kPointWeights,
-        rhoOutValues,
-        gradRhoOutValues,
-        rhoOutValuesSpinPolarized,
-        gradRhoOutValuesSpinPolarized,
-        d_dftParamsPtr->xcFamilyType == "GGA",
-        d_mpiCommParent,
-        interpoolcomm,
-        interBandGroupComm,
-        *d_dftParamsPtr,
-        isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
-        false);
-#endif
       // normalizeRhoOutQuadValues();
 
       if (isGroundState)
@@ -247,14 +252,12 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           if (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD != 2)
             normalizeRhoOutQuadValues();
 
+          computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_GPU
-          computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
-                                 kohnShamDFTEigenOperatorCPU,
-                                 isConsiderSpectrumSplitting);
-#else
-          computeRhoNodalFromPSI(kohnShamDFTEigenOperatorCPU,
-                                 isConsiderSpectrumSplitting);
+            kohnShamDFTEigenOperator,
 #endif
+            kohnShamDFTEigenOperatorCPU,
+            isConsiderSpectrumSplitting);
           d_rhoOutNodalValues.update_ghost_values();
 
           // normalize rho
@@ -284,7 +287,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
     }
   else if (d_dftParamsPtr->computeEnergyEverySCF)
     {
-      if (d_dftParamsPtr->mixingMethod != "ANDERSON_WITH_KERKER")
+      if (d_dftParamsPtr->mixingMethod != "ANDERSON_WITH_KERKER" &&
+          d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND")
         {
           std::function<double(
             const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
@@ -452,9 +456,11 @@ dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
           gradRhoInValuesSpinPolarized = &(gradRhoInValsSpinPolarized.back());
         }
 
-      if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+      if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+          d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
         {
           d_rhoInNodalValues = d_rhoOutNodalValues;
+          d_rhoInNodalValues.update_ghost_values();
 
           // normalize rho
           const double charge =
@@ -476,15 +482,55 @@ dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
             *gradRhoInValues,
             d_dftParamsPtr->xcFamilyType == "GGA");
 
+          if (d_dftParamsPtr->spinPolarized == 1)
+            {
+              d_rhoInSpin0NodalValues = d_rhoOutSpin0NodalValues;
+              d_rhoInSpin0NodalValues.update_ghost_values();
+
+              d_rhoInSpin1NodalValues = d_rhoOutSpin1NodalValues;
+              d_rhoInSpin1NodalValues.update_ghost_values();
+
+              // scale nodal vector with scalingFactor
+              d_rhoInSpin0NodalValues *= scalingFactor;
+              d_rhoInSpin0NodalVals.push_back(d_rhoInSpin0NodalValues);
+
+              d_rhoInSpin1NodalValues *= scalingFactor;
+              d_rhoInSpin1NodalVals.push_back(d_rhoInSpin1NodalValues);
+
+              interpolateRhoSpinNodalDataToQuadratureDataGeneral(
+                d_matrixFreeDataPRefined,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro,
+                d_rhoInSpin0NodalValues,
+                d_rhoInSpin1NodalValues,
+                *rhoInValuesSpinPolarized,
+                *gradRhoInValuesSpinPolarized,
+                *gradRhoInValuesSpinPolarized,
+                d_dftParamsPtr->xcFamilyType == "GGA");
+            }
 
           rhoOutVals.push_back(std::map<dealii::CellId, std::vector<double>>());
           rhoOutValues = &(rhoOutVals.back());
+          if (d_dftParamsPtr->spinPolarized == 1)
+            {
+              rhoOutValsSpinPolarized.push_back(
+                std::map<dealii::CellId, std::vector<double>>());
+              rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+            }
 
           if (d_dftParamsPtr->xcFamilyType == "GGA")
             {
               gradRhoOutVals.push_back(
                 std::map<dealii::CellId, std::vector<double>>());
               gradRhoOutValues = &(gradRhoOutVals.back());
+
+              if (d_dftParamsPtr->spinPolarized == 1)
+                {
+                  gradRhoOutValsSpinPolarized.push_back(
+                    std::map<dealii::CellId, std::vector<double>>());
+                  gradRhoOutValuesSpinPolarized =
+                    &(gradRhoOutValsSpinPolarized.back());
+                }
             }
         }
 
@@ -505,6 +551,8 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
   bool isConsiderSpectrumSplitting)
 {
   std::map<dealii::CellId, std::vector<double>> rhoPRefinedNodalData;
+  std::map<dealii::CellId, std::vector<double>>
+    rhoPRefinedSpinPolarizedNodalData;
 
   // initialize variables to be used later
   const unsigned int dofs_per_cell =
@@ -551,12 +599,17 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
           const dealii::CellId cellId = cell->id();
           rhoPRefinedNodalData[cellId] =
             std::vector<double>(numQuadPoints, 0.0);
+
+          if (d_dftParamsPtr->spinPolarized == 1)
+            {
+              rhoPRefinedSpinPolarizedNodalData[cellId] =
+                std::vector<double>(numQuadPoints * 2, 0.0);
+            }
         }
     }
 
   // allocate dummy datastructures
   std::map<dealii::CellId, std::vector<double>> _gradRhoValues;
-  std::map<dealii::CellId, std::vector<double>> _rhoValuesSpinPolarized;
   std::map<dealii::CellId, std::vector<double>> _gradRhoValuesSpinPolarized;
 
   cell = dofHandler.begin_active();
@@ -571,8 +624,6 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            (_rhoValuesSpinPolarized)[cellId] =
-              std::vector<double>(2 * numQuadPoints, 0.0);
             if (d_dftParamsPtr->xcFamilyType == "GGA")
               (_gradRhoValuesSpinPolarized)[cellId] =
                 std::vector<double>(6 * numQuadPoints, 0.0);
@@ -603,7 +654,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       d_kPointWeights,
       &rhoPRefinedNodalData,
       &_gradRhoValues,
-      &_rhoValuesSpinPolarized,
+      &rhoPRefinedSpinPolarizedNodalData,
       &_gradRhoValuesSpinPolarized,
       false,
       d_mpiCommParent,
@@ -612,8 +663,8 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       *d_dftParamsPtr,
       isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
       true);
-
-  else
+#endif
+  if (!d_dftParamsPtr->useGPU)
     computeRhoFromPSICPU(
       d_eigenVectorsFlattenedSTL,
       d_eigenVectorsRotFracDensityFlattenedSTL,
@@ -632,7 +683,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       d_kPointWeights,
       &rhoPRefinedNodalData,
       &_gradRhoValues,
-      &_rhoValuesSpinPolarized,
+      &rhoPRefinedSpinPolarizedNodalData,
       &_gradRhoValuesSpinPolarized,
       false,
       d_mpiCommParent,
@@ -641,35 +692,6 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       *d_dftParamsPtr,
       isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
       true);
-#else
-  computeRhoFromPSICPU(
-    d_eigenVectorsFlattenedSTL,
-    d_eigenVectorsRotFracDensityFlattenedSTL,
-    d_numEigenValues,
-    d_numEigenValuesRR,
-    d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-    eigenValues,
-    fermiEnergy,
-    fermiEnergyUp,
-    fermiEnergyDown,
-    kohnShamDFTEigenOperatorCPU,
-    dofHandler,
-    matrix_free_data.n_physical_cells(),
-    matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
-    quadrature_formula.size(),
-    d_kPointWeights,
-    &rhoPRefinedNodalData,
-    &_gradRhoValues,
-    &_rhoValuesSpinPolarized,
-    &_gradRhoValuesSpinPolarized,
-    false,
-    d_mpiCommParent,
-    interpoolcomm,
-    interBandGroupComm,
-    *d_dftParamsPtr,
-    isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
-    true);
-#endif
 
   // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
   DoFHandler<3>::active_cell_iterator cellP =
@@ -699,6 +721,44 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
                   if (locallyOwnedDofs.is_element(nodeID))
                     d_rhoOutNodalValues(nodeID) =
                       nodalValues[renumberingMap[iNode]];
+                }
+            }
+        }
+    }
+
+  cellP = d_dofHandlerRhoNodal.begin_active();
+  endcP = d_dofHandlerRhoNodal.end();
+
+  if (d_dftParamsPtr->spinPolarized == 1)
+    {
+      for (; cellP != endcP; ++cellP)
+        {
+          if (cellP->is_locally_owned())
+            {
+              std::vector<dealii::types::global_dof_index> cell_dof_indices(
+                dofs_per_cell);
+              cellP->get_dof_indices(cell_dof_indices);
+              const std::vector<double> &nodalValues =
+                rhoPRefinedSpinPolarizedNodalData.find(cellP->id())->second;
+              Assert(
+                nodalValues.size() == 2 * dofs_per_cell,
+                ExcMessage(
+                  "Number of nodes in 2p DoFHandler does not match with data stored in rhoNodal Values variable"));
+
+              for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+                {
+                  const dealii::types::global_dof_index nodeID =
+                    cell_dof_indices[iNode];
+                  if (!d_constraintsRhoNodal.is_constrained(nodeID))
+                    {
+                      if (locallyOwnedDofs.is_element(nodeID))
+                        {
+                          d_rhoOutSpin0NodalValues(nodeID) =
+                            nodalValues[2 * renumberingMap[iNode]];
+                          d_rhoOutSpin1NodalValues(nodeID) =
+                            nodalValues[2 * renumberingMap[iNode] + 1];
+                        }
+                    }
                 }
             }
         }

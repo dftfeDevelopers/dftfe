@@ -294,7 +294,7 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
 
-        d_dftPtr->solve(true, false, false, false);
+        d_dftPtr->solve(true, false);
         force = d_dftPtr->getForceonAtoms();
         if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
             d_dftPtr->getParametersObject().spinPolarized != 1)
@@ -1266,7 +1266,7 @@ namespace dftfe
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       pcout << "Time taken for updateAtomPositionsAndMoveMesh: " << update_time
             << std::endl;
-    d_dftPtr->solve(true, false, false, false);
+    d_dftPtr->solve(true, false);
     forceOnAtoms = d_dftPtr->getForceonAtoms();
     if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
         d_dftPtr->getParametersObject().spinPolarized != 1)
@@ -1696,7 +1696,7 @@ namespace dftfe
          force[iCharge][2] = fileForceData[iCharge][2];
        }
        */
-    d_dftPtr->solve(true, false, false, false);
+    d_dftPtr->solve(true, false);
     force = d_dftPtr->getForceonAtoms();
 
     if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&

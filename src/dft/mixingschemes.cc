@@ -122,7 +122,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
         }
     }
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 // implement anderson mixing scheme
@@ -415,7 +415,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
 
 
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -687,7 +687,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
 
 
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -1057,7 +1057,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
 
 
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -1186,7 +1186,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
         }
     }
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 // implement anderson mixing scheme
@@ -1573,5 +1573,5 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
             }
         }
     }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }

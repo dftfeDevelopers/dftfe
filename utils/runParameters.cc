@@ -694,9 +694,9 @@ namespace dftfe
 
         prm.declare_entry(
           "MIXING PARAMETER",
-          "0.2",
-          Patterns::Double(0.0, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.2.");
+          "0.0",
+          Patterns::Double(-1e-12, 1.0),
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",
@@ -707,7 +707,8 @@ namespace dftfe
         prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
-          Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER"),
+          Patterns::Selection(
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -728,6 +729,52 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
+
+        prm.enter_subsection("LOW RANK DIELECM PRECOND");
+        {
+          prm.declare_entry(
+            "METHOD SUB TYPE",
+            "ADAPTIVE",
+            Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
+            "[Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.");
+
+          prm.declare_entry(
+            "STARTING NORM LARGE DAMPING",
+            "2.0",
+            Patterns::Double(0.0, 10.0),
+            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::MIXING PARAMETER, otherwise set to 0.1.");
+
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL",
+            "0.3",
+            Patterns::Double(0.0, 1.0),
+            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
+
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL REACCUM FACTOR",
+            "2.0",
+            Patterns::Double(0.0, 100.0),
+            "[Advanced] For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.");
+
+          prm.declare_entry(
+            "POISSON SOLVER ABS TOL",
+            "1e-6",
+            Patterns::Double(0.0),
+            "[Advanced] Absolute poisson solver tolerance for electrostatic potential response computation.");
+
+          prm.declare_entry(
+            "USE SINGLE PREC DENSITY RESPONSE",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Turns on single precision optimization in density response computation.");
+
+          prm.declare_entry(
+            "ESTIMATE JAC CONDITION NO",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Estimate condition number of the Jacobian at the final SCF iteration step using a low rank approximation with ADAPTIVE RANK REL TOL=1.0e-5.");
+        }
+        prm.leave_subsection();
 
         prm.enter_subsection("Eigen-solver parameters");
         {
@@ -939,30 +986,6 @@ namespace dftfe
           "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
 
         prm.declare_entry(
-          "XL BOMD",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD",
-          "1e-6",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD RANK UPDATES FD",
-          "1e-7",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD RESTART",
-          "1e-9",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
           "MAX JACOBIAN RATIO FACTOR",
           "1.5",
           Patterns::Double(0.9, 3.0),
@@ -1004,46 +1027,6 @@ namespace dftfe
                           "2592000.0",
                           Patterns::Double(0.0),
                           "[Standard] Maximum Wall Time in seconds");
-
-        prm.declare_entry(
-          "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
-          "0.1",
-          Patterns::Double(0.0),
-          "[Developer] Dirac delta scaling kernel constant for XL BOMD.");
-
-        prm.declare_entry(
-          "KERNEL RANK XL BOMD",
-          "0",
-          Patterns::Integer(0, 10),
-          "[Standard] Maximum rank for low rank kernel update in XL BOMD.");
-
-        prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD",
-                          "8",
-                          Patterns::Integer(1, 8),
-                          "[Standard] Number of dissipation terms in XL BOMD.");
-
-        prm.declare_entry(
-          "NUMBER PASSES RR SKIPPED XL BOMD",
-          "0",
-          Patterns::Integer(0),
-          "[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
-
-        prm.declare_entry("USE ATOMIC RHO XL BOMD",
-                          "true",
-                          Patterns::Bool(),
-                          "[Standard] Use atomic rho xl bomd.");
-
-        prm.declare_entry(
-          "DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Use density matrix perturbation theory for rank updates.");
-
-        prm.declare_entry(
-          "XL BOMD KERNEL RANK UPDATE FD PARAMETER",
-          "1e-2",
-          Patterns::Double(0.0),
-          "[Standard] Finite difference perturbation parameter.");
       }
       prm.leave_subsection();
     }

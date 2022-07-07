@@ -694,9 +694,9 @@ namespace dftfe
 
         prm.declare_entry(
           "MIXING PARAMETER",
-          "0.2",
-          Patterns::Double(0.0, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.2.");
+          "0.0",
+          Patterns::Double(-1e-12, 1.0),
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",
@@ -707,7 +707,8 @@ namespace dftfe
         prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
-          Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER"),
+          Patterns::Selection(
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -728,6 +729,54 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
+
+
+        prm.enter_subsection("LOW RANK DIELECM PRECOND");
+        {
+          prm.declare_entry(
+            "METHOD SUB TYPE",
+            "ADAPTIVE",
+            Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
+            "[Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.");
+
+          prm.declare_entry(
+            "STARTING NORM LARGE DAMPING",
+            "2.0",
+            Patterns::Double(0.0, 10.0),
+            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::MIXING PARAMETER, otherwise set to 0.1.");
+
+
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL",
+            "0.3",
+            Patterns::Double(0.0, 1.0),
+            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
+
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL REACCUM FACTOR",
+            "2.0",
+            Patterns::Double(0.0, 100.0),
+            "[Advanced] For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.");
+
+          prm.declare_entry(
+            "POISSON SOLVER ABS TOL",
+            "1e-6",
+            Patterns::Double(0.0),
+            "[Advanced] Absolute poisson solver tolerance for electrostatic potential response computation.");
+
+          prm.declare_entry(
+            "USE SINGLE PREC DENSITY RESPONSE",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Turns on single precision optimization in density response computation.");
+
+          prm.declare_entry(
+            "ESTIMATE JAC CONDITION NO",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Estimate condition number of the Jacobian at the final SCF iteration step using a low rank approximation with ADAPTIVE RANK REL TOL=1.0e-5.");
+        }
+        prm.leave_subsection();
 
         prm.enter_subsection("Eigen-solver parameters");
         {
@@ -764,9 +813,9 @@ namespace dftfe
 
           prm.declare_entry(
             "CHEBYSHEV FILTER TOLERANCE",
-            "5e-02",
-            Patterns::Double(1e-10),
-            "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
+            "0.0",
+            Patterns::Double(-1.0e-12),
+            "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. For default value of 0.0, we heuristically set the value between 1e-3 and 5e-2 depending on the MIXING METHOD used.");
 
           prm.declare_entry(
             "ENABLE HAMILTONIAN TIMES VECTOR OPTIM",
@@ -938,30 +987,6 @@ namespace dftfe
           "[Standard] Parameter controlling the reuse of ground-state density during molecular dynamics. The options are 0 default setting where superposition of atomic densities is the initial rho, 1 (second order extrapolation of density), and 2 (extrapolation of split density and the atomic densities are added) Option 2 is not enabled for spin-polarized case. Default setting is 0.");
 
         prm.declare_entry(
-          "XL BOMD",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD",
-          "1e-6",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD RANK UPDATES FD",
-          "1e-7",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
-          "CHEBY TOL XL BOMD RESTART",
-          "1e-9",
-          Patterns::Double(0.0),
-          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
-
-        prm.declare_entry(
           "MAX JACOBIAN RATIO FACTOR",
           "1.5",
           Patterns::Double(0.9, 3.0),
@@ -1003,46 +1028,6 @@ namespace dftfe
                           "2592000.0",
                           Patterns::Double(0.0),
                           "[Standard] Maximum Wall Time in seconds");
-
-        prm.declare_entry(
-          "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
-          "0.1",
-          Patterns::Double(0.0),
-          "[Developer] Dirac delta scaling kernel constant for XL BOMD.");
-
-        prm.declare_entry(
-          "KERNEL RANK XL BOMD",
-          "0",
-          Patterns::Integer(0, 10),
-          "[Standard] Maximum rank for low rank kernel update in XL BOMD.");
-
-        prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD",
-                          "8",
-                          Patterns::Integer(1, 8),
-                          "[Standard] Number of dissipation terms in XL BOMD.");
-
-        prm.declare_entry(
-          "NUMBER PASSES RR SKIPPED XL BOMD",
-          "0",
-          Patterns::Integer(0),
-          "[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
-
-        prm.declare_entry("USE ATOMIC RHO XL BOMD",
-                          "true",
-                          Patterns::Bool(),
-                          "[Standard] Use atomic rho xl bomd.");
-
-        prm.declare_entry(
-          "DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Use density matrix perturbation theory for rank updates.");
-
-        prm.declare_entry(
-          "XL BOMD KERNEL RANK UPDATE FD PARAMETER",
-          "1e-2",
-          Patterns::Double(0.0),
-          "[Standard] Finite difference perturbation parameter.");
       }
       prm.leave_subsection();
     }
@@ -1070,17 +1055,16 @@ namespace dftfe
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
 
-    radiusAtomBall                      = 0.0;
-    mixingParameter                     = 0.5;
-    absLinearSolverTolerance            = 1e-10;
-    selfConsistentSolverTolerance       = 1e-10;
-    TVal                                = 500;
-    start_magnetization                 = 0.0;
-    absLinearSolverToleranceHelmholtz   = 1e-10;
-    chebyshevTolerance                  = 1e-02;
-    chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
-    mixingMethod                        = "";
-    ionOptSolver                        = "";
+    radiusAtomBall                    = 0.0;
+    mixingParameter                   = 0.5;
+    absLinearSolverTolerance          = 1e-10;
+    selfConsistentSolverTolerance     = 1e-10;
+    TVal                              = 500;
+    start_magnetization               = 0.0;
+    absLinearSolverToleranceHelmholtz = 1e-10;
+    chebyshevTolerance                = 1e-02;
+    mixingMethod                      = "";
+    ionOptSolver                      = "";
 
     isPseudopotential           = false;
     periodicX                   = false;
@@ -1119,7 +1103,6 @@ namespace dftfe
     isIonForce             = false;
     isCellStress           = false;
     isBOMD                 = false;
-    isXLBOMD               = false;
     nonSelfConsistentForce = false;
     forceRelaxTol          = 1e-4; // Hartree/Bohr
     stressRelaxTol         = 1e-6; // Hartree/Bohr^3
@@ -1172,7 +1155,6 @@ namespace dftfe
     overlapComputeCommunOrthoRR                    = false;
     autoGPUBlockSizes                              = true;
     maxJacobianRatioFactorForMD                    = 1.5;
-    chebyshevFilterTolXLBOMD                       = 1e-8;
     reuseDensityMD                                 = 0;
     timeStepBOMD                                   = 0.5;
     numberStepsBOMD                                = 1000;
@@ -1181,15 +1163,9 @@ namespace dftfe
     gaussianOrderMoveMeshToAtoms                   = 4.0;
     useFlatTopGenerator                            = false;
     diracDeltaKernelScalingConstant                = 0.1;
-    kernelUpdateRankXLBOMD                         = 0;
-    kmaxXLBOMD                                     = 8;
-    useAtomicRhoXLBOMD                             = true;
     useMeshSizesFromAtomsFile                      = false;
     chebyshevFilterPolyDegreeFirstScfScalingFactor = 1.34;
-    numberPassesRRSkippedXLBOMD                    = 0;
-    xlbomdRestartChebyTol                          = 1e-9;
     useDensityMatrixPerturbationRankUpdates        = false;
-    xlbomdKernelRankUpdateFDParameter              = 1e-2;
     smearedNuclearCharges                          = false;
     floatingNuclearCharges                         = false;
     nonLinearCoreCorrection                        = false;
@@ -1222,6 +1198,16 @@ namespace dftfe
     dc_d3cutoff2                = 94.8683298050514;
     dc_d3cutoff3                = 40.0;
     dc_d3cutoffCN               = 40.0;
+
+    /** parameters for LRD preconditioner **/
+    startingNormLRDLargeDamping   = 2.0;
+    adaptiveRankRelTolLRD         = 0.3;
+    std::string methodSubTypeLRD  = "";
+    factorAdapAccumClearLRD       = 2.0;
+    absPoissonSolverToleranceLRD  = 1.0e-6;
+    singlePrecLRD                 = false;
+    estimateJacCondNoFinalSCFIter = false;
+    /*****************************************/
   }
 
 
@@ -1417,6 +1403,20 @@ namespace dftfe
       startingWFCType               = prm.get("STARTING WFC");
       computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
+      prm.enter_subsection("LOW RANK DIELECM PRECOND");
+      {
+        methodSubTypeLRD = prm.get("METHOD SUB TYPE");
+        startingNormLRDLargeDamping =
+          prm.get_double("STARTING NORM LARGE DAMPING");
+        adaptiveRankRelTolLRD = prm.get_double("ADAPTIVE RANK REL TOL");
+        factorAdapAccumClearLRD =
+          prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
+        absPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER ABS TOL");
+        singlePrecLRD = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
+        estimateJacCondNoFinalSCFIter =
+          prm.get_bool("ESTIMATE JAC CONDITION NO");
+      }
+      prm.leave_subsection();
 
       prm.enter_subsection("Eigen-solver parameters");
       {
@@ -1482,33 +1482,16 @@ namespace dftfe
       reuseDensityMD              = prm.get_integer("EXTRAPOLATE DENSITY");
       isBOMD                      = prm.get_bool("BOMD");
       maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
-      isXLBOMD                    = prm.get_bool("XL BOMD");
-      chebyshevFilterTolXLBOMD    = prm.get_double("CHEBY TOL XL BOMD");
-      chebyshevFilterTolXLBOMDRankUpdates =
-        prm.get_double("CHEBY TOL XL BOMD RANK UPDATES FD");
-      timeStepBOMD               = prm.get_double("TIME STEP");
-      numberStepsBOMD            = prm.get_integer("NUMBER OF STEPS");
-      MDTrack                    = prm.get_integer("TRACKING ATOMIC NO");
-      startingTempBOMD           = prm.get_double("STARTING TEMPERATURE");
-      thermostatTimeConstantBOMD = prm.get_double("THERMOSTAT TIME CONSTANT");
-      MaxWallTime                = prm.get_double("MAX WALL TIME");
+      timeStepBOMD                = prm.get_double("TIME STEP");
+      numberStepsBOMD             = prm.get_integer("NUMBER OF STEPS");
+      MDTrack                     = prm.get_integer("TRACKING ATOMIC NO");
+      startingTempBOMD            = prm.get_double("STARTING TEMPERATURE");
+      thermostatTimeConstantBOMD  = prm.get_double("THERMOSTAT TIME CONSTANT");
+      MaxWallTime                 = prm.get_double("MAX WALL TIME");
 
 
 
       tempControllerTypeBOMD = prm.get("TEMPERATURE CONTROLLER TYPE");
-
-      diracDeltaKernelScalingConstant =
-        prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD");
-      kernelUpdateRankXLBOMD = prm.get_integer("KERNEL RANK XL BOMD");
-      kmaxXLBOMD = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
-      numberPassesRRSkippedXLBOMD =
-        prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
-      useAtomicRhoXLBOMD    = prm.get_bool("USE ATOMIC RHO XL BOMD");
-      xlbomdRestartChebyTol = prm.get_double("CHEBY TOL XL BOMD RESTART");
-      useDensityMatrixPerturbationRankUpdates =
-        prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");
-      xlbomdKernelRankUpdateFDParameter =
-        prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
     }
     prm.leave_subsection();
 
@@ -1642,6 +1625,12 @@ namespace dftfe
         std::cout
           << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
           << std::endl;
+
+    if (spinPolarized == 1 && mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+      AssertThrow(
+        !constraintMagnetization,
+        ExcMessage(
+          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRD Preconditioner is not yet supported."));
 
     AssertThrow(
       natoms != 0,
@@ -1832,6 +1821,26 @@ namespace dftfe
 
     if (verbosity >= 5)
       computeEnergyEverySCF = true;
+
+    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
+      {
+        if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+          chebyshevTolerance = 2.0e-3;
+        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+          chebyshevTolerance = 1.0e-2;
+        else
+          chebyshevTolerance = 5.0e-2;
+      }
+
+    if (std::fabs(mixingParameter - 0.0) < 1.0e-12)
+      {
+        if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+          mixingParameter = 0.5;
+        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+          mixingParameter = 0.5;
+        else
+          mixingParameter = 0.2;
+      }
   }
 
   void

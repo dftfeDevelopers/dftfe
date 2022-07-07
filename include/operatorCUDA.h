@@ -125,6 +125,9 @@ namespace dftfe
     getParallelChebyBlockVectorDevice() = 0;
 
     virtual distributedGPUVec<dataTypes::numberGPU> &
+    getParallelChebyBlockVector2Device() = 0;
+
+    virtual distributedGPUVec<dataTypes::numberGPU> &
     getParallelProjectorKetTimesBlockVectorDevice() = 0;
 
     virtual thrust::device_vector<unsigned int> &
@@ -180,7 +183,8 @@ namespace dftfe
        const bool                               scaleFlag,
        const double                             scalar,
        distributedGPUVec<dataTypes::numberGPU> &Y,
-       const bool                               doUnscalingX = true) = 0;
+       const bool                               doUnscalingX    = true,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     virtual void
@@ -235,7 +239,8 @@ namespace dftfe
          cublasHandle_t &                         handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-         GPUCCLWrapper &gpucclMpiCommDomain) = 0;
+         GPUCCLWrapper &                                  gpucclMpiCommDomain,
+         const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -265,7 +270,8 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain) = 0;
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -302,7 +308,8 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain) = 0;
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     /**
@@ -410,6 +417,8 @@ namespace dftfe
     thrust::device_vector<dataTypes::numberThrustGPU> d_cellWaveFunctionMatrix;
 
     distributedGPUVec<dataTypes::numberGPU> d_parallelChebyBlockVectorDevice;
+
+    distributedGPUVec<dataTypes::numberGPU> d_parallelChebyBlockVector2Device;
 
     distributedGPUVec<dataTypes::numberGPU>
       d_parallelProjectorKetTimesBlockVectorDevice;

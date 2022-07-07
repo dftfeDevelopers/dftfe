@@ -190,16 +190,17 @@ namespace dftfe
     void
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
-          const bool solveLinearizedKS             = false,
           const bool restartGroundStateCalcFromChk = false);
 
 
-    /**
-     * @brief Kohn-Sham ground-state solve using SCF iteration
-     */
     void
-    computeDensityPerturbation();
-
+    computeOutputDensityDirectionalDerivative(
+      const distributedCPUVec<double> &v,
+      const distributedCPUVec<double> &vSpin0,
+      const distributedCPUVec<double> &vSpin1,
+      distributedCPUVec<double> &      fv,
+      distributedCPUVec<double> &      fvSpin0,
+      distributedCPUVec<double> &      fvSpin1);
 
     void
     initializeKohnShamDFTOperator(const bool initializeCublas = true);
@@ -499,7 +500,7 @@ namespace dftfe
                         const bool vselfPerturbationUpdateForStress = false);
 
     /**
-     *@brief interpolate nodal data to quadrature data using FEEvaluation
+     *@brief interpolate rho nodal data to quadrature data using FEEvaluation
      *
      *@param[in] matrixFreeData matrix free data object
      *@param[in] nodalField nodal data to be interpolated
@@ -659,6 +660,18 @@ namespace dftfe
         &  kohnShamDFTEigenOperatorCPU,
       bool isConsiderSpectrumSplitting);
 
+
+    void
+    computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorGPU,
+#endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                        kohnShamDFTEigenOperatorCPU,
+      distributedCPUVec<double> &fv,
+      distributedCPUVec<double> &fvSpin0,
+      distributedCPUVec<double> &fvSpin1);
 
     /**
      *@brief resize and allocate table storage for rho cell quadratrue data
@@ -837,16 +850,22 @@ namespace dftfe
     double
     mixing_broyden_spinPolarized();
     double
-    nodalDensity_mixing_simple(
+    nodalDensity_mixing_simple_kerker(
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 solverProblem,
       dealiiLinearSolver &dealiiLinearSolver);
     double
-    nodalDensity_mixing_anderson(
+    nodalDensity_mixing_anderson_kerker(
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 solverProblem,
       dealiiLinearSolver &dealiiLinearSolver);
 
+    double
+    lowrankApproxScfDielectricMatrixInv(const unsigned int scfIter);
+
+    double
+    lowrankApproxScfDielectricMatrixInvSpinPolarized(
+      const unsigned int scfIter);
 
     /**
      * Re solves the all electrostatics on a h refined mesh, and computes
@@ -1261,6 +1280,8 @@ namespace dftfe
      */
     std::vector<std::vector<double>> eigenValues;
 
+    std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
+
     /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
     std::vector<std::vector<double>>                  eigenValuesRRSplit;
     std::vector<distributedCPUVec<dataTypes::number>> d_eigenVectorsFlattened;
@@ -1268,12 +1289,17 @@ namespace dftfe
     std::vector<std::vector<dataTypes::number>>
       d_eigenVectorsRotFracDensityFlattenedSTL;
 
+    std::vector<std::vector<dataTypes::number>>
+      d_eigenVectorsDensityMatrixPrimeSTL;
+
     /// cuda eigenvectors
 #ifdef DFTFE_WITH_GPU
     cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
       d_eigenVectorsFlattenedCUDA;
     cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
       d_eigenVectorsRotFracFlattenedCUDA;
+    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsDensityMatrixPrimeFlattenedCUDA;
 #endif
 
     /// parallel message stream
@@ -1305,9 +1331,27 @@ namespace dftfe
     distributedCPUVec<double> d_rhoInSpin0NodalValuesRead;
     distributedCPUVec<double> d_rhoInSpin1NodalValuesRead;
 
+    distributedCPUVec<double> d_rhoOutSpin0NodalValues,
+      d_rhoOutSpin1NodalValues;
+
+    std::deque<distributedCPUVec<double>> d_rhoInSpin0NodalVals,
+      d_rhoOutSpin0NodalVals;
+    std::deque<distributedCPUVec<double>> d_rhoInSpin1NodalVals,
+      d_rhoOutSpin1NodalVals;
+
     std::map<dealii::CellId, std::vector<double>> d_rhoOutValuesLpspQuad,
       d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad,
       d_gradRhoInValuesLpspQuad;
+
+    /// for low rank jacobian inverse approximation
+    std::deque<distributedCPUVec<double>> d_vcontainerVals;
+    std::deque<distributedCPUVec<double>> d_fvcontainerVals;
+    std::deque<distributedCPUVec<double>> d_vSpin0containerVals;
+    std::deque<distributedCPUVec<double>> d_fvSpin0containerVals;
+    std::deque<distributedCPUVec<double>> d_vSpin1containerVals;
+    std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
+    unsigned int                          d_rankCurrentLRD;
+    double                                d_relativeErrorJacInvApproxPrevScfLRD;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
@@ -1557,9 +1601,6 @@ namespace dftfe
 
     double d_freeEnergy;
 
-    /// shadow potential energy in extended Lagrangian framework
-    double d_shadowPotentialEnergy;
-
     /// entropic energy
     double d_entropicEnergy;
 
@@ -1633,12 +1674,33 @@ namespace dftfe
         &                  subspaceIterationSolverCUDA,
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
-      const unsigned int   numberRayleighRitzAvoidanceXLBOMDPasses = 0,
-      const bool           isSpectrumSplit                         = false,
-      const bool           useMixedPrec                            = false,
-      const bool           isFirstScf                              = false);
+      const unsigned int   numberRayleighRitzAvoidancePasses = 0,
+      const bool           isSpectrumSplit                   = false,
+      const bool           useMixedPrec                      = false,
+      const bool           isFirstScf                        = false);
 #endif
 
+
+#ifdef DFTFE_WITH_GPU
+    void
+    kohnShamEigenSpaceFirstOrderDensityMatResponse(
+      const unsigned int s,
+      const unsigned int kPointIndex,
+      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &               kohnShamDFTEigenOperator,
+      elpaScalaManager &elpaScala,
+      chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+        &subspaceIterationSolverCUDA);
+
+#endif
+
+    void
+    kohnShamEigenSpaceFirstOrderDensityMatResponse(
+      const unsigned int s,
+      const unsigned int kPointIndex,
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &               kohnShamDFTEigenOperator,
+      elpaScalaManager &elpaScala);
 
     void
     kohnShamEigenSpaceComputeNSCF(

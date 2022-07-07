@@ -590,7 +590,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
     &                  subspaceIterationSolverCUDA,
   std::vector<double> &residualNormWaveFunctions,
   const bool           computeResidual,
-  const unsigned int   numberRayleighRitzAvoidanceXLBOMDPasses,
+  const unsigned int   numberRayleighRitzAvoidancePasses,
   const bool           isSpectrumSplit,
   const bool           useMixedPrec,
   const bool           isFirstScf)
@@ -616,7 +616,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
                                          kPointIndex +
                                        spinType]);
 
-  if (numberRayleighRitzAvoidanceXLBOMDPasses > 0)
+  if (numberRayleighRitzAvoidancePasses > 0)
     {
       subspaceIterationSolverCUDA.solveNoRR(
         kohnShamDFTEigenOperator,
@@ -629,7 +629,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
         eigenValuesDummy,
         *d_gpucclMpiCommDomainPtr,
         interBandGroupComm,
-        numberRayleighRitzAvoidanceXLBOMDPasses,
+        numberRayleighRitzAvoidancePasses,
         useMixedPrec);
     }
   else
@@ -722,6 +722,119 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
 }
 #endif
 
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+dftClass<FEOrder, FEOrderElectro>::
+  kohnShamEigenSpaceFirstOrderDensityMatResponse(
+    const unsigned int                                 spinType,
+    const unsigned int                                 kPointIndex,
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    elpaScalaManager &                                 elpaScala)
+{
+  if (d_dftParamsPtr->verbosity >= 2)
+    {
+      pcout << "kPoint: " << kPointIndex << std::endl;
+      if (d_dftParamsPtr->spinPolarized == 1)
+        pcout << "spin: " << spinType + 1 << std::endl;
+    }
+
+
+  //
+  // scale the eigenVectors to convert into Lowden Orthonormalized FE basis
+  // multiply by M^{1/2}
+  internal::pointWiseScaleWithDiagonal(
+    kohnShamDFTEigenOperator.d_sqrtMassVector,
+    matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
+    d_numEigenValues,
+    d_eigenVectorsDensityMatrixPrimeSTL[(1 + d_dftParamsPtr->spinPolarized) *
+                                          kPointIndex +
+                                        spinType]);
+
+  std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
+  for (unsigned int i = 0; i < d_numEigenValues; i++)
+    {
+      eigenValuesTemp[i] =
+        eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+    }
+
+
+  linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
+    kohnShamDFTEigenOperator,
+    d_eigenVectorsDensityMatrixPrimeSTL[(1 + d_dftParamsPtr->spinPolarized) *
+                                          kPointIndex +
+                                        spinType],
+    d_numEigenValues,
+    d_mpiCommParent,
+    kohnShamDFTEigenOperator.getMPICommunicator(),
+    interBandGroupComm,
+    eigenValuesTemp,
+    fermiEnergy,
+    d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
+                                 kPointIndex +
+                               spinType],
+    elpaScala,
+    *d_dftParamsPtr);
+
+
+  //
+  // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the
+  // usual FE basis
+  //
+  internal::pointWiseScaleWithDiagonal(
+    kohnShamDFTEigenOperator.d_invSqrtMassVector,
+    matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
+    d_numEigenValues,
+    d_eigenVectorsDensityMatrixPrimeSTL[(1 + d_dftParamsPtr->spinPolarized) *
+                                          kPointIndex +
+                                        spinType]);
+}
+
+#ifdef DFTFE_WITH_GPU
+// chebyshev solver
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+dftClass<FEOrder, FEOrderElectro>::
+  kohnShamEigenSpaceFirstOrderDensityMatResponse(
+    const unsigned int spinType,
+    const unsigned int kPointIndex,
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &               kohnShamDFTEigenOperator,
+    elpaScalaManager &elpaScala,
+    chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+      &subspaceIterationSolverCUDA)
+{
+  if (d_dftParamsPtr->verbosity >= 2)
+    {
+      pcout << "kPoint: " << kPointIndex << std::endl;
+      if (d_dftParamsPtr->spinPolarized == 1)
+        pcout << "spin: " << spinType + 1 << std::endl;
+    }
+
+  std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
+  for (unsigned int i = 0; i < d_numEigenValues; i++)
+    {
+      eigenValuesTemp[i] =
+        eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+    }
+
+  subspaceIterationSolverCUDA.densityMatrixEigenBasisFirstOrderResponse(
+    kohnShamDFTEigenOperator,
+    d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin() +
+      ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+        d_eigenVectorsFlattenedSTL[0].size(),
+    d_eigenVectorsFlattenedSTL[0].size(),
+    d_numEigenValues,
+    eigenValuesTemp,
+    fermiEnergy,
+    d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
+                                 kPointIndex +
+                               spinType],
+    *d_gpucclMpiCommDomainPtr,
+    interBandGroupComm,
+    elpaScala);
+}
+#endif
 
 // chebyshev solver
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -816,7 +929,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
     true,
     false);
 
-  if (d_dftParamsPtr->verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 5)
     {
 #ifdef USE_PETSC
       PetscLogDouble bytes;

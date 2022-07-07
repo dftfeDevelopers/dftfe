@@ -1,0 +1,84 @@
+set VERBOSITY= 0
+set REPRODUCIBLE OUTPUT=true
+
+subsection Geometry
+  set NATOMS=4
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/fccAlPert_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAlPert_domainBoundingVectors.inp
+  
+  subsection Optimization
+    set ION FORCE=true
+    set CELL STRESS=true
+  end 
+ 
+end
+
+
+subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=true
+  set FLOATING NUCLEAR CHARGES=false
+  set SELF POTENTIAL RADIUS = 3.0
+  set PERIODIC1 = true
+  set PERIODIC2 = true
+  set PERIODIC3 = true
+  set CONSTRAINTS PARALLEL CHECK=true
+end
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 2
+  
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set BASE MESH SIZE = 1.0 
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AROUND ATOM = 0.5
+    set MESH SIZE AT ATOM = 0.5 
+  end
+
+end
+
+
+subsection DFT functional parameters
+  set PSEUDOPOTENTIAL CALCULATION =true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlNLCC.inp
+  set PSEUDO TESTS FLAG = true
+  set EXCHANGE CORRELATION TYPE = 4
+  set SPIN POLARIZATION=1
+  set START MAGNETIZATION=-0.1
+end
+
+
+subsection SCF parameters
+  set COMPUTE ENERGY EACH ITER=false
+  set MAXIMUM ITERATIONS = 100
+  set TOLERANCE          = 1e-6
+  set MIXING PARAMETER   = 0.5
+  set MIXING METHOD=LOW_RANK_DIELECM_PRECOND
+  set MIXING HISTORY     = 20
+  set TEMPERATURE                        = 1000
+  set STARTING WFC = RANDOM
+ 
+  subsection LOW RANK DIELECM PRECOND
+      set METHOD SUB TYPE=ADAPTIVE
+      set STARTING NORM LARGE DAMPING=4.0
+      set ADAPTIVE RANK REL TOL=0.3
+      set POISSON SOLVER ABS TOL=1.0e-10
+  end
+
+
+  subsection Eigen-solver parameters
+     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 40
+     set CHEBY WFC BLOCK SIZE=20
+     set WFC BLOCK SIZE=40
+     set CHEBYSHEV POLYNOMIAL DEGREE = 15
+     set CHEBYSHEV FILTER TOLERANCE=1e-4
+  end
+end
+
+
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 10000
+  set TOLERANCE          = 1e-12
+end
