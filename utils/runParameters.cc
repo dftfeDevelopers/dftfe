@@ -269,15 +269,15 @@ namespace dftfe
 
           prm.declare_entry(
             "ION OPT SOLVER",
-            "CGPRP",
+            "LBFGS",
             Patterns::Selection("BFGS|LBFGS|CGPRP"),
-            "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+            "[Standard] Method for Ion relaxation solver. LBFGS is the default");
 
           prm.declare_entry(
             "CELL OPT SOLVER",
-            "CGPRP",
+            "LBFGS",
             Patterns::Selection("BFGS|LBFGS|CGPRP"),
-            "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+            "[Standard] Method for Cell relaxation solver. LBFGS is the default");
 
           prm.declare_entry(
             "MAXIMUM OPTIMIZATION STEPS",
