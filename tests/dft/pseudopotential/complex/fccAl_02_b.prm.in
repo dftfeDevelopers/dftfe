@@ -58,6 +58,7 @@ subsection Geometry
   subsection Optimization
     set STRESS TOL            = 2e-5
     set OPTIMIZATION MODE     = CELL
+    set CELL OPT SOLVER       = CGPRP
     set CELL CONSTRAINT TYPE  = 1
     set REUSE WFC=true
     set REUSE DENSITY=1
