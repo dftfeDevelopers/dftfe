@@ -91,7 +91,7 @@ namespace dftfe
 
 
     /**
-     * @brief Used for LRJI preconditioner, also required for XL-BOMD
+     * @brief Used for LRD preconditioner, also required for XL-BOMD
      */
     void
     densityMatrixEigenBasisFirstOrderResponse(

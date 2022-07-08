@@ -1233,7 +1233,7 @@ namespace dftfe
                     projHamPrimePar.local_m() * projHamPrimePar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParams.singlePrecLRJI && dftParams.overlapComputeCommunOrthoRR)
+      if (dftParams.singlePrecLRD && dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
           X,
           Xb,
@@ -1415,7 +1415,7 @@ namespace dftfe
 
       densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
 
-      if (dftParams.singlePrecLRJI)
+      if (dftParams.singlePrecLRD)
         subspaceRotationRRMixedPrecScalapack(X,
                                              M,
                                              N,

@@ -285,7 +285,7 @@ namespace internalLowrankJacInv
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
-dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
+dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   const unsigned int scfIter)
 {
   int this_process;
@@ -323,132 +323,131 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
   const unsigned int local_size = residualRho.local_size();
 
   const unsigned int maxRankCurrentSCF =
-    d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
+    d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
   const unsigned int maxRankAccum = 20;
 
-  if (d_rankCurrentLRJI >= 1 &&
-      d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+  if (d_rankCurrentLRD >= 1 &&
+      d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
     {
       const double relativeApproxError =
         internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
                                                      residualRho,
                                                      k0);
-      if (d_rankCurrentLRJI >= maxRankAccum ||
-          (relativeApproxError > d_dftParamsPtr->adaptiveRankRelTolLRJI *
-                                   d_dftParamsPtr->factorAdapAccumClearLRJI) ||
-          relativeApproxError > d_relativeErrorJacInvApproxPrevScfLRJI)
+      if (d_rankCurrentLRD >= maxRankAccum ||
+          (relativeApproxError > d_dftParamsPtr->adaptiveRankRelTolLRD *
+                                   d_dftParamsPtr->factorAdapAccumClearLRD) ||
+          relativeApproxError > d_relativeErrorJacInvApproxPrevScfLRD)
         {
           if (d_dftParamsPtr->verbosity >= 4)
             pcout
               << " Clearing accumulation as relative tolerance metric exceeded "
               << ", relative tolerance current scf: " << relativeApproxError
               << ", relative tolerance prev scf: "
-              << d_relativeErrorJacInvApproxPrevScfLRJI << std::endl;
+              << d_relativeErrorJacInvApproxPrevScfLRD << std::endl;
           d_vcontainerVals.clear();
           d_fvcontainerVals.clear();
-          d_rankCurrentLRJI                      = 0;
-          d_relativeErrorJacInvApproxPrevScfLRJI = 100.0;
+          d_rankCurrentLRD                      = 0;
+          d_relativeErrorJacInvApproxPrevScfLRD = 100.0;
         }
       else
-        d_relativeErrorJacInvApproxPrevScfLRJI = relativeApproxError;
+        d_relativeErrorJacInvApproxPrevScfLRD = relativeApproxError;
     }
   else
     {
       d_vcontainerVals.clear();
       d_fvcontainerVals.clear();
-      d_rankCurrentLRJI = 0;
+      d_rankCurrentLRD = 0;
     }
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
   while (((rankAddedInThisScf < maxRankThisScf) &&
-          d_rankCurrentLRJI < maxRankAccum) ||
+          d_rankCurrentLRD < maxRankAccum) ||
          ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
           (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
     {
       if (rankAddedInThisScf == 0)
         {
           d_vcontainerVals.push_back(residualRho);
-          d_vcontainerVals[d_rankCurrentLRJI] *= k0;
+          d_vcontainerVals[d_rankCurrentLRD] *= k0;
         }
       else
-        d_vcontainerVals.push_back(d_fvcontainerVals[d_rankCurrentLRJI - 1]);
+        d_vcontainerVals.push_back(d_fvcontainerVals[d_rankCurrentLRD - 1]);
 
       compvec = 0;
-      for (int jrank = 0; jrank < d_rankCurrentLRJI; jrank++)
+      for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
         {
           const double tTvj =
-            d_vcontainerVals[d_rankCurrentLRJI] * d_vcontainerVals[jrank];
+            d_vcontainerVals[d_rankCurrentLRD] * d_vcontainerVals[jrank];
           compvec.add(tTvj, d_vcontainerVals[jrank]);
         }
-      d_vcontainerVals[d_rankCurrentLRJI] -= compvec;
+      d_vcontainerVals[d_rankCurrentLRD] -= compvec;
 
-      d_vcontainerVals[d_rankCurrentLRJI] *=
-        1.0 / d_vcontainerVals[d_rankCurrentLRJI].l2_norm();
+      d_vcontainerVals[d_rankCurrentLRD] *=
+        1.0 / d_vcontainerVals[d_rankCurrentLRD].l2_norm();
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << " Vector norm of v:  "
-              << d_vcontainerVals[d_rankCurrentLRJI].l2_norm()
-              << ", for rank: " << d_rankCurrentLRJI + 1 << std::endl;
+              << d_vcontainerVals[d_rankCurrentLRD].l2_norm()
+              << ", for rank: " << d_rankCurrentLRD + 1 << std::endl;
 
       d_fvcontainerVals.push_back(residualRho);
-      d_fvcontainerVals[d_rankCurrentLRJI] = 0;
+      d_fvcontainerVals[d_rankCurrentLRD] = 0;
 
-      d_vcontainerVals[d_rankCurrentLRJI].update_ghost_values();
+      d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined,
-                           d_vcontainerVals[d_rankCurrentLRJI]);
+                           d_vcontainerVals[d_rankCurrentLRD]);
 
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral v before scaling:  " << charge << std::endl;
 
-      d_vcontainerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume);
+      d_vcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
 
-      d_vcontainerVals[d_rankCurrentLRJI].update_ghost_values();
+      d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined,
-                           d_vcontainerVals[d_rankCurrentLRJI]);
+                           d_vcontainerVals[d_rankCurrentLRD]);
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral v after scaling:  " << charge << std::endl;
 
       computeOutputDensityDirectionalDerivative(
-        d_vcontainerVals[d_rankCurrentLRJI],
+        d_vcontainerVals[d_rankCurrentLRD],
         dummy,
         dummy,
-        d_fvcontainerVals[d_rankCurrentLRJI],
+        d_fvcontainerVals[d_rankCurrentLRD],
         dummy,
         dummy);
 
-      d_fvcontainerVals[d_rankCurrentLRJI].update_ghost_values();
+      d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined,
-                           d_fvcontainerVals[d_rankCurrentLRJI]);
+                           d_fvcontainerVals[d_rankCurrentLRD]);
 
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral fv before scaling:  " << charge << std::endl;
 
-      d_fvcontainerVals[d_rankCurrentLRJI].add(-charge / d_domainVolume);
+      d_fvcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
 
-      d_fvcontainerVals[d_rankCurrentLRJI].update_ghost_values();
+      d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
       charge = totalCharge(d_matrixFreeDataPRefined,
-                           d_fvcontainerVals[d_rankCurrentLRJI]);
+                           d_fvcontainerVals[d_rankCurrentLRD]);
       if (d_dftParamsPtr->verbosity >= 4)
         pcout << "Integral fv after scaling:  " << charge << std::endl;
 
       if (d_dftParamsPtr->verbosity >= 4)
         pcout
           << " Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "
-          << d_fvcontainerVals[d_rankCurrentLRJI].l2_norm()
-          << " for kernel rank: " << d_rankCurrentLRJI + 1 << std::endl;
+          << d_fvcontainerVals[d_rankCurrentLRD].l2_norm()
+          << " for kernel rank: " << d_rankCurrentLRD + 1 << std::endl;
 
-      d_fvcontainerVals[d_rankCurrentLRJI] -=
-        d_vcontainerVals[d_rankCurrentLRJI];
-      d_fvcontainerVals[d_rankCurrentLRJI] *= k0;
-      d_rankCurrentLRJI++;
+      d_fvcontainerVals[d_rankCurrentLRD] -= d_vcontainerVals[d_rankCurrentLRD];
+      d_fvcontainerVals[d_rankCurrentLRD] *= k0;
+      d_rankCurrentLRD++;
       rankAddedInThisScf++;
 
-      if (d_dftParamsPtr->methodSubTypeLRJI == "ADAPTIVE" ||
-          d_dftParamsPtr->methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+      if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE" ||
+          d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
         {
           const double relativeApproxError =
             internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
@@ -457,7 +456,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
 
           if (d_dftParamsPtr->verbosity >= 4)
             pcout << " Relative approx error:  " << relativeApproxError
-                  << " for kernel rank: " << d_rankCurrentLRJI << std::endl;
+                  << " for kernel rank: " << d_rankCurrentLRD << std::endl;
 
           if ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
               (d_dftParamsPtr->estimateJacCondNoFinalSCFIter))
@@ -469,7 +468,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
             }
           else
             {
-              if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRJI)
+              if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD)
                 {
                   break;
                 }
@@ -479,7 +478,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
 
 
   if (d_dftParamsPtr->verbosity >= 4)
-    pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRJI
+    pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRD
           << " Accumulated in this scf: " << rankAddedInThisScf << std::endl;
 
   internalLowrankJacInv::lowrankKernelApply(
@@ -518,7 +517,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
   // Suggested to use 0.1 for initial steps
   // as well as when normValue is greater than 2.0
   double const2 =
-    (normValue > d_dftParamsPtr->startingNormLRJILargeDamping || scfIter < 2) ?
+    (normValue > d_dftParamsPtr->startingNormLRDLargeDamping || scfIter < 2) ?
       -0.1 :
       -d_dftParamsPtr->mixingParameter;
 

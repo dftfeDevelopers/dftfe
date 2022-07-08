@@ -141,7 +141,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
                                          (1 + d_dftParamsPtr->spinPolarized) *
                                          d_kPointWeights.size());
 
-      if (d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
         d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.resize(
           d_eigenVectorsFlattenedSTL[0].size() *
           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
@@ -169,7 +169,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
 #endif
 
   if (!d_dftParamsPtr->useGPU &&
-      d_dftParamsPtr->mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
     }

@@ -735,7 +735,7 @@ namespace dftfe
           "MIXING PARAMETER",
           "0.0",
           Patterns::Double(-1e-12, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRJI.");
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",
@@ -747,7 +747,7 @@ namespace dftfe
           "MIXING METHOD",
           "ANDERSON",
           Patterns::Selection(
-            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_JACINV_PRECOND"),
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -770,13 +770,13 @@ namespace dftfe
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
 
 
-        prm.enter_subsection("LOW RANK JACINV PRECOND");
+        prm.enter_subsection("LOW RANK DIELECM PRECOND");
         {
           prm.declare_entry(
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Advanced] Method subtype for LOW_RANK_JACINV_PRECOND.");
+            "[Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
@@ -1240,13 +1240,13 @@ namespace dftfe
     dc_d3cutoff3                = 40.0;
     dc_d3cutoffCN               = 40.0;
 
-    /** parameters for LRJI preconditioner **/
-    startingNormLRJILargeDamping  = 2.0;
-    adaptiveRankRelTolLRJI        = 0.3;
-    std::string methodSubTypeLRJI = "";
-    factorAdapAccumClearLRJI      = 2.0;
-    absPoissonSolverToleranceLRJI = 1.0e-6;
-    singlePrecLRJI                = false;
+    /** parameters for LRD preconditioner **/
+    startingNormLRDLargeDamping   = 2.0;
+    adaptiveRankRelTolLRD         = 0.3;
+    std::string methodSubTypeLRD  = "";
+    factorAdapAccumClearLRD       = 2.0;
+    absPoissonSolverToleranceLRD  = 1.0e-6;
+    singlePrecLRD                 = false;
     estimateJacCondNoFinalSCFIter = false;
     /*****************************************/
     bfgsStepMethod     = "QN";
@@ -1459,17 +1459,16 @@ namespace dftfe
       startingWFCType               = prm.get("STARTING WFC");
       computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
-      prm.enter_subsection("LOW RANK JACINV PRECOND");
+      prm.enter_subsection("LOW RANK DIELECM PRECOND");
       {
-        methodSubTypeLRJI = prm.get("METHOD SUB TYPE");
-        startingNormLRJILargeDamping =
+        methodSubTypeLRD = prm.get("METHOD SUB TYPE");
+        startingNormLRDLargeDamping =
           prm.get_double("STARTING NORM LARGE DAMPING");
-        adaptiveRankRelTolLRJI = prm.get_double("ADAPTIVE RANK REL TOL");
-        factorAdapAccumClearLRJI =
+        adaptiveRankRelTolLRD = prm.get_double("ADAPTIVE RANK REL TOL");
+        factorAdapAccumClearLRD =
           prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
-        absPoissonSolverToleranceLRJI =
-          prm.get_double("POISSON SOLVER ABS TOL");
-        singlePrecLRJI = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
+        absPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER ABS TOL");
+        singlePrecLRD = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
         estimateJacCondNoFinalSCFIter =
           prm.get_bool("ESTIMATE JAC CONDITION NO");
       }
@@ -1683,11 +1682,11 @@ namespace dftfe
           << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
           << std::endl;
 
-    if (spinPolarized == 1 && mixingMethod == "LOW_RANK_JACINV_PRECOND")
+    if (spinPolarized == 1 && mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       AssertThrow(
         !constraintMagnetization,
         ExcMessage(
-          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRJI Preconditioner is not yet supported."));
+          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRD Preconditioner is not yet supported."));
 
     AssertThrow(
       natoms != 0,
@@ -1881,7 +1880,7 @@ namespace dftfe
 
     if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
       {
-        if (mixingMethod == "LOW_RANK_JACINV_PRECOND")
+        if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER")
           chebyshevTolerance = 1.0e-2;
@@ -1891,7 +1890,7 @@ namespace dftfe
 
     if (std::fabs(mixingParameter - 0.0) < 1.0e-12)
       {
-        if (mixingMethod == "LOW_RANK_JACINV_PRECOND")
+        if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           mixingParameter = 0.5;
         else if (mixingMethod == "ANDERSON_WITH_KERKER")
           mixingParameter = 0.5;
