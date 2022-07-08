@@ -126,9 +126,8 @@ namespace dftfe
                       "%-52s:%25.16e\n",
                       "Dispersion energy",
                       dispersionEnergy);
+              pcout << bufferEnergy;
             }
-
-          pcout << bufferEnergy;
           sprintf(bufferEnergy,
                   "%-52s:%25.16e\n",
                   "Total internal energy",
