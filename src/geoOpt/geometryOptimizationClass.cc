@@ -168,10 +168,11 @@ namespace dftfe
                             d_dftPtr->getParametersObject().periodicZ ?
                           1 :
                           0;
-        dftUtils::writeDataIntoFile(optData,
-                                    d_restartFilesPath +
-                                      "/optRestart/geometryOptimization.dat",
-                                    d_mpiCommParent);
+        if (!d_dftPtr->getParametersObject().reproducible_output)
+          dftUtils::writeDataIntoFile(optData,
+                                      d_restartFilesPath +
+                                        "/optRestart/geometryOptimization.dat",
+                                      d_mpiCommParent);
         d_cycle  = 0;
         d_status = d_optMode == 1 ? 1 : 0;
         d_geoOptIonPtr =
@@ -196,6 +197,14 @@ namespace dftfe
         d_dftPtr->getParametersObject().isIonForce   = true;
         d_dftPtr->getParametersObject().isCellStress = true;
       }
+#ifdef USE_COMPLEX
+    if (d_dftPtr->getParametersObject().isIonForce ||
+        d_dftPtr->getParametersObject().isCellStress)
+      AssertThrow(
+        !d_dftPtr->getParametersObject().useSymm,
+        ExcMessage(
+          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+#endif
   }
 
 
@@ -210,19 +219,21 @@ namespace dftfe
         if (d_dftPtr->getParametersObject().verbosity >= 1)
           pcout << "Starting optimization cycle: " << d_cycle << std::endl;
         tmpData[0][0] = d_cycle;
-        dftUtils::writeDataIntoFile(tmpData,
-                                    d_restartFilesPath +
-                                      "/optRestart/cycle.chk",
-                                    d_mpiCommParent);
+        if (!d_dftPtr->getParametersObject().reproducible_output)
+          dftUtils::writeDataIntoFile(tmpData,
+                                      d_restartFilesPath +
+                                        "/optRestart/cycle.chk",
+                                      d_mpiCommParent);
 
         std::string restartPath =
           d_restartFilesPath + "/optRestart/cycle" + std::to_string(d_cycle);
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir(restartPath.c_str(), ACCESSPERMS);
         tmpData[0][0] = d_status;
-        dftUtils::writeDataIntoFile(tmpData,
-                                    restartPath + "/status.chk",
-                                    d_mpiCommParent);
+        if (!d_dftPtr->getParametersObject().reproducible_output)
+          dftUtils::writeDataIntoFile(tmpData,
+                                      restartPath + "/status.chk",
+                                      d_mpiCommParent);
         if (d_cycle == 0 && !d_isRestart)
           {
             d_dftPtr->solve(true, true, false);
@@ -248,9 +259,10 @@ namespace dftfe
               }
           }
         tmpData[0][0] = d_status;
-        dftUtils::writeDataIntoFile(tmpData,
-                                    restartPath + "/status.chk",
-                                    d_mpiCommParent);
+        if (!d_dftPtr->getParametersObject().reproducible_output)
+          dftUtils::writeDataIntoFile(tmpData,
+                                      restartPath + "/status.chk",
+                                      d_mpiCommParent);
         if (d_optMode == 2 && d_status == 1)
           {
             d_dftPtr->trivialSolveForStress();

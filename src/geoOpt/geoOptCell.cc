@@ -219,10 +219,10 @@ namespace dftfe
                                                                          0.0));
         cellOptData[0][0] = d_solver;
         cellOptData[1][0] = d_dftPtr->getParametersObject().cellConstraintType;
-
-        dftUtils::writeDataIntoFile(cellOptData,
-                                    d_restartPath + "/cellOpt.dat",
-                                    mpi_communicator);
+        if (!d_dftPtr->getParametersObject().reproducible_output)
+          dftUtils::writeDataIntoFile(cellOptData,
+                                      d_restartPath + "/cellOpt.dat",
+                                      mpi_communicator);
       }
     if (d_solver == 0)
       d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
@@ -616,18 +616,22 @@ namespace dftfe
   void
   geoOptCell::save()
   {
-    std::vector<std::vector<double>> tmpData(1, std::vector<double>(1, 0.0));
-    std::string                      savePath =
-      d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
-    if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
-      mkdir(savePath.c_str(), ACCESSPERMS);
-    const Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
-    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
-    d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
-    tmpData[0][0] = d_totalUpdateCalls;
-    dftUtils::writeDataIntoFile(tmpData,
-                                d_restartPath + "/step.chk",
-                                mpi_communicator);
+    if (!d_dftPtr->getParametersObject().reproducible_output)
+      {
+        std::vector<std::vector<double>> tmpData(1,
+                                                 std::vector<double>(1, 0.0));
+        std::string                      savePath =
+          d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
+        if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+          mkdir(savePath.c_str(), ACCESSPERMS);
+        const Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
+        d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
+        d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
+        tmpData[0][0] = d_totalUpdateCalls;
+        dftUtils::writeDataIntoFile(tmpData,
+                                    d_restartPath + "/step.chk",
+                                    mpi_communicator);
+      }
   }
 
   bool
