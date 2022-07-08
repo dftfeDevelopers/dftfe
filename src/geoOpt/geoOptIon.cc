@@ -137,6 +137,8 @@ namespace dftfe
                            d_dftPtr->getParametersObject().usePreconditioner);
         d_solverRestartPath =
           d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
+        if (!d_solverRestart)
+          d_dftPtr->solve(true, false);
       }
     else
       {

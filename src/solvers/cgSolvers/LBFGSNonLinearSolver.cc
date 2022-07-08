@@ -764,9 +764,6 @@ namespace dftfe
       {
         if (d_debugLevel >= 1)
           pcout << "LBFGS Step no. " << d_iter + 1 << std::endl;
-        if (d_debugLevel >= 2)
-          for (unsigned int i = 0; i < d_gradient.size(); ++i)
-            pcout << "d_gradient: " << d_gradient[i] << std::endl;
 
         //
         // If history is all deleted then fail

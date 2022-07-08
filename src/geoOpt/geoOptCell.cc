@@ -206,6 +206,8 @@ namespace dftfe
           (solver == d_solver);
         d_solverRestartPath =
           d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
+        if (!d_solverRestart)
+          d_dftPtr->solve(true, true);
       }
     else
       {

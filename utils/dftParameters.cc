@@ -1606,13 +1606,7 @@ namespace dftfe
         ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
 
-#ifdef USE_COMPLEX
-    if (isIonForce || isCellStress)
-      AssertThrow(
-        !useSymm,
-        ExcMessage(
-          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
-#else
+#ifndef USE_COMPLEX
     AssertThrow(
       nkx == 1 && nky == 1 && nkz == 1 && offsetFlagX == 0 &&
         offsetFlagY == 0 && offsetFlagZ == 0,
@@ -1697,12 +1691,6 @@ namespace dftfe
       natomTypes != 0,
       ExcMessage(
         "DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
-
-    if (meshAdaption)
-      AssertThrow(
-        !(isIonOpt && isCellOpt),
-        ExcMessage(
-          "DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
 
     if (nbandGrps > 1)
       AssertThrow(

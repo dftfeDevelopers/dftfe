@@ -720,11 +720,6 @@ namespace dftfe
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
       {
-        if (d_debugLevel >= 2)
-          for (unsigned int i = 0; i < d_gradient.size(); ++i)
-            pcout << "d_gradient: " << d_gradient[i] << std::endl;
-
-
         //
         // compute L2-norm of the residual (gradient)
         //
