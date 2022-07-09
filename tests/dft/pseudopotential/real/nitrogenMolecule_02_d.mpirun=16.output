@@ -1,6 +1,4 @@
 Restarting Optimization using saved data.
-Looking for geometry files of step 4 at: /home/nikhilk/dftfe/dftfe_lbfgs/dftfe/tests/dft/pseudopotential/real/nitrogenMolecule02_d/optRestart/cycle0/ionRelax/step4
-Geometry restart files are found in: /home/nikhilk/dftfe/dftfe_lbfgs/dftfe/tests/dft/pseudopotential/real/nitrogenMolecule02_d/optRestart/cycle0/ionRelax/step4
 number of atoms: 2
 number of atoms types: 1
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------

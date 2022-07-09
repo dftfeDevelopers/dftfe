@@ -31,11 +31,13 @@ namespace dftfe
     const std::string parameter_file,
     const std::string restartFilesPath,
     const MPI_Comm &  mpi_comm_parent,
-    const bool        restart)
+    const bool        restart,
+    const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
     , d_restartFilesPath(restartFilesPath)
+    , d_verbosity(verbosity)
   {
     init(parameter_file);
     if (d_restartFilesPath != "")
@@ -78,8 +80,9 @@ namespace dftfe
             while (lastSavedStep >= 0)
               {
                 std::string path = tempfolder + std::to_string(lastSavedStep);
-                pcout << "Looking for geometry files of step " << lastSavedStep
-                      << " at: " << path << std::endl;
+                if (d_verbosity > 0)
+                  pcout << "Looking for geometry files of step "
+                        << lastSavedStep << " at: " << path << std::endl;
                 std::string file1 = isPeriodic ?
                                       path + "/atomsFracCoordCurrent.chk" :
                                       path + "/atomsCartCoordCurrent.chk";
@@ -95,19 +98,22 @@ namespace dftfe
                     dftUtils::writeDataIntoFile(tmp,
                                                 tempfolder + ".chk",
                                                 d_mpiCommParent);
-
-                    pcout << "Geometry restart files are found in: " << path
-                          << std::endl;
+                    if (d_verbosity > 0)
+                      pcout << "Geometry restart files are found in: " << path
+                            << std::endl;
                     restartFilesFound = true;
                     restartPath       = path;
                     break;
                   }
 
                 else
-                  pcout << "----Error opening restart files present in: "
-                        << path << std::endl
-                        << "Switching to step: " << --lastSavedStep << " ----"
-                        << std::endl;
+                  {
+                    if (d_verbosity > 0)
+                      pcout << "----Error opening restart files present in: "
+                            << path << std::endl
+                            << "Switching to step: " << --lastSavedStep
+                            << " ----" << std::endl;
+                  }
               }
             if (restartFilesFound)
               break;

@@ -42,7 +42,8 @@ namespace dftfe
     geometryOptimizationClass(const std::string parameter_file,
                               const std::string restartFilesPath,
                               const MPI_Comm &  mpi_comm_parent,
-                              const bool        restart);
+                              const bool        restart,
+                              const int         verbosity);
 
 
     void
@@ -66,6 +67,7 @@ namespace dftfe
     // restart parameters
     const bool        d_isRestart;
     const std::string d_restartFilesPath;
+    const int d_verbosity;
     // status parameters
     int d_status, d_cycle, d_optMode;
     // parallel communication objects
