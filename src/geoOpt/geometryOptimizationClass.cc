@@ -67,64 +67,88 @@ namespace dftfe
         chkPath += "cycle" + std::to_string(d_cycle);
         tmp.clear();
         dftUtils::readFile(1, tmp, chkPath + "/status.chk");
-        d_status               = tmp[0][0];
+        d_status = tmp[0][0];
+        int  lastSavedStep;
         bool restartFilesFound = false;
-        while (d_cycle >= 0)
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
-            std::string tempfolder = d_restartFilesPath + "/optRestart/cycle" +
-                                     std::to_string(d_cycle);
-            tempfolder += d_status == 0 ? "/ionRelax/step" : "/cellRelax/step";
-            tmp.clear();
-            dftUtils::readFile(1, tmp, tempfolder + ".chk");
-            int lastSavedStep = tmp[0][0];
-            while (lastSavedStep >= 0)
+            while (d_cycle >= 0)
               {
-                std::string path = tempfolder + std::to_string(lastSavedStep);
-                if (d_verbosity > 0)
-                  pcout << "Looking for geometry files of step "
-                        << lastSavedStep << " at: " << path << std::endl;
-                std::string file1 = isPeriodic ?
-                                      path + "/atomsFracCoordCurrent.chk" :
-                                      path + "/atomsCartCoordCurrent.chk";
-                std::string file2 = path + "/domainBoundingVectorsCurrent.chk";
-                std::ifstream readFile1(file1.c_str());
-                std::ifstream readFile2(file2.c_str());
-                if (!readFile1.fail() && !readFile2.fail())
+                std::string tempfolder = d_restartFilesPath +
+                                         "/optRestart/cycle" +
+                                         std::to_string(d_cycle);
+                tempfolder +=
+                  d_status == 0 ? "/ionRelax/step" : "/cellRelax/step";
+                tmp.clear();
+                dftUtils::readFile(1, tmp, tempfolder + ".chk");
+                lastSavedStep = tmp[0][0];
+                while (lastSavedStep >= 0)
                   {
-                    coordinatesFile   = file1;
-                    domainVectorsFile = file2;
-                    tmp.clear();
-                    tmp.resize(1, std::vector<double>(1, lastSavedStep));
-                    MPI_Barrier( d_mpiCommParent);
-                    dftUtils::writeDataIntoFile(tmp,
-                                                tempfolder + ".chk",
-                                                d_mpiCommParent);
-                    MPI_Barrier( d_mpiCommParent);
+                    std::string path =
+                      tempfolder + std::to_string(lastSavedStep);
                     if (d_verbosity > 0)
-                      pcout << "Geometry restart files are found in: " << path
+                      pcout << "Looking for geometry files of step "
+                            << lastSavedStep << " at: " << path << std::endl;
+                    std::string file1 = isPeriodic ?
+                                          path + "/atomsFracCoordCurrent.chk" :
+                                          path + "/atomsCartCoordCurrent.chk";
+                    std::string file2 =
+                      path + "/domainBoundingVectorsCurrent.chk";
+                    std::ifstream readFile1(file1.c_str());
+                    std::ifstream readFile2(file2.c_str());
+                    if (!readFile1.fail() && !readFile2.fail())
+                      {
+                        tmp.clear();
+                        tmp.resize(1, std::vector<double>(1, lastSavedStep));
+                        dftUtils::writeDataIntoFile(tmp, tempfolder + ".chk");
+                        if (d_verbosity > 0)
+                          pcout
+                            << "Geometry restart files are found in: " << path
                             << std::endl;
-                    restartFilesFound = true;
-                    restartPath       = path;
-                    break;
-                  }
+                        restartFilesFound = true;
+                        break;
+                      }
 
-                else
-                  {
-                    if (d_verbosity > 0)
-                      pcout << "----Error opening restart files present in: "
+                    else
+                      {
+                        if (d_verbosity > 0)
+                          pcout
+                            << "----Error opening restart files present in: "
                             << path << std::endl
                             << "Switching to step: " << --lastSavedStep
                             << " ----" << std::endl;
+                      }
+                  }
+                if (restartFilesFound)
+                  break;
+                else if (d_optMode == 2)
+                  {
+                    d_cycle  = d_status == 0 ? d_cycle - 1 : d_cycle;
+                    d_status = d_status == 0 ? 1 : 0;
                   }
               }
-            if (restartFilesFound)
-              break;
-            else if (d_optMode == 2)
-              {
-                d_cycle  = d_status == 0 ? d_cycle - 1 : d_cycle;
-                d_status = d_status == 0 ? 1 : 0;
-              }
           }
+        std::vector<int> broadcastData(4, 0);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          {
+            broadcastData[0] = restartFilesFound ? 1 : 0;
+            broadcastData[1] = lastSavedStep;
+            broadcastData[2] = d_status;
+            broadcastData[3] = d_cycle;
+          }
+        MPI_Bcast(broadcastData.data(), 4, MPI_INT, 0, d_mpiCommParent);
+        restartFilesFound = broadcastData[0] > 0;
+        lastSavedStep     = broadcastData[1];
+        d_status          = broadcastData[2];
+        d_cycle           = broadcastData[3];
+        restartPath       = d_restartFilesPath + "/optRestart/cycle" +
+                      std::to_string(d_cycle) +
+                      (d_status == 0 ? "/ionRelax/step" : "/cellRelax/step") +
+                      std::to_string(lastSavedStep);
+        coordinatesFile = isPeriodic ?
+                            restartPath + "/atomsFracCoordCurrent.chk" :
+                            restartPath + "/atomsCartCoordCurrent.chk";
+        domainVectorsFile = restartPath + "/domainBoundingVectorsCurrent.chk";
         if (!restartFilesFound)
           {
             AssertThrow(

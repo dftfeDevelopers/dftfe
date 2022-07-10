@@ -67,7 +67,7 @@ namespace dftfe
     // restart parameters
     const bool        d_isRestart;
     const std::string d_restartFilesPath;
-    const int d_verbosity;
+    const int         d_verbosity;
     // status parameters
     int d_status, d_cycle, d_optMode;
     // parallel communication objects
