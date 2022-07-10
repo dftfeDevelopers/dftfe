@@ -98,6 +98,7 @@ namespace dftfe
                     dftUtils::writeDataIntoFile(tmp,
                                                 tempfolder + ".chk",
                                                 d_mpiCommParent);
+                    MPI_Barrier( d_mpiCommParent);
                     if (d_verbosity > 0)
                       pcout << "Geometry restart files are found in: " << path
                             << std::endl;
