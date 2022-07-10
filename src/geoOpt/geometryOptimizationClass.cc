@@ -95,6 +95,7 @@ namespace dftfe
                     domainVectorsFile = file2;
                     tmp.clear();
                     tmp.resize(1, std::vector<double>(1, lastSavedStep));
+                    MPI_Barrier( d_mpiCommParent);
                     dftUtils::writeDataIntoFile(tmp,
                                                 tempfolder + ".chk",
                                                 d_mpiCommParent);
