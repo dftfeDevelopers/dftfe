@@ -776,7 +776,7 @@ namespace dftfe
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.");
+            "[Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
@@ -789,13 +789,13 @@ namespace dftfe
             "ADAPTIVE RANK REL TOL",
             "0.3",
             Patterns::Double(0.0, 1.0),
-            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
+            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED\_ADAPTIVE method.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
             "2.0",
             Patterns::Double(0.0, 100.0),
-            "[Advanced] For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.");
+            "[Advanced] For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
 
           prm.declare_entry(
             "POISSON SOLVER ABS TOL",
@@ -1047,7 +1047,7 @@ namespace dftfe
           "TEMPERATURE CONTROLLER TYPE",
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
-          "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
+          "[Standard] Method of controlling temperature in the MD run. NO\_CONTROL is the default option.");
 
         prm.declare_entry("TIME STEP",
                           "0.5",
