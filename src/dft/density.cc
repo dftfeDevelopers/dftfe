@@ -320,8 +320,10 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   popOutRhoInRhoOutVals();
 
   if (isGroundState &&
-      (d_dftParamsPtr->reuseDensityGeoOpt == 2 ||
-       d_dftParamsPtr->reuseDensityMD == 2) &&
+      ((d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
+        d_dftParamsPtr->solverMode == "GEOOPT") ||
+       (d_dftParamsPtr->reuseDensityMD == 2 &&
+        d_dftParamsPtr->solverMode == "MD")) &&
       d_dftParamsPtr->spinPolarized != 1)
     {
       d_rhoOutNodalValuesSplit = d_rhoOutNodalValues;

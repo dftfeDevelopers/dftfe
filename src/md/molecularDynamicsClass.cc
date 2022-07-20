@@ -53,10 +53,8 @@ namespace dftfe
     if (d_restartFlag == 0)
       {
         d_startingTimeStep = 0;
-        d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                               d_mpiCommParent,
-                                                               true,
-                                                               true);
+        d_dftfeWrapper     = std::make_unique<dftfe::dftfeWrapper>(
+          parameter_file, d_mpiCommParent, true, true, "MD");
       }
     else
       {
@@ -68,7 +66,8 @@ namespace dftfe
                                                 domainVectorsFile,
                                                 d_mpiCommParent,
                                                 true,
-                                                true);
+                                                true,
+                                                "MD");
       }
 
     set();

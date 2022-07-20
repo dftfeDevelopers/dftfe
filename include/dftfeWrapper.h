@@ -54,7 +54,8 @@ namespace dftfe
     dftfeWrapper(const std::string parameter_file,
                  const MPI_Comm &  mpi_comm_parent,
                  const bool        printParams                      = false,
-                 const bool        setGPUToMPITaskBindingInternally = false);
+                 const bool        setGPUToMPITaskBindingInternally = false,
+                 const std::string solverMode                       = "GS");
 
     /**
      * @brief constructor based on input parameter_file and restart
@@ -65,7 +66,8 @@ namespace dftfe
                  const std::string restartDomainVectorsFile,
                  const MPI_Comm &  mpi_comm_parent,
                  const bool        printParams                      = false,
-                 const bool        setGPUToMPITaskBindingInternally = false);
+                 const bool        setGPUToMPITaskBindingInternally = false,
+                 const std::string solverMode                       = "GS");
 
     /**
      * @brief constructor based on input list of atomic coordinates,
@@ -152,7 +154,8 @@ namespace dftfe
     reinit(const std::string parameter_file,
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
-           const bool        setGPUToMPITaskBindingInternally = false);
+           const bool        setGPUToMPITaskBindingInternally = false,
+           const std::string solverMode                       = "GS");
 
     /**
      * @brief clear and reinitialize based on input parameter_file and restart
@@ -164,7 +167,8 @@ namespace dftfe
            const std::string restartDomainVectorsFile,
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
-           const bool        setGPUToMPITaskBindingInternally = false);
+           const bool        setGPUToMPITaskBindingInternally = false,
+           const std::string solverMode                       = "GS");
 
     void
     reinit(const MPI_Comm &                       mpi_comm_parent,

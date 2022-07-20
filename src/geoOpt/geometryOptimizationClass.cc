@@ -159,7 +159,8 @@ namespace dftfe
                                                         domainVectorsFile,
                                                         d_mpiCommParent,
                                                         true,
-                                                        true);
+                                                        true,
+                                                        "GEOOPT");
         d_dftPtr        = d_dftfeWrapper->getDftfeBasePtr();
         bool nlpRestart = true;
         if (d_dftPtr->getParametersObject().optimizationMode == "ION")
@@ -179,11 +180,9 @@ namespace dftfe
       }
     else
       {
-        d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
-                                                        d_mpiCommParent,
-                                                        true,
-                                                        true);
-        d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
+        d_dftfeWrapper = std::make_unique<dftfeWrapper>(
+          parameter_file, d_mpiCommParent, true, true, "GEOOPT");
+        d_dftPtr = d_dftfeWrapper->getDftfeBasePtr();
         if (d_dftPtr->getParametersObject().optimizationMode == "ION")
           d_optMode = 0;
         else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")
@@ -212,31 +211,6 @@ namespace dftfe
         d_geoOptCellPtr =
           std::make_unique<geoOptCell>(d_dftPtr, d_mpiCommParent, d_isRestart);
       }
-    if (d_dftPtr->getParametersObject().optimizationMode == "ION")
-      {
-        d_dftPtr->getParametersObject().isIonOpt   = true;
-        d_dftPtr->getParametersObject().isIonForce = true;
-      }
-    else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")
-      {
-        d_dftPtr->getParametersObject().isCellOpt    = true;
-        d_dftPtr->getParametersObject().isCellStress = true;
-      }
-    else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
-      {
-        d_dftPtr->getParametersObject().isIonOpt     = true;
-        d_dftPtr->getParametersObject().isCellOpt    = true;
-        d_dftPtr->getParametersObject().isIonForce   = true;
-        d_dftPtr->getParametersObject().isCellStress = true;
-      }
-#ifdef USE_COMPLEX
-    if (d_dftPtr->getParametersObject().isIonForce ||
-        d_dftPtr->getParametersObject().isCellStress)
-      AssertThrow(
-        !d_dftPtr->getParametersObject().useSymm,
-        ExcMessage(
-          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
-#endif
   }
 
 

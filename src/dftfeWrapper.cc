@@ -169,7 +169,8 @@ namespace dftfe
   dftfeWrapper::dftfeWrapper(const std::string parameter_file,
                              const MPI_Comm &  mpi_comm_parent,
                              const bool        printParams,
-                             const bool        setGPUToMPITaskBindingInternally)
+                             const bool        setGPUToMPITaskBindingInternally,
+                             const std::string mode)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
@@ -178,7 +179,8 @@ namespace dftfe
     reinit(parameter_file,
            mpi_comm_parent,
            printParams,
-           setGPUToMPITaskBindingInternally);
+           setGPUToMPITaskBindingInternally,
+           mode);
   }
 
 
@@ -190,7 +192,8 @@ namespace dftfe
                              const std::string restartDomainVectorsFile,
                              const MPI_Comm &  mpi_comm_parent,
                              const bool        printParams,
-                             const bool        setGPUToMPITaskBindingInternally)
+                             const bool        setGPUToMPITaskBindingInternally,
+                             const std::string mode)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
@@ -201,7 +204,8 @@ namespace dftfe
            restartDomainVectorsFile,
            mpi_comm_parent,
            printParams,
-           setGPUToMPITaskBindingInternally);
+           setGPUToMPITaskBindingInternally,
+           mode);
   }
 
 
@@ -259,7 +263,8 @@ namespace dftfe
   dftfeWrapper::reinit(const std::string parameter_file,
                        const MPI_Comm &  mpi_comm_parent,
                        const bool        printParams,
-                       const bool        setGPUToMPITaskBindingInternally)
+                       const bool        setGPUToMPITaskBindingInternally,
+                       const std::string mode)
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
@@ -272,7 +277,8 @@ namespace dftfe
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file,
                                            d_mpi_comm_parent,
-                                           printParams);
+                                           printParams,
+                                           mode);
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -284,7 +290,8 @@ namespace dftfe
                        const std::string restartDomainVectorsFile,
                        const MPI_Comm &  mpi_comm_parent,
                        const bool        printParams,
-                       const bool        setGPUToMPITaskBindingInternally)
+                       const bool        setGPUToMPITaskBindingInternally,
+                       const std::string mode)
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
@@ -297,7 +304,8 @@ namespace dftfe
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file,
                                            d_mpi_comm_parent,
-                                           printParams);
+                                           printParams,
+                                           mode);
         d_dftfeParamsPtr->coordinatesFile           = restartCoordsFile;
         d_dftfeParamsPtr->domainBoundingVectorsFile = restartDomainVectorsFile;
       }

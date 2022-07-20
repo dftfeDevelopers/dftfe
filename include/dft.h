@@ -1591,7 +1591,7 @@ namespace dftfe
     /**
      * Recomputes the k point cartesian coordinates from the crystal k point
      * coordinates and the current lattice vectors, which can change in each
-     * ground state solve when isCellOpt is true
+     * ground state solve dutring cell optimization.
      */
     void
     recomputeKPointCoordinates();

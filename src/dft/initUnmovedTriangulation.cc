@@ -36,9 +36,10 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
 
   // initialize affine transformation object (must be done on unmoved
   // triangulation)
-  d_affineTransformMesh.init(triangulation,
-                             d_mesh.getSerialMeshUnmoved(),
-                             d_domainBoundingVectors);
+  if (d_dftParamsPtr->isCellStress)
+    d_affineTransformMesh.init(triangulation,
+                               d_mesh.getSerialMeshUnmoved(),
+                               d_domainBoundingVectors);
 
   // initialize meshMovementGaussianClass object (must be done on unmoved
   // triangulation) when not using floating charges

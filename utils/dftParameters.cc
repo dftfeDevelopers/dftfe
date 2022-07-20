@@ -1139,8 +1139,6 @@ namespace dftfe
     topfrac                        = 0.1;
     kerkerParameter                = 0.05;
 
-    isIonOpt               = false;
-    isCellOpt              = false;
     isIonForce             = false;
     isCellStress           = false;
     isBOMD                 = false;
@@ -1261,12 +1259,13 @@ namespace dftfe
   void
   dftParameters::parse_parameters(const std::string &parameter_file,
                                   const MPI_Comm &   mpi_comm_parent,
-                                  const bool         printParams)
+                                  const bool         printParams,
+                                  const std::string  mode)
   {
     ParameterHandler prm;
     internalDftParameters::declare_parameters(prm);
     prm.parse_input(parameter_file);
-
+    solverMode                = mode;
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
@@ -1325,18 +1324,20 @@ namespace dftfe
       prm.enter_subsection("Optimization");
       {
         optimizationMode       = prm.get("OPTIMIZATION MODE");
-        isIonOpt               = false;
         ionOptSolver           = prm.get("ION OPT SOLVER");
         cellOptSolver          = prm.get("CELL OPT SOLVER");
         maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
-        isIonForce             = prm.get_bool("ION FORCE");
-        forceRelaxTol          = prm.get_double("FORCE TOL");
-        ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-        isCellOpt              = false;
-        isCellStress           = prm.get_bool("CELL STRESS") ||
-                       optimizationMode == "CELL" ||
-                       optimizationMode == "IONCELL";
+        isIonForce =
+          prm.get_bool("ION FORCE") ||
+          ((optimizationMode == "ION" || optimizationMode == "IONCELL") &&
+           solverMode == "GEOOPT");
+        forceRelaxTol     = prm.get_double("FORCE TOL");
+        ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
+        isCellStress =
+          prm.get_bool("CELL STRESS") ||
+          ((optimizationMode == "CELL" || optimizationMode == "IONCELL") &&
+           solverMode == "GEOOPT");
         stressRelaxTol     = prm.get_double("STRESS TOL");
         cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
         reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
@@ -1605,7 +1606,13 @@ namespace dftfe
         smearedNuclearCharges,
         ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
-
+#ifdef USE_COMPLEX
+    if (isIonForce || isCellStress)
+      AssertThrow(
+        !useSymm,
+        ExcMessage(
+          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+#endif
 #ifndef USE_COMPLEX
     AssertThrow(
       nkx == 1 && nky == 1 && nkz == 1 && offsetFlagX == 0 &&
@@ -1613,16 +1620,6 @@ namespace dftfe
       ExcMessage(
         "DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
-    AssertThrow(
-      !(chkType == 2 && (isIonOpt || isCellOpt)),
-      ExcMessage(
-        "DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
-
-    AssertThrow(
-      !(chkType == 1 && (isIonOpt && isCellOpt)),
-      ExcMessage(
-        "DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
-
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,
