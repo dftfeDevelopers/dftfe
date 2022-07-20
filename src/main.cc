@@ -132,7 +132,8 @@ main(int argc, char *argv[])
       dftfe::geometryOptimizationClass geoOpt(parameter_file,
                                               runParams.restartFilesPath,
                                               MPI_COMM_WORLD,
-                                              runParams.restart);
+                                              runParams.restart,
+                                              runParams.verbosity);
       geoOpt.runOpt();
     }
   else

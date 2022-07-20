@@ -99,13 +99,13 @@ namespace dftfe
           "SUBSPACE ROT FULL CPU MEM",
           "true",
           Patterns::Bool(),
-          "[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.");
+          R"([Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.)");
 
         prm.declare_entry(
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           Patterns::Bool(),
-          "[Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
+          R"([Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -127,13 +127,13 @@ namespace dftfe
           "WRITE WFC",
           "false",
           Patterns::Bool(),
-          "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
+          R"([Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY",
           "false",
           Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
+          R"([Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
@@ -151,7 +151,7 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           Patterns::Bool(),
-          "[Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.");
+          R"([Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.)");
 
         prm.declare_entry(
           "READ ATOMIC WFC PDOS FROM PSP FILE",
@@ -185,7 +185,7 @@ namespace dftfe
           "MPI ALLREDUCE BLOCK SIZE",
           "100.0",
           Patterns::Double(0),
-          "[Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
+          R"([Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.)");
 
         prm.declare_entry(
           "BAND PARAL OPT",
@@ -624,7 +624,7 @@ namespace dftfe
           "PSEUDOPOTENTIAL FILE NAMES LIST",
           "",
           Patterns::Anything(),
-          "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
+          R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
 
         prm.declare_entry(
           "EXCHANGE CORRELATION TYPE",
@@ -741,7 +741,7 @@ namespace dftfe
           "KERKER MIXING PARAMETER",
           "0.05",
           Patterns::Double(0.0, 1000.0),
-          "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).");
+          R"([Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).)");
 
         prm.declare_entry(
           "MIXING METHOD",
@@ -776,7 +776,7 @@ namespace dftfe
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.");
+            "[Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
@@ -789,13 +789,13 @@ namespace dftfe
             "ADAPTIVE RANK REL TOL",
             "0.3",
             Patterns::Double(0.0, 1.0),
-            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
+            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED\_ADAPTIVE method.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
             "2.0",
             Patterns::Double(0.0, 100.0),
-            "[Advanced] For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.");
+            "[Advanced] For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
 
           prm.declare_entry(
             "POISSON SOLVER ABS TOL",
@@ -1047,7 +1047,7 @@ namespace dftfe
           "TEMPERATURE CONTROLLER TYPE",
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
-          "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
+          "[Standard] Method of controlling temperature in the MD run. NO\_CONTROL is the default option.");
 
         prm.declare_entry("TIME STEP",
                           "0.5",
@@ -1139,8 +1139,6 @@ namespace dftfe
     topfrac                        = 0.1;
     kerkerParameter                = 0.05;
 
-    isIonOpt               = false;
-    isCellOpt              = false;
     isIonForce             = false;
     isCellStress           = false;
     isBOMD                 = false;
@@ -1261,12 +1259,13 @@ namespace dftfe
   void
   dftParameters::parse_parameters(const std::string &parameter_file,
                                   const MPI_Comm &   mpi_comm_parent,
-                                  const bool         printParams)
+                                  const bool         printParams,
+                                  const std::string  mode)
   {
     ParameterHandler prm;
     internalDftParameters::declare_parameters(prm);
     prm.parse_input(parameter_file);
-
+    solverMode                = mode;
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
@@ -1325,18 +1324,20 @@ namespace dftfe
       prm.enter_subsection("Optimization");
       {
         optimizationMode       = prm.get("OPTIMIZATION MODE");
-        isIonOpt               = false;
         ionOptSolver           = prm.get("ION OPT SOLVER");
         cellOptSolver          = prm.get("CELL OPT SOLVER");
         maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
-        isIonForce             = prm.get_bool("ION FORCE");
-        forceRelaxTol          = prm.get_double("FORCE TOL");
-        ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-        isCellOpt              = false;
-        isCellStress           = prm.get_bool("CELL STRESS") ||
-                       optimizationMode == "CELL" ||
-                       optimizationMode == "IONCELL";
+        isIonForce =
+          prm.get_bool("ION FORCE") ||
+          ((optimizationMode == "ION" || optimizationMode == "IONCELL") &&
+           solverMode == "GEOOPT");
+        forceRelaxTol     = prm.get_double("FORCE TOL");
+        ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
+        isCellStress =
+          prm.get_bool("CELL STRESS") ||
+          ((optimizationMode == "CELL" || optimizationMode == "IONCELL") &&
+           solverMode == "GEOOPT");
         stressRelaxTol     = prm.get_double("STRESS TOL");
         cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
         reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
@@ -1605,7 +1606,13 @@ namespace dftfe
         smearedNuclearCharges,
         ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
-
+#ifdef USE_COMPLEX
+    if (isIonForce || isCellStress)
+      AssertThrow(
+        !useSymm,
+        ExcMessage(
+          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+#endif
 #ifndef USE_COMPLEX
     AssertThrow(
       nkx == 1 && nky == 1 && nkz == 1 && offsetFlagX == 0 &&
@@ -1613,16 +1620,6 @@ namespace dftfe
       ExcMessage(
         "DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
-    AssertThrow(
-      !(chkType == 2 && (isIonOpt || isCellOpt)),
-      ExcMessage(
-        "DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
-
-    AssertThrow(
-      !(chkType == 1 && (isIonOpt && isCellOpt)),
-      ExcMessage(
-        "DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
-
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,

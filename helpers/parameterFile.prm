@@ -1,3 +1,4 @@
+set SOLVER MODE=GS
 set VERBOSITY=1
 subsection Geometry
   set NATOMS=1

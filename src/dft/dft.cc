@@ -2030,7 +2030,7 @@ namespace dftfe
       firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-4 ?
                            1e-4 :
                            d_dftParamsPtr->chebyshevTolerance;
-    else if (d_dftParamsPtr->isIonOpt || d_dftParamsPtr->isCellOpt)
+    else if (d_dftParamsPtr->solverMode == "GEOOPT")
       firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-3 ?
                            1e-3 :
                            d_dftParamsPtr->chebyshevTolerance;
