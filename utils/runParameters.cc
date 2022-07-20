@@ -70,6 +70,14 @@ namespace dftfe
     solvermode       = prm.get("SOLVER MODE");
     restart          = prm.get_bool("RESTART");
     restartFilesPath = prm.get("RESTART FOLDER");
+
+    const bool printParametersToFile = false;
+    if (printParametersToFile &&
+        Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      {
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::LaTeX);
+        exit(0);
+      }
   }
 
 } // namespace dftfe
