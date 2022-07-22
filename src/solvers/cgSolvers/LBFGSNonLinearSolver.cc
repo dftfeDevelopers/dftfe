@@ -500,20 +500,27 @@ namespace dftfe
                 << std::endl;
             if (d_usePreconditioner)
               initializePreconditioner(problem);
-            d_alpha = 1.0;
-            std::fill(d_deltaGq[d_maxNumPastSteps - d_numPastSteps].begin(),
-                      d_deltaGq[d_maxNumPastSteps - d_numPastSteps].end(),
-                      0);
-            std::fill(d_deltaXq[d_maxNumPastSteps - d_numPastSteps].begin(),
-                      d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
-                      0);
-            d_rhoq[d_maxNumPastSteps - d_numPastSteps] = 0.0;
-            --d_numPastSteps;
-            if (d_debugLevel >= 2)
-              pcout << "Number of past steps currently stored: "
-                    << d_numPastSteps << std::endl;
-            d_noHistory = d_numPastSteps == 0;
-            computeStep();
+            if (d_numPastSteps > 0)
+              {
+                d_alpha = 1.0;
+                std::fill(d_deltaGq[d_maxNumPastSteps - d_numPastSteps].begin(),
+                          d_deltaGq[d_maxNumPastSteps - d_numPastSteps].end(),
+                          0);
+                std::fill(d_deltaXq[d_maxNumPastSteps - d_numPastSteps].begin(),
+                          d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
+                          0);
+                d_rhoq[d_maxNumPastSteps - d_numPastSteps] = 0.0;
+                --d_numPastSteps;
+                if (d_debugLevel >= 2)
+                  pcout << "Number of past steps currently stored: "
+                        << d_numPastSteps << std::endl;
+                d_noHistory = d_numPastSteps == 0;
+                computeStep();
+              }
+            else
+              {
+                d_noHistory = true;
+              }
           }
       }
     if (d_debugLevel >= 2)
