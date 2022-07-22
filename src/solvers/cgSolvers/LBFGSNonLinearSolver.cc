@@ -341,12 +341,7 @@ namespace dftfe
           {
             for (int i = 0; i < d_numberUnknowns; ++i)
               {
-                gradient[i] *=
-                  internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
-                                             d_deltaGq[d_maxNumPastSteps - 1],
-                                             d_preconditioner) /
-                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                     d_deltaGq[d_maxNumPastSteps - 1]);
+                gradient[i] *= d_scalingFactor;
               }
           }
       }
@@ -354,11 +349,7 @@ namespace dftfe
       {
         for (int i = 0; i < d_numberUnknowns; ++i)
           {
-            gradient[i] *=
-              internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1]) /
-              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1]);
+            gradient[i] *= d_scalingFactor;
           }
       }
     for (int j = 0; j < d_maxNumPastSteps; ++j)
@@ -417,7 +408,21 @@ namespace dftfe
       {
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
-    double sBs   = -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha;
+    double temp = d_scalingFactor;
+    if (d_usePreconditioner &&
+        internalLBFGS::computePdot(d_deltaXNew, delta_g, d_preconditioner) > 0)
+      {
+        d_scalingFactor =
+          internalLBFGS::computePdot(d_deltaXNew, delta_g, d_preconditioner) /
+          internalLBFGS::dot(delta_g, delta_g);
+      }
+    else if (!d_usePreconditioner && internalLBFGS::dot(d_deltaXNew, delta_g) > 0)
+      {
+        d_scalingFactor = internalLBFGS::dot(d_deltaXNew, delta_g) /
+                          internalLBFGS::dot(delta_g, delta_g);
+      }
+    double sBs =
+      -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha *temp / d_scalingFactor;
     double sy    = internalLBFGS::dot(delta_g, d_deltaXNew);
     double theta = 1.0;
     if (sy / sBs < 0.2)
@@ -596,6 +601,7 @@ namespace dftfe
     data.push_back(std::vector<double>(1, d_iter));
     data.push_back(std::vector<double>(1, (double)d_stepAccepted));
     data.push_back(std::vector<double>(1, d_numPastSteps));
+    data.push_back(std::vector<double>(1, d_scalingFactor));
 
 
     dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
@@ -617,7 +623,7 @@ namespace dftfe
     AssertThrow(
       data.size() ==
         (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
-         d_maxNumPastSteps + 6),
+         d_maxNumPastSteps + 7),
       dealii::ExcMessage(std::string(
         "DFT-FE Error: data size of lbfgs solver checkpoint file is incorrect.")));
 
@@ -689,6 +695,10 @@ namespace dftfe
       data[5 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0];
 
+    d_scalingFactor =
+      data[6 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
+           d_maxNumPastSteps][0];
+
     d_noHistory = d_alpha < 0.1 && d_numPastSteps == 0;
   }
 
@@ -727,10 +737,11 @@ namespace dftfe
     //
     if (!restart)
       {
-        d_stepAccepted = true;
-        d_numPastSteps = 0;
-        d_iter         = 0;
-        d_noHistory    = false;
+        d_stepAccepted  = true;
+        d_numPastSteps  = 0;
+        d_iter          = 0;
+        d_noHistory     = false;
+        d_scalingFactor = 1;
         //
         // compute initial values of problem and problem gradient
         //

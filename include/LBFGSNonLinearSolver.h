@@ -188,6 +188,9 @@ namespace dftfe
     /// storage for backtracking line search parameter.
     double d_alpha;
 
+    /// storage for hessian scaling.
+    double d_scalingFactor;
+
     /// boolean parameter for step accepteance and Wolfe conditions.
     bool d_stepAccepted, d_wolfeCurvature, d_wolfeSufficientDec,
       d_wolfeSatisfied;
