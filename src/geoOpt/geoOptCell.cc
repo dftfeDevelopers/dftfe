@@ -188,9 +188,10 @@ namespace dftfe
         std::vector<std::vector<double>> tmp, cellOptData;
         dftUtils::readFile(1, cellOptData, d_restartPath + "/cellOpt.dat");
         dftUtils::readFile(1, tmp, d_restartPath + "/step.chk");
-        int  solver             = cellOptData[0][0];
-        bool cellConstraintType = cellOptData[1][0];
-        d_totalUpdateCalls      = tmp[0][0];
+        int solver             = cellOptData[0][0];
+        int cellConstraintType = cellOptData[1][0];
+        d_domainVolumeInitial  = cellOptData[2][0];
+        d_totalUpdateCalls     = tmp[0][0];
         if (solver != d_solver)
           pcout
             << "Solver has changed since last save, the newly set solver will start from scratch."
@@ -214,11 +215,12 @@ namespace dftfe
         d_totalUpdateCalls = 0;
         if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
           mkdir(d_restartPath.c_str(), ACCESSPERMS);
-        std::vector<std::vector<double>> cellOptData(2,
+        std::vector<std::vector<double>> cellOptData(3,
                                                      std::vector<double>(1,
                                                                          0.0));
         cellOptData[0][0] = d_solver;
         cellOptData[1][0] = d_dftPtr->getParametersObject().cellConstraintType;
+        cellOptData[2][0] = d_domainVolumeInitial;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           dftUtils::writeDataIntoFile(cellOptData,
                                       d_restartPath + "/cellOpt.dat",
@@ -498,7 +500,8 @@ namespace dftfe
     gradient.clear();
     const Tensor<2, 3, double> tempGradient =
       d_dftPtr->getCellVolume() *
-      (d_dftPtr->getCellStress() * invert(d_strainEpsilon));
+      (d_dftPtr->getCellStress() * invert(d_strainEpsilon)) /
+      d_domainVolumeInitial;
 
     if (d_relaxationFlags[0] == 1)
       gradient.push_back(tempGradient[0][0]);
