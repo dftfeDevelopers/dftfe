@@ -114,36 +114,10 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85824880
+             Total energy:         -41.85840426
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.001840,0.000000,0.000000
-AtomId    1:  0.001840,0.000000,0.000000
---------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 1408
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
--------------------------------------------------
-
-Pseudopotential initalization....
-
-Reading data for core electron-density to be used in nonlinear core-correction.....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -41.85842650
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.000192,0.000000,0.000000
-AtomId    1:  0.000191,0.000000,0.000000
+AtomId    0:  0.000544,0.000000,0.000000
+AtomId    1:  0.000543,0.000000,0.000000
 --------------------------------------------------------------------------------------------
