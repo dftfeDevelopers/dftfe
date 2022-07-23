@@ -111,7 +111,7 @@
 
 \index[prmindex]{VERBOSITY}
 \index[prmindexfull]{VERBOSITY}
-{\it Value:} 0
+{\it Value:} 1
 
 
 {\it Default:} 1
@@ -1427,7 +1427,7 @@
 
 \index[prmindex]{ION FORCE}
 \index[prmindexfull]{Geometry!Optimization!ION FORCE}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -1461,7 +1461,7 @@
 
 \index[prmindex]{ION RELAX FLAGS FILE}
 \index[prmindexfull]{Geometry!Optimization!ION RELAX FLAGS FILE}
-{\it Value:} 
+{\it Value:} relaxationFlags.inp
 
 
 {\it Default:} 
@@ -1488,6 +1488,40 @@
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
+\item {\it Parameter name:} {\tt MAXIMUM CELL UPDATE STEP}
+\phantomsection\label{parameters:Geometry/Optimization/MAXIMUM CELL UPDATE STEP}
+\label{parameters:Geometry/Optimization/MAXIMUM_20CELL_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM CELL UPDATE STEP}
+\index[prmindexfull]{Geometry!Optimization!MAXIMUM CELL UPDATE STEP}
+{\it Value:} 0.1
+
+
+{\it Default:} 0.1
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (deformation) during cell relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
+\item {\it Parameter name:} {\tt MAXIMUM ION UPDATE STEP}
+\phantomsection\label{parameters:Geometry/Optimization/MAXIMUM ION UPDATE STEP}
+\label{parameters:Geometry/Optimization/MAXIMUM_20ION_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM ION UPDATE STEP}
+\index[prmindexfull]{Geometry!Optimization!MAXIMUM ION UPDATE STEP}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
 \item {\it Parameter name:} {\tt MAXIMUM OPTIMIZATION STEPS}
 \phantomsection\label{parameters:Geometry/Optimization/MAXIMUM OPTIMIZATION STEPS}
 \label{parameters:Geometry/Optimization/MAXIMUM_20OPTIMIZATION_20STEPS}
@@ -1522,23 +1556,6 @@
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 1000$
-\item {\it Parameter name:} {\tt MAXIMUM UPDATE STEP}
-\phantomsection\label{parameters:Geometry/Optimization/MAXIMUM UPDATE STEP}
-\label{parameters:Geometry/Optimization/MAXIMUM_20UPDATE_20STEP}
-
-
-\index[prmindex]{MAXIMUM UPDATE STEP}
-\index[prmindexfull]{Geometry!Optimization!MAXIMUM UPDATE STEP}
-{\it Value:} 0.5
-
-
-{\it Default:} 0.5
-
-
-{\it Description:} [Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.
-
-
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
 \item {\it Parameter name:} {\tt MAX LINE SEARCH ITER}
 \phantomsection\label{parameters:Geometry/Optimization/MAX LINE SEARCH ITER}
 \label{parameters:Geometry/Optimization/MAX_20LINE_20SEARCH_20ITER}
@@ -2192,7 +2209,7 @@
 
 \index[prmindex]{MAXIMUM ITERATIONS}
 \index[prmindexfull]{SCF parameters!MAXIMUM ITERATIONS}
-{\it Value:} 40
+{\it Value:} 200
 
 
 {\it Default:} 200
@@ -2243,7 +2260,7 @@
 
 \index[prmindex]{MIXING PARAMETER}
 \index[prmindexfull]{SCF parameters!MIXING PARAMETER}
-{\it Value:} 0.5
+{\it Value:} 0.0
 
 
 {\it Default:} 0.0
