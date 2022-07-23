@@ -769,10 +769,10 @@ namespace dftfe
     //
     if (!restart)
       {
-        d_stepAccepted  = true;
-        d_numPastSteps  = 0;
-        d_iter          = 0;
-        d_noHistory     = false;
+        d_stepAccepted = true;
+        d_numPastSteps = 0;
+        d_iter         = 0;
+        d_noHistory    = false;
         //
         // compute initial values of problem and problem gradient
         //

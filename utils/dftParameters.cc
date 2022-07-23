@@ -293,10 +293,16 @@ namespace dftfe
             "[Standard] Sets the maximum number of staggered ion/cell optimization cycles to be performed.");
 
           prm.declare_entry(
-            "MAXIMUM UPDATE STEP",
+            "MAXIMUM ION UPDATE STEP",
             "0.5",
             Patterns::Double(0, 5.0),
-            "[Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.");
+            "[Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.");
+
+          prm.declare_entry(
+            "MAXIMUM CELL UPDATE STEP",
+            "0.1",
+            Patterns::Double(0, 5.0),
+            "[Standard] Sets the maximum allowed step size (deformation) during cell relaxation.");
 
           prm.declare_entry(
             "MAX LINE SEARCH ITER",
@@ -1252,7 +1258,8 @@ namespace dftfe
     lbfgsNumPastSteps  = 5;
     maxOptIter         = 300;
     maxStaggeredCycles = 100;
-    maxUpdateStep      = 0.5;
+    maxIonUpdateStep   = 0.5;
+    maxCellUpdateStep  = 0.1;
   }
 
 
@@ -1347,7 +1354,8 @@ namespace dftfe
         lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
         maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
         maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-        maxUpdateStep      = prm.get_double("MAXIMUM UPDATE STEP");
+        maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+        maxCellUpdateStep  = prm.get_double("MAXIMUM CELL UPDATE STEP");
       }
       prm.leave_subsection();
     }

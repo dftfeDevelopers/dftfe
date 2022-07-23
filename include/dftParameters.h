@@ -170,7 +170,7 @@ namespace dftfe
     unsigned int lbfgsNumPastSteps;
     unsigned int maxOptIter;
     unsigned int maxStaggeredCycles;
-    double       maxUpdateStep;
+    double       maxIonUpdateStep, maxCellUpdateStep;
 
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;
