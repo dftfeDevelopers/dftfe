@@ -639,7 +639,9 @@ namespace dftfe
         MPI_Barrier(d_mpi_comm_parent);
         d_dftfeParamsPtr = new dftfe::dftParameters;
         d_dftfeParamsPtr->parse_parameters(parameter_file_path,
-                                           d_mpi_comm_parent);
+                                           d_mpi_comm_parent,
+                                           false,
+                                           "GS");
         d_dftfeParamsPtr->useGPU = useGPU;
       }
     initialize(setGPUToMPITaskBindingInternally);
