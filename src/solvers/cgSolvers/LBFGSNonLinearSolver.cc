@@ -320,6 +320,78 @@ namespace dftfe
       }
   }
 
+  //
+  // Compute Hessian inverse times vector.
+  //
+  void
+  LBFGSNonLinearSolver::computeHx(std::vector<double> &Hx)
+  {
+    AssertThrow(
+      Hx.size() == d_numberUnknowns,
+      dealii::ExcMessage(std::string(
+        "DFT-FE Error: data size of input to LBFGSNonLinearSolver::computeHx is incorrect.")));
+    double d_scalingFactor = 1;
+    if (d_numPastSteps > 0)
+      {
+        if (d_usePreconditioner &&
+            internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                       d_deltaGq[d_maxNumPastSteps - 1],
+                                       d_preconditioner) > 0)
+          {
+            d_scalingFactor =
+              internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                         d_deltaGq[d_maxNumPastSteps - 1],
+                                         d_preconditioner) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]);
+          }
+        else if (!d_usePreconditioner &&
+                 internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                    d_deltaGq[d_maxNumPastSteps - 1]) > 0)
+          {
+            d_scalingFactor =
+              internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]);
+          }
+        else
+          {
+            AssertThrow(false,
+                        dealii::ExcMessage(std::string(
+                          "DFT-FE Error: LBFGS history not properly damped.")));
+          }
+      }
+    std::vector<double> alpha(d_maxNumPastSteps, 0.0);
+    for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
+      {
+        alpha[j] = internalLBFGS::dot(d_deltaXq[j], Hx) * d_rhoq[j];
+        internalLBFGS::axpy(-alpha[j], d_deltaGq[j], Hx);
+      }
+    if (d_usePreconditioner)
+      {
+        internalLBFGS::linearSolve(d_preconditioner, Hx);
+        if (d_numPastSteps > 0)
+          {
+            for (int i = 0; i < d_numberUnknowns; ++i)
+              {
+                Hx[i] *= d_scalingFactor;
+              }
+          }
+      }
+    else if (d_numPastSteps > 0)
+      {
+        for (int i = 0; i < d_numberUnknowns; ++i)
+          {
+            Hx[i] *= d_scalingFactor;
+          }
+      }
+    for (int j = 0; j < d_maxNumPastSteps; ++j)
+      {
+        double beta = internalLBFGS::dot(d_deltaGq[j], Hx) * d_rhoq[j];
+        internalLBFGS::axpy(alpha[j] - beta, d_deltaXq[j], Hx);
+      }
+  }
 
   //
   // Compute LBFGS step
@@ -328,35 +400,7 @@ namespace dftfe
   LBFGSNonLinearSolver::computeStep()
   {
     std::vector<double> gradient = d_gradient;
-    std::vector<double> alpha(d_maxNumPastSteps, 0.0);
-    for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
-      {
-        alpha[j] = internalLBFGS::dot(d_deltaXq[j], gradient) * d_rhoq[j];
-        internalLBFGS::axpy(-alpha[j], d_deltaGq[j], gradient);
-      }
-    if (d_usePreconditioner)
-      {
-        internalLBFGS::linearSolve(d_preconditioner, gradient);
-        if (d_numPastSteps > 0)
-          {
-            for (int i = 0; i < d_numberUnknowns; ++i)
-              {
-                gradient[i] *= d_scalingFactor;
-              }
-          }
-      }
-    else if (d_numPastSteps > 0)
-      {
-        for (int i = 0; i < d_numberUnknowns; ++i)
-          {
-            gradient[i] *= d_scalingFactor;
-          }
-      }
-    for (int j = 0; j < d_maxNumPastSteps; ++j)
-      {
-        double beta = internalLBFGS::dot(d_deltaGq[j], gradient) * d_rhoq[j];
-        internalLBFGS::axpy(alpha[j] - beta, d_deltaXq[j], gradient);
-      }
+    computeHx(gradient);
     for (int i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaXNew[i] = -gradient[i];
@@ -408,31 +452,24 @@ namespace dftfe
       {
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
-    double temp = d_scalingFactor;
-    if (d_usePreconditioner &&
-        internalLBFGS::computePdot(d_deltaXNew, delta_g, d_preconditioner) > 0)
+    double sBs = -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha;
+    double sy  = internalLBFGS::dot(delta_g, d_deltaXNew);
+    std::vector<double> Hy = d_gradientNew;
+    computeHx(Hy);
+    for (int i = 0; i < Hy.size(); ++i)
       {
-        d_scalingFactor =
-          internalLBFGS::computePdot(d_deltaXNew, delta_g, d_preconditioner) /
-          internalLBFGS::dot(delta_g, delta_g);
+        Hy[i] += d_deltaXNew[i] / d_alpha;
       }
-    else if (!d_usePreconditioner && internalLBFGS::dot(d_deltaXNew, delta_g) > 0)
-      {
-        d_scalingFactor = internalLBFGS::dot(d_deltaXNew, delta_g) /
-                          internalLBFGS::dot(delta_g, delta_g);
-      }
-    double sBs =
-      -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha *temp / d_scalingFactor;
-    double sy    = internalLBFGS::dot(delta_g, d_deltaXNew);
+    double yHy   = internalLBFGS::dot(delta_g, Hy);
     double theta = 1.0;
-    if (sy / sBs < 0.2)
+    if ((sy / sBs < 0) || (sy / sBs < 0.2 && sy / sBs + 1e-8 < yHy / sy))
       {
         theta = 0.8 * sBs / (sBs - sy);
       }
-    /*else if (sy / sBs > 4)
+    else if (sy / sBs > 4 && sy / sBs + 1e-8 < yHy / sy)
       {
         theta = 3 * sBs / (sy - sBs);
-      }*/
+      }
     if (theta != 1 && d_debugLevel >= 1)
       {
         pcout << "Using damped LBFGS update with theta = " << theta
@@ -528,7 +565,7 @@ namespace dftfe
               }
           }
       }
-    if (d_debugLevel >= 2)
+    if (d_debugLevel >= 1)
       pcout << "Trying step size (scaling factor): " << d_alpha << std::endl;
   }
 
@@ -601,7 +638,6 @@ namespace dftfe
     data.push_back(std::vector<double>(1, d_iter));
     data.push_back(std::vector<double>(1, (double)d_stepAccepted));
     data.push_back(std::vector<double>(1, d_numPastSteps));
-    data.push_back(std::vector<double>(1, d_scalingFactor));
 
 
     dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
@@ -623,7 +659,7 @@ namespace dftfe
     AssertThrow(
       data.size() ==
         (2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
-         d_maxNumPastSteps + 7),
+         d_maxNumPastSteps + 6),
       dealii::ExcMessage(std::string(
         "DFT-FE Error: data size of lbfgs solver checkpoint file is incorrect.")));
 
@@ -695,10 +731,6 @@ namespace dftfe
       data[5 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
            d_maxNumPastSteps][0];
 
-    d_scalingFactor =
-      data[6 + 2 * d_numberUnknowns + 2 * d_numberUnknowns * d_maxNumPastSteps +
-           d_maxNumPastSteps][0];
-
     d_noHistory = d_alpha < 0.1 && d_numPastSteps == 0;
   }
 
@@ -741,7 +773,6 @@ namespace dftfe
         d_numPastSteps  = 0;
         d_iter          = 0;
         d_noHistory     = false;
-        d_scalingFactor = 1;
         //
         // compute initial values of problem and problem gradient
         //
