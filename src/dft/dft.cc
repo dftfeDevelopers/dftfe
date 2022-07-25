@@ -999,7 +999,7 @@ namespace dftfe
     // optimization is on as well as reuse wfcs and density from previous ionic
     // step is on, or if serial constraints generation is on.
     //
-    if (d_dftParamsPtr->chkType == 2 && d_dftParamsPtr->restartFromChk)
+    if (d_dftParamsPtr->loadRhoData)
       {
         d_mesh.generateCoarseMeshesForRestart(
           atomLocations,
@@ -1105,7 +1105,7 @@ namespace dftfe
         d_isAtomsGaussianDisplacementsReadFromFile = false;
       }
 
-    if (d_dftParamsPtr->chkType == 2 && d_dftParamsPtr->restartFromChk)
+    if (d_dftParamsPtr->loadRhoData)
       {
         if (d_dftParamsPtr->verbosity >= 1)
           pcout
@@ -1154,6 +1154,34 @@ namespace dftfe
               *gradRhoInValuesSpinPolarized,
               *gradRhoInValuesSpinPolarized,
               d_dftParamsPtr->xcFamilyType == "GGA");
+          }
+        if (!(d_dftParamsPtr->solverMode == "GS"))
+          {
+            d_rhoOutNodalValues = d_rhoInNodalValues;
+            d_rhoOutNodalValues.update_ghost_values();
+            rhoOutVals.push_back(*(rhoInValues));
+            rhoOutValues = &(rhoOutVals.back());
+
+            if (d_dftParamsPtr->xcFamilyType == "GGA")
+              {
+                gradRhoOutVals.push_back(*(gradRhoInValues));
+                gradRhoOutValues = &(gradRhoOutVals.back());
+              }
+
+            if (d_dftParamsPtr->spinPolarized == 1)
+              {
+                rhoOutValsSpinPolarized.push_back(*rhoInValuesSpinPolarized);
+                rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+              }
+
+            if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+                d_dftParamsPtr->spinPolarized == 1)
+              {
+                gradRhoOutValsSpinPolarized.push_back(
+                  *gradRhoInValuesSpinPolarized);
+                gradRhoOutValuesSpinPolarized =
+                  &(gradRhoOutValsSpinPolarized.back());
+              }
           }
 
         d_isRestartGroundStateCalcFromChk = true;
@@ -1394,6 +1422,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
     const Tensor<2, 3, double> &deformationGradient,
     const bool                  vselfPerturbationUpdateForStress,
+    const bool                  useSingleAtomSolutionsOverride,
     const bool                  print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
@@ -1547,7 +1576,7 @@ namespace dftfe
       }
     else
       {
-        initNoRemesh(false, true, false, true);
+        initNoRemesh(false, true, useSingleAtomSolutionsOverride, true);
       }
   }
 
@@ -1660,6 +1689,11 @@ namespace dftfe
   {
     if (d_dftParamsPtr->meshAdaption)
       aposterioriMeshGenerate();
+
+    if (d_dftParamsPtr->restartFolder != "." && d_dftParamsPtr->saveRhoData)
+      {
+        mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
+      }
 
     solve(true, true, d_isRestartGroundStateCalcFromChk);
 
@@ -2443,8 +2477,7 @@ namespace dftfe
                 // This improves the scf convergence performance.
 
                 const double filterPassTol =
-                  (scfIter == 0 && isRestartGroundStateCalcFromChk &&
-                   (d_dftParamsPtr->chkType == 2)) ?
+                  (scfIter == 0 && isRestartGroundStateCalcFromChk) ?
                     1.0e-8 :
                     ((scfIter == 0 &&
                       adaptiveChebysevFilterPassesTol > firstScfChebyTol) ?
@@ -2732,8 +2765,7 @@ namespace dftfe
                 // This improves the scf convergence performance.
 
                 const double filterPassTol =
-                  (scfIter == 0 && isRestartGroundStateCalcFromChk &&
-                   (d_dftParamsPtr->chkType == 2)) ?
+                  (scfIter == 0 && isRestartGroundStateCalcFromChk) ?
                     1.0e-8 :
                     ((scfIter == 0 &&
                       adaptiveChebysevFilterPassesTol > firstScfChebyTol) ?
@@ -3072,11 +3104,13 @@ namespace dftfe
         //
         scfIter++;
 
-        if (d_dftParamsPtr->chkType == 2 && scfIter % 10 == 0)
+        if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
+            d_dftParamsPtr->solverMode == "GS")
           saveTriaInfoAndRhoNodalData();
       }
 
-    if (d_dftParamsPtr->chkType == 2)
+    if (d_dftParamsPtr->saveRhoData &&
+        !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
       saveTriaInfoAndRhoNodalData();
 
 
@@ -3463,6 +3497,7 @@ namespace dftfe
           deformDomain(deformationGradientPerturb1 *
                          invert(deformationGradientPerturb2),
                        true,
+                       false,
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
 
 #ifdef DFTFE_WITH_GPU
@@ -3514,6 +3549,7 @@ namespace dftfe
           deformDomain(deformationGradientPerturb2 *
                          invert(deformationGradientPerturb1),
                        true,
+                       false,
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
 
 #ifdef DFTFE_WITH_GPU
@@ -3565,6 +3601,7 @@ namespace dftfe
     // reset
     deformDomain(invert(deformationGradientPerturb2),
                  true,
+                 false,
                  d_dftParamsPtr->verbosity >= 4 ? true : false);
 
 #ifdef DFTFE_WITH_GPU

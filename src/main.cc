@@ -141,7 +141,9 @@ main(int argc, char *argv[])
       dftfe::dftfeWrapper dftfeWrapped(parameter_file,
                                        MPI_COMM_WORLD,
                                        true,
-                                       true);
+                                       true,
+                                       "GS",
+                                       runParams.restartFilesPath);
       dftfeWrapped.run();
     }
 

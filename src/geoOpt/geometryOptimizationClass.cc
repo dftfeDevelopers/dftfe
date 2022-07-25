@@ -40,7 +40,7 @@ namespace dftfe
     , d_verbosity(verbosity)
   {
     init(parameter_file);
-    if (d_restartFilesPath != "")
+    if (d_restartFilesPath != ".")
       {
         mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
       }
@@ -70,6 +70,7 @@ namespace dftfe
         d_status = tmp[0][0];
         int  lastSavedStep;
         bool restartFilesFound = false;
+        bool scfRestart        = true;
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             while (d_cycle >= 0)
@@ -111,6 +112,7 @@ namespace dftfe
 
                     else
                       {
+                        scfRestart = false;
                         if (d_verbosity > 0)
                           pcout
                             << "----Error opening restart files present in: "
@@ -128,19 +130,21 @@ namespace dftfe
                   }
               }
           }
-        std::vector<int> broadcastData(4, 0);
+        std::vector<int> broadcastData(5, 0);
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             broadcastData[0] = restartFilesFound ? 1 : 0;
             broadcastData[1] = lastSavedStep;
             broadcastData[2] = d_status;
             broadcastData[3] = d_cycle;
+            broadcastData[4] = scfRestart ? 1 : 0;
           }
-        MPI_Bcast(broadcastData.data(), 4, MPI_INT, 0, d_mpiCommParent);
+        MPI_Bcast(broadcastData.data(), 5, MPI_INT, 0, d_mpiCommParent);
         restartFilesFound = broadcastData[0] > 0;
         lastSavedStep     = broadcastData[1];
         d_status          = broadcastData[2];
         d_cycle           = broadcastData[3];
+        scfRestart        = broadcastData[4] > 0;
         restartPath       = d_restartFilesPath + "/optRestart/cycle" +
                       std::to_string(d_cycle) +
                       (d_status == 0 ? "/ionRelax/step" : "/cellRelax/step") +
@@ -154,14 +158,17 @@ namespace dftfe
             AssertThrow(
               false, ExcMessage("DFT-FE Error: Unable to find restart files."));
           }
-        d_dftfeWrapper  = std::make_unique<dftfeWrapper>(parameter_file,
+        d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
                                                         coordinatesFile,
                                                         domainVectorsFile,
                                                         d_mpiCommParent,
                                                         true,
                                                         true,
-                                                        "GEOOPT");
-        d_dftPtr        = d_dftfeWrapper->getDftfeBasePtr();
+                                                        "GEOOPT",
+                                                        d_restartFilesPath,
+                                                        scfRestart);
+        d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
+
         bool nlpRestart = true;
         if (d_dftPtr->getParametersObject().optimizationMode == "ION")
           nlpRestart = d_optMode == 0;
@@ -180,9 +187,13 @@ namespace dftfe
       }
     else
       {
-        d_dftfeWrapper = std::make_unique<dftfeWrapper>(
-          parameter_file, d_mpiCommParent, true, true, "GEOOPT");
-        d_dftPtr = d_dftfeWrapper->getDftfeBasePtr();
+        d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
+                                                        d_mpiCommParent,
+                                                        true,
+                                                        true,
+                                                        "GEOOPT",
+                                                        d_restartFilesPath);
+        d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
         if (d_dftPtr->getParametersObject().optimizationMode == "ION")
           d_optMode = 0;
         else if (d_dftPtr->getParametersObject().optimizationMode == "CELL")

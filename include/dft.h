@@ -956,6 +956,7 @@ namespace dftfe
     void
     deformDomain(const Tensor<2, 3, double> &deformationGradient,
                  const bool vselfPerturbationUpdateForStress = false,
+                 const bool useSingleAtomSolutionsOverride   = false,
                  const bool print                            = true);
 
     /**

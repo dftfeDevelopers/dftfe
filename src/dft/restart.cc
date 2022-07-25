@@ -214,6 +214,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoNodalData()
   pcout << "Checkpointing tria info and rho data in progress..." << std::endl;
 
   d_mesh.saveTriangulationsSolutionVectors(
+    d_dftParamsPtr->restartFolder,
     C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
     1,
     solutionVectors,
@@ -410,7 +411,10 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoNodalData()
     }
 
   d_mesh.loadTriangulationsSolutionVectors(
-    C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(), 1, solutionVectors);
+    d_dftParamsPtr->restartFolder,
+    C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+    1,
+    solutionVectors);
 
   pcout << "...Reading from checkpoint done." << std::endl;
 
