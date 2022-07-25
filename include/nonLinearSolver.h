@@ -73,6 +73,9 @@ namespace dftfe
           const std::string       checkpointFileName = "",
           const bool              restart            = false) = 0;
 
+    virtual void
+    save(const std::string &checkpointFileName) = 0;
+
 
   protected:
     /**
@@ -81,7 +84,7 @@ namespace dftfe
      */
     nonLinearSolver(const unsigned int debugLevel,
                     const unsigned int maxNumberIterations,
-                    const double       tolerance);
+                    const double       tolerance = 0);
 
 
   protected:

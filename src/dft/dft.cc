@@ -29,8 +29,6 @@
 #include <dftd.h>
 #include <fileReaders.h>
 #include <force.h>
-#include <geoOptCell.h>
-#include <geoOptIon.h>
 #include <kohnShamDFTOperator.h>
 #include <linalg.h>
 #include <linearAlgebraOperations.h>
@@ -192,12 +190,6 @@ namespace dftfe
                                                              mpi_comm_parent,
                                                              mpi_comm_domain,
                                                              _interpoolcomm);
-    geoOptIonPtr =
-      new geoOptIon<FEOrder, FEOrderElectro>(this, mpi_comm_parent);
-
-    geoOptCellPtr =
-      new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_parent);
-
 
     d_isRestartGroundStateCalcFromChk = false;
 
@@ -219,8 +211,6 @@ namespace dftfe
     delete symmetryPtr;
     matrix_free_data.clear();
     delete forcePtr;
-    delete geoOptIonPtr;
-    delete geoOptCellPtr;
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
@@ -1671,77 +1661,7 @@ namespace dftfe
     if (d_dftParamsPtr->meshAdaption)
       aposterioriMeshGenerate();
 
-    if (!(d_dftParamsPtr->chkType == 1 && d_dftParamsPtr->restartFromChk &&
-          d_dftParamsPtr->ionOptSolver == "CGPRP"))
-      {
-        solve(true, true, d_isRestartGroundStateCalcFromChk);
-      }
-
-    d_isRestartGroundStateCalcFromChk = false;
-    if (d_dftParamsPtr->isIonOpt && !d_dftParamsPtr->isCellOpt)
-      {
-        d_atomLocationsInitial = atomLocations;
-        d_freeEnergyInitial    = d_freeEnergy;
-
-        geoOptIonPtr->init();
-        geoOptIonPtr->run();
-      }
-    else if (!d_dftParamsPtr->isIonOpt && d_dftParamsPtr->isCellOpt)
-      {
-        d_atomLocationsInitial = atomLocations;
-        d_freeEnergyInitial    = d_freeEnergy;
-
-        geoOptCellPtr->init();
-        geoOptCellPtr->run();
-      }
-    else if (d_dftParamsPtr->isIonOpt && d_dftParamsPtr->isCellOpt)
-      {
-        // staggered ion and cell relaxation
-
-        int ionGeoUpdates  = 100;
-        int cellGeoUpdates = 100;
-        int cycle          = 0;
-        while (ionGeoUpdates > 0 && cellGeoUpdates > 0)
-          {
-            if (d_dftParamsPtr->verbosity >= 1)
-              pcout
-                << std::endl
-                << "----------Staggered ionic and cell relaxation cycle no: "
-                << cycle << " start---------" << std::endl;
-
-            // relax ionic forces. Current forces are assumed
-            // to be already computed
-            d_atomLocationsInitial = atomLocations;
-            d_freeEnergyInitial    = d_freeEnergy;
-            geoOptIonPtr->init();
-            ionGeoUpdates = geoOptIonPtr->run();
-
-            // redo trivial solve to compute current stress
-            // as stress is not computed during ionic relaxation
-            // for efficiency gains
-            initBoundaryConditions(false);
-            noRemeshRhoDataInit();
-            solve(false, true);
-
-            // relax cell stress
-            geoOptCellPtr->init();
-            cellGeoUpdates = geoOptCellPtr->run();
-
-            if (d_dftParamsPtr->verbosity >= 1)
-              pcout
-                << std::endl
-                << "----------Staggered ionic and cell relaxation cycle no: "
-                << cycle << " end-----------" << std::endl;
-
-            cycle++;
-          }
-
-        if (d_dftParamsPtr->verbosity >= 1)
-          pcout
-            << std::endl
-            << "--------- Staggered ionic and cell relaxation cycle completed in "
-            << cycle << " cycles-------" << std::endl;
-      }
+    solve(true, true, d_isRestartGroundStateCalcFromChk);
 
     if (d_dftParamsPtr->writeDosFile)
       compute_tdos(eigenValues, "dosData.out");
@@ -1761,6 +1681,15 @@ namespace dftfe
         << std::endl
         << "------------------DFT-FE ground-state solve completed---------------------------"
         << std::endl;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::trivialSolveForStress()
+  {
+    initBoundaryConditions(false);
+    noRemeshRhoDataInit();
+    solve(false, true);
   }
 
 
@@ -1940,7 +1869,7 @@ namespace dftfe
   // dft solve
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
+  std::tuple<bool, double>
   dftClass<FEOrder, FEOrderElectro>::solve(
     const bool computeForces,
     const bool computeStress,
@@ -2101,7 +2030,7 @@ namespace dftfe
       firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-4 ?
                            1e-4 :
                            d_dftParamsPtr->chebyshevTolerance;
-    else if (d_dftParamsPtr->isIonOpt || d_dftParamsPtr->isCellOpt)
+    else if (d_dftParamsPtr->solverMode == "GEOOPT")
       firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-3 ?
                            1e-3 :
                            d_dftParamsPtr->chebyshevTolerance;
@@ -3477,6 +3406,7 @@ namespace dftfe
         writeBands();
       }
 #endif
+    return std::make_tuple(scfConverged, norm);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -3981,6 +3911,13 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::getCell() const
   {
     return d_domainBoundingVectors;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::getCellVolume() const
+  {
+    return d_domainVolume;
   }
 
 

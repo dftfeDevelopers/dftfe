@@ -23,6 +23,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
+#include <limits>
 
 namespace dftfe
 {

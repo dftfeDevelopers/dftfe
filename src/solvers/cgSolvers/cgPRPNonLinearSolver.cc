@@ -26,7 +26,6 @@ namespace dftfe
   // Constructor.
   //
   cgPRPNonLinearSolver::cgPRPNonLinearSolver(
-    const double       tolerance,
     const unsigned int maxNumberIterations,
     const unsigned int debugLevel,
     const MPI_Comm &   mpi_comm_parent,
@@ -38,7 +37,7 @@ namespace dftfe
     , d_lineSearchMaxIterations(lineSearchMaxIterations)
     , d_lineSearchDampingParameter(lineSearchDampingParameter)
     , d_maxSolutionIncrementLinf(maxIncrementSolLinf)
-    , nonLinearSolver(debugLevel, maxNumberIterations, tolerance)
+    , nonLinearSolver(debugLevel, maxNumberIterations)
     , mpi_communicator(mpi_comm_parent)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_parent))
     , this_mpi_process(
@@ -472,12 +471,8 @@ namespace dftfe
         d_etaAlphaZeroChk          = etaAlphaZero;
         d_lineSearchRestartIterChk = -1;
 
-        if (!checkpointFileName.empty())
-          {
-            MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
-            problem.save();
-          }
+        MPI_Barrier(mpi_communicator);
+        problem.save();
 
         //
         // update unknowns removing earlier update
@@ -543,12 +538,8 @@ namespace dftfe
         d_etaAlphaZeroChk          = etaAlphaZero;
         d_lineSearchRestartIterChk = iter;
 
-        if (!checkpointFileName.empty())
-          {
-            MPI_Barrier(mpi_communicator);
-            save(checkpointFileName);
-            problem.save();
-          }
+        MPI_Barrier(mpi_communicator);
+        problem.save();
 
         // FIXME: check whether >1 or >=1 is the correct choice
         if (iter >= 1)
@@ -573,7 +564,7 @@ namespace dftfe
 
                 isSuccess = 1;
               }
-            else if (d_gradMax < d_tolerance)
+            else if (problem.isConverged())
               {
                 isSuccess = 1;
               }
@@ -667,11 +658,6 @@ namespace dftfe
                               const bool              restart)
   {
     //
-    // method const data
-    //
-    const double toleranceSqr = d_tolerance * d_tolerance;
-
-    //
     // get total number of unknowns in the problem.
     //
     d_numberUnknowns = problem.getNumberUnknowns();
@@ -723,7 +709,7 @@ namespace dftfe
     // check for convergence
     //
     unsigned int isSuccess = 0;
-    if (d_gradMax < d_tolerance)
+    if (problem.isConverged())
       isSuccess = 1;
 
     MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
@@ -734,11 +720,6 @@ namespace dftfe
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
       {
-        if (d_debugLevel >= 2)
-          for (unsigned int i = 0; i < d_gradient.size(); ++i)
-            pcout << "d_gradient: " << d_gradient[i] << std::endl;
-
-
         //
         // compute L2-norm of the residual (gradient)
         //
@@ -825,7 +806,7 @@ namespace dftfe
               d_gradMax = std::abs(d_gradient[i]);
           }
 
-        if (d_gradMax < d_tolerance)
+        if (problem.isConverged())
           isBreak = 1;
         MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
         if (isBreak == 1)

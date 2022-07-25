@@ -28,8 +28,6 @@ number of elements: 1408
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15849
 -------------------------------------------------
 
-Reading initial guess for electron-density.....
-
 Setting initial guess for wavefunctions....
 
 Reading initial guess for electron-density.....
@@ -50,9 +48,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000033
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.599876 0.000000 0.000000
-v2 : 0.000000 7.599876 0.000000
-v3 : 0.000000 0.000000 7.599876
+v1 : 7.599802 0.000000 0.000000
+v2 : 0.000000 7.599802 0.000000
+v3 : 0.000000 0.000000 7.599802
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -77,7 +75,7 @@ SCF iterations converged to the specified tolerance after: 8 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36800072
+             Total energy:          -8.36800122
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
@@ -86,9 +84,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000032
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.564749 0.000000 0.000000
-v2 : 0.000000 7.564749 0.000000
-v3 : 0.000000 0.000000 7.564749
+v1 : 7.566652 0.000000 0.000000
+v2 : 0.000000 7.566652 0.000000
+v3 : 0.000000 0.000000 7.566652
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -113,11 +111,11 @@ SCF iterations converged to the specified tolerance after: 8 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36812834
+             Total energy:          -8.36812719
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000004  0.000000  0.000000
-0.000000  0.000004  0.000000
-0.000000  0.000000  0.000004
+0.000002  0.000000  0.000000
+0.000000  0.000002  0.000000
+0.000000  0.000000  0.000002
 ------------------------------------------------------------------------

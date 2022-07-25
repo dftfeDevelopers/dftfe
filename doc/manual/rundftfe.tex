@@ -50,6 +50,10 @@ computing the ground-state and forces of the Nitrogen molecule while parameterFi
 
 Below, we provide a step by step procedure on setting up the above input parameter files, doing a total energy and force convergence study with respect to finite-element mesh discretization, and finally doing the atomic relaxation of Nitrogen molecule.
 \begin{enumerate}
+\item Set the solver mode in order to perform a single ground-state calculation
+\begin{verbatim}
+set SOLVER MODE = GS
+\end{verbatim}
 \item The geometry of the Nitrogen molecule (${\rm N}_{2}$) system is set using input parameters under \verb|Geometry| subsection
 \begin{verbatim}
 subsection Geometry
@@ -213,16 +217,17 @@ in the input parameter file, and visualizing the ``densityOutput.vtu'' file in P
   \end{center}
 \end{table}
 
-\item Finally we discuss how to set up the input parameter file for atomic relaxation. Use the same finite-element mesh input parameters as used for \emph{Mesh No. 3}, and update the 
+\item Finally we discuss how to set up the input parameter file for atomic relaxation. Use the same finite-element mesh input parameters as used for \emph{Mesh No. 3}, and update the solver mode and the
 input parameters in \verb|Geometry| subsection from the fifth step to
 \begin{verbatim}
+set SOLVER MODE = GEOOPT
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
-    set ION OPT              = true
+    set OPTIMIZATION MODE    = ION
     set FORCE TOL            = 1e-4    
     set ION RELAX FLAGS FILE = relaxationFlags.inp
   end
@@ -230,7 +235,7 @@ end
 \end{verbatim}
 where
 \begin{itemize}
-\item \verb|ION OPT| is set to true which enables atomic relaxation.  		
+\item \verb|OPTIMIZATION MODE| is set to \verb|ION| which enables atomic relaxation.  		
 \item ``1e-4'' for \verb|FORCE TOL| sets the tolerance of the maximum force (in Hartree/Bohr) on an atom when atoms are
 considered to be relaxed.
 \item ``relaxationFlags.inp'', given as input to \verb|ION RELAX FLAGS FILE| is an external file (any other file name can be used) in the same workspace, which specifies the permission flags (1-- free to move, 0-- fixed) for each coordinate axis and for all atoms. This file is described as 
@@ -270,6 +275,10 @@ Here we briefly discuss how to setup and run the fully periodic problem (FCC Alu
 for computing the ground-state and cell stress of the FCC Al unit cell, while parameterFile\_b.prm additionally does cell stress relaxation.  
 Important input parameters in the above parameter files, beyond what we discussed in the previous example are
 \begin{enumerate}
+\item Set the solver mode in order to perform a single ground-state calculation
+\begin{verbatim}
+set SOLVER MODE = GS
+\end{verbatim}
 \item ``coordinates.inp'' given as input to \verb|ATOMIC COORDINATES FILE|, is the name of an external input file present in the same workspace which lists the fractional (reduced) coordinates of the atoms. For this example, ``coordinates.inp'' is described as 
 \begin{verbatim}
 13   3   0.00000000E+00   0.00000000E+00   0.00000000E+00
@@ -349,15 +358,19 @@ The ground-state energy per atom and hydrostatic cell stress for finite-element 
 \end{table}
 The output file using the mesh parameters for \emph{Mesh No.1} is provided at \verb|/demo/ex2/ex2_a.output| (for parameterFile\_a.prm).
 
-\item For cell stress relaxation, use parameterFile\_b.prm, where we set within the \verb|Optimization| subsection nested under \verb|Geometry|
+\item For cell stress relaxation, use parameterFile\_b.prm, where we update the solver mode
+\begin{verbatim}
+set SOLVER MODE = GEOOPT
+\end{verbatim}
+and within the \verb|Optimization| subsection nested under \verb|Geometry| we set
 \begin{verbatim}
     set STRESS TOL            = 4e-6
-    set CELL OPT              = true
+    set OPTIMIZATION MODE     = CELL
     set CELL CONSTRAINT TYPE  = 1
 \end{verbatim}
 where
 \begin{itemize}
-\item \verb|CELL OPT| is set to true which enables cell stress relaxation.  		
+\item \verb|OPTIMIZATION MODE| is set to \verb|CELL| which enables cell stress relaxation.  		
 \item ``4e-6'' for \verb|STRESS TOL| sets the tolerance of the cell stress (in a.u.) for cell stress relaxation.
 \item Choice of ``1'' for \verb|CELL CONSTRAINT TYPE| enforces isotropic shape-fixed volume optimization constraint during cell stress relaxation.
 \end{itemize}

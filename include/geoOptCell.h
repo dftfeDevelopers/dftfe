@@ -18,19 +18,19 @@
 #define geoOptCell_H_
 #include "constants.h"
 #include "nonlinearSolverProblem.h"
+#include "nonLinearSolver.h"
+#include "dftBase.h"
+#include "dftfeWrapper.h"
 
 namespace dftfe
 {
   using namespace dealii;
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  class dftClass;
 
   /**
    * @brief problem class for cell stress relaxation solver.
    *
    * @author Sambit Das
    */
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   class geoOptCell : public nonlinearSolverProblem
   {
   public:
@@ -39,15 +39,16 @@ namespace dftfe
      *  @param _dftPtr pointer to dftClass
      *  @param mpi_comm_parent parent mpi_communicator
      */
-    geoOptCell(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-               const MPI_Comm &                   mpi_comm_replica);
+    geoOptCell(dftBase *       dftPtr,
+               const MPI_Comm &mpi_comm_parent,
+               const bool      restart = false);
 
     /**
      * @brief initializes the data member d_relaxationFlags.
      *
      */
     void
-    init();
+    init(const std::string &restartPath);
 
     /**
      * @brief calls the cell stress relaxation solver.
@@ -104,6 +105,13 @@ namespace dftfe
     void
     save();
 
+    /**
+     * @brief check for convergence.
+     *
+     */
+    bool
+    isConverged() const;
+
     const MPI_Comm &
     getMPICommunicator();
 
@@ -113,8 +121,7 @@ namespace dftfe
 
     /// Not implemented
     void
-    precondition(std::vector<double> &      s,
-                 const std::vector<double> &gradient) const;
+    precondition(std::vector<double> &s, const std::vector<double> &gradient);
 
     /// Not implemented
     void
@@ -131,14 +138,20 @@ namespace dftfe
     //  constraint type.
     std::vector<unsigned int> d_relaxationFlags;
 
+    std::string d_restartPath;
+    std::string d_solverRestartPath;
+    bool        d_isRestart;
+    bool        d_solverRestart;
+    int         d_solver;
     /// total number of calls to update()
-    unsigned int d_totalUpdateCalls;
-
+    int    d_totalUpdateCalls;
+    double d_domainVolumeInitial;
     /// current strain tensor applied on the domain
     Tensor<2, 3, double> d_strainEpsilon;
 
     /// pointer to dft class
-    dftClass<FEOrder, FEOrderElectro> *dftPtr;
+    dftBase *                        d_dftPtr;
+    std::unique_ptr<nonLinearSolver> d_nonLinearSolverPtr;
 
     /// parallel communication objects
     const MPI_Comm     mpi_communicator;

@@ -33,7 +33,8 @@ SET(TARGET_SRC
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
-  ./src/solvers/cgSolvers/cg_descent.cc
+  ./src/solvers/cgSolvers/BFGSNonLinearSolver.cc
+  ./src/solvers/cgSolvers/LBFGSNonLinearSolver.cc
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc
@@ -45,6 +46,7 @@ SET(TARGET_SRC
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc
+  ./src/geoOpt/geometryOptimizationClass.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/runParameters.cc

@@ -73,15 +73,16 @@ namespace dftfe
     bool        autoAdaptBaseMeshSize;
     double      meshSizeInnerBall, meshSizeOuterBall;
     double      chebyshevTolerance, topfrac, kerkerParameter;
-    std::string mixingMethod, ionOptSolver;
+    std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
 
-    bool         isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
+    bool         isIonForce, isCellStress, isBOMD;
     bool         nonSelfConsistentForce, meshAdaption;
     double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
     unsigned int cellConstraintType;
 
     int          verbosity;
+    std::string  solverMode;
     bool         keepScratchFolder;
     unsigned int chkType;
     bool         restartSpinFromNoSpin;
@@ -164,6 +165,13 @@ namespace dftfe
     double       dc_d3cutoffCN;
 
 
+    std::string  bfgsStepMethod;
+    bool         usePreconditioner;
+    unsigned int lbfgsNumPastSteps;
+    unsigned int maxOptIter;
+    unsigned int maxStaggeredCycles;
+    double       maxIonUpdateStep, maxCellUpdateStep;
+
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;
     double      MaxWallTime;
@@ -179,7 +187,8 @@ namespace dftfe
     void
     parse_parameters(const std::string &parameter_file,
                      const MPI_Comm &   mpi_comm_parent,
-                     const bool         printParams = false);
+                     const bool         printParams = false,
+                     const std::string  mode        = "GS");
 
     /**
      * Check parameters

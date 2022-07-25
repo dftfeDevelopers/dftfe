@@ -249,9 +249,6 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
 
       if (isGroundState)
         {
-          if (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD != 2)
-            normalizeRhoOutQuadValues();
-
           computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_GPU
             kohnShamDFTEigenOperator,
@@ -323,20 +320,42 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   popOutRhoInRhoOutVals();
 
   if (isGroundState &&
-      (d_dftParamsPtr->isIonOpt ||
-       (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD == 2)) &&
+      ((d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
+        d_dftParamsPtr->solverMode == "GEOOPT") ||
+       (d_dftParamsPtr->reuseDensityMD == 2 &&
+        d_dftParamsPtr->solverMode == "MD")) &&
       d_dftParamsPtr->spinPolarized != 1)
     {
       d_rhoOutNodalValuesSplit = d_rhoOutNodalValues;
-      // d_rhoOutNodalValuesSplit-=d_atomicRho;
+      std::map<dealii::CellId, std::vector<double>> rhoOutValuesCopy =
+        *(rhoOutValues);
 
-      // d_rhoOutNodalValuesSplit.update_ghost_values();
-      normalizeRhoOutQuadValues();
+      const Quadrature<3> &quadrature_formula =
+        matrix_free_data.get_quadrature(d_densityQuadratureId);
+      const unsigned int n_q_points = quadrature_formula.size();
+
+      const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
+      const double scaling = ((double)numElectrons) / charge;
+
+      // scaling rho
+      typename DoFHandler<3>::active_cell_iterator cell =
+                                                     dofHandler.begin_active(),
+                                                   endc = dofHandler.end();
+      for (; cell != endc; ++cell)
+        {
+          if (cell->is_locally_owned())
+            {
+              for (unsigned int q = 0; q < n_q_points; ++q)
+                {
+                  rhoOutValuesCopy[cell->id()][q] *= scaling;
+                }
+            }
+        }
       l2ProjectionQuadDensityMinusAtomicDensity(d_matrixFreeDataPRefined,
                                                 d_constraintsRhoNodal,
                                                 d_densityDofHandlerIndexElectro,
                                                 d_densityQuadratureIdElectro,
-                                                *rhoOutValues,
+                                                rhoOutValuesCopy,
                                                 d_rhoOutNodalValuesSplit);
       d_rhoOutNodalValuesSplit.update_ghost_values();
     }
