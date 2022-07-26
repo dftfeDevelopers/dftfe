@@ -126,8 +126,8 @@ namespace dftfe
     dftUtils::verifyCheckpointFileExists(filename);
     try
       {
-        d_parallelTriangulationMoved.load(filename.c_str(), false);
-        d_parallelTriangulationUnmoved.load(filename.c_str(), false);
+        d_parallelTriangulationMoved.load(filename.c_str());
+        d_parallelTriangulationUnmoved.load(filename.c_str());
       }
     catch (...)
       {
