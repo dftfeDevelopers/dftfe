@@ -1690,7 +1690,8 @@ namespace dftfe
     if (d_dftParamsPtr->meshAdaption)
       aposterioriMeshGenerate();
 
-    if (d_dftParamsPtr->restartFolder != "." && d_dftParamsPtr->saveRhoData)
+    if (d_dftParamsPtr->restartFolder != "." && d_dftParamsPtr->saveRhoData &&
+        Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
       }
