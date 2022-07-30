@@ -45,12 +45,24 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     d_rhoInNodalValues, d_densityDofHandlerIndexElectro);
   d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
   d_rhoOutNodalValuesSplit.reinit(d_rhoInNodalValues);
+  d_rhoOutSpin0NodalValues.reinit(d_rhoInNodalValues);
+  d_rhoOutSpin1NodalValues.reinit(d_rhoInNodalValues);
   d_rhoInSpin0NodalValues.reinit(d_rhoInNodalValues);
   d_rhoInSpin1NodalValues.reinit(d_rhoInNodalValues);
   // d_atomicRho.reinit(d_rhoInNodalValues);
 
-  if (d_dftParamsPtr->isIonOpt || d_dftParamsPtr->isCellOpt ||
-      (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD == 2))
+  d_rhoInNodalValues       = 0;
+  d_rhoOutNodalValues      = 0;
+  d_rhoOutNodalValuesSplit = 0;
+  d_rhoOutSpin0NodalValues = 0;
+  d_rhoOutSpin1NodalValues = 0;
+  d_rhoInSpin0NodalValues  = 0;
+  d_rhoInSpin1NodalValues  = 0;
+
+  if ((d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
+       d_dftParamsPtr->solverMode == "GEOOPT") ||
+      (d_dftParamsPtr->reuseDensityMD == 2 &&
+       d_dftParamsPtr->solverMode == "MD"))
     {
       initAtomicRho();
     }
@@ -131,6 +143,11 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
                                          (1 + d_dftParamsPtr->spinPolarized) *
                                          d_kPointWeights.size());
 
+      if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.resize(
+          d_eigenVectorsFlattenedSTL[0].size() *
+          (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
+
       if (d_numEigenValuesRR != d_numEigenValues)
         d_eigenVectorsRotFracFlattenedCUDA.resize(
           d_eigenVectorsRotFracDensityFlattenedSTL[0].size() *
@@ -153,9 +170,14 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     }
 #endif
 
-  if (d_dftParamsPtr->verbosity >= 2)
-    if (d_dftParamsPtr->spinPolarized == 1)
-      pcout << std::endl
-            << "net magnetization: "
-            << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;
+  if (!d_dftParamsPtr->useGPU &&
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+    {
+      d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
+    }
+
+  if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
+    pcout << std::endl
+          << "net magnetization: "
+          << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;
 }

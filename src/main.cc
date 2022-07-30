@@ -23,6 +23,7 @@
 #include "dftfeWrapper.h"
 #include "runParameters.h"
 #include "molecularDynamicsClass.h"
+#include "geometryOptimizationClass.h"
 
 //
 // C++ headers
@@ -126,7 +127,15 @@ main(int argc, char *argv[])
 
   else if (runParams.solvermode == "NEB")
     {}
-
+  else if (runParams.solvermode == "GEOOPT")
+    {
+      dftfe::geometryOptimizationClass geoOpt(parameter_file,
+                                              runParams.restartFilesPath,
+                                              MPI_COMM_WORLD,
+                                              runParams.restart,
+                                              runParams.verbosity);
+      geoOpt.runOpt();
+    }
   else
     {
       dftfe::dftfeWrapper dftfeWrapped(parameter_file,

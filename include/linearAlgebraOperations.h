@@ -46,6 +46,17 @@ namespace dftfe
            double *            C,
            const unsigned int *INCY);
     void
+    dsymv_(const char *        UPLO,
+           const unsigned int *N,
+           const double *      alpha,
+           const double *      A,
+           const unsigned int *LDA,
+           const double *      X,
+           const unsigned int *INCX,
+           const double *      beta,
+           double *            C,
+           const unsigned int *INCY);
+    void
     dgesv_(int *   n,
            int *   nrhs,
            double *a,
@@ -54,6 +65,18 @@ namespace dftfe
            double *b,
            int *   ldb,
            int *   info);
+    void
+    dsysv_(const char *UPLO,
+           const int * n,
+           const int * nrhs,
+           double *    a,
+           const int * lda,
+           int *       ipiv,
+           double *    b,
+           const int * ldb,
+           double *    work,
+           const int * lwork,
+           int *       info);
     void
     dscal_(const unsigned int *n,
            const double *      alpha,
@@ -122,6 +145,53 @@ namespace dftfe
             const unsigned int *liwork,
             int *               info);
     void
+    dsygvx_(const int *   itype,
+            const char *  jobz,
+            const char *  range,
+            const char *  uplo,
+            const int *   n,
+            double *      a,
+            const int *   lda,
+            double *      b,
+            const int *   ldb,
+            const double *vl,
+            const double *vu,
+            const int *   il,
+            const int *   iu,
+            const double *abstol,
+            int *         m,
+            double *      w,
+            double *      z,
+            const int *   ldz,
+            double *      work,
+            const int *   lwork,
+            int *         iwork,
+            int *         ifail,
+            int *         info);
+    void
+    dsyevx_(const char *  jobz,
+            const char *  range,
+            const char *  uplo,
+            const int *   n,
+            double *      a,
+            const int *   lda,
+            const double *vl,
+            const double *vu,
+            const int *   il,
+            const int *   iu,
+            const double *abstol,
+            int *         m,
+            double *      w,
+            double *      z,
+            const int *   ldz,
+            double *      work,
+            const int *   lwork,
+            int *         iwork,
+            int *         ifail,
+            int *         info);
+    double
+    dlamch_(const char *cmach);
+    void
     dsyevr_(const char *        jobz,
             const char *        range,
             const char *        uplo,
@@ -154,6 +224,24 @@ namespace dftfe
            const double *      beta,
            double *            C,
            const unsigned int *ldc);
+    void
+    dsyr_(const char *        uplo,
+          const unsigned int *n,
+          const double *      alpha,
+          const double *      X,
+          const unsigned int *incx,
+          double *            A,
+          const unsigned int *lda);
+    void
+    dsyr2_(const char *        uplo,
+           const unsigned int *n,
+           const double *      alpha,
+           const double *      x,
+           const unsigned int *incx,
+           const double *      y,
+           const unsigned int *incy,
+           double *            a,
+           const unsigned int *lda);
     void
     dcopy_(const unsigned int *n,
            const double *      x,
@@ -256,6 +344,15 @@ namespace dftfe
            const int *                 INCX,
            const std::complex<double> *Y,
            const int *                 INCY);
+    double
+    ddot_(const unsigned int *N,
+          const double *      X,
+          const unsigned int *INCX,
+          const double *      Y,
+          const unsigned int *INCY);
+
+    double
+    dnrm2_(const unsigned int *n, const double *x, const unsigned int *incx);
     void
     zaxpy_(const unsigned int *        n,
            const std::complex<double> *alpha,
@@ -289,6 +386,20 @@ namespace dftfe
             std::complex<double> *a,
             const unsigned int *  lda,
             int *                 info);
+
+    // LU decomoposition of a general matrix
+    void
+    dgetrf_(int *M, int *N, double *A, int *lda, int *IPIV, int *INFO);
+
+    // generate inverse of a matrix given its LU decomposition
+    void
+    dgetri_(int *   N,
+            double *A,
+            int *   lda,
+            int *   IPIV,
+            double *WORK,
+            int *   lwork,
+            int *   INFO);
   }
 #endif
 
@@ -410,6 +521,11 @@ namespace dftfe
    */
   namespace linearAlgebraOperations
   {
+    /** @brief Compute inverse of serial matrix using LAPACK LU factorization
+     */
+    void
+    inverse(double *A, int N);
+
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
      *  k-step Lanczos method.
      *
@@ -629,7 +745,7 @@ namespace dftfe
                                     const dftParameters & dftParams);
 
 
-    /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
+    /** @brief Compute residual norm associated with eigenValue problem of the given operator
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in]  X Given subspace as STL vector of dealii vectors
@@ -648,6 +764,25 @@ namespace dftfe
                              const MPI_Comm &           interBandGroupComm,
                              std::vector<double> &      residualNorm,
                              const dftParameters &      dftParams);
+
+    /** @brief Compute first order response in density matrix with respect to perturbation in the Hamiltonian.
+     * Perturbation is computed in the eigenbasis.
+     */
+    template <typename T>
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTClass &         operatorMatrix,
+      std::vector<T> &           X,
+      const unsigned int         N,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      elpaScalaManager &         elpaScala,
+      const dftParameters &      dftParams);
+
 
   } // namespace linearAlgebraOperations
 

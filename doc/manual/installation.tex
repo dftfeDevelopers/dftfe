@@ -1,4 +1,4 @@
-All the underlying installation instructions assume a Linux operating system. We assume standard tools and libraries like CMake, compilers- (C, C++ and Fortran), CUDA (in case of GPU architectures), MPI, and math(BLAS-LAPACK) libraries are pre-installed. Most high-performance computers would have the latest version of these libraries in the default environment. However, in many cases you would have to use \href{http://modules.sourceforge.net/}{Environment Modules} to set the correct environment variables for the above and compilation tools like \href{http://www.cmake.org/}{CMake}. \emph{For example, on one of the high-performance computers (UMICH Greatlakes) we develop and test the \dftfe{} code, we can use the following commands to set the desired environment variables}
+All the underlying installation instructions assume a Linux operating system. We assume standard tools and libraries like CMake, compilers- (C, C++ and Fortran), CUDA (in case of GPU architectures), MPI, and math(BLAS-LAPACK) libraries are pre-installed. Most high-performance computers would have the latest version of these libraries in the default environment. However, in many cases you would have to use \href{http://modules.sourceforge.net/}{Environment Modules} to set the correct environment variables for the above and compilation tools like \href{http://www.cmake.org/}{CMake}. For example, on one of the high-performance computers (UMICH Greatlakes) we develop and test the \dftfe{} code, we can use the following commands to set the desired environment variables
 \begin{verbatim}
 $ module load cmake/3.18.2
 $ module load gcc/8.2.0
@@ -18,7 +18,7 @@ Note the above are shown only as an example. We strongly recommend using the lat
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
 on \href{http://p4est.org/}{p4est}, \href{http://www.netlib.org/scalapack/}{ScaLAPACK} and BLAS-LAPACK are set. The other required external libraries, which are
-not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA}. DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc}, \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. Below, we give brief installation instructions for each of the above libraries.
+not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA}. DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc} (via deali.II), \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. \dftfe{} can also be linked to \href{https://github.com/awvwgk/simple-dftd3}{simple-dftd3} and \href{https://github.com/dftd4/dftd4}{dftd4} in order to provide support for the dftd family of dispersion corrections by Grimme et. al.. Below, we give brief installation instructions for each of the above libraries.
 \subsubsection{Instructions for dependencies: ALGLIB, Libxc, spglib, Libxml2, ScaLAPACK, ELPA, p4est and nccl (nccl is optional)}
 \begin{enumerate}
 	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting for various radial data. Download the current release of the Alglib free C++ edition from \url{http://www.alglib.net/download.php}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using GCC compiler do
@@ -101,7 +101,7 @@ Note the use of LDFLAGS instead of SCALAPACK\_LDFLAGS and SCALAPACK\_FCFLAGS, si
 \end{verbatim} 
 above. \textcolor{red}{\bf Some or all of these options may be required for systems without Intel CPUs such as IBM Power and AMD Epyc processors depending on what they support.}
 
-\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{http://www.p4est.org/}. Next download the \verb|p4est-setup.sh| script from \url{https://dealii.org/developer/external-libs/p4est.html}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
+\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{http://www.p4est.org/}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
 $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
@@ -229,6 +229,37 @@ deal.II compilation will automatically try to pick the available vector instruct
 
 Ensure that deal.II picks up AVX-512, which is strongly recommended for obtaining maximum performance on the new Intel Xeon Phi (KNL) and Skylake processors, both of which support Intel AVX-512 instructions.
 
+\subsubsection{Instructions for simple-dftd3 and dftd4}
+
+\begin{enumerate}
+	\item   {\bf simple-dftd3}: Used by \dftfe{} to provide dftd3 corrections to energy, force and stress. Download the current release (0.6.0 at the time of writing) of simple-dftd3 from \url{https://github.com/awvwgk/simple-dftd3/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS, do
+\begin{verbatim}
+$ FC=gfortran cmake -B _build 
+-DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 
+-Wl,--no-as-needed -lmkl_gf_lp64 
+-lmkl_gnu_thread -lmkl_core -lgomp 
+-lpthread -lm -ldl" 
+-DCMAKE_INSTALL_PREFIX=simple_dftd3_install_path
+$ cmake --build _build
+$ cmake --install _build 
+\end{verbatim}
+	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.4.0 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
+\begin{verbatim}
+$ FC=gfortran cmake -B _build 
+-DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 
+-Wl,--no-as-needed -lmkl_gf_lp64 
+-lmkl_gnu_thread -lmkl_core -lgomp 
+-lpthread -lm -ldl" 
+-DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 
+-Wl,--no-as-needed -lmkl_gf_lp64 
+-lmkl_gnu_thread -lmkl_core -lgomp 
+-lpthread -lm -ldl" 
+-DCMAKE_INSTALL_PREFIX=dftd4_install_path
+$ cmake --build _build
+$ cmake --install _build 
+\end{verbatim}
+\end{enumerate}
+The values for \verb|-DBLAS_LIBRARIES| and \verb|-DLAPACK_LIBRARIES| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU fortran compiler.\\ 
 
 \subsection{Obtaining and Compiling \dftfe{}}\label{sec:dftfeinstall}
 Assuming that you have already installed the above external dependencies, next follow the steps below to obtain and compile \dftfe{}.

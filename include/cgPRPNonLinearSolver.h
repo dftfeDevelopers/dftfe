@@ -35,7 +35,6 @@ namespace dftfe
     /**
      * @brief Constructor.
      *
-     * @param tolerance Tolerance (relative) required for convergence.
      * @param maxNumberIterations Maximum number of iterations.
      * @param debugLevel Debug output level:
      *                   0 - no debug output
@@ -47,8 +46,7 @@ namespace dftfe
      * line search.
      * @param lineSearchDampingParameter scales the initial line search step
      */
-    cgPRPNonLinearSolver(const double       tolerance,
-                         const unsigned int maxNumberIterations,
+    cgPRPNonLinearSolver(const unsigned int maxNumberIterations,
                          const unsigned int debugLevel,
                          const MPI_Comm &   mpi_comm_parent,
                          const double       lineSearchTolerance       = 1.0e-6,
@@ -77,6 +75,15 @@ namespace dftfe
     solve(nonlinearSolverProblem &problem,
           const std::string       checkpointFileName = "",
           const bool              restart            = false);
+
+
+    /**
+     * @brief Create checkpoint file for current state of the cg solver.
+     *
+     */
+    void
+    save(const std::string &checkpointFileName);
+
 
   private:
     /**
@@ -167,13 +174,6 @@ namespace dftfe
     updateSolution(const double               alpha,
                    const std::vector<double> &direction,
                    nonlinearSolverProblem &   problem);
-
-    /**
-     * @brief Create checkpoint file for current state of the cg solver.
-     *
-     */
-    void
-    save(const std::string &checkpointFileName);
 
     /**
      * @brief Load cg solver state from checkpoint file.

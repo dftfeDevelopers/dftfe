@@ -1,3 +1,4 @@
+set SOLVER MODE = GS
 subsection Geometry
   set NATOMS=4
   set NATOM TYPES=1

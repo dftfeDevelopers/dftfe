@@ -23,9 +23,11 @@
  *
  */
 
-#include <dftUtils.h>
-#include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsInternal.h>
+#include "dftParameters.h"
+#include "dftUtils.h"
+#include "linearAlgebraOperations.h"
+#include "linearAlgebraOperationsInternal.h"
+#include "constants.h"
 #include "elpaScalaManager.h"
 #include "pseudoGS.cc"
 
@@ -33,6 +35,21 @@ namespace dftfe
 {
   namespace linearAlgebraOperations
   {
+    void
+    inverse(double *A, int N)
+    {
+      int *   IPIV  = new int[N];
+      int     LWORK = N * N;
+      double *WORK  = new double[LWORK];
+      int     INFO;
+
+      dgetrf_(&N, &N, A, &N, IPIV, &INFO);
+      dgetri_(&N, A, &N, IPIV, WORK, &LWORK, &INFO);
+
+      delete[] IPIV;
+      delete[] WORK;
+    }
+
     void
     callevd(const unsigned int dimensionMatrix,
             double *           matrix,
@@ -3012,6 +3029,213 @@ namespace dftfe
     }
 
 
+    template <typename T>
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTClass &         operatorMatrix,
+      std::vector<T> &           X,
+      const unsigned int         N,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &  elpaScala,
+      const dftParameters &      dftParams)
+    {
+      dealii::ConditionalOStream pcout(
+        std::cout,
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
+
+      dealii::TimerOutput computing_timer(mpiCommDomain,
+                                          pcout,
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
+                                            dealii::TimerOutput::never :
+                                            dealii::TimerOutput::summary,
+                                          dealii::TimerOutput::wall_times);
+
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+        elpaScala.getProcessGridDftfeScalaWrapper();
+
+      dftfe::ScaLAPACKMatrix<T> projHamPrimePar(N, processGrid, rowsBlockSize);
+
+
+      if (processGrid->is_process_active())
+        std::fill(&projHamPrimePar.local_el(0, 0),
+                  &projHamPrimePar.local_el(0, 0) +
+                    projHamPrimePar.local_m() * projHamPrimePar.local_n(),
+                  T(0.0));
+
+      //
+      // compute projected Hamiltonian conjugate HConjProjPrime=
+      // X^{T}*HConjPrime*XConj
+      //
+      computing_timer.enter_subsection("Compute ProjHamPrime, DMFOR step");
+      if (dftParams.singlePrecLRD)
+        {
+          operatorMatrix.XtHXMixedPrec(
+            X, N, N, processGrid, projHamPrimePar, true);
+        }
+      else
+        operatorMatrix.XtHX(X, N, processGrid, projHamPrimePar, true);
+      computing_timer.leave_subsection("Compute ProjHamPrime, DMFOR step");
+
+
+      computing_timer.enter_subsection(
+        "Recursive fermi operator expansion operations, DMFOR step");
+
+      const int    m    = 10;
+      const double beta = 1.0 / C_kb / dftParams.TVal;
+      const double c    = std::pow(2.0, -2.0 - m) * beta;
+
+      std::vector<double> H0 = eigenValues;
+      std::vector<double> X0(N, 0.0);
+      for (unsigned int i = 0; i < N; ++i)
+        {
+          X0[i] = 0.5 - c * (H0[i] - fermiEnergy);
+        }
+
+      dftfe::ScaLAPACKMatrix<T> densityMatPrimePar(N,
+                                                   processGrid,
+                                                   rowsBlockSize);
+      densityMatPrimePar.add(projHamPrimePar, T(0.0), T(-c)); //-c*HPrime
+
+      dftfe::ScaLAPACKMatrix<T> X1Temp(N, processGrid, rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> X1Tempb(N, processGrid, rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> X1Tempc(N, processGrid, rowsBlockSize);
+
+      std::vector<double> Y0Temp(N, 0.0);
+
+      for (unsigned int i = 0; i < m; ++i)
+        {
+          // step1
+          X1Temp.add(densityMatPrimePar, T(0.0), T(1.0));  // copy
+          X1Tempb.add(densityMatPrimePar, T(0.0), T(1.0)); // copy
+          X1Temp.scale_rows_realfactors(X0);
+          X1Tempb.scale_columns_realfactors(X0);
+          X1Temp.add(X1Tempb, T(1.0), T(1.0));
+
+          // step2 and 3
+          for (unsigned int j = 0; j < N; ++j)
+            {
+              Y0Temp[j] = 1.0 / (2.0 * X0[j] * (X0[j] - 1.0) + 1.0);
+              X0[j]     = Y0Temp[j] * X0[j] * X0[j];
+            }
+
+          // step4
+          X1Tempc.add(X1Temp, T(0.0), T(1.0)); // copy
+          X1Temp.scale_rows_realfactors(Y0Temp);
+          X1Tempc.scale_columns_realfactors(X0);
+          X1Tempc.scale_rows_realfactors(Y0Temp);
+          X1Temp.add(X1Tempc, T(1.0), T(-2.0));
+          X1Tempb.add(densityMatPrimePar, T(0.0), T(1.0)); // copy
+          X1Tempb.scale_columns_realfactors(X0);
+          X1Tempb.scale_rows_realfactors(Y0Temp);
+          densityMatPrimePar.add(X1Temp, T(0.0), T(1.0));
+          densityMatPrimePar.add(X1Tempb, T(1.0), T(2.0));
+        }
+
+      std::vector<double> Pmu0(N, 0.0);
+      double              sum = 0.0;
+      for (unsigned int i = 0; i < N; ++i)
+        {
+          Pmu0[i] = beta * X0[i] * (1.0 - X0[i]);
+          sum += Pmu0[i];
+        }
+
+      densityMatDerFermiEnergy = Pmu0;
+
+      computing_timer.leave_subsection(
+        "Recursive fermi operator expansion operations, DMFOR step");
+
+      //
+      // subspace transformation Y^{T} = DMP^T*X^{T}, implemented as
+      // Y^{T}=DMPc^{C}*X^{T} with X^{T} stored in the column major format
+      //
+      computing_timer.enter_subsection(
+        "Blocked subspace transformation, DMFOR step");
+
+      // For subspace transformation the full matrix is required
+      dftfe::ScaLAPACKMatrix<T> densityMatPrimeParConjTrans(N,
+                                                            processGrid,
+                                                            rowsBlockSize);
+
+      if (processGrid->is_process_active())
+        std::fill(&densityMatPrimeParConjTrans.local_el(0, 0),
+                  &densityMatPrimeParConjTrans.local_el(0, 0) +
+                    densityMatPrimeParConjTrans.local_m() *
+                      densityMatPrimeParConjTrans.local_n(),
+                  T(0.0));
+
+
+      densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
+      densityMatPrimePar.add(densityMatPrimeParConjTrans, T(1.0), T(1.0));
+
+      if (processGrid->is_process_active())
+        for (unsigned int i = 0; i < densityMatPrimePar.local_n(); ++i)
+          {
+            const unsigned int glob_i = densityMatPrimePar.global_column(i);
+            for (unsigned int j = 0; j < densityMatPrimePar.local_m(); ++j)
+              {
+                const unsigned int glob_j = densityMatPrimePar.global_row(j);
+                if (glob_i == glob_j)
+                  densityMatPrimePar.local_el(j, i) *= T(0.5);
+              }
+          }
+
+      densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
+
+      if (dftParams.singlePrecLRD)
+        {
+          if (std::is_same<T, std::complex<double>>::value)
+            internal::subspaceRotationMixedPrec<T, std::complex<float>>(
+              &X[0],
+              X.size(),
+              N,
+              processGrid,
+              interBandGroupComm,
+              mpiCommDomain,
+              densityMatPrimeParConjTrans,
+              dftParams,
+              false,
+              false);
+          else
+            internal::subspaceRotationMixedPrec<T, float>(
+              &X[0],
+              X.size(),
+              N,
+              processGrid,
+              interBandGroupComm,
+              mpiCommDomain,
+              densityMatPrimeParConjTrans,
+              dftParams,
+              false,
+              false);
+        }
+      else
+        {
+          internal::subspaceRotation(&X[0],
+                                     X.size(),
+                                     N,
+                                     processGrid,
+                                     interBandGroupComm,
+                                     mpiCommDomain,
+                                     densityMatPrimeParConjTrans,
+                                     dftParams,
+                                     false,
+                                     false,
+                                     false);
+        }
+
+
+      computing_timer.leave_subsection(
+        "Blocked subspace transformation, DMFOR step");
+    }
+
+
     template std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
       operatorDFTClass &,
@@ -3116,6 +3340,20 @@ namespace dftfe
                              const MPI_Comm &                interBandGroupComm,
                              std::vector<double> &           residualNorm,
                              const dftParameters &           dftParams);
+
+    template void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTClass &              operatorMatrix,
+      std::vector<dataTypes::number> &X,
+      const unsigned int              N,
+      const MPI_Comm &                mpiCommParent,
+      const MPI_Comm &                mpiCommDomain,
+      const MPI_Comm &                interBandGroupComm,
+      const std::vector<double> &     eigenValues,
+      const double                    fermiEnergy,
+      std::vector<double> &           densityMatDerFermiEnergy,
+      elpaScalaManager &              elpaScala,
+      const dftParameters &           dftParams);
 
   } // namespace linearAlgebraOperations
 

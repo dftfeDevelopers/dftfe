@@ -19,6 +19,7 @@
 #define dftBase_H_
 
 #include <vector>
+#include <tuple>
 #include <deal.II/base/tensor_function.h>
 #include "dftParameters.h"
 
@@ -63,11 +64,13 @@ namespace dftfe
                  const bool print                            = true) = 0;
 
 
-    virtual void
+    virtual std::tuple<bool, double>
     solve(const bool computeForces                   = true,
           const bool computeStress                   = true,
-          const bool solveLinearizedKS               = false,
           const bool isRestartGroundStateCalcFromChk = false) = 0;
+
+    virtual void
+    trivialSolveForStress() = 0;
 
     virtual double
     getInternalEnergy() const = 0;
@@ -116,6 +119,13 @@ namespace dftfe
      */
     virtual std::vector<std::vector<double>>
     getCell() const = 0;
+
+    /**
+     * @brief Gets the current cell volume
+     *
+     */
+    virtual double
+    getCellVolume() const = 0;
 
     /**
      * @brief Gets the current atom types from dftClass

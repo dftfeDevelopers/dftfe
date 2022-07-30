@@ -19,8 +19,6 @@ number of elements: 1408
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
 -------------------------------------------------
 
-Reading initial guess for electron-density.....
-
 Setting initial guess for wavefunctions....
 =============================================================================================================================
 number of electrons: 16
@@ -38,12 +36,12 @@ SCF iterations converged to the specified tolerance after: 8 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85742131
+             Total energy:         -41.85742144
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004669,0.000000,0.000000
-AtomId    1:  0.004669,0.000000,0.000000
+AtomId    0:  0.004763,0.000000,0.000000
+AtomId    1:  0.004763,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -55,23 +53,21 @@ number of elements: 1408
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
 -------------------------------------------------
 
-Reading initial guess for electron-density.....
-
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 22 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85745448
+             Total energy:         -41.85746368
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004524,0.000000,0.000000
-AtomId    1:  0.004523,0.000000,0.000000
+AtomId    0:  0.004601,0.000000,0.000000
+AtomId    1:  0.004601,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -83,23 +79,21 @@ number of elements: 1408
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
 -------------------------------------------------
 
-Reading initial guess for electron-density.....
-
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85821318
+             Total energy:         -41.85766208
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.001939,0.000000,0.000000
-AtomId    1:  0.001939,0.000000,0.000000
+AtomId    0:  0.004045,0.000000,0.000000
+AtomId    1:  0.004045,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -111,21 +105,19 @@ number of elements: 1408
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
 -------------------------------------------------
 
-Reading initial guess for electron-density.....
-
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85841678
+             Total energy:         -41.85840426
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000259,0.000000,0.000000
-AtomId    1:  0.000259,0.000000,0.000000
+AtomId    0:  0.000544,0.000000,0.000000
+AtomId    1:  0.000543,0.000000,0.000000
 --------------------------------------------------------------------------------------------

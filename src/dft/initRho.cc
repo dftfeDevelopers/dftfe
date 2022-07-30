@@ -40,6 +40,18 @@ dftClass<FEOrder, FEOrderElectro>::clearRhoData()
   gradUBroyden.clear();
   d_rhoInNodalVals.clear();
   d_rhoOutNodalVals.clear();
+  d_rhoInSpin0NodalVals.clear();
+  d_rhoOutSpin0NodalVals.clear();
+  d_rhoInSpin1NodalVals.clear();
+  d_rhoOutSpin1NodalVals.clear();
+
+  // related to low rank jacobian inverse scf preconditioning
+  d_vcontainerVals.clear();
+  d_fvcontainerVals.clear();
+  d_vSpin0containerVals.clear();
+  d_fvSpin0containerVals.clear();
+  d_vSpin1containerVals.clear();
+  d_fvSpin1containerVals.clear();
 }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -155,7 +167,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
   // Initialize electron density table storage for rhoOut only for Anderson with
   // Kerker for other mixing schemes it is done in density.cc as we need to do
   // this initialization every SCF
-  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       rhoOutVals.push_back(std::map<dealii::CellId, std::vector<double>>());
       rhoOutValues = &(rhoOutVals.back());
@@ -165,6 +178,21 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
           gradRhoOutVals.push_back(
             std::map<dealii::CellId, std::vector<double>>());
           gradRhoOutValues = &(gradRhoOutVals.back());
+        }
+
+      if (d_dftParamsPtr->spinPolarized == 1)
+        {
+          rhoOutValsSpinPolarized.push_back(
+            std::map<dealii::CellId, std::vector<double>>());
+          rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
+            {
+              gradRhoOutValsSpinPolarized.push_back(
+                std::map<dealii::CellId, std::vector<double>>());
+              gradRhoOutValuesSpinPolarized =
+                &(gradRhoOutValsSpinPolarized.back());
+            }
         }
     }
 
@@ -176,7 +204,9 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
   const int numberImageCharges  = d_imageIdsTrunc.size();
   const int numberGlobalCharges = atomLocations.size();
 
-  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+
+  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+      d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       const IndexSet &locallyOwnedSet =
         d_dofHandlerRhoNodal.locally_owned_dofs();
@@ -241,7 +271,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
       for (unsigned int dof = 0; dof < numberDofs; ++dof)
         {
           const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-          Point<3> nodalCoor = supportPointsRhoNodal[dofID];
+          const Point<3> &nodalCoor = supportPointsRhoNodal[dofID];
           if (!d_constraintsRhoNodal.is_constrained(dofID))
             {
               // loop over atoms and superimpose electron-density at a given dof
@@ -308,6 +338,44 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
         *gradRhoInValues,
         *gradRhoInValues,
         d_dftParamsPtr->xcFamilyType == "GGA");
+
+      if (d_dftParamsPtr->spinPolarized == 1)
+        {
+          for (unsigned int dof = 0; dof < numberDofs; ++dof)
+            {
+              const dealii::types::global_dof_index dofID =
+                locallyOwnedDOFs[dof];
+              const Point<3> &nodalCoor = supportPointsRhoNodal[dofID];
+              if (!d_constraintsRhoNodal.is_constrained(dofID))
+                {
+                  d_rhoInSpin0NodalValues.local_element(dof) =
+                    (0.5 - d_dftParamsPtr->start_magnetization) *
+                    d_rhoInNodalValues.local_element(dof);
+                  d_rhoInSpin1NodalValues.local_element(dof) =
+                    (0.5 + d_dftParamsPtr->start_magnetization) *
+                    d_rhoInNodalValues.local_element(dof);
+                }
+            }
+
+          d_rhoInSpin0NodalValues.update_ghost_values();
+          d_rhoInSpin1NodalValues.update_ghost_values();
+
+          // push the rhoIn to deque storing the history of nodal values
+          d_rhoInSpin0NodalVals.push_back(d_rhoInSpin0NodalValues);
+          d_rhoInSpin1NodalVals.push_back(d_rhoInSpin1NodalValues);
+
+          interpolateRhoSpinNodalDataToQuadratureDataGeneral(
+            d_matrixFreeDataPRefined,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_rhoInSpin0NodalValues,
+            d_rhoInSpin1NodalValues,
+            *rhoInValuesSpinPolarized,
+            *gradRhoInValuesSpinPolarized,
+            *gradRhoInValuesSpinPolarized,
+            d_dftParamsPtr->xcFamilyType == "GGA");
+        }
+
       normalizeRhoInQuadValues();
     }
   else

@@ -1,3 +1,4 @@
+set SOLVER MODE = GEOOPT
 subsection Geometry
   set NATOMS=4
   set NATOM TYPES=1
@@ -5,7 +6,7 @@ subsection Geometry
   set DOMAIN VECTORS FILE = domainBoundingVectors.inp
   subsection Optimization
     set STRESS TOL            = 4e-6
-    set CELL OPT              = true
+    set OPTIMIZATION MODE     = CELL
     set CELL CONSTRAINT TYPE  = 1
   end  
 end

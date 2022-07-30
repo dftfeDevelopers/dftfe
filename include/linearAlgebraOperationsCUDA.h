@@ -250,6 +250,47 @@ namespace dftfe
   }
 
   inline cublasStatus_t
+  cublasXgemmStridedBatched(cublasHandle_t    handle,
+                            cublasOperation_t transa,
+                            cublasOperation_t transb,
+                            int               m,
+                            int               n,
+                            int               k,
+                            const float *     alpha,
+                            const float *     A,
+                            int               lda,
+                            long long int     strideA,
+                            const float *     B,
+                            int               ldb,
+                            long long int     strideB,
+                            const float *     beta,
+                            float *           C,
+                            int               ldc,
+                            long long int     strideC,
+                            int               batchCount)
+  {
+    return cublasSgemmStridedBatched(handle,
+                                     transa,
+                                     transb,
+                                     m,
+                                     n,
+                                     k,
+                                     alpha,
+                                     A,
+                                     lda,
+                                     strideA,
+                                     B,
+                                     ldb,
+                                     strideB,
+                                     beta,
+                                     C,
+                                     ldc,
+                                     strideC,
+                                     batchCount);
+  }
+
+
+  inline cublasStatus_t
   cublasXgemmStridedBatched(cublasHandle_t         handle,
                             cublasOperation_t      transa,
                             cublasOperation_t      transb,
@@ -289,6 +330,46 @@ namespace dftfe
                                      batchCount);
   }
 
+
+  inline cublasStatus_t
+  cublasXgemmStridedBatched(cublasHandle_t        handle,
+                            cublasOperation_t     transa,
+                            cublasOperation_t     transb,
+                            int                   m,
+                            int                   n,
+                            int                   k,
+                            const cuFloatComplex *alpha,
+                            const cuFloatComplex *A,
+                            int                   lda,
+                            long long int         strideA,
+                            const cuFloatComplex *B,
+                            int                   ldb,
+                            long long int         strideB,
+                            const cuFloatComplex *beta,
+                            cuFloatComplex *      C,
+                            int                   ldc,
+                            long long int         strideC,
+                            int                   batchCount)
+  {
+    return cublasCgemmStridedBatched(handle,
+                                     transa,
+                                     transb,
+                                     m,
+                                     n,
+                                     k,
+                                     alpha,
+                                     A,
+                                     lda,
+                                     strideA,
+                                     B,
+                                     ldb,
+                                     strideB,
+                                     beta,
+                                     C,
+                                     ldc,
+                                     strideC,
+                                     batchCount);
+  }
 
   /**
    *  @brief Contains functions for linear algebra operations on GPU
@@ -469,7 +550,6 @@ namespace dftfe
       const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall = false);
 
-
     void
     rayleighRitzGEP(
       operatorDFTCUDAClass &                       operatorMatrix,
@@ -512,6 +592,27 @@ namespace dftfe
       const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall = false);
 
+
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTCUDAClass &                       operatorMatrix,
+      dataTypes::numberGPU *                       X,
+      distributedGPUVec<dataTypes::numberGPU> &    Xb,
+      distributedGPUVec<dataTypes::numberFP32GPU> &floatXb,
+      distributedGPUVec<dataTypes::numberGPU> &    HXb,
+      distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      GPUCCLWrapper &                              gpucclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      const std::vector<double> &                  eigenValues,
+      const double                                 fermiEnergy,
+      std::vector<double> &                        densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &                    elpaScala,
+      cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams);
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
      *  k-step Lanczos method.

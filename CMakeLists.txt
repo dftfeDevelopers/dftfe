@@ -14,6 +14,7 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/dft/densityCalculatorCPU.cc
+  ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
@@ -32,7 +33,8 @@ SET(TARGET_SRC
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
-  ./src/solvers/cgSolvers/cg_descent.cc
+  ./src/solvers/cgSolvers/BFGSNonLinearSolver.cc
+  ./src/solvers/cgSolvers/LBFGSNonLinearSolver.cc
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc
@@ -44,6 +46,7 @@ SET(TARGET_SRC
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc
+  ./src/geoOpt/geometryOptimizationClass.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/runParameters.cc
@@ -65,6 +68,7 @@ SET(CUDA_SRC
   ./src/gpuBase/cudaHelpers.cu
   ./src/gpuBase/gpuDirectCCLWrapper.cu  
   ./src/dft/densityCalculatorCUDA.cu
+  ./src/dft/densityFirstOrderResponseCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
   ./src/dft/solveVselfInBinsCUDA.cu

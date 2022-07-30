@@ -50,6 +50,20 @@ namespace dftfe
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
       writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
+
+
+    /** parameters for LRD preconditioner **/
+
+    double      startingNormLRDLargeDamping;
+    std::string methodSubTypeLRD;
+    double      adaptiveRankRelTolLRD;
+    double      factorAdapAccumClearLRD;
+    double      absPoissonSolverToleranceLRD;
+    bool        singlePrecLRD;
+    bool        estimateJacCondNoFinalSCFIter;
+
+    /**********************************************/
+
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
       ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
@@ -59,15 +73,16 @@ namespace dftfe
     bool        autoAdaptBaseMeshSize;
     double      meshSizeInnerBall, meshSizeOuterBall;
     double      chebyshevTolerance, topfrac, kerkerParameter;
-    std::string mixingMethod, ionOptSolver;
+    std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
 
-    bool   isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD, isXLBOMD;
-    bool   nonSelfConsistentForce, meshAdaption;
-    double forceRelaxTol, stressRelaxTol, toleranceKinetic;
+    bool         isIonForce, isCellStress, isBOMD;
+    bool         nonSelfConsistentForce, meshAdaption;
+    double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
     unsigned int cellConstraintType;
 
     int          verbosity;
+    std::string  solverMode;
     bool         keepScratchFolder;
     unsigned int chkType;
     bool         restartSpinFromNoSpin;
@@ -112,8 +127,6 @@ namespace dftfe
     bool         autoGPUBlockSizes;
     bool         readWfcForPdosPspFile;
     double       maxJacobianRatioFactorForMD;
-    double       chebyshevFilterTolXLBOMD;
-    double       chebyshevFilterTolXLBOMDRankUpdates;
     double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
     int          reuseDensityMD;
     double       timeStepBOMD;
@@ -124,11 +137,7 @@ namespace dftfe
     double       gaussianOrderMoveMeshToAtoms;
     bool         useFlatTopGenerator;
     double       diracDeltaKernelScalingConstant;
-    unsigned int kernelUpdateRankXLBOMD;
-    unsigned int kmaxXLBOMD;
-    bool         useAtomicRhoXLBOMD;
     bool         useMeshSizesFromAtomsFile;
-    unsigned int numberPassesRRSkippedXLBOMD;
     double       xlbomdRestartChebyTol;
     bool         useDensityMatrixPerturbationRankUpdates;
     double       xlbomdKernelRankUpdateFDParameter;
@@ -156,6 +165,13 @@ namespace dftfe
     double       dc_d3cutoffCN;
 
 
+    std::string  bfgsStepMethod;
+    bool         usePreconditioner;
+    unsigned int lbfgsNumPastSteps;
+    unsigned int maxOptIter;
+    unsigned int maxStaggeredCycles;
+    double       maxIonUpdateStep, maxCellUpdateStep;
+
     // New Paramters for moleculardyynamics class
     double      startingTempBOMD;
     double      MaxWallTime;
@@ -171,7 +187,8 @@ namespace dftfe
     void
     parse_parameters(const std::string &parameter_file,
                      const MPI_Comm &   mpi_comm_parent,
-                     const bool         printParams = false);
+                     const bool         printParams = false,
+                     const std::string  mode        = "GS");
 
     /**
      * Check parameters

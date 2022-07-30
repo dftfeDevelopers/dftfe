@@ -53,10 +53,8 @@ namespace dftfe
     if (d_restartFlag == 0)
       {
         d_startingTimeStep = 0;
-        d_dftfeWrapper = std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                               MPI_COMM_WORLD,
-                                                               true,
-                                                               true);
+        d_dftfeWrapper     = std::make_unique<dftfe::dftfeWrapper>(
+          parameter_file, d_mpiCommParent, true, true, "MD");
       }
     else
       {
@@ -66,9 +64,10 @@ namespace dftfe
           std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                 coordinatesFile,
                                                 domainVectorsFile,
-                                                MPI_COMM_WORLD,
+                                                d_mpiCommParent,
                                                 true,
-                                                true);
+                                                true,
+                                                "MD");
       }
 
     set();
@@ -170,7 +169,8 @@ namespace dftfe
     if (d_restartFlag == 0)
       {
         std::string tempfolder = "mdRestart";
-        mkdir(tempfolder.c_str(), ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir(tempfolder.c_str(), ACCESSPERMS);
         double KineticEnergy = 0.0, TemperatureFromVelocities = 0.0,
                GroundStateEnergyvalue = 0.0, EntropicEnergyvalue = 0.0;
 
@@ -294,7 +294,7 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
 
-        d_dftPtr->solve(true, false, false, false);
+        d_dftPtr->solve(true, false);
         force = d_dftPtr->getForceonAtoms();
         if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
             d_dftPtr->getParametersObject().spinPolarized != 1)
@@ -1266,7 +1266,7 @@ namespace dftfe
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       pcout << "Time taken for updateAtomPositionsAndMoveMesh: " << update_time
             << std::endl;
-    d_dftPtr->solve(true, false, false, false);
+    d_dftPtr->solve(true, false);
     forceOnAtoms = d_dftPtr->getForceonAtoms();
     if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
         d_dftPtr->getParametersObject().spinPolarized != 1)
@@ -1533,7 +1533,8 @@ namespace dftfe
         timeIndexData[0][0]    = double(time);
         std::string Folder     = "mdRestart/Step";
         std::string tempfolder = Folder + std::to_string(time);
-        mkdir(tempfolder.c_str(), ACCESSPERMS);
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir(tempfolder.c_str(), ACCESSPERMS);
         Folder                  = "mdRestart";
         std::string newFolder3  = Folder + "/" + "time.chk";
         std::string newFolder_0 = Folder + "/" + "moleculardynamics.dat";
@@ -1696,7 +1697,7 @@ namespace dftfe
          force[iCharge][2] = fileForceData[iCharge][2];
        }
        */
-    d_dftPtr->solve(true, false, false, false);
+    d_dftPtr->solve(true, false);
     force = d_dftPtr->getForceonAtoms();
 
     if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
