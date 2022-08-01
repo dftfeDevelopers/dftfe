@@ -15,6 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
+#if defined(DFTFE_WITH_MDI)
 #ifndef dftfeMDIEngine_H_
 #define dftfeMDIEngine_H_
 
@@ -69,4 +70,5 @@ namespace dftfe
 
   };
 } // namespace dftfe
+#endif
 #endif
