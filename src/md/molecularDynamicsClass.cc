@@ -1843,11 +1843,11 @@ namespace dftfe
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldpath = "TotalDisplacement.chk";
-            std::string newpath = "./mdRestart/Step";
+            std::string newpath = d_restartFilesPath+"/Step";
             newpath             = newpath + std::to_string(time) + "/.";
             dftUtils::copyFile(oldpath, newpath);
             std::string oldpath2 = "Displacement.chk";
-            std::string newpath2 = "./mdRestart/Step";
+            std::string newpath2 = d_restartFilesPath+"/Step";
             newpath2             = newpath2 + std::to_string(time) + "/.";
             dftUtils::copyFile(oldpath2, newpath2);
           }
