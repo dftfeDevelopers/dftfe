@@ -40,7 +40,8 @@ namespace dftfe
     , d_verbosity(verbosity)
   {
     init(parameter_file);
-    if (d_restartFilesPath != ".")
+    if (d_restartFilesPath != "." &&
+        Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
       }
