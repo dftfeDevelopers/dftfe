@@ -17,6 +17,7 @@
 // @author Sambit Das
 //
 
+#if defined(DFTFE_WITH_MDI)
 #include "mdi_engine.h"
 #include "library_mdi.h"
 
@@ -97,7 +98,7 @@ namespace dftfe
      process a single driver command
      called by engine_node() in loop
      also called by MDI itself via lib::lammps_execute_mdi_command()
-       when LAMMPS is running as a plugin
+       when DFTFE is running as a plugin
   ---------------------------------------------------------------------- */
 
   int MDIEngine::execute_command(const char *command, MDI_Comm mdicomm)
@@ -105,8 +106,8 @@ namespace dftfe
   }
 
   /* ----------------------------------------------------------------------
-     define which MDI commands the LAMMPS engine recognizes at each node
-     both standard MDI commands and custom LAMMPS commands
+     define which MDI commands the DFTFE engine recognizes at each node
+     both standard MDI commands and custom DFTFE commands
      max length for a command is currently 11 chars
   ---------------------------------------------------------------------- */
 
@@ -128,7 +129,7 @@ namespace dftfe
     MDI_Register_command("@DEFAULT", "<PE");
     MDI_Register_command("@DEFAULT", "<STRESS");
     MDI_Register_command("@DEFAULT", "<TYPES");
-    MDI_Register_command("@DEFAULT", "<VELOCITIES");
+    //MDI_Register_command("@DEFAULT", "<VELOCITIES");
     MDI_Register_command("@DEFAULT", ">CELL");
     MDI_Register_command("@DEFAULT", ">CELL_DISPL");
     MDI_Register_command("@DEFAULT", ">CHARGES");
@@ -138,100 +139,20 @@ namespace dftfe
     MDI_Register_command("@DEFAULT", ">NSTEPS");
     MDI_Register_command("@DEFAULT", ">TOLERANCE");
     MDI_Register_command("@DEFAULT", ">TYPES");
-    MDI_Register_command("@DEFAULT", ">VELOCITIES");
-    MDI_Register_command("@DEFAULT", "MD");
-    MDI_Register_command("@DEFAULT", "OPTG");
-    MDI_Register_command("@DEFAULT", "@INIT_MD");
-    MDI_Register_command("@DEFAULT", "@INIT_OPTG");
+    //MDI_Register_command("@DEFAULT", ">VELOCITIES");
+    //MDI_Register_command("@DEFAULT", "MD");
+    //MDI_Register_command("@DEFAULT", "OPTG");
+    //MDI_Register_command("@DEFAULT", "@INIT_MD");
+    //MDI_Register_command("@DEFAULT", "@INIT_OPTG");
     MDI_Register_command("@DEFAULT", "EXIT");
 
-    // default node, custom commands added by LAMMPS
+    // default node, custom commands added by DFTFE
 
     MDI_Register_command("@DEFAULT", "NBYTES");
     MDI_Register_command("@DEFAULT", "COMMAND");
     MDI_Register_command("@DEFAULT", "COMMANDS");
     MDI_Register_command("@DEFAULT", "INFILE");
     MDI_Register_command("@DEFAULT", "<KE");
-
-    // node for setting up and running a dynamics simulation
-
-    MDI_Register_node("@INIT_MD");
-    MDI_Register_command("@INIT_MD", "<@");
-    MDI_Register_command("@INIT_MD", "@");
-    MDI_Register_command("@INIT_MD", "@DEFAULT");
-    MDI_Register_command("@INIT_MD", "@COORDS");
-    MDI_Register_command("@INIT_MD", "@FORCES");
-    MDI_Register_command("@INIT_MD", "@ENDSTEP");
-    MDI_Register_command("@INIT_MD", "EXIT");
-
-    // node for setting up and running a minimization
-
-    MDI_Register_node("@INIT_OPTG");
-    MDI_Register_command("@INIT_OPTG", "<@");
-    MDI_Register_command("@INIT_OPTG", "@");
-    MDI_Register_command("@INIT_OPTG", "@DEFAULT");
-    MDI_Register_command("@INIT_OPTG", "@COORDS");
-    MDI_Register_command("@INIT_OPTG", "@FORCES");
-    MDI_Register_command("@INIT_OPTG", "EXIT");
-
-    // node at POST_INTEGRATE location in timestep
-    // only used if fix MDI/ENGINE is instantiated
-
-    MDI_Register_node("@COORDS");
-    MDI_Register_command("@COORDS", "<@");
-    MDI_Register_command("@COORDS", "<COORDS");
-    MDI_Register_command("@COORDS", "<VELOCITIES");
-    MDI_Register_command("@COORDS", ">COORDS");
-    MDI_Register_command("@COORDS", ">VELOCITIES");
-    MDI_Register_command("@COORDS", "@");
-    MDI_Register_command("@COORDS", "@DEFAULT");
-    MDI_Register_command("@COORDS", "@COORDS");
-    MDI_Register_command("@COORDS", "@FORCES");
-    MDI_Register_command("@COORDS", "@ENDSTEP");
-    MDI_Register_command("@COORDS", "EXIT");
-
-    // node at POST_FORCE location in timestep
-    // only used if fix MDI/ENGINE is instantiated
-    // two register callbacks allow LAMMPS to interact more easily
-    //   with drivers which don't know LAMMPS control flow
-
-    MDI_Register_node("@FORCES");
-    MDI_Register_callback("@FORCES", ">FORCES");
-    MDI_Register_callback("@FORCES", ">+FORCES");
-    MDI_Register_command("@FORCES", "<@");
-    MDI_Register_command("@FORCES", "<COORDS");
-    MDI_Register_command("@FORCES", "<ENERGY");
-    MDI_Register_command("@FORCES", "<FORCES");
-    MDI_Register_command("@FORCES", "<KE");
-    MDI_Register_command("@FORCES", "<PE");
-    MDI_Register_command("@FORCES", "<STRESS");
-    MDI_Register_command("@FORCES", "<VELOCITIES");
-    MDI_Register_command("@FORCES", ">FORCES");
-    MDI_Register_command("@FORCES", ">+FORCES");
-    MDI_Register_command("@FORCES", ">VELOCITIES");
-    MDI_Register_command("@FORCES", "@");
-    MDI_Register_command("@FORCES", "@DEFAULT");
-    MDI_Register_command("@FORCES", "@COORDS");
-    MDI_Register_command("@FORCES", "@FORCES");
-    MDI_Register_command("@FORCES", "@ENDSTEP");
-    MDI_Register_command("@FORCES", "EXIT");
-
-    // node at END_OF_STEP location in timestep
-    // only used if fix MDI/ENGINE is instantiated
-
-    MDI_Register_node("@ENDSTEP");
-    MDI_Register_command("@ENDSTEP", "<@");
-    MDI_Register_command("@ENDSTEP", "<ENERGY");
-    MDI_Register_command("@ENDSTEP", "<FORCES");
-    MDI_Register_command("@ENDSTEP", "<KE");
-    MDI_Register_command("@ENDSTEP", "<PE");
-    MDI_Register_command("@ENDSTEP", "<STRESS");
-    MDI_Register_command("@ENDSTEP", "@");
-    MDI_Register_command("@ENDSTEP", "@DEFAULT");
-    MDI_Register_command("@ENDSTEP", "@COORDS");
-    MDI_Register_command("@ENDSTEP", "@FORCES");
-    MDI_Register_command("@ENDSTEP", "@ENDSTEP");
-    MDI_Register_command("@ENDSTEP", "EXIT");
   }
 
 
@@ -325,7 +246,7 @@ namespace dftfe
   /* ----------------------------------------------------------------------
      >ELEMENTS command
      receive elements for each atom = atomic numbers
-     convert to LAMMPS atom types and store in sys_types
+     convert to DFTFE atom types and store in sys_types
   ---------------------------------------------------------------------- */
 
   void MDIEngine::receive_elements()
@@ -495,7 +416,7 @@ namespace dftfe
 
   // ----------------------------------------------------------------------
   // ----------------------------------------------------------------------
-  // responses to custom LAMMPS MDI commands
+  // responses to custom DFTFE MDI commands
   // ----------------------------------------------------------------------
   // ----------------------------------------------------------------------
 
@@ -522,3 +443,4 @@ namespace dftfe
   }
 
 }
+#endif
