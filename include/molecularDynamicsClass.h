@@ -78,11 +78,11 @@ namespace dftfe
 
     // conditional stream object
     dealii::ConditionalOStream pcout;
-    
-    std::string d_restartFilesPath;
-    const int         d_verbosity;  
 
-   unsigned int                     d_restartFlag;
+    std::string d_restartFilesPath;
+    const int   d_verbosity;
+
+    unsigned int                     d_restartFlag;
     unsigned int                     d_numberGlobalCharges;
     double                           d_TimeStep;
     unsigned int                     d_TimeIndex;
@@ -435,7 +435,9 @@ namespace dftfe
      *
      */
     int
-    checkRestart(std::string &coordinatesFile, std::string &domainVectorsFile, bool &scfRestart);
+    checkRestart(std::string &coordinatesFile,
+                 std::string &domainVectorsFile,
+                 bool &       scfRestart);
 
     /**
      * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *

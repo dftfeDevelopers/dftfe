@@ -125,7 +125,7 @@ main(int argc, char *argv[])
                                             runParams.restart,
                                             runParams.verbosity);
 
-      int                           status = mdClass.runMD();
+      int status = mdClass.runMD();
     }
 
   else if (runParams.solvermode == "NEB")

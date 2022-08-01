@@ -1310,7 +1310,7 @@ namespace dftfe
               }
           }
 
-        else if (d_dftParamsPtr->reuseDensityMD == 1 &&
+        else if (d_dftParamsPtr->extrapolateDensity  == 1 &&
                  d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
           {
             interpolateRhoNodalDataToQuadratureDataGeneral(
@@ -1334,7 +1334,7 @@ namespace dftfe
 
             d_rhoInNodalValues.update_ghost_values();
           }
-        else if (d_dftParamsPtr->reuseDensityMD == 2 &&
+        else if (d_dftParamsPtr->extrapolateDensity  == 2 &&
                  d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
           {
             initAtomicRho();
@@ -1709,10 +1709,12 @@ namespace dftfe
     if (d_dftParamsPtr->writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 
-    //std::vector<double> dipolemoment;
-    dipole(d_dofHandlerPRefined, rhoOutValues,false);
-    dipole(d_dofHandlerPRefined, rhoOutValues,true);
-    //pcout<<"*** DIPOLE MOMENT: "<<dipolemoment[0]<<"  "<<dipolemoment[1]<<"  "<<dipolemoment[2]<<std::endl;
+    if (d_dftParamsPtr->computeDipoleMoment)
+    {
+      dipole(d_dofHandlerPRefined, rhoOutValues, false);
+      dipole(d_dofHandlerPRefined, rhoOutValues, true);
+    }  
+
     if (d_dftParamsPtr->verbosity >= 1)
       pcout
         << std::endl

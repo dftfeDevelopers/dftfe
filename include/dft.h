@@ -763,9 +763,9 @@ namespace dftfe
 
 
     void
-    dipole(
-      const dealii::DoFHandler<3> &                        dofHandlerOfField,
-      const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues, bool centerofCharge);
+    dipole(const dealii::DoFHandler<3> &dofHandlerOfField,
+           const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues,
+           bool                                                 centerofCharge);
 
     double
     rhofieldl2Norm(const dealii::MatrixFree<3, double> &matrixFreeDataObject,
