@@ -40,11 +40,15 @@ namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
     const std::string parameter_file,
+    const std::string restartFilesPath,
     const MPI_Comm &  mpi_comm_parent,
-    const bool        restart)
+    const bool        restart,
+    const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_restartFilesPath(restartFilesPath)
+    , d_verbosity(verbosity)
   {
     MPI_Barrier(d_mpiCommParent);
     d_MDstartWallTime = MPI_Wtime();
@@ -54,12 +58,13 @@ namespace dftfe
       {
         d_startingTimeStep = 0;
         d_dftfeWrapper     = std::make_unique<dftfe::dftfeWrapper>(
-          parameter_file, d_mpiCommParent, true, true, "MD");
+          parameter_file, d_mpiCommParent, true, true, "MD",d_restartFilesPath);
       }
     else
       {
         std::string coordinatesFile, domainVectorsFile;
-        d_startingTimeStep = checkRestart(coordinatesFile, domainVectorsFile);
+        bool scfRestart;
+        d_startingTimeStep = checkRestart(coordinatesFile, domainVectorsFile, scfRestart);
         d_dftfeWrapper =
           std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                 coordinatesFile,
@@ -67,7 +72,9 @@ namespace dftfe
                                                 d_mpiCommParent,
                                                 true,
                                                 true,
-                                                "MD");
+                                                "MD",
+                                                d_restartFilesPath,
+                                                scfRestart);
       }
 
     set();
@@ -168,9 +175,10 @@ namespace dftfe
     pcout << "RestartFlag: " << d_restartFlag << std::endl;
     if (d_restartFlag == 0)
       {
-        std::string tempfolder = "mdRestart";
+        
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          mkdir(tempfolder.c_str(), ACCESSPERMS);
+          mkdir((d_restartFilesPath + "/mdRestart").c_str(), ACCESSPERMS);
+        d_restartFilesPath = d_restartFilesPath + "/mdRestart"; 
         double KineticEnergy = 0.0, TemperatureFromVelocities = 0.0,
                GroundStateEnergyvalue = 0.0, EntropicEnergyvalue = 0.0;
 
@@ -406,7 +414,7 @@ namespace dftfe
                               dealii::Utilities::to_string(error) + ".")));
               }
             pcout << "Removed File: " << file2 << std::endl;
-            std::string   file3 = "/mdRestart/NHCThermostat.chk";
+            std::string   file3 = d_restartFilesPath+"/NHCThermostat.chk";
             std::ifstream readFile3(file3.c_str());
             if (!readFile3.fail() && d_ThermostatType == "NOSE_HOVER_CHAINS")
               {
@@ -1518,7 +1526,7 @@ namespace dftfe
         std::vector<std::vector<double>> IEData(1, std::vector<double>(1, 0.0));
         std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
 
-        std::vector<std::vector<double>> mdData(4, std::vector<double>(4, 0.0));
+        std::vector<std::vector<double>> mdData(5, std::vector<double>(3, 0.0));
         if (d_ThermostatType == "NO_CONTROL")
           mdData[0][0] = 0.0;
         else if (d_ThermostatType == "RESCALE")
@@ -1530,12 +1538,17 @@ namespace dftfe
         mdData[1][0]           = d_numberGlobalCharges;
         mdData[2][0]           = d_TimeStep;
         mdData[3][0]           = d_TimeIndex;
+        pcout<<"Hi!1";
+        mdData[4][0]            = d_dftPtr->getParametersObject().periodicX?1:0;
+        mdData[4][1]            = d_dftPtr->getParametersObject().periodicY?1:0;
+        mdData[4][2]            = d_dftPtr->getParametersObject().periodicZ?1:0;
         timeIndexData[0][0]    = double(time);
-        std::string Folder     = "mdRestart/Step";
+        pcout<<"Hi!2";
+        std::string Folder     = d_restartFilesPath+"/Step";
         std::string tempfolder = Folder + std::to_string(time);
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir(tempfolder.c_str(), ACCESSPERMS);
-        Folder                  = "mdRestart";
+        Folder                  = d_restartFilesPath;
         std::string newFolder3  = Folder + "/" + "time.chk";
         std::string newFolder_0 = Folder + "/" + "moleculardynamics.dat";
         dftUtils::writeDataIntoFile(mdData, newFolder_0, d_mpiCommParent);
@@ -1646,7 +1659,7 @@ namespace dftfe
                   << atomLocations[iCharge][4] << std::endl;
           }
       }
-    std::string Folder = "mdRestart";
+    std::string Folder = d_restartFilesPath;
 
     std::vector<std::vector<double>> t1, KE0, IE0, TE0;
     std::string                      tempfolder =
@@ -1708,10 +1721,10 @@ namespace dftfe
       DensitySplitExtrapolation(0);
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
-        std::string oldFolder1 = "./mdRestart/Step";
+        std::string oldFolder1 = d_restartFilesPath+"/Step";
         oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
                      "/TotalDisplacement.chk";
-        std::string oldFolder2 = "./mdRestart/Step";
+        std::string oldFolder2 = d_restartFilesPath+"/Step";
         oldFolder2 =
           oldFolder2 + std::to_string(d_startingTimeStep) + "/Displacement.chk";
 
@@ -1865,7 +1878,7 @@ namespace dftfe
 
   int
   molecularDynamicsClass::checkRestart(std::string &coordinatesFile,
-                                       std::string &domainVectorsFile)
+                                       std::string &domainVectorsFile, bool &scfRestart)
   {
     int time1 = 0;
 
@@ -1873,7 +1886,7 @@ namespace dftfe
       {
         std::vector<std::vector<double>> t1, mdData;
         pcout << " MD is in Restart Mode" << std::endl;
-        dftfe::dftUtils::readFile(1, mdData, "mdRestart/moleculardynamics.dat");
+        dftfe::dftUtils::readFile(3, mdData, "mdRestart/moleculardynamics.dat");
         dftfe::dftUtils::readFile(1, t1, "mdRestart/time.chk");
         time1                  = t1[0][0];
         std::string tempfolder = "mdRestart/Step";
@@ -1884,7 +1897,11 @@ namespace dftfe
         while (!flag && time1 > 1)
           {
             std::string   path  = tempfolder + std::to_string(time1);
-            std::string   file1 = path + "/atomsFracCoordCurrent.chk";
+            std::string   file1;
+            if(mdData[4][0]==1||mdData[4][1]==1||mdData[4][2]==1 )
+              file1 = path + "/atomsFracCoordCurrent.chk";
+            else
+             file1 = path + "/atomsCartCoordCurrent.chk";
             std::string   file2 = path + "/velocity.chk";
             std::string   file3 = path + "/NHCThermostat.chk";
             std::string   file4 = path + "/domainBoundingVectorsCurrent.chk";
@@ -1913,7 +1930,18 @@ namespace dftfe
               pcout << "----Error opening restart files present in: " << path
                     << std::endl
                     << "Switching to time: " << --time1 << " ----" << std::endl;
+          
+          
+          
           }
+      if (time1 == t1[0][0])
+        scfRestart = true;
+      else
+        scfRestart = false;  
+      
+      
+      
+      
       }
 
     return (time1);

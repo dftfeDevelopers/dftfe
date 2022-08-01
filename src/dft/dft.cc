@@ -1709,7 +1709,10 @@ namespace dftfe
     if (d_dftParamsPtr->writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 
-
+    //std::vector<double> dipolemoment;
+    dipole(d_dofHandlerPRefined, rhoOutValues,false);
+    dipole(d_dofHandlerPRefined, rhoOutValues,true);
+    //pcout<<"*** DIPOLE MOMENT: "<<dipolemoment[0]<<"  "<<dipolemoment[1]<<"  "<<dipolemoment[2]<<std::endl;
     if (d_dftParamsPtr->verbosity >= 1)
       pcout
         << std::endl
