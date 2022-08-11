@@ -26,9 +26,9 @@
 namespace dftfe
 {
   /**
-   * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
+   * @brief Abstract class for linear solver problems to be used with the linearSolverCGCUDA interface.
    *
-   * @author Phani Motamarri, Sambit Das
+   * @author Phani Motamarri, Sambit Das, Gourab Panigrahi
    */
   class linearSolverProblemCUDA
   {
@@ -51,9 +51,29 @@ namespace dftfe
      *
      */
     virtual void
-    computeAX(distributedGPUVec<double> &src,
-              distributedGPUVec<double> &dst) = 0;
+    computeAX(distributedGPUVec<double> &dst,
+              distributedGPUVec<double> &src) = 0;
 
+    /**
+     * @brief Combines the precondition_Jacobi and various functions in CG
+     *
+     */
+    virtual double
+    cg(double *hvec, double *gvec) = 0;
+
+    /**
+     * @brief Combines the precondition_Jacobi and various functions in CG
+     *
+     */
+    virtual double
+    cg2(double *hvec, double *gvec, double *dvec) = 0;
+
+    /**
+     * @brief Combines the precondition_Jacobi and various functions in CG
+     *
+     */
+    virtual double
+    cg3(double *hvec, double *gvec, double *dvec, double &alpha) = 0;
 
     /**
      * @brief Compute right hand side vector for the problem Ax = rhs.
@@ -61,15 +81,15 @@ namespace dftfe
      * @param rhs vector for the right hand side values
      */
     virtual void
-    computeRhs(distributedGPUVec<double> &rhs) = 0;
+    computeRhs(distributedCPUVec<double> &rhs) = 0;
 
     /**
      * @brief Jacobi preconditioning function.
      *
      */
     virtual void
-    precondition_Jacobi(const distributedGPUVec<double> &src,
-                        distributedGPUVec<double> &      dst) const = 0;
+    precondition_Jacobi(distributedGPUVec<double> &      dst,
+                        const distributedGPUVec<double> &src) const = 0;
 
 
     /**
@@ -79,6 +99,11 @@ namespace dftfe
     virtual void
     setX() = 0;
 
+    virtual void
+    distributeX() = 0;
+
+    virtual void
+    copyCUDAToHost() = 0;
 
     // protected:
 

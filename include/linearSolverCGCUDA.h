@@ -17,23 +17,38 @@
 
 
 #if defined(DFTFE_WITH_GPU)
-#  ifndef linearSolverCUDA_H_
-#    define linearSolverCUDA_H_
+#  ifndef linearSolverCGCUDA_H_
+#    define linearSolverCGCUDA_H_
 
+#    include <linearSolverCUDA.h>
 #    include <linearSolverProblemCUDA.h>
 
 namespace dftfe
 {
   /**
-   * @brief Abstract linear solver base class.
+   * @brief conjugate gradient cuda linear solver class wrapper
    *
-   * @author Sambit Das, Gourab Panigrahi
+   * @author Gourab Panigrahi
    */
-  class linearSolverCUDA
+  class linearSolverCGCUDA : public linearSolverCUDA
   {
   public:
-    /// Constructor
-    linearSolverCUDA();
+    enum solverType
+    {
+      CG = 0,
+      GMRES
+    };
+
+    /**
+     * @brief Constructor
+     *
+     * @param mpi_comm_parent parent mpi communicato
+     * @param mpi_comm_domain domain mpi communicator
+     * @param type enum specifying the choice of the linear solver
+     */
+    linearSolverCGCUDA(const MPI_Comm & mpi_comm_parent,
+                       const MPI_Comm & mpi_comm_domain,
+                       const solverType type);
 
     /**
      * @brief Solve linear system, A*x=Rhs
@@ -46,17 +61,28 @@ namespace dftfe
      *                   1 - limited debug output
      *                   2 - all debug output.
      */
-    virtual void
+    void
     solve(linearSolverProblemCUDA &problem,
           const double             absTolerance,
           const unsigned int       maxNumberIterations,
           cublasHandle_t &         handle,
           const unsigned int       debugLevel     = 0,
-          bool                     distributeFlag = true) = 0;
+          bool                     distributeFlag = true);
 
   private:
+    /// enum denoting the choice of the linear solver
+    const solverType d_type;
+
+    /// define some temporary vectors
+    distributedGPUVec<double> gvec, dvec, hvec;
+
+    const MPI_Comm             d_mpiCommParent;
+    const MPI_Comm             mpi_communicator;
+    const unsigned int         n_mpi_processes;
+    const unsigned int         this_mpi_process;
+    dealii::ConditionalOStream pcout;
   };
 
 } // namespace dftfe
-#  endif // linearSolverCUDA_H_
+#  endif // linearSolverCGCUDA_H_
 #endif

@@ -432,6 +432,8 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
           kohnShamDFTEigenOperator, vecForLanczos, *d_dftParamsPtr);
       const double upperBoundUnwantedSpectrum = bounds.second;
       const double lowerBoundWantedSpectrum   = bounds.first;
+
+      // const double upperBoundUnwantedSpectrum = 1.0940000000e+03;
       a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
         lowerBoundWantedSpectrum;
       computing_timer.leave_subsection("Lanczos k-step Upper Bound");
