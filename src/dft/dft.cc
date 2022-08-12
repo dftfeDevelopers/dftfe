@@ -2281,22 +2281,6 @@ namespace dftfe
                                  d_dftParamsPtr->verbosity);
           }
 
-        // double sumsq = 0.0, l2norm = 0.0;
-
-        // for (int i = 0; i < d_phiTotRhoIn.local_size(); i++)
-        //   {
-        //     double temp = d_phiTotRhoIn.local_element(i);
-        //     sumsq += temp * temp;
-        //   }
-
-        // MPI_Reduce(&sumsq, &l2norm, 1, MPI_DOUBLE, MPI_SUM, 0, d_mpiCommParent);
-
-        // pcout << "CGTest L2 Norm of d_phiTotRhoIn : " << std::sqrt(l2norm)
-        //       << "\n";
-
-        // pcout << "CGTest L2 dealii Norm of d_phiTotRhoIn : "
-        //       << d_phiTotRhoIn.l2_norm() << "\n";
-
         std::map<dealii::CellId, std::vector<double>> dummy;
         interpolateElectroNodalDataToQuadratureDataGeneral(
           d_matrixFreeDataPRefined,

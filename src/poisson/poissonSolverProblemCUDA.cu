@@ -157,7 +157,7 @@ namespace dftfe
   {
     cudaUtils::copyCUDAVecToHostVec<double>(d_xDevice.begin(),
                                             d_xPtr->begin(),
-                                            d_xLenLocalDof);
+                                            d_xLen);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -167,7 +167,7 @@ namespace dftfe
     constraintsTotalPotentialInfo.distribute(d_xDevice, 1);
 
     // if (d_isMeanValueConstraintComputed)
-    // meanValueConstraintDistribute(*d_xPtr);
+      // meanValueConstraintDistribute(d_xDevice);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
