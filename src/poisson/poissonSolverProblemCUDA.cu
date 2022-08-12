@@ -166,8 +166,8 @@ namespace dftfe
   {
     constraintsTotalPotentialInfo.distribute(d_xDevice, 1);
 
-    // if (d_isMeanValueConstraintComputed)
-      // meanValueConstraintDistribute(d_xDevice);
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistribute(d_xDevice);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

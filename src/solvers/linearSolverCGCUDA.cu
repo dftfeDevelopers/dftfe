@@ -81,7 +81,7 @@ namespace dftfe
 
     try
       {
-        // x.updateGhostValues();
+        x.updateGhostValues();
 
         if (d_type == CG)
           {
@@ -111,10 +111,11 @@ namespace dftfe
                                    d_xLenLocalDof,
                                    cublasHandle);
 
-            res         = cudaUtils::l2_norm<double>(gvec.begin(),
+            res = cudaUtils::l2_norm<double>(gvec.begin(),
                                              d_xLenLocalDof,
                                              mpi_communicator,
                                              cublasHandle);
+
             initial_res = res;
 
             if (res < absTolerance)
@@ -162,57 +163,6 @@ namespace dftfe
                   conv = true;
               }
 
-            // Old Approach
-            /*while ((!conv) && (it < maxNumberIterations))
-              {
-                it++;
-
-                if (it > 1)
-                  {
-                    beta = gh;
-
-                    // AssertThrow(std::abs(beta) != 0.,
-                    //             dealii::ExcMessage("Division by zero\n"));
-
-                    problem.precondition_Jacobi(hvec, gvec);
-
-                    gh   = cudaUtils::dot<double> (gvec.begin(), hvec.begin(),
-              d_xLenLocalDof, mpi_communicator, cublasHandle); beta = gh / beta;
-
-                    cudaUtils::sadd<double> (dvec.begin(), hvec.begin(), beta,
-              d_xLenLocalDof);
-                  }
-                else
-                  {
-                    problem.precondition_Jacobi(hvec, gvec);
-
-                    cudaUtils::equ<double> (dvec.begin(), hvec.begin(), -1.,
-              d_xLenLocalDof);
-
-                    gh = cudaUtils::dot<double> (gvec.begin(), hvec.begin(),
-              d_xLenLocalDof, mpi_communicator, cublasHandle);
-                  }
-
-                problem.computeAX(hvec, dvec);
-
-                alpha = cudaUtils::dot<double> (dvec.begin(), hvec.begin(),
-              d_xLenLocalDof, mpi_communicator, cublasHandle);
-
-                AssertThrow(std::abs(alpha) != 0.,
-                            dealii::ExcMessage("Division by zero\n"));
-                alpha = gh / alpha;
-
-                cudaUtils::add<double> (x.begin(), dvec.begin(), alpha,
-              d_xLenLocalDof, cublasHandle); cudaUtils::add<double>
-              (gvec.begin(), hvec.begin(), alpha, d_xLenLocalDof, cublasHandle);
-
-                res = std::sqrt(std::abs(cudaUtils::dot<double> (gvec.begin(),
-              gvec.begin(), d_xLenLocalDof, mpi_communicator, cublasHandle)));
-
-                if (res < absTolerance)
-                  conv = true;
-              }//*/
-
             if (!conv)
               {
                 AssertThrow(false,
@@ -231,7 +181,7 @@ namespace dftfe
         if (distributeFlag)
           problem.distributeX();
 
-        // x.updateGhostValues();
+        x.updateGhostValues();
 
         problem.copyCUDAToHost();
 
