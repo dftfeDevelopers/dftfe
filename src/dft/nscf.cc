@@ -29,7 +29,7 @@ void
 dftClass<FEOrder, FEOrderElectro>::initnscf(
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
   poissonSolverProblem<FEOrder, FEOrderElectro> &    phiTotalSolverProblem,
-  dealiiLinearSolver &                               dealiiCGSolver)
+  dealiiLinearSolver &                               CGSolver)
 {
   //
   const IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
@@ -114,10 +114,10 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
 
   std::map<dealii::CellId, std::vector<double>> phiInValues;
 
-  dealiiCGSolver.solve(phiTotalSolverProblem,
-                       d_dftParamsPtr->absLinearSolverTolerance,
-                       d_dftParamsPtr->maxLinearSolverIterations,
-                       d_dftParamsPtr->verbosity);
+  CGSolver.solve(phiTotalSolverProblem,
+                 d_dftParamsPtr->absLinearSolverTolerance,
+                 d_dftParamsPtr->maxLinearSolverIterations,
+                 d_dftParamsPtr->verbosity);
 
   std::map<dealii::CellId, std::vector<double>> dummy2;
   interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,

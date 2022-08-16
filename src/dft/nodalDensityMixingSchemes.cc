@@ -23,7 +23,7 @@ double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
-  dealiiLinearSolver &dealiiCGSolver)
+  dealiiLinearSolver &CGSolver)
 {
   double normValue = 0.0;
 
@@ -101,11 +101,11 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 
 
   // solve the Helmholtz system to compute preconditioned residual
-  dealiiCGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                       d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                       d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                       d_dftParamsPtr->verbosity,
-                       false);
+  CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
+                 d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                 d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                 d_dftParamsPtr->verbosity,
+                 false);
 
 
   // compute rhoIn to being the current SCF iteration using the preconditioned
@@ -182,7 +182,7 @@ double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
-  dealiiLinearSolver &dealiiCGSolver)
+  dealiiLinearSolver &CGSolver)
 {
   double normValue = 0.0;
 
@@ -366,11 +366,11 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
 
 
   // solve the Helmholtz system to compute preconditioned residual
-  dealiiCGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                       d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                       d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                       d_dftParamsPtr->verbosity,
-                       false);
+  CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
+                 d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                 d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                 d_dftParamsPtr->verbosity,
+                 false);
 
 
   // rhoIn += mixingScalar*residual for Kerker

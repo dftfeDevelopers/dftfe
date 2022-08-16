@@ -70,14 +70,16 @@ namespace dftfe
 
     bool conv = false;
 
-    distributedGPUVec<double> &x = problem.getX();
+    distributedGPUVec<double> &x        = problem.getX();
+    distributedGPUVec<double> &d_Jacobi = problem.getPreconditioner();
 
-    int d_xLenLocalDof = x.locallyOwnedDofsSize();
+    devSum.resize(1);
+    devSumPtr = thrust::raw_pointer_cast(devSum.data());
+
+    d_xLenLocalDof = x.locallyOwnedDofsSize();
 
     double res = 0.0, initial_res = 0.0;
     int    it = 0;
-
-    double start_GPU, end_GPU;
 
     try
       {
@@ -87,31 +89,27 @@ namespace dftfe
           {
             // resize the vectors, but do not set the values since they'd be
             // overwritten soon anyway.
-            gvec.reinit(x);
-            dvec.reinit(x);
-            hvec.reinit(x);
+            q.reinit(x);
+            r.reinit(x);
+            d.reinit(x);
 
-            gvec.zeroOutGhosts();
-            dvec.zeroOutGhosts();
-            hvec.zeroOutGhosts();
+            q.zeroOutGhosts();
+            r.zeroOutGhosts();
+            d.zeroOutGhosts();
 
-            double gh    = 0.0;
-            double beta  = 0.0;
             double alpha = 0.0;
+            double beta  = 0.0;
+            double delta = 0.0;
 
-            MPI_Barrier(mpi_communicator);
-            cudaDeviceSynchronize();
-            start_GPU = MPI_Wtime();
+            // r = Ax
+            problem.computeAX(r, x);
 
-            problem.computeAX(gvec, x);
+            // r = Ax - rhs
+            cudaUtils::add<double>(
+              r.begin(), rhs_device.begin(), -1., d_xLenLocalDof, cublasHandle);
 
-            cudaUtils::add<double>(gvec.begin(),
-                                   rhs_device.begin(),
-                                   -1.,
-                                   d_xLenLocalDof,
-                                   cublasHandle);
-
-            res = cudaUtils::l2_norm<double>(gvec.begin(),
+            // res = l2_norm(r)
+            res = cudaUtils::l2_norm<double>(r.begin(),
                                              d_xLenLocalDof,
                                              mpi_communicator,
                                              cublasHandle);
@@ -129,35 +127,49 @@ namespace dftfe
 
                 if (it > 1)
                   {
-                    beta = gh;
+                    beta = delta;
                     AssertThrow(std::abs(beta) != 0.,
                                 dealii::ExcMessage("Division by zero\n"));
-                    gh   = problem.cg(hvec.begin(), gvec.begin());
-                    beta = gh / beta;
-                    cudaUtils::sadd<double>(dvec.begin(),
-                                            hvec.begin(),
+
+                    // d = M^(-1)r
+                    // delta = r * d
+                    delta =
+                      applyPreconditionAndComputeDotProduct(d_Jacobi.begin());
+
+                    beta = delta / beta;
+
+                    // q = beta * q - d
+                    cudaUtils::sadd<double>(q.begin(),
+                                            d.begin(),
                                             beta,
                                             d_xLenLocalDof);
                   }
                 else
                   {
-                    gh = problem.cg2(hvec.begin(), gvec.begin(), dvec.begin());
+                    // delta = r * M^(-1)r
+                    // q = -M^(-1)r
+                    delta = applyPreconditionComputeDotProductAndSadd(
+                      d_Jacobi.begin());
                   }
 
-                problem.computeAX(hvec, dvec);
+                // d = Aq
+                problem.computeAX(d, q);
 
-                alpha = cudaUtils::dot<double>(dvec.begin(),
-                                               hvec.begin(),
+                // alpha = q * d
+                alpha = cudaUtils::dot<double>(q.begin(),
+                                               d.begin(),
                                                d_xLenLocalDof,
                                                mpi_communicator,
                                                cublasHandle);
 
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));
-                alpha = gh / alpha;
+                alpha = delta / alpha;
 
-                res =
-                  problem.cg3(hvec.begin(), gvec.begin(), dvec.begin(), alpha);
+                // x = x + alpha * q
+                // r + alpha * d
+                // res = l2_norm(r)
+                res = scaleXRandComputeNorm(x.begin(), alpha);
 
                 if (res < absTolerance)
                   conv = true;
@@ -181,12 +193,9 @@ namespace dftfe
         if (distributeFlag)
           problem.distributeX();
 
-        x.updateGhostValues();
+        // x.updateGhostValues();
 
-        problem.copyCUDAToHost();
-
-        MPI_Barrier(mpi_communicator);
-        end_GPU = MPI_Wtime();
+        problem.copyXfromDeviceToHost();
       }
 
     catch (...)
@@ -206,7 +215,6 @@ namespace dftfe
         pcout << "initial abs. residual: " << initial_res
               << " , current abs. residual: " << res << " , nsteps: " << it
               << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
-        pcout << "GPU Time: " << end_GPU - start_GPU << "\n";
       }
 
     MPI_Barrier(mpi_communicator);
@@ -216,4 +224,293 @@ namespace dftfe
       pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
             << std::endl;
   }
+
+
+  template <typename Type, int blockSize>
+  __global__ void
+  applyPreconditionAndComputeDotProductKernel(Type *d,
+                                              Type *r,
+                                              Type *jacobi,
+                                              Type *devSum,
+                                              int   N)
+  {
+    __shared__ Type smem[blockSize];
+
+    int tid = threadIdx.x;
+    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
+    cooperative_groups::thread_block block =
+      cooperative_groups::this_thread_block();
+
+    Type localSum;
+
+    if (idx < N)
+      {
+        Type d_jacobi = jacobi[idx];
+        Type d_r      = r[idx];
+
+        localSum = d_jacobi * d_r * d_r;
+        d[idx]   = d_jacobi * d_r;
+      }
+
+    else
+      {
+        localSum = 0;
+      }
+
+    if (idx + blockSize < N)
+      {
+        Type d_jacobi = jacobi[idx + blockSize];
+        Type d_r      = r[idx + blockSize];
+        localSum += d_jacobi * d_r * d_r;
+        d[idx + blockSize] = d_jacobi * d_r;
+      }
+
+    smem[tid] = localSum;
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 512) && (tid < 256))
+      smem[tid] = localSum = localSum + smem[tid + 256];
+
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 256) && (tid < 128))
+      smem[tid] = localSum = localSum + smem[tid + 128];
+
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 128) && (tid < 64))
+      smem[tid] = localSum = localSum + smem[tid + 64];
+
+    cooperative_groups::sync(block);
+
+    cooperative_groups::thread_block_tile<32> tile32 =
+      cooperative_groups::tiled_partition<32>(block);
+
+    if (block.thread_rank() < 32)
+      {
+        if (blockSize >= 64)
+          localSum += smem[tid + 32];
+
+        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+          localSum += tile32.shfl_down(localSum, offset);
+      }
+
+    if (block.thread_rank() == 0)
+      atomicAdd(&devSum[0], localSum);
+  }
+
+
+  template <typename Type, int blockSize>
+  __global__ void
+  applyPreconditionComputeDotProductAndSaddKernel(Type *q,
+                                                  Type *r,
+                                                  Type *jacobi,
+                                                  Type *devSum,
+                                                  int   N)
+  {
+    __shared__ Type smem[blockSize];
+
+    int tid = threadIdx.x;
+    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
+    cooperative_groups::thread_block block =
+      cooperative_groups::this_thread_block();
+
+    Type localSum;
+
+    if (idx < N)
+      {
+        Type d_jacobi = jacobi[idx];
+        Type d_r      = r[idx];
+
+        localSum = d_jacobi * d_r * d_r;
+        q[idx]   = -1 * d_jacobi * d_r;
+      }
+
+    else
+      {
+        localSum = 0;
+      }
+
+    if (idx + blockSize < N)
+      {
+        Type d_jacobi = jacobi[idx + blockSize];
+        Type d_r      = r[idx + blockSize];
+        localSum += d_jacobi * d_r * d_r;
+        q[idx + blockSize] = -1 * d_jacobi * d_r;
+      }
+
+    smem[tid] = localSum;
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 512) && (tid < 256))
+      smem[tid] = localSum = localSum + smem[tid + 256];
+
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 256) && (tid < 128))
+      smem[tid] = localSum = localSum + smem[tid + 128];
+
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 128) && (tid < 64))
+      smem[tid] = localSum = localSum + smem[tid + 64];
+
+    cooperative_groups::sync(block);
+
+    cooperative_groups::thread_block_tile<32> tile32 =
+      cooperative_groups::tiled_partition<32>(block);
+
+    if (block.thread_rank() < 32)
+      {
+        if (blockSize >= 64)
+          localSum += smem[tid + 32];
+
+        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+          localSum += tile32.shfl_down(localSum, offset);
+      }
+
+    if (block.thread_rank() == 0)
+      atomicAdd(&devSum[0], localSum);
+  }
+
+
+  template <typename Type, int blockSize>
+  __global__ void
+  scaleXRandComputeNormKernel(Type *q,
+                              Type *r,
+                              Type *d,
+                              Type *x,
+                              Type *devSum,
+                              Type  alpha,
+                              int   N)
+  {
+    __shared__ Type smem[blockSize];
+
+    int tid = threadIdx.x;
+    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
+    cooperative_groups::thread_block block =
+      cooperative_groups::this_thread_block();
+
+    Type localSum;
+
+    if (idx < N)
+      {
+        Type d_r = r[idx];
+        localSum = d_r * d_r;
+        x[idx] += alpha * q[idx];
+        r[idx] += alpha * d[idx];
+      }
+
+    else
+      {
+        localSum = 0;
+      }
+
+    if (idx + blockSize < N)
+      {
+        Type d_r = r[idx + blockSize];
+        localSum += d_r * d_r;
+        x[idx + blockSize] += alpha * q[idx + blockSize];
+        r[idx + blockSize] += alpha * d[idx + blockSize];
+      }
+
+    smem[tid] = localSum;
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 512) && (tid < 256))
+      smem[tid] = localSum = localSum + smem[tid + 256];
+
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 256) && (tid < 128))
+      smem[tid] = localSum = localSum + smem[tid + 128];
+
+    cooperative_groups::sync(block);
+
+    if ((blockSize >= 128) && (tid < 64))
+      smem[tid] = localSum = localSum + smem[tid + 64];
+
+    cooperative_groups::sync(block);
+
+    cooperative_groups::thread_block_tile<32> tile32 =
+      cooperative_groups::tiled_partition<32>(block);
+
+    if (block.thread_rank() < warpSize)
+      {
+        if (blockSize >= 64)
+          localSum += smem[tid + 32];
+
+        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+          localSum += tile32.shfl_down(localSum, offset);
+      }
+
+    if (block.thread_rank() == 0)
+      atomicAdd(&devSum[0], localSum);
+  }
+
+
+  double
+  linearSolverCGCUDA::applyPreconditionAndComputeDotProduct(double *jacobi)
+  {
+    double    local_sum = 0.0, sum = 0.0;
+    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
+                       (cudaConstants::blockSize * 2);
+
+    devSum[0] = 0.0;
+
+    applyPreconditionAndComputeDotProductKernel<double,
+                                                cudaConstants::blockSize>
+      <<<blocks, cudaConstants::blockSize>>>(
+        d.begin(), r.begin(), jacobi, devSumPtr, d_xLenLocalDof);
+
+    local_sum = devSum[0];
+
+    MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+
+    return sum;
+  }
+
+
+  double
+  linearSolverCGCUDA::applyPreconditionComputeDotProductAndSadd(double *jacobi)
+  {
+    double    local_sum = 0.0, sum = 0.0;
+    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
+                       (cudaConstants::blockSize * 2);
+
+    devSum[0] = 0.0;
+
+    applyPreconditionComputeDotProductAndSaddKernel<double,
+                                                    cudaConstants::blockSize>
+      <<<blocks, cudaConstants::blockSize>>>(
+        q.begin(), r.begin(), jacobi, devSumPtr, d_xLenLocalDof);
+
+    local_sum = devSum[0];
+
+    MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+
+    return sum;
+  }
+
+
+  double
+  linearSolverCGCUDA::scaleXRandComputeNorm(double *x, double &alpha)
+  {
+    double    local_sum = 0.0, sum = 0.0;
+    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
+                       (cudaConstants::blockSize * 2);
+
+    devSum[0] = 0.0;
+
+    scaleXRandComputeNormKernel<double, cudaConstants::blockSize>
+      <<<blocks, cudaConstants::blockSize>>>(
+        q.begin(), r.begin(), d.begin(), x, devSumPtr, alpha, d_xLenLocalDof);
+
+    local_sum = devSum[0];
+
+    MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+
+    return std::sqrt(sum);
+  }
+
 } // namespace dftfe

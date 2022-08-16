@@ -153,7 +153,7 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::copyCUDAToHost()
+  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::copyXfromDeviceToHost()
   {
     cudaUtils::copyCUDAVecToHostVec<double>(d_xDevice.begin(),
                                             d_xPtr->begin(),
@@ -427,18 +427,6 @@ namespace dftfe
     d_constraintMatrixPtr->set_zero(rhs);
   }
 
-  // Matrix-Free Jacobi preconditioner application
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::precondition_Jacobi(
-    distributedGPUVec<double> &      dst,
-    const distributedGPUVec<double> &src) const
-  {
-    cudaUtils::scale<double>(dst.begin(),
-                             d_diagonalAdevice.begin(),
-                             src.begin(),
-                             d_xLenLocalDof);
-  }
 
   // Compute and fill value at mean value constrained dof
   // u_o= -\sum_{i \neq o} a_i * u_i where i runs over all dofs
@@ -800,294 +788,11 @@ namespace dftfe
   }
 
 
-  template <typename Type, int blockSize>
-  __global__ void
-  cgKernel(Type *hvec, Type *gvec, Type *diagA, Type *dev_sum, int N)
-  {
-    __shared__ Type smem[blockSize];
-
-    int tid = threadIdx.x;
-    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
-    cooperative_groups::thread_block block =
-      cooperative_groups::this_thread_block();
-
-    Type localSum;
-
-    if (idx < N)
-      {
-        Type d_diagA = diagA[idx];
-        Type d_gvec  = gvec[idx];
-
-        localSum  = d_diagA * d_gvec * d_gvec;
-        hvec[idx] = d_diagA * d_gvec;
-      }
-
-    else
-      {
-        localSum = 0;
-      }
-
-    if (idx + blockSize < N)
-      {
-        Type d_diagA = diagA[idx + blockSize];
-        Type d_gvec  = gvec[idx + blockSize];
-        localSum += d_diagA * d_gvec * d_gvec;
-        hvec[idx + blockSize] = d_diagA * d_gvec;
-      }
-
-    smem[tid] = localSum;
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 512) && (tid < 256))
-      smem[tid] = localSum = localSum + smem[tid + 256];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 256) && (tid < 128))
-      smem[tid] = localSum = localSum + smem[tid + 128];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 128) && (tid < 64))
-      smem[tid] = localSum = localSum + smem[tid + 64];
-
-    cooperative_groups::sync(block);
-
-    cooperative_groups::thread_block_tile<32> tile32 =
-      cooperative_groups::tiled_partition<32>(block);
-
-    if (block.thread_rank() < 32)
-      {
-        if (blockSize >= 64)
-          localSum += smem[tid + 32];
-
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
-          localSum += tile32.shfl_down(localSum, offset);
-      }
-
-    if (block.thread_rank() == 0)
-      atomicAdd(&dev_sum[0], localSum);
-  }
-
-
-  template <typename Type, int blockSize>
-  __global__ void
-  cgKernel2(Type *hvec,
-            Type *gvec,
-            Type *dvec,
-            Type *diagA,
-            Type *dev_sum,
-            int   N)
-  {
-    __shared__ Type smem[blockSize];
-
-    int tid = threadIdx.x;
-    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
-    cooperative_groups::thread_block block =
-      cooperative_groups::this_thread_block();
-
-    Type localSum;
-
-    if (idx < N)
-      {
-        Type d_diagA = diagA[idx];
-        Type d_gvec  = gvec[idx];
-
-        localSum  = d_diagA * d_gvec * d_gvec;
-        dvec[idx] = -1 * d_diagA * d_gvec;
-      }
-
-    else
-      {
-        localSum = 0;
-      }
-
-    if (idx + blockSize < N)
-      {
-        Type d_diagA = diagA[idx + blockSize];
-        Type d_gvec  = gvec[idx + blockSize];
-        localSum += d_diagA * d_gvec * d_gvec;
-        dvec[idx + blockSize] = -1 * d_diagA * d_gvec;
-      }
-
-    smem[tid] = localSum;
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 512) && (tid < 256))
-      smem[tid] = localSum = localSum + smem[tid + 256];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 256) && (tid < 128))
-      smem[tid] = localSum = localSum + smem[tid + 128];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 128) && (tid < 64))
-      smem[tid] = localSum = localSum + smem[tid + 64];
-
-    cooperative_groups::sync(block);
-
-    cooperative_groups::thread_block_tile<32> tile32 =
-      cooperative_groups::tiled_partition<32>(block);
-
-    if (block.thread_rank() < 32)
-      {
-        if (blockSize >= 64)
-          localSum += smem[tid + 32];
-
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
-          localSum += tile32.shfl_down(localSum, offset);
-      }
-
-    if (block.thread_rank() == 0)
-      atomicAdd(&dev_sum[0], localSum);
-  }
-
-  template <typename Type, int blockSize>
-  __global__ void
-  cgKernel3(Type *hvec,
-            Type *gvec,
-            Type *dvec,
-            Type *x,
-            Type *dev_sum,
-            Type  alpha,
-            int   N)
-  {
-    __shared__ Type smem[blockSize];
-
-    int tid = threadIdx.x;
-    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
-    cooperative_groups::thread_block block =
-      cooperative_groups::this_thread_block();
-
-    Type localSum;
-
-    if (idx < N)
-      {
-        Type d_gvec = gvec[idx];
-        localSum    = d_gvec * d_gvec;
-        x[idx] += alpha * dvec[idx];
-        gvec[idx] += alpha * hvec[idx];
-      }
-
-    else
-      {
-        localSum = 0;
-      }
-
-    if (idx + blockSize < N)
-      {
-        Type d_gvec = gvec[idx + blockSize];
-        localSum += d_gvec * d_gvec;
-        x[idx + blockSize] += alpha * dvec[idx + blockSize];
-        gvec[idx + blockSize] += alpha * hvec[idx + blockSize];
-      }
-
-    smem[tid] = localSum;
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 512) && (tid < 256))
-      smem[tid] = localSum = localSum + smem[tid + 256];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 256) && (tid < 128))
-      smem[tid] = localSum = localSum + smem[tid + 128];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 128) && (tid < 64))
-      smem[tid] = localSum = localSum + smem[tid + 64];
-
-    cooperative_groups::sync(block);
-
-    cooperative_groups::thread_block_tile<32> tile32 =
-      cooperative_groups::tiled_partition<32>(block);
-
-    if (block.thread_rank() < warpSize)
-      {
-        if (blockSize >= 64)
-          localSum += smem[tid + 32];
-
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
-          localSum += tile32.shfl_down(localSum, offset);
-      }
-
-    if (block.thread_rank() == 0)
-      atomicAdd(&dev_sum[0], localSum);
-  }
-
-
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  double
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::cg(double *hvec,
-                                                        double *gvec)
+  distributedGPUVec<double> &
+  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::getPreconditioner()
   {
-    double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
-                       (cudaConstants::blockSize * 2);
-
-    dev_sum[0] = 0.0;
-
-    cgKernel<double, cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(
-        hvec, gvec, d_diagonalAdevice.begin(), sum_ptr, d_xLenLocalDof);
-
-    local_sum = dev_sum[0];
-
-    MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
-
-    return sum;
-  }
-
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  double
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::cg2(double *hvec,
-                                                         double *gvec,
-                                                         double *dvec)
-  {
-    double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
-                       (cudaConstants::blockSize * 2);
-
-    dev_sum[0] = 0.0;
-
-    cgKernel2<double, cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(
-        hvec, gvec, dvec, d_diagonalAdevice.begin(), sum_ptr, d_xLenLocalDof);
-
-    local_sum = dev_sum[0];
-
-    MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
-
-    return sum;
-  }
-
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  double
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::cg3(double *hvec,
-                                                         double *gvec,
-                                                         double *dvec,
-                                                         double &alpha)
-  {
-    double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
-                       (cudaConstants::blockSize * 2);
-
-    dev_sum[0] = 0.0;
-
-    cgKernel3<double, cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(
-        hvec, gvec, dvec, d_xDevice.begin(), sum_ptr, alpha, d_xLenLocalDof);
-
-    local_sum = dev_sum[0];
-
-    MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
-
-    return std::sqrt(sum);
+    return d_diagonalAdevice;
   }
 
 
@@ -1199,8 +904,6 @@ namespace dftfe
           }
       }
 
-    dev_sum.resize(1);
-
     // Construct the device vectors
     d_shapeFunctionValue    = spV;
     d_shapeFunctionGradient = spG;
@@ -1215,7 +918,6 @@ namespace dftfe
     weights_ptr         = thrust::raw_pointer_cast(d_weights.data());
     inverseJacobian_ptr = thrust::raw_pointer_cast(d_inverseJacobian.data());
     map_ptr             = thrust::raw_pointer_cast(d_map.data());
-    sum_ptr             = thrust::raw_pointer_cast(dev_sum.data());
   }
 
 
@@ -1253,9 +955,6 @@ namespace dftfe
             shared_map[i] = map[i + blockIdx.x * p * p * p];
           }
 
-          // Can optimize by separate i and transpose, use shared_X as
-          // intermidiary or shared_Y
-
 #pragma unroll
         for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p * p;
              i += blockDim.x * blockDim.y)
@@ -1265,17 +964,6 @@ namespace dftfe
             shared_D[i]                       = D[i];
             shared_D_T[(i / p) + (i % p) * p] = D[i];
           }
-
-        // #pragma unroll
-        // for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p; i +=
-        // blockDim.x * blockDim.y) { 	shared_W[i] = W[i];
-        // }
-
-        // #pragma unroll
-        // for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < dim*dim; i
-        // += blockDim.x * blockDim.y) { 	shared_J_inv[i] = J_inv[i + blockIdx.x
-        // * dim*dim];
-        // }
 
         __syncthreads();
 
@@ -1519,10 +1207,6 @@ namespace dftfe
           }
 
         __syncthreads();
-
-        //////////////// Switch to J_inv_T ////////////////////
-        // Can separate the 3 lines to 3 loops
-        // Change the order of the x, y, z (z first)
 
         // Gemm with J_inv
 
@@ -1917,309 +1601,6 @@ namespace dftfe
   }
 
 
-  template <typename Type, int p, int vec_shared, int dim>
-  __global__ void
-  massMatrixKernel(Type *    V,
-                   Type *    U,
-                   Type *    N,
-                   Type *    W,
-                   Type *    J,
-                   int *     map,
-                   const int lenU)
-  {
-    // gridDim.y = batch;
-    // gridDim.x = cells;
-    // n_vec = vec_shared * gridDim.y;
-
-    // extern __shared__ Type SMem[];
-    // Type *shared_U	 = SMem;
-    // Type *shared_V	 = &shared_U[vec_shared*p*p*p];
-    // Type *shared_N	 = &shared_V[vec_shared*p*p*p];
-    // Type *shared_N_T	 = &shared_N[p*p];
-    // Type *shared_W	 = &shared_N_T[p*p];
-    // Type *shared_J_inv = &shared_W[p];
-    // int *shared_map = (int*) &shared_J_inv[dim*dim];
-
-    __shared__ Type shared_U[vec_shared * p * p * p],
-      shared_V[vec_shared * p * p * p];
-    __shared__ Type shared_N[p * p], shared_N_T[p * p], shared_W[p],
-      shared_J_inv[dim * dim];
-    __shared__ int shared_map[p * p * p];
-
-#pragma unroll
-    for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p * p * p;
-         i += blockDim.x * blockDim.y)
-      {
-        shared_map[i] = map[i + blockIdx.x * p * p * p];
-      }
-
-#pragma unroll
-    for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p * p;
-         i += blockDim.x * blockDim.y)
-      {
-        shared_N[i]                       = N[i];
-        shared_N_T[(i / p) + (i % p) * p] = N[i];
-      }
-
-    __syncthreads();
-
-    //////////////////////////////////////////////////////////////
-
-    // vec_shared, p^3 fastest index Shared_U = [vec_shared][p^3]
-    // Interpolation combined with Extraction
-
-    // 1st GEMM
-    for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-      {
-        Type temp[p], u[p];
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            temp[i] = 0.0;
-          }
-
-        for (int m = 0; m < p; ++m)
-          {
-            u[m] = U[threadIdx.x + shared_map[k + m * p * p] * vec_shared +
-                     blockIdx.y * vec_shared * lenU];
-            // u[m] = U[threadIdx.x + map[k + m*p*p + blockIdx.x * p*p*p] *
-            // vec_shared + blockIdx.y * vec_shared*lenU];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] += shared_N_T[i + m * p] * u[m];
-              }
-          }
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            shared_U[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-              temp[i];
-          }
-      }
-
-    __syncthreads();
-
-    // 2nd GEMM
-    for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-      {
-        Type temp[p], u[p];
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            temp[i] = 0.0;
-          }
-
-        for (int m = 0; m < p; ++m)
-          {
-            u[m] =
-              shared_U[threadIdx.x + k * vec_shared + m * p * p * vec_shared];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] += shared_N_T[i + m * p] * u[m];
-              }
-          }
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            shared_V[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-              temp[i];
-          }
-      }
-
-    __syncthreads();
-
-    // 3rd GEMM
-    for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-      {
-        Type temp[p], u[p];
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            temp[i] = 0.0;
-          }
-
-        for (int m = 0; m < p; ++m)
-          {
-            u[m] =
-              shared_V[threadIdx.x + k * vec_shared + m * p * p * vec_shared];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] += shared_N_T[i + m * p] * u[m];
-              }
-          }
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            shared_U[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-              temp[i];
-          }
-      }
-
-    __syncthreads();
-
-#pragma unroll
-    for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p;
-         i += blockDim.x * blockDim.y)
-      {
-        shared_W[i] = W[i];
-      }
-
-#pragma unroll
-    for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < dim * dim;
-         i += blockDim.x * blockDim.y)
-      {
-        shared_J_inv[i] = J[i + blockIdx.x * dim * dim];
-      }
-
-    __syncthreads();
-
-#pragma unroll
-    for (int k = threadIdx.y; k < p * p * p; k += blockDim.y)
-      {
-        int iz = k / (p * p);
-        int iy = (k % (p * p)) / p;
-        int ix = (k % (p * p)) % p;
-
-        Type R = (shared_W[ix] * shared_W[iy] * shared_W[iz]) /
-                 (shared_J_inv[0] * (shared_J_inv[4] * shared_J_inv[8] -
-                                     shared_J_inv[5] * shared_J_inv[7]) -
-                  shared_J_inv[3] * (shared_J_inv[1] * shared_J_inv[8] -
-                                     shared_J_inv[2] * shared_J_inv[7]) +
-                  shared_J_inv[6] * (shared_J_inv[1] * shared_J_inv[5] -
-                                     shared_J_inv[2] * shared_J_inv[4]));
-
-        shared_U[threadIdx.x + k * vec_shared] *= R;
-        // shared_U[threadIdx.x + k * vec_shared] *= J[blockIdx.x] *
-        // shared_W[ix] * shared_W[iy] * shared_W[iz];
-      }
-
-    __syncthreads();
-
-    // 1st GEMM
-    for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-      {
-        Type temp[p], u[p];
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            temp[i] = 0.0;
-          }
-
-        for (int m = 0; m < p; ++m)
-          {
-            u[m] =
-              shared_U[threadIdx.x + k * vec_shared + m * p * p * vec_shared];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] += shared_N[i + m * p] * u[m];
-              }
-          }
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            shared_V[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-              temp[i];
-          }
-      }
-
-    __syncthreads();
-
-    // 2nd GEMM
-    for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-      {
-        Type temp[p], u[p];
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            temp[i] = 0.0;
-          }
-
-        for (int m = 0; m < p; ++m)
-          {
-            u[m] =
-              shared_V[threadIdx.x + k * vec_shared + m * p * p * vec_shared];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] += shared_N[i + m * p] * u[m];
-              }
-          }
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            shared_U[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-              temp[i];
-          }
-      }
-
-    __syncthreads();
-
-    // 3rd GEMM
-    for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-      {
-        Type temp[p], u[p];
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            temp[i] = 0.0;
-          }
-
-        for (int m = 0; m < p; ++m)
-          {
-            u[m] =
-              shared_U[threadIdx.x + k * vec_shared + m * p * p * vec_shared];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] += shared_N[i + m * p] * u[m];
-              }
-          }
-
-#pragma unroll
-        for (int i = 0; i < p; ++i)
-          {
-            shared_V[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-              temp[i];
-          }
-      }
-
-    __syncthreads();
-
-#pragma unroll
-    for (int k = threadIdx.y; k < p * p * p; k += blockDim.y)
-      {
-        atomicAdd(&V[threadIdx.x + shared_map[k] * vec_shared +
-                     blockIdx.y * vec_shared * lenU],
-                  shared_V[threadIdx.x + k * vec_shared]);
-        // atomicAdd(&V[threadIdx.x + map[k + blockIdx.x * p*p*p] * vec_shared +
-        // blockIdx.y * vec_shared*lenU], shared_V[threadIdx.x + k *
-        // vec_shared]); if (blockIdx.x==0 && blockIdx.y ==0 && blockIdx.z==0)
-        // printf("%5d\n", j + dof_index * vec_shared + blockIdx.y *
-        // vec_shared*lenU);
-      }
-  }
-
   // computeAX
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -2244,19 +1625,12 @@ namespace dftfe
     // cudaFuncSetSharedMemConfig(computeAXKernel,
     // cudaSharedMemBankSizeEightByte);
 
-    // const double zero = 0.0;
-    // cudaUtils::set<double> (Ax.begin(), zero, d_xLen);
-
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(x);
 
     x.updateGhostValues();
 
     constraintsTotalPotentialInfo.distribute(x, 1);
-
-    // massMatrixKernel <double, d_p, d_vecShared, d_dim> <<< blocks, threads
-    // >>> (Ax.begin(), x.begin(), shapeFunctionValue_ptr, weights_ptr,
-    // inverseJacobian_ptr, map_ptr, d_xLen);
 
     computeAXKernel<double, d_p, d_vecShared, d_dim>
       <<<blocks, threads>>>(Ax.begin(),

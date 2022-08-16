@@ -1901,9 +1901,9 @@ namespace dftfe
                                         *d_dftParamsPtr);
 
     // set up linear solver
-    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
-                                      mpi_communicator,
-                                      dealiiLinearSolver::CG);
+    dealiiLinearSolver CGSolver(d_mpiCommParent,
+                                mpi_communicator,
+                                dealiiLinearSolver::CG);
 
 #ifdef DFTFE_WITH_GPU
     // set up linear solver CUDA
@@ -2088,8 +2088,7 @@ namespace dftfe
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
                       norm = nodalDensity_mixing_simple_kerker(
-                        kerkerPreconditionedResidualSolverProblem,
-                        dealiiCGSolver);
+                        kerkerPreconditionedResidualSolverProblem, CGSolver);
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
@@ -2132,8 +2131,7 @@ namespace dftfe
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       norm = nodalDensity_mixing_anderson_kerker(
-                        kerkerPreconditionedResidualSolverProblem,
-                        dealiiCGSolver);
+                        kerkerPreconditionedResidualSolverProblem, CGSolver);
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
@@ -2275,10 +2273,10 @@ namespace dftfe
           }
         else
           {
-            dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                                 d_dftParamsPtr->absLinearSolverTolerance,
-                                 d_dftParamsPtr->maxLinearSolverIterations,
-                                 d_dftParamsPtr->verbosity);
+            CGSolver.solve(d_phiTotalSolverProblem,
+                           d_dftParamsPtr->absLinearSolverTolerance,
+                           d_dftParamsPtr->maxLinearSolverIterations,
+                           d_dftParamsPtr->verbosity);
           }
 
         std::map<dealii::CellId, std::vector<double>> dummy;
@@ -3048,10 +3046,10 @@ namespace dftfe
                   false,
                   true);
 
-                dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                                     d_dftParamsPtr->absLinearSolverTolerance,
-                                     d_dftParamsPtr->maxLinearSolverIterations,
-                                     d_dftParamsPtr->verbosity);
+                CGSolver.solve(d_phiTotalSolverProblem,
+                               d_dftParamsPtr->absLinearSolverTolerance,
+                               d_dftParamsPtr->maxLinearSolverIterations,
+                               d_dftParamsPtr->verbosity);
               }
 
             //
@@ -3266,10 +3264,10 @@ namespace dftfe
               false,
               true);
 
-            dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                                 d_dftParamsPtr->absLinearSolverTolerance,
-                                 d_dftParamsPtr->maxLinearSolverIterations,
-                                 d_dftParamsPtr->verbosity);
+            CGSolver.solve(d_phiTotalSolverProblem,
+                           d_dftParamsPtr->absLinearSolverTolerance,
+                           d_dftParamsPtr->maxLinearSolverIterations,
+                           d_dftParamsPtr->verbosity);
           }
 
         computing_timer.leave_subsection("phiTot solve");
@@ -3545,9 +3543,7 @@ namespace dftfe
     if (!(d_dftParamsPtr->kPointDataFile == ""))
       {
         readkPointData();
-        initnscf(kohnShamDFTEigenOperator,
-                 d_phiTotalSolverProblem,
-                 dealiiCGSolver);
+        initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem, CGSolver);
         nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
         writeBands();
       }

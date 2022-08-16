@@ -1640,7 +1640,7 @@ namespace dftfe
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                                            kohnShamDFTEigenOperator,
       poissonSolverProblem<FEOrder, FEOrderElectro> &phiTotalSolverProblem,
-      dealiiLinearSolver &                           dealiiCGSolver);
+      dealiiLinearSolver &                           CGSolver);
 
     /**
      * @brief compute the maximum of the residual norm of the highest occupied state among all k points

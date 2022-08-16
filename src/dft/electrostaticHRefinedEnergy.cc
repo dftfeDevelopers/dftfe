@@ -513,9 +513,9 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,
                                                phiTotDofHandlerIndexHRefined);
 
-  dealiiLinearSolver                            dealiiCGSolver(d_mpiCommParent,
-                                    mpi_communicator,
-                                    dealiiLinearSolver::CG);
+  dealiiLinearSolver                            CGSolver(d_mpiCommParent,
+                              mpi_communicator,
+                              dealiiLinearSolver::CG);
   poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
     mpi_communicator);
 
@@ -539,10 +539,10 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     pcout
       << std::endl
       << "Solving for total electrostatic potential (rhoIn+b) on h refined mesh: ";
-  dealiiCGSolver.solve(phiTotalSolverProblem,
-                       d_dftParamsPtr->absLinearSolverTolerance,
-                       d_dftParamsPtr->maxLinearSolverIterations,
-                       d_dftParamsPtr->verbosity);
+  CGSolver.solve(phiTotalSolverProblem,
+                 d_dftParamsPtr->absLinearSolverTolerance,
+                 d_dftParamsPtr->maxLinearSolverIterations,
+                 d_dftParamsPtr->verbosity);
 
   std::map<dealii::CellId, std::vector<double>> pseudoVLocHRefined;
   std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>

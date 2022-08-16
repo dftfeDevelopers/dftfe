@@ -94,28 +94,15 @@ namespace dftfe
     getX();
 
     /**
-     * @brief Combines the precondition_Jacobi and various functions in CG
+     * @brief get the reference to Preconditioner
      *
+     * @return reference to Preconditioner
      */
-    double
-    cg(double *hvec, double *gvec);
+    distributedGPUVec<double> &
+    getPreconditioner();
 
     /**
-     * @brief Combines the precondition_Jacobi and various functions in CG
-     *
-     */
-    double
-    cg2(double *hvec, double *gvec, double *dvec);
-
-    /**
-     * @brief Combines the precondition_Jacobi and various functions in CG
-     *
-     */
-    double
-    cg3(double *hvec, double *gvec, double *dvec, double &alpha);
-
-    /**
-     * @brief Sets up the matrixfree shapefunction, gradient, weights, jacobian and map for matrixfree AX
+     * @brief Sets up the matrixfree shapefunction, gradient, weights, jacobian and map for matrixfree computeAX
      *
      */
     void
@@ -135,14 +122,6 @@ namespace dftfe
      */
     void
     computeRhs(distributedCPUVec<double> &rhs);
-
-    /**
-     * @brief Jacobi preconditioning.
-     *
-     */
-    void
-    precondition_Jacobi(distributedGPUVec<double> &      dst,
-                        const distributedGPUVec<double> &src) const;
 
     /**
      * @brief distribute x to the constrained nodes.
@@ -174,7 +153,7 @@ namespace dftfe
     setX();
 
     void
-    copyCUDAToHost();
+    copyXfromDeviceToHost();
 
   private:
     /**
@@ -244,8 +223,6 @@ namespace dftfe
       d_weights, d_inverseJacobian;
     thrust::device_vector<int> d_map;
 
-    thrust::device_vector<double> dev_sum;
-
     cublasHandle_t *d_cublasHandlePtr;
 
     // constraint
@@ -261,7 +238,6 @@ namespace dftfe
     double *shapeFunctionGradient_ptr;
     double *weights_ptr;
     double *inverseJacobian_ptr;
-    double *sum_ptr;
     int *   map_ptr;
 
     /// pointer to dealii dealii::AffineConstraints<double> object

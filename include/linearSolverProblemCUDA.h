@@ -47,6 +47,14 @@ namespace dftfe
     getX() = 0;
 
     /**
+     * @brief get the reference to Preconditioner
+     *
+     * @return reference to Preconditioner
+     */
+    virtual distributedGPUVec<double> &
+    getPreconditioner() = 0;
+
+    /**
      * @brief Compute A matrix multipled by x.
      *
      */
@@ -55,42 +63,12 @@ namespace dftfe
               distributedGPUVec<double> &src) = 0;
 
     /**
-     * @brief Combines the precondition_Jacobi and various functions in CG
-     *
-     */
-    virtual double
-    cg(double *hvec, double *gvec) = 0;
-
-    /**
-     * @brief Combines the precondition_Jacobi and various functions in CG
-     *
-     */
-    virtual double
-    cg2(double *hvec, double *gvec, double *dvec) = 0;
-
-    /**
-     * @brief Combines the precondition_Jacobi and various functions in CG
-     *
-     */
-    virtual double
-    cg3(double *hvec, double *gvec, double *dvec, double &alpha) = 0;
-
-    /**
      * @brief Compute right hand side vector for the problem Ax = rhs.
      *
      * @param rhs vector for the right hand side values
      */
     virtual void
     computeRhs(distributedCPUVec<double> &rhs) = 0;
-
-    /**
-     * @brief Jacobi preconditioning function.
-     *
-     */
-    virtual void
-    precondition_Jacobi(distributedGPUVec<double> &      dst,
-                        const distributedGPUVec<double> &src) const = 0;
-
 
     /**
      * @brief distribute x to the constrained nodes.
@@ -102,8 +80,12 @@ namespace dftfe
     virtual void
     distributeX() = 0;
 
+    /**
+     * @brief copies x from device to host
+     *
+     */
     virtual void
-    copyCUDAToHost() = 0;
+    copyXfromDeviceToHost() = 0;
 
     // protected:
 

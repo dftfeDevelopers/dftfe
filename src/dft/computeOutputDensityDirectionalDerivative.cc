@@ -52,9 +52,9 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 
   // set up linear solver
-  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
-                                    mpi_communicator,
-                                    dealiiLinearSolver::CG);
+  dealiiLinearSolver CGSolver(d_mpiCommParent,
+                              mpi_communicator,
+                              dealiiLinearSolver::CG);
 
 #ifdef DFTFE_WITH_GPU
   // set up linear solver CUDA
@@ -131,10 +131,10 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     }
   else
     {
-      dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                           d_dftParamsPtr->absPoissonSolverToleranceLRD,
-                           d_dftParamsPtr->maxLinearSolverIterations,
-                           d_dftParamsPtr->verbosity);
+      CGSolver.solve(d_phiTotalSolverProblem,
+                     d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                     d_dftParamsPtr->maxLinearSolverIterations,
+                     d_dftParamsPtr->verbosity);
     }
 
 
