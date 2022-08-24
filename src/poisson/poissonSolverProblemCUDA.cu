@@ -439,17 +439,17 @@ namespace dftfe
     // -\sum_{i \neq o} a_i * u_i computation which involves summation across
     // MPI tasks
     const double constrainedNodeValue =
-      cudaUtils::dot<double>(d_meanValueConstraintGPUVec.begin(),
-                             vec.begin(),
-                             d_xLenLocalDof,
-                             mpi_communicator,
-                             *d_cublasHandlePtr);
+      cudaUtils::dot(d_meanValueConstraintGPUVec.begin(),
+                     vec.begin(),
+                     d_xLenLocalDof,
+                     mpi_communicator,
+                     *d_cublasHandlePtr);
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
-      cudaUtils::set<double>(vec.begin() + d_meanValueConstraintNodeIdLocal,
-                             constrainedNodeValue,
-                             1);
+      cudaUtils::set(vec.begin() + d_meanValueConstraintNodeIdLocal,
+                     constrainedNodeValue,
+                     1);
 
     // cudaUtils::copyHostVecToCUDAVec<double>(&constrainedNodeValue,
     //                                       vec.begin() +
@@ -481,11 +481,11 @@ namespace dftfe
               d_meanValueConstraintProcId,
               mpi_communicator);
 
-    cudaUtils::add<double>(vec.begin(),
-                           d_meanValueConstraintGPUVec.begin(),
-                           constrainedNodeValue,
-                           d_xLenLocalDof,
-                           *d_cublasHandlePtr);
+    cudaUtils::add(vec.begin(),
+                   d_meanValueConstraintGPUVec.begin(),
+                   constrainedNodeValue,
+                   d_xLenLocalDof,
+                   *d_cublasHandlePtr);
 
     if (d_isMeanValueConstraintComputed)
       if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==

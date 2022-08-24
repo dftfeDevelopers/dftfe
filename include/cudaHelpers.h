@@ -99,46 +99,29 @@ namespace dftfe
                          const dataTypes::local_size_type size);
 
 
-    template <typename NumberType>
     void
-    add(NumberType *      y,
-        const NumberType *x,
-        const NumberType  alpha,
-        const int         size,
-        cublasHandle_t &  cublasHandle);
+    add(double *        y,
+        const double *  x,
+        const double    alpha,
+        const int       size,
+        cublasHandle_t &cublasHandle);
 
-    template <typename NumberType>
-    NumberType
-    l2_norm(const NumberType *x,
-            const int         size,
-            const MPI_Comm &  mpi_communicator,
-            cublasHandle_t &  cublasHandle);
+    double
+    l2_norm(const double *  x,
+            const int       size,
+            const MPI_Comm &mpi_communicator,
+            cublasHandle_t &cublasHandle);
 
-    template <typename NumberType>
-    NumberType
-    dot(const NumberType *x,
-        const NumberType *y,
-        const int         size,
-        const MPI_Comm &  mpi_communicator,
-        cublasHandle_t &  cublasHandle);
+    double
+    dot(const double *  x,
+        const double *  y,
+        const int       size,
+        const MPI_Comm &mpi_communicator,
+        cublasHandle_t &cublasHandle);
 
     template <typename NumberType>
     void
     sadd(NumberType *y, NumberType *x, const NumberType beta, const int size);
-
-    template <typename NumberType>
-    void
-    equ(NumberType *      y,
-        const NumberType *x,
-        const NumberType  alpha,
-        const int         size);
-
-    template <typename NumberType>
-    void
-    scale(NumberType *      z,
-          const NumberType *x,
-          const NumberType *y,
-          const int         size);
 
     template <typename NumberType>
     void

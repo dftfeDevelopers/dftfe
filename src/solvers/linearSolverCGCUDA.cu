@@ -105,14 +105,14 @@ namespace dftfe
             problem.computeAX(r, x);
 
             // r = Ax - rhs
-            cudaUtils::add<double>(
+            cudaUtils::add(
               r.begin(), rhs_device.begin(), -1., d_xLenLocalDof, cublasHandle);
 
             // res = l2_norm(r)
-            res = cudaUtils::l2_norm<double>(r.begin(),
-                                             d_xLenLocalDof,
-                                             mpi_communicator,
-                                             cublasHandle);
+            res = cudaUtils::l2_norm(r.begin(),
+                                     d_xLenLocalDof,
+                                     mpi_communicator,
+                                     cublasHandle);
 
             initial_res = res;
 
@@ -156,11 +156,11 @@ namespace dftfe
                 problem.computeAX(d, q);
 
                 // alpha = q * d
-                alpha = cudaUtils::dot<double>(q.begin(),
-                                               d.begin(),
-                                               d_xLenLocalDof,
-                                               mpi_communicator,
-                                               cublasHandle);
+                alpha = cudaUtils::dot(q.begin(),
+                                       d.begin(),
+                                       d_xLenLocalDof,
+                                       mpi_communicator,
+                                       cublasHandle);
 
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));
@@ -192,8 +192,6 @@ namespace dftfe
 
         if (distributeFlag)
           problem.distributeX();
-
-        // x.updateGhostValues();
 
         problem.copyXfromDeviceToHost();
       }

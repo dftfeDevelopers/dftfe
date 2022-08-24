@@ -161,27 +161,26 @@ namespace dftfe
                            cudaMemcpyDeviceToHost));
     }
 
-    template <typename NumberType>
+
     void
-    add(NumberType *      y,
-        const NumberType *x,
-        const NumberType  alpha,
-        const int         size,
-        cublasHandle_t &  cublasHandle)
+    add(double *        y,
+        const double *  x,
+        const double    alpha,
+        const int       size,
+        cublasHandle_t &cublasHandle)
     {
       int incx = 1, incy = 1;
       cublasCheck(cublasDaxpy(cublasHandle, size, &alpha, x, incx, y, incy));
     }
 
-    template <typename NumberType>
-    NumberType
-    l2_norm(const NumberType *x,
-            const int         size,
-            const MPI_Comm &  mpi_communicator,
-            cublasHandle_t &  cublasHandle)
+    double
+    l2_norm(const double *  x,
+            const int       size,
+            const MPI_Comm &mpi_communicator,
+            cublasHandle_t &cublasHandle)
     {
-      int        incx = 1;
-      NumberType local_nrm, nrm = 0;
+      int    incx = 1;
+      double local_nrm, nrm = 0;
 
       cublasCheck(cublasDnrm2(cublasHandle, size, x, incx, &local_nrm));
 
@@ -191,16 +190,15 @@ namespace dftfe
       return std::sqrt(nrm);
     }
 
-    template <typename NumberType>
-    NumberType
-    dot(const NumberType *x,
-        const NumberType *y,
-        const int         size,
-        const MPI_Comm &  mpi_communicator,
-        cublasHandle_t &  cublasHandle)
+    double
+    dot(const double *  x,
+        const double *  y,
+        const int       size,
+        const MPI_Comm &mpi_communicator,
+        cublasHandle_t &cublasHandle)
     {
-      int        incx = 1, incy = 1;
-      NumberType local_sum, sum = 0;
+      int    incx = 1, incy = 1;
+      double local_sum, sum = 0;
 
       cublasCheck(cublasDdot(cublasHandle, size, x, incx, y, incy, &local_sum));
       MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -232,58 +230,6 @@ namespace dftfe
                            (size % cudaConstants::blockSize == 0 ? 0 : 1);
       saddKernel<NumberType>
         <<<gridSize, cudaConstants::blockSize>>>(y, x, beta, size);
-    }
-
-    template <typename NumberType>
-    __global__ void
-    equKernel(NumberType *      y,
-              const NumberType *x,
-              const NumberType  alpha,
-              const int         size)
-    {
-      const int globalThreadId = threadIdx.x + blockIdx.x * blockDim.x;
-
-      for (int idx = globalThreadId; idx < size; idx += blockDim.x * gridDim.x)
-        y[idx] = alpha * x[idx];
-    }
-
-    template <typename NumberType>
-    void
-    equ(NumberType *      y,
-        const NumberType *x,
-        const NumberType  alpha,
-        const int         size)
-    {
-      const int gridSize = (size / cudaConstants::blockSize) +
-                           (size % cudaConstants::blockSize == 0 ? 0 : 1);
-      equKernel<NumberType>
-        <<<gridSize, cudaConstants::blockSize>>>(y, x, alpha, size);
-    }
-
-    template <typename NumberType>
-    __global__ void
-    scaleKernel(NumberType *      z,
-                const NumberType *x,
-                const NumberType *y,
-                const int         size)
-    {
-      const int globalThreadId = threadIdx.x + blockIdx.x * blockDim.x;
-
-      for (int idx = globalThreadId; idx < size; idx += blockDim.x * gridDim.x)
-        z[idx] = x[idx] * y[idx];
-    }
-
-    template <typename NumberType>
-    void
-    scale(NumberType *      z,
-          const NumberType *x,
-          const NumberType *y,
-          const int         size)
-    {
-      int gridSize = (size / cudaConstants::blockSize) +
-                     (size % cudaConstants::blockSize == 0 ? 0 : 1);
-      scaleKernel<NumberType>
-        <<<gridSize, cudaConstants::blockSize>>>(z, x, y, size);
     }
 
     template <typename NumberType>
@@ -495,33 +441,7 @@ namespace dftfe
                          const dataTypes::local_size_type size);
 
     template void
-    add(double *        y,
-        const double *  x,
-        const double    alpha,
-        const int       size,
-        cublasHandle_t &cublasHandle);
-
-    template double
-    l2_norm(const double *  x,
-            const int       size,
-            const MPI_Comm &mpi_communicator,
-            cublasHandle_t &cublasHandle);
-
-    template double
-    dot(const double *  x,
-        const double *  y,
-        const int       size,
-        const MPI_Comm &mpi_communicator,
-        cublasHandle_t &cublasHandle);
-
-    template void
     sadd(double *y, double *x, const double beta, const int size);
-
-    template void
-    equ(double *y, const double *x, const double alpha, const int size);
-
-    template void
-    scale(double *z, const double *x, const double *y, const int size);
 
     template void
     set(double *x, const double &alpha, const int size);
