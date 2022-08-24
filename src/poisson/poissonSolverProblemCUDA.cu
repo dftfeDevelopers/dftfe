@@ -117,7 +117,6 @@ namespace dftfe
     d_xLenLocalDof                     = d_xDevice.locallyOwnedDofsSize();
     d_xLenGhost                        = d_xDevice.ghostFlattenedSize();
     d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
-    d_fPI  = 1.0 / (4.0 * M_PI);
 
     AssertThrow(
       storeSmearedChargeRhs == false || reuseSmearedChargeRhs == false,
@@ -450,11 +449,6 @@ namespace dftfe
       cudaUtils::set(vec.begin() + d_meanValueConstraintNodeIdLocal,
                      constrainedNodeValue,
                      1);
-
-    // cudaUtils::copyHostVecToCUDAVec<double>(&constrainedNodeValue,
-    //                                       vec.begin() +
-    //                                       d_meanValueConstraintNodeIdLocal,
-    //                                       1);
   }
 
   // Distribute value at mean value constrained dof (u_o) to all other dofs
@@ -487,45 +481,13 @@ namespace dftfe
                    d_xLenLocalDof,
                    *d_cublasHandlePtr);
 
+    // meanValueConstraintSetZero
     if (d_isMeanValueConstraintComputed)
       if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
           d_meanValueConstraintProcId)
         cudaUtils::set<double>(vec.begin() + d_meanValueConstraintNodeIdLocal,
                                0,
                                1);
-
-    // meanValueConstraintSetZero(vec);
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::meanValueConstraintSetZero(
-    distributedGPUVec<double> &vec) const
-  {
-    const double zero = 0.0;
-
-    if (d_isMeanValueConstraintComputed)
-      if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
-          d_meanValueConstraintProcId)
-        cudaUtils::copyHostVecToCUDAVec<double>(
-          &zero, vec.begin() + d_meanValueConstraintNodeIdLocal, 1);
-  }
-
-  // Compute and fill value at mean value constrained dof
-  // u_o= -\sum_{i \neq o} a_i * u_i where i runs over all dofs
-  // except the mean value constrained dof (o^{th})
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::
-    meanValueConstraintDistribute(distributedCPUVec<double> &vec) const
-  {
-    // -\sum_{i \neq o} a_i * u_i computation which involves summation across
-    // MPI tasks
-    const double constrainedNodeValue = d_meanValueConstraintVec * vec;
-
-    if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
-        d_meanValueConstraintProcId)
-      vec[d_meanValueConstraintNodeIdLocal] = constrainedNodeValue;
   }
 
   // Distribute value at mean value constrained dof (u_o) to all other dofs
@@ -825,10 +787,10 @@ namespace dftfe
     shapeInfo.reinit(quad, feCell1D);
     std::vector<unsigned int> lexMap1D = shapeInfo.lexicographic_numbering;
 
-    thrust::host_vector<double> quad_weights(p);
+    std::vector<double> quadWeights(p);
     for (int i = 0; i < p; i++)
       {
-        quad_weights[i] = quad.weight(lexMap1D[i]);
+        quadWeights[i] = quad.weight(lexMap1D[i]);
       }
 
     thrust::host_vector<double> spV(p * p), spG(p * p);
@@ -836,8 +798,10 @@ namespace dftfe
       {
         for (int j = 0; j < p; j++)
           {
-            spV[i + j * p] = shapeValue[i * p + lexMap1D[j]];
-            spG[i + j * p] = shapeGrad[i * p + lexMap1D[j]];
+            spV[i + j * p] =
+              shapeValue[i * p + lexMap1D[j]] * std::sqrt(quadWeights[j]);
+            spG[i + j * p] =
+              shapeGrad[i * p + lexMap1D[j]] * std::sqrt(quadWeights[j]);
           }
       }
 
@@ -877,15 +841,20 @@ namespace dftfe
 
     // Jacobian
     dealii::QGauss<dim> quadrature_formula(dofHandler.get_fe().degree + 1);
-    const int           n_q_points = quadrature_formula.size();
+    const int           qPoints = quadrature_formula.size();
 
     std::vector<dealii::DerivativeForm<1, dim, dim>> inv_jacobians_tensor;
-    thrust::host_vector<double> invJac(d_nLocalCells * dim * dim);
-    dealii::FEValues<dim>       fe_values(dofHandler.get_fe(),
+    std::vector<double> detJacobian(d_nLocalCells * qPoints),
+      invJac(d_nLocalCells * dim * dim);
+    thrust::host_vector<double> jacobianAction(d_nLocalCells * dim * dim);
+
+    dealii::FEValues<dim> fe_values(dofHandler.get_fe(),
                                     quadrature_formula,
                                     dealii::update_inverse_jacobians |
                                       dealii::update_JxW_values |
                                       dealii::update_quadrature_points);
+
+    constexpr double coeffLaplacian = 1.0 / (4.0 * M_PI);
 
     cellIdx = 0;
     for (const auto &cell : dofHandler.active_cell_iterators())
@@ -897,121 +866,128 @@ namespace dftfe
 
             for (int d = 0; d < dim; d++)
               for (int e = 0; e < dim; e++)
-                invJac[cellIdx * dim * dim + d * dim + e] =
+                invJac[e + d * dim + cellIdx * dim * dim] =
                   inv_jacobians_tensor[0][d][e];
+
+            for (int q = 0; q < qPoints; q++)
+              detJacobian[q + cellIdx * qPoints] =
+                fe_values.JxW(lexMap3D[q]) /
+                quadrature_formula.weight(lexMap3D[q]) * coeffLaplacian;
 
             cellIdx++;
           }
       }
 
+    for (int cellIdx = 0; cellIdx < d_nLocalCells; cellIdx++)
+      for (int d = 0; d < dim; d++)
+        for (int e = 0; e < dim; e++)
+          for (int f = 0; f < dim; f++)
+            jacobianAction[e + d * dim + cellIdx * dim * dim] +=
+              invJac[f + d * dim + cellIdx * dim * dim] *
+              invJac[e + f * dim + cellIdx * dim * dim] *
+              detJacobian[cellIdx * qPoints];
+
     // Construct the device vectors
     d_shapeFunctionValue    = spV;
     d_shapeFunctionGradient = spG;
-    d_weights               = quad_weights;
-    d_inverseJacobian       = invJac;
+    d_jacobianAction        = jacobianAction;
     d_map                   = map;
 
-    shapeFunctionValue_ptr =
+    shapeFunctionValuePtr =
       thrust::raw_pointer_cast(d_shapeFunctionValue.data());
-    shapeFunctionGradient_ptr =
+    shapeFunctionGradientPtr =
       thrust::raw_pointer_cast(d_shapeFunctionGradient.data());
-    weights_ptr         = thrust::raw_pointer_cast(d_weights.data());
-    inverseJacobian_ptr = thrust::raw_pointer_cast(d_inverseJacobian.data());
-    map_ptr             = thrust::raw_pointer_cast(d_map.data());
+    jacobianActionPtr = thrust::raw_pointer_cast(d_jacobianAction.data());
+    mapPtr            = thrust::raw_pointer_cast(d_map.data());
   }
 
 
-  template <typename Type, int p, int vec_shared, int dim>
+  template <typename Type, int M, int N, int K, int vecShared, int dim>
   __global__ void
   computeAXKernel(Type *      V,
                   const Type *U,
-                  const Type *N,
+                  const Type *P,
                   const Type *D,
-                  const Type *W,
-                  const Type *J_inv,
+                  const Type *J,
                   const int * map,
-                  const int   lenU,
-                  const Type  fPI)
+                  const int   lenU)
   {
     // V = AU
-    // gridDim.y = batch;
     // gridDim.x = cells;
-    // n_vec = vec_shared * gridDim.y;
-    // vec_shared - No of vectors in shared memory
+    // gridDim.y = batch;
+    // nVec = vecShared * batch;
+    // vecShared -> No of vectors in shared memory
+    // sharedT is used to temporarily store sharedX, sharedY or sharedZ
 
-    if (p < 11)
+    if (M < 11)
       {
-        __shared__ Type shared_X[vec_shared * p * p * p],
-          shared_Y[vec_shared * p * p * p], shared_Z[vec_shared * p * p * p],
-          shared_T[vec_shared * p * p * p];
-        __shared__ Type shared_N[p * p], shared_D[p * p], shared_N_T[p * p],
-          shared_D_T[p * p], shared_W[p], shared_J_inv[dim * dim];
-        __shared__ int shared_map[p * p * p];
+        __shared__ Type sharedX[vecShared * M * N], sharedY[vecShared * M * N],
+          sharedZ[vecShared * M * N], sharedT[vecShared * M * N];
 
+        __shared__ Type sharedN[M * K], sharedD[M * K], sharedNT[M * K],
+          sharedDT[M * K], sharedJ[dim * dim];
+
+        __shared__ int sharedMap[M * N];
+
+        // Copy Map to shared memory
 #pragma unroll
-        for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p * p * p;
+        for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < M * N;
              i += blockDim.x * blockDim.y)
           {
-            shared_map[i] = map[i + blockIdx.x * p * p * p];
+            sharedMap[i] = map[i + blockIdx.x * M * N];
           }
 
+          // Copy Shape Function Values and Gradients to shared memory
 #pragma unroll
-        for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p * p;
+        for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < M * K;
              i += blockDim.x * blockDim.y)
           {
-            shared_N[i]                       = N[i];
-            shared_N_T[(i / p) + (i % p) * p] = N[i];
-            shared_D[i]                       = D[i];
-            shared_D_T[(i / p) + (i % p) * p] = D[i];
+            sharedN[i]                      = P[i];
+            sharedNT[(i / M) + (i % M) * K] = P[i];
+            sharedD[i]                      = D[i];
+            sharedDT[(i / M) + (i % M) * K] = D[i];
           }
 
         __syncthreads();
 
         //////////////////////////////////////////////////////////////
-
         // First index is the fastest
-        // Shared_U = [vec_shared][p^3]
-        // For x - DNNU
-        // For y - NDNU
-        // For z - NNDU
-
         // Interpolation combined with Extraction
+        // X -> DNNU
+        // Y -> NDNU
+        // Z -> NNDU
 
         // 1st GEMM
         // X, Y and Z Directions
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp1[p], temp2[p], u[p];
+            Type y[M], x[M], u[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp1[i] = 0.0;
-                temp2[i] = 0.0;
+                y[i] = 0.0;
+                x[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = U[threadIdx.x + shared_map[k + m * p * p] * vec_shared +
-                         blockIdx.y * vec_shared * lenU];
-                // u[m] = U[threadIdx.x + map[k + m*p*p + blockIdx.x * p*p*p] *
-                // vec_shared + blockIdx.y * vec_shared*lenU];
+                u[k] = U[threadIdx.x + sharedMap[j + k * N] * vecShared +
+                         blockIdx.y * vecShared * lenU];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp1[i] += shared_D_T[i + m * p] * u[m];
-                    temp2[i] += shared_N_T[i + m * p] * u[m];
+                    y[i] += sharedDT[i + k * M] * u[k];
+                    x[i] += sharedNT[i + k * M] * u[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Y[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp1[i];
-                shared_X[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp2[i];
+                sharedY[threadIdx.x + i * vecShared + j * M * vecShared] = y[i];
+                sharedX[threadIdx.x + i * vecShared + j * M * vecShared] = x[i];
               }
           }
 
@@ -1019,70 +995,65 @@ namespace dftfe
 
         // 2nd GEMM
         // Z Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type t[M], y[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                t[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Y[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                y[k] = sharedY[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N_T[i + m * p] * u[m];
+                    t[i] += sharedNT[i + k * M] * y[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_T[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedT[threadIdx.x + i * vecShared + j * M * vecShared] = t[i];
               }
           }
 
         __syncthreads();
 
         // X and Y Directions
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp1[p], temp2[p], u[p];
+            Type y[M], z[M], x[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp1[i] = 0.0;
-                temp2[i] = 0.0;
+                y[i] = 0.0;
+                z[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_X[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                x[k] = sharedX[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp1[i] += shared_N_T[i + m * p] * u[m];
-                    temp2[i] += shared_D_T[i + m * p] * u[m];
+                    y[i] += sharedNT[i + k * M] * x[k];
+                    z[i] += sharedDT[i + k * M] * x[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Y[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp1[i];
-                shared_Z[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp2[i];
+                sharedY[threadIdx.x + i * vecShared + j * M * vecShared] = y[i];
+                sharedZ[threadIdx.x + i * vecShared + j * M * vecShared] = z[i];
               }
           }
 
@@ -1090,293 +1061,225 @@ namespace dftfe
 
         // 3rd GEMM
         // X Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type x[M], y[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                x[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Y[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                y[k] = sharedY[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_D_T[i + m * p] * u[m];
+                    x[i] += sharedDT[i + k * M] * y[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_X[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedX[threadIdx.x + i * vecShared + j * M * vecShared] = x[i];
               }
           }
 
         __syncthreads();
 
         // Y Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type y[M], z[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                y[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Z[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                z[k] = sharedZ[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N_T[i + m * p] * u[m];
+                    y[i] += sharedNT[i + k * M] * z[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Y[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedY[threadIdx.x + i * vecShared + j * M * vecShared] = y[i];
               }
           }
 
         __syncthreads();
 
         // Z Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type z[M], t[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                z[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_T[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                t[k] = sharedT[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N_T[i + m * p] * u[m];
+                    z[i] += sharedNT[i + k * M] * t[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Z[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedZ[threadIdx.x + i * vecShared + j * M * vecShared] = z[i];
               }
           }
 
         __syncthreads();
 
-        // shared_X, shared_Y, shared_Z have the respective gemms
-        // V used to store pieces of X, Y and Z
-        // Copy W and J_inv to shared memory
+        //////////////////////////////////////////////////////////////////
+        // sharedX, sharedY, sharedZ have the respective gemms of X, Y, Z
+        // directions
 
-#pragma unroll
-        for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < p;
-             i += blockDim.x * blockDim.y)
-          {
-            shared_W[i] = W[i];
-          }
-
+        // Copy Jacobian Action to shared memory
 #pragma unroll
         for (int i = threadIdx.x + threadIdx.y * blockDim.x; i < dim * dim;
              i += blockDim.x * blockDim.y)
           {
-            shared_J_inv[i] = J_inv[i + blockIdx.x * dim * dim];
+            sharedJ[i] = J[i + blockIdx.x * dim * dim];
           }
 
         __syncthreads();
 
-        // Gemm with J_inv
-
+        // Gemm with Jacobian Action
 #pragma unroll
-        for (int k = threadIdx.y; k < p * p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < M * N; j += blockDim.y)
           {
-            Type temp[3];
-            temp[0] = shared_X[threadIdx.x + k * vec_shared];
-            temp[1] = shared_Y[threadIdx.x + k * vec_shared];
-            temp[2] = shared_Z[threadIdx.x + k * vec_shared];
+            Type t[3];
+            t[0] = sharedX[threadIdx.x + j * vecShared];
+            t[1] = sharedY[threadIdx.x + j * vecShared];
+            t[2] = sharedZ[threadIdx.x + j * vecShared];
 
-            shared_X[threadIdx.x + k * vec_shared] = shared_J_inv[0] * temp[0] +
-                                                     shared_J_inv[1] * temp[1] +
-                                                     shared_J_inv[2] * temp[2];
-            shared_Y[threadIdx.x + k * vec_shared] = shared_J_inv[3] * temp[0] +
-                                                     shared_J_inv[4] * temp[1] +
-                                                     shared_J_inv[5] * temp[2];
-            shared_Z[threadIdx.x + k * vec_shared] = shared_J_inv[6] * temp[0] +
-                                                     shared_J_inv[7] * temp[1] +
-                                                     shared_J_inv[8] * temp[2];
-          }
-
-        __syncthreads();
-
-        // Point-wise multiplication
-
-#pragma unroll
-        for (int k = threadIdx.y; k < p * p * p; k += blockDim.y)
-          {
-            int idx[3];
-            idx[0] = k / (p * p);
-            idx[1] = (k % (p * p)) / p;
-            idx[2] = (k % (p * p)) % p;
-
-            Type R =
-              (fPI * shared_W[idx[0]] * shared_W[idx[1]] * shared_W[idx[2]]) /
-              (shared_J_inv[0] * (shared_J_inv[4] * shared_J_inv[8] -
-                                  shared_J_inv[5] * shared_J_inv[7]) -
-               shared_J_inv[3] * (shared_J_inv[1] * shared_J_inv[8] -
-                                  shared_J_inv[2] * shared_J_inv[7]) +
-               shared_J_inv[6] * (shared_J_inv[1] * shared_J_inv[5] -
-                                  shared_J_inv[2] * shared_J_inv[4]));
-
-            shared_X[threadIdx.x + k * vec_shared] *= R;
-            shared_Y[threadIdx.x + k * vec_shared] *= R;
-            shared_Z[threadIdx.x + k * vec_shared] *= R;
-          }
-
-        __syncthreads();
-
-        // Gemm with J_inv transpose
-
-#pragma unroll
-        for (int k = threadIdx.y; k < p * p * p; k += blockDim.y)
-          {
-            Type temp[3];
-            temp[0] = shared_X[threadIdx.x + k * vec_shared];
-            temp[1] = shared_Y[threadIdx.x + k * vec_shared];
-            temp[2] = shared_Z[threadIdx.x + k * vec_shared];
-
-            shared_X[threadIdx.x + k * vec_shared] = shared_J_inv[0] * temp[0] +
-                                                     shared_J_inv[3] * temp[1] +
-                                                     shared_J_inv[6] * temp[2];
-            shared_Y[threadIdx.x + k * vec_shared] = shared_J_inv[1] * temp[0] +
-                                                     shared_J_inv[4] * temp[1] +
-                                                     shared_J_inv[7] * temp[2];
-            shared_Z[threadIdx.x + k * vec_shared] = shared_J_inv[2] * temp[0] +
-                                                     shared_J_inv[5] * temp[1] +
-                                                     shared_J_inv[8] * temp[2];
+            sharedX[threadIdx.x + j * vecShared] =
+              sharedJ[0] * t[0] + sharedJ[1] * t[1] + sharedJ[2] * t[2];
+            sharedY[threadIdx.x + j * vecShared] =
+              sharedJ[3] * t[0] + sharedJ[4] * t[1] + sharedJ[5] * t[2];
+            sharedZ[threadIdx.x + j * vecShared] =
+              sharedJ[6] * t[0] + sharedJ[7] * t[1] + sharedJ[8] * t[2];
           }
 
         __syncthreads();
 
         // Integration
+        // X -> DNNU
+        // Y -> NDNU
+        // Z -> NNDU
 
         // 1st GEMM
         // Z Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type t[M], z[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                t[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Z[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                z[k] = sharedZ[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_D[i + m * p] * u[m];
+                    t[i] += sharedD[i + k * M] * z[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_T[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedT[threadIdx.x + i * vecShared + j * M * vecShared] = t[i];
               }
           }
 
         __syncthreads();
 
         // Y Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type z[M], y[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                z[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Y[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                y[k] = sharedY[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N[i + m * p] * u[m];
+                    z[i] += sharedN[i + k * M] * y[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Z[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedZ[threadIdx.x + i * vecShared + j * M * vecShared] = z[i];
               }
           }
 
         __syncthreads();
 
         // X Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type y[M], x[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                y[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_X[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                x[k] = sharedX[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N[i + m * p] * u[m];
+                    y[i] += sharedN[i + k * M] * x[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Y[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedY[threadIdx.x + i * vecShared + j * M * vecShared] = y[i];
               }
           }
 
@@ -1384,218 +1287,169 @@ namespace dftfe
 
         // 2nd GEMM
         // X Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type x[M], y[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                x[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Y[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                y[k] = sharedY[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N[i + m * p] * u[m];
+                    x[i] += sharedN[i + k * M] * y[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_X[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedX[threadIdx.x + i * vecShared + j * M * vecShared] = x[i];
               }
           }
 
         __syncthreads();
 
         // Y Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type y[M], z[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                y[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Z[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                z[k] = sharedZ[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_D[i + m * p] * u[m];
+                    y[i] += sharedD[i + k * M] * z[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Y[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedY[threadIdx.x + i * vecShared + j * M * vecShared] = y[i];
               }
           }
 
         __syncthreads();
 
         // Z Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type y[M], t[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                y[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_T[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                t[k] = sharedT[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N[i + m * p] * u[m];
+                    y[i] += sharedN[i + k * M] * t[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Z[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedY[threadIdx.x + i * vecShared + j * M * vecShared] +=
+                  y[i];
               }
           }
 
         __syncthreads();
-
-        // Combine Y and X Direction to V after Z Direction
 
         // 3rd GEMM
         // Z Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type t[M], y[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                t[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_Z[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                y[k] = sharedY[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_N[i + m * p] * u[m];
+                    t[i] += sharedN[i + k * M] * y[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_T[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
-              }
-          }
-
-        __syncthreads();
-
-        // Y Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
-          {
-            Type temp[p], u[p];
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                temp[i] = 0.0;
-              }
-
-            for (int m = 0; m < p; ++m)
-              {
-                u[m] = shared_Y[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
-
-#pragma unroll
-                for (int i = 0; i < p; ++i)
-                  {
-                    temp[i] += shared_N[i + m * p] * u[m];
-                  }
-              }
-
-#pragma unroll
-            for (int i = 0; i < p; ++i)
-              {
-                shared_Z[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedT[threadIdx.x + i * vecShared + j * M * vecShared] = t[i];
               }
           }
 
         __syncthreads();
 
         // X Direction
-        for (int k = threadIdx.y; k < p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < N; j += blockDim.y)
           {
-            Type temp[p], u[p];
+            Type t[M], x[K];
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                temp[i] = 0.0;
+                t[i] = 0.0;
               }
 
-            for (int m = 0; m < p; ++m)
+            for (int k = 0; k < K; k++)
               {
-                u[m] = shared_X[threadIdx.x + k * vec_shared +
-                                m * p * p * vec_shared];
+                x[k] = sharedX[threadIdx.x + j * vecShared + k * N * vecShared];
 
 #pragma unroll
-                for (int i = 0; i < p; ++i)
+                for (int i = 0; i < M; i++)
                   {
-                    temp[i] += shared_D[i + m * p] * u[m];
+                    t[i] += sharedD[i + k * M] * x[k];
                   }
               }
 
 #pragma unroll
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < M; i++)
               {
-                shared_Y[threadIdx.x + i * vec_shared + k * p * vec_shared] =
-                  temp[i];
+                sharedT[threadIdx.x + i * vecShared + j * M * vecShared] +=
+                  t[i];
               }
           }
 
         __syncthreads();
 
 #pragma unroll
-        for (int k = threadIdx.y; k < p * p * p; k += blockDim.y)
+        for (int j = threadIdx.y; j < M * N; j += blockDim.y)
           {
-            atomicAdd(&V[threadIdx.x + shared_map[k] * vec_shared +
-                         blockIdx.y * vec_shared * lenU],
-                      shared_Y[threadIdx.x + k * vec_shared] +
-                        shared_Z[threadIdx.x + k * vec_shared] +
-                        shared_T[threadIdx.x + k * vec_shared]);
-            // atomicAdd(&V[threadIdx.x + map[k + blockIdx.x * p*p*p] *
-            // vec_shared + blockIdx.y * vec_shared*lenU], shared_Y[threadIdx.x
-            // + k * vec_shared] + shared_Z[threadIdx.x + k * vec_shared] +
-            // shared_T[threadIdx.x + k * vec_shared]);
+            atomicAdd(&V[threadIdx.x + sharedMap[j] * vecShared +
+                         blockIdx.y * vecShared * lenU],
+                      sharedT[threadIdx.x + j * vecShared]);
           }
       }
   }
@@ -1622,9 +1476,6 @@ namespace dftfe
     dim3 blocks(d_nLocalCells, batch, 1);
     dim3 threads(d_vecShared, d_yThreads, 1);
 
-    // cudaFuncSetSharedMemConfig(computeAXKernel,
-    // cudaSharedMemBankSizeEightByte);
-
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(x);
 
@@ -1632,16 +1483,14 @@ namespace dftfe
 
     constraintsTotalPotentialInfo.distribute(x, 1);
 
-    computeAXKernel<double, d_p, d_vecShared, d_dim>
+    computeAXKernel<double, d_p, d_p * d_p, d_p, d_vecShared, d_dim>
       <<<blocks, threads>>>(Ax.begin(),
                             x.begin(),
-                            shapeFunctionValue_ptr,
-                            shapeFunctionGradient_ptr,
-                            weights_ptr,
-                            inverseJacobian_ptr,
-                            map_ptr,
-                            d_xLen,
-                            d_fPI);
+                            shapeFunctionValuePtr,
+                            shapeFunctionGradientPtr,
+                            jacobianActionPtr,
+                            mapPtr,
+                            d_xLen);
 
     constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 

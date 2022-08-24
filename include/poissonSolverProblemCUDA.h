@@ -178,9 +178,6 @@ namespace dftfe
     void
     meanValueConstraintDistribute(distributedGPUVec<double> &vec) const;
 
-    void
-    meanValueConstraintDistribute(distributedCPUVec<double> &vec) const;
-
     /**
      * @brief Mean value constraint distibute slave to master
      *
@@ -220,7 +217,7 @@ namespace dftfe
 
     // shape function value, gradient, weights, jacobian and map for matrixfree
     thrust::device_vector<double> d_shapeFunctionValue, d_shapeFunctionGradient,
-      d_weights, d_inverseJacobian;
+      d_jacobianAction;
     thrust::device_vector<int> d_map;
 
     cublasHandle_t *d_cublasHandlePtr;
@@ -229,16 +226,14 @@ namespace dftfe
     dftUtils::constraintMatrixInfoCUDA constraintsTotalPotentialInfo;
 
     // number of cells local to each mpi task
-    int    d_nLocalCells, d_xLenLocalDof, d_xLenGhost, d_xLen;
-    double d_fPI;
+    int d_nLocalCells, d_xLenLocalDof, d_xLenGhost, d_xLen;
 
     // Pointers to shape function value, gradient, weights, jacobian and map for
     // matrixfree on device
-    double *shapeFunctionValue_ptr;
-    double *shapeFunctionGradient_ptr;
-    double *weights_ptr;
-    double *inverseJacobian_ptr;
-    int *   map_ptr;
+    double *shapeFunctionValuePtr;
+    double *shapeFunctionGradientPtr;
+    double *jacobianActionPtr;
+    int *   mapPtr;
 
     /// pointer to dealii dealii::AffineConstraints<double> object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
