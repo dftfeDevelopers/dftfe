@@ -2159,7 +2159,7 @@ namespace dftfe
             << std::endl
             << "Poisson solve for total electrostatic potential (rhoIn+b): ";
 
-        if (d_dftParamsPtr->useGPU)
+        if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
           {
 #ifdef DFTFE_WITH_GPU
             if (scfIter > 0)
@@ -2261,7 +2261,7 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useGPU)
+        if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
           {
 #ifdef DFTFE_WITH_GPU
             CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
@@ -2992,7 +2992,8 @@ namespace dftfe
 
             computing_timer.enter_subsection("phiTot solve");
 
-            if (d_dftParamsPtr->useGPU)
+            if (d_dftParamsPtr->useGPU and
+                d_dftParamsPtr->floatingNuclearCharges)
               {
 #ifdef DFTFE_WITH_GPU
                 d_phiTotalSolverProblemCUDA.reinit(
@@ -3211,7 +3212,8 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useGPU)
+
+        if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
           {
 #ifdef DFTFE_WITH_GPU
             d_phiTotalSolverProblemCUDA.reinit(
