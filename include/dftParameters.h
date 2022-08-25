@@ -65,7 +65,8 @@ namespace dftfe
     /**********************************************/
 
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
-      ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
+      ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile,
+      restartFolder;
 
     std::string coordinatesGaussianDispFile;
 
@@ -81,13 +82,13 @@ namespace dftfe
     double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
     unsigned int cellConstraintType;
 
-    int          verbosity;
-    std::string  solverMode;
-    bool         keepScratchFolder;
-    unsigned int chkType;
-    bool         restartSpinFromNoSpin;
-    bool         restartFromChk;
-    bool         electrostaticsHRefinement;
+    int         verbosity;
+    std::string solverMode;
+    bool        keepScratchFolder;
+    bool        saveRhoData;
+    bool        loadRhoData;
+    bool        restartSpinFromNoSpin;
+    bool        electrostaticsHRefinement;
 
     bool reproducible_output;
 
@@ -187,8 +188,9 @@ namespace dftfe
     void
     parse_parameters(const std::string &parameter_file,
                      const MPI_Comm &   mpi_comm_parent,
-                     const bool         printParams = false,
-                     const std::string  mode        = "GS");
+                     const bool         printParams      = false,
+                     const std::string  mode             = "GS",
+                     const std::string  restartFilesPath = ".");
 
     /**
      * Check parameters

@@ -43,7 +43,9 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
-  {}
+  {
+    d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
+  }
 
   //
   //
@@ -648,7 +650,9 @@ namespace dftfe
       factor = 1.15;
 
     d_dftPtr->updateAtomPositionsAndMoveMesh(
-      globalAtomsDisplacements, factor, useSingleAtomSolutionsInitialGuess);
+      globalAtomsDisplacements,
+      factor,
+      useSingleAtomSolutionsInitialGuess && !d_isScfRestart);
 
 
     /*if(d_maximumAtomForceToBeRelaxed >= 1e-02)
@@ -660,7 +664,8 @@ namespace dftfe
       else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
       d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 5e-06;*/
 
-    d_dftPtr->solve(computeForces, false);
+    d_dftPtr->solve(computeForces, false, d_isScfRestart);
+    d_isScfRestart = false;
     d_totalUpdateCalls += 1;
   }
 

@@ -42,7 +42,9 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
-  {}
+  {
+    d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
+  }
 
   //
   //
@@ -613,10 +615,14 @@ namespace dftfe
     d_strainEpsilon = strainEpsilonNew;
 
     // deform fem mesh and reinit
-    d_dftPtr->deformDomain(deformationGradient);
+    d_dftPtr->deformDomain(deformationGradient,
+                           false,
+                           useSingleAtomSolutionsInitialGuess &&
+                             !d_isScfRestart);
 
 
-    d_dftPtr->solve(true, computeStress);
+    d_dftPtr->solve(true, computeStress, d_isScfRestart);
+    d_isScfRestart = false;
     d_totalUpdateCalls += 1;
   }
 

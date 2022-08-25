@@ -135,6 +135,7 @@ namespace dftfe
     std::string                      d_solverRestartPath;
     bool                             d_isRestart;
     bool                             d_solverRestart;
+    bool                             d_isScfRestart;
     int                              d_solver;
     /// maximum force component to be relaxed
     double d_maximumAtomForceToBeRelaxed;

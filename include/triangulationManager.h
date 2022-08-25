@@ -210,6 +210,7 @@ namespace dftfe
      */
     void
     saveTriangulationsSolutionVectors(
+      std::string                                           path,
       const unsigned int                                    feOrder,
       const unsigned int                                    nComponents,
       const std::vector<const distributedCPUVec<double> *> &solutionVectors,
@@ -229,6 +230,7 @@ namespace dftfe
      */
     void
     loadTriangulationsSolutionVectors(
+      std::string                               path,
       const unsigned int                        feOrder,
       const unsigned int                        nComponents,
       std::vector<distributedCPUVec<double> *> &solutionVectors);
@@ -354,13 +356,13 @@ namespace dftfe
      * @brief internal function to serialize support triangulations. No solution data is attached to them
      */
     void
-    saveSupportTriangulations();
+    saveSupportTriangulations(std::string path);
 
     /**
      * @brief internal function to de-serialize support triangulations. No solution data is read from them
      */
     void
-    loadSupportTriangulations();
+    loadSupportTriangulations(std::string path);
 
     //
     // data members

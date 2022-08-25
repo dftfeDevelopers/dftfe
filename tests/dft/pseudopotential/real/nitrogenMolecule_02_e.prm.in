@@ -1,0 +1,52 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set SOLVER MODE = GS
+set RESTART FOLDER = @SOURCE_DIR@/nitrogenMolecule02_e
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/nitrogenMolecule_coordinates2.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/nitrogenMolecule_domainVectors.inp
+  subsection Optimization
+    set ION FORCE = true
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL RADIUS = 4.0
+  set CONSTRAINTS PARALLEL CHECK=true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+
+    set MESH SIZE AROUND ATOM  = 0.7
+    set BASE MESH SIZE = 10.0
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AT ATOM = 0.7
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDO TESTS FLAG = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoNGGA.inp
+end
+
+subsection SCF Checkpointing and Restart
+  set LOAD RHO DATA = true
+end
+
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 5e-5
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 15
+  end
+end
