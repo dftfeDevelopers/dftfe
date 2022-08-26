@@ -60,8 +60,9 @@ namespace dftfe
      */
     virtual void
     deformDomain(const dealii::Tensor<2, 3, double> &deformationGradient,
-                 const bool vselfPerturbationUpdateForStress = false,
-                 const bool print                            = true) = 0;
+                 const bool vselfPerturbationUpdateForStress   = false,
+                 const bool useSingleAtomSolutionsInitialGuess = false,
+                 const bool print                              = true) = 0;
 
 
     virtual std::tuple<bool, double>

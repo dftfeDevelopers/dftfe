@@ -27,12 +27,12 @@ namespace dftfe
 {
   //
   void
-  triangulationManager::saveSupportTriangulations()
+  triangulationManager::saveSupportTriangulations(std::string path)
   {
     if (d_serialTriangulationUnmoved.n_global_active_cells() != 0 &&
         this_mpi_process == 0)
       {
-        const std::string filename1 = "serialUnmovedTria.chk";
+        const std::string filename1 = path + "/serialUnmovedTria.chk";
         if (std::ifstream(filename1))
           {
             dftUtils::moveFile(filename1, filename1 + ".old");
@@ -45,11 +45,11 @@ namespace dftfe
 
   //
   void
-  triangulationManager::loadSupportTriangulations()
+  triangulationManager::loadSupportTriangulations(std::string path)
   {
     if (d_serialTriangulationUnmoved.n_global_active_cells() != 0)
       {
-        const std::string filename1 = "serialUnmovedTria.chk";
+        const std::string filename1 = path + "/serialUnmovedTria.chk";
         dftUtils::verifyCheckpointFileExists(filename1);
         try
           {
@@ -68,6 +68,7 @@ namespace dftfe
   //
   void
   triangulationManager::saveTriangulationsSolutionVectors(
+    std::string                                           path,
     const unsigned int                                    feOrder,
     const unsigned int                                    nComponents,
     const std::vector<const distributedCPUVec<double> *> &solutionVectors,
@@ -97,7 +98,7 @@ namespace dftfe
         // assumes solution vectors are ghosted
         solTrans.prepare_for_serialization(solutionVectors);
 
-        const std::string filename = "parallelUnmovedTriaSolData.chk";
+        const std::string filename = path + "/parallelUnmovedTriaSolData.chk";
         if (std::ifstream(filename) && this_mpi_process == 0)
           {
             dftUtils::moveFile(filename, filename + ".old");
@@ -107,7 +108,7 @@ namespace dftfe
 
         d_parallelTriangulationUnmoved.save(filename.c_str());
 
-        saveSupportTriangulations();
+        saveSupportTriangulations(path);
       }
   }
 
@@ -115,17 +116,18 @@ namespace dftfe
   //
   void
   triangulationManager::loadTriangulationsSolutionVectors(
+    std::string                               path,
     const unsigned int                        feOrder,
     const unsigned int                        nComponents,
     std::vector<distributedCPUVec<double> *> &solutionVectors)
   {
-    loadSupportTriangulations();
-    const std::string filename = "parallelUnmovedTriaSolData.chk";
+    loadSupportTriangulations(path);
+    const std::string filename = path + "/parallelUnmovedTriaSolData.chk";
     dftUtils::verifyCheckpointFileExists(filename);
     try
       {
-        d_parallelTriangulationMoved.load(filename.c_str(), false);
-        d_parallelTriangulationUnmoved.load(filename.c_str(), false);
+        d_parallelTriangulationMoved.load(filename.c_str());
+        d_parallelTriangulationUnmoved.load(filename.c_str());
       }
     catch (...)
       {

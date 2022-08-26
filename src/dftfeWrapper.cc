@@ -170,7 +170,8 @@ namespace dftfe
                              const MPI_Comm &  mpi_comm_parent,
                              const bool        printParams,
                              const bool        setGPUToMPITaskBindingInternally,
-                             const std::string mode)
+                             const std::string mode,
+                             const std::string restartFilesPath)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
@@ -180,7 +181,8 @@ namespace dftfe
            mpi_comm_parent,
            printParams,
            setGPUToMPITaskBindingInternally,
-           mode);
+           mode,
+           restartFilesPath);
   }
 
 
@@ -193,7 +195,9 @@ namespace dftfe
                              const MPI_Comm &  mpi_comm_parent,
                              const bool        printParams,
                              const bool        setGPUToMPITaskBindingInternally,
-                             const std::string mode)
+                             const std::string mode,
+                             const std::string restartFilesPath,
+                             const bool        isScfRestart)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
@@ -205,7 +209,9 @@ namespace dftfe
            mpi_comm_parent,
            printParams,
            setGPUToMPITaskBindingInternally,
-           mode);
+           mode,
+           restartFilesPath,
+           isScfRestart);
   }
 
 
@@ -264,7 +270,8 @@ namespace dftfe
                        const MPI_Comm &  mpi_comm_parent,
                        const bool        printParams,
                        const bool        setGPUToMPITaskBindingInternally,
-                       const std::string mode)
+                       const std::string mode,
+                       const std::string restartFilesPath)
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
@@ -278,7 +285,8 @@ namespace dftfe
         d_dftfeParamsPtr->parse_parameters(parameter_file,
                                            d_mpi_comm_parent,
                                            printParams,
-                                           mode);
+                                           mode,
+                                           restartFilesPath);
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -291,7 +299,9 @@ namespace dftfe
                        const MPI_Comm &  mpi_comm_parent,
                        const bool        printParams,
                        const bool        setGPUToMPITaskBindingInternally,
-                       const std::string mode)
+                       const std::string mode,
+                       const std::string restartFilesPath,
+                       const bool        isScfRestart)
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
@@ -305,9 +315,12 @@ namespace dftfe
         d_dftfeParamsPtr->parse_parameters(parameter_file,
                                            d_mpi_comm_parent,
                                            printParams,
-                                           mode);
+                                           mode,
+                                           restartFilesPath);
         d_dftfeParamsPtr->coordinatesFile           = restartCoordsFile;
         d_dftfeParamsPtr->domainBoundingVectorsFile = restartDomainVectorsFile;
+        d_dftfeParamsPtr->loadRhoData =
+          d_dftfeParamsPtr->loadRhoData && isScfRestart;
       }
     initialize(setGPUToMPITaskBindingInternally);
   }

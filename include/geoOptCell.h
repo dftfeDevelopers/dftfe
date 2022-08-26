@@ -142,6 +142,7 @@ namespace dftfe
     std::string d_solverRestartPath;
     bool        d_isRestart;
     bool        d_solverRestart;
+    bool        d_isScfRestart;
     int         d_solver;
     /// total number of calls to update()
     int    d_totalUpdateCalls;

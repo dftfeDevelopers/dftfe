@@ -451,63 +451,6 @@
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
 \end{itemize}
 
-\subsection{Parameters in section \tt Checkpointing and Restart}
-\label{parameters:Checkpointing_20and_20Restart}
-
-\begin{itemize}
-\item {\it Parameter name:} {\tt CHK TYPE}
-\phantomsection\label{parameters:Checkpointing and Restart/CHK TYPE}
-\label{parameters:Checkpointing_20and_20Restart/CHK_20TYPE}
-
-
-\index[prmindex]{CHK TYPE}
-\index[prmindexfull]{Checkpointing and Restart!CHK TYPE}
-{\it Value:} 0
-
-
-{\it Default:} 0
-
-
-{\it Description:} [Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)
-
-
-{\it Possible values:} An integer $n$ such that $0\leq n \leq 2$
-\item {\it Parameter name:} {\tt RESTART FROM CHK}
-\phantomsection\label{parameters:Checkpointing and Restart/RESTART FROM CHK}
-\label{parameters:Checkpointing_20and_20Restart/RESTART_20FROM_20CHK}
-
-
-\index[prmindex]{RESTART FROM CHK}
-\index[prmindexfull]{Checkpointing and Restart!RESTART FROM CHK}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. Further, for CHK TYPE=2 same number of MPI tasks must be used as used to create the checkpoint files. RESTART FROM CHK is always false for CHK TYPE 0.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt RESTART SP FROM NO SP}
-\phantomsection\label{parameters:Checkpointing and Restart/RESTART SP FROM NO SP}
-\label{parameters:Checkpointing_20and_20Restart/RESTART_20SP_20FROM_20NO_20SP}
-
-
-\index[prmindex]{RESTART SP FROM NO SP}
-\index[prmindexfull]{Checkpointing and Restart!RESTART SP FROM NO SP}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..
-
-
-{\it Possible values:} A boolean value (true or false)
-\end{itemize}
-
 \subsection{Parameters in section \tt DFT functional parameters}
 \label{parameters:DFT_20functional_20parameters}
 
@@ -2142,6 +2085,63 @@
 
 
 {\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\end{itemize}
+
+\subsection{Parameters in section \tt SCF Checkpointing and Restart}
+\label{parameters:SCF_20Checkpointing_20and_20Restart}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt LOAD RHO DATA}
+\phantomsection\label{parameters:SCF Checkpointing and Restart/LOAD RHO DATA}
+\label{parameters:SCF_20Checkpointing_20and_20Restart/LOAD_20RHO_20DATA}
+
+
+\index[prmindex]{LOAD RHO DATA}
+\index[prmindexfull]{SCF Checkpointing and Restart!LOAD RHO DATA}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Loads charge density and mesh triagulation data from file.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt RESTART SP FROM NO SP}
+\phantomsection\label{parameters:SCF Checkpointing and Restart/RESTART SP FROM NO SP}
+\label{parameters:SCF_20Checkpointing_20and_20Restart/RESTART_20SP_20FROM_20NO_20SP}
+
+
+\index[prmindex]{RESTART SP FROM NO SP}
+\index[prmindexfull]{SCF Checkpointing and Restart!RESTART SP FROM NO SP}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt SAVE RHO DATA}
+\phantomsection\label{parameters:SCF Checkpointing and Restart/SAVE RHO DATA}
+\label{parameters:SCF_20Checkpointing_20and_20Restart/SAVE_20RHO_20DATA}
+
+
+\index[prmindex]{SAVE RHO DATA}
+\index[prmindexfull]{SCF Checkpointing and Restart!SAVE RHO DATA}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve.
 
 
 {\it Possible values:} A boolean value (true or false)
