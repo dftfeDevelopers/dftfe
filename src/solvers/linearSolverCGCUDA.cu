@@ -73,8 +73,8 @@ namespace dftfe
     distributedGPUVec<double> &x        = problem.getX();
     distributedGPUVec<double> &d_Jacobi = problem.getPreconditioner();
 
-    devSum.resize(1);
-    devSumPtr = thrust::raw_pointer_cast(devSum.data());
+    d_devSum.resize(1);
+    d_devSumPtr = thrust::raw_pointer_cast(d_devSum.data());
 
     d_xLenLocalDof = x.locallyOwnedDofsSize();
 
@@ -89,27 +89,30 @@ namespace dftfe
           {
             // resize the vectors, but do not set the values since they'd be
             // overwritten soon anyway.
-            q.reinit(x);
-            r.reinit(x);
-            d.reinit(x);
+            d_qvec.reinit(x);
+            d_rvec.reinit(x);
+            d_dvec.reinit(x);
 
-            q.zeroOutGhosts();
-            r.zeroOutGhosts();
-            d.zeroOutGhosts();
+            d_qvec.zeroOutGhosts();
+            d_rvec.zeroOutGhosts();
+            d_dvec.zeroOutGhosts();
 
             double alpha = 0.0;
             double beta  = 0.0;
             double delta = 0.0;
 
-            // r = Ax
-            problem.computeAX(r, x);
+            // d_rvec = Ax
+            problem.computeAX(d_rvec, x);
 
-            // r = Ax - rhs
-            cudaUtils::add(
-              r.begin(), rhs_device.begin(), -1., d_xLenLocalDof, cublasHandle);
+            // d_rvec = Ax - rhs
+            cudaUtils::add(d_rvec.begin(),
+                           rhs_device.begin(),
+                           -1.,
+                           d_xLenLocalDof,
+                           cublasHandle);
 
-            // res = l2_norm(r)
-            res = cudaUtils::l2_norm(r.begin(),
+            // res = l2_norm(d_rvec)
+            res = cudaUtils::l2_norm(d_rvec.begin(),
                                      d_xLenLocalDof,
                                      mpi_communicator,
                                      cublasHandle);
@@ -131,33 +134,33 @@ namespace dftfe
                     AssertThrow(std::abs(beta) != 0.,
                                 dealii::ExcMessage("Division by zero\n"));
 
-                    // d = M^(-1)r
-                    // delta = r * d
+                    // d_dvec = M^(-1)d_rvec
+                    // delta = d_rvec * d_dvec
                     delta =
                       applyPreconditionAndComputeDotProduct(d_Jacobi.begin());
 
                     beta = delta / beta;
 
-                    // q = beta * q - d
-                    cudaUtils::sadd<double>(q.begin(),
-                                            d.begin(),
+                    // d_qvec = beta * d_qvec - d_dvec
+                    cudaUtils::sadd<double>(d_qvec.begin(),
+                                            d_dvec.begin(),
                                             beta,
                                             d_xLenLocalDof);
                   }
                 else
                   {
-                    // delta = r * M^(-1)r
-                    // q = -M^(-1)r
+                    // delta = d_rvec * M^(-1)d_rvec
+                    // d_qvec = -M^(-1)d_rvec
                     delta = applyPreconditionComputeDotProductAndSadd(
                       d_Jacobi.begin());
                   }
 
-                // d = Aq
-                problem.computeAX(d, q);
+                // d_dvec = Aq
+                problem.computeAX(d_dvec, d_qvec);
 
-                // alpha = q * d
-                alpha = cudaUtils::dot(q.begin(),
-                                       d.begin(),
+                // alpha = d_qvec * d_dvec
+                alpha = cudaUtils::dot(d_qvec.begin(),
+                                       d_dvec.begin(),
                                        d_xLenLocalDof,
                                        mpi_communicator,
                                        cublasHandle);
@@ -166,9 +169,9 @@ namespace dftfe
                             dealii::ExcMessage("Division by zero\n"));
                 alpha = delta / alpha;
 
-                // x = x + alpha * q
-                // r + alpha * d
-                // res = l2_norm(r)
+                // x = x + alpha * d_qvec
+                // d_rvec + alpha * d_dvec
+                // res = l2_norm(d_rvec)
                 res = scaleXRandComputeNorm(x.begin(), alpha);
 
                 if (res < absTolerance)
@@ -226,11 +229,11 @@ namespace dftfe
 
   template <typename Type, int blockSize>
   __global__ void
-  applyPreconditionAndComputeDotProductKernel(Type *d,
-                                              Type *r,
-                                              Type *jacobi,
-                                              Type *devSum,
-                                              int   N)
+  applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
+                                              Type *      d_devSum,
+                                              const Type *d_rvec,
+                                              const Type *jacobi,
+                                              const int   N)
   {
     __shared__ Type smem[blockSize];
 
@@ -244,10 +247,10 @@ namespace dftfe
     if (idx < N)
       {
         Type d_jacobi = jacobi[idx];
-        Type d_r      = r[idx];
+        Type d_r      = d_rvec[idx];
 
-        localSum = d_jacobi * d_r * d_r;
-        d[idx]   = d_jacobi * d_r;
+        localSum    = d_jacobi * d_r * d_r;
+        d_dvec[idx] = d_jacobi * d_r;
       }
 
     else
@@ -258,9 +261,9 @@ namespace dftfe
     if (idx + blockSize < N)
       {
         Type d_jacobi = jacobi[idx + blockSize];
-        Type d_r      = r[idx + blockSize];
+        Type d_r      = d_rvec[idx + blockSize];
         localSum += d_jacobi * d_r * d_r;
-        d[idx + blockSize] = d_jacobi * d_r;
+        d_dvec[idx + blockSize] = d_jacobi * d_r;
       }
 
     smem[tid] = localSum;
@@ -294,17 +297,17 @@ namespace dftfe
       }
 
     if (block.thread_rank() == 0)
-      atomicAdd(&devSum[0], localSum);
+      atomicAdd(&d_devSum[0], localSum);
   }
 
 
   template <typename Type, int blockSize>
   __global__ void
-  applyPreconditionComputeDotProductAndSaddKernel(Type *q,
-                                                  Type *r,
-                                                  Type *jacobi,
-                                                  Type *devSum,
-                                                  int   N)
+  applyPreconditionComputeDotProductAndSaddKernel(Type *      d_qvec,
+                                                  Type *      d_devSum,
+                                                  const Type *d_rvec,
+                                                  const Type *jacobi,
+                                                  const int   N)
   {
     __shared__ Type smem[blockSize];
 
@@ -318,10 +321,10 @@ namespace dftfe
     if (idx < N)
       {
         Type d_jacobi = jacobi[idx];
-        Type d_r      = r[idx];
+        Type d_r      = d_rvec[idx];
 
-        localSum = d_jacobi * d_r * d_r;
-        q[idx]   = -1 * d_jacobi * d_r;
+        localSum    = d_jacobi * d_r * d_r;
+        d_qvec[idx] = -1 * d_jacobi * d_r;
       }
 
     else
@@ -332,9 +335,9 @@ namespace dftfe
     if (idx + blockSize < N)
       {
         Type d_jacobi = jacobi[idx + blockSize];
-        Type d_r      = r[idx + blockSize];
+        Type d_r      = d_rvec[idx + blockSize];
         localSum += d_jacobi * d_r * d_r;
-        q[idx + blockSize] = -1 * d_jacobi * d_r;
+        d_qvec[idx + blockSize] = -1 * d_jacobi * d_r;
       }
 
     smem[tid] = localSum;
@@ -368,19 +371,19 @@ namespace dftfe
       }
 
     if (block.thread_rank() == 0)
-      atomicAdd(&devSum[0], localSum);
+      atomicAdd(&d_devSum[0], localSum);
   }
 
 
   template <typename Type, int blockSize>
   __global__ void
-  scaleXRandComputeNormKernel(Type *q,
-                              Type *r,
-                              Type *d,
-                              Type *x,
-                              Type *devSum,
-                              Type  alpha,
-                              int   N)
+  scaleXRandComputeNormKernel(Type *      x,
+                              Type *      d_rvec,
+                              Type *      d_devSum,
+                              const Type *d_qvec,
+                              const Type *d_dvec,
+                              const Type  alpha,
+                              const int   N)
   {
     __shared__ Type smem[blockSize];
 
@@ -393,10 +396,10 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_r = r[idx];
+        Type d_r = d_rvec[idx];
         localSum = d_r * d_r;
-        x[idx] += alpha * q[idx];
-        r[idx] += alpha * d[idx];
+        x[idx] += alpha * d_qvec[idx];
+        d_rvec[idx] += alpha * d_dvec[idx];
       }
 
     else
@@ -406,10 +409,10 @@ namespace dftfe
 
     if (idx + blockSize < N)
       {
-        Type d_r = r[idx + blockSize];
+        Type d_r = d_rvec[idx + blockSize];
         localSum += d_r * d_r;
-        x[idx + blockSize] += alpha * q[idx + blockSize];
-        r[idx + blockSize] += alpha * d[idx + blockSize];
+        x[idx + blockSize] += alpha * d_qvec[idx + blockSize];
+        d_rvec[idx + blockSize] += alpha * d_dvec[idx + blockSize];
       }
 
     smem[tid] = localSum;
@@ -443,25 +446,26 @@ namespace dftfe
       }
 
     if (block.thread_rank() == 0)
-      atomicAdd(&devSum[0], localSum);
+      atomicAdd(&d_devSum[0], localSum);
   }
 
 
   double
-  linearSolverCGCUDA::applyPreconditionAndComputeDotProduct(double *jacobi)
+  linearSolverCGCUDA::applyPreconditionAndComputeDotProduct(
+    const double *jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
     const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    devSum[0] = 0.0;
+    d_devSum[0] = 0.0;
 
     applyPreconditionAndComputeDotProductKernel<double,
                                                 cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(
-        d.begin(), r.begin(), jacobi, devSumPtr, d_xLenLocalDof);
+        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), jacobi, d_xLenLocalDof);
 
-    local_sum = devSum[0];
+    local_sum = d_devSum[0];
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
@@ -470,20 +474,21 @@ namespace dftfe
 
 
   double
-  linearSolverCGCUDA::applyPreconditionComputeDotProductAndSadd(double *jacobi)
+  linearSolverCGCUDA::applyPreconditionComputeDotProductAndSadd(
+    const double *jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
     const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    devSum[0] = 0.0;
+    d_devSum[0] = 0.0;
 
     applyPreconditionComputeDotProductAndSaddKernel<double,
                                                     cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(
-        q.begin(), r.begin(), jacobi, devSumPtr, d_xLenLocalDof);
+        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), jacobi, d_xLenLocalDof);
 
-    local_sum = devSum[0];
+    local_sum = d_devSum[0];
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
@@ -492,19 +497,24 @@ namespace dftfe
 
 
   double
-  linearSolverCGCUDA::scaleXRandComputeNorm(double *x, double &alpha)
+  linearSolverCGCUDA::scaleXRandComputeNorm(double *x, const double &alpha)
   {
     double    local_sum = 0.0, sum = 0.0;
     const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    devSum[0] = 0.0;
+    d_devSum[0] = 0.0;
 
     scaleXRandComputeNormKernel<double, cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(
-        q.begin(), r.begin(), d.begin(), x, devSumPtr, alpha, d_xLenLocalDof);
+      <<<blocks, cudaConstants::blockSize>>>(x,
+                                             d_rvec.begin(),
+                                             d_devSumPtr,
+                                             d_qvec.begin(),
+                                             d_dvec.begin(),
+                                             alpha,
+                                             d_xLenLocalDof);
 
-    local_sum = devSum[0];
+    local_sum = d_devSum[0];
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 

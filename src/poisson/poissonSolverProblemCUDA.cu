@@ -115,7 +115,6 @@ namespace dftfe
     d_cublasHandlePtr                  = &cublasHandle;
     d_nLocalCells                      = d_matrixFreeDataPtr->n_macro_cells();
     d_xLenLocalDof                     = d_xDevice.locallyOwnedDofsSize();
-    d_xLenGhost                        = d_xDevice.ghostFlattenedSize();
     d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
 
     AssertThrow(

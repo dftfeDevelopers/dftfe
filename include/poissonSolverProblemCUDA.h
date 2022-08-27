@@ -152,6 +152,10 @@ namespace dftfe
     void
     setX();
 
+    /**
+     * @brief Copies x from Device to Host
+     *
+     */
     void
     copyXfromDeviceToHost();
 
@@ -220,13 +224,15 @@ namespace dftfe
       d_jacobianAction;
     thrust::device_vector<int> d_map;
 
+    // cuBLAS handle for cuBLAS operations
     cublasHandle_t *d_cublasHandlePtr;
 
-    // constraint
+    // constraints
     dftUtils::constraintMatrixInfoCUDA constraintsTotalPotentialInfo;
 
-    // number of cells local to each mpi task
-    int d_nLocalCells, d_xLenLocalDof, d_xLenGhost, d_xLen;
+    // number of cells local to each mpi task, number of degrees of freedom
+    // locally owned and total degrees of freedom including ghost
+    int d_nLocalCells, d_xLenLocalDof, d_xLen;
 
     // Pointers to shape function value, gradient, weights, jacobian and map for
     // matrixfree on device

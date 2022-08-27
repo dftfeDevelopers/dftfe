@@ -74,11 +74,11 @@ namespace dftfe
     const solverType d_type;
 
     /// define some temporary vectors
-    distributedGPUVec<double> q, r, d;
+    distributedGPUVec<double> d_qvec, d_rvec, d_dvec;
 
     int                           d_xLenLocalDof;
-    double *                      devSumPtr;
-    thrust::device_vector<double> devSum;
+    double *                      d_devSumPtr;
+    thrust::device_vector<double> d_devSum;
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
@@ -91,21 +91,21 @@ namespace dftfe
      *
      */
     double
-    applyPreconditionAndComputeDotProduct(double *jacobi);
+    applyPreconditionAndComputeDotProduct(const double *jacobi);
 
     /**
      * @brief Combines precondition, sadd and dot product
      *
      */
     double
-    applyPreconditionComputeDotProductAndSadd(double *jacobi);
+    applyPreconditionComputeDotProductAndSadd(const double *jacobi);
 
     /**
      * @brief Combines scaling and norm
      *
      */
     double
-    scaleXRandComputeNorm(double *x, double &alpha);
+    scaleXRandComputeNorm(double *x, const double &alpha);
   };
 
 } // namespace dftfe
