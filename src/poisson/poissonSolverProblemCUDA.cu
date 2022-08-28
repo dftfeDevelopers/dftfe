@@ -669,7 +669,6 @@ namespace dftfe
       d_meanValueConstraintVec[d_meanValueConstraintNodeId] = 0;
 
     d_meanValueConstraintNodeIdLocal =
-      // d_xPtr->get_partitioner()->global_to_local(
       d_meanValueConstraintVec.get_partitioner()->global_to_local(
         d_meanValueConstraintNodeId);
     cudaUtils::copyHostVecToCUDAVec<double>(d_meanValueConstraintVec.begin(),
