@@ -27,7 +27,7 @@ namespace dftfe
   /**
    * @brief Abstract linear solver base class.
    *
-   * @author Sambit Das
+   * @author Sambit Das, Gourab Panigrahi
    */
   class linearSolverCUDA
   {
@@ -38,7 +38,7 @@ namespace dftfe
     /**
      * @brief Solve linear system, A*x=Rhs
      *
-     * @param problem linearSolverCUDAProblem object (functor) to compute Rhs and A*x, and preconditioning
+     * @param problem linearSolverProblemCUDA object (functor) to compute Rhs and A*x, and preconditioning
      * @param relTolerance Tolerance (relative) required for convergence.
      * @param maxNumberIterations Maximum number of iterations.
      * @param debugLevel Debug output level:
@@ -48,13 +48,15 @@ namespace dftfe
      */
     virtual void
     solve(linearSolverProblemCUDA &problem,
-          const double             relTolerance,
+          const double             absTolerance,
           const unsigned int       maxNumberIterations,
-          const unsigned int       debugLevel = 0) = 0;
+          cublasHandle_t &         handle,
+          const unsigned int       debugLevel     = 0,
+          bool                     distributeFlag = true) = 0;
 
   private:
   };
 
 } // namespace dftfe
-#  endif
+#  endif // linearSolverCUDA_H_
 #endif

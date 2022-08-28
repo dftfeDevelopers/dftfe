@@ -21,6 +21,9 @@
 #    include <cuda_runtime.h>
 #    include "dftfeDataTypes.h"
 #    include "memorySpace.h"
+#    include "headers.h"
+#    include <cooperative_groups.h>
+#    include <cooperative_groups/reduce.h>
 
 namespace dftfe
 {
@@ -39,9 +42,22 @@ namespace dftfe
         }                                               \
       while (0)
 
+#    define cublasCheck(expr)                                                            \
+      {                                                                                  \
+        cublasStatus_t __cublas_error = expr;                                            \
+        if ((__cublas_error) != CUBLAS_STATUS_SUCCESS)                                   \
+          {                                                                              \
+            printf(                                                                      \
+              "cuBLAS error on or before line number %d in file: %s. Error code: %d.\n", \
+              __LINE__,                                                                  \
+              __FILE__,                                                                  \
+              __cublas_error);                                                           \
+          }                                                                              \
+      }
+
   namespace cudaConstants
   {
-    static const dataTypes::local_size_type blockSize = 256;
+    static const int blockSize = 256;
   }
 
   namespace cudaUtils
@@ -64,7 +80,6 @@ namespace dftfe
                                 const NumberTypeReal *           imagArr,
                                 NumberTypeComplex *              complexArr);
 
-
     template <typename NumberType>
     void
     copyCUDAVecToCUDAVec(const NumberType *               cudaVecSrc,
@@ -82,6 +97,35 @@ namespace dftfe
     copyCUDAVecToHostVec(const NumberType *               cudaVector,
                          NumberType *                     hostVec,
                          const dataTypes::local_size_type size);
+
+
+    void
+    add(double *        y,
+        const double *  x,
+        const double    alpha,
+        const int       size,
+        cublasHandle_t &cublasHandle);
+
+    double
+    l2_norm(const double *  x,
+            const int       size,
+            const MPI_Comm &mpi_communicator,
+            cublasHandle_t &cublasHandle);
+
+    double
+    dot(const double *  x,
+        const double *  y,
+        const int       size,
+        const MPI_Comm &mpi_communicator,
+        cublasHandle_t &cublasHandle);
+
+    template <typename NumberType>
+    void
+    sadd(NumberType *y, NumberType *x, const NumberType beta, const int size);
+
+    template <typename NumberType>
+    void
+    set(NumberType *x, const NumberType &alpha, const int size);
 
 
     template <typename NumberType, typename MemorySpace>

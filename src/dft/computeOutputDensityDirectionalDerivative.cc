@@ -52,9 +52,17 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 
   // set up linear solver
-  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
-                                    mpi_communicator,
-                                    dealiiLinearSolver::CG);
+  dealiiLinearSolver CGSolver(d_mpiCommParent,
+                              mpi_communicator,
+                              dealiiLinearSolver::CG);
+
+#ifdef DFTFE_WITH_GPU
+  // set up linear solver CUDA
+  linearSolverCGCUDA CGSolverCUDA(d_mpiCommParent,
+                                  mpi_communicator,
+                                  linearSolverCGCUDA::CG);
+#endif
+
 
   std::map<dealii::CellId, std::vector<double>> charge;
   std::map<dealii::CellId, std::vector<double>> dummy;
@@ -74,25 +82,61 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   electrostaticPotPrime = 0;
 
   // Reuses diagonalA and mean value constraints
-  d_phiTotalSolverProblem.reinit(
-    d_matrixFreeDataPRefined,
-    electrostaticPotPrime,
-    *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-    d_phiTotDofHandlerIndexElectro,
-    d_densityQuadratureIdElectro,
-    d_phiTotAXQuadratureIdElectro,
-    std::map<dealii::types::global_dof_index, double>(),
-    dummy,
-    d_smearedChargeQuadratureIdElectro,
-    charge,
-    false,
-    false);
+  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
+      not d_dftParamsPtr->pinnedNodeForPBC)
+    {
+#ifdef DFTFE_WITH_GPU
+      d_phiTotalSolverProblemCUDA.reinit(
+        d_matrixFreeDataPRefined,
+        electrostaticPotPrime,
+        *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+        d_phiTotDofHandlerIndexElectro,
+        d_densityQuadratureIdElectro,
+        d_phiTotAXQuadratureIdElectro,
+        std::map<dealii::types::global_dof_index, double>(),
+        dummy,
+        d_smearedChargeQuadratureIdElectro,
+        charge,
+        d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+        false,
+        false);
+#endif
+    }
+  else
+    {
+      d_phiTotalSolverProblem.reinit(
+        d_matrixFreeDataPRefined,
+        electrostaticPotPrime,
+        *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+        d_phiTotDofHandlerIndexElectro,
+        d_densityQuadratureIdElectro,
+        d_phiTotAXQuadratureIdElectro,
+        std::map<dealii::types::global_dof_index, double>(),
+        dummy,
+        d_smearedChargeQuadratureIdElectro,
+        charge,
+        false,
+        false);
+    }
 
-  dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                       d_dftParamsPtr->absPoissonSolverToleranceLRD,
-                       d_dftParamsPtr->maxLinearSolverIterations,
-                       d_dftParamsPtr->verbosity);
-
+  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
+      not d_dftParamsPtr->pinnedNodeForPBC)
+    {
+#ifdef DFTFE_WITH_GPU
+      CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
+                         d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                         d_dftParamsPtr->maxLinearSolverIterations,
+                         d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                         d_dftParamsPtr->verbosity);
+#endif
+    }
+  else
+    {
+      CGSolver.solve(d_phiTotalSolverProblem,
+                     d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                     d_dftParamsPtr->maxLinearSolverIterations,
+                     d_dftParamsPtr->verbosity);
+    }
 
   std::map<dealii::CellId, std::vector<double>> electrostaticPotPrimeValues;
   interpolateElectroNodalDataToQuadratureDataGeneral(
