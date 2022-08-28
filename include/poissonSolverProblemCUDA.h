@@ -33,7 +33,8 @@ namespace dftfe
    * @brief poisson solver problem cuda class template. template parameter FEOrderElectro
    * is the finite element polynomial order. FEOrder template parameter is used
    * in conjunction with FEOrderElectro to determine the order of the Gauss
-   * quadrature rule
+   * quadrature rule. The class should not be used with FLOATING NUCLEAR
+   * CHARGES = false or POINT WISE DIRICHLET CONSTRAINT = true
    *
    * @author Gourab Panigrahi
    */

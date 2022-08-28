@@ -83,7 +83,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
   // Reuses diagonalA and mean value constraints
   if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
-      d_dftParamsPtr->pinnedNodeForPBC)
+      not d_dftParamsPtr->pinnedNodeForPBC)
     {
 #ifdef DFTFE_WITH_GPU
       d_phiTotalSolverProblemCUDA.reinit(
@@ -119,9 +119,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         false);
     }
 
-
   if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
-      d_dftParamsPtr->pinnedNodeForPBC)
+      not d_dftParamsPtr->pinnedNodeForPBC)
     {
 #ifdef DFTFE_WITH_GPU
       CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
@@ -138,8 +137,6 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                      d_dftParamsPtr->maxLinearSolverIterations,
                      d_dftParamsPtr->verbosity);
     }
-
-
 
   std::map<dealii::CellId, std::vector<double>> electrostaticPotPrimeValues;
   interpolateElectroNodalDataToQuadratureDataGeneral(
