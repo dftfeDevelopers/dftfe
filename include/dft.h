@@ -34,6 +34,8 @@
 #  include <constraintMatrixInfoCUDA.h>
 #  include <kohnShamDFTOperatorCUDA.h>
 #  include "cudaHelpers.h"
+#  include <poissonSolverProblemCUDA.h>
+
 
 #  include "gpuDirectCCLWrapper.h"
 #endif
@@ -1218,6 +1220,8 @@ namespace dftfe
     elpaScalaManager *d_elpaScala;
 
     poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
+    poissonSolverProblemCUDA<FEOrder, FEOrderElectro>
+      d_phiTotalSolverProblemCUDA;
 
     bool d_kohnShamDFTOperatorsInitialized;
 
@@ -1642,7 +1646,7 @@ namespace dftfe
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                                            kohnShamDFTEigenOperator,
       poissonSolverProblem<FEOrder, FEOrderElectro> &phiTotalSolverProblem,
-      dealiiLinearSolver &                           dealiiCGSolver);
+      dealiiLinearSolver &                           CGSolver);
 
     /**
      * @brief compute the maximum of the residual norm of the highest occupied state among all k points
