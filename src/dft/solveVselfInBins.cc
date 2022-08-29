@@ -408,9 +408,10 @@ namespace dftfe
       }
 
     // set up poisson solver
-    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
-                                      mpi_communicator,
-                                      dealiiLinearSolver::CG);
+    dealiiLinearSolver CGSolver(d_mpiCommParent,
+                                mpi_communicator,
+                                dealiiLinearSolver::CG);
+
     poissonSolverProblem<FEOrder, FEOrderElectro> vselfSolverProblem(
       mpi_communicator);
 
@@ -628,10 +629,10 @@ namespace dftfe
           pcout << " Time taken for vself solver problem init for current bin: "
                 << vselfinit_time << std::endl;
 
-        dealiiCGSolver.solve(vselfSolverProblem,
-                             d_dftParams.absLinearSolverTolerance,
-                             d_dftParams.maxLinearSolverIterations,
-                             d_dftParams.verbosity);
+        CGSolver.solve(vselfSolverProblem,
+                       d_dftParams.absLinearSolverTolerance,
+                       d_dftParams.maxLinearSolverIterations,
+                       d_dftParams.verbosity);
 
         if (useSmearedCharges && !isVselfPerturbationSolve)
           for (unsigned int idim = 0; idim < 3; idim++)
@@ -670,10 +671,10 @@ namespace dftfe
                   << " Time taken for vself solver problem init for current bin: "
                   << vselfinit_time << std::endl;
 
-              dealiiCGSolver.solve(vselfSolverProblem,
-                                   d_dftParams.absLinearSolverTolerance,
-                                   d_dftParams.maxLinearSolverIterations,
-                                   d_dftParams.verbosity);
+              CGSolver.solve(vselfSolverProblem,
+                             d_dftParams.absLinearSolverTolerance,
+                             d_dftParams.maxLinearSolverIterations,
+                             d_dftParams.verbosity);
             }
 
         //

@@ -627,44 +627,12 @@ namespace dftfe
         double ampfactor =
           internalBFGS::computeLInfNorm(d_deltaX) > d_trustRadius + 1e-8 ? 1.5 :
                                                                            1.1;
-        if (d_wolfeSatisfied)
-          {
-            d_trustRadius = 2 * ampfactor * d_trustRadius < d_trustRadiusMax ?
-                              2 * ampfactor * d_trustRadius :
-                              d_trustRadiusMax;
-            d_trustRadius =
-              d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
-          }
-        else
-          {
-            d_trustRadius = ampfactor * d_trustRadius < d_normDeltaXnew ?
-                              ampfactor * d_trustRadius :
-                              d_normDeltaXnew;
-            d_trustRadius = d_trustRadius < d_trustRadiusMax ? d_trustRadius :
-                                                               d_trustRadiusMax;
-            if (d_trustRadius < d_trustRadiusMin)
-              {
-                if (d_debugLevel >= 1)
-                  pcout
-                    << "Resetting BFGS Hessian as trust radius is below allowed threshold."
-                    << std::endl;
-                initializeHessian(problem);
-                d_trustRadius = d_trustRadiusInitial;
-                if (d_useRFOStep)
-                  {
-                    computeRFOStep();
-                  }
-                else
-                  {
-                    computeNewtonStep();
-                  }
-                d_trustRadius = d_trustRadius < d_normDeltaXnew ?
-                                  d_trustRadius :
-                                  d_normDeltaXnew;
-                d_hessianScaled = false;
-                d_isReset       = d_isReset == 1 ? 2 : 1;
-              }
-          }
+        ampfactor     = d_wolfeSatisfied ? 2 * ampfactor : ampfactor;
+        d_trustRadius = ampfactor * d_trustRadius < d_normDeltaXnew ?
+                          ampfactor * d_trustRadius :
+                          d_normDeltaXnew;
+        d_trustRadius =
+          d_trustRadius < d_trustRadiusMax ? d_trustRadius : d_trustRadiusMax;
       }
     else
       {

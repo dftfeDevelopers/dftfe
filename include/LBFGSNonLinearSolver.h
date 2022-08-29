@@ -97,6 +97,12 @@ namespace dftfe
     scalePreconditioner(nonlinearSolverProblem &problem);
 
     /**
+     * @brief Compute Hessian inverse times vector.
+     */
+    void
+    computeHx(std::vector<double> &Hx);
+
+    /**
      * @brief Compute LBFGS step.
      */
     void

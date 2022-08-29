@@ -26,9 +26,9 @@
 namespace dftfe
 {
   /**
-   * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
+   * @brief Abstract class for linear solver problems to be used with the linearSolverCGCUDA interface.
    *
-   * @author Phani Motamarri, Sambit Das
+   * @author Phani Motamarri, Sambit Das, Gourab Panigrahi
    */
   class linearSolverProblemCUDA
   {
@@ -47,13 +47,20 @@ namespace dftfe
     getX() = 0;
 
     /**
+     * @brief get the reference to Preconditioner
+     *
+     * @return reference to Preconditioner
+     */
+    virtual distributedGPUVec<double> &
+    getPreconditioner() = 0;
+
+    /**
      * @brief Compute A matrix multipled by x.
      *
      */
     virtual void
-    computeAX(distributedGPUVec<double> &src,
-              distributedGPUVec<double> &dst) = 0;
-
+    computeAX(distributedGPUVec<double> &dst,
+              distributedGPUVec<double> &src) = 0;
 
     /**
      * @brief Compute right hand side vector for the problem Ax = rhs.
@@ -61,16 +68,7 @@ namespace dftfe
      * @param rhs vector for the right hand side values
      */
     virtual void
-    computeRhs(distributedGPUVec<double> &rhs) = 0;
-
-    /**
-     * @brief Jacobi preconditioning function.
-     *
-     */
-    virtual void
-    precondition_Jacobi(const distributedGPUVec<double> &src,
-                        distributedGPUVec<double> &      dst) const = 0;
-
+    computeRhs(distributedCPUVec<double> &rhs) = 0;
 
     /**
      * @brief distribute x to the constrained nodes.
@@ -79,6 +77,15 @@ namespace dftfe
     virtual void
     setX() = 0;
 
+    virtual void
+    distributeX() = 0;
+
+    /**
+     * @brief copies x from device to host
+     *
+     */
+    virtual void
+    copyXfromDeviceToHost() = 0;
 
     // protected:
 

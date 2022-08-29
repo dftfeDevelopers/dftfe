@@ -60,9 +60,9 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtHX(
   //
   // set up poisson solver
   //
-  dealiiLinearSolver                            dealiiCGSolver(d_mpiCommParent,
-                                    mpi_communicator,
-                                    dealiiLinearSolver::CG);
+  dealiiLinearSolver                            CGSolver(d_mpiCommParent,
+                              mpi_communicator,
+                              dealiiLinearSolver::CG);
   poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
     mpi_communicator);
 
@@ -109,10 +109,10 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtHX(
 
   std::map<dealii::CellId, std::vector<double>> phiInValues;
 
-  dealiiCGSolver.solve(phiTotalSolverProblem,
-                       d_dftParamsPtr->absLinearSolverTolerance,
-                       d_dftParamsPtr->maxLinearSolverIterations,
-                       d_dftParamsPtr->verbosity);
+  CGSolver.solve(phiTotalSolverProblem,
+                 d_dftParamsPtr->absLinearSolverTolerance,
+                 d_dftParamsPtr->maxLinearSolverIterations,
+                 d_dftParamsPtr->verbosity);
 
   std::map<dealii::CellId, std::vector<double>> dummy;
   interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
@@ -430,8 +430,10 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
       std::pair<double, double> bounds =
         linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(
           kohnShamDFTEigenOperator, vecForLanczos, *d_dftParamsPtr);
+
       const double upperBoundUnwantedSpectrum = bounds.second;
       const double lowerBoundWantedSpectrum   = bounds.first;
+
       a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
         lowerBoundWantedSpectrum;
       computing_timer.leave_subsection("Lanczos k-step Upper Bound");

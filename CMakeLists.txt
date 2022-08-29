@@ -66,7 +66,7 @@ ENDIF()
 
 SET(CUDA_SRC
   ./src/gpuBase/cudaHelpers.cu
-  ./src/gpuBase/gpuDirectCCLWrapper.cu  
+  ./src/gpuBase/gpuDirectCCLWrapper.cu
   ./src/dft/densityCalculatorCUDA.cu
   ./src/dft/densityFirstOrderResponseCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
@@ -78,6 +78,10 @@ SET(CUDA_SRC
   ./src/linAlg/rayleighRitzCUDA.cu
   ./src/force/forceCUDA.cu
   ./utils/constraintMatrixInfoCUDA.cu
+  ./src/solvers/linearSolverCUDA.cu
+  ./src/solvers/linearSolverCGCUDA.cu
+  ./src/solvers/linearSolverProblemCUDA.cu
+  ./src/poisson/poissonSolverProblemCUDA.cu
   )
 
 IF (WITH_GPU)
@@ -347,7 +351,7 @@ IF (DFTD4_FOUND)
   MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
   ADD_DEFINITIONS(-DDFTFE_WITH_DFTD4)
   target_link_libraries(${TARGETLIB} DFTD4)
-ENDIF()   
+ENDIF()
 
 
 #
@@ -379,7 +383,7 @@ MESSAGE(STATUS "Will Link With ELPA")
 target_link_libraries(${TARGETLIB} ELPA::ELPA)
 
 #
-# NCCL. Pass path to -DCMAKE_PREFIX_PATH 
+# NCCL. Pass path to -DCMAKE_PREFIX_PATH
 #
 IF (WITH_NCCL)
   find_package(NCCL REQUIRED)
@@ -388,7 +392,7 @@ IF (WITH_NCCL)
      ADD_DEFINITIONS(-DDFTFE_WITH_NCCL)
      find_package(MPI REQUIRED)
      target_link_libraries(${TARGETLIB} NCCL MPI::MPI_CXX)
-  ENDIF()   
+  ENDIF()
 ENDIF()
 
 #

@@ -43,7 +43,9 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
-  {}
+  {
+    d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
+  }
 
   //
   //
@@ -170,11 +172,11 @@ namespace dftfe
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         mpi_communicator,
-        d_dftPtr->getParametersObject().maxUpdateStep);
+        d_dftPtr->getParametersObject().maxIonUpdateStep);
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
-        d_dftPtr->getParametersObject().maxUpdateStep,
+        d_dftPtr->getParametersObject().maxIonUpdateStep,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
         d_dftPtr->getParametersObject().verbosity,
@@ -187,7 +189,7 @@ namespace dftfe
         1e-4,
         d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
         0.8,
-        d_dftPtr->getParametersObject().maxUpdateStep);
+        d_dftPtr->getParametersObject().maxIonUpdateStep);
     // print relaxation flags
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
@@ -223,7 +225,8 @@ namespace dftfe
                   << std::endl;
 
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << std::endl;
 
 
             pcout << "   -----------------------------------------  "
@@ -244,7 +247,8 @@ namespace dftfe
                   << d_dftPtr->getParametersObject().lbfgsNumPastSteps
                   << std::endl;
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
@@ -261,6 +265,9 @@ namespace dftfe
                   << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
                   << std::endl;
             pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
@@ -643,7 +650,9 @@ namespace dftfe
       factor = 1.15;
 
     d_dftPtr->updateAtomPositionsAndMoveMesh(
-      globalAtomsDisplacements, factor, useSingleAtomSolutionsInitialGuess);
+      globalAtomsDisplacements,
+      factor,
+      useSingleAtomSolutionsInitialGuess && !d_isScfRestart);
 
 
     /*if(d_maximumAtomForceToBeRelaxed >= 1e-02)
@@ -655,7 +664,8 @@ namespace dftfe
       else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
       d_dftPtr->getParametersObject().selfConsistentSolverTolerance = 5e-06;*/
 
-    d_dftPtr->solve(computeForces, false);
+    d_dftPtr->solve(computeForces, false, d_isScfRestart);
+    d_isScfRestart = false;
     d_totalUpdateCalls += 1;
   }
 

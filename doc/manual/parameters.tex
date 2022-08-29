@@ -4,74 +4,6 @@
 
 \begin{itemize}
 
-\item {\it Parameter name:} {\tt RESTART}
-\phantomsection\label{parameters:RESTART}
-
-
-\index[prmindex]{RESTART}
-\index[prmindexfull]{RESTART}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] If set to true solvermode triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt RESTART FOLDER}
-\phantomsection\label{parameters:RESTART FOLDER}
-\label{parameters:RESTART_20FOLDER}
-
-
-\index[prmindex]{RESTART FOLDER}
-\index[prmindexfull]{RESTART FOLDER}
-{\it Value:} .
-
-
-{\it Default:} .
-
-
-{\it Description:} [Standard] Folder to store restart files.
-
-
-{\it Possible values:} Any string
-\item {\it Parameter name:} {\tt SOLVER MODE}
-\phantomsection\label{parameters:SOLVER MODE}
-\label{parameters:SOLVER_20MODE}
-
-
-\index[prmindex]{SOLVER MODE}
-\index[prmindexfull]{SOLVER MODE}
-{\it Value:} GS
-
-
-{\it Default:} GS
-
-
-{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation.
-
-
-{\it Possible values:} Any one of GS, MD, NEB, GEOOPT
-\item {\it Parameter name:} {\tt VERBOSITY}
-\phantomsection\label{parameters:VERBOSITY}
-
-
-\index[prmindex]{VERBOSITY}
-\index[prmindexfull]{VERBOSITY}
-{\it Value:} 0
-
-
-{\it Default:} 1
-
-
-{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.
-
-
-{\it Possible values:} An integer $n$ such that $-1\leq n \leq 5$
-
-
 \item {\it Parameter name:} {\tt H REFINED ELECTROSTATICS}
 \phantomsection\label{parameters:H REFINED ELECTROSTATICS}
 \label{parameters:H_20REFINED_20ELECTROSTATICS}
@@ -179,7 +111,7 @@
 
 \index[prmindex]{VERBOSITY}
 \index[prmindexfull]{VERBOSITY}
-{\it Value:} 0
+{\it Value:} 1
 
 
 {\it Default:} 1
@@ -517,63 +449,6 @@
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
-\end{itemize}
-
-\subsection{Parameters in section \tt Checkpointing and Restart}
-\label{parameters:Checkpointing_20and_20Restart}
-
-\begin{itemize}
-\item {\it Parameter name:} {\tt CHK TYPE}
-\phantomsection\label{parameters:Checkpointing and Restart/CHK TYPE}
-\label{parameters:Checkpointing_20and_20Restart/CHK_20TYPE}
-
-
-\index[prmindex]{CHK TYPE}
-\index[prmindexfull]{Checkpointing and Restart!CHK TYPE}
-{\it Value:} 0
-
-
-{\it Default:} 0
-
-
-{\it Description:} [Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)
-
-
-{\it Possible values:} An integer $n$ such that $0\leq n \leq 2$
-\item {\it Parameter name:} {\tt RESTART FROM CHK}
-\phantomsection\label{parameters:Checkpointing and Restart/RESTART FROM CHK}
-\label{parameters:Checkpointing_20and_20Restart/RESTART_20FROM_20CHK}
-
-
-\index[prmindex]{RESTART FROM CHK}
-\index[prmindexfull]{Checkpointing and Restart!RESTART FROM CHK}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. Further, for CHK TYPE=2 same number of MPI tasks must be used as used to create the checkpoint files. RESTART FROM CHK is always false for CHK TYPE 0.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt RESTART SP FROM NO SP}
-\phantomsection\label{parameters:Checkpointing and Restart/RESTART SP FROM NO SP}
-\label{parameters:Checkpointing_20and_20Restart/RESTART_20SP_20FROM_20NO_20SP}
-
-
-\index[prmindex]{RESTART SP FROM NO SP}
-\index[prmindexfull]{Checkpointing and Restart!RESTART SP FROM NO SP}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..
-
-
-{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 \subsection{Parameters in section \tt DFT functional parameters}
@@ -1495,7 +1370,7 @@
 
 \index[prmindex]{ION FORCE}
 \index[prmindexfull]{Geometry!Optimization!ION FORCE}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -1529,7 +1404,7 @@
 
 \index[prmindex]{ION RELAX FLAGS FILE}
 \index[prmindexfull]{Geometry!Optimization!ION RELAX FLAGS FILE}
-{\it Value:} 
+{\it Value:} relaxationFlags.inp
 
 
 {\it Default:} 
@@ -1556,6 +1431,40 @@
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
+\item {\it Parameter name:} {\tt MAXIMUM CELL UPDATE STEP}
+\phantomsection\label{parameters:Geometry/Optimization/MAXIMUM CELL UPDATE STEP}
+\label{parameters:Geometry/Optimization/MAXIMUM_20CELL_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM CELL UPDATE STEP}
+\index[prmindexfull]{Geometry!Optimization!MAXIMUM CELL UPDATE STEP}
+{\it Value:} 0.1
+
+
+{\it Default:} 0.1
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (deformation) during cell relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
+\item {\it Parameter name:} {\tt MAXIMUM ION UPDATE STEP}
+\phantomsection\label{parameters:Geometry/Optimization/MAXIMUM ION UPDATE STEP}
+\label{parameters:Geometry/Optimization/MAXIMUM_20ION_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM ION UPDATE STEP}
+\index[prmindexfull]{Geometry!Optimization!MAXIMUM ION UPDATE STEP}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
 \item {\it Parameter name:} {\tt MAXIMUM OPTIMIZATION STEPS}
 \phantomsection\label{parameters:Geometry/Optimization/MAXIMUM OPTIMIZATION STEPS}
 \label{parameters:Geometry/Optimization/MAXIMUM_20OPTIMIZATION_20STEPS}
@@ -1590,23 +1499,6 @@
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 1000$
-\item {\it Parameter name:} {\tt MAXIMUM UPDATE STEP}
-\phantomsection\label{parameters:Geometry/Optimization/MAXIMUM UPDATE STEP}
-\label{parameters:Geometry/Optimization/MAXIMUM_20UPDATE_20STEP}
-
-
-\index[prmindex]{MAXIMUM UPDATE STEP}
-\index[prmindexfull]{Geometry!Optimization!MAXIMUM UPDATE STEP}
-{\it Value:} 0.5
-
-
-{\it Default:} 0.5
-
-
-{\it Description:} [Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.
-
-
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
 \item {\it Parameter name:} {\tt MAX LINE SEARCH ITER}
 \phantomsection\label{parameters:Geometry/Optimization/MAX LINE SEARCH ITER}
 \label{parameters:Geometry/Optimization/MAX_20LINE_20SEARCH_20ITER}
@@ -2198,6 +2090,63 @@
 {\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
+\subsection{Parameters in section \tt SCF Checkpointing and Restart}
+\label{parameters:SCF_20Checkpointing_20and_20Restart}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt LOAD RHO DATA}
+\phantomsection\label{parameters:SCF Checkpointing and Restart/LOAD RHO DATA}
+\label{parameters:SCF_20Checkpointing_20and_20Restart/LOAD_20RHO_20DATA}
+
+
+\index[prmindex]{LOAD RHO DATA}
+\index[prmindexfull]{SCF Checkpointing and Restart!LOAD RHO DATA}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Loads charge density and mesh triagulation data from file.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt RESTART SP FROM NO SP}
+\phantomsection\label{parameters:SCF Checkpointing and Restart/RESTART SP FROM NO SP}
+\label{parameters:SCF_20Checkpointing_20and_20Restart/RESTART_20SP_20FROM_20NO_20SP}
+
+
+\index[prmindex]{RESTART SP FROM NO SP}
+\index[prmindexfull]{SCF Checkpointing and Restart!RESTART SP FROM NO SP}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt SAVE RHO DATA}
+\phantomsection\label{parameters:SCF Checkpointing and Restart/SAVE RHO DATA}
+\label{parameters:SCF_20Checkpointing_20and_20Restart/SAVE_20RHO_20DATA}
+
+
+\index[prmindex]{SAVE RHO DATA}
+\index[prmindexfull]{SCF Checkpointing and Restart!SAVE RHO DATA}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve.
+
+
+{\it Possible values:} A boolean value (true or false)
+\end{itemize}
+
 \subsection{Parameters in section \tt SCF parameters}
 \label{parameters:SCF_20parameters}
 
@@ -2260,7 +2209,7 @@
 
 \index[prmindex]{MAXIMUM ITERATIONS}
 \index[prmindexfull]{SCF parameters!MAXIMUM ITERATIONS}
-{\it Value:} 40
+{\it Value:} 200
 
 
 {\it Default:} 200
@@ -2311,7 +2260,7 @@
 
 \index[prmindex]{MIXING PARAMETER}
 \index[prmindexfull]{SCF parameters!MIXING PARAMETER}
-{\it Value:} 0.5
+{\it Value:} 0.0
 
 
 {\it Default:} 0.0

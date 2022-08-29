@@ -14,11 +14,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das
+// @author Sambit Das, Gourab Panigrahi
 //
 
 
 #include <cudaHelpers.h>
+#include "dftUtils.h"
 #include <headers.h>
 #include <cublas_v2.h>
 
@@ -161,6 +162,86 @@ namespace dftfe
     }
 
 
+    void
+    add(double *        y,
+        const double *  x,
+        const double    alpha,
+        const int       size,
+        cublasHandle_t &cublasHandle)
+    {
+      int incx = 1, incy = 1;
+      cublasCheck(cublasDaxpy(cublasHandle, size, &alpha, x, incx, y, incy));
+    }
+
+    double
+    l2_norm(const double *  x,
+            const int       size,
+            const MPI_Comm &mpi_communicator,
+            cublasHandle_t &cublasHandle)
+    {
+      int    incx = 1;
+      double local_nrm, nrm = 0;
+
+      cublasCheck(cublasDnrm2(cublasHandle, size, x, incx, &local_nrm));
+
+      local_nrm *= local_nrm;
+      MPI_Allreduce(&local_nrm, &nrm, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+
+      return std::sqrt(nrm);
+    }
+
+    double
+    dot(const double *  x,
+        const double *  y,
+        const int       size,
+        const MPI_Comm &mpi_communicator,
+        cublasHandle_t &cublasHandle)
+    {
+      int    incx = 1, incy = 1;
+      double local_sum, sum = 0;
+
+      cublasCheck(cublasDdot(cublasHandle, size, x, incx, y, incy, &local_sum));
+      MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+
+      return sum;
+    }
+
+    template <typename NumberType>
+    __global__ void
+    saddKernel(NumberType *     y,
+               NumberType *     x,
+               const NumberType beta,
+               const int        size)
+    {
+      const int globalThreadId = threadIdx.x + blockIdx.x * blockDim.x;
+
+      for (int idx = globalThreadId; idx < size; idx += blockDim.x * gridDim.x)
+        {
+          y[idx] = beta * y[idx] - x[idx];
+          x[idx] = 0;
+        }
+    }
+
+    template <typename NumberType>
+    void
+    sadd(NumberType *y, NumberType *x, const NumberType beta, const int size)
+    {
+      const int gridSize = (size / cudaConstants::blockSize) +
+                           (size % cudaConstants::blockSize == 0 ? 0 : 1);
+      saddKernel<NumberType>
+        <<<gridSize, cudaConstants::blockSize>>>(y, x, beta, size);
+    }
+
+    template <typename NumberType>
+    void
+    set(NumberType *x, const NumberType &alpha, const int size)
+    {
+      const int blockSize = 32;
+      const int gridSize = (size / blockSize) + (size % blockSize == 0 ? 0 : 1);
+      setKernel<NumberType><<<gridSize, blockSize>>>(size, alpha, x);
+    }
+
+
     template <typename NumberType, typename MemorySpace>
     Vector<NumberType, MemorySpace>::Vector()
       : d_data(NULL)
@@ -275,8 +356,6 @@ namespace dftfe
     template class Vector<float, dftfe::MemorySpace::GPU>;
     template class Vector<cuFloatComplex, dftfe::MemorySpace::GPU>;
 
-
-
     template void
     copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
                                 const cuDoubleComplex *          complexArr,
@@ -321,7 +400,6 @@ namespace dftfe
                          cuFloatComplex *                 cudaVecDst,
                          const dataTypes::local_size_type size);
 
-
     template void
     copyHostVecToCUDAVec(const double *                   hostVec,
                          double *                         cudaVector,
@@ -362,6 +440,11 @@ namespace dftfe
                          cuFloatComplex *                 hostVec,
                          const dataTypes::local_size_type size);
 
+    template void
+    sadd(double *y, double *x, const double beta, const int size);
+
+    template void
+    set(double *x, const double &alpha, const int size);
 
   } // namespace cudaUtils
 } // namespace dftfe

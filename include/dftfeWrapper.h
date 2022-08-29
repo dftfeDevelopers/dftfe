@@ -55,7 +55,8 @@ namespace dftfe
                  const MPI_Comm &  mpi_comm_parent,
                  const bool        printParams                      = false,
                  const bool        setGPUToMPITaskBindingInternally = false,
-                 const std::string solverMode                       = "GS");
+                 const std::string solverMode                       = "GS",
+                 const std::string restartFilesPath                 = ".");
 
     /**
      * @brief constructor based on input parameter_file and restart
@@ -67,7 +68,10 @@ namespace dftfe
                  const MPI_Comm &  mpi_comm_parent,
                  const bool        printParams                      = false,
                  const bool        setGPUToMPITaskBindingInternally = false,
-                 const std::string solverMode                       = "GS");
+                 const std::string solverMode                       = "GS",
+                 const std::string restartFilesPath                 = ".",
+                 const bool        isScfRestart                     = true);
+
 
     /**
      * @brief constructor based on input list of atomic coordinates,
@@ -155,7 +159,8 @@ namespace dftfe
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
            const bool        setGPUToMPITaskBindingInternally = false,
-           const std::string solverMode                       = "GS");
+           const std::string solverMode                       = "GS",
+           const std::string restartFilesPath                 = ".");
 
     /**
      * @brief clear and reinitialize based on input parameter_file and restart
@@ -168,7 +173,9 @@ namespace dftfe
            const MPI_Comm &  mpi_comm_parent,
            const bool        printParams                      = false,
            const bool        setGPUToMPITaskBindingInternally = false,
-           const std::string solverMode                       = "GS");
+           const std::string solverMode                       = "GS",
+           const std::string restartFilesPath                 = ".",
+           const bool        isScfRestart                     = true);
 
     void
     reinit(const MPI_Comm &                       mpi_comm_parent,

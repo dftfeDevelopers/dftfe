@@ -195,19 +195,19 @@ namespace dftfe
       }
       prm.leave_subsection();
 
-      prm.enter_subsection("Checkpointing and Restart");
+      prm.enter_subsection("SCF Checkpointing and Restart");
       {
         prm.declare_entry(
-          "CHK TYPE",
-          "0",
-          Patterns::Integer(0, 2),
-          "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
-
-        prm.declare_entry(
-          "RESTART FROM CHK",
+          "SAVE RHO DATA",
           "false",
           Patterns::Bool(),
-          "[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. Further, for CHK TYPE=2 same number of MPI tasks must be used as used to create the checkpoint files. RESTART FROM CHK is always false for CHK TYPE 0.");
+          "[Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve.");
+
+        prm.declare_entry(
+          "LOAD RHO DATA",
+          "false",
+          Patterns::Bool(),
+          "[Standard] Loads charge density and mesh triagulation data from file.");
 
         prm.declare_entry(
           "RESTART SP FROM NO SP",
@@ -293,10 +293,16 @@ namespace dftfe
             "[Standard] Sets the maximum number of staggered ion/cell optimization cycles to be performed.");
 
           prm.declare_entry(
-            "MAXIMUM UPDATE STEP",
+            "MAXIMUM ION UPDATE STEP",
             "0.5",
             Patterns::Double(0, 5.0),
-            "[Standard] Sets the maximum allowed step size (in a.u.) during ion/cell relaxation.");
+            "[Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.");
+
+          prm.declare_entry(
+            "MAXIMUM CELL UPDATE STEP",
+            "0.1",
+            Patterns::Double(0, 5.0),
+            "[Standard] Sets the maximum allowed step size (deformation) during cell relaxation.");
 
           prm.declare_entry(
             "MAX LINE SEARCH ITER",
@@ -776,7 +782,7 @@ namespace dftfe
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.");
+            R"([Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.)");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
@@ -789,13 +795,13 @@ namespace dftfe
             "ADAPTIVE RANK REL TOL",
             "0.3",
             Patterns::Double(0.0, 1.0),
-            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED\_ADAPTIVE method.");
+            R"([Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED\_ADAPTIVE method.)");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
             "2.0",
             Patterns::Double(0.0, 100.0),
-            "[Advanced] For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
+            R"([Advanced] For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.)");
 
           prm.declare_entry(
             "POISSON SOLVER ABS TOL",
@@ -1047,7 +1053,7 @@ namespace dftfe
           "TEMPERATURE CONTROLLER TYPE",
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
-          "[Standard] Method of controlling temperature in the MD run. NO\_CONTROL is the default option.");
+          R"([Standard] Method of controlling temperature in the MD run. NO\_CONTROL is the default option.)");
 
         prm.declare_entry("TIME STEP",
                           "0.5",
@@ -1150,9 +1156,10 @@ namespace dftfe
 
     verbosity                 = 0;
     keepScratchFolder         = false;
-    chkType                   = 0;
+    restartFolder             = ".";
+    saveRhoData               = false;
+    loadRhoData               = false;
     restartSpinFromNoSpin     = false;
-    restartFromChk            = false;
     reproducible_output       = false;
     electrostaticsHRefinement = false;
     meshAdaption              = false;
@@ -1252,7 +1259,8 @@ namespace dftfe
     lbfgsNumPastSteps  = 5;
     maxOptIter         = 300;
     maxStaggeredCycles = 100;
-    maxUpdateStep      = 0.5;
+    maxIonUpdateStep   = 0.5;
+    maxCellUpdateStep  = 0.1;
   }
 
 
@@ -1260,7 +1268,8 @@ namespace dftfe
   dftParameters::parse_parameters(const std::string &parameter_file,
                                   const MPI_Comm &   mpi_comm_parent,
                                   const bool         printParams,
-                                  const std::string  mode)
+                                  const std::string  mode,
+                                  const std::string  restartFilesPath)
   {
     ParameterHandler prm;
     internalDftParameters::declare_parameters(prm);
@@ -1270,6 +1279,7 @@ namespace dftfe
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
+    restartFolder             = restartFilesPath;
 
     prm.enter_subsection("GPU");
     {
@@ -1306,10 +1316,10 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    prm.enter_subsection("Checkpointing and Restart");
+    prm.enter_subsection("SCF Checkpointing and Restart");
     {
-      chkType               = prm.get_integer("CHK TYPE");
-      restartFromChk        = prm.get_bool("RESTART FROM CHK") && chkType != 0;
+      saveRhoData           = prm.get_bool("SAVE RHO DATA");
+      loadRhoData           = prm.get_bool("LOAD RHO DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
     }
     prm.leave_subsection();
@@ -1347,7 +1357,8 @@ namespace dftfe
         lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
         maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
         maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-        maxUpdateStep      = prm.get_double("MAXIMUM UPDATE STEP");
+        maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+        maxCellUpdateStep  = prm.get_double("MAXIMUM CELL UPDATE STEP");
       }
       prm.leave_subsection();
     }
@@ -1551,23 +1562,6 @@ namespace dftfe
       tempControllerTypeBOMD = prm.get("TEMPERATURE CONTROLLER TYPE");
     }
     prm.leave_subsection();
-
-    if ((restartFromChk == true) && (chkType == 1))
-      {
-        if (periodicX || periodicY || periodicZ)
-          coordinatesFile = floatingNuclearCharges ?
-                              "atomsFracCoordCurrent.chk" :
-                              "atomsFracCoordAutomesh.chk";
-        else
-          coordinatesFile = floatingNuclearCharges ?
-                              "atomsCartCoordCurrent.chk" :
-                              "atomsCartCoordAutomesh.chk";
-
-        domainBoundingVectorsFile = "domainBoundingVectorsCurrent.chk";
-
-        if (!floatingNuclearCharges)
-          coordinatesGaussianDispFile = "atomsGaussianDispCoord.chk";
-      }
 
     check_parameters(mpi_comm_parent);
 

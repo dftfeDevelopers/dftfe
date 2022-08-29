@@ -42,7 +42,9 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
-  {}
+  {
+    d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
+  }
 
   //
   //
@@ -188,9 +190,10 @@ namespace dftfe
         std::vector<std::vector<double>> tmp, cellOptData;
         dftUtils::readFile(1, cellOptData, d_restartPath + "/cellOpt.dat");
         dftUtils::readFile(1, tmp, d_restartPath + "/step.chk");
-        int  solver             = cellOptData[0][0];
-        bool cellConstraintType = cellOptData[1][0];
-        d_totalUpdateCalls      = tmp[0][0];
+        int solver             = cellOptData[0][0];
+        int cellConstraintType = cellOptData[1][0];
+        d_domainVolumeInitial  = cellOptData[2][0];
+        d_totalUpdateCalls     = tmp[0][0];
         if (solver != d_solver)
           pcout
             << "Solver has changed since last save, the newly set solver will start from scratch."
@@ -214,11 +217,12 @@ namespace dftfe
         d_totalUpdateCalls = 0;
         if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
           mkdir(d_restartPath.c_str(), ACCESSPERMS);
-        std::vector<std::vector<double>> cellOptData(2,
+        std::vector<std::vector<double>> cellOptData(3,
                                                      std::vector<double>(1,
                                                                          0.0));
         cellOptData[0][0] = d_solver;
         cellOptData[1][0] = d_dftPtr->getParametersObject().cellConstraintType;
+        cellOptData[2][0] = d_domainVolumeInitial;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           dftUtils::writeDataIntoFile(cellOptData,
                                       d_restartPath + "/cellOpt.dat",
@@ -231,11 +235,11 @@ namespace dftfe
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         mpi_communicator,
-        d_dftPtr->getParametersObject().maxUpdateStep);
+        d_dftPtr->getParametersObject().maxCellUpdateStep);
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
-        d_dftPtr->getParametersObject().maxUpdateStep,
+        d_dftPtr->getParametersObject().maxCellUpdateStep,
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
         d_dftPtr->getParametersObject().verbosity,
@@ -248,7 +252,7 @@ namespace dftfe
         1e-4,
         d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
         0.8,
-        d_dftPtr->getParametersObject().maxUpdateStep);
+        d_dftPtr->getParametersObject().maxCellUpdateStep);
 
     if (d_dftPtr->getParametersObject().verbosity >= 2)
       {
@@ -284,7 +288,8 @@ namespace dftfe
                   << std::endl;
 
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+                  << d_dftPtr->getParametersObject().maxCellUpdateStep
+                  << std::endl;
 
 
             pcout << "   -----------------------------------------  "
@@ -306,7 +311,8 @@ namespace dftfe
                   << d_dftPtr->getParametersObject().lbfgsNumPastSteps
                   << std::endl;
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxUpdateStep << std::endl;
+                  << d_dftPtr->getParametersObject().maxCellUpdateStep
+                  << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
@@ -324,6 +330,9 @@ namespace dftfe
                   << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
                   << std::endl;
             pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxCellUpdateStep
+                  << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
@@ -498,7 +507,8 @@ namespace dftfe
     gradient.clear();
     const Tensor<2, 3, double> tempGradient =
       d_dftPtr->getCellVolume() *
-      (d_dftPtr->getCellStress() * invert(d_strainEpsilon));
+      (d_dftPtr->getCellStress() * invert(d_strainEpsilon)) /
+      d_domainVolumeInitial;
 
     if (d_relaxationFlags[0] == 1)
       gradient.push_back(tempGradient[0][0]);
@@ -605,10 +615,14 @@ namespace dftfe
     d_strainEpsilon = strainEpsilonNew;
 
     // deform fem mesh and reinit
-    d_dftPtr->deformDomain(deformationGradient);
+    d_dftPtr->deformDomain(deformationGradient,
+                           false,
+                           useSingleAtomSolutionsInitialGuess &&
+                             !d_isScfRestart);
 
 
-    d_dftPtr->solve(true, computeStress);
+    d_dftPtr->solve(true, computeStress, d_isScfRestart);
+    d_isScfRestart = false;
     d_totalUpdateCalls += 1;
   }
 

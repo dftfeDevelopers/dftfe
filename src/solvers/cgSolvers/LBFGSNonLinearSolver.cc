@@ -320,6 +320,78 @@ namespace dftfe
       }
   }
 
+  //
+  // Compute Hessian inverse times vector.
+  //
+  void
+  LBFGSNonLinearSolver::computeHx(std::vector<double> &Hx)
+  {
+    AssertThrow(
+      Hx.size() == d_numberUnknowns,
+      dealii::ExcMessage(std::string(
+        "DFT-FE Error: data size of input to LBFGSNonLinearSolver::computeHx is incorrect.")));
+    double d_scalingFactor = 1;
+    if (d_numPastSteps > 0)
+      {
+        if (d_usePreconditioner &&
+            internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                       d_deltaGq[d_maxNumPastSteps - 1],
+                                       d_preconditioner) > 0)
+          {
+            d_scalingFactor =
+              internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
+                                         d_deltaGq[d_maxNumPastSteps - 1],
+                                         d_preconditioner) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]);
+          }
+        else if (!d_usePreconditioner &&
+                 internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                    d_deltaGq[d_maxNumPastSteps - 1]) > 0)
+          {
+            d_scalingFactor =
+              internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]) /
+              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
+                                 d_deltaGq[d_maxNumPastSteps - 1]);
+          }
+        else
+          {
+            AssertThrow(false,
+                        dealii::ExcMessage(std::string(
+                          "DFT-FE Error: LBFGS history not properly damped.")));
+          }
+      }
+    std::vector<double> alpha(d_maxNumPastSteps, 0.0);
+    for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
+      {
+        alpha[j] = internalLBFGS::dot(d_deltaXq[j], Hx) * d_rhoq[j];
+        internalLBFGS::axpy(-alpha[j], d_deltaGq[j], Hx);
+      }
+    if (d_usePreconditioner)
+      {
+        internalLBFGS::linearSolve(d_preconditioner, Hx);
+        if (d_numPastSteps > 0)
+          {
+            for (int i = 0; i < d_numberUnknowns; ++i)
+              {
+                Hx[i] *= d_scalingFactor;
+              }
+          }
+      }
+    else if (d_numPastSteps > 0)
+      {
+        for (int i = 0; i < d_numberUnknowns; ++i)
+          {
+            Hx[i] *= d_scalingFactor;
+          }
+      }
+    for (int j = 0; j < d_maxNumPastSteps; ++j)
+      {
+        double beta = internalLBFGS::dot(d_deltaGq[j], Hx) * d_rhoq[j];
+        internalLBFGS::axpy(alpha[j] - beta, d_deltaXq[j], Hx);
+      }
+  }
 
   //
   // Compute LBFGS step
@@ -328,44 +400,7 @@ namespace dftfe
   LBFGSNonLinearSolver::computeStep()
   {
     std::vector<double> gradient = d_gradient;
-    std::vector<double> alpha(d_maxNumPastSteps, 0.0);
-    for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
-      {
-        alpha[j] = internalLBFGS::dot(d_deltaXq[j], gradient) * d_rhoq[j];
-        internalLBFGS::axpy(-alpha[j], d_deltaGq[j], gradient);
-      }
-    if (d_usePreconditioner)
-      {
-        internalLBFGS::linearSolve(d_preconditioner, gradient);
-        if (d_numPastSteps > 0)
-          {
-            for (int i = 0; i < d_numberUnknowns; ++i)
-              {
-                gradient[i] *=
-                  internalLBFGS::computePdot(d_deltaXq[d_maxNumPastSteps - 1],
-                                             d_deltaGq[d_maxNumPastSteps - 1],
-                                             d_preconditioner) /
-                  internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                     d_deltaGq[d_maxNumPastSteps - 1]);
-              }
-          }
-      }
-    else if (d_numPastSteps > 0)
-      {
-        for (int i = 0; i < d_numberUnknowns; ++i)
-          {
-            gradient[i] *=
-              internalLBFGS::dot(d_deltaXq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1]) /
-              internalLBFGS::dot(d_deltaGq[d_maxNumPastSteps - 1],
-                                 d_deltaGq[d_maxNumPastSteps - 1]);
-          }
-      }
-    for (int j = 0; j < d_maxNumPastSteps; ++j)
-      {
-        double beta = internalLBFGS::dot(d_deltaGq[j], gradient) * d_rhoq[j];
-        internalLBFGS::axpy(alpha[j] - beta, d_deltaXq[j], gradient);
-      }
+    computeHx(gradient);
     for (int i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaXNew[i] = -gradient[i];
@@ -417,17 +452,24 @@ namespace dftfe
       {
         delta_g[i] = d_gradientNew[i] - d_gradient[i];
       }
-    double sBs   = -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha;
-    double sy    = internalLBFGS::dot(delta_g, d_deltaXNew);
+    double sBs = -internalLBFGS::dot(d_deltaXNew, d_gradient) * d_alpha;
+    double sy  = internalLBFGS::dot(delta_g, d_deltaXNew);
+    std::vector<double> Hy = d_gradientNew;
+    computeHx(Hy);
+    for (int i = 0; i < Hy.size(); ++i)
+      {
+        Hy[i] += d_deltaXNew[i] / d_alpha;
+      }
+    double yHy   = internalLBFGS::dot(delta_g, Hy);
     double theta = 1.0;
-    if (sy / sBs < 0.2)
+    if ((sy / sBs < 0) || (sy / sBs < 0.2 && sy / sBs + 1e-8 < yHy / sy))
       {
         theta = 0.8 * sBs / (sBs - sy);
       }
-    /*else if (sy / sBs > 4)
+    else if (sy / sBs > 4 && sy / sBs + 1e-8 < yHy / sy)
       {
         theta = 3 * sBs / (sy - sBs);
-      }*/
+      }
     if (theta != 1 && d_debugLevel >= 1)
       {
         pcout << "Using damped LBFGS update with theta = " << theta
@@ -500,23 +542,30 @@ namespace dftfe
                 << std::endl;
             if (d_usePreconditioner)
               initializePreconditioner(problem);
-            d_alpha = 1.0;
-            std::fill(d_deltaGq[d_maxNumPastSteps - d_numPastSteps].begin(),
-                      d_deltaGq[d_maxNumPastSteps - d_numPastSteps].end(),
-                      0);
-            std::fill(d_deltaXq[d_maxNumPastSteps - d_numPastSteps].begin(),
-                      d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
-                      0);
-            d_rhoq[d_maxNumPastSteps - d_numPastSteps] = 0.0;
-            --d_numPastSteps;
-            if (d_debugLevel >= 2)
-              pcout << "Number of past steps currently stored: "
-                    << d_numPastSteps << std::endl;
-            d_noHistory = d_numPastSteps == 0;
-            computeStep();
+            if (d_numPastSteps > 0)
+              {
+                d_alpha = 1.0;
+                std::fill(d_deltaGq[d_maxNumPastSteps - d_numPastSteps].begin(),
+                          d_deltaGq[d_maxNumPastSteps - d_numPastSteps].end(),
+                          0);
+                std::fill(d_deltaXq[d_maxNumPastSteps - d_numPastSteps].begin(),
+                          d_deltaXq[d_maxNumPastSteps - d_numPastSteps].end(),
+                          0);
+                d_rhoq[d_maxNumPastSteps - d_numPastSteps] = 0.0;
+                --d_numPastSteps;
+                if (d_debugLevel >= 2)
+                  pcout << "Number of past steps currently stored: "
+                        << d_numPastSteps << std::endl;
+                d_noHistory = d_numPastSteps == 0;
+                computeStep();
+              }
+            else
+              {
+                d_noHistory = true;
+              }
           }
       }
-    if (d_debugLevel >= 2)
+    if (d_debugLevel >= 1)
       pcout << "Trying step size (scaling factor): " << d_alpha << std::endl;
   }
 
