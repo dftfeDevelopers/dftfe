@@ -312,34 +312,41 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
                 (*rhoQuadValues).find(cell->id())->second;
               for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
                 {
-                  if(!d_dftParamsPtr->periodicX)
+                  if (!d_dftParamsPtr->periodicX)
                     dipolevector[0] += rhoValues[q_point] *
-                                     fe_values.JxW(q_point) *
-                                     fe_values.quadrature_point(q_point)[0];
-                  if(!d_dftParamsPtr->periodicY)                   
+                                       fe_values.JxW(q_point) *
+                                       fe_values.quadrature_point(q_point)[0];
+                  if (!d_dftParamsPtr->periodicY)
                     dipolevector[1] += rhoValues[q_point] *
-                                     fe_values.JxW(q_point) *
-                                     fe_values.quadrature_point(q_point)[1];
-                  if(!d_dftParamsPtr->periodicZ)
+                                       fe_values.JxW(q_point) *
+                                       fe_values.quadrature_point(q_point)[1];
+                  if (!d_dftParamsPtr->periodicZ)
                     dipolevector[2] += rhoValues[q_point] *
-                                     fe_values.JxW(q_point) *
-                                     fe_values.quadrature_point(q_point)[2];
+                                       fe_values.JxW(q_point) *
+                                       fe_values.quadrature_point(q_point)[2];
                 }
             }
         }
-      MPI_Allreduce(
-        MPI_IN_PLACE, &dipolevector[0], 3, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+      MPI_Allreduce(MPI_IN_PLACE,
+                    &dipolevector[0],
+                    3,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpi_communicator);
       pcout << "Electron dipole moment: " << dipolevector[0] << " "
             << dipolevector[1] << " " << dipolevector[2] << std::endl;
 
       for (int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
         {
-          if(!d_dftParamsPtr->periodicX)
-            dipolevector[0] += -atomLocations[iAtom][1] * atomLocations[iAtom][2];
-          if(!d_dftParamsPtr->periodicY)
-            dipolevector[1] += -atomLocations[iAtom][1] * atomLocations[iAtom][3];
-          if(!d_dftParamsPtr->periodicZ)
-            dipolevector[2] += -atomLocations[iAtom][1] * atomLocations[iAtom][4];
+          if (!d_dftParamsPtr->periodicX)
+            dipolevector[0] +=
+              -atomLocations[iAtom][1] * atomLocations[iAtom][2];
+          if (!d_dftParamsPtr->periodicY)
+            dipolevector[1] +=
+              -atomLocations[iAtom][1] * atomLocations[iAtom][3];
+          if (!d_dftParamsPtr->periodicZ)
+            dipolevector[2] +=
+              -atomLocations[iAtom][1] * atomLocations[iAtom][4];
         }
       pcout << "Total dipole moment: " << dipolevector[0] << " "
             << dipolevector[1] << " " << dipolevector[2] << std::endl;
@@ -367,37 +374,41 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
                 (*rhoQuadValues).find(cell->id())->second;
               for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
                 {
-                  if(!d_dftParamsPtr->periodicX)
+                  if (!d_dftParamsPtr->periodicX)
                     dipolevector[0] +=
-                    rhoValues[q_point] * fe_values.JxW(q_point) *
-                    (fe_values.quadrature_point(q_point)[0] - COM[0]);
-                  if(!d_dftParamsPtr->periodicY)
+                      rhoValues[q_point] * fe_values.JxW(q_point) *
+                      (fe_values.quadrature_point(q_point)[0] - COM[0]);
+                  if (!d_dftParamsPtr->periodicY)
                     dipolevector[1] +=
-                    rhoValues[q_point] * fe_values.JxW(q_point) *
-                    (fe_values.quadrature_point(q_point)[1] - COM[1]);
-                  if(!d_dftParamsPtr->periodicZ)
+                      rhoValues[q_point] * fe_values.JxW(q_point) *
+                      (fe_values.quadrature_point(q_point)[1] - COM[1]);
+                  if (!d_dftParamsPtr->periodicZ)
                     dipolevector[2] +=
-                    rhoValues[q_point] * fe_values.JxW(q_point) *
-                    (fe_values.quadrature_point(q_point)[2] - COM[2]);
+                      rhoValues[q_point] * fe_values.JxW(q_point) *
+                      (fe_values.quadrature_point(q_point)[2] - COM[2]);
                 }
             }
         }
-      MPI_Allreduce(
-        MPI_IN_PLACE, &dipolevector[0], 3, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+      MPI_Allreduce(MPI_IN_PLACE,
+                    &dipolevector[0],
+                    3,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpi_communicator);
       pcout << "Electron dipole moment wrt COM: " << dipolevector[0] << " "
             << dipolevector[1] << " " << dipolevector[2] << std::endl;
 
       for (int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
         {
-          if(!d_dftParamsPtr->periodicX)
+          if (!d_dftParamsPtr->periodicX)
             dipolevector[0] +=
-            -atomLocations[iAtom][1] * (atomLocations[iAtom][2] - COM[0]);
-          if(!d_dftParamsPtr->periodicY)
+              -atomLocations[iAtom][1] * (atomLocations[iAtom][2] - COM[0]);
+          if (!d_dftParamsPtr->periodicY)
             dipolevector[1] +=
-            -atomLocations[iAtom][1] * (atomLocations[iAtom][3] - COM[1]);
-          if(!d_dftParamsPtr->periodicZ)
+              -atomLocations[iAtom][1] * (atomLocations[iAtom][3] - COM[1]);
+          if (!d_dftParamsPtr->periodicZ)
             dipolevector[2] +=
-            -atomLocations[iAtom][1] * (atomLocations[iAtom][4] - COM[2]);
+              -atomLocations[iAtom][1] * (atomLocations[iAtom][4] - COM[2]);
         }
       pcout << "Total dipole moment wrt COM: " << dipolevector[0] << " "
             << dipolevector[1] << " " << dipolevector[2] << std::endl;

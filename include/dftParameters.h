@@ -49,7 +49,8 @@ namespace dftfe
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
-      writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile,computeDipoleMoment;
+      writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile,
+      computeDipoleMoment;
 
 
     /** parameters for LRD preconditioner **/
@@ -129,7 +130,7 @@ namespace dftfe
     bool         readWfcForPdosPspFile;
     double       maxJacobianRatioFactorForMD;
     double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
-    int          extrapolateDensity ;
+    int          extrapolateDensity;
     double       timeStepBOMD;
     unsigned int numberStepsBOMD;
     unsigned int TotalImages;

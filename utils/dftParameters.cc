@@ -169,7 +169,6 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Standard] Computes the dipole moment along the non-periodic axis");
-
       }
       prm.leave_subsection();
 
@@ -1208,7 +1207,7 @@ namespace dftfe
     overlapComputeCommunOrthoRR                    = false;
     autoGPUBlockSizes                              = true;
     maxJacobianRatioFactorForMD                    = 1.5;
-    extrapolateDensity                                  = 0;
+    extrapolateDensity                             = 0;
     timeStepBOMD                                   = 0.5;
     numberStepsBOMD                                = 1000;
     gaussianConstantForce                          = 0.75;
@@ -1310,7 +1309,7 @@ namespace dftfe
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
-      computeDipoleMoment = prm.get_bool("CALCULATE DIPOLE MOMENT");
+      computeDipoleMoment      = prm.get_bool("CALCULATE DIPOLE MOMENT");
     }
     prm.leave_subsection();
 
@@ -1555,7 +1554,7 @@ namespace dftfe
     prm.enter_subsection("Molecular Dynamics");
     {
       atomicMassesFile            = prm.get("ATOMIC MASSES FILE");
-      extrapolateDensity              = prm.get_integer("EXTRAPOLATE DENSITY");
+      extrapolateDensity          = prm.get_integer("EXTRAPOLATE DENSITY");
       isBOMD                      = prm.get_bool("BOMD");
       maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
       timeStepBOMD                = prm.get_double("TIME STEP");
@@ -1639,7 +1638,8 @@ namespace dftfe
         false,
         ExcMessage(
           "DFT-FE Error: Implementation of this feature is not completed yet."));
-    if (spinPolarized == 1 && (extrapolateDensity  >= 1 || reuseDensityGeoOpt == 2))
+    if (spinPolarized == 1 &&
+        (extrapolateDensity >= 1 || reuseDensityGeoOpt == 2))
       AssertThrow(
         false,
         ExcMessage(

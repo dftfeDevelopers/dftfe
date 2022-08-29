@@ -1157,7 +1157,7 @@ namespace dftfe
               *gradRhoInValuesSpinPolarized,
               d_dftParamsPtr->xcFamilyType == "GGA");
           }
-        if (!(d_dftParamsPtr->solverMode == "GS"))
+        if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
             d_rhoOutNodalValues = d_rhoInNodalValues;
             d_rhoOutNodalValues.update_ghost_values();
@@ -1312,7 +1312,7 @@ namespace dftfe
               }
           }
 
-        else if (d_dftParamsPtr->extrapolateDensity  == 1 &&
+        else if (d_dftParamsPtr->extrapolateDensity == 1 &&
                  d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
           {
             interpolateRhoNodalDataToQuadratureDataGeneral(
@@ -1336,7 +1336,7 @@ namespace dftfe
 
             d_rhoInNodalValues.update_ghost_values();
           }
-        else if (d_dftParamsPtr->extrapolateDensity  == 2 &&
+        else if (d_dftParamsPtr->extrapolateDensity == 2 &&
                  d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
           {
             initAtomicRho();
@@ -1713,10 +1713,10 @@ namespace dftfe
       compute_localizationLength("localizationLengths.out");
 
     if (d_dftParamsPtr->computeDipoleMoment)
-    {
-      dipole(d_dofHandlerPRefined, rhoOutValues, false);
-      dipole(d_dofHandlerPRefined, rhoOutValues, true);
-    }  
+      {
+        dipole(d_dofHandlerPRefined, rhoOutValues, false);
+        dipole(d_dofHandlerPRefined, rhoOutValues, true);
+      }
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout

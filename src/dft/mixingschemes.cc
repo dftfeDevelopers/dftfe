@@ -136,7 +136,6 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
   FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
-
   // initialize data structures
   int N = rhoOutVals.size() - 1;
   // pcout << "\nN:" << N << "\n";
@@ -204,6 +203,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
             }
         }
     }
+
+
   // accumulate over all processors
   std::vector<double> ATotal(lda * N), cTotal(ldb * NRHS);
   MPI_Allreduce(
@@ -214,6 +215,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
   // pcout << "A,c:" << ATotal[0] << " " << cTotal[0] << "\n";
   // solve for coefficients
   dgesv_(&N, &NRHS, &ATotal[0], &lda, &ipiv[0], &cTotal[0], &ldb, &info);
+
   if ((info > 0) && (this_mpi_process == 0))
     {
       printf(
