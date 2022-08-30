@@ -1220,10 +1220,11 @@ namespace dftfe
     elpaScalaManager *d_elpaScala;
 
     poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
-#if defined(DFTFE_WITH_GPU)
+#ifdef DFTFE_WITH_GPU
     poissonSolverProblemCUDA<FEOrder, FEOrderElectro>
       d_phiTotalSolverProblemCUDA;
 #endif
+
     bool d_kohnShamDFTOperatorsInitialized;
 
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> *d_kohnShamDFTOperatorPtr;
