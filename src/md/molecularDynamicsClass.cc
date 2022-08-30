@@ -203,10 +203,13 @@ namespace dftfe
           {
             fileDisplacementData.push_back(initDisp);
           }
-
-
+        std::string Folder     = d_restartFilesPath + "/Step0";
+        mkdir(Folder.c_str(), ACCESSPERMS);
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    "Displacement.chk",
+                                    Folder+"/Displacement.chk",
+                                    d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileDisplacementData,
+                                    Folder+"/TotalDisplacement.chk",
                                     d_mpiCommParent);
         //--------------------Starting Initialization
         //----------------------------------------------//
@@ -399,7 +402,7 @@ namespace dftfe
 
     else if (d_restartFlag == 1)
       {
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        /*if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             int           error;
             std::string   file1 = "TotalDisplacement.chk";
@@ -431,7 +434,7 @@ namespace dftfe
 
           }
 
-        MPI_Barrier(d_mpiCommParent);
+        MPI_Barrier(d_mpiCommParent);*/
         InitialiseFromRestartFile(displacements,
                                   velocity,
                                   force,
@@ -1702,7 +1705,7 @@ namespace dftfe
     else if (d_dftPtr->getParametersObject().extrapolateDensity == 2 &&
              d_dftPtr->getParametersObject().spinPolarized != 1)
       DensitySplitExtrapolation(0);
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    /*if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string oldFolder1 = d_restartFilesPath + "/Step";
         oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
@@ -1714,8 +1717,8 @@ namespace dftfe
         dftUtils::copyFile(oldFolder1, ".");
         dftUtils::copyFile(oldFolder2, ".");
       }
-    MPI_Barrier(d_mpiCommParent);
-  }
+    MPI_Barrier(d_mpiCommParent); */
+  } 
 
 
   void
@@ -1793,8 +1796,10 @@ namespace dftfe
   {
     if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
+        std::string prevPath = d_restartFilesPath + "/Step" + std::to_string(time-1) + "/";
+        std::string currPath = d_restartFilesPath + "/Step" + std::to_string(time) + "/";
         std::vector<std::vector<double>> fileDisplacementData;
-        dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
+        dftUtils::readFile(3, fileDisplacementData, prevPath+"Displacement.chk");
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             fileDisplacementData[iCharge][0] =
@@ -1805,13 +1810,14 @@ namespace dftfe
               fileDisplacementData[iCharge][2] + r[iCharge][2];
           }
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    "Displacement.chk",
+                                    currPath+"Displacement.chk",
                                     d_mpiCommParent);
 
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::ofstream outfile;
-            outfile.open("TotalDisplacement.chk", std::ios_base::app);
+            dftUtils::copyFile(prevPath+"TotalDisplacement.chk", currPath+"TotalDisplacement.chk");
+            outfile.open(currPath+"TotalDisplacement.chk", std::ios_base::app);
             std::vector<std::vector<double>> atomLocations;
             atomLocations = d_dftPtr->getAtomLocationsCart();
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -1825,18 +1831,7 @@ namespace dftfe
             outfile.close();
           }
         MPI_Barrier(d_mpiCommParent);
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          {
-            std::string oldpath = "TotalDisplacement.chk";
-            std::string newpath = d_restartFilesPath + "/Step";
-            newpath             = newpath + std::to_string(time) + "/.";
-            dftUtils::copyFile(oldpath, newpath);
-            std::string oldpath2 = "Displacement.chk";
-            std::string newpath2 = d_restartFilesPath + "/Step";
-            newpath2             = newpath2 + std::to_string(time) + "/.";
-            dftUtils::copyFile(oldpath2, newpath2);
-          }
-        MPI_Barrier(d_mpiCommParent);
+
       }
   }
 

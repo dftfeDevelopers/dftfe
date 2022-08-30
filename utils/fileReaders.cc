@@ -207,11 +207,7 @@ namespace dftfe
         {
           std::cout << "Copy failed: " << error << " From: " << pathold
                     << "  To: " << pathnew << std::endl;
-          /*  AssertThrow(error == 0,
-                  dealii::ExcMessage(
-                    std::string("Unable to Copy files: ") + pathold +
-                    " -> " + pathnew + ". The error code is " +
-                    dealii::Utilities::to_string(error) + ".")); */
+
         }
       else
         std::cout << "*Successful copy: "
