@@ -428,20 +428,7 @@ namespace dftfe
                               dealii::Utilities::to_string(error) + ".")));
               }
             pcout << "Removed File: " << file2 << std::endl;
-            /*std::string   file3 = d_restartFilesPath + "/NHCThermostat.chk";
-            std::ifstream readFile3(file3.c_str());
-            if (!readFile3.fail() && d_ThermostatType == "NOSE_HOVER_CHAINS")
-              {
-                error = remove(file3.c_str());
-                AssertThrow(error == 0,
-                            dealii::ExcMessage(std::string(
-                              "Unable to remove file: " + file3 +
-                              ", although it seems to exist. " +
-                              "The error code is " +
-                              dealii::Utilities::to_string(error) + ".")));
-              }
-            pcout << "Removed File: " << file3 << std::endl;
-            */
+
           }
 
         MPI_Barrier(d_mpiCommParent);
@@ -511,8 +498,7 @@ namespace dftfe
                                         massAtoms);
       }
 
-    pcout << "MD run completed" << std::endl;
-    return (1);
+        return (0);
   }
 
 
@@ -637,11 +623,11 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
 
@@ -777,11 +763,11 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
   int
@@ -981,11 +967,11 @@ namespace dftfe
         //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
 
@@ -1121,11 +1107,11 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
 
@@ -1624,7 +1610,7 @@ namespace dftfe
                 << " Step Displacements of TimeStep: " << time - 1
                 << " present in file StepDisplacement.chk.old #" << std::endl;
         MPI_Barrier(d_mpiCommParent);
-
+        if (d_dftPtr->getParametersObject().reproducible_output == false)
         pcout << "#RESTART NOTE: restart files for TimeStep: " << time
               << " successfully created #" << std::endl;
         std::string newFolder0 =
