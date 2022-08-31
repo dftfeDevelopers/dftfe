@@ -456,9 +456,10 @@ namespace dftfe
 
     //--------------------Choosing Ensemble
     //----------------------------------------------//
+    int status;
     if (d_ThermostatType == "NO_CONTROL")
       {
-        int status = mdNVE(KineticEnergyVector,
+         status = mdNVE(KineticEnergyVector,
                            InternalEnergyVector,
                            EntropicEnergyVector,
                            TotalEnergyVector,
@@ -469,7 +470,7 @@ namespace dftfe
       }
     else if (d_ThermostatType == "RESCALE")
       {
-        int status = mdNVTrescaleThermostat(KineticEnergyVector,
+         status = mdNVTrescaleThermostat(KineticEnergyVector,
                                             InternalEnergyVector,
                                             EntropicEnergyVector,
                                             TotalEnergyVector,
@@ -480,7 +481,7 @@ namespace dftfe
       }
     else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
       {
-        int status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
+         status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
                                                     InternalEnergyVector,
                                                     EntropicEnergyVector,
                                                     TotalEnergyVector,
@@ -491,7 +492,7 @@ namespace dftfe
       }
     else if (d_ThermostatType == "CSVR")
       {
-        int status = mdNVTsvrThermostat(KineticEnergyVector,
+         status = mdNVTsvrThermostat(KineticEnergyVector,
                                         InternalEnergyVector,
                                         EntropicEnergyVector,
                                         TotalEnergyVector,
@@ -499,9 +500,15 @@ namespace dftfe
                                         velocity,
                                         force,
                                         massAtoms);
+      
       }
 
-        return (0);
+        if (status == 0)
+        pcout<<"---MD run completed successfully---"<<std::endl;
+        else if (status == 1)
+          pcout<<"---MD run exited: Wall Time Exceeded---"<<std::endl;  
+        return (status);  
+      
   }
 
 

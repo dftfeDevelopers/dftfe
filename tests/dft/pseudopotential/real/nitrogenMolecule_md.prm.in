@@ -2,7 +2,7 @@ set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
 set SOLVER MODE = MD
 set RESTART FOLDER = @SOURCE_DIR@/nitrogenMolecule_md
-set RESTART = false
+set RESTART = true
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
@@ -70,8 +70,7 @@ end
 set H REFINED ELECTROSTATICS=false
 
 subsection SCF Checkpointing and Restart
-  set LOAD RHO DATA = false
-  set SAVE RHO DATA = true
+  set LOAD RHO DATA = true
 end
 
 subsection Molecular Dynamics

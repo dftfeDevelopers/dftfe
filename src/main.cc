@@ -126,13 +126,7 @@ main(int argc, char *argv[])
                                             runParams.verbosity);
 
       int status = mdClass.runMD();
-      if (runParams.verbosity >= 1 && world_rank == 0)
-      {
-        if (status == 0)
-          std::cout<<"---MD run completed successfully---"<<std::endl;
-        else if (status == 1)
-          std::cout<<"---MD run exited: Wall Time Exceeded---"<<std::endl;  
-      }
+
 
     }
 
