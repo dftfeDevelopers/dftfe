@@ -314,4 +314,4 @@ AtomId   49:  0.000690,0.001949,0.002694
 ---------------MD STEP 2 ------------------ 
  Temperature from velocities: 2852.44
  Total Energy in Ha at timeIndex -602.38417
-MD run completed
+---MD run completed successfully---
