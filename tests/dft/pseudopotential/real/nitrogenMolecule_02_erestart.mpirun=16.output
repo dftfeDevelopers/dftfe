@@ -9,6 +9,8 @@ v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 AtomId 0:  -1.300000000000000044e+00 0.000000000000000000e+00 0.000000000000000000e+00
 AtomId 1:  1.300000000000000044e+00 0.000000000000000000e+00 0.000000000000000000e+00
 -----------------------------------------------------------------------------------------
+Reading tria info and rho data from checkpoint in progress...
+...Reading from checkpoint done.
 
 Finite element mesh information
 -------------------------------------------------
@@ -30,11 +32,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-Checkpointing tria info and rho data in progress...
-...checkpointing done.
-Checkpointing tria info and rho data in progress...
-...checkpointing done.
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 2 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -42,6 +40,6 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290857,0.000000,0.000000
-AtomId    1:  0.290856,0.000000,0.000000
+AtomId    0:  0.290832,0.000000,0.000000
+AtomId    1:  0.290845,0.000000,0.000000
 --------------------------------------------------------------------------------------------

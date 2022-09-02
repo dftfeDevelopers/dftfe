@@ -126,8 +126,6 @@ main(int argc, char *argv[])
                                             runParams.verbosity);
 
       int status = mdClass.runMD();
-
-
     }
 
   else if (runParams.solvermode == "NEB")

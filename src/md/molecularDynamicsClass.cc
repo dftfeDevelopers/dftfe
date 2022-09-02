@@ -203,13 +203,13 @@ namespace dftfe
           {
             fileDisplacementData.push_back(initDisp);
           }
-        std::string Folder     = d_restartFilesPath + "/Step0";
+        std::string Folder = d_restartFilesPath + "/Step0";
         mkdir(Folder.c_str(), ACCESSPERMS);
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    Folder+"/Displacement.chk",
+                                    Folder + "/Displacement.chk",
                                     d_mpiCommParent);
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    Folder+"/TotalDisplacement.chk",
+                                    Folder + "/TotalDisplacement.chk",
                                     d_mpiCommParent);
         //--------------------Starting Initialization
         //----------------------------------------------//
@@ -459,40 +459,18 @@ namespace dftfe
     int status;
     if (d_ThermostatType == "NO_CONTROL")
       {
-         status = mdNVE(KineticEnergyVector,
-                           InternalEnergyVector,
-                           EntropicEnergyVector,
-                           TotalEnergyVector,
-                           displacements,
-                           velocity,
-                           force,
-                           massAtoms);
+        status = mdNVE(KineticEnergyVector,
+                       InternalEnergyVector,
+                       EntropicEnergyVector,
+                       TotalEnergyVector,
+                       displacements,
+                       velocity,
+                       force,
+                       massAtoms);
       }
     else if (d_ThermostatType == "RESCALE")
       {
-         status = mdNVTrescaleThermostat(KineticEnergyVector,
-                                            InternalEnergyVector,
-                                            EntropicEnergyVector,
-                                            TotalEnergyVector,
-                                            displacements,
-                                            velocity,
-                                            force,
-                                            massAtoms);
-      }
-    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
-      {
-         status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
-                                                    InternalEnergyVector,
-                                                    EntropicEnergyVector,
-                                                    TotalEnergyVector,
-                                                    displacements,
-                                                    velocity,
-                                                    force,
-                                                    massAtoms);
-      }
-    else if (d_ThermostatType == "CSVR")
-      {
-         status = mdNVTsvrThermostat(KineticEnergyVector,
+        status = mdNVTrescaleThermostat(KineticEnergyVector,
                                         InternalEnergyVector,
                                         EntropicEnergyVector,
                                         TotalEnergyVector,
@@ -500,15 +478,35 @@ namespace dftfe
                                         velocity,
                                         force,
                                         massAtoms);
-      
+      }
+    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
+      {
+        status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
+                                                InternalEnergyVector,
+                                                EntropicEnergyVector,
+                                                TotalEnergyVector,
+                                                displacements,
+                                                velocity,
+                                                force,
+                                                massAtoms);
+      }
+    else if (d_ThermostatType == "CSVR")
+      {
+        status = mdNVTsvrThermostat(KineticEnergyVector,
+                                    InternalEnergyVector,
+                                    EntropicEnergyVector,
+                                    TotalEnergyVector,
+                                    displacements,
+                                    velocity,
+                                    force,
+                                    massAtoms);
       }
 
-        if (status == 0)
-        pcout<<"---MD run completed successfully---"<<std::endl;
-        else if (status == 1)
-          pcout<<"---MD run exited: Wall Time Exceeded---"<<std::endl;  
-        return (status);  
-      
+    if (status == 0)
+      pcout << "---MD run completed successfully---" << std::endl;
+    else if (status == 1)
+      pcout << "---MD run exited: Wall Time Exceeded---" << std::endl;
+    return (status);
   }
 
 
@@ -633,7 +631,6 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            
             return (1);
           }
       }
@@ -773,7 +770,6 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            
             return (1);
           }
       }
@@ -977,7 +973,6 @@ namespace dftfe
         //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            
             return (1);
           }
       }
@@ -1117,7 +1112,6 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            
             return (1);
           }
       }
@@ -1621,8 +1615,8 @@ namespace dftfe
                 << " present in file StepDisplacement.chk.old #" << std::endl;
         MPI_Barrier(d_mpiCommParent);
         if (d_dftPtr->getParametersObject().reproducible_output == false)
-        pcout << "#RESTART NOTE: restart files for TimeStep: " << time
-              << " successfully created #" << std::endl;
+          pcout << "#RESTART NOTE: restart files for TimeStep: " << time
+                << " successfully created #" << std::endl;
         std::string newFolder0 =
           tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
         dftUtils::writeDataIntoFile(d_atomFractionalunwrapped,
@@ -1725,7 +1719,7 @@ namespace dftfe
         dftUtils::copyFile(oldFolder2, ".");
       }
     MPI_Barrier(d_mpiCommParent); */
-  } 
+  }
 
 
   void
@@ -1803,10 +1797,14 @@ namespace dftfe
   {
     if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
-        std::string prevPath = d_restartFilesPath + "/Step" + std::to_string(time-1) + "/";
-        std::string currPath = d_restartFilesPath + "/Step" + std::to_string(time) + "/";
+        std::string prevPath =
+          d_restartFilesPath + "/Step" + std::to_string(time - 1) + "/";
+        std::string currPath =
+          d_restartFilesPath + "/Step" + std::to_string(time) + "/";
         std::vector<std::vector<double>> fileDisplacementData;
-        dftUtils::readFile(3, fileDisplacementData, prevPath+"Displacement.chk");
+        dftUtils::readFile(3,
+                           fileDisplacementData,
+                           prevPath + "Displacement.chk");
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             fileDisplacementData[iCharge][0] =
@@ -1817,14 +1815,16 @@ namespace dftfe
               fileDisplacementData[iCharge][2] + r[iCharge][2];
           }
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    currPath+"Displacement.chk",
+                                    currPath + "Displacement.chk",
                                     d_mpiCommParent);
 
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::ofstream outfile;
-            dftUtils::copyFile(prevPath+"TotalDisplacement.chk", currPath+"TotalDisplacement.chk");
-            outfile.open(currPath+"TotalDisplacement.chk", std::ios_base::app);
+            dftUtils::copyFile(prevPath + "TotalDisplacement.chk",
+                               currPath + "TotalDisplacement.chk");
+            outfile.open(currPath + "TotalDisplacement.chk",
+                         std::ios_base::app);
             std::vector<std::vector<double>> atomLocations;
             atomLocations = d_dftPtr->getAtomLocationsCart();
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -1838,7 +1838,6 @@ namespace dftfe
             outfile.close();
           }
         MPI_Barrier(d_mpiCommParent);
-
       }
   }
 
@@ -1911,14 +1910,21 @@ namespace dftfe
                 flag              = true;
                 coordinatesFile   = file1;
                 domainVectorsFile = file4;
-                pcout << " Restart files are found in: " << path << std::endl;
+                if (d_dftPtr->getParametersObject().verbosity >= 1 &&
+                    !d_dftPtr->getParametersObject().reproducible_output)
+                  pcout << " Restart files are found in: " << path << std::endl;
                 break;
               }
 
             else
-              pcout << "----Error opening restart files present in: " << path
-                    << std::endl
-                    << "Switching to time: " << --time1 << " ----" << std::endl;
+              {
+                if (d_dftPtr->getParametersObject().verbosity >= 1 &&
+                    !d_dftPtr->getParametersObject().reproducible_output)
+                  pcout << "----Error opening restart files present in: "
+                        << path << std::endl
+                        << "Switching to time: " << --time1 << " ----"
+                        << std::endl;
+              }
           }
         if (time1 == t1[0][0])
           scfRestart = true;

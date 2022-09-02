@@ -207,7 +207,6 @@ namespace dftfe
         {
           std::cout << "Copy failed: " << error << " From: " << pathold
                     << "  To: " << pathnew << std::endl;
-
         }
       else
         std::cout << "*Successful copy: "

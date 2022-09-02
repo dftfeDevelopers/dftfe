@@ -1272,7 +1272,8 @@ namespace dftfe
 
         noRemeshRhoDataInit();
 
-        if (d_dftParamsPtr->reuseDensityGeoOpt >= 1 && d_dftParamsPtr->solverMode=="GEOOPT")
+        if (d_dftParamsPtr->reuseDensityGeoOpt >= 1 &&
+            d_dftParamsPtr->solverMode == "GEOOPT")
           {
             if (d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
                 d_dftParamsPtr->spinPolarized != 1)
@@ -1313,7 +1314,8 @@ namespace dftfe
           }
 
         else if (d_dftParamsPtr->extrapolateDensity == 1 &&
-                 d_dftParamsPtr->spinPolarized != 1 &&d_dftParamsPtr->solverMode=="MD")
+                 d_dftParamsPtr->spinPolarized != 1 &&
+                 d_dftParamsPtr->solverMode == "MD")
           {
             interpolateRhoNodalDataToQuadratureDataGeneral(
               d_matrixFreeDataPRefined,
@@ -1337,7 +1339,8 @@ namespace dftfe
             d_rhoInNodalValues.update_ghost_values();
           }
         else if (d_dftParamsPtr->extrapolateDensity == 2 &&
-                 d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->solverMode=="MD")
+                 d_dftParamsPtr->spinPolarized != 1 &&
+                 d_dftParamsPtr->solverMode == "MD")
           {
             initAtomicRho();
             interpolateRhoNodalDataToQuadratureDataGeneral(

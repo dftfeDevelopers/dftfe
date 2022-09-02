@@ -1,7 +1,7 @@
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
 set SOLVER MODE = GS
-set RESTART FOLDER = nitrogenMolecule02_e
+set RESTART FOLDER = ../../nitrogenMolecule_02_e.release/mpirun=16/nitrogenMolecule02_e
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
@@ -40,7 +40,7 @@ subsection DFT functional parameters
 end
 
 subsection SCF Checkpointing and Restart
-  set SAVE RHO DATA = true
+  set LOAD RHO DATA = true
 end
 
 subsection SCF parameters
