@@ -1910,16 +1910,14 @@ namespace dftfe
                 flag              = true;
                 coordinatesFile   = file1;
                 domainVectorsFile = file4;
-                if (d_dftPtr->getParametersObject().verbosity >= 1 &&
-                    !d_dftPtr->getParametersObject().reproducible_output)
+
                   pcout << " Restart files are found in: " << path << std::endl;
                 break;
               }
 
             else
               {
-                if (d_dftPtr->getParametersObject().verbosity >= 1 &&
-                    !d_dftPtr->getParametersObject().reproducible_output)
+
                   pcout << "----Error opening restart files present in: "
                         << path << std::endl
                         << "Switching to time: " << --time1 << " ----"
