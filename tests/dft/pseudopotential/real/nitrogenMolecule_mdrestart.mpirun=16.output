@@ -1,8 +1,8 @@
  MD is in Restart Mode
-Looking for files of TimeStep 2 at: /home/kartickr/dft_fe_development/MDRestartfix/dftfe/tests/dft/pseudopotential/real/nitrogenMolecule_md/mdRestart/Step2
+Looking for files of TimeStep 2 at: ../../nitrogenMolecule_md.release/mpirun=16/nitrogenMolecule_md/mdRestart/Step2
 Starting files search
 Finishing files search
- Restart files are found in: /home/kartickr/dft_fe_development/MDRestartfix/dftfe/tests/dft/pseudopotential/real/nitrogenMolecule_md/mdRestart/Step2
+ Restart files are found in: ../../nitrogenMolecule_md.release/mpirun=16/nitrogenMolecule_md/mdRestart/Step2
 scfRestartFlag: 1
 number of atoms: 2
 number of atoms types: 1

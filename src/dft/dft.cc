@@ -2078,7 +2078,7 @@ namespace dftfe
       d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2;
 
 
-    if (d_dftParamsPtr->isBOMD)
+    if (d_dftParamsPtr->solverMode == "MD")
       firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-4 ?
                            1e-4 :
                            d_dftParamsPtr->chebyshevTolerance;

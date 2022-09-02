@@ -671,7 +671,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                   MPI_Barrier(d_mpiCommParent);
                   init_time = MPI_Wtime();
 
-                  if (d_dftParamsPtr->isBOMD)
+                  if (d_dftParamsPtr->solverMode == "MD")
                     initNoRemesh(false,
                                  true,
                                  (!d_dftParamsPtr->reproducible_output &&
@@ -704,7 +704,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
       MPI_Barrier(d_mpiCommParent);
       init_time = MPI_Wtime();
 
-      if (d_dftParamsPtr->isBOMD)
+      if (d_dftParamsPtr->solverMode == "MD")
         initNoRemesh(
           atomsPeriodicWrapped == 1,
           (maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps >
