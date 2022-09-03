@@ -1911,17 +1911,16 @@ namespace dftfe
                 coordinatesFile   = file1;
                 domainVectorsFile = file4;
 
-                  pcout << " Restart files are found in: " << path << std::endl;
+                pcout << " Restart files are found in: " << path << std::endl;
                 break;
               }
 
             else
               {
-
-                  pcout << "----Error opening restart files present in: "
-                        << path << std::endl
-                        << "Switching to time: " << --time1 << " ----"
-                        << std::endl;
+                pcout << "----Error opening restart files present in: " << path
+                      << std::endl
+                      << "Switching to time: " << --time1 << " ----"
+                      << std::endl;
               }
           }
         if (time1 == t1[0][0])

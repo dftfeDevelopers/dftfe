@@ -164,11 +164,6 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.");
-        prm.declare_entry(
-          "CALCULATE DIPOLE MOMENT",
-          "false",
-          Patterns::Bool(),
-          "[Standard] Computes the dipole moment along the non-periodic axis");
       }
       prm.leave_subsection();
 
@@ -1130,7 +1125,6 @@ namespace dftfe
     writeLdosFile               = false;
     writePdosFile               = false;
     writeLocalizationLengths    = false;
-    computeDipoleMoment         = false;
     std::string coordinatesFile = "";
     domainBoundingVectorsFile   = "";
     kPointDataFile              = "";
@@ -1309,7 +1303,6 @@ namespace dftfe
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
-      computeDipoleMoment      = prm.get_bool("CALCULATE DIPOLE MOMENT");
     }
     prm.leave_subsection();
 

@@ -280,7 +280,7 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
 }
 
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+/*template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::dipole(
   const dealii::DoFHandler<3> &                        dofHandlerOfField,
@@ -413,4 +413,4 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
       pcout << "Total dipole moment wrt COM: " << dipolevector[0] << " "
             << dipolevector[1] << " " << dipolevector[2] << std::endl;
     }
-}
+} */

@@ -1715,11 +1715,11 @@ namespace dftfe
     if (d_dftParamsPtr->writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 
-    if (d_dftParamsPtr->computeDipoleMoment)
+    /*if (d_dftParamsPtr->computeDipoleMoment)
       {
         dipole(d_dofHandlerPRefined, rhoOutValues, false);
         dipole(d_dofHandlerPRefined, rhoOutValues, true);
-      }
+      } */
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout
