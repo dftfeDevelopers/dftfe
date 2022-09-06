@@ -121,7 +121,7 @@ namespace dftfe
       }
       prm.leave_subsection();
 
-      prm.enter_subsection("Postprocessing");
+      prm.enter_subsection("Ground-state derived computations");
       {
         prm.declare_entry(
           "WRITE WFC",
@@ -1201,7 +1201,7 @@ namespace dftfe
     overlapComputeCommunOrthoRR                    = false;
     autoGPUBlockSizes                              = true;
     maxJacobianRatioFactorForMD                    = 1.5;
-    reuseDensityMD                                 = 0;
+    extrapolateDensity                             = 0;
     timeStepBOMD                                   = 0.5;
     numberStepsBOMD                                = 1000;
     gaussianConstantForce                          = 0.75;
@@ -1293,7 +1293,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    prm.enter_subsection("Postprocessing");
+    prm.enter_subsection("Ground-state derived computations");
     {
       writeWfcSolutionFields     = prm.get_bool("WRITE WFC");
       writeDensitySolutionFields = prm.get_bool("WRITE DENSITY");
@@ -1547,7 +1547,7 @@ namespace dftfe
     prm.enter_subsection("Molecular Dynamics");
     {
       atomicMassesFile            = prm.get("ATOMIC MASSES FILE");
-      reuseDensityMD              = prm.get_integer("EXTRAPOLATE DENSITY");
+      extrapolateDensity          = prm.get_integer("EXTRAPOLATE DENSITY");
       isBOMD                      = prm.get_bool("BOMD");
       maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
       timeStepBOMD                = prm.get_double("TIME STEP");
@@ -1631,7 +1631,8 @@ namespace dftfe
         false,
         ExcMessage(
           "DFT-FE Error: Implementation of this feature is not completed yet."));
-    if (spinPolarized == 1 && (reuseDensityMD >= 1 || reuseDensityGeoOpt == 2))
+    if (spinPolarized == 1 &&
+        (extrapolateDensity >= 1 || reuseDensityGeoOpt == 2))
       AssertThrow(
         false,
         ExcMessage(

@@ -764,6 +764,11 @@ namespace dftfe
                 const distributedCPUVec<double> &    rhoNodalField);
 
 
+    void
+    dipole(const dealii::DoFHandler<3> &dofHandlerOfField,
+           const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues,
+           bool                                                 centerofCharge);
+
     double
     rhofieldl2Norm(const dealii::MatrixFree<3, double> &matrixFreeDataObject,
                    const distributedCPUVec<double> &    rhoNodalField,

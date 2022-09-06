@@ -296,4 +296,4 @@ AtomId   31:  0.000776,0.000110,0.002121
 ---------------MD STEP 3 ------------------ 
  Temperature from velocities: 1151.45
  Total Energy in Ha at timeIndex -73.37992
-MD run completed
+---MD run completed successfully---

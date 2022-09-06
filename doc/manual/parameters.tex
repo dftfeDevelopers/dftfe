@@ -3,7 +3,6 @@
 
 
 \begin{itemize}
-
 \item {\it Parameter name:} {\tt H REFINED ELECTROSTATICS}
 \phantomsection\label{parameters:H REFINED ELECTROSTATICS}
 \label{parameters:H_20REFINED_20ELECTROSTATICS}
@@ -78,7 +77,7 @@
 
 \index[prmindex]{RESTART FOLDER}
 \index[prmindexfull]{RESTART FOLDER}
-{\it Value:} .
+{\it Value:} GSfolder
 
 
 {\it Default:} .
@@ -790,7 +789,7 @@
 
 \index[prmindex]{ATOM BALL RADIUS}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!ATOM BALL RADIUS}
-{\it Value:} 3
+{\it Value:} 20
 
 
 {\it Default:} 0.0
@@ -1193,7 +1192,7 @@
 
 \index[prmindex]{ATOMIC COORDINATES FILE}
 \index[prmindexfull]{Geometry!ATOMIC COORDINATES FILE}
-{\it Value:} coordinates.inp
+{\it Value:} coordinates1.inp
 
 
 {\it Default:} 
@@ -1370,7 +1369,7 @@
 
 \index[prmindex]{ION FORCE}
 \index[prmindexfull]{Geometry!Optimization!ION FORCE}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -1404,7 +1403,7 @@
 
 \index[prmindex]{ION RELAX FLAGS FILE}
 \index[prmindexfull]{Geometry!Optimization!ION RELAX FLAGS FILE}
-{\it Value:} relaxationFlags.inp
+{\it Value:} 
 
 
 {\it Default:} 
@@ -1620,6 +1619,131 @@
 {\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
+\subsection{Parameters in section \tt Ground-state derived computations}
+\label{parameters:Ground_2dstate_20derived_20computations}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt READ ATOMIC WFC PDOS FROM PSP FILE}
+\phantomsection\label{parameters:Ground_2dstate derived computations/READ ATOMIC WFC PDOS FROM PSP FILE}
+\label{parameters:Ground_2dstate_20derived_20computations/READ_20ATOMIC_20WFC_20PDOS_20FROM_20PSP_20FILE}
+
+
+\index[prmindex]{READ ATOMIC WFC PDOS FROM PSP FILE}
+\index[prmindexfull]{Ground-state derived computations!READ ATOMIC WFC PDOS FROM PSP FILE}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Read atomic wavefunctons from the pseudopotential file for computing projected density of states. When set to false atomic wavefunctions from the internal database are read, which correspond to sg15 ONCV pseudopotentials.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY}
+
+
+\index[prmindex]{WRITE DENSITY}
+\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY OF STATES}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY OF STATES}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE DENSITY OF STATES}
+\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY OF STATES}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE LOCALIZATION LENGTHS}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE LOCALIZATION LENGTHS}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20LOCALIZATION_20LENGTHS}
+
+
+\index[prmindex]{WRITE LOCALIZATION LENGTHS}
+\index[prmindexfull]{Ground-state derived computations!WRITE LOCALIZATION LENGTHS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE LOCAL DENSITY OF STATES}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE LOCAL DENSITY OF STATES}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20LOCAL_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE LOCAL DENSITY OF STATES}
+\index[prmindexfull]{Ground-state derived computations!WRITE LOCAL DENSITY OF STATES}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE PROJECTED DENSITY OF STATES}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE PROJECTED DENSITY OF STATES}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20PROJECTED_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE PROJECTED DENSITY OF STATES}
+\index[prmindexfull]{Ground-state derived computations!WRITE PROJECTED DENSITY OF STATES}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE WFC}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE WFC}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20WFC}
+
+
+\index[prmindex]{WRITE WFC}
+\index[prmindexfull]{Ground-state derived computations!WRITE WFC}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\end{itemize}
+
 \subsection{Parameters in section \tt Helmholtz problem parameters}
 \label{parameters:Helmholtz_20problem_20parameters}
 
@@ -1671,7 +1795,7 @@
 
 \index[prmindex]{ATOMIC MASSES FILE}
 \index[prmindexfull]{Molecular Dynamics!ATOMIC MASSES FILE}
-{\it Value:} 
+{\it Value:} Mass.inp
 
 
 {\it Default:} 
@@ -1688,7 +1812,7 @@
 
 \index[prmindex]{BOMD}
 \index[prmindexfull]{Molecular Dynamics!BOMD}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -1756,7 +1880,7 @@
 
 \index[prmindex]{NUMBER OF STEPS}
 \index[prmindexfull]{Molecular Dynamics!NUMBER OF STEPS}
-{\it Value:} 1000
+{\it Value:} 9
 
 
 {\it Default:} 1000
@@ -1965,131 +2089,6 @@
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
 \end{itemize}
 
-\subsection{Parameters in section \tt Postprocessing}
-\label{parameters:Postprocessing}
-
-\begin{itemize}
-\item {\it Parameter name:} {\tt READ ATOMIC WFC PDOS FROM PSP FILE}
-\phantomsection\label{parameters:Postprocessing/READ ATOMIC WFC PDOS FROM PSP FILE}
-\label{parameters:Postprocessing/READ_20ATOMIC_20WFC_20PDOS_20FROM_20PSP_20FILE}
-
-
-\index[prmindex]{READ ATOMIC WFC PDOS FROM PSP FILE}
-\index[prmindexfull]{Postprocessing!READ ATOMIC WFC PDOS FROM PSP FILE}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Read atomic wavefunctons from the pseudopotential file for computing projected density of states. When set to false atomic wavefunctions from the internal database are read, which correspond to sg15 ONCV pseudopotentials.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE DENSITY}
-\phantomsection\label{parameters:Postprocessing/WRITE DENSITY}
-\label{parameters:Postprocessing/WRITE_20DENSITY}
-
-
-\index[prmindex]{WRITE DENSITY}
-\index[prmindexfull]{Postprocessing!WRITE DENSITY}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE DENSITY OF STATES}
-\phantomsection\label{parameters:Postprocessing/WRITE DENSITY OF STATES}
-\label{parameters:Postprocessing/WRITE_20DENSITY_20OF_20STATES}
-
-
-\index[prmindex]{WRITE DENSITY OF STATES}
-\index[prmindexfull]{Postprocessing!WRITE DENSITY OF STATES}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE LOCALIZATION LENGTHS}
-\phantomsection\label{parameters:Postprocessing/WRITE LOCALIZATION LENGTHS}
-\label{parameters:Postprocessing/WRITE_20LOCALIZATION_20LENGTHS}
-
-
-\index[prmindex]{WRITE LOCALIZATION LENGTHS}
-\index[prmindexfull]{Postprocessing!WRITE LOCALIZATION LENGTHS}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE LOCAL DENSITY OF STATES}
-\phantomsection\label{parameters:Postprocessing/WRITE LOCAL DENSITY OF STATES}
-\label{parameters:Postprocessing/WRITE_20LOCAL_20DENSITY_20OF_20STATES}
-
-
-\index[prmindex]{WRITE LOCAL DENSITY OF STATES}
-\index[prmindexfull]{Postprocessing!WRITE LOCAL DENSITY OF STATES}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE PROJECTED DENSITY OF STATES}
-\phantomsection\label{parameters:Postprocessing/WRITE PROJECTED DENSITY OF STATES}
-\label{parameters:Postprocessing/WRITE_20PROJECTED_20DENSITY_20OF_20STATES}
-
-
-\index[prmindex]{WRITE PROJECTED DENSITY OF STATES}
-\index[prmindexfull]{Postprocessing!WRITE PROJECTED DENSITY OF STATES}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE WFC}
-\phantomsection\label{parameters:Postprocessing/WRITE WFC}
-\label{parameters:Postprocessing/WRITE_20WFC}
-
-
-\index[prmindex]{WRITE WFC}
-\index[prmindexfull]{Postprocessing!WRITE WFC}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\end{itemize}
-
 \subsection{Parameters in section \tt SCF Checkpointing and Restart}
 \label{parameters:SCF_20Checkpointing_20and_20Restart}
 
@@ -2135,7 +2134,7 @@
 
 \index[prmindex]{SAVE RHO DATA}
 \index[prmindexfull]{SCF Checkpointing and Restart!SAVE RHO DATA}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -2209,7 +2208,7 @@
 
 \index[prmindex]{MAXIMUM ITERATIONS}
 \index[prmindexfull]{SCF parameters!MAXIMUM ITERATIONS}
-{\it Value:} 200
+{\it Value:} 40
 
 
 {\it Default:} 200
@@ -2260,7 +2259,7 @@
 
 \index[prmindex]{MIXING PARAMETER}
 \index[prmindexfull]{SCF parameters!MIXING PARAMETER}
-{\it Value:} 0.0
+{\it Value:} 0.5
 
 
 {\it Default:} 0.0
@@ -2277,7 +2276,7 @@
 
 \index[prmindex]{STARTING WFC}
 \index[prmindexfull]{SCF parameters!STARTING WFC}
-{\it Value:} RANDOM
+{\it Value:} ATOMIC
 
 
 {\it Default:} RANDOM
@@ -2311,7 +2310,7 @@
 
 \index[prmindex]{TOLERANCE}
 \index[prmindexfull]{SCF parameters!TOLERANCE}
-{\it Value:} 5e-5
+{\it Value:} 1e-8
 
 
 {\it Default:} 1e-05
@@ -2455,7 +2454,7 @@
 
 \index[prmindex]{NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
-{\it Value:} 15
+{\it Value:} 8
 
 
 {\it Default:} 0
