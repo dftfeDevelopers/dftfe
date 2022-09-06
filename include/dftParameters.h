@@ -129,7 +129,7 @@ namespace dftfe
     bool         readWfcForPdosPspFile;
     double       maxJacobianRatioFactorForMD;
     double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
-    int          reuseDensityMD;
+    int          extrapolateDensity;
     double       timeStepBOMD;
     unsigned int numberStepsBOMD;
     unsigned int TotalImages;

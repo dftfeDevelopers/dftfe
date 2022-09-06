@@ -120,9 +120,12 @@ main(int argc, char *argv[])
   if (runParams.solvermode == "MD")
     {
       dftfe::molecularDynamicsClass mdClass(parameter_file,
+                                            runParams.restartFilesPath,
                                             MPI_COMM_WORLD,
-                                            runParams.restart);
-      int                           status = mdClass.runMD();
+                                            runParams.restart,
+                                            runParams.verbosity);
+
+      int status = mdClass.runMD();
     }
 
   else if (runParams.solvermode == "NEB")

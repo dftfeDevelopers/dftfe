@@ -41,8 +41,10 @@ namespace dftfe
      *  @param[in] mpi_comm_parent parent mpi communicator
      */
     molecularDynamicsClass(const std::string parameter_file,
+                           const std::string restartFilesPath,
                            const MPI_Comm &  mpi_comm_parent,
-                           const bool        restart);
+                           const bool        restart,
+                           const int         verbosity);
 
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
@@ -77,6 +79,8 @@ namespace dftfe
     // conditional stream object
     dealii::ConditionalOStream pcout;
 
+    std::string d_restartFilesPath;
+    const int   d_verbosity;
 
     unsigned int                     d_restartFlag;
     unsigned int                     d_numberGlobalCharges;
@@ -431,7 +435,9 @@ namespace dftfe
      *
      */
     int
-    checkRestart(std::string &coordinatesFile, std::string &domainVectorsFile);
+    checkRestart(std::string &coordinatesFile,
+                 std::string &domainVectorsFile,
+                 bool &       scfRestart);
 
     /**
      * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *

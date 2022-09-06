@@ -1157,7 +1157,7 @@ namespace dftfe
               *gradRhoInValuesSpinPolarized,
               d_dftParamsPtr->xcFamilyType == "GGA");
           }
-        if (!(d_dftParamsPtr->solverMode == "GS"))
+        if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
             d_rhoOutNodalValues = d_rhoInNodalValues;
             d_rhoOutNodalValues.update_ghost_values();
@@ -1272,7 +1272,8 @@ namespace dftfe
 
         noRemeshRhoDataInit();
 
-        if (d_dftParamsPtr->reuseDensityGeoOpt >= 1 && !d_dftParamsPtr->isBOMD)
+        if (d_dftParamsPtr->reuseDensityGeoOpt >= 1 &&
+            d_dftParamsPtr->solverMode == "GEOOPT")
           {
             if (d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
                 d_dftParamsPtr->spinPolarized != 1)
@@ -1312,8 +1313,9 @@ namespace dftfe
               }
           }
 
-        else if (d_dftParamsPtr->reuseDensityMD == 1 &&
-                 d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
+        else if (d_dftParamsPtr->extrapolateDensity == 1 &&
+                 d_dftParamsPtr->spinPolarized != 1 &&
+                 d_dftParamsPtr->solverMode == "MD")
           {
             interpolateRhoNodalDataToQuadratureDataGeneral(
               d_matrixFreeDataPRefined,
@@ -1336,8 +1338,9 @@ namespace dftfe
 
             d_rhoInNodalValues.update_ghost_values();
           }
-        else if (d_dftParamsPtr->reuseDensityMD == 2 &&
-                 d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
+        else if (d_dftParamsPtr->extrapolateDensity == 2 &&
+                 d_dftParamsPtr->spinPolarized != 1 &&
+                 d_dftParamsPtr->solverMode == "MD")
           {
             initAtomicRho();
             interpolateRhoNodalDataToQuadratureDataGeneral(
@@ -1712,6 +1715,11 @@ namespace dftfe
     if (d_dftParamsPtr->writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 
+    /*if (d_dftParamsPtr->computeDipoleMoment)
+      {
+        dipole(d_dofHandlerPRefined, rhoOutValues, false);
+        dipole(d_dofHandlerPRefined, rhoOutValues, true);
+      } */
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout
@@ -2070,7 +2078,7 @@ namespace dftfe
       d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2;
 
 
-    if (d_dftParamsPtr->isBOMD)
+    if (d_dftParamsPtr->solverMode == "MD")
       firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-4 ?
                            1e-4 :
                            d_dftParamsPtr->chebyshevTolerance;
