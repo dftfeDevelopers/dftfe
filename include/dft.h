@@ -1361,6 +1361,7 @@ namespace dftfe
     std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
     unsigned int                          d_rankCurrentLRD;
     double                                d_relativeErrorJacInvApproxPrevScfLRD;
+    double d_residualNormPredicted;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
