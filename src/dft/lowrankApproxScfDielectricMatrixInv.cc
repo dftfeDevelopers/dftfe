@@ -389,7 +389,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   if (d_rankCurrentLRD >= 1 &&
       d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
     {
-      const double relativeApproxErrorAccumStart =
+      relativeApproxErrorAccumStart =
         internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
                                                      residualRho,
                                                      k0);
@@ -461,7 +461,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           checkvec-= compvec;
 
           //check orthogonal complement against previous scf direction functions to decide to clear or not
-          const double checkTol=0.2;
+          const double checkTol=0.25;
           const double normCheck=checkvec.l2_norm();
           if (normCheck<checkTol || (predictedToActualResidualRatio <0.9) || predictedToActualResidualRatio>1.1)
           {
