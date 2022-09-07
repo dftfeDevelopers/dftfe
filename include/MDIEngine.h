@@ -16,12 +16,12 @@
 //
 
 #if defined(DFTFE_WITH_MDI)
-#ifndef dftfeMDIEngine_H_
-#define dftfeMDIEngine_H_
+#  ifndef dftfeMDIEngine_H_
+#    define dftfeMDIEngine_H_
 
-#include <mpi.h>
-#include <string>
-#include <vector>
+#    include <mpi.h>
+#    include <string>
+#    include <vector>
 
 namespace dftfe
 {
@@ -32,43 +32,41 @@ namespace dftfe
    */
   class MDIEngine
   {
-    public:
+  public:
+    /**
+     * @brief constructor
+     */
+    MDIEngine(int argc, char *argv[]);
 
-      /**
-       * @brief constructor 
-       */
-      MDIEngine(int argc, char *argv[]);
+    int
+    execute_command(const char *command, MDI_Comm mdicomm);
 
-      int execute_command(const char *command, MDI_Comm mdicomm);
-
-      void engine_node(const char *node);
-
-
-    private:
-
-      /// 1 for proc 0, otherwise 0
-      int d_root; 
-
-      /// MDI communicator
-      MDI_Comm d_mdicomm;
-
-      // state of MDI engine
-
-      /// which mode engine is in ()
-      int d_mode;
-      /// current MDI command being processed
-      char * d_mdicmd;
-      /// which node engine is at
-      char * d_node_engine;
-      /// which node driver has requested
-      char * d_node_driver;
-      /// true if driver and engine node currently match
-      bool d_node_match;
-      /// true if EXIT command received from driver
-      bool d_exit_command; 
+    void
+    engine_node(const char *node);
 
 
+  private:
+    /// 1 for proc 0, otherwise 0
+    int d_root;
+
+    /// MDI communicator
+    MDI_Comm d_mdicomm;
+
+    // state of MDI engine
+
+    /// which mode engine is in ()
+    int d_mode;
+    /// current MDI command being processed
+    char *d_mdicmd;
+    /// which node engine is at
+    char *d_node_engine;
+    /// which node driver has requested
+    char *d_node_driver;
+    /// true if driver and engine node currently match
+    bool d_node_match;
+    /// true if EXIT command received from driver
+    bool d_exit_command;
   };
 } // namespace dftfe
-#endif
+#  endif
 #endif

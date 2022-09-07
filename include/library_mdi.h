@@ -16,17 +16,20 @@
 //
 
 #if defined(DFTFE_WITH_MDI)
-#ifndef dftfeLibraryMDI_H_
-#define dftfeLibraryMDI_H_
+#  ifndef dftfeLibraryMDI_H_
+#    define dftfeLibraryMDI_H_
 
 /* C style library calls to DFTFE when a DFTFE shared library is
  *  used as a plugin through MolSSI Driver Interface (MDI). */
 
-#include <mdi.h>
+#    include <mdi.h>
 
-extern "C" {
-int MDI_Plugin_init_dftfe();
-int dftfe_execute_mdi_command(const char *, MDI_Comm, void *);
+extern "C"
+{
+  int
+  MDI_Plugin_init_dftfe();
+  int
+  dftfe_execute_mdi_command(const char *, MDI_Comm, void *);
 }
-#endif
+#  endif
 #endif

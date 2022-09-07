@@ -34,24 +34,47 @@
 #include <sstream>
 #include <sys/stat.h>
 
-
+#if defined(DFTFE_WITH_MDI)
+#  include <mdi.h>
+#endif
 
 int
 main(int argc, char *argv[])
 {
-  // deal.II tests expect parameter file as a first (!) argument
-  AssertThrow(argc > 1,
-              dealii::ExcMessage(
-                "Usage:\n"
-                "mpirun -np nProcs executable parameterfile.prm\n"
-                "\n"));
-
   //
   MPI_Init(&argc, &argv);
   const double start = MPI_Wtime();
   int          world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
+  dftfe::dftfeWrapper::globalHandlesInitialize();
+
+#if defined(DFTFE_WITH_MDI)
+
+  MPI_Comm dftfe_comm = MPI_COMM_WORLD;
+
+  // initialize MDI interface, if compiled in
+
+  int mdi_flag;
+  if (MDI_Init(&argc, &argv))
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  if (MDI_Initialized(&mdi_flag))
+    MPI_Abort(MPI_COMM_WORLD, 1);
+
+  // get the MPI communicator that spans all ranks running DFTFE
+  // when using MDI, this may be a subset of MPI_COMM_WORLD
+
+  if (mdi_flag)
+    if (MDI_MPI_get_world_comm(&dftfe_comm))
+      MPI_Abort(MPI_COMM_WORLD, 1);
+#else
+
+  // deal.II tests expect parameter file as a first (!) argument
+  AssertThrow(argc > 1,
+              dealii::ExcMessage(
+                "Usage:\n"
+                "mpirun -np nProcs executable parameterfile.prm\n"
+                "\n"));
   const std::string parameter_file = argv[1];
 
   dftfe::runParameters runParams;
@@ -114,8 +137,6 @@ main(int argc, char *argv[])
         << std::endl;
     }
 
-  dftfe::dftfeWrapper::globalHandlesInitialize();
-
 
   if (runParams.solvermode == "MD")
     {
@@ -150,7 +171,6 @@ main(int argc, char *argv[])
       dftfeWrapped.run();
     }
 
-  dftfe::dftfeWrapper::globalHandlesFinalize();
 
   const double end = MPI_Wtime();
   if (runParams.verbosity >= 1 && world_rank == 0)
@@ -165,6 +185,10 @@ main(int argc, char *argv[])
         << "============================================================================================="
         << std::endl;
     }
+#endif
+
+  dftfe::dftfeWrapper::globalHandlesFinalize();
+
   MPI_Finalize();
   return 0;
 }
