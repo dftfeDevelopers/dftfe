@@ -40,11 +40,15 @@ namespace dftfe
 {
   molecularDynamicsClass::molecularDynamicsClass(
     const std::string parameter_file,
+    const std::string restartFilesPath,
     const MPI_Comm &  mpi_comm_parent,
-    const bool        restart)
+    const bool        restart,
+    const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_restartFilesPath(restartFilesPath)
+    , d_verbosity(verbosity)
   {
     MPI_Barrier(d_mpiCommParent);
     d_MDstartWallTime = MPI_Wtime();
@@ -53,13 +57,26 @@ namespace dftfe
     if (d_restartFlag == 0)
       {
         d_startingTimeStep = 0;
-        d_dftfeWrapper     = std::make_unique<dftfe::dftfeWrapper>(
-          parameter_file, d_mpiCommParent, true, true, "MD");
+        if (d_this_mpi_process == 0)
+          if (d_restartFilesPath != ".")
+            {
+              mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+            }
+        d_dftfeWrapper =
+          std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                d_mpiCommParent,
+                                                true,
+                                                true,
+                                                "MD",
+                                                d_restartFilesPath);
       }
     else
       {
         std::string coordinatesFile, domainVectorsFile;
-        d_startingTimeStep = checkRestart(coordinatesFile, domainVectorsFile);
+        bool        scfRestart;
+        d_startingTimeStep =
+          checkRestart(coordinatesFile, domainVectorsFile, scfRestart);
+        pcout << "scfRestartFlag: " << scfRestart << std::endl;
         d_dftfeWrapper =
           std::make_unique<dftfe::dftfeWrapper>(parameter_file,
                                                 coordinatesFile,
@@ -67,9 +84,12 @@ namespace dftfe
                                                 d_mpiCommParent,
                                                 true,
                                                 true,
-                                                "MD");
+                                                "MD",
+                                                d_restartFilesPath,
+                                                scfRestart);
       }
 
+    d_restartFilesPath = d_restartFilesPath + "/mdRestart";
     set();
   }
 
@@ -168,9 +188,9 @@ namespace dftfe
     pcout << "RestartFlag: " << d_restartFlag << std::endl;
     if (d_restartFlag == 0)
       {
-        std::string tempfolder = "mdRestart";
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          mkdir(tempfolder.c_str(), ACCESSPERMS);
+          mkdir((d_restartFilesPath).c_str(), ACCESSPERMS);
+
         double KineticEnergy = 0.0, TemperatureFromVelocities = 0.0,
                GroundStateEnergyvalue = 0.0, EntropicEnergyvalue = 0.0;
 
@@ -183,10 +203,13 @@ namespace dftfe
           {
             fileDisplacementData.push_back(initDisp);
           }
-
-
+        std::string Folder = d_restartFilesPath + "/Step0";
+        mkdir(Folder.c_str(), ACCESSPERMS);
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    "Displacement.chk",
+                                    Folder + "/Displacement.chk",
+                                    d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileDisplacementData,
+                                    Folder + "/TotalDisplacement.chk",
                                     d_mpiCommParent);
         //--------------------Starting Initialization
         //----------------------------------------------//
@@ -294,12 +317,14 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
 
-        d_dftPtr->solve(true, false);
+        d_dftPtr->solve(true,
+                        false,
+                        d_dftPtr->getParametersObject().loadRhoData);
         force = d_dftPtr->getForceonAtoms();
-        if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
+        if (d_dftPtr->getParametersObject().extrapolateDensity == 1 &&
             d_dftPtr->getParametersObject().spinPolarized != 1)
           DensityExtrapolation(0);
-        else if (d_dftPtr->getParametersObject().reuseDensityMD == 2 &&
+        else if (d_dftPtr->getParametersObject().extrapolateDensity == 2 &&
                  d_dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(0);
         double dt = d_TimeStep;
@@ -377,7 +402,7 @@ namespace dftfe
 
     else if (d_restartFlag == 1)
       {
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        /*if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             int           error;
             std::string   file1 = "TotalDisplacement.chk";
@@ -406,22 +431,10 @@ namespace dftfe
                               dealii::Utilities::to_string(error) + ".")));
               }
             pcout << "Removed File: " << file2 << std::endl;
-            std::string   file3 = "/mdRestart/NHCThermostat.chk";
-            std::ifstream readFile3(file3.c_str());
-            if (!readFile3.fail() && d_ThermostatType == "NOSE_HOVER_CHAINS")
-              {
-                error = remove(file3.c_str());
-                AssertThrow(error == 0,
-                            dealii::ExcMessage(std::string(
-                              "Unable to remove file: " + file3 +
-                              ", although it seems to exist. " +
-                              "The error code is " +
-                              dealii::Utilities::to_string(error) + ".")));
-              }
-            pcout << "Removed File: " << file3 << std::endl;
+
           }
 
-        MPI_Barrier(d_mpiCommParent);
+        MPI_Barrier(d_mpiCommParent);*/
         InitialiseFromRestartFile(displacements,
                                   velocity,
                                   force,
@@ -443,42 +456,21 @@ namespace dftfe
 
     //--------------------Choosing Ensemble
     //----------------------------------------------//
+    int status;
     if (d_ThermostatType == "NO_CONTROL")
       {
-        int status = mdNVE(KineticEnergyVector,
-                           InternalEnergyVector,
-                           EntropicEnergyVector,
-                           TotalEnergyVector,
-                           displacements,
-                           velocity,
-                           force,
-                           massAtoms);
+        status = mdNVE(KineticEnergyVector,
+                       InternalEnergyVector,
+                       EntropicEnergyVector,
+                       TotalEnergyVector,
+                       displacements,
+                       velocity,
+                       force,
+                       massAtoms);
       }
     else if (d_ThermostatType == "RESCALE")
       {
-        int status = mdNVTrescaleThermostat(KineticEnergyVector,
-                                            InternalEnergyVector,
-                                            EntropicEnergyVector,
-                                            TotalEnergyVector,
-                                            displacements,
-                                            velocity,
-                                            force,
-                                            massAtoms);
-      }
-    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
-      {
-        int status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
-                                                    InternalEnergyVector,
-                                                    EntropicEnergyVector,
-                                                    TotalEnergyVector,
-                                                    displacements,
-                                                    velocity,
-                                                    force,
-                                                    massAtoms);
-      }
-    else if (d_ThermostatType == "CSVR")
-      {
-        int status = mdNVTsvrThermostat(KineticEnergyVector,
+        status = mdNVTrescaleThermostat(KineticEnergyVector,
                                         InternalEnergyVector,
                                         EntropicEnergyVector,
                                         TotalEnergyVector,
@@ -487,9 +479,34 @@ namespace dftfe
                                         force,
                                         massAtoms);
       }
+    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
+      {
+        status = mdNVTnosehoverchainsThermostat(KineticEnergyVector,
+                                                InternalEnergyVector,
+                                                EntropicEnergyVector,
+                                                TotalEnergyVector,
+                                                displacements,
+                                                velocity,
+                                                force,
+                                                massAtoms);
+      }
+    else if (d_ThermostatType == "CSVR")
+      {
+        status = mdNVTsvrThermostat(KineticEnergyVector,
+                                    InternalEnergyVector,
+                                    EntropicEnergyVector,
+                                    TotalEnergyVector,
+                                    displacements,
+                                    velocity,
+                                    force,
+                                    massAtoms);
+      }
 
-    pcout << "MD run completed" << std::endl;
-    return (1);
+    if (status == 0)
+      pcout << "---MD run completed successfully---" << std::endl;
+    else if (status == 1)
+      pcout << "---MD run exited: Wall Time Exceeded---" << std::endl;
+    return (status);
   }
 
 
@@ -614,11 +631,10 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
 
@@ -754,11 +770,10 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
   int
@@ -958,11 +973,10 @@ namespace dftfe
         //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
 
@@ -1098,11 +1112,10 @@ namespace dftfe
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         if (d_MaxWallTime - (curr_time + 1.05 * step_time) < 0)
           {
-            pcout << "Wall Time exceeded" << std::endl;
-            return (0);
+            return (1);
           }
       }
-    return (1);
+    return (0);
   }
 
 
@@ -1268,10 +1281,10 @@ namespace dftfe
             << std::endl;
     d_dftPtr->solve(true, false);
     forceOnAtoms = d_dftPtr->getForceonAtoms();
-    if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
+    if (d_dftPtr->getParametersObject().extrapolateDensity == 1 &&
         d_dftPtr->getParametersObject().spinPolarized != 1)
       DensityExtrapolation(d_TimeIndex - d_startingTimeStep);
-    else if (d_dftPtr->getParametersObject().reuseDensityMD == 2 &&
+    else if (d_dftPtr->getParametersObject().extrapolateDensity == 2 &&
              d_dftPtr->getParametersObject().spinPolarized != 1)
       DensitySplitExtrapolation(d_TimeIndex - d_startingTimeStep);
     // Call Force
@@ -1377,23 +1390,16 @@ namespace dftfe
     double G1, G2, s;
     double L = 3 * (d_numberGlobalCharges - 1);
     /* Start Chain 1*/
-    G2 = (Q[0] * v_e[0] * v_e[0] - kB * Temperature) / Q[1];
-    // pcout << "v_e[0]:"<<v_e[0]<<std::endl;
+    G2     = (Q[0] * v_e[0] * v_e[0] - kB * Temperature) / Q[1];
     v_e[1] = v_e[1] + G2 * d_TimeStep / 4;
-    // pcout << "v_e[1]:"<<v_e[1]<<std::endl;
     v_e[0] = v_e[0] * std::exp(-v_e[1] * d_TimeStep / 8);
-    // pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
     G1     = (2 * KE - L * kB * Temperature) / Q[0];
     v_e[0] = v_e[0] + G1 * d_TimeStep / 4;
-    // pcout << "v_e[0]+G1*timeStep/4:"<<v_e[0]<<std::endl;
     v_e[0] = v_e[0] * std::exp(-v_e[1] * d_TimeStep / 8);
-    // pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
-    e[0] = e[0] + v_e[0] * d_TimeStep / 2;
-    e[1] = e[1] + v_e[1] * d_TimeStep / 2;
-    s    = std::exp(-v_e[0] * d_TimeStep / 2);
-    // pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"//"<<Temperature<<"Q[1]
-    // "<<Q[1]<<"v_e[0] "<<v_e[0]<<"G1 "<<G1<< "Exponent: "<<std::exp(1)<<
-    // std::endl;
+    e[0]   = e[0] + v_e[0] * d_TimeStep / 2;
+    e[1]   = e[1] + v_e[1] * d_TimeStep / 2;
+    s      = std::exp(-v_e[0] * d_TimeStep / 2);
+
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         v[3 * iCharge + 0] = s * v[3 * iCharge + 0];
@@ -1501,76 +1507,78 @@ namespace dftfe
     int                                              time)
 
   {
-    if (d_dftPtr->getParametersObject().reproducible_output == false)
-      {
-        // Writes the restart files for velocities and positions
-        std::vector<std::vector<double>> fileForceData(
-          d_numberGlobalCharges, std::vector<double>(3, 0.0));
-        std::vector<std::vector<double>> fileDispData(d_numberGlobalCharges,
+    // Writes the restart files for velocities and positions
+    std::vector<std::vector<double>> fileForceData(d_numberGlobalCharges,
+                                                   std::vector<double>(3, 0.0));
+    std::vector<std::vector<double>> fileDispData(d_numberGlobalCharges,
+                                                  std::vector<double>(3, 0.0));
+    std::vector<std::vector<double>> fileVelocityData(d_numberGlobalCharges,
                                                       std::vector<double>(3,
                                                                           0.0));
-        std::vector<std::vector<double>> fileVelocityData(
-          d_numberGlobalCharges, std::vector<double>(3, 0.0));
-        std::vector<std::vector<double>> timeIndexData(1,
-                                                       std::vector<double>(1,
-                                                                           0));
-        std::vector<std::vector<double>> KEData(1, std::vector<double>(1, 0.0));
-        std::vector<std::vector<double>> IEData(1, std::vector<double>(1, 0.0));
-        std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
+    std::vector<std::vector<double>> timeIndexData(1,
+                                                   std::vector<double>(1, 0));
+    std::vector<std::vector<double>> KEData(1, std::vector<double>(1, 0.0));
+    std::vector<std::vector<double>> IEData(1, std::vector<double>(1, 0.0));
+    std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
 
-        std::vector<std::vector<double>> mdData(4, std::vector<double>(4, 0.0));
-        if (d_ThermostatType == "NO_CONTROL")
-          mdData[0][0] = 0.0;
-        else if (d_ThermostatType == "RESCALE")
-          mdData[0][0] = 1.0;
-        else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
-          mdData[0][0] = 2.0;
-        else if (d_ThermostatType == "CSVR")
-          mdData[0][0] = 3.0;
-        mdData[1][0]           = d_numberGlobalCharges;
-        mdData[2][0]           = d_TimeStep;
-        mdData[3][0]           = d_TimeIndex;
-        timeIndexData[0][0]    = double(time);
-        std::string Folder     = "mdRestart/Step";
-        std::string tempfolder = Folder + std::to_string(time);
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          mkdir(tempfolder.c_str(), ACCESSPERMS);
-        Folder                  = "mdRestart";
-        std::string newFolder3  = Folder + "/" + "time.chk";
-        std::string newFolder_0 = Folder + "/" + "moleculardynamics.dat";
-        dftUtils::writeDataIntoFile(mdData, newFolder_0, d_mpiCommParent);
-        dftUtils::writeDataIntoFile(timeIndexData, newFolder3, d_mpiCommParent);
-        KEData[0][0] = KineticEnergyVector[time - d_startingTimeStep];
-        IEData[0][0] = InternalEnergyVector[time - d_startingTimeStep];
-        TEData[0][0] = TotalEnergyVector[time - d_startingTimeStep];
-        std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";
-        dftUtils::writeDataIntoFile(KEData, newFolder4, d_mpiCommParent);
-        std::string newFolder5 = tempfolder + "/" + "InternalEnergy.chk";
-        dftUtils::writeDataIntoFile(IEData, newFolder5, d_mpiCommParent);
-        std::string newFolder6 = tempfolder + "/" + "TotalEnergy.chk";
-        dftUtils::writeDataIntoFile(TEData, newFolder6, d_mpiCommParent);
+    std::vector<std::vector<double>> mdData(5, std::vector<double>(3, 0.0));
+    if (d_ThermostatType == "NO_CONTROL")
+      mdData[0][0] = 0.0;
+    else if (d_ThermostatType == "RESCALE")
+      mdData[0][0] = 1.0;
+    else if (d_ThermostatType == "NOSE_HOVER_CHAINS")
+      mdData[0][0] = 2.0;
+    else if (d_ThermostatType == "CSVR")
+      mdData[0][0] = 3.0;
+    mdData[1][0]           = d_numberGlobalCharges;
+    mdData[2][0]           = d_TimeStep;
+    mdData[3][0]           = d_TimeIndex;
+    mdData[4][0]           = d_dftPtr->getParametersObject().periodicX ? 1 : 0;
+    mdData[4][1]           = d_dftPtr->getParametersObject().periodicY ? 1 : 0;
+    mdData[4][2]           = d_dftPtr->getParametersObject().periodicZ ? 1 : 0;
+    timeIndexData[0][0]    = double(time);
+    std::string Folder     = d_restartFilesPath + "/Step";
+    std::string tempfolder = Folder + std::to_string(time);
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+      mkdir(tempfolder.c_str(), ACCESSPERMS);
+    Folder                  = d_restartFilesPath;
+    std::string newFolder3  = Folder + "/" + "time.chk";
+    std::string newFolder_0 = Folder + "/" + "moleculardynamics.dat";
+    dftUtils::writeDataIntoFile(mdData, newFolder_0, d_mpiCommParent);
+    dftUtils::writeDataIntoFile(timeIndexData, newFolder3, d_mpiCommParent);
+    KEData[0][0]           = KineticEnergyVector[time - d_startingTimeStep];
+    IEData[0][0]           = InternalEnergyVector[time - d_startingTimeStep];
+    TEData[0][0]           = TotalEnergyVector[time - d_startingTimeStep];
+    std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";
+    dftUtils::writeDataIntoFile(KEData, newFolder4, d_mpiCommParent);
+    std::string newFolder5 = tempfolder + "/" + "InternalEnergy.chk";
+    dftUtils::writeDataIntoFile(IEData, newFolder5, d_mpiCommParent);
+    std::string newFolder6 = tempfolder + "/" + "TotalEnergy.chk";
+    dftUtils::writeDataIntoFile(TEData, newFolder6, d_mpiCommParent);
 
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-          {
-            fileForceData[iCharge][0] = force[3 * iCharge + 0];
-            fileForceData[iCharge][1] = force[3 * iCharge + 1];
-            fileForceData[iCharge][2] = force[3 * iCharge + 2];
-          }
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-          {
-            fileDispData[iCharge][0] = disp[iCharge][0];
-            fileDispData[iCharge][1] = disp[iCharge][1];
-            fileDispData[iCharge][2] = disp[iCharge][2];
-          }
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-          {
-            fileVelocityData[iCharge][0] = velocity[3 * iCharge + 0];
-            fileVelocityData[iCharge][1] = velocity[3 * iCharge + 1];
-            fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
-          }
-        std::string cordFolder = tempfolder + "/";
-        d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
-        if (time > 1)
+    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+      {
+        fileForceData[iCharge][0] = force[3 * iCharge + 0];
+        fileForceData[iCharge][1] = force[3 * iCharge + 1];
+        fileForceData[iCharge][2] = force[3 * iCharge + 2];
+      }
+    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+      {
+        fileDispData[iCharge][0] = disp[iCharge][0];
+        fileDispData[iCharge][1] = disp[iCharge][1];
+        fileDispData[iCharge][2] = disp[iCharge][2];
+      }
+    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+      {
+        fileVelocityData[iCharge][0] = velocity[3 * iCharge + 0];
+        fileVelocityData[iCharge][1] = velocity[3 * iCharge + 1];
+        fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
+      }
+    std::string cordFolder = tempfolder + "/";
+    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
+    if (time > 1)
+      {
+        if (d_dftPtr->getParametersObject().reproducible_output == false)
           pcout << "#RESTART NOTE: Positions:-"
                 << " Positions of TimeStep: " << time
                 << " present in file atomsFracCoordCurrent.chk" << std::endl
@@ -1581,7 +1589,9 @@ namespace dftfe
         dftUtils::writeDataIntoFile(fileVelocityData,
                                     newFolder1,
                                     d_mpiCommParent);
-        if (time > 1)
+
+
+        if (d_dftPtr->getParametersObject().reproducible_output == false)
           pcout << "#RESTART NOTE: Velocity:-"
                 << " Velocity of TimeStep: " << time
                 << " present in file velocity.chk" << std::endl
@@ -1589,7 +1599,7 @@ namespace dftfe
                 << " present in file velocity.chk.old #" << std::endl;
         std::string newFolder2 = tempfolder + "/" + "force.chk";
         dftUtils::writeDataIntoFile(fileForceData, newFolder2, d_mpiCommParent);
-        if (time > 1)
+        if (d_dftPtr->getParametersObject().reproducible_output == false)
           pcout << "#RESTART NOTE: Force:-"
                 << " Force of TimeStep: " << time
                 << " present in file force.chk" << std::endl
@@ -1597,16 +1607,16 @@ namespace dftfe
                 << " present in file force.chk.old #" << std::endl;
         std::string newFolder22 = tempfolder + "/" + "StepDisplacement.chk";
         dftUtils::writeDataIntoFile(fileDispData, newFolder22, d_mpiCommParent);
-        if (time > 1)
+        if (d_dftPtr->getParametersObject().reproducible_output == false)
           pcout << "#RESTART NOTE: Step Displacement:-"
                 << " Step Displacements of TimeStep: " << time
                 << " present in file StepDisplacement.chk" << std::endl
                 << " Step Displacements of TimeStep: " << time - 1
                 << " present in file StepDisplacement.chk.old #" << std::endl;
         MPI_Barrier(d_mpiCommParent);
-
-        pcout << "#RESTART NOTE: restart files for TimeStep: " << time
-              << " successfully created #" << std::endl;
+        if (d_dftPtr->getParametersObject().reproducible_output == false)
+          pcout << "#RESTART NOTE: restart files for TimeStep: " << time
+                << " successfully created #" << std::endl;
         std::string newFolder0 =
           tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
         dftUtils::writeDataIntoFile(d_atomFractionalunwrapped,
@@ -1646,7 +1656,7 @@ namespace dftfe
                   << atomLocations[iCharge][4] << std::endl;
           }
       }
-    std::string Folder = "mdRestart";
+    std::string Folder = d_restartFilesPath;
 
     std::vector<std::vector<double>> t1, KE0, IE0, TE0;
     std::string                      tempfolder =
@@ -1686,39 +1696,29 @@ namespace dftfe
     KE[0] = KE0[0][0];
     IE[0] = IE0[0][0];
     TE[0] = TE0[0][0];
-    /* std::string                      fileName3  = "force.chk";
-     std::string                      newFolder3 = tempfolder + "/" + fileName3;
-     std::vector<std::vector<double>> fileForceData;
-     dftUtils::readFile(3, fileForceData, newFolder3);
-     for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-       {
-         force[iCharge][0] = fileForceData[iCharge][0];
-         force[iCharge][1] = fileForceData[iCharge][1];
-         force[iCharge][2] = fileForceData[iCharge][2];
-       }
-       */
-    d_dftPtr->solve(true, false);
+
+    d_dftPtr->solve(true, false, d_dftPtr->getParametersObject().loadRhoData);
     force = d_dftPtr->getForceonAtoms();
 
-    if (d_dftPtr->getParametersObject().reuseDensityMD == 1 &&
+    if (d_dftPtr->getParametersObject().extrapolateDensity == 1 &&
         d_dftPtr->getParametersObject().spinPolarized != 1)
       DensityExtrapolation(0);
-    else if (d_dftPtr->getParametersObject().reuseDensityMD == 2 &&
+    else if (d_dftPtr->getParametersObject().extrapolateDensity == 2 &&
              d_dftPtr->getParametersObject().spinPolarized != 1)
       DensitySplitExtrapolation(0);
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    /*if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
-        std::string oldFolder1 = "./mdRestart/Step";
+        std::string oldFolder1 = d_restartFilesPath + "/Step";
         oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
                      "/TotalDisplacement.chk";
-        std::string oldFolder2 = "./mdRestart/Step";
+        std::string oldFolder2 = d_restartFilesPath + "/Step";
         oldFolder2 =
           oldFolder2 + std::to_string(d_startingTimeStep) + "/Displacement.chk";
 
         dftUtils::copyFile(oldFolder1, ".");
         dftUtils::copyFile(oldFolder2, ".");
       }
-    MPI_Barrier(d_mpiCommParent);
+    MPI_Barrier(d_mpiCommParent); */
   }
 
 
@@ -1797,8 +1797,14 @@ namespace dftfe
   {
     if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
+        std::string prevPath =
+          d_restartFilesPath + "/Step" + std::to_string(time - 1) + "/";
+        std::string currPath =
+          d_restartFilesPath + "/Step" + std::to_string(time) + "/";
         std::vector<std::vector<double>> fileDisplacementData;
-        dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
+        dftUtils::readFile(3,
+                           fileDisplacementData,
+                           prevPath + "Displacement.chk");
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             fileDisplacementData[iCharge][0] =
@@ -1809,13 +1815,16 @@ namespace dftfe
               fileDisplacementData[iCharge][2] + r[iCharge][2];
           }
         dftUtils::writeDataIntoFile(fileDisplacementData,
-                                    "Displacement.chk",
+                                    currPath + "Displacement.chk",
                                     d_mpiCommParent);
 
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::ofstream outfile;
-            outfile.open("TotalDisplacement.chk", std::ios_base::app);
+            dftUtils::copyFile(prevPath + "TotalDisplacement.chk",
+                               currPath + "TotalDisplacement.chk");
+            outfile.open(currPath + "TotalDisplacement.chk",
+                         std::ios_base::app);
             std::vector<std::vector<double>> atomLocations;
             atomLocations = d_dftPtr->getAtomLocationsCart();
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -1827,18 +1836,6 @@ namespace dftfe
                         << fileDisplacementData[iCharge][2] << std::endl;
               }
             outfile.close();
-          }
-        MPI_Barrier(d_mpiCommParent);
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          {
-            std::string oldpath = "TotalDisplacement.chk";
-            std::string newpath = "./mdRestart/Step";
-            newpath             = newpath + std::to_string(time) + "/.";
-            dftUtils::copyFile(oldpath, newpath);
-            std::string oldpath2 = "Displacement.chk";
-            std::string newpath2 = "./mdRestart/Step";
-            newpath2             = newpath2 + std::to_string(time) + "/.";
-            dftUtils::copyFile(oldpath2, newpath2);
           }
         MPI_Barrier(d_mpiCommParent);
       }
@@ -1865,7 +1862,8 @@ namespace dftfe
 
   int
   molecularDynamicsClass::checkRestart(std::string &coordinatesFile,
-                                       std::string &domainVectorsFile)
+                                       std::string &domainVectorsFile,
+                                       bool &       scfRestart)
   {
     int time1 = 0;
 
@@ -1873,18 +1871,25 @@ namespace dftfe
       {
         std::vector<std::vector<double>> t1, mdData;
         pcout << " MD is in Restart Mode" << std::endl;
-        dftfe::dftUtils::readFile(1, mdData, "mdRestart/moleculardynamics.dat");
-        dftfe::dftUtils::readFile(1, t1, "mdRestart/time.chk");
+        dftfe::dftUtils::readFile(
+          3, mdData, d_restartFilesPath + "/mdRestart/moleculardynamics.dat");
+        dftfe::dftUtils::readFile(1,
+                                  t1,
+                                  d_restartFilesPath + "/mdRestart/time.chk");
         time1                  = t1[0][0];
-        std::string tempfolder = "mdRestart/Step";
+        std::string tempfolder = d_restartFilesPath + "/mdRestart/Step";
         bool        flag       = false;
         std::string path2      = tempfolder + std::to_string(time1);
         pcout << "Looking for files of TimeStep " << time1 << " at: " << path2
               << std::endl;
         while (!flag && time1 > 1)
           {
-            std::string   path  = tempfolder + std::to_string(time1);
-            std::string   file1 = path + "/atomsFracCoordCurrent.chk";
+            std::string path = tempfolder + std::to_string(time1);
+            std::string file1;
+            if (mdData[4][0] == 1 || mdData[4][1] == 1 || mdData[4][2] == 1)
+              file1 = path + "/atomsFracCoordCurrent.chk";
+            else
+              file1 = path + "/atomsCartCoordCurrent.chk";
             std::string   file2 = path + "/velocity.chk";
             std::string   file3 = path + "/NHCThermostat.chk";
             std::string   file4 = path + "/domainBoundingVectorsCurrent.chk";
@@ -1905,15 +1910,23 @@ namespace dftfe
                 flag              = true;
                 coordinatesFile   = file1;
                 domainVectorsFile = file4;
+
                 pcout << " Restart files are found in: " << path << std::endl;
                 break;
               }
 
             else
-              pcout << "----Error opening restart files present in: " << path
-                    << std::endl
-                    << "Switching to time: " << --time1 << " ----" << std::endl;
+              {
+                pcout << "----Error opening restart files present in: " << path
+                      << std::endl
+                      << "Switching to time: " << --time1 << " ----"
+                      << std::endl;
+              }
           }
+        if (time1 == t1[0][0])
+          scfRestart = true;
+        else
+          scfRestart = false;
       }
 
     return (time1);
