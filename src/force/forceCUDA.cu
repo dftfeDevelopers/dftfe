@@ -1260,11 +1260,11 @@ namespace dftfe
         std::min(dftParams.chebyWfcBlockSize,
                  bandGroupLowHighPlusOneIndices[1]);
 
-      int this_process;
-      MPI_Comm_rank(mpiCommParent, &this_process);
-      cudaDeviceSynchronize();
-      MPI_Barrier(mpiCommParent);
-      double gpu_time = MPI_Wtime();
+      // int this_process;
+      // MPI_Comm_rank(mpiCommParent, &this_process);
+      // cudaDeviceSynchronize();
+      // MPI_Barrier(mpiCommParent);
+      // double gpu_time = MPI_Wtime();
 
       distributedGPUVec<dataTypes::numberGPU> &cudaFlattenedArrayBlock =
         operatorMatrix.getParallelChebyBlockVectorDevice();
@@ -1272,16 +1272,16 @@ namespace dftfe
       distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVectorD =
         operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
-      cudaDeviceSynchronize();
-      MPI_Barrier(mpiCommParent);
-      gpu_time = MPI_Wtime() - gpu_time;
+      // cudaDeviceSynchronize();
+      // MPI_Barrier(mpiCommParent);
+      // gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParams.verbosity >= 2)
-        std::cout
-          << "Time for creating cuda parallel vectors for force computation: "
-          << gpu_time << std::endl;
+      // if (this_process == 0 && dftParams.verbosity >= 2)
+      //  std::cout
+      //    << "Time for creating cuda parallel vectors for force computation: "
+      //    << gpu_time << std::endl;
 
-      gpu_time = MPI_Wtime();
+      // gpu_time = MPI_Wtime();
 
       thrust::device_vector<double> eigenValuesD(blockSize, 0.0);
       thrust::device_vector<double> partialOccupanciesD(blockSize, 0.0);
@@ -1475,13 +1475,13 @@ namespace dftfe
         CUDACHECK(cudaFreeHost(
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp));
 
-      cudaDeviceSynchronize();
-      MPI_Barrier(mpiCommParent);
-      gpu_time = MPI_Wtime() - gpu_time;
+      // cudaDeviceSynchronize();
+      // MPI_Barrier(mpiCommParent);
+      // gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParams.verbosity >= 1)
-        std::cout << "Time taken for all gpu kernels force computation: "
-                  << gpu_time << std::endl;
+      // if (this_process == 0 && dftParams.verbosity >= 1)
+      //  std::cout << "Time taken for all gpu kernels force computation: "
+      //            << gpu_time << std::endl;
     }
 
   } // namespace forceCUDA
