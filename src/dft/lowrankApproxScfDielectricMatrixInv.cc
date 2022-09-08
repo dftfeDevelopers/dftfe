@@ -393,8 +393,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
         internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
                                                      residualRho,
                                                      k0);
-
       pcout << "Starting relative approx error accumulated: "<<relativeApproxErrorAccumStart<<std::endl;
+
+
       if (d_rankCurrentLRD >= maxRankAccum ||
           (relativeApproxErrorAccumStart > d_dftParamsPtr->adaptiveRankRelTolLRD *
                                    d_dftParamsPtr->factorAdapAccumClearLRD))
@@ -417,7 +418,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   int       rankAddedInThisScf = 0;
   const int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-
+  int rankAddedBeforeClearing=0;
   if (relativeApproxErrorAccumStart>d_dftParamsPtr->adaptiveRankRelTolLRD)
   {
     while (((rankAddedInThisScf < maxRankThisScf) &&
@@ -447,7 +448,6 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
 
         ///METHOD 1
-        
         if (d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" && (d_rankCurrentLRD-rankAddedInThisScf)>0)
         {
           compvec = 0;
@@ -463,52 +463,31 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           //check orthogonal complement against previous scf direction functions to decide to clear or not
           const double checkTol=0.25;
           const double normCheck=checkvec.l2_norm();
-          if (normCheck<checkTol || (predictedToActualResidualRatio <0.9) || predictedToActualResidualRatio>1.1)
+          if (normCheck<checkTol || (predictedToActualResidualRatio <0.85) || predictedToActualResidualRatio>1.15)
           {
-              for (int irank = 0; irank < (d_rankCurrentLRD-rankAddedInThisScf); irank++)  
+              /*
+              for (int irank = 0; irank < d_rankCurrentLRD; irank++)  
               {
                 d_vcontainerVals.pop_front();
                 d_fvcontainerVals.pop_front();
                 components.pop_front();
               }
-              d_rankCurrentLRD=rankAddedInThisScf;
+              */
+              d_vcontainerVals.clear();
+              d_fvcontainerVals.clear();
+              components.clear();
+	            rankAddedBeforeClearing=rankAddedInThisScf;
+              d_rankCurrentLRD=0;
+	            rankAddedInThisScf=0;
               pcout
                  << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "<<normCheck<< ", or outside of linear regime, predictedToActualResidualRatio: "<<predictedToActualResidualRatio<< std::endl;
+	            continue;
           }
           else
           {
             pcout<< "Orthogonal component to previous direction functions l2 norm: "<<normCheck <<std::endl;
           }
         }
-        /*
-        ///METHOD 2
-        if (d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
-        {
-
-          //check components on previous scf direction functions to decide to clear or not
-          const double checkTol=0.3;
-          std::deque<double> componentsCopy=components;
-          const int rankCurrentCopy=d_rankCurrentLRD;
-          for (int irank = 0; irank < (rankCurrentCopy-rankAddedInThisScf); irank++)  
-          {
-            if (std::abs(componentsCopy[irank])>checkTol)
-            {
-              d_vcontainerVals.erase(d_vcontainerVals.begin()+irank);
-              d_fvcontainerVals.erase(d_fvcontainerVals.begin()+irank);
-              components.erase(components.begin()+irank);
-             
-
-              pcout<< " Clearing accumulation of history rank: "<<irank<< std::endl;
-              pcout<< " Component: "<<std::abs(componentsCopy[irank])<<std::endl;
-
-              d_rankCurrentLRD--;
-            }
-            else
-              pcout<< " Component on previous direction functions, irank "<<irank<<", component: "<<std::abs(componentsCopy[irank])<<std::endl;            
-          }
-
-        }
-        */
         ////
 
 
@@ -617,7 +596,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   if (d_dftParamsPtr->verbosity >= 4)
     pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRD
-          << " Accumulated in this scf: " << rankAddedInThisScf << std::endl;
+          << " Accumulated or used in this scf: " << (rankAddedInThisScf+rankAddedBeforeClearing) << std::endl;
 
   internalLowrankJacInv::lowrankKernelApply(
     d_fvcontainerVals, d_vcontainerVals, residualRho, k0, kernelAction);
