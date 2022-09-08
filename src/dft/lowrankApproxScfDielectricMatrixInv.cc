@@ -381,7 +381,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   const unsigned int local_size = residualRho.local_size();
 
   const unsigned int maxRankCurrentSCF =
-    d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
+    d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 20 : 20;
   const unsigned int maxRankAccum = 40;
 
   double relativeApproxErrorAccumStart=1.0e+6;
