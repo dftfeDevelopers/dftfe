@@ -36,6 +36,7 @@
 
 #if defined(DFTFE_WITH_MDI)
 #  include <mdi.h>
+#  include "MDIEngine.h"
 #endif
 
 int
@@ -51,7 +52,7 @@ main(int argc, char *argv[])
 
 #if defined(DFTFE_WITH_MDI)
 
-  MPI_Comm dftfe_comm = MPI_COMM_WORLD;
+  MPI_Comm dftfe_mpi_comm = MPI_COMM_WORLD;
 
   // initialize MDI interface, if compiled in
 
@@ -65,8 +66,10 @@ main(int argc, char *argv[])
   // when using MDI, this may be a subset of MPI_COMM_WORLD
 
   if (mdi_flag)
-    if (MDI_MPI_get_world_comm(&dftfe_comm))
+    if (MDI_MPI_get_world_comm(&dftfe_mpi_comm))
       MPI_Abort(MPI_COMM_WORLD, 1);
+
+  dftfe::MDIEngine mdiEngine(dftfe_mpi_comm, argc, argv);
 #else
 
   // deal.II tests expect parameter file as a first (!) argument

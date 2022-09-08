@@ -58,6 +58,8 @@ SET(TARGET_SRC
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
   ./src/dft/dftd.cc
+  ./src/mdi/MDIEngine.cpp
+  ./src/mdi/libraryMDI.cpp
   )
 
 IF (WITH_GPU)

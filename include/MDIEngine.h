@@ -18,7 +18,7 @@
 #if defined(DFTFE_WITH_MDI)
 #  ifndef dftfeMDIEngine_H_
 #    define dftfeMDIEngine_H_
-
+#    include <mdi.h>
 #    include <mpi.h>
 #    include <string>
 #    include <vector>
@@ -36,7 +36,7 @@ namespace dftfe
     /**
      * @brief constructor
      */
-    MDIEngine(int argc, char *argv[]);
+    MDIEngine(MPI_Comm dftfeMPIComm, int argc, char *argv[]);
 
     int
     execute_command(const char *command, MDI_Comm mdicomm);
@@ -52,6 +52,9 @@ namespace dftfe
     /// MDI communicator
     MDI_Comm d_mdicomm;
 
+    /// MDI communicator
+    MPI_Comm d_dftfeMPIComm;
+
     // state of MDI engine
 
     /// which mode engine is in ()
@@ -66,6 +69,50 @@ namespace dftfe
     bool d_node_match;
     /// true if EXIT command received from driver
     bool d_exit_command;
+
+    // flags for data received by engine
+    // not acted on until a request to send <ENERGY,<FORCES,<PE,<STRESS
+    int d_actionflag;
+    int d_flag_natoms, d_flag_types;
+    int d_flag_cell, d_flag_cell_displ;
+    int d_flag_charges, d_flag_coords;
+
+    int     d_sys_natoms;
+    int *   d_sys_types;
+    double *d_sys_charges, *d_sys_coords, *d_sys_velocities;
+    double  d_sys_cell[9], d_sys_cell_displ[3];
+
+    // class methods
+    void
+    mdi_commands();
+
+    void
+    evaluate();
+    void
+    create_system();
+    void
+    adjust_box();
+    void
+    adjust_coords();
+
+    void
+    receive_cell();
+    void
+    receive_cell_displ();
+    void
+    receive_coords();
+    void
+    receive_natoms();
+    void
+    receive_types();
+
+
+    void
+    send_energy();
+    void
+    send_forces();
+    void
+    send_stress();
   };
 } // namespace dftfe
 #  endif
