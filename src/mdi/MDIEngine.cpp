@@ -20,7 +20,6 @@
 #if defined(DFTFE_WITH_MDI)
 #  include "MDIEngine.h"
 #  include "libraryMDI.h"
-#  include "dftfeWrapper.h"
 
 #  include <deal.II/base/data_out_base.h>
 
@@ -78,8 +77,8 @@ namespace dftfe
 
     // internal state of engine
 
-    d_flag_natoms = 0;
-    d_flag_types = d_flag_coords = 0;
+    d_flag_natoms   = 0;
+    d_flag_elements = d_flag_coords = 0;
     d_flag_cell = d_flag_cell_displ = 0;
 
     d_actionflag = 0;
@@ -246,9 +245,9 @@ namespace dftfe
       {
         receive_natoms();
       }
-    else if (strcmp(command, ">TYPES") == 0)
+    else if (strcmp(command, ">ELEMENTS") == 0)
       {
-        receive_types();
+        receive_elements();
 
         // -----------------------------------------------
       }
@@ -321,20 +320,20 @@ namespace dftfe
 
   /* ----------------------------------------------------------------------
      evaluate() invoked by <ENERGY, <FORCES, <STRESS
-     if flag_natoms or flag_types set, create a new system
+     if flag_natoms or flag_elements set, create a new system
      if any receive flags set, evaulate eng/forces/stress
   ---------------------------------------------------------------------- */
 
   void
   MDIEngine::evaluate()
   {
-    int flag_create = d_flag_natoms | d_flag_types;
+    int flag_create = d_flag_natoms | d_flag_elements;
     int flag_other  = d_flag_cell | d_flag_cell_displ | d_flag_coords;
 
     // create new system or incrementally update system
     // NOTE: logic here is as follows
-    //   if >NATOMS or >TYPES received since last eval, create a new system
-    //     using natoms, cell edge vectors, cell_displ, coords, types
+    //   if >NATOMS or >ELEMENTS received since last eval, create a new system
+    //     using natoms, cell edge vectors, cell_displ, coords, elements
     //   otherwise just update existing system
     //     using any of cell edge vectors, cell_displ, coords
     //     assume the received values are incremental changes
@@ -351,18 +350,18 @@ namespace dftfe
 
     // evaluate energy, forces, virial
     // NOTE: here is where you trigger the QM calc to happen
-
+    d_dftfeWrapper.computeDFTFreeEnergy(true, false);
 
 
     // clear flags that trigger next eval
 
-    d_flag_natoms = d_flag_types = 0;
+    d_flag_natoms = d_flag_elements = 0;
     d_flag_cell = d_flag_cell_displ = d_flag_coords = 0;
   }
 
   /* ----------------------------------------------------------------------
      create a new system
-     >CELL, >NATOMS, >TYPES, >COORDS commands are required
+     >CELL, >NATOMS, >ELEMENTS, >COORDS commands are required
      >CELL_DISPL command is optional
   ---------------------------------------------------------------------- */
 
@@ -371,19 +370,52 @@ namespace dftfe
   {
     // check requirements
 
-    if (d_flag_cell == 0 || d_flag_natoms == 0 || d_flag_types == 0 ||
+    if (d_flag_cell == 0 || d_flag_natoms == 0 || d_flag_elements == 0 ||
         d_flag_coords == 0)
       AssertThrow(
         false,
         dealii::ExcMessage(
-          "MDI create_system requires >CELL, >NATOMS, >TYPES, >COORDS MDI commands"));
+          "MDI create_system requires >CELL, >NATOMS, >ELEMENTS, >COORDS MDI commands"));
     // error->all(FLERR,
-    //           "MDI create_system requires >CELL, >NATOMS, >TYPES, >COORDS "
-    //           "MDI commands");
+    //           "MDI create_system requires >CELL, >NATOMS, >ELEMENTS, >COORDS
+    //           " "MDI commands");
 
     // create new system
     // NOTE: here is where you wipeout the old system
-    //       setup a new box, atoms, types, etc
+    //       setup a new box, atoms, elements, etc
+
+    // in atomic units
+    std::vector<std::vector<double>> cell(3, std::vector<double>(3, 0.0));
+    cell[0][0] = d_sys_cell[0];
+    cell[0][1] = d_sys_cell[1];
+    cell[0][2] = d_sys_cell[2];
+    cell[1][0] = d_sys_cell[3];
+    cell[1][1] = d_sys_cell[4];
+    cell[1][2] = d_sys_cell[5];
+
+    // in atomic units
+    std::vector<std::vector<double>> atomicPositionsCart(
+      d_sys_natoms, std::vector<double>(3, 0.0));
+
+    for (unsigned int i = 0; i < d_sys_natoms; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        atomicPositionsCart[i][j] = d_sys_coords[3 * i + j];
+
+    std::vector<unsigned int> atomicNumbers(d_sys_natoms, 0);
+    for (unsigned int i = 0; i < d_sys_natoms; ++i)
+      atomicNumbers[i] = d_sys_elements[i];
+
+    // constructs dftfe wrapper object
+    d_dftfeWrapper.reinit(d_dftfeMPIComm,
+                          true, // use GPU mode if compiled with CUDA
+                          atomicPositionsCart,
+                          atomicNumbers,
+                          cell,
+                          std::vector<bool>{true, true, true}, // pbc
+                          std::vector<unsigned int>{1, 1, 1},  // MP grid
+                          std::vector<bool>{false,
+                                            false,
+                                            false}); // MP grid shift
   }
 
   void
@@ -392,7 +424,20 @@ namespace dftfe
 
   void
   MDIEngine::adjust_coords()
-  {}
+  {
+    std::vector<std::vector<double>> currentCoords =
+      d_dftfeWrapper.getAtomPositionsCart();
+
+    std::vector<std::vector<double>> atomsDisplacements(
+      d_sys_natoms, std::vector<double>(3, 0.0));
+    // in atomic units
+    for (unsigned int i = 0; i < d_sys_natoms; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        atomsDisplacements[i][j] =
+          d_sys_coords[3 * i + j] - currentCoords[i][j];
+
+    d_dftfeWrapper.updateAtomPositions(atomsDisplacements);
+  }
 
   // ----------------------------------------------------------------------
   // ----------------------------------------------------------------------/
@@ -450,11 +495,12 @@ namespace dftfe
     d_actionflag  = 0;
     d_flag_coords = 1;
     int n         = 3 * d_sys_natoms;
-    int ierr      = MDI_Recv(d_sys_coords, n, MDI_DOUBLE, d_mdicomm);
+    d_sys_coords.resize(n);
+    int ierr = MDI_Recv(&d_sys_coords[0], n, MDI_DOUBLE, d_mdicomm);
     if (ierr)
       AssertThrow(false, dealii::ExcMessage("MDI: >COORDS data"));
     // error->all(FLERR, "MDI: >COORDS data");
-    MPI_Bcast(d_sys_coords, n, MPI_DOUBLE, 0, d_dftfeMPIComm);
+    MPI_Bcast(&d_sys_coords[0], n, MPI_DOUBLE, 0, d_dftfeMPIComm);
   }
 
   /* ----------------------------------------------------------------------
@@ -475,22 +521,22 @@ namespace dftfe
   }
 
   /* ----------------------------------------------------------------------
-     >TYPES command
-     NOTE: these are numeric types (atom species)
-           need to figure out what these mean in driver vs QM engine
+     >ELEMENTS command
+     NOTE: these are the atomic numbers for each atom index
   ---------------------------------------------------------------------- */
 
   void
-  MDIEngine::receive_types()
+  MDIEngine::receive_elements()
   {
-    d_actionflag = 0;
-    d_flag_types = 1;
-    int ierr     = MDI_Recv(d_sys_types, d_sys_natoms, MDI_INT, d_mdicomm);
+    d_actionflag    = 0;
+    d_flag_elements = 1;
+    d_sys_elements.resize(d_sys_natoms);
+    int ierr = MDI_Recv(&d_sys_elements[0], d_sys_natoms, MDI_INT, d_mdicomm);
     if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: >TYPES data"));
-    // error->all(FLERR, "MDI: >TYPES data");
+      AssertThrow(false, dealii::ExcMessage("MDI: >ELEMENTS data"));
+    // error->all(FLERR, "MDI: >ELEMENTS data");
     // FIXME: check if the correct communicator is being used
-    MPI_Bcast(d_sys_types, d_sys_natoms, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(&d_sys_elements[0], d_sys_natoms, MPI_INT, 0, d_dftfeMPIComm);
   }
 
   // ----------------------------------------------------------------------
@@ -513,8 +559,8 @@ namespace dftfe
   MDIEngine::send_energy()
   {
     // NOTE: energy should be QM energy
-    double energy;
-    int    ierr = MDI_Send(&energy, 1, MDI_DOUBLE, d_mdicomm);
+    const double energy = d_dftfeWrapper.getDFTFreeEnergy();
+    int          ierr   = MDI_Send(&energy, 1, MDI_DOUBLE, d_mdicomm);
     if (ierr)
       AssertThrow(false, dealii::ExcMessage("MDI: <ENERGY data"));
     // error->all(FLERR, "MDI: <ENERGY data");
@@ -530,7 +576,16 @@ namespace dftfe
   MDIEngine::send_forces()
   {
     // NOTE: forces should be vector of 3*N QM forces
+    std::vector<std::vector<double>> ionicForces =
+      d_dftfeWrapper.getForcesAtoms();
+
     std::vector<double> forces(3 * d_sys_natoms, 0.0);
+    for (unsigned int i = 0; i < d_sys_natoms; i++)
+      {
+        forces[3 * i + 0] = ionicForces[i][0];
+        forces[3 * i + 1] = ionicForces[i][1];
+        forces[3 * i + 2] = ionicForces[i][2];
+      }
     int ierr = MDI_Send(&forces[0], 3 * d_sys_natoms, MDI_DOUBLE, d_mdicomm);
     if (ierr)
       AssertThrow(false, dealii::ExcMessage("MDI: <FORCES data"));
@@ -546,8 +601,21 @@ namespace dftfe
   MDIEngine::send_stress()
   {
     // NOTE: vtensor should be QM virial values (symmetric tensor)
-    std::vector<double> vtensor(6, 0.0);
-    int                 ierr = MDI_Send(&vtensor[0], 6, MDI_DOUBLE, d_mdicomm);
+    std::vector<std::vector<double>> stressTensor =
+      d_dftfeWrapper.getCellStress();
+
+    std::vector<double> stressTensorFlattened(9, 0.0);
+    stressTensorFlattened[0] = stressTensor[0][0];
+    stressTensorFlattened[1] = stressTensor[0][1];
+    stressTensorFlattened[2] = stressTensor[0][2];
+    stressTensorFlattened[3] = stressTensor[1][0];
+    stressTensorFlattened[4] = stressTensor[1][1];
+    stressTensorFlattened[5] = stressTensor[1][2];
+    stressTensorFlattened[6] = stressTensor[2][0];
+    stressTensorFlattened[7] = stressTensor[2][1];
+    stressTensorFlattened[8] = stressTensor[2][2];
+
+    int ierr = MDI_Send(&stressTensorFlattened[0], 9, MDI_DOUBLE, d_mdicomm);
     if (ierr)
       AssertThrow(false, dealii::ExcMessage("MDI: <STRESS data"));
     // error->all(FLERR, "MDI: <STRESS data");

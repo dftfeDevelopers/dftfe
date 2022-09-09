@@ -163,6 +163,17 @@ namespace dftfe
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
   }
 
+
+  //
+  // constructor
+  //
+  dftfeWrapper::dftfeWrapper()
+    : d_dftfeBasePtr(nullptr)
+    , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
+    , d_isGPUToMPITaskBindingSetInternally(false)
+  {}
+
   //
   // constructor
   //
@@ -876,6 +887,18 @@ namespace dftfe
                            std::get<0>(t),
                            std::get<1>(t));
   }
+
+
+  double
+  dftfeWrapper::getDFTFreeEnergy() const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    return d_dftfeBasePtr->getFreeEnergy();
+  }
+
 
   double
   dftfeWrapper::getElectronicEntropicEnergy() const

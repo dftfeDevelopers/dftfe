@@ -18,6 +18,7 @@
 #if defined(DFTFE_WITH_MDI)
 #  ifndef dftfeMDIEngine_H_
 #    define dftfeMDIEngine_H_
+#    include "dftfeWrapper.h"
 #    include <mdi.h>
 #    include <mpi.h>
 #    include <string>
@@ -55,6 +56,9 @@ namespace dftfe
     /// MDI communicator
     MPI_Comm d_dftfeMPIComm;
 
+    /// DFT-FE object
+    dftfeWrapper d_dftfeWrapper;
+
     // state of MDI engine
 
     /// which mode engine is in ()
@@ -73,14 +77,14 @@ namespace dftfe
     // flags for data received by engine
     // not acted on until a request to send <ENERGY,<FORCES,<PE,<STRESS
     int d_actionflag;
-    int d_flag_natoms, d_flag_types;
+    int d_flag_natoms, d_flag_elements;
     int d_flag_cell, d_flag_cell_displ;
     int d_flag_charges, d_flag_coords;
 
-    int     d_sys_natoms;
-    int *   d_sys_types;
-    double *d_sys_charges, *d_sys_coords, *d_sys_velocities;
-    double  d_sys_cell[9], d_sys_cell_displ[3];
+    int                 d_sys_natoms;
+    std::vector<int>    d_sys_elements;
+    std::vector<double> d_sys_coords;
+    double              d_sys_cell[9], d_sys_cell_displ[3];
 
     // class methods
     void
@@ -104,7 +108,7 @@ namespace dftfe
     void
     receive_natoms();
     void
-    receive_types();
+    receive_elements();
 
 
     void
