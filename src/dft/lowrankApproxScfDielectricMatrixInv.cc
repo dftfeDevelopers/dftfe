@@ -382,45 +382,61 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   const unsigned int maxRankCurrentSCF =
     d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 20 : 20;
-  const unsigned int maxRankAccum = 40;
+  const unsigned int maxRankAccum = 25;
 
-  double relativeApproxErrorAccumStart=1.0e+6;
-
+  double relativeApproxError=1.0e+6;
   if (d_rankCurrentLRD >= 1 &&
-      d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
-    {
-      relativeApproxErrorAccumStart =
-        internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
-                                                     residualRho,
+        d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
+  {
+       relativeApproxError =
+         internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
+                                                      residualRho,
                                                      k0);
-      pcout << "Starting relative approx error accumulated: "<<relativeApproxErrorAccumStart<<std::endl;
+       pcout << "Starting relative approx error accumulated: "<<relativeApproxError<<std::endl;
 
+  }
 
-      if (d_rankCurrentLRD >= maxRankAccum ||
-          (relativeApproxErrorAccumStart > d_dftParamsPtr->adaptiveRankRelTolLRD *
-                                   d_dftParamsPtr->factorAdapAccumClearLRD))
+  const double linearityRegimeFac=0.1;
+  int       rankAddedInThisScf = 0;
+  const int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
+  int rankAddedBeforeClearing=0;
+  if (!(relativeApproxError<d_dftParamsPtr->adaptiveRankRelTolLRD && predictedToActualResidualRatio >(1-linearityRegimeFac) && predictedToActualResidualRatio<(1+linearityRegimeFac)))
+  {
+
+    if (d_rankCurrentLRD >= 1 &&
+        d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
+     {
+        if (d_rankCurrentLRD >= maxRankAccum)
         {
           if (d_dftParamsPtr->verbosity >= 4)
             pcout
-              << " Clearing accumulation "
-              << ", relative tolerance current scf: " << relativeApproxErrorAccumStart << std::endl;
+              << " Clearing accumulation as maxRankAccum reached "
+              << ", relative tolerance current scf: " << relativeApproxError << std::endl;
           d_vcontainerVals.clear();
           d_fvcontainerVals.clear();
           d_rankCurrentLRD                      = 0;
         }
-    }
-  else
-    {
-      d_vcontainerVals.clear();
-      d_fvcontainerVals.clear();
-      d_rankCurrentLRD = 0;
-    }
+	else if(predictedToActualResidualRatio <(1-linearityRegimeFac) || predictedToActualResidualRatio>(1+linearityRegimeFac))
+	{
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout
+              << " Clearing accumulation as outside local linear regime "
+              << ", linearity indicator: " << predictedToActualResidualRatio << std::endl;
+          d_vcontainerVals.clear();
+          d_fvcontainerVals.clear();
+          d_rankCurrentLRD                      = 0;
 
-  int       rankAddedInThisScf = 0;
-  const int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-  int rankAddedBeforeClearing=0;
-  if (relativeApproxErrorAccumStart>d_dftParamsPtr->adaptiveRankRelTolLRD)
-  {
+        }
+
+      }
+     else
+      {
+        d_vcontainerVals.clear();
+        d_fvcontainerVals.clear();
+        d_rankCurrentLRD = 0;
+      }
+
+
     while (((rankAddedInThisScf < maxRankThisScf) &&
             d_rankCurrentLRD < maxRankAccum) ||
            ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
@@ -461,18 +477,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           checkvec-= compvec;
 
           //check orthogonal complement against previous scf direction functions to decide to clear or not
-          const double checkTol=0.25;
+          const double checkTol=0.2;
           const double normCheck=checkvec.l2_norm();
-          if (normCheck<checkTol || (predictedToActualResidualRatio <0.85) || predictedToActualResidualRatio>1.15)
+          if (normCheck<checkTol && relativeApproxError>1.6*d_dftParamsPtr->adaptiveRankRelTolLRD)
           {
-              /*
-              for (int irank = 0; irank < d_rankCurrentLRD; irank++)  
-              {
-                d_vcontainerVals.pop_front();
-                d_fvcontainerVals.pop_front();
-                components.pop_front();
-              }
-              */
               d_vcontainerVals.clear();
               d_fvcontainerVals.clear();
               components.clear();
@@ -480,7 +488,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
               d_rankCurrentLRD=0;
 	            rankAddedInThisScf=0;
               pcout
-                 << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "<<normCheck<< ", or outside of linear regime, predictedToActualResidualRatio: "<<predictedToActualResidualRatio<< std::endl;
+                 << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "<<normCheck<< std::endl;
 	            continue;
           }
           else
@@ -565,7 +573,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
         if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE" ||
             d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
           {
-            const double relativeApproxError =
+            relativeApproxError =
               internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
                                                            residualRho,
                                                            k0);
