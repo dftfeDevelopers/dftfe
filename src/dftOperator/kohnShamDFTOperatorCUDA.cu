@@ -625,6 +625,8 @@ namespace dftfe
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::createCublasHandle()
   {
     cublasCreate(&d_cublasHandle);
+    if (dftPtr->d_dftParamsPtr->useTF32GPU)
+      cublasSetMathMode(d_cublasHandle, CUBLAS_TF32_TENSOR_OP_MATH);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
