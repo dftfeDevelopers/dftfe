@@ -82,10 +82,11 @@ namespace dftfe
                           Patterns::Bool(),
                           "[Standard] Use GPU for compute.");
 
-        prm.declare_entry("USE TF32 OP",
-                          "false",
-                          Patterns::Bool(),
-                          "[Advanced] Enables TensorFloat-32 precision for single precision math operations on GPUs, which take advantage of the tensor core hardware. This capability is currently available for certain GPUs like NVIDIA A100. Accuracy of USE TF32 OP has been tested in the case of LRDM preconditioner with USE SINGLE PREC DENSITY RESPONSE mode set to true.");
+        prm.declare_entry(
+          "USE TF32 OP",
+          "false",
+          Patterns::Bool(),
+          "[Advanced] Enables TensorFloat-32 precision for single precision math operations on GPUs, which take advantage of the tensor core hardware. This capability is currently available for certain GPUs like NVIDIA A100. Accuracy of USE TF32 OP has been tested in the case of LRDM preconditioner with USE SINGLE PREC DENSITY RESPONSE mode set to true.");
 
 
         prm.declare_entry(
