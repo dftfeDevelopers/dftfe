@@ -396,7 +396,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   }
 
-  const double linearityRegimeFac=0.1;
+  const double linearityRegimeFac=0.05;
   int       rankAddedInThisScf = 0;
   const int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
   int rankAddedBeforeClearing=0;
@@ -479,7 +479,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           //check orthogonal complement against previous scf direction functions to decide to clear or not
           const double checkTol=0.2;
           const double normCheck=checkvec.l2_norm();
-          if (normCheck<checkTol && relativeApproxError>1.6*d_dftParamsPtr->adaptiveRankRelTolLRD)
+          if (normCheck<0.01 || (normCheck<checkTol && relativeApproxError>1.5*d_dftParamsPtr->adaptiveRankRelTolLRD))
           {
               d_vcontainerVals.clear();
               d_fvcontainerVals.clear();
