@@ -371,12 +371,25 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   distributedCPUVec<double> kernelAction;
   distributedCPUVec<double> compvec;
   distributedCPUVec<double> checkvec;
-  distributedCPUVec<double> predictedResidual;
   distributedCPUVec<double> dummy;
   kernelAction.reinit(residualRho);
   checkvec.reinit(residualRho);
   compvec.reinit(residualRho);
-  predictedResidual.reinit(residualRho);
+
+  if (scfIter>1)
+  {
+    double cosAnglePredictedActualResidual=rhofieldInnerProduct(d_matrixFreeDataPRefined,
+                             residualRho,
+                             d_residualPredicted,
+                             d_densityDofHandlerIndexElectro,
+                             d_densityQuadratureIdElectro);
+    cosAnglePredictedActualResidual=cosAnglePredictedActualResidual/d_residualNormPredicted/normValue;
+    pcout<<"cosAnglePredictedActualResidual: "<<cosAnglePredictedActualResidual<<std::endl;
+  }
+
+  d_residualPredicted.reinit(residualRho);
+  d_residualPredicted=0;
+
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
@@ -396,7 +409,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   }
 
-  const double linearityRegimeFac=0.05;
+  const double linearityRegimeFac=0.1;
   int       rankAddedInThisScf = 0;
   const int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
   int rankAddedBeforeClearing=0;
@@ -479,7 +492,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           //check orthogonal complement against previous scf direction functions to decide to clear or not
           const double checkTol=0.2;
           const double normCheck=checkvec.l2_norm();
-          if (normCheck<0.01 || (normCheck<checkTol && relativeApproxError>1.5*d_dftParamsPtr->adaptiveRankRelTolLRD))
+          if (normCheck<0.01 || (normCheck<checkTol && relativeApproxError>1.6*d_dftParamsPtr->adaptiveRankRelTolLRD))
           {
               d_vcontainerVals.clear();
               d_fvcontainerVals.clear();
@@ -653,15 +666,15 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   internalLowrankJacInv::predictNextStepResidual(
     d_fvcontainerVals,
     residualRho,
-    predictedResidual,
+    d_residualPredicted,
     k0,
     -const2);
 
-  predictedResidual.update_ghost_values();
+  d_residualPredicted.update_ghost_values();
 
   // compute l2 norm of the field residual
   d_residualNormPredicted=rhofieldl2Norm(d_matrixFreeDataPRefined,
-                             predictedResidual,
+                             d_residualPredicted,
                              d_densityDofHandlerIndexElectro,
                              d_densityQuadratureIdElectro);
 
