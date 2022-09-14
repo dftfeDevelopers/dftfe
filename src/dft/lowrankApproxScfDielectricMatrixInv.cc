@@ -357,12 +357,14 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
                              d_densityDofHandlerIndexElectro,
                              d_densityQuadratureIdElectro);
 
-  const double predictedToActualResidualRatio=d_residualNormPredicted/normValue;
+  const double predictedToActualResidualRatio=d_residualPredicted.l2_norm()/residualRho.l2_norm();
+	  //d_residualNormPredicted/normValue;
   if (scfIter>1)
   {
     pcout<<"Actual norm value: "<<normValue<<std::endl;
     pcout<<"Predicted norm value: "<<d_residualNormPredicted<<std::endl;   
     pcout<<"Ratio: "<<predictedToActualResidualRatio<<std::endl;
+    //pcout<<"RatioNew: "<<d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;    
   }
 
   const double k0 = 1.0;
@@ -376,15 +378,21 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   checkvec.reinit(residualRho);
   compvec.reinit(residualRho);
 
+  double anglePredictedActualResidual=1.0;
   if (scfIter>1)
   {
-    double cosAnglePredictedActualResidual=rhofieldInnerProduct(d_matrixFreeDataPRefined,
+    anglePredictedActualResidual=(d_residualPredicted*residualRho)/d_residualPredicted.l2_norm()/residualRho.l2_norm();
+    /*
+	    rhofieldInnerProduct(d_matrixFreeDataPRefined,
                              residualRho,
                              d_residualPredicted,
                              d_densityDofHandlerIndexElectro,
                              d_densityQuadratureIdElectro);
     cosAnglePredictedActualResidual=cosAnglePredictedActualResidual/d_residualNormPredicted/normValue;
-    pcout<<"cosAnglePredictedActualResidual: "<<cosAnglePredictedActualResidual<<std::endl;
+    */
+    pcout<<"anglePredictedActualResidual: "<<anglePredictedActualResidual<<std::endl;
+    //pcout<<"cosAnglePredictedActualResidualNew: "<<(d_residualPredicted*residualRho)/d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;
+    
   }
 
   d_residualPredicted.reinit(residualRho);
@@ -393,9 +401,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  const unsigned int maxRankCurrentSCF =
-    d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 20 : 20;
-  const unsigned int maxRankAccum = 25;
+  //const unsigned int maxRankCurrentSCF =
+  //  d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 20 : 20;
+  const unsigned int maxRankAccum = 20;
 
   double relativeApproxError=1.0e+6;
   if (d_rankCurrentLRD >= 1 &&
@@ -409,11 +417,11 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   }
 
-  const double linearityRegimeFac=0.1;
+  const double linearityRegimeFac=0.15;
+  const double angleTol=0.6;//
   int       rankAddedInThisScf = 0;
-  const int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
   int rankAddedBeforeClearing=0;
-  if (!(relativeApproxError<d_dftParamsPtr->adaptiveRankRelTolLRD && predictedToActualResidualRatio >(1-linearityRegimeFac) && predictedToActualResidualRatio<(1+linearityRegimeFac)))
+  if (!(relativeApproxError<d_dftParamsPtr->adaptiveRankRelTolLRD && predictedToActualResidualRatio >(1-linearityRegimeFac) && predictedToActualResidualRatio<(1+linearityRegimeFac) && anglePredictedActualResidual>angleTol))
   {
 
     if (d_rankCurrentLRD >= 1 &&
@@ -429,12 +437,12 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           d_fvcontainerVals.clear();
           d_rankCurrentLRD                      = 0;
         }
-	else if(predictedToActualResidualRatio <(1-linearityRegimeFac) || predictedToActualResidualRatio>(1+linearityRegimeFac))
+	else if(predictedToActualResidualRatio <(1-linearityRegimeFac) || predictedToActualResidualRatio>(1+linearityRegimeFac) || anglePredictedActualResidual<angleTol)
 	{
           if (d_dftParamsPtr->verbosity >= 4)
             pcout
               << " Clearing accumulation as outside local linear regime "
-              << ", linearity indicator: " << predictedToActualResidualRatio << std::endl;
+              << ", linearity indicator: " << predictedToActualResidualRatio <<" , angle: "<<anglePredictedActualResidual<< std::endl;
           d_vcontainerVals.clear();
           d_fvcontainerVals.clear();
           d_rankCurrentLRD                      = 0;
@@ -449,6 +457,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
         d_rankCurrentLRD = 0;
       }
 
+    int maxRankThisScf     = (scfIter < 2) ? 5 : (d_rankCurrentLRD>=1?6:20);     
 
     while (((rankAddedInThisScf < maxRankThisScf) &&
             d_rankCurrentLRD < maxRankAccum) ||
@@ -490,19 +499,20 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           checkvec-= compvec;
 
           //check orthogonal complement against previous scf direction functions to decide to clear or not
-          const double checkTol=0.2;
+          //const double checkTol=0.2;
           const double normCheck=checkvec.l2_norm();
-          if (normCheck<0.01 || (normCheck<checkTol && relativeApproxError>1.6*d_dftParamsPtr->adaptiveRankRelTolLRD))
+          if (normCheck<0.01 || (predictedToActualResidualRatio <(1-normCheck*linearityRegimeFac) || predictedToActualResidualRatio>(1+normCheck*linearityRegimeFac) || anglePredictedActualResidual<(1.0-normCheck*(1.0-angleTol))))
           {
               d_vcontainerVals.clear();
               d_fvcontainerVals.clear();
               components.clear();
-	            rankAddedBeforeClearing=rankAddedInThisScf;
+	      rankAddedBeforeClearing=rankAddedInThisScf;
               d_rankCurrentLRD=0;
-	            rankAddedInThisScf=0;
+	      rankAddedInThisScf=0;
+	      maxRankThisScf=20;
               pcout
                  << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "<<normCheck<< std::endl;
-	            continue;
+	      continue;
           }
           else
           {
