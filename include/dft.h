@@ -1376,6 +1376,7 @@ namespace dftfe
     unsigned int                          d_rankCurrentLRD;
     double                                d_relativeErrorJacInvApproxPrevScfLRD;
     double d_residualNormPredicted;
+    bool d_tolReached;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
