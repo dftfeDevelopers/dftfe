@@ -424,7 +424,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   if (!(relativeApproxError<d_dftParamsPtr->adaptiveRankRelTolLRD && predictedToActualResidualRatio >(1-linearityRegimeFac) && predictedToActualResidualRatio<(1+linearityRegimeFac)))
   {
 
-    if (d_rankCurrentLRD >= 1 &&
+    if ((normValue < d_dftParamsPtr->startingNormLRDLargeDamping) &&
+        d_rankCurrentLRD >= 1 &&
         d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
      {
         if (!d_tolReached)
@@ -452,6 +453,10 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
       }
      else
       {
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout
+              << " Clearing accumulation as residual is not sufficiently reduced yet "
+              << std::endl;	      
         d_vcontainerVals.clear();
         d_fvcontainerVals.clear();
         d_rankCurrentLRD = 0;
