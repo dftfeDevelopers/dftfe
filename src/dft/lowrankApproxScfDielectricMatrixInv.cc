@@ -417,14 +417,14 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   }
 
-  const double linearityRegimeFac=0.07;
+  const double linearityRegimeFac=0.1;
   //const double angleTol=0.0;//
   int       rankAddedInThisScf = 0;
   int rankAddedBeforeClearing=0;
   if (!(relativeApproxError<d_dftParamsPtr->adaptiveRankRelTolLRD && predictedToActualResidualRatio >(1-linearityRegimeFac) && predictedToActualResidualRatio<(1+linearityRegimeFac)))
   {
 
-    if ((normValue < 0.5) &&
+    if ((normValue < 1.0) &&
         d_rankCurrentLRD >= 1 &&
         d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
      {
