@@ -120,6 +120,7 @@ namespace dftfe
     bool         createConstraintsFromSerialDofhandler;
     bool         bandParalOpt;
     bool         useGPU;
+    bool         useTF32GPU;
     bool         gpuFineGrainedTimings;
     bool         allowFullCPUMemSubspaceRot;
     bool         useMixedPrecCheby;
