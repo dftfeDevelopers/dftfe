@@ -462,7 +462,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
         d_rankCurrentLRD = 0;
       }
 
-    int maxRankThisScf     = (scfIter < 2) ? 5 : (d_rankCurrentLRD>=1?6:20);     
+    int maxRankThisScf     = (scfIter < 2) ? 5 : (d_rankCurrentLRD>=1?5:20);     
     d_tolReached=false;
     while (((rankAddedInThisScf < maxRankThisScf)) ||
            ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
