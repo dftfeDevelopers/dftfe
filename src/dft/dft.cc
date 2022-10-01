@@ -219,6 +219,8 @@ namespace dftfe
 
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
+
+    delete excWavefunctionBasePtr;
   }
 
   namespace internaldft
@@ -3132,8 +3134,7 @@ namespace dftfe
                   eigenValues,
                   d_kPointWeights,
                   fermiEnergy,
-                  funcX,
-                  funcC,
+                  excFunctionalPtr,
                   dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
@@ -3171,8 +3172,7 @@ namespace dftfe
                   fermiEnergy,
                   fermiEnergyUp,
                   fermiEnergyDown,
-                  funcX,
-                  funcC,
+                  excFunctionalPtr,
                   dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
@@ -3344,8 +3344,7 @@ namespace dftfe
                                  eigenValues,
                                  d_kPointWeights,
                                  fermiEnergy,
-                                 funcX,
-                                 funcC,
+                                 excFunctionalPtr,
                                  dispersionCorr,
                                  d_phiInValues,
                                  d_phiTotRhoOut,
@@ -3382,8 +3381,7 @@ namespace dftfe
           fermiEnergy,
           fermiEnergyUp,
           fermiEnergyDown,
-          funcX,
-          funcC,
+          excFunctionalPtr,
           dispersionCorr,
           d_phiInValues,
           d_phiTotRhoOut,

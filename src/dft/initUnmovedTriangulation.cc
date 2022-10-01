@@ -346,6 +346,14 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
       exit(-1);
     }
 
+  excManager::createExcClassObj(d_dftParamsPtr->xc_id  ,
+                                isSpinPolarized
+                                0.0, // exx factor
+                                false, // scale exchange
+                                1.0, // scale exchange factor
+                                true,// computeCorrelation
+                                excFunctionalPtr);
+
 
   computing_timer.leave_subsection("unmoved setup");
 }

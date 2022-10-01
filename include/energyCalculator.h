@@ -19,6 +19,7 @@
 #include <dftd.h>
 #include <xc.h>
 #include "dftParameters.h"
+#include <excWavefunctionBaseClass.h>
 
 #ifndef energyCalculator_H_
 #  define energyCalculator_H_
@@ -102,8 +103,7 @@ namespace dftfe
       const std::vector<std::vector<double>> &eigenValues,
       const std::vector<double> &             kPointWeights,
       const double                            fermiEnergy,
-      const xc_func_type &                    funcX,
-      const xc_func_type &                    funcC,
+      const excWavefunctionBaseClass * excFunctionalPtr,
       const dispersionCorrection &            dispersionCorr,
       const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
       const distributedCPUVec<double> &                    phiTotRhoOut,
@@ -277,8 +277,7 @@ namespace dftfe
       const double                            fermiEnergy,
       const double                            fermiEnergyUp,
       const double                            fermiEnergyDown,
-      const xc_func_type &                    funcX,
-      const xc_func_type &                    funcC,
+      const excWavefunctionBaseClass * excFunctionalPtr,
       const dispersionCorrection &            dispersionCorr,
       const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
       const distributedCPUVec<double> &                    phiTotRhoOut,

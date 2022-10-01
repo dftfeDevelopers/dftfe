@@ -15,6 +15,12 @@ SET(TARGET_SRC
   ./src/dft/energyCalculator.cc
   ./src/dft/densityCalculatorCPU.cc
   ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
+  ./src/excManager/excDensityBaseClass.cpp
+  ./src/excManager/excDensityLDAClass.cpp
+  ./src/excManager/excWavefunctionBaseClass.cpp
+  ./src/excManager/excDensityGGAClass.cpp
+  ./src/excManager/excManager.cpp
+  ./src/excManager/excWavefunctionNoneClass.cpp
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
