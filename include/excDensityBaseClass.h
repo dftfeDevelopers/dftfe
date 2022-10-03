@@ -47,7 +47,7 @@ namespace dftfe
   class excDensityBaseClass
   {
   public :
-    excDensityBaseClass(xc_func_type funcX, xcfunc_type funcC, bool scaleExchange,
+    excDensityBaseClass(xc_func_type funcX, xc_func_type funcC, bool scaleExchange,
                         bool computeCorrelation, double scaleExchangeFactor);
 
     virtual void computeDensityBasedEnergyDensity(unsigned int sizeInput,
@@ -56,13 +56,13 @@ namespace dftfe
                             std::vector<double> &outputCorrEnergyDensity) const = 0 ;
 
     virtual void computeDensityBasedVxc(unsigned int sizeInput,
-                                     const std::map<rhoDataAttributes,const std::vector<double>&> &rhoData,
-                           std::map<VeffOutputDataAttributes,const std::vector<double>*> &outputDerExchangeEnergy,
-                           std::map<VeffOutputDataAttributes,const std::vector<double>*> &outputDerCorrEnergy) const = 0 ;
+                                     const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
+                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const = 0 ;
 
     densityFamilyType getDensityBasedFamilyType() const ;
 
-  private :
+  protected :
     densityFamilyType d_familyType;
     xc_func_type d_funcX, d_funcC;
     bool d_scaleExchange, d_computeCorrelation;

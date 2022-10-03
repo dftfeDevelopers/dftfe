@@ -24,10 +24,11 @@ namespace dftfe
 {
 class excWavefunctionNoneClass : public excWavefunctionBaseClass
 {
+	public:
   excWavefunctionNoneClass(
-    densityFamilyType densityFamilyTypeObj,,
+    densityFamilyType densityFamilyTypeObj,
     xc_func_type funcX,
-                           xcfunc_type funcC,
+                           xc_func_type funcC,
                            double factorForWavefunctionDependent,
                            bool scaleExchange,
                            bool computeCorrelation,

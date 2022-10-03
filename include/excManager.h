@@ -18,17 +18,20 @@
 #ifndef DFTFE_EXCMANAGER_H
 #define DFTFE_EXCMANAGER_H
 
+#include <excWavefunctionNoneClass.h>
+#include <excWavefunctionBaseClass.h>
 namespace dftfe
 {
   class excManager
   {
+	  public:
     static void createExcClassObj(unsigned int xc_id,
-                      bool isSpinPolarized,
+                      int isSpinPolarized,
                       unsigned int exxFactor,
                       bool scaleExchange,
-                      unsigned int scaleExchangeFactor
+                      unsigned int scaleExchangeFactor,
                       bool computeCorrelation,
-                      excWavefunctionBaseClass *excClassPtr);
+                      excWavefunctionBaseClass * &excClassPtr);
   };
 }
 

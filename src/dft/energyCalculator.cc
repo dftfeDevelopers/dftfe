@@ -525,8 +525,8 @@ namespace dftfe
           std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
           std::map<rhoDataAttributes,const std::vector<double>*>  rhoInData;
 
-          std::map<VeffOutputDataAttributes,const std::vector<double>*> outputDerExchangeEnergy;
-          std::map<VeffOutputDataAttributes,const std::vector<double>*> outputDerCorrEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double>*> outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double>*> outputDerCorrEnergy;
 
 
           if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
@@ -1542,8 +1542,8 @@ namespace dftfe
           std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
           std::map<rhoDataAttributes,const std::vector<double>*>  rhoInData;
 
-          std::map<VeffOutputDataAttributes,const std::vector<double>*> outputDerExchangeEnergy;
-          std::map<VeffOutputDataAttributes,const std::vector<double>*> outputDerCorrEnergy;
+          std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerCorrEnergy;
 
 
           if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)

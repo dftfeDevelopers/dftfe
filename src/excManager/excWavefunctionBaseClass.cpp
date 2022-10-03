@@ -24,7 +24,7 @@ namespace dftfe
   excWavefunctionBaseClass::excWavefunctionBaseClass(
                            densityFamilyType densityFamilyTypeObj,
                            xc_func_type funcX,
-                           xcfunc_type funcC,
+                           xc_func_type funcC,
                            double factorForWavefunctionDependent,
                            bool scaleExchange,
                            bool computeCorrelation,
@@ -44,7 +44,7 @@ namespace dftfe
                                                             computeCorrelation,
                                                             scaleExchangeFactor);
           break;
-        case default : std::cout<<" Error in deciphering "
+        default : std::cout<<" Error in deciphering "
                        "family type of density based exc functional\n";
           break;
       }
@@ -56,7 +56,7 @@ namespace dftfe
   }
 
   void excWavefunctionBaseClass::computeDensityBasedEnergyDensity(unsigned int sizeInput,
-                                   const std::map<rhoDataAttributes,const std::vector<double>&> &rhoData,
+                                   const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
                                    std::vector<double> &outputExchangeEnergyDensity,
                                    std::vector<double> &outputCorrEnergyDensity) const
   {
@@ -66,9 +66,9 @@ namespace dftfe
   }
 
   void excWavefunctionBaseClass::computeDensityBasedVxc(unsigned int sizeInput,
-                         const std::map<rhoDataAttributes,const std::vector<double>&> &rhoData,
-                         std::map<VeffOutputDataAttributes,const std::vector<double>&> &outputDerExchangeEnergy,
-                         std::map<VeffOutputDataAttributes,const std::vector<double>&> &outputDerCorrEnergy) const
+                         const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                         std::map<VeffOutputDataAttributes, std::vector<double>*> &outputDerExchangeEnergy,
+                         std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const
   {
     d_excDensityBaseClassPtr->computeDensityBasedVxc(sizeInput,rhoData,
                                                      outputDerExchangeEnergy,

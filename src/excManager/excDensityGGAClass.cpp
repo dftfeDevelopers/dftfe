@@ -22,7 +22,7 @@
 namespace dftfe
 {
   excDensityGGAClass::excDensityGGAClass(xc_func_type funcX,
-                                         xcfunc_type funcC,
+                                         xc_func_type funcC,
                                          bool scaleExchange,
                                          bool computeCorrelation,
                                          double scaleExchangeFactor):
@@ -47,34 +47,34 @@ namespace dftfe
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
-               &exchangeEnergyDensity[0]);
+               &outputExchangeEnergyDensity[0]);
     xc_gga_exc(&d_funcC,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
-               &corrEnergyDensity[0]);
+               &outputCorrEnergyDensity[0]);
 
   }
 
   void excDensityGGAClass::computeDensityBasedVxc(unsigned int sizeInput,
                                              const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                                             std::map<VeffOutputDataAttributes,const std::vector<double>*> &outputDerExchangeEnergy,
-                                             std::map<VeffOutputDataAttributes,const std::vector<double>*> &outputDerCorrEnergy) const
+                                             std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
+                                             std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const
   {
     auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
     auto rhoSigmaGradValues = rhoData.find(rhoDataAttributes::sigmaGradValue)->second;
 
 
     auto derExchangeEnergyWithDensity = outputDerExchangeEnergy.
-                                find(derEnergyWithDensity)->second;
+                                find(VeffOutputDataAttributes::derEnergyWithDensity)->second;
     auto derExchangeEnergyWithSigmaGradDensity = outputDerExchangeEnergy.
-                                find(derEnergyWithSigmaGradDensity)->second;
+                                find(VeffOutputDataAttributes::derEnergyWithSigmaGradDensity)->second;
 
     auto derCorrEnergyWithDensity = outputDerCorrEnergy.
-                            find(derEnergyWithDensity)->second;
+                            find(VeffOutputDataAttributes::derEnergyWithDensity)->second;
 
     auto derCorrEnergyWithSigmaGradDensity = outputDerCorrEnergy.
-                                                 find(derEnergyWithSigmaGradDensity)->second;
+                                                 find(VeffOutputDataAttributes::derEnergyWithSigmaGradDensity)->second;
 
 
     xc_gga_vxc(&d_funcX,

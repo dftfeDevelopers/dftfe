@@ -22,7 +22,7 @@
 namespace dftfe
 {
   excDensityBaseClass::excDensityBaseClass(xc_func_type funcX,
-                                           xcfunc_type funcC,
+                                           xc_func_type funcC,
                                            bool scaleExchange,
                                            bool computeCorrelation,
                                            double scaleExchangeFactor)
@@ -35,7 +35,7 @@ namespace dftfe
 
   }
 
-  std::string excDensityBaseClass::getDensityBasedFamilyType()
+  densityFamilyType excDensityBaseClass::getDensityBasedFamilyType() const
   {
     return d_familyType;
   }

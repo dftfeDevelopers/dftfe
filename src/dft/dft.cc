@@ -220,7 +220,7 @@ namespace dftfe
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
 
-    delete excWavefunctionBasePtr;
+    delete excFunctionalPtr;
   }
 
   namespace internaldft

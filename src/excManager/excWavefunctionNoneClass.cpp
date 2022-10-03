@@ -23,12 +23,14 @@ namespace dftfe
 {
   excWavefunctionNoneClass::excWavefunctionNoneClass(densityFamilyType densityFamilyTypeObj,
                                                      xc_func_type funcX,
-                           xcfunc_type funcC,
+                           xc_func_type funcC,
+			   double factorForWavefunctionDependent,
                            bool scaleExchange,
                            bool computeCorrelation,
                            double scaleExchangeFactor)
   :excWavefunctionBaseClass(densityFamilyTypeObj,
                                funcX,funcC,
+			       factorForWavefunctionDependent,
                                scaleExchange,
                                computeCorrelation,
                                scaleExchangeFactor)

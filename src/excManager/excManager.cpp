@@ -23,15 +23,15 @@
 namespace dftfe
 {
   void excManager::createExcClassObj(unsigned int xc_id,
-                                           bool isSpinPolarized,
+                                           int isSpinPolarized,
                                            unsigned int exxFactor,
                                            bool scaleExchange,
-                                           unsigned int scaleExchangeFactor
+                                           unsigned int scaleExchangeFactor,
                                            bool computeCorrelation,
-                                excWavefunctionBaseClass *excClassPtr)
+                                excWavefunctionBaseClass * &excClassPtr)
   {
     xc_func_type funcX, funcC;
-    int exceptParamX, exceptParamC;
+    int exceptParamX =-1 , exceptParamC = -1;
     switch (xc_id) {
         case 1 :
           exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
@@ -39,6 +39,7 @@ namespace dftfe
           excClassPtr = new excWavefunctionNoneClass (densityFamilyType::LDA,
                                                      funcX,
                                                      funcC,
+						     0.0,
                                                      scaleExchange,
                                                      computeCorrelation,
                                                      scaleExchangeFactor);
@@ -49,6 +50,7 @@ namespace dftfe
           excClassPtr = new excWavefunctionNoneClass (densityFamilyType::LDA,
                                                      funcX,
                                                      funcC,
+						     0.0,
                                                      scaleExchange,
                                                      computeCorrelation,
                                                      scaleExchangeFactor);
@@ -59,6 +61,7 @@ namespace dftfe
           excClassPtr = new excWavefunctionNoneClass (densityFamilyType::LDA,
                                                      funcX,
                                                      funcC,
+						     0.0,
                                                      scaleExchange,
                                                      computeCorrelation,
                                                      scaleExchangeFactor);
@@ -69,6 +72,7 @@ namespace dftfe
           excClassPtr = new excWavefunctionNoneClass (densityFamilyType::GGA,
                                                      funcX,
                                                      funcC,
+						     0.0,
                                                      scaleExchange,
                                                      computeCorrelation,
                                                      scaleExchangeFactor);
@@ -79,13 +83,23 @@ namespace dftfe
           excClassPtr = new excWavefunctionNoneClass (densityFamilyType::GGA,
                                                      funcX,
                                                      funcC,
+						     0.0,
                                                      scaleExchange,
                                                      computeCorrelation,
                                                      scaleExchangeFactor);
           break;
-        case default :
+         default :
           std::cout<< "Error in xc code \n";
           break;
+
+	  if (exceptParamX != 0 || exceptParamC != 0)
+    {
+	    std::cout << "-------------------------------------" << std::endl;
+	    std::cout << "Exchange or Correlation Functional not found" << std::endl;
+	    std::cout << "-------------------------------------" << std::endl;
+      exit(-1);
+    }
+
       }
 
   }

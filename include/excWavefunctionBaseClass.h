@@ -37,8 +37,9 @@ namespace dftfe
     excWavefunctionBaseClass(
       densityFamilyType densityFamilyTypeObj,
       xc_func_type funcX,
-                             xcfunc_type funcC,
-                             bool scaleExchange,
+                             xc_func_type funcC,
+                             double factorForWavefunctionDependent,
+			     bool scaleExchange,
                              bool computeCorrelation,
                              double scaleExchangeFactor);
     ~excWavefunctionBaseClass();
@@ -48,8 +49,8 @@ namespace dftfe
                                      std::vector<double> &outputCorrEnergyDensity) const ;
     void computeDensityBasedVxc(unsigned int sizeInput,
                            const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                           std::map<VeffOutputDataAttributes,const std::vector<double>*> &outputDerExchangeEnergy,
-                           std::map<VeffOutputDataAttributes,const std::vector<double>*> &outputDerCorrEnergy) const ;
+                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
+                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const ;
 
     virtual void applyWaveFunctionDependentVxc() const = 0;
     virtual void updateWaveFunctionDependentVxc() const = 0;
@@ -59,7 +60,7 @@ namespace dftfe
 
     wavefunctionFamilyType getWavefunctionBasedFamilyType() const;
 
-  private:
+  protected:
     excDensityBaseClass *d_excDensityBaseClassPtr;
     wavefunctionFamilyType d_wavefunctionFamilyType;
   };
