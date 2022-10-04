@@ -516,7 +516,7 @@ namespace dftfe
 
             dftPtr->excFunctionalPtr->computeDensityBasedVxc(
               numberQuadraturePoints,
-              rhoInData,
+              rhoData,
               outputDerExchangeEnergy,
               outputDerCorrEnergy);
 
@@ -642,7 +642,7 @@ namespace dftfe
             outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithDensityVal;
             outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigmaVal;
 
-            excFunctionalPtr->computeDensityBasedVxc(
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -1690,7 +1690,7 @@ namespace dftfe
 
             dftPtr->excFunctionalPtr->computeDensityBasedVxc(
               numberQuadraturePoints,
-              rhoInData,
+              rhoData,
               outputDerExchangeEnergy,
               outputDerCorrEnergy);
 
@@ -1841,7 +1841,7 @@ namespace dftfe
             outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithDensityVal;
             outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigma;
 
-            excFunctionalPtr->computeDensityBasedVxc(
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
