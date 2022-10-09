@@ -1566,7 +1566,6 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         rhoOutData,
                         outputDerExchangeEnergy,
                         outputDerCorrEnergy);
-                      
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
                           excQuads[q][iSubCell] =
