@@ -1555,13 +1555,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                       outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &corrPotValRhoOut;
 
-                      excFunctionalPtr->computeDensityBasedEnergyDensity(
+                      dftPtr->excFunctionalPtr->computeDensityBasedEnergyDensity(
                         numQuadPoints,
                         rhoOutData,
                         exchValRhoOut,
                         corrValRhoOut);
 
-                      excFunctionalPtr->computeDensityBasedVxc(
+                      dftPtr->excFunctionalPtr->computeDensityBasedVxc(
                         numQuadPoints,
                         rhoOutData,
                         outputDerExchangeEnergy,
@@ -1834,13 +1834,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                       outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &corrPotValRhoOut;
 
-                      excFunctionalPtr->computeDensityBasedEnergyDensity(
-                        numQuadPoints,
+                       dftPtr->excFunctionalPtr->computeDensityBasedEnergyDensity( 
+		        numQuadPoints,
                         rhoOutData,
                         exchValRhoOut,
                         corrValRhoOut);
 
-                      excFunctionalPtr->computeDensityBasedVxc(
+                      dftPtr->excFunctionalPtr->computeDensityBasedVxc(
                         numQuadPoints,
                         rhoOutData,
                         outputDerExchangeEnergy,
