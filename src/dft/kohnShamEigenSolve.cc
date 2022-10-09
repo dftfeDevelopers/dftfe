@@ -140,12 +140,12 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtHX(
   //
   // compute Veff
   //
-  if (d_dftParamsPtr->xcFamilyType == "LDA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
     {
       kohnShamDFTEigenOperator.computeVEff(
         rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
     }
-  else if (d_dftParamsPtr->xcFamilyType == "GGA")
+  else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                            gradRhoInValues,
@@ -370,7 +370,7 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
     gradRhoOutValues,
     rhoOutValuesSpinPolarized,
     gradRhoOutValuesSpinPolarized,
-    d_dftParamsPtr->xcFamilyType == "GGA",
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA,
     d_mpiCommParent,
     interpoolcomm,
     interBandGroupComm,

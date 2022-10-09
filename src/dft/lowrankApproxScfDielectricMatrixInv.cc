@@ -538,7 +538,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    d_dftParamsPtr->xcFamilyType == "GGA");
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
   // push the rhoIn to deque storing the history of nodal values
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);

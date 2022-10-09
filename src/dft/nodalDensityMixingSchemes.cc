@@ -142,7 +142,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   }
   }
 
-  if(d_dftParamsPtr->xcFamilyType=="GGA")
+  if(excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
   {
   for(unsigned int iSubCell = 0; iSubCell <
   d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
@@ -171,7 +171,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    d_dftParamsPtr->xcFamilyType == "GGA");
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
   return normValue;
 }
@@ -407,7 +407,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
     }
     }
 
-    if(d_dftParamsPtr->xcFamilyType=="GGA")
+    if(excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
     for(unsigned int iSubCell = 0; iSubCell <
     d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
@@ -435,7 +435,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    d_dftParamsPtr->xcFamilyType == "GGA");
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
 
   return normValue;

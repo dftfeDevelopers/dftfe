@@ -493,7 +493,7 @@ dftClass<FEOrder, FEOrderElectro>::
     *rhoInValuesSpinPolarized,
     *gradRhoInValuesSpinPolarized,
     *gradRhoInValuesSpinPolarized,
-    d_dftParamsPtr->xcFamilyType == "GGA");
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
   // push the rhoIn to deque storing the history of nodal values
   d_rhoInSpin0NodalVals.push_back(d_rhoInSpin0NodalValues);
@@ -515,7 +515,7 @@ dftClass<FEOrder, FEOrderElectro>::
     *rhoInValues,
     *gradRhoInValues,
     *gradRhoInValues,
-    d_dftParamsPtr->xcFamilyType == "GGA");
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
   // push the rhoIn to deque storing the history of nodal values
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);

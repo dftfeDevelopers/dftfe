@@ -752,7 +752,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
   if (onlyHPrimePartForFirstOrderDensityMatResponse)
     {
-      if (dftPtr->d_dftParamsPtr->xcFamilyType == "GGA")
+      if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
         hamPrimeMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                            d_numberNodesPerElement *
                                            d_numberNodesPerElement +
@@ -778,7 +778,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                                     d_numLocallyOwnedCells *
                                                     d_numberNodesPerElement *
                                                     d_numberNodesPerElement])));
-      else
+      else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
                                      d_numberNodesPerElement *
                                      d_numberNodesPerElement +
@@ -806,7 +806,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
     }
   else
     {
-      if (dftPtr->d_dftParamsPtr->xcFamilyType == "GGA")
+      if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
         hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                       d_numberNodesPerElement *
                                       d_numberNodesPerElement +
@@ -842,7 +842,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           kSquareTimesHalf,
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
-      else
+      else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
         hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                 d_numberNodesPerElement +
                               255) /

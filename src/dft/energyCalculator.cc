@@ -952,6 +952,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const xc_func_type &                    funcX,
     const xc_func_type &                    funcC,
+    const excWavefunctionBaseClass * excFunctionalPtr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoIn,
     const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -985,7 +986,7 @@ namespace dftfe
           num_quad_points_density == rhoInValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (d_dftParams.xcFamilyType == "GGA")
+        if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
           AssertThrow(
             num_quad_points_density * 3 ==
               gradRhoInValues.begin()->second.size(),
@@ -1035,7 +1036,7 @@ namespace dftfe
         {
           feValuesElectronic.reinit(cellElectronic);
 
-          if (d_dftParams.xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
             {
               // Get exc
               std::vector<double> densityValueIn(num_quad_points_density);
@@ -1204,7 +1205,7 @@ namespace dftfe
                     feValuesElectronic.JxW(q_point);
                 }
             }
-          else
+          else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
             {
               // Get Exc
               std::vector<double> densityValueIn(num_quad_points_density);

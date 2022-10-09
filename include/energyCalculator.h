@@ -190,6 +190,7 @@ namespace dftfe
       const double                            fermiEnergy,
       const xc_func_type &                    funcX,
       const xc_func_type &                    funcC,
+      const excWavefunctionBaseClass * excFunctionalPtr,
       const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
       const distributedCPUVec<double> &                    phiTotRhoIn,
       const std::map<dealii::CellId, std::vector<double>> &rhoInValues,

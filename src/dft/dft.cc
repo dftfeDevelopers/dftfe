@@ -1131,7 +1131,7 @@ namespace dftfe
           *(rhoInValues),
           *(gradRhoInValues),
           *(gradRhoInValues),
-          d_dftParamsPtr->xcFamilyType == "GGA");
+          excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
@@ -1157,7 +1157,7 @@ namespace dftfe
               *rhoInValuesSpinPolarized,
               *gradRhoInValuesSpinPolarized,
               *gradRhoInValuesSpinPolarized,
-              d_dftParamsPtr->xcFamilyType == "GGA");
+              excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
           }
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
@@ -1166,7 +1166,7 @@ namespace dftfe
             rhoOutVals.push_back(*(rhoInValues));
             rhoOutValues = &(rhoOutVals.back());
 
-            if (d_dftParamsPtr->xcFamilyType == "GGA")
+            if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
               {
                 gradRhoOutVals.push_back(*(gradRhoInValues));
                 gradRhoOutValues = &(gradRhoOutVals.back());
@@ -1178,7 +1178,7 @@ namespace dftfe
                 rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
               }
 
-            if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+            if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA &&
                 d_dftParamsPtr->spinPolarized == 1)
               {
                 gradRhoOutValsSpinPolarized.push_back(
@@ -1295,12 +1295,11 @@ namespace dftfe
                   *(rhoInValues),
                   *(gradRhoInValues),
                   *(gradRhoInValues),
-                  d_dftParamsPtr->xcFamilyType == "GGA");
+                  excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
                 addAtomicRhoQuadValuesGradients(*(rhoInValues),
                                                 *(gradRhoInValues),
-                                                d_dftParamsPtr->xcFamilyType ==
-                                                  "GGA");
+                                                excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
                 normalizeRhoInQuadValues();
 
@@ -1327,7 +1326,7 @@ namespace dftfe
               *(rhoInValues),
               *(gradRhoInValues),
               *(gradRhoInValues),
-              d_dftParamsPtr->xcFamilyType == "GGA");
+              excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
             normalizeRhoInQuadValues();
 
@@ -1353,12 +1352,11 @@ namespace dftfe
               *(rhoInValues),
               *(gradRhoInValues),
               *(gradRhoInValues),
-              d_dftParamsPtr->xcFamilyType == "GGA");
+              excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
             addAtomicRhoQuadValuesGradients(*(rhoInValues),
                                             *(gradRhoInValues),
-                                            d_dftParamsPtr->xcFamilyType ==
-                                              "GGA");
+                                            excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
             normalizeRhoInQuadValues();
 
@@ -2381,7 +2379,7 @@ namespace dftfe
 
             for (unsigned int s = 0; s < 2; ++s)
               {
-                if (d_dftParamsPtr->xcFamilyType == "LDA")
+                if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
                   {
                     computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2404,7 +2402,7 @@ namespace dftfe
                         d_lpspQuadratureId);
                     computing_timer.leave_subsection("VEff Computation");
                   }
-                else if (d_dftParamsPtr->xcFamilyType == "GGA")
+                else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                   {
                     computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2697,7 +2695,7 @@ namespace dftfe
                   d_numEigenValues :
                   d_numEigenValuesRR);
 
-            if (d_dftParamsPtr->xcFamilyType == "LDA")
+            if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType:LDA)
               {
                 computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2716,7 +2714,7 @@ namespace dftfe
                                                        d_lpspQuadratureId);
                 computing_timer.leave_subsection("VEff Computation");
               }
-            else if (d_dftParamsPtr->xcFamilyType == "GGA")
+            else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
               {
                 computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_GPU

@@ -1428,7 +1428,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (d_dftParams.xcFamilyType == "GGA")
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                     {
                       const std::vector<double> &temp3 =
                         (*dftPtr->gradRhoOutValuesSpinPolarized)
@@ -1462,7 +1462,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (d_dftParams.xcFamilyType == "GGA")
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
@@ -1542,7 +1542,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             }
                         }
                     }
-                  else
+                  else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
                     {
                       std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
 
@@ -1589,7 +1589,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
-                          if (d_dftParams.xcFamilyType == "GGA")
+                          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -1633,7 +1633,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       derExchCorrEnergyWithGradRhoOutSpin1Quads,
                       gradRhoCoreAtoms,
                       hessianRhoCoreAtoms,
-                      d_dftParams.xcFamilyType == "GGA");
+                      dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
                 }
 
               for (unsigned int iSubCell = 0; iSubCell < numSubCells;
@@ -1744,7 +1744,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (d_dftParams.xcFamilyType == "GGA")
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                     {
                       const std::vector<double> &temp3 =
                         gradRhoOutValues.find(subCellId)->second;
@@ -1769,7 +1769,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (d_dftParams.xcFamilyType == "GGA")
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();
@@ -1820,7 +1820,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             }
                         }
                     }
-                  else
+                  else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
                     {
                       std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
 
@@ -1866,7 +1866,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim];
 
-                          if (d_dftParams.xcFamilyType == "GGA")
+                          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
