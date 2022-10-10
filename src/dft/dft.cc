@@ -2695,7 +2695,7 @@ namespace dftfe
                   d_numEigenValues :
                   d_numEigenValuesRR);
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType:LDA)
+            if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
               {
                 computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_GPU
