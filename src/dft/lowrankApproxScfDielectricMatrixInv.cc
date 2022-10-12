@@ -68,7 +68,7 @@ namespace internalLowrankJacInv
   predictNextStepResidual(
     const std::deque<distributedCPUVec<double>> &fvcontainer,
     const distributedCPUVec<double> &            residualVec,
-    distributedCPUVec<double> &            predictedResidualVec,    
+    distributedCPUVec<double> &                  predictedResidualVec,
     const double                                 k0,
     const double                                 alpha)
   {
@@ -104,11 +104,10 @@ namespace internalLowrankJacInv
 
         for (unsigned int idof = 0; idof < residualVec.local_size(); idof++)
           predictedResidualVec.local_element(idof) -=
-            alpha*fvcontainer[i].local_element(idof) * temp;
+            alpha * fvcontainer[i].local_element(idof) * temp;
       }
-
   }
-  
+
 
   void
   lowrankKernelApply(const std::deque<distributedCPUVec<double>> &fvcontainer,
@@ -357,15 +356,17 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
                              d_densityDofHandlerIndexElectro,
                              d_densityQuadratureIdElectro);
 
-  const double predictedToActualResidualRatio=d_residualPredicted.l2_norm()/residualRho.l2_norm();
-	  //d_residualNormPredicted/normValue;
-  if (scfIter>1)
-  {
-    pcout<<"Actual norm value: "<<normValue<<std::endl;
-    pcout<<"Predicted norm value: "<<d_residualNormPredicted<<std::endl;   
-    pcout<<"Ratio: "<<predictedToActualResidualRatio<<std::endl;
-    //pcout<<"RatioNew: "<<d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;    
-  }
+  const double predictedToActualResidualRatio =
+    d_residualPredicted.l2_norm() / residualRho.l2_norm();
+  // d_residualNormPredicted/normValue;
+  if (scfIter > 1)
+    {
+      pcout << "Actual norm value: " << normValue << std::endl;
+      pcout << "Predicted norm value: " << d_residualNormPredicted << std::endl;
+      pcout << "Ratio: " << predictedToActualResidualRatio << std::endl;
+      // pcout<<"RatioNew:
+      // "<<d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;
+    }
 
   const double k0 = 1.0;
 
@@ -378,261 +379,272 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   checkvec.reinit(residualRho);
   compvec.reinit(residualRho);
 
-  double anglePredictedActualResidual=1.0;
-  if (scfIter>1)
-  {
-    anglePredictedActualResidual=std::abs((d_residualPredicted*residualRho)/d_residualPredicted.l2_norm()/residualRho.l2_norm());
-    /*
-	    rhofieldInnerProduct(d_matrixFreeDataPRefined,
-                             residualRho,
-                             d_residualPredicted,
-                             d_densityDofHandlerIndexElectro,
-                             d_densityQuadratureIdElectro);
-    cosAnglePredictedActualResidual=cosAnglePredictedActualResidual/d_residualNormPredicted/normValue;
-    */
-    pcout<<"anglePredictedActualResidual: "<<anglePredictedActualResidual<<std::endl;
-    //pcout<<"cosAnglePredictedActualResidualNew: "<<(d_residualPredicted*residualRho)/d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;
-    
-  }
+  double anglePredictedActualResidual = 1.0;
+  if (scfIter > 1)
+    {
+      anglePredictedActualResidual =
+        std::abs((d_residualPredicted * residualRho) /
+                 d_residualPredicted.l2_norm() / residualRho.l2_norm());
+      /*
+        rhofieldInnerProduct(d_matrixFreeDataPRefined,
+                               residualRho,
+                               d_residualPredicted,
+                               d_densityDofHandlerIndexElectro,
+                               d_densityQuadratureIdElectro);
+      cosAnglePredictedActualResidual=cosAnglePredictedActualResidual/d_residualNormPredicted/normValue;
+      */
+      pcout << "anglePredictedActualResidual: " << anglePredictedActualResidual
+            << std::endl;
+      // pcout<<"cosAnglePredictedActualResidualNew:
+      // "<<(d_residualPredicted*residualRho)/d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;
+    }
 
   d_residualPredicted.reinit(residualRho);
-  d_residualPredicted=0;
+  d_residualPredicted = 0;
 
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  //const unsigned int maxRankCurrentSCF =
+  // const unsigned int maxRankCurrentSCF =
   //  d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 20 : 20;
-  //const unsigned int maxRankAccum = 100;
+  // const unsigned int maxRankAccum = 100;
 
-  double relativeApproxError=1.0e+6;
+  double relativeApproxError = 1.0e+6;
   if (d_rankCurrentLRD >= 1 &&
-        d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
-  {
-       relativeApproxError =
-         internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
-                                                      residualRho,
+      d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
+    {
+      relativeApproxError =
+        internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
+                                                     residualRho,
                                                      k0);
-       pcout << "Starting relative approx error accumulated: "<<relativeApproxError<<std::endl;
+      pcout << "Starting relative approx error accumulated: "
+            << relativeApproxError << std::endl;
+    }
 
-  }
-
-  const double linearityRegimeFac=0.1;
-  //const double angleTol=0.0;//
-  int       rankAddedInThisScf = 0;
-  int rankAddedBeforeClearing=0;
-  if (!(relativeApproxError<d_dftParamsPtr->adaptiveRankRelTolLRD && predictedToActualResidualRatio >(1-linearityRegimeFac) && predictedToActualResidualRatio<(1+linearityRegimeFac)))
-  {
-
-    if ((normValue < 1.0) &&
-        d_rankCurrentLRD >= 1 &&
-        d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
-     {
-        if (!d_tolReached)
+  const double linearityRegimeFac = 0.1;
+  // const double angleTol=0.0;//
+  int rankAddedInThisScf      = 0;
+  int rankAddedBeforeClearing = 0;
+  if (!(relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD &&
+        predictedToActualResidualRatio > (1 - linearityRegimeFac) &&
+        predictedToActualResidualRatio < (1 + linearityRegimeFac)))
+    {
+      if ((normValue < 1.0) && d_rankCurrentLRD >= 1 &&
+          d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
         {
-          if (d_dftParamsPtr->verbosity >= 4)
-            pcout
-              << " Clearing accumulation as tolerance not reached in previous step "
-              << std::endl;
-          d_vcontainerVals.clear();
-          d_fvcontainerVals.clear();
-          d_rankCurrentLRD                      = 0;
+          if (!d_tolReached)
+            {
+              if (d_dftParamsPtr->verbosity >= 4)
+                pcout
+                  << " Clearing accumulation as tolerance not reached in previous step "
+                  << std::endl;
+              d_vcontainerVals.clear();
+              d_fvcontainerVals.clear();
+              d_rankCurrentLRD = 0;
+            }
+          else if (predictedToActualResidualRatio < (1 - linearityRegimeFac) ||
+                   predictedToActualResidualRatio > (1 + linearityRegimeFac))
+            {
+              if (d_dftParamsPtr->verbosity >= 4)
+                pcout
+                  << " Clearing accumulation as outside local linear regime "
+                  << ", linearity indicator: " << predictedToActualResidualRatio
+                  << std::endl;
+              d_vcontainerVals.clear();
+              d_fvcontainerVals.clear();
+              d_rankCurrentLRD = 0;
+            }
         }
-	else if(predictedToActualResidualRatio <(1-linearityRegimeFac) || predictedToActualResidualRatio>(1+linearityRegimeFac))
-	{
-          if (d_dftParamsPtr->verbosity >= 4)
-            pcout
-              << " Clearing accumulation as outside local linear regime "
-              << ", linearity indicator: " << predictedToActualResidualRatio << std::endl;
-          d_vcontainerVals.clear();
-          d_fvcontainerVals.clear();
-          d_rankCurrentLRD                      = 0;
-
-        }
-
-      }
-     else
-      {
+      else
+        {
           if (d_dftParamsPtr->verbosity >= 4)
             pcout
               << " Clearing accumulation as residual is not sufficiently reduced yet "
-              << std::endl;	      
-        d_vcontainerVals.clear();
-        d_fvcontainerVals.clear();
-        d_rankCurrentLRD = 0;
-      }
+              << std::endl;
+          d_vcontainerVals.clear();
+          d_fvcontainerVals.clear();
+          d_rankCurrentLRD = 0;
+        }
 
-    int maxRankThisScf     = (scfIter < 2) ? 5 : (d_rankCurrentLRD>=1?5:20);     
-    d_tolReached=false;
-    while (((rankAddedInThisScf < maxRankThisScf)) ||
-           ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
-            (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
-      {
-        if (rankAddedInThisScf == 0)
-          {
-            d_vcontainerVals.push_back(residualRho);
-            d_vcontainerVals[d_rankCurrentLRD] *= k0;
-          }
-        else
-          d_vcontainerVals.push_back(d_fvcontainerVals[d_rankCurrentLRD - 1]);
-
-
-        d_vcontainerVals[d_rankCurrentLRD] *=
-          1.0 / d_vcontainerVals[d_rankCurrentLRD].l2_norm();
-
-
-        std::deque<double> components;
-        for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
-          {
-            components.push_back(
-              d_vcontainerVals[d_rankCurrentLRD] * d_vcontainerVals[jrank]);
-          }
-
-
-        ///METHOD 1
-        if (d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" && (d_rankCurrentLRD-rankAddedInThisScf)>0)
+      int maxRankThisScf = (scfIter < 2) ? 5 : (d_rankCurrentLRD >= 1 ? 5 : 20);
+      d_tolReached       = false;
+      while (((rankAddedInThisScf < maxRankThisScf)) ||
+             ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
+              (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
         {
-          compvec = 0;
-          for (int jrank = 0; jrank < (d_rankCurrentLRD-rankAddedInThisScf); jrank++)
+          if (rankAddedInThisScf == 0)
             {
-              compvec.add(components[jrank], d_vcontainerVals[jrank]);
-                
+              d_vcontainerVals.push_back(residualRho);
+              d_vcontainerVals[d_rankCurrentLRD] *= k0;
+            }
+          else
+            d_vcontainerVals.push_back(d_fvcontainerVals[d_rankCurrentLRD - 1]);
+
+
+          d_vcontainerVals[d_rankCurrentLRD] *=
+            1.0 / d_vcontainerVals[d_rankCurrentLRD].l2_norm();
+
+
+          std::deque<double> components;
+          for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
+            {
+              components.push_back(d_vcontainerVals[d_rankCurrentLRD] *
+                                   d_vcontainerVals[jrank]);
             }
 
-          checkvec=d_vcontainerVals[d_rankCurrentLRD];
-          checkvec-= compvec;
 
-          //check orthogonal complement against previous scf direction functions to decide to clear or not
-          //const double checkTol=0.2;
-          const double normCheck=checkvec.l2_norm();
-          if (normCheck<0.01)
-          {
-              d_vcontainerVals.clear();
-              d_fvcontainerVals.clear();
-              components.clear();
-	      rankAddedBeforeClearing=rankAddedInThisScf;
-              d_rankCurrentLRD=0;
-	      rankAddedInThisScf=0;
-	      maxRankThisScf=20;
-              pcout
-                 << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "<<normCheck<< std::endl;
-	      continue;
-          }
-          else
-          {
-            pcout<< "Orthogonal component to previous direction functions l2 norm: "<<normCheck <<std::endl;
-          }
+          /// METHOD 1
+          if (d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" &&
+              (d_rankCurrentLRD - rankAddedInThisScf) > 0)
+            {
+              compvec = 0;
+              for (int jrank = 0;
+                   jrank < (d_rankCurrentLRD - rankAddedInThisScf);
+                   jrank++)
+                {
+                  compvec.add(components[jrank], d_vcontainerVals[jrank]);
+                }
+
+              checkvec = d_vcontainerVals[d_rankCurrentLRD];
+              checkvec -= compvec;
+
+              // check orthogonal complement against previous scf direction
+              // functions to decide to clear or not const double checkTol=0.2;
+              const double normCheck = checkvec.l2_norm();
+              if (normCheck < 0.01)
+                {
+                  d_vcontainerVals.clear();
+                  d_fvcontainerVals.clear();
+                  components.clear();
+                  rankAddedBeforeClearing = rankAddedInThisScf;
+                  d_rankCurrentLRD        = 0;
+                  rankAddedInThisScf      = 0;
+                  maxRankThisScf          = 20;
+                  pcout
+                    << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "
+                    << normCheck << std::endl;
+                  continue;
+                }
+              else
+                {
+                  pcout
+                    << "Orthogonal component to previous direction functions l2 norm: "
+                    << normCheck << std::endl;
+                }
+            }
+          ////
+
+
+          compvec = 0;
+          for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
+            {
+              compvec.add(components[jrank], d_vcontainerVals[jrank]);
+            }
+
+          d_vcontainerVals[d_rankCurrentLRD] -= compvec;
+
+          d_vcontainerVals[d_rankCurrentLRD] *=
+            1.0 / d_vcontainerVals[d_rankCurrentLRD].l2_norm();
+
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout << " Vector norm of v:  "
+                  << d_vcontainerVals[d_rankCurrentLRD].l2_norm()
+                  << ", for rank: " << d_rankCurrentLRD + 1 << std::endl;
+
+          d_fvcontainerVals.push_back(residualRho);
+          d_fvcontainerVals[d_rankCurrentLRD] = 0;
+
+          d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
+          charge = totalCharge(d_matrixFreeDataPRefined,
+                               d_vcontainerVals[d_rankCurrentLRD]);
+
+
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout << "Integral v before scaling:  " << charge << std::endl;
+
+          d_vcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
+
+          d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
+          charge = totalCharge(d_matrixFreeDataPRefined,
+                               d_vcontainerVals[d_rankCurrentLRD]);
+
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout << "Integral v after scaling:  " << charge << std::endl;
+
+          computeOutputDensityDirectionalDerivative(
+            d_vcontainerVals[d_rankCurrentLRD],
+            dummy,
+            dummy,
+            d_fvcontainerVals[d_rankCurrentLRD],
+            dummy,
+            dummy);
+
+          d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
+          charge = totalCharge(d_matrixFreeDataPRefined,
+                               d_fvcontainerVals[d_rankCurrentLRD]);
+
+
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout << "Integral fv before scaling:  " << charge << std::endl;
+
+          d_fvcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
+
+          d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
+          charge = totalCharge(d_matrixFreeDataPRefined,
+                               d_fvcontainerVals[d_rankCurrentLRD]);
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout << "Integral fv after scaling:  " << charge << std::endl;
+
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout
+              << " Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "
+              << d_fvcontainerVals[d_rankCurrentLRD].l2_norm()
+              << " for kernel rank: " << d_rankCurrentLRD + 1 << std::endl;
+
+          d_fvcontainerVals[d_rankCurrentLRD] -=
+            d_vcontainerVals[d_rankCurrentLRD];
+          d_fvcontainerVals[d_rankCurrentLRD] *= k0;
+          d_rankCurrentLRD++;
+          rankAddedInThisScf++;
+
+          if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE" ||
+              d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
+            {
+              relativeApproxError =
+                internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
+                                                             residualRho,
+                                                             k0);
+
+              if (d_dftParamsPtr->verbosity >= 4)
+                pcout << " Relative approx error:  " << relativeApproxError
+                      << " for kernel rank: " << d_rankCurrentLRD << std::endl;
+
+              if ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
+                  (d_dftParamsPtr->estimateJacCondNoFinalSCFIter))
+                {
+                  if (relativeApproxError < 1.0e-5)
+                    {
+                      break;
+                    }
+                }
+              else
+                {
+                  if (relativeApproxError <
+                      d_dftParamsPtr->adaptiveRankRelTolLRD)
+                    {
+                      d_tolReached = true;
+                      break;
+                    }
+                }
+            }
         }
-        ////
-
-
-        compvec = 0;
-        for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
-          {
-            compvec.add(components[jrank], d_vcontainerVals[jrank]);
-          }
-
-        d_vcontainerVals[d_rankCurrentLRD] -= compvec;
-
-        d_vcontainerVals[d_rankCurrentLRD] *=
-          1.0 / d_vcontainerVals[d_rankCurrentLRD].l2_norm();
-
-        if (d_dftParamsPtr->verbosity >= 4)
-          pcout << " Vector norm of v:  "
-                << d_vcontainerVals[d_rankCurrentLRD].l2_norm()
-                << ", for rank: " << d_rankCurrentLRD + 1 << std::endl;
-
-        d_fvcontainerVals.push_back(residualRho);
-        d_fvcontainerVals[d_rankCurrentLRD] = 0;
-
-        d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
-        charge = totalCharge(d_matrixFreeDataPRefined,
-                             d_vcontainerVals[d_rankCurrentLRD]);
-
-
-        if (d_dftParamsPtr->verbosity >= 4)
-          pcout << "Integral v before scaling:  " << charge << std::endl;
-
-        d_vcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
-
-        d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
-        charge = totalCharge(d_matrixFreeDataPRefined,
-                             d_vcontainerVals[d_rankCurrentLRD]);
-
-        if (d_dftParamsPtr->verbosity >= 4)
-          pcout << "Integral v after scaling:  " << charge << std::endl;
-
-        computeOutputDensityDirectionalDerivative(
-          d_vcontainerVals[d_rankCurrentLRD],
-          dummy,
-          dummy,
-          d_fvcontainerVals[d_rankCurrentLRD],
-          dummy,
-          dummy);
-
-        d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
-        charge = totalCharge(d_matrixFreeDataPRefined,
-                             d_fvcontainerVals[d_rankCurrentLRD]);
-
-
-        if (d_dftParamsPtr->verbosity >= 4)
-          pcout << "Integral fv before scaling:  " << charge << std::endl;
-
-        d_fvcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
-
-        d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
-        charge = totalCharge(d_matrixFreeDataPRefined,
-                             d_fvcontainerVals[d_rankCurrentLRD]);
-        if (d_dftParamsPtr->verbosity >= 4)
-          pcout << "Integral fv after scaling:  " << charge << std::endl;
-
-        if (d_dftParamsPtr->verbosity >= 4)
-          pcout
-            << " Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "
-            << d_fvcontainerVals[d_rankCurrentLRD].l2_norm()
-            << " for kernel rank: " << d_rankCurrentLRD + 1 << std::endl;
-
-        d_fvcontainerVals[d_rankCurrentLRD] -= d_vcontainerVals[d_rankCurrentLRD];
-        d_fvcontainerVals[d_rankCurrentLRD] *= k0;
-        d_rankCurrentLRD++;
-        rankAddedInThisScf++;
-
-        if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE" ||
-            d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
-          {
-            relativeApproxError =
-              internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
-                                                           residualRho,
-                                                           k0);
-
-            if (d_dftParamsPtr->verbosity >= 4)
-              pcout << " Relative approx error:  " << relativeApproxError
-                    << " for kernel rank: " << d_rankCurrentLRD << std::endl;
-
-            if ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
-                (d_dftParamsPtr->estimateJacCondNoFinalSCFIter))
-              {
-                if (relativeApproxError < 1.0e-5)
-                  {
-                    break;
-                  }
-              }
-            else
-              {
-                if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD)
-                  {
-	            d_tolReached=true;
-                    break;
-                  }
-              }
-          }
-      }
-  }
+    }
 
 
   if (d_dftParamsPtr->verbosity >= 4)
     pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRD
-          << " Accumulated or used in this scf: " << (rankAddedInThisScf+rankAddedBeforeClearing) << std::endl;
+          << " Accumulated or used in this scf: "
+          << (rankAddedInThisScf + rankAddedBeforeClearing) << std::endl;
 
   internalLowrankJacInv::lowrankKernelApply(
     d_fvcontainerVals, d_vcontainerVals, residualRho, k0, kernelAction);
@@ -679,19 +691,15 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
           << std::endl;
 
   internalLowrankJacInv::predictNextStepResidual(
-    d_fvcontainerVals,
-    residualRho,
-    d_residualPredicted,
-    k0,
-    -const2);
+    d_fvcontainerVals, residualRho, d_residualPredicted, k0, -const2);
 
   d_residualPredicted.update_ghost_values();
 
   // compute l2 norm of the field residual
-  d_residualNormPredicted=rhofieldl2Norm(d_matrixFreeDataPRefined,
-                             d_residualPredicted,
-                             d_densityDofHandlerIndexElectro,
-                             d_densityQuadratureIdElectro);
+  d_residualNormPredicted = rhofieldl2Norm(d_matrixFreeDataPRefined,
+                                           d_residualPredicted,
+                                           d_densityDofHandlerIndexElectro,
+                                           d_densityQuadratureIdElectro);
 
   d_rhoInNodalValues.add(const2, kernelAction);
 

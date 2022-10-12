@@ -776,11 +776,12 @@ namespace dftfe
                    const unsigned int                   quadratureId);
 
     double
-    rhofieldInnerProduct(const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-                   const distributedCPUVec<double> &    rhoNodalField1,
-                   const distributedCPUVec<double> &    rhoNodalField2,
-                   const unsigned int                   dofHandlerId,
-                   const unsigned int                   quadratureId);
+    rhofieldInnerProduct(
+      const dealii::MatrixFree<3, double> &matrixFreeDataObject,
+      const distributedCPUVec<double> &    rhoNodalField1,
+      const distributedCPUVec<double> &    rhoNodalField2,
+      const unsigned int                   dofHandlerId,
+      const unsigned int                   quadratureId);
 
 
     double
@@ -1372,11 +1373,11 @@ namespace dftfe
     std::deque<distributedCPUVec<double>> d_fvSpin0containerVals;
     std::deque<distributedCPUVec<double>> d_vSpin1containerVals;
     std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
-    distributedCPUVec<double> d_residualPredicted;
+    distributedCPUVec<double>             d_residualPredicted;
     unsigned int                          d_rankCurrentLRD;
     double                                d_relativeErrorJacInvApproxPrevScfLRD;
-    double d_residualNormPredicted;
-    bool d_tolReached;
+    double                                d_residualNormPredicted;
+    bool                                  d_tolReached;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,

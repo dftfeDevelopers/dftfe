@@ -293,7 +293,7 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
                double>
                           fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
   VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
-  const unsigned int      numQuadPoints       = fe_evalField.n_q_points;
+  const unsigned int      numQuadPoints   = fe_evalField.n_q_points;
 
   AssertThrow(
     matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
@@ -307,23 +307,25 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
       fe_evalField.reinit(cell);
       fe_evalField.read_dof_values(nodalField1);
       fe_evalField.evaluate(true, false);
-      dealii::AlignedVector<VectorizedArray<double>> temp1(numQuadPoints,make_vectorized_array(0.0));
+      dealii::AlignedVector<VectorizedArray<double>> temp1(
+        numQuadPoints, make_vectorized_array(0.0));
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
-          temp1[q_point] =fe_evalField.get_value(q_point);
+          temp1[q_point] = fe_evalField.get_value(q_point);
         }
 
       fe_evalField.read_dof_values(nodalField2);
       fe_evalField.evaluate(true, false);
-      dealii::AlignedVector<VectorizedArray<double>> temp2(numQuadPoints,make_vectorized_array(0.0));
+      dealii::AlignedVector<VectorizedArray<double>> temp2(
+        numQuadPoints, make_vectorized_array(0.0));
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
-          temp2[q_point] =fe_evalField.get_value(q_point);
+          temp2[q_point] = fe_evalField.get_value(q_point);
         }
 
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
-          fe_evalField.submit_value(temp1[q_point]*temp2[q_point], q_point);
+          fe_evalField.submit_value(temp1[q_point] * temp2[q_point], q_point);
         }
 
 
