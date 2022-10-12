@@ -358,14 +358,12 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
 
   const double predictedToActualResidualRatio =
     d_residualPredicted.l2_norm() / residualRho.l2_norm();
-  // d_residualNormPredicted/normValue;
-  if (scfIter > 1)
+  if (scfIter > 1 && d_dftParamsPtr->verbosity >= 4)
     {
-      pcout << "Actual norm value: " << normValue << std::endl;
-      pcout << "Predicted norm value: " << d_residualNormPredicted << std::endl;
+      pcout << "Actual residual norm value: " << normValue << std::endl;
+      pcout << "Predicted residual norm value: " << d_residualNormPredicted
+            << std::endl;
       pcout << "Ratio: " << predictedToActualResidualRatio << std::endl;
-      // pcout<<"RatioNew:
-      // "<<d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;
     }
 
   const double k0 = 1.0;
@@ -379,35 +377,12 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
   checkvec.reinit(residualRho);
   compvec.reinit(residualRho);
 
-  double anglePredictedActualResidual = 1.0;
-  if (scfIter > 1)
-    {
-      anglePredictedActualResidual =
-        std::abs((d_residualPredicted * residualRho) /
-                 d_residualPredicted.l2_norm() / residualRho.l2_norm());
-      /*
-        rhofieldInnerProduct(d_matrixFreeDataPRefined,
-                               residualRho,
-                               d_residualPredicted,
-                               d_densityDofHandlerIndexElectro,
-                               d_densityQuadratureIdElectro);
-      cosAnglePredictedActualResidual=cosAnglePredictedActualResidual/d_residualNormPredicted/normValue;
-      */
-      pcout << "anglePredictedActualResidual: " << anglePredictedActualResidual
-            << std::endl;
-      // pcout<<"cosAnglePredictedActualResidualNew:
-      // "<<(d_residualPredicted*residualRho)/d_residualPredicted.l2_norm()/residualRho.l2_norm()<<std::endl;
-    }
-
   d_residualPredicted.reinit(residualRho);
   d_residualPredicted = 0;
 
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  // const unsigned int maxRankCurrentSCF =
-  //  d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 20 : 20;
-  // const unsigned int maxRankAccum = 100;
 
   double relativeApproxError = 1.0e+6;
   if (d_rankCurrentLRD >= 1 &&
@@ -421,10 +396,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
             << relativeApproxError << std::endl;
     }
 
-  const double linearityRegimeFac = 0.1;
-  // const double angleTol=0.0;//
-  int rankAddedInThisScf      = 0;
-  int rankAddedBeforeClearing = 0;
+  const double linearityRegimeFac      = d_dftParamsPtr->betaTol;
+  int          rankAddedInThisScf      = 0;
+  int          rankAddedBeforeClearing = 0;
   if (!(relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD &&
         predictedToActualResidualRatio > (1 - linearityRegimeFac) &&
         predictedToActualResidualRatio < (1 + linearityRegimeFac)))
@@ -493,7 +467,6 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
             }
 
 
-          /// METHOD 1
           if (d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" &&
               (d_rankCurrentLRD - rankAddedInThisScf) > 0)
             {
@@ -520,16 +493,18 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
                   d_rankCurrentLRD        = 0;
                   rankAddedInThisScf      = 0;
                   maxRankThisScf          = 20;
-                  pcout
-                    << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "
-                    << normCheck << std::endl;
+                  if (d_dftParamsPtr->verbosity >= 4)
+                    pcout
+                      << " Clearing accumulation as current scf direction function well represented in previous scf Krylov subspace, l2norm of Orthogonal component: "
+                      << normCheck << std::endl;
                   continue;
                 }
               else
                 {
-                  pcout
-                    << "Orthogonal component to previous direction functions l2 norm: "
-                    << normCheck << std::endl;
+                  if (d_dftParamsPtr->verbosity >= 4)
+                    pcout
+                      << "Orthogonal component to previous direction functions l2 norm: "
+                      << normCheck << std::endl;
                 }
             }
           ////
