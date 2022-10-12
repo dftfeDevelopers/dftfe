@@ -305,46 +305,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     {
       isSpinPolarized = XC_UNPOLARIZED;
     }
-  if (d_dftParamsPtr->xc_id == 1)
-    {
-      exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
-      exceptParamC = xc_func_init(&funcC, XC_LDA_C_PZ, isSpinPolarized);
-    }
-  else if (d_dftParamsPtr->xc_id == 2)
-    {
-      exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
-      exceptParamC = xc_func_init(&funcC, XC_LDA_C_PW, isSpinPolarized);
-    }
-  else if (d_dftParamsPtr->xc_id == 3)
-    {
-      exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
-      exceptParamC = xc_func_init(&funcC, XC_LDA_C_VWN, isSpinPolarized);
-    }
-  else if (d_dftParamsPtr->xc_id == 4)
-    {
-      exceptParamX = xc_func_init(&funcX, XC_GGA_X_PBE, isSpinPolarized);
-      exceptParamC = xc_func_init(&funcC, XC_GGA_C_PBE, isSpinPolarized);
-    }
-  else if (d_dftParamsPtr->xc_id == 5)
-    {
-      exceptParamX = xc_func_init(&funcX, XC_GGA_X_RPBE, isSpinPolarized);
-      exceptParamC = xc_func_init(&funcC, XC_GGA_C_PBE, isSpinPolarized);
-    }
-  else if (d_dftParamsPtr->xc_id > 5)
-    {
-      pcout << "-------------------------------------" << std::endl;
-      pcout << "Exchange or Correlation Functional not found" << std::endl;
-      pcout << "-------------------------------------" << std::endl;
-      exit(-1);
-    }
 
-  if (exceptParamX != 0 || exceptParamC != 0)
-    {
-      pcout << "-------------------------------------" << std::endl;
-      pcout << "Exchange or Correlation Functional not found" << std::endl;
-      pcout << "-------------------------------------" << std::endl;
-      exit(-1);
-    }
 
   excManager::createExcClassObj(d_dftParamsPtr->xc_id  ,
                                 isSpinPolarized,

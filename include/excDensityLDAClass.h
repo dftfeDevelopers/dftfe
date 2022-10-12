@@ -40,6 +40,11 @@ namespace dftfe
                            std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
                            std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const override;
 
+    void computeDensityBasedFxc(unsigned int sizeInput,
+                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const override ;
+
 
   private:
 

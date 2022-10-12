@@ -43,6 +43,13 @@ namespace dftfe
     derEnergyWithSigmaGradDensity
   };
 
+  enum class fxcOutputDataAttributes
+  {
+    der2EnergyWithDensity,
+    der2EnergyWithDensitySigma,
+    der2EnergyWithSigma
+  };
+
 
   class excDensityBaseClass
   {
@@ -59,6 +66,11 @@ namespace dftfe
                                      const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
                            std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
                            std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const = 0 ;
+
+    virtual void computeDensityBasedFxc(unsigned int sizeInput,
+                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const = 0 ;
 
     densityFamilyType getDensityBasedFamilyType() const ;
 

@@ -74,6 +74,32 @@ namespace dftfe
 
     }
 
+    void excDensityLDAClass::computeDensityBasedFxc(unsigned int sizeInput,
+                                               const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                                               std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
+                                               std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const
+    {
+      auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+
+      auto der2ExchangeEnergyWithDensity = outputDer2ExchangeEnergy.
+                                           find(fxcOutputDataAttributes::der2EnergyWithDensity)->second;
+
+      auto der2CorrEnergyWithDensity = outputDer2CorrEnergy.
+                                       find(fxcOutputDataAttributes::der2EnergyWithDensity)->second;
+
+
+
+      xc_lda_fxc(&d_funcX,
+                 sizeInput,
+                 &(*rhoValues)[0],
+                 &(*der2ExchangeEnergyWithDensity)[0]);
+
+      xc_lda_fxc(&d_funcC,
+                 sizeInput,
+                 &(*rhoValues)[0],
+                 &(*der2CorrEnergyWithDensity)[0]);
+    }
+
 
 
 }
