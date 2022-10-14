@@ -40,7 +40,7 @@ namespace dftfe
     MDIEngine(MPI_Comm &dftfeMPIComm, int argc, char *argv[]);
 
     int
-    execute_command(const char *command, MDI_Comm mdicomm);
+    execute_command(const char *command, MDI_Comm &mdicomm);
 
     void
     engine_node(const char *node);

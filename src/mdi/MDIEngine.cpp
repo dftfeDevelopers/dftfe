@@ -190,7 +190,7 @@ namespace dftfe
   ---------------------------------------------------------------------- */
 
   int
-  MDIEngine::execute_command(const char *command, MDI_Comm mdicomm)
+  MDIEngine::execute_command(const char *command, MDI_Comm &mdicomm)
   {
     int ierr;
 
