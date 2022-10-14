@@ -229,53 +229,18 @@ dftClass<FEOrder, FEOrderElectro>::
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  const unsigned int maxRankCurrentSCF =
-    d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE" ? 15 : 20;
-  const unsigned int maxRankAccum = 20;
+  const unsigned int maxRankCurrentSCF = 20;
 
-  if (d_rankCurrentLRD >= 1 &&
-      d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
-    {
-      const double relativeApproxError =
-        internalLowrankJacInv::relativeErrorEstimateSpin(d_fvSpin0containerVals,
-                                                         d_fvSpin1containerVals,
-                                                         residualRhoSpin0,
-                                                         residualRhoSpin1,
-                                                         k0);
-      if (d_rankCurrentLRD >= maxRankAccum ||
-          (relativeApproxError > d_dftParamsPtr->adaptiveRankRelTolLRD *
-                                   d_dftParamsPtr->factorAdapAccumClearLRD) ||
-          relativeApproxError > d_relativeErrorJacInvApproxPrevScfLRD)
-        {
-          if (d_dftParamsPtr->verbosity >= 4)
-            pcout
-              << " Clearing accumulation as relative tolerance metric exceeded "
-              << ", relative tolerance current scf: " << relativeApproxError
-              << ", relative tolerance prev scf: "
-              << d_relativeErrorJacInvApproxPrevScfLRD << std::endl;
-          d_vSpin0containerVals.clear();
-          d_vSpin1containerVals.clear();
-          d_fvSpin0containerVals.clear();
-          d_fvSpin1containerVals.clear();
-          d_rankCurrentLRD                      = 0;
-          d_relativeErrorJacInvApproxPrevScfLRD = 100.0;
-        }
-      else
-        d_relativeErrorJacInvApproxPrevScfLRD = relativeApproxError;
-    }
-  else
-    {
-      d_vSpin0containerVals.clear();
-      d_vSpin1containerVals.clear();
-      d_fvSpin0containerVals.clear();
-      d_fvSpin1containerVals.clear();
-      d_rankCurrentLRD = 0;
-    }
+
+  d_vSpin0containerVals.clear();
+  d_vSpin1containerVals.clear();
+  d_fvSpin0containerVals.clear();
+  d_fvSpin1containerVals.clear();
+  d_rankCurrentLRD = 0;
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-  while (((rankAddedInThisScf < maxRankThisScf) &&
-          d_rankCurrentLRD < maxRankAccum) ||
+  while ((rankAddedInThisScf < maxRankThisScf) ||
          ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
           (d_dftParamsPtr->estimateJacCondNoFinalSCFIter)))
     {
@@ -423,8 +388,7 @@ dftClass<FEOrder, FEOrderElectro>::
       d_rankCurrentLRD++;
       rankAddedInThisScf++;
 
-      if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE" ||
-          d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
+      if (d_dftParamsPtr->methodSubTypeLRD == "ADAPTIVE")
         {
           const double relativeApproxError =
             internalLowrankJacInv::relativeErrorEstimateSpin(

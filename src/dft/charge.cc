@@ -243,10 +243,6 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
   VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
   const unsigned int      numQuadPoints       = fe_evalField.n_q_points;
 
-  // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(dofHandlerId)),
-  //        dealii::ExcMessage("DFT-FE Error: mismatch in
-  //        partitioner/dofHandler."));
-
   AssertThrow(
     matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
     dealii::ExcMessage(
@@ -277,6 +273,73 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
     }
 
   return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+}
+
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+double
+dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
+  const dealii::MatrixFree<3, double> &matrixFreeDataObject,
+  const distributedCPUVec<double> &    nodalField1,
+  const distributedCPUVec<double> &    nodalField2,
+  const unsigned int                   dofHandlerId,
+  const unsigned int                   quadratureId)
+
+{
+  FEEvaluation<3,
+               C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+               1,
+               double>
+                          fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+  VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
+  const unsigned int      numQuadPoints   = fe_evalField.n_q_points;
+
+  AssertThrow(
+    matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
+    dealii::ExcMessage(
+      "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+  double value = 0.0;
+  for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+       ++cell)
+    {
+      fe_evalField.reinit(cell);
+      fe_evalField.read_dof_values(nodalField1);
+      fe_evalField.evaluate(true, false);
+      dealii::AlignedVector<VectorizedArray<double>> temp1(
+        numQuadPoints, make_vectorized_array(0.0));
+      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        {
+          temp1[q_point] = fe_evalField.get_value(q_point);
+        }
+
+      fe_evalField.read_dof_values(nodalField2);
+      fe_evalField.evaluate(true, false);
+      dealii::AlignedVector<VectorizedArray<double>> temp2(
+        numQuadPoints, make_vectorized_array(0.0));
+      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        {
+          temp2[q_point] = fe_evalField.get_value(q_point);
+        }
+
+      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        {
+          fe_evalField.submit_value(temp1[q_point] * temp2[q_point], q_point);
+        }
+
+
+      valueVectorized = fe_evalField.integrate_value();
+
+      for (unsigned int iSubCell = 0;
+           iSubCell < matrixFreeDataObject.n_components_filled(cell);
+           ++iSubCell)
+        {
+          value += valueVectorized[iSubCell];
+        }
+    }
+
+  return Utilities::MPI::sum(value, mpi_communicator);
 }
 
 
