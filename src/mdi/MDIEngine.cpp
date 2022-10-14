@@ -48,7 +48,7 @@ namespace dftfe
      when EXIT command is received, mdi engine command exits
   ---------------------------------------------------------------------- */
 
-  MDIEngine::MDIEngine(MPI_Comm dftfeMPIComm, int argc, char *argv[])
+  MDIEngine::MDIEngine(MPI_Comm &dftfeMPIComm, int argc, char *argv[])
     : d_dftfeMPIComm(dftfeMPIComm)
   {
     // confirm DFTFE is being run as an engine

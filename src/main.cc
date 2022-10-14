@@ -44,33 +44,50 @@ main(int argc, char *argv[])
 {
   //
   MPI_Init(&argc, &argv);
-  const double start = MPI_Wtime();
-  int          world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   dftfe::dftfeWrapper::globalHandlesInitialize();
 
 #if defined(DFTFE_WITH_MDI)
 
-  MPI_Comm dftfe_mpi_comm = MPI_COMM_WORLD;
+  MPI_Comm mpi_world_comm;
 
-  // initialize MDI interface, if compiled in
 
-  int mdi_flag;
-  if (MDI_Init(&argc, &argv))
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  if (MDI_Initialized(&mdi_flag))
-    MPI_Abort(MPI_COMM_WORLD, 1);
+  int ret;
+  // Initialize MDI
+  ret = MDI_Init(&argc, &argv);
+  if (ret != 0)
+    {
+      throw std::runtime_error(
+        "The MDI library was not initialized correctly.");
+    }
+
+  // Confirm that MDI was initialized successfully
+  int initialized_mdi;
+  ret = MDI_Initialized(&initialized_mdi);
+  if (ret != 0)
+    {
+      throw std::runtime_error("MDI_Initialized failed.");
+    }
+  if (!initialized_mdi)
+    {
+      throw std::runtime_error(
+        "MDI not initialized: did you provide the -mdi option?.");
+    }
 
   // get the MPI communicator that spans all ranks running DFTFE
   // when using MDI, this may be a subset of MPI_COMM_WORLD
 
-  if (mdi_flag)
-    if (MDI_MPI_get_world_comm(&dftfe_mpi_comm))
-      MPI_Abort(MPI_COMM_WORLD, 1);
+  ret = MDI_MPI_get_world_comm(&mpi_world_comm);
+  if (ret != 0)
+    {
+      throw std::runtime_error("MDI_MPI_get_world_comm failed.");
+    }
 
-  dftfe::MDIEngine mdiEngine(dftfe_mpi_comm, argc, argv);
+  dftfe::MDIEngine mdiEngine(mpi_world_comm, argc, argv);
 #else
+  const double start = MPI_Wtime();
+  int          world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   // deal.II tests expect parameter file as a first (!) argument
   AssertThrow(argc > 1,

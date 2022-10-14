@@ -37,7 +37,7 @@ namespace dftfe
     /**
      * @brief constructor
      */
-    MDIEngine(MPI_Comm dftfeMPIComm, int argc, char *argv[]);
+    MDIEngine(MPI_Comm &dftfeMPIComm, int argc, char *argv[]);
 
     int
     execute_command(const char *command, MDI_Comm mdicomm);
