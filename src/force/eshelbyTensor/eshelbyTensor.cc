@@ -354,6 +354,7 @@ namespace dftfe
       Tensor<1, 3, VectorizedArray<double>> Fnl  = zeroTensor;
       VectorizedArray<double>               four = make_vectorized_array(4.0);
 
+      unsigned int j=0;
       for (unsigned int iAtomNonLocal = 0; iAtomNonLocal < zetaDeltaV.size();
            ++iAtomNonLocal)
         {
@@ -361,9 +362,9 @@ namespace dftfe
             continue;
 
           const int numberPseudoWaveFunctions =
-            zetaDeltaV[iAtomNonLocal].size();
+            zetaDeltaV[j].size();//zetaDeltaV[iAtomNonLocal].size();
           const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaVAtom =
-            zetaDeltaV[iAtomNonLocal];
+            zetaDeltaV[j];//zetaDeltaV[iAtomNonLocal];
 
           Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
           for (unsigned int iPseudoWave = 0;
@@ -373,6 +374,7 @@ namespace dftfe
                        [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave] *
                      zetaDeltaVAtom[iPseudoWave];
           Fnl += four * tempF;
+          j=j+1;
         }
       return Fnl;
     }
