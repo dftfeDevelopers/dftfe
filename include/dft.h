@@ -75,11 +75,11 @@ namespace dftfe
 
   struct orbital
   {
-    unsigned int                 atomID;
-    unsigned int                 waveID;
-    unsigned int                 Z, n, l;
-    int                          m;
-    alglib::spline1dinterpolant *psi;
+    unsigned int                atomID;
+    unsigned int                waveID;
+    unsigned int                Z, n, l;
+    int                         m;
+    alglib::spline1dinterpolant psi;
   };
 
   /* code that must be skipped by Doxygen */
@@ -1141,7 +1141,7 @@ namespace dftfe
     std::vector<orbital> waveFunctionsVector;
     std::map<unsigned int,
              std::map<unsigned int,
-                      std::map<unsigned int, alglib::spline1dinterpolant *>>>
+                      std::map<unsigned int, alglib::spline1dinterpolant>>>
       radValues;
     std::map<unsigned int,
              std::map<unsigned int, std::map<unsigned int, double>>>
