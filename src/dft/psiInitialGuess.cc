@@ -97,8 +97,7 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
         }
       alglib::real_1d_array y;
       y.setcontent(numRows, &yData[0]);
-      alglib::ae_int_t             natural_bound_type = 0;
-      alglib::spline1dinterpolant *spline = new alglib::spline1dinterpolant;
+      alglib::ae_int_t natural_bound_type = 0;
       alglib::spline1dbuildcubic(x,
                                  y,
                                  numRows,
@@ -106,9 +105,8 @@ dftClass<FEOrder, FEOrderElectro>::loadPSIFiles(unsigned int  Z,
                                  0.0,
                                  natural_bound_type,
                                  0.0,
-                                 *spline);
+                                 radValues[Z][n][l]);
 
-      radValues[Z][n][l] = spline;
 
       maxTruncationRadius = xData[truncRowId];
       if (maxTruncationRadius > d_wfcInitTruncation)
@@ -487,7 +485,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
                         d_wfcInitTruncation) // outerValues[it->Z][it->n][it->l])
                         {
                           // radial part
-                          R = alglib::spline1dcalc(*(it->psi), r);
+                          R = alglib::spline1dcalc((it->psi), r);
                           // spherical part
                           if (it->m > 0)
                             {
