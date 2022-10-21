@@ -42,7 +42,7 @@ namespace dftfe
 			     bool scaleExchange,
                              bool computeCorrelation,
                              double scaleExchangeFactor);
-    ~excWavefunctionBaseClass();
+    virtual ~excWavefunctionBaseClass();
     void computeDensityBasedEnergyDensity(unsigned int sizeInput,
                                      const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
                                      std::vector<double> &outputExchangeEnergyDensity,
