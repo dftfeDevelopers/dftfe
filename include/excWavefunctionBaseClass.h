@@ -51,6 +51,10 @@ namespace dftfe
                            const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
                            std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
                            std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const ;
+   void computeDensityBasedFxc(unsigned int sizeInput,
+                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const ;
 
     virtual void applyWaveFunctionDependentVxc() const = 0;
     virtual void updateWaveFunctionDependentVxc() const = 0;

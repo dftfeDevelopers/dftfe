@@ -75,6 +75,16 @@ namespace dftfe
                                                      outputDerCorrEnergy);
   }
 
+  void excWavefunctionBaseClass::computeDensityBasedFxc(unsigned int sizeInput,
+                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
+                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const
+  {
+	  d_excDensityBaseClassPtr->computeDensityBasedFxc(sizeInput,rhoData,
+                                                     outputDer2ExchangeEnergy,
+                                                     outputDer2CorrEnergy);
+  }
+
   densityFamilyType excWavefunctionBaseClass::getDensityBasedFamilyType() const
   {
     return d_excDensityBaseClassPtr->getDensityBasedFamilyType();

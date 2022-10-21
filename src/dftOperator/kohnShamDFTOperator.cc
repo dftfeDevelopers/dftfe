@@ -2508,10 +2508,10 @@ namespace dftfe
             rhoData [rhoDataAttributes::sigmaGradValue] = &sigmaValue;
 
             outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithDensityVal;
-            outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derExchEnergyWithSigma;
+            outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derExchEnergyWithSigmaVal;
 
             outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithDensityVal;
-            outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigma;
+            outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigmaVal;
 
             outputDer2ExchangeEnergy[fxcOutputDataAttributes::der2EnergyWithDensity] = &der2ExchEnergyWithDensityVal;
             outputDer2ExchangeEnergy[fxcOutputDataAttributes::der2EnergyWithDensitySigma] = &der2ExchEnergyWithDensitySigmaVal;
