@@ -25,7 +25,7 @@
 
 #  include <cstring>
 #  include <limits>
-
+#  include <iostream>
 
 
 namespace dftfe
@@ -228,6 +228,7 @@ namespace dftfe
     // respond to MDI standard commands
     // receives first, sends second
     // ---------------------------------------
+    std::cout << "HELLO " << command << std::endl;
 
     if (strcmp(command, ">CELL") == 0)
       {
@@ -392,6 +393,9 @@ namespace dftfe
     cell[1][0] = d_sys_cell[3];
     cell[1][1] = d_sys_cell[4];
     cell[1][2] = d_sys_cell[5];
+    cell[2][0] = d_sys_cell[6];
+    cell[2][1] = d_sys_cell[7];
+    cell[2][2] = d_sys_cell[8];
 
     // in atomic units
     std::vector<std::vector<double>> atomicPositionsCart(
@@ -463,6 +467,8 @@ namespace dftfe
       AssertThrow(false, dealii::ExcMessage("MDI: >CELL data"));
     // error->all(FLERR, "MDI: >CELL data");
     MPI_Bcast(d_sys_cell, 9, MPI_DOUBLE, 0, d_dftfeMPIComm);
+    for (int i = 0; i < 9; i++)
+      std::cout << "cell: " << d_sys_cell[i] << std::endl;
   }
 
   /* ----------------------------------------------------------------------
@@ -501,6 +507,9 @@ namespace dftfe
       AssertThrow(false, dealii::ExcMessage("MDI: >COORDS data"));
     // error->all(FLERR, "MDI: >COORDS data");
     MPI_Bcast(&d_sys_coords[0], n, MPI_DOUBLE, 0, d_dftfeMPIComm);
+
+    for (int i = 0; i < n; i++)
+      std::cout << "coord: " << d_sys_coords[i] << std::endl;
   }
 
   /* ----------------------------------------------------------------------
@@ -518,6 +527,7 @@ namespace dftfe
       AssertThrow(false, dealii::ExcMessage("MDI: >NATOMS data"));
     // error->all(FLERR, "MDI: >NATOMS data");
     MPI_Bcast(&d_sys_natoms, 1, MPI_INT, 0, d_dftfeMPIComm);
+    std::cout << "n atoms: " << d_sys_natoms << std::endl;
   }
 
   /* ----------------------------------------------------------------------
@@ -537,6 +547,9 @@ namespace dftfe
     // error->all(FLERR, "MDI: >ELEMENTS data");
     // FIXME: check if the correct communicator is being used
     MPI_Bcast(&d_sys_elements[0], d_sys_natoms, MPI_INT, 0, d_dftfeMPIComm);
+
+    for (int i = 0; i < d_sys_natoms; i++)
+      std::cout << "element: " << d_sys_elements[i] << std::endl;
   }
 
   // ----------------------------------------------------------------------

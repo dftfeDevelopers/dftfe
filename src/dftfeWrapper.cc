@@ -666,7 +666,9 @@ namespace dftfe
                                            d_mpi_comm_parent,
                                            false,
                                            "GS");
+#ifdef DFTFE_WITH_GPU
         d_dftfeParamsPtr->useGPU = useGPU;
+#endif
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
