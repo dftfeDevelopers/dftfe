@@ -78,10 +78,11 @@ namespace dftfe
     // not acted on until a request to send <ENERGY,<FORCES,<PE,<STRESS
     int d_actionflag;
     int d_flag_natoms, d_flag_elements;
-    int d_flag_cell, d_flag_cell_displ;
+    int d_flag_cell, d_flag_dimensions, d_flag_cell_displ;
     int d_flag_charges, d_flag_coords;
 
     int                 d_sys_natoms;
+    int                 d_sys_dimensions[3];
     std::vector<int>    d_sys_elements;
     std::vector<double> d_sys_coords;
     double              d_sys_cell[9], d_sys_cell_displ[3];
@@ -109,7 +110,8 @@ namespace dftfe
     receive_natoms();
     void
     receive_elements();
-
+    void
+    receive_dimensions();
 
     void
     send_energy();

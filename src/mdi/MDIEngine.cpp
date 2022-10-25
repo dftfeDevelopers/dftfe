@@ -228,7 +228,7 @@ namespace dftfe
     // respond to MDI standard commands
     // receives first, sends second
     // ---------------------------------------
-    std::cout << "HELLO " << command << std::endl;
+    // std::cout << "HELLO " << command << std::endl;
 
     if (strcmp(command, ">CELL") == 0)
       {
@@ -249,8 +249,10 @@ namespace dftfe
     else if (strcmp(command, ">ELEMENTS") == 0)
       {
         receive_elements();
-
-        // -----------------------------------------------
+      }
+    else if (strcmp(command, ">DIMENSIONS") == 0)
+      {
+        receive_dimensions();
       }
     else if (strcmp(command, "<ENERGY") == 0)
       {
@@ -315,6 +317,7 @@ namespace dftfe
     MDI_Register_command("@DEFAULT", ">COORDS");
     MDI_Register_command("@DEFAULT", ">NATOMS");
     MDI_Register_command("@DEFAULT", ">ELEMENTS");
+    MDI_Register_command("@DEFAULT", ">DIMENSIONS");
     MDI_Register_command("@DEFAULT", "EXIT");
   }
 
@@ -328,7 +331,7 @@ namespace dftfe
   void
   MDIEngine::evaluate()
   {
-    int flag_create = d_flag_natoms | d_flag_elements;
+    int flag_create = d_flag_natoms | d_flag_elements | d_flag_dimensions;
     int flag_other  = d_flag_cell | d_flag_cell_displ | d_flag_coords;
 
     // create new system or incrementally update system
@@ -357,7 +360,7 @@ namespace dftfe
     // clear flags that trigger next eval
 
     d_flag_natoms = d_flag_elements = 0;
-    d_flag_cell = d_flag_cell_displ = d_flag_coords = 0;
+    d_flag_cell = d_flag_dimensions = d_flag_cell_displ = d_flag_coords = 0;
   }
 
   /* ----------------------------------------------------------------------
@@ -371,12 +374,12 @@ namespace dftfe
   {
     // check requirements
 
-    if (d_flag_cell == 0 || d_flag_natoms == 0 || d_flag_elements == 0 ||
-        d_flag_coords == 0)
+    if (d_flag_cell == 0 || d_flag_dimensions == 0 || d_flag_natoms == 0 ||
+        d_flag_elements == 0 || d_flag_coords == 0)
       AssertThrow(
         false,
         dealii::ExcMessage(
-          "MDI create_system requires >CELL, >NATOMS, >ELEMENTS, >COORDS MDI commands"));
+          "MDI create_system requires >CELL, >DIMENSIONS, >NATOMS, >ELEMENTS, >COORDS MDI commands"));
     // error->all(FLERR,
     //           "MDI create_system requires >CELL, >NATOMS, >ELEMENTS, >COORDS
     //           " "MDI commands");
@@ -409,14 +412,36 @@ namespace dftfe
     for (unsigned int i = 0; i < d_sys_natoms; ++i)
       atomicNumbers[i] = d_sys_elements[i];
 
+    std::vector<bool> pbc({true, true, true});
+
+    for (int i = 0; i < 3; i++)
+      {
+        if (d_sys_dimensions[i] == 1)
+          {
+            pbc[i] = false;
+          }
+        else if (d_sys_dimensions[i] == 2)
+          {
+            pbc[i] = true;
+          }
+        else
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                "Incorrect DIMENSIONS vector input values from MDI driver. Should have value of either 1 or 2 for the three different cell vectors."));
+          }
+      }
+
+
     // constructs dftfe wrapper object
     d_dftfeWrapper.reinit(d_dftfeMPIComm,
                           true, // use GPU mode if compiled with CUDA
                           atomicPositionsCart,
                           atomicNumbers,
                           cell,
-                          std::vector<bool>{true, true, true}, // pbc
-                          std::vector<unsigned int>{1, 1, 1},  // MP grid
+                          pbc,                                // pbc
+                          std::vector<unsigned int>{1, 1, 1}, // MP grid
                           std::vector<bool>{false,
                                             false,
                                             false}); // MP grid shift
@@ -570,6 +595,24 @@ namespace dftfe
     //  std::cout << "element: " << d_sys_elements[i] << std::endl;
   }
 
+
+  void
+  MDIEngine::receive_dimensions()
+  {
+    d_actionflag      = 0;
+    d_flag_dimensions = 1;
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(d_sys_dimensions, 3, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: >DIMENSIONS data"));
+      }
+
+    MPI_Bcast(d_sys_dimensions, 3, MPI_INT, 0, d_dftfeMPIComm);
+
+    // for (int i = 0; i < d_sys_natoms; i++)
+    //  std::cout << "element: " << d_sys_elements[i] << std::endl;
+  }
   // ----------------------------------------------------------------------
   // ----------------------------------------------------------------------
   // MDI "<" driver commands that request data
