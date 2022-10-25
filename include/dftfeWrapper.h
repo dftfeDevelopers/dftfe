@@ -39,7 +39,7 @@ namespace dftfe
      * after calling MPI_Init
      */
     static void
-    globalHandlesInitialize();
+    globalHandlesInitialize(const MPI_Comm &mpi_comm_world);
 
     /**
      * @brief must be called only once at end of program from all processors
@@ -47,6 +47,12 @@ namespace dftfe
      */
     static void
     globalHandlesFinalize();
+
+
+    /**
+     * @brief empty constructor
+     */
+    dftfeWrapper();
 
     /**
      * @brief constructor based on input parameter_file
@@ -217,6 +223,13 @@ namespace dftfe
     std::tuple<double, bool, double>
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
+
+    /**
+     * @brief Get DFT free energy (in Hartree units). This function can
+     * only be called after calling computeDFTFreeEnergy
+     */
+    double
+    getDFTFreeEnergy() const;
 
     /**
      * @brief Get electronic entropic energy (in Hartree units). This function can
