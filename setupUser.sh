@@ -27,12 +27,14 @@ ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/install
 
 #Paths for optional external libraries
 NCCL_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/nccl/build"
+mdiPath=""
 
 #Toggle GPU compilation
 withGPU=ON
 
 #Option to link to NCCL library (Only for GPU compilation)
 withNCCL=ON
+withMDI=OFF
 
 #Compiler options and flags
 cxx_compiler=mpic++
@@ -67,6 +69,7 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir\
+  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -81,7 +84,8 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-  -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
+  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
