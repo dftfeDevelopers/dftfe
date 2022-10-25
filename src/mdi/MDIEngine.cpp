@@ -20,6 +20,7 @@
 #if defined(DFTFE_WITH_MDI)
 #  include "MDIEngine.h"
 #  include "libraryMDI.h"
+#  include "linearAlgebraOperations.h"
 
 #  include <deal.II/base/data_out_base.h>
 
@@ -449,7 +450,40 @@ namespace dftfe
 
   void
   MDIEngine::adjust_box()
-  {}
+  {
+    std::vector<std::vector<double>> currentCell = d_dftfeWrapper.getCell();
+
+    // row major storage of columns of cell vectors
+    std::vector<double> currentCellFlattenedInv(9, 0.0);
+    for (unsigned int i = 0; i < 3; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        currentCellFlattenedInv[i + 3 * j] = currentCell[i][j];
+    dftfe::linearAlgebraOperations::inverse(&currentCellFlattenedInv[0], 3);
+
+    // row major storage of columns of cell vectors
+    std::vector<double> newCellFlattened(9, 0.0);
+    for (unsigned int i = 0; i < 3; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        newCellFlattened[i + 3 * j] = d_sys_cell[3 * i + j];
+
+
+
+    std::vector<double> deformationGradientFlattened(9, 0.0);
+
+    for (unsigned int i = 0; i < 3; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        for (unsigned int k = 0; k < 3; ++k)
+          deformationGradientFlattened[3 * i + j] +=
+            newCellFlattened[3 * i + k] * currentCellFlattenedInv[3 * k + j];
+
+
+    std::vector<std::vector<double>> deformationGradient(
+      3, std::vector<double>(3));
+    for (unsigned int i = 0; i < 3; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        deformationGradient[i][j] = deformationGradientFlattened[3 * i + j];
+    d_dftfeWrapper.deformCell(deformationGradient);
+  }
 
   void
   MDIEngine::adjust_coords()
