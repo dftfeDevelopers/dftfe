@@ -359,22 +359,23 @@ ENDIF()
 #
 # MDI. 
 #
-find_library(MDI_LIBRARY
-    NAMES mdi
-    PATHS ${MDI_PATH}/lib64/mdi
-    NO_DEFAULT_PATH
-  )
-MESSAGE("-- Use MDI library from ${MDI_PATH}/lib64/mdi")
-TARGET_LINK_LIBRARIES(${TARGETLIB}
-      "${MDI_LIBRARY}"
-  )
-TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${MDI_PATH}/include/mdi")
-IF(MDI_LIBRARY STREQUAL "MDI_LIBRARY-NOTFOUND")
-  MESSAGE("-- MDI was not found in ${MDI_PATH}")
-ELSE()
-  ADD_DEFINITIONS(-DDFTFE_WITH_MDI)
+IF (WITH_MDI)
+  find_library(MDI_LIBRARY
+      NAMES mdi
+      PATHS ${MDI_PATH}/lib64/mdi
+      NO_DEFAULT_PATH
+    )
+  MESSAGE("-- Use MDI library from ${MDI_PATH}/lib64/mdi")
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
+        "${MDI_LIBRARY}"
+    )
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${MDI_PATH}/include/mdi")
+  IF(MDI_LIBRARY STREQUAL "MDI_LIBRARY-NOTFOUND")
+    MESSAGE("-- MDI was not found in ${MDI_PATH}")
+  ELSE()
+    ADD_DEFINITIONS(-DDFTFE_WITH_MDI)
+  ENDIF()
 ENDIF()
-
 
 
 #
