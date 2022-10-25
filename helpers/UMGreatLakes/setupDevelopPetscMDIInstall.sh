@@ -18,14 +18,14 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_complex_cpu"
-alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
-libxcDir="/home/vikramg/DFT-FE-softwares/libxc/install_libxc5.1.5"
-spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
+dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cpu"
+dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii/install_complex_cpu"
+alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
+libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/install_libxc5.2.3"
+spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2021.05.002_gcc8.2.0_openmpi4.0.6_install"
+ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
 
 #Paths for optional external libraries
 NCCL_PATH=""

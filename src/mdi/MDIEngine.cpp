@@ -65,7 +65,6 @@ namespace dftfe
     // root = 1 for proc 0, otherwise 0
     int rank;
     MPI_Comm_rank(d_dftfeMPIComm, &rank);
-    std::cout << "rank: " << rank << std::endl;
     d_root = (rank == 0) ? 1 : 0;
 
     // MDI setup
@@ -463,13 +462,17 @@ namespace dftfe
   {
     d_actionflag = 0;
     d_flag_cell  = 1;
-    int ierr     = MDI_Recv(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: >CELL data"));
-    // error->all(FLERR, "MDI: >CELL data");
+
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: >CELL data"));
+      }
+
     MPI_Bcast(d_sys_cell, 9, MPI_DOUBLE, 0, d_dftfeMPIComm);
-    for (int i = 0; i < 9; i++)
-      std::cout << "cell: " << d_sys_cell[i] << std::endl;
+    // for (int i = 0; i < 9; i++)
+    //  std::cout << "cell: " << d_sys_cell[i] << std::endl;
   }
 
   /* ----------------------------------------------------------------------
@@ -485,10 +488,14 @@ namespace dftfe
   {
     d_actionflag      = 0;
     d_flag_cell_displ = 1;
-    int ierr          = MDI_Recv(d_sys_cell_displ, 3, MDI_DOUBLE, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: >CELL_DISPLS data"));
-    // error->all(FLERR, "MDI: >CELL_DISPLS data");
+
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(d_sys_cell_displ, 3, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: >CELL_DISPLS data"));
+      }
+
     MPI_Bcast(d_sys_cell_displ, 3, MPI_DOUBLE, 0, d_dftfeMPIComm);
   }
 
@@ -503,14 +510,18 @@ namespace dftfe
     d_flag_coords = 1;
     int n         = 3 * d_sys_natoms;
     d_sys_coords.resize(n);
-    int ierr = MDI_Recv(&d_sys_coords[0], n, MDI_DOUBLE, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: >COORDS data"));
-    // error->all(FLERR, "MDI: >COORDS data");
+
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(&d_sys_coords[0], n, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: >COORDS data"));
+      }
+
     MPI_Bcast(&d_sys_coords[0], n, MPI_DOUBLE, 0, d_dftfeMPIComm);
 
-    for (int i = 0; i < n; i++)
-      std::cout << "coord: " << d_sys_coords[i] << std::endl;
+    // for (int i = 0; i < n; i++)
+    //  std::cout << "coord: " << d_sys_coords[i] << std::endl;
   }
 
   /* ----------------------------------------------------------------------
@@ -523,12 +534,15 @@ namespace dftfe
   {
     d_actionflag  = 0;
     d_flag_natoms = 1;
-    int ierr      = MDI_Recv(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: >NATOMS data"));
-    // error->all(FLERR, "MDI: >NATOMS data");
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: >NATOMS data"));
+      }
+
     MPI_Bcast(&d_sys_natoms, 1, MPI_INT, 0, d_dftfeMPIComm);
-    std::cout << "n atoms: " << d_sys_natoms << std::endl;
+    // std::cout << "n atoms: " << d_sys_natoms << std::endl;
   }
 
   /* ----------------------------------------------------------------------
@@ -542,15 +556,18 @@ namespace dftfe
     d_actionflag    = 0;
     d_flag_elements = 1;
     d_sys_elements.resize(d_sys_natoms);
-    int ierr = MDI_Recv(&d_sys_elements[0], d_sys_natoms, MDI_INT, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: >ELEMENTS data"));
-    // error->all(FLERR, "MDI: >ELEMENTS data");
-    // FIXME: check if the correct communicator is being used
+    if (d_root == 1)
+      {
+        int ierr =
+          MDI_Recv(&d_sys_elements[0], d_sys_natoms, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: >ELEMENTS data"));
+      }
+
     MPI_Bcast(&d_sys_elements[0], d_sys_natoms, MPI_INT, 0, d_dftfeMPIComm);
 
-    for (int i = 0; i < d_sys_natoms; i++)
-      std::cout << "element: " << d_sys_elements[i] << std::endl;
+    // for (int i = 0; i < d_sys_natoms; i++)
+    //  std::cout << "element: " << d_sys_elements[i] << std::endl;
   }
 
   // ----------------------------------------------------------------------
@@ -574,10 +591,13 @@ namespace dftfe
   {
     // NOTE: energy should be QM energy
     const double energy = d_dftfeWrapper.getDFTFreeEnergy();
-    int          ierr   = MDI_Send(&energy, 1, MDI_DOUBLE, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: <ENERGY data"));
-    // error->all(FLERR, "MDI: <ENERGY data");
+    if (d_root == 1)
+      {
+        int ierr = MDI_Send(&energy, 1, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <ENERGY data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
   }
 
   /* ----------------------------------------------------------------------
@@ -600,15 +620,18 @@ namespace dftfe
         forces[3 * i + 1] = ionicForces[i][1];
         forces[3 * i + 2] = ionicForces[i][2];
       }
-    int ierr = MDI_Send(&forces[0], 3 * d_sys_natoms, MDI_DOUBLE, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: <FORCES data"));
-    // error->all(FLERR, "MDI: <FORCES data");
+    if (d_root == 1)
+      {
+        int ierr =
+          MDI_Send(&forces[0], 3 * d_sys_natoms, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <FORCES data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
   }
 
   /* ----------------------------------------------------------------------
      <STRESS command
-     send 6-component stress tensor (no kinetic energy term)
   ---------------------------------------------------------------------- */
 
   void
@@ -629,10 +652,14 @@ namespace dftfe
     stressTensorFlattened[7] = stressTensor[2][1];
     stressTensorFlattened[8] = stressTensor[2][2];
 
-    int ierr = MDI_Send(&stressTensorFlattened[0], 9, MDI_DOUBLE, d_mdicomm);
-    if (ierr)
-      AssertThrow(false, dealii::ExcMessage("MDI: <STRESS data"));
-    // error->all(FLERR, "MDI: <STRESS data");
+    if (d_root == 1)
+      {
+        int ierr =
+          MDI_Send(&stressTensorFlattened[0], 9, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <STRESS data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
   }
 } // namespace dftfe
 #endif
