@@ -75,7 +75,7 @@ MDI_Plugin_init_dftfe()
     MPI_Abort(MPI_COMM_WORLD, 1);
 
   // open DFT-FE
-  dftfe::dftfeWrapper::globalHandlesInitialize();
+  // dftfe::dftfeWrapper::globalHandlesInitialize();
 
   // launch MDI engine in endless loop
   dftfe::MDIEngine mdiEngine(mpi_world_comm, mdi_argc, mdi_argv);

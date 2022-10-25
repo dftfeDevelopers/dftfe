@@ -45,14 +45,9 @@ main(int argc, char *argv[])
   //
   MPI_Init(&argc, &argv);
 
-  dftfe::dftfeWrapper::globalHandlesInitialize();
-
 #if defined(DFTFE_WITH_MDI)
-
   MPI_Comm mpi_world_comm;
-
-
-  int ret;
+  int      ret;
   // Initialize MDI
   ret = MDI_Init(&argc, &argv);
   if (ret != 0)
@@ -83,8 +78,12 @@ main(int argc, char *argv[])
       throw std::runtime_error("MDI_MPI_get_world_comm failed.");
     }
 
+  dftfe::dftfeWrapper::globalHandlesInitialize(mpi_world_comm);
   dftfe::MDIEngine mdiEngine(mpi_world_comm, argc, argv);
+  dftfe::dftfeWrapper::globalHandlesFinalize();
+  MPI_Barrier(mpi_world_comm);
 #else
+  dftfe::dftfeWrapper::globalHandlesInitialize(MPI_COMM_WORLD);
   const double start = MPI_Wtime();
   int          world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -205,10 +204,10 @@ main(int argc, char *argv[])
         << "============================================================================================="
         << std::endl;
     }
-#endif
 
   dftfe::dftfeWrapper::globalHandlesFinalize();
-
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   MPI_Finalize();
   return 0;
 }

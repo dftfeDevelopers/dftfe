@@ -39,7 +39,7 @@ namespace dftfe
      * after calling MPI_Init
      */
     static void
-    globalHandlesInitialize();
+    globalHandlesInitialize(const MPI_Comm &mpi_comm_world);
 
     /**
      * @brief must be called only once at end of program from all processors

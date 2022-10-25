@@ -65,6 +65,7 @@ namespace dftfe
     // root = 1 for proc 0, otherwise 0
     int rank;
     MPI_Comm_rank(d_dftfeMPIComm, &rank);
+    std::cout << "rank: " << rank << std::endl;
     d_root = (rank == 0) ? 1 : 0;
 
     // MDI setup
@@ -278,7 +279,7 @@ namespace dftfe
     else if (strcmp(command, "EXIT") == 0)
       {
         d_exit_command = true;
-
+        d_dftfeWrapper.clear();
         // -------------------------------------------------------
         // unknown command
         // -------------------------------------------------------
