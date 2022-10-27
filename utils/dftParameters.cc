@@ -106,13 +106,13 @@ namespace dftfe
           "SUBSPACE ROT FULL CPU MEM",
           "true",
           Patterns::Bool(),
-          R"([Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.)");
+          "[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.");
 
         prm.declare_entry(
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           Patterns::Bool(),
-          R"([Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
+          "[Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -134,13 +134,13 @@ namespace dftfe
           "WRITE WFC",
           "false",
           Patterns::Bool(),
-          R"([Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.)");
+          "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY",
           "false",
           Patterns::Bool(),
-          R"([Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.)");
+          "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
@@ -158,7 +158,7 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           Patterns::Bool(),
-          R"([Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.)");
+          "[Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.");
 
         prm.declare_entry(
           "READ ATOMIC WFC PDOS FROM PSP FILE",
@@ -192,7 +192,7 @@ namespace dftfe
           "MPI ALLREDUCE BLOCK SIZE",
           "100.0",
           Patterns::Double(0),
-          R"([Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.)");
+          "[Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
 
         prm.declare_entry(
           "BAND PARAL OPT",
@@ -637,7 +637,7 @@ namespace dftfe
           "PSEUDOPOTENTIAL FILE NAMES LIST",
           "",
           Patterns::Anything(),
-          R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
+          "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
 
         prm.declare_entry(
           "EXCHANGE CORRELATION TYPE",
@@ -754,7 +754,7 @@ namespace dftfe
           "KERKER MIXING PARAMETER",
           "0.05",
           Patterns::Double(0.0, 1000.0),
-          R"([Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).)");
+          "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).");
 
         prm.declare_entry(
           "MIXING METHOD",
@@ -789,7 +789,7 @@ namespace dftfe
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            R"([Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.)");
+            "[Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
@@ -802,13 +802,13 @@ namespace dftfe
             "ADAPTIVE RANK REL TOL",
             "0.3",
             Patterns::Double(0.0, 1.0),
-            R"([Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED\_ADAPTIVE method.)");
+            "[Standard] Relative error metric on the low rank approximation error that adaptively sets the rank in each SCF iteration step.");
 
           prm.declare_entry(
-            "ADAPTIVE RANK REL TOL REACCUM FACTOR",
-            "2.0",
-            Patterns::Double(0.0, 100.0),
-            R"([Advanced] For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.)");
+            "BETA TOL",
+            "0.1",
+            Patterns::Double(0.0),
+            "[Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
 
           prm.declare_entry(
             "POISSON SOLVER ABS TOL",
@@ -1255,8 +1255,8 @@ namespace dftfe
     /** parameters for LRD preconditioner **/
     startingNormLRDLargeDamping   = 2.0;
     adaptiveRankRelTolLRD         = 0.3;
-    std::string methodSubTypeLRD  = "";
-    factorAdapAccumClearLRD       = 2.0;
+    methodSubTypeLRD              = "";
+    betaTol                       = 0.1;
     absPoissonSolverToleranceLRD  = 1.0e-6;
     singlePrecLRD                 = false;
     estimateJacCondNoFinalSCFIter = false;
@@ -1484,9 +1484,8 @@ namespace dftfe
         methodSubTypeLRD = prm.get("METHOD SUB TYPE");
         startingNormLRDLargeDamping =
           prm.get_double("STARTING NORM LARGE DAMPING");
-        adaptiveRankRelTolLRD = prm.get_double("ADAPTIVE RANK REL TOL");
-        factorAdapAccumClearLRD =
-          prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
+        adaptiveRankRelTolLRD        = prm.get_double("ADAPTIVE RANK REL TOL");
+        betaTol                      = prm.get_double("BETA TOL");
         absPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER ABS TOL");
         singlePrecLRD = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
         estimateJacCondNoFinalSCFIter =

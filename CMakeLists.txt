@@ -64,6 +64,8 @@ SET(TARGET_SRC
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
   ./src/dft/dftd.cc
+  ./src/mdi/MDIEngine.cpp
+  ./src/mdi/libraryMDI.cpp
   )
 
 IF (WITH_GPU)
@@ -360,8 +362,26 @@ IF (DFTD4_FOUND)
 ENDIF()
 
 
-
-
+#
+# MDI. 
+#
+IF (WITH_MDI)
+  find_library(MDI_LIBRARY
+      NAMES mdi
+      PATHS ${MDI_PATH}/lib64/mdi
+      NO_DEFAULT_PATH
+    )
+  MESSAGE("-- Use MDI library from ${MDI_PATH}/lib64/mdi")
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
+        "${MDI_LIBRARY}"
+    )
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${MDI_PATH}/include/mdi")
+  IF(MDI_LIBRARY STREQUAL "MDI_LIBRARY-NOTFOUND")
+    MESSAGE("-- MDI was not found in ${MDI_PATH}")
+  ELSE()
+    ADD_DEFINITIONS(-DDFTFE_WITH_MDI)
+  ENDIF()
+ENDIF()
 
 
 #

@@ -28,19 +28,19 @@ checks
 # Process all source and header files:
 #
 
-process "include utils src pseudoConverters" ".*\.(cc|h|cu|cuh)" format_file
+process "include utils src pseudoConverters" ".*\.(cc|cpp|h|cu|cuh)" format_file
 
 #
 # Removing trailing whitespace
 #
 
 process "include utils src pseudoConverters" \
-  ".*\.(cc|h|cu|cuh|html|dox|txt)" remove_trailing_whitespace
+  ".*\.(cc|cpp|h|cu|cuh|html|dox|txt)" remove_trailing_whitespace
 
 #
 # Ensure only a single newline at end of files
 #
 
 process "include utils src pseudoConverters" \
-  ".*\.(cc|h|cu|cuh|html|dox|txt)" ensure_single_trailing_newline
+  ".*\.(cc|cpp|h|cu|cuh|html|dox|txt)" ensure_single_trailing_newline
 

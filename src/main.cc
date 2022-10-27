@@ -34,24 +34,66 @@
 #include <sstream>
 #include <sys/stat.h>
 
-
+#if defined(DFTFE_WITH_MDI)
+#  include <mdi.h>
+#  include "MDIEngine.h"
+#endif
 
 int
 main(int argc, char *argv[])
 {
+  //
+  MPI_Init(&argc, &argv);
+
+#if defined(DFTFE_WITH_MDI)
+  MPI_Comm mpi_world_comm;
+  int      ret;
+  // Initialize MDI
+  ret = MDI_Init(&argc, &argv);
+  if (ret != 0)
+    {
+      throw std::runtime_error(
+        "The MDI library was not initialized correctly.");
+    }
+
+  // Confirm that MDI was initialized successfully
+  int initialized_mdi;
+  ret = MDI_Initialized(&initialized_mdi);
+  if (ret != 0)
+    {
+      throw std::runtime_error("MDI_Initialized failed.");
+    }
+  if (!initialized_mdi)
+    {
+      throw std::runtime_error(
+        "MDI not initialized: did you provide the -mdi option?.");
+    }
+
+  // get the MPI communicator that spans all ranks running DFTFE
+  // when using MDI, this may be a subset of MPI_COMM_WORLD
+
+  ret = MDI_MPI_get_world_comm(&mpi_world_comm);
+  if (ret != 0)
+    {
+      throw std::runtime_error("MDI_MPI_get_world_comm failed.");
+    }
+
+  dftfe::dftfeWrapper::globalHandlesInitialize(mpi_world_comm);
+  dftfe::MDIEngine mdiEngine(mpi_world_comm, argc, argv);
+  dftfe::dftfeWrapper::globalHandlesFinalize();
+  MPI_Barrier(mpi_world_comm);
+#else
+  dftfe::dftfeWrapper::globalHandlesInitialize(MPI_COMM_WORLD);
+  const double start = MPI_Wtime();
+  int          world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
   // deal.II tests expect parameter file as a first (!) argument
   AssertThrow(argc > 1,
               dealii::ExcMessage(
                 "Usage:\n"
                 "mpirun -np nProcs executable parameterfile.prm\n"
                 "\n"));
-
-  //
-  MPI_Init(&argc, &argv);
-  const double start = MPI_Wtime();
-  int          world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
   const std::string parameter_file = argv[1];
 
   dftfe::runParameters runParams;
@@ -114,8 +156,6 @@ main(int argc, char *argv[])
         << std::endl;
     }
 
-  dftfe::dftfeWrapper::globalHandlesInitialize();
-
 
   if (runParams.solvermode == "MD")
     {
@@ -150,7 +190,6 @@ main(int argc, char *argv[])
       dftfeWrapped.run();
     }
 
-  dftfe::dftfeWrapper::globalHandlesFinalize();
 
   const double end = MPI_Wtime();
   if (runParams.verbosity >= 1 && world_rank == 0)
@@ -165,6 +204,10 @@ main(int argc, char *argv[])
         << "============================================================================================="
         << std::endl;
     }
+
+  dftfe::dftfeWrapper::globalHandlesFinalize();
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   MPI_Finalize();
   return 0;
 }

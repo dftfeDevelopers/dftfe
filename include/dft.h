@@ -77,11 +77,11 @@ namespace dftfe
 
   struct orbital
   {
-    unsigned int                 atomID;
-    unsigned int                 waveID;
-    unsigned int                 Z, n, l;
-    int                          m;
-    alglib::spline1dinterpolant *psi;
+    unsigned int                atomID;
+    unsigned int                waveID;
+    unsigned int                Z, n, l;
+    int                         m;
+    alglib::spline1dinterpolant psi;
   };
 
   /* code that must be skipped by Doxygen */
@@ -778,6 +778,15 @@ namespace dftfe
                    const unsigned int                   quadratureId);
 
     double
+    rhofieldInnerProduct(
+      const dealii::MatrixFree<3, double> &matrixFreeDataObject,
+      const distributedCPUVec<double> &    rhoNodalField1,
+      const distributedCPUVec<double> &    rhoNodalField2,
+      const unsigned int                   dofHandlerId,
+      const unsigned int                   quadratureId);
+
+
+    double
     fieldGradl2Norm(const dealii::MatrixFree<3, double> &matrixFreeDataObject,
                     const distributedCPUVec<double> &    field);
 
@@ -1136,7 +1145,7 @@ namespace dftfe
     std::vector<orbital> waveFunctionsVector;
     std::map<unsigned int,
              std::map<unsigned int,
-                      std::map<unsigned int, alglib::spline1dinterpolant *>>>
+                      std::map<unsigned int, alglib::spline1dinterpolant>>>
       radValues;
     std::map<unsigned int,
              std::map<unsigned int, std::map<unsigned int, double>>>
@@ -1368,8 +1377,11 @@ namespace dftfe
     std::deque<distributedCPUVec<double>> d_fvSpin0containerVals;
     std::deque<distributedCPUVec<double>> d_vSpin1containerVals;
     std::deque<distributedCPUVec<double>> d_fvSpin1containerVals;
+    distributedCPUVec<double>             d_residualPredicted;
     unsigned int                          d_rankCurrentLRD;
     double                                d_relativeErrorJacInvApproxPrevScfLRD;
+    double                                d_residualNormPredicted;
+    bool                                  d_tolReached;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,

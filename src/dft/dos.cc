@@ -24,9 +24,9 @@ loadSingleAtomPSIFiles(
   unsigned int  l,
   unsigned int &fileReadFlag,
   double &      wfcInitTruncation,
-  std::map<unsigned int,
-           std::map<unsigned int,
-                    std::map<unsigned int, alglib::spline1dinterpolant *>>>
+  std::map<
+    unsigned int,
+    std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant>>>
     &                  radValues,
   const MPI_Comm &     mpiCommParent,
   const dftParameters &dftParams)
@@ -113,8 +113,7 @@ loadSingleAtomPSIFiles(
         }
       alglib::real_1d_array y;
       y.setcontent(numRows, &yData[0]);
-      alglib::ae_int_t             natural_bound_type = 0;
-      alglib::spline1dinterpolant *spline = new alglib::spline1dinterpolant;
+      alglib::ae_int_t natural_bound_type = 0;
       alglib::spline1dbuildcubic(x,
                                  y,
                                  numRows,
@@ -122,9 +121,8 @@ loadSingleAtomPSIFiles(
                                  0.0,
                                  natural_bound_type,
                                  0.0,
-                                 *spline);
+                                 radValues[Z][n][l]);
 
-      radValues[Z][n][l]  = spline;
       maxTruncationRadius = xData[truncRowId];
       if (maxTruncationRadius > wfcInitTruncation)
         wfcInitTruncation = maxTruncationRadius;
@@ -764,9 +762,9 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
   unsigned int errorReadFile = 0;
   unsigned int fileReadFlag  = 0;
 
-  std::map<unsigned int,
-           std::map<unsigned int,
-                    std::map<unsigned int, alglib::spline1dinterpolant *>>>
+  std::map<
+    unsigned int,
+    std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant>>>
                                     radValues;
   std::vector<std::vector<orbital>> singleAtomInfo;
   singleAtomInfo.resize(numberGlobalAtoms);
@@ -1037,7 +1035,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
 
                               if (r <= wfcInitTruncation)
                                 {
-                                  R = alglib::spline1dcalc(*dataOrb.psi, r);
+                                  R = alglib::spline1dcalc(dataOrb.psi, r);
                                   if (dataOrb.m > 0)
                                     singleAtomWaveFunctionQuadValue =
                                       R * std::sqrt(2) *

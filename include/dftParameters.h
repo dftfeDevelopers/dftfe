@@ -57,7 +57,7 @@ namespace dftfe
     double      startingNormLRDLargeDamping;
     std::string methodSubTypeLRD;
     double      adaptiveRankRelTolLRD;
-    double      factorAdapAccumClearLRD;
+    double      betaTol;
     double      absPoissonSolverToleranceLRD;
     bool        singlePrecLRD;
     bool        estimateJacCondNoFinalSCFIter;

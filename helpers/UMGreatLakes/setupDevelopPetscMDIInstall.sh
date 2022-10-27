@@ -29,14 +29,14 @@ ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
 
 #Paths for optional external libraries
 NCCL_PATH=""
-mdiPath=""
+mdiPath="/home/dsambit/exaaltInterfaceRelated/MDI_Library/install"
+
 
 #Toggle GPU compilation
 withGPU=OFF
 
 #Option to link to NCCL library (Only for GPU compilation)
 withNCCL=OFF
-withMDI=OFF
 
 #Compiler options and flags
 cxx_compiler=mpicxx
@@ -49,7 +49,7 @@ withHigherQuadPSP=OFF
 #Optmization flag: Release for optimized mode and Debug for debug mode compilation
 build_type=Release
 
-testing=OFF
+testing=ON
 minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
@@ -64,13 +64,13 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
-  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/scratch/vikramg_root/vikramg/dsambit/testInstallReal -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+  -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
@@ -80,14 +80,14 @@ function cmake_real() {
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
-  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/scratch/vikramg_root/vikramg/dsambit/testInstallImag -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
-	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
+  -DMDI_PATH=$mdiPath\
+  -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
 	-DWITH_COMPLEX=ON \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
@@ -107,11 +107,11 @@ fi
 cd $out
 
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j4
+cmake_real "$SRC" && make -j4 && make install
 cd ..
 
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j4
+cmake_cplx "$SRC" && make -j4 && make install
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
