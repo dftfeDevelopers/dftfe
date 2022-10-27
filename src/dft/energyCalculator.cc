@@ -382,7 +382,7 @@ namespace dftfe
     const std::vector<std::vector<double>> &eigenValues,
     const std::vector<double> &             kPointWeights,
     const double                            fermiEnergy,
-    const excWavefunctionBaseClass * excFunctionalPtr,
+    const excWavefunctionBaseClass *        excFunctionalPtr,
     const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
@@ -441,7 +441,8 @@ namespace dftfe
           num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA)
           AssertThrow(
             num_quad_points_electronic * 3 ==
               gradRhoOutValues.begin()->second.size(),
@@ -510,10 +511,8 @@ namespace dftfe
           // feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 
           feValuesElectronicLpsp.reinit(cellElectronic);
-          std::vector<double> densityValueInXC,
-            densityValueOutXC;
-          std::vector<double> exchangeEnergyDensity,
-            corrEnergyDensity;
+          std::vector<double> densityValueInXC, densityValueOutXC;
+          std::vector<double> exchangeEnergyDensity, corrEnergyDensity;
           std::vector<double> derExchEnergyWithInputDensity,
             derCorrEnergyWithInputDensity;
           std::vector<double> derExchEnergyWithSigmaGradDenInput,
@@ -522,14 +521,17 @@ namespace dftfe
             sigmaWithInputGradDensity;
           std::vector<double> gradXCRhoInDotgradRhoOut;
 
-          std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
-          std::map<rhoDataAttributes,const std::vector<double>*>  rhoInData;
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoOutData;
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoInData;
 
-          std::map<VeffOutputDataAttributes, std::vector<double>*> outputDerExchangeEnergy;
-          std::map<VeffOutputDataAttributes, std::vector<double>*> outputDerCorrEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
 
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               // Get exc
               densityValueInXC.resize(num_quad_points_electronic);
@@ -538,8 +540,10 @@ namespace dftfe
               corrEnergyDensity.resize(num_quad_points_electronic);
               derExchEnergyWithInputDensity.resize(num_quad_points_electronic);
               derCorrEnergyWithInputDensity.resize(num_quad_points_electronic);
-              derExchEnergyWithSigmaGradDenInput.resize(num_quad_points_electronic);
-              derCorrEnergyWithSigmaGradDenInput.resize(num_quad_points_electronic);
+              derExchEnergyWithSigmaGradDenInput.resize(
+                num_quad_points_electronic);
+              derCorrEnergyWithSigmaGradDenInput.resize(
+                num_quad_points_electronic);
               sigmaWithOutputGradDensity.resize(num_quad_points_electronic);
               sigmaWithInputGradDensity.resize(num_quad_points_electronic);
               gradXCRhoInDotgradRhoOut.resize(num_quad_points_electronic);
@@ -653,20 +657,30 @@ namespace dftfe
                     }
                 }
 
-              rhoOutData [rhoDataAttributes::values] = &densityValueOutXC;
-              rhoOutData [rhoDataAttributes::sigmaGradValue] = &sigmaWithOutputGradDensity;
+              rhoOutData[rhoDataAttributes::values] = &densityValueOutXC;
+              rhoOutData[rhoDataAttributes::sigmaGradValue] =
+                &sigmaWithOutputGradDensity;
 
-              rhoInData [rhoDataAttributes::values] = &densityValueInXC;
-              rhoInData [rhoDataAttributes::sigmaGradValue] = &sigmaWithInputGradDensity;
+              rhoInData[rhoDataAttributes::values] = &densityValueInXC;
+              rhoInData[rhoDataAttributes::sigmaGradValue] =
+                &sigmaWithInputGradDensity;
 
-              outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithInputDensity;
-              outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derExchEnergyWithSigmaGradDenInput;
+              outputDerExchangeEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derExchEnergyWithInputDensity;
+              outputDerExchangeEnergy
+                [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                  &derExchEnergyWithSigmaGradDenInput;
 
-              outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithInputDensity;
-              outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigmaGradDenInput;
-
+              outputDerCorrEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derCorrEnergyWithInputDensity;
+              outputDerCorrEnergy
+                [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                  &derCorrEnergyWithSigmaGradDenInput;
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                   densityFamilyType::LDA)
             {
               densityValueInXC.resize(num_quad_points_electronic);
               densityValueOutXC.resize(num_quad_points_electronic);
@@ -707,15 +721,17 @@ namespace dftfe
                     }
                 }
 
-              rhoOutData [rhoDataAttributes::values] = &densityValueOutXC;
+              rhoOutData[rhoDataAttributes::values] = &densityValueOutXC;
 
-              rhoInData [rhoDataAttributes::values] = &densityValueInXC;
+              rhoInData[rhoDataAttributes::values] = &densityValueInXC;
 
-              outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithInputDensity;
+              outputDerExchangeEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derExchEnergyWithInputDensity;
 
-              outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithInputDensity;
-
-
+              outputDerCorrEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derCorrEnergyWithInputDensity;
             }
 
           excFunctionalPtr->computeDensityBasedEnergyDensity(
@@ -724,14 +740,14 @@ namespace dftfe
             exchangeEnergyDensity,
             corrEnergyDensity);
 
-          excFunctionalPtr->computeDensityBasedVxc(
-            num_quad_points_electronic,
-            rhoInData,
-            outputDerExchangeEnergy,
-            outputDerCorrEnergy);
+          excFunctionalPtr->computeDensityBasedVxc(num_quad_points_electronic,
+                                                   rhoInData,
+                                                   outputDerExchangeEnergy,
+                                                   outputDerCorrEnergy);
 
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               for (unsigned int q_point = 0;
                    q_point < num_quad_points_electronic;
@@ -765,9 +781,9 @@ namespace dftfe
                     (rhoOutValues.find(cellElectronic->id())->second[q_point]) *
                     feValuesElectronic.JxW(q_point);
                 }
-
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                   densityFamilyType::LDA)
             {
               for (unsigned int q_point = 0;
                    q_point < num_quad_points_electronic;
@@ -792,7 +808,6 @@ namespace dftfe
                     (rhoOutValues.find(cellElectronic->id())->second[q_point]) *
                     feValuesElectronic.JxW(q_point);
                 }
-
             }
 
 
@@ -809,7 +824,7 @@ namespace dftfe
                   feValuesElectronicLpsp.JxW(q_point);
             }
 
-        }  // cell loop
+        } // cell loop
 
     for (; cellElectrostatic != endcElectrostatic; ++cellElectrostatic)
       if (cellElectrostatic->is_locally_owned())
@@ -937,7 +952,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    const excWavefunctionBaseClass * excFunctionalPtr,
+    const excWavefunctionBaseClass *        excFunctionalPtr,
     const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
@@ -1005,7 +1020,8 @@ namespace dftfe
           num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA)
           AssertThrow(
             num_quad_points_electronic * 3 ==
               gradRhoOutValues.begin()->second.size(),
@@ -1071,10 +1087,8 @@ namespace dftfe
           feValuesElectronic.reinit(cellElectronic);
           feValuesElectronicLpsp.reinit(cellElectronic);
 
-          std::vector<double> densityValueInXC,
-            densityValueOutXC;
-          std::vector<double> exchangeEnergyDensity,
-            corrEnergyDensity;
+          std::vector<double> densityValueInXC, densityValueOutXC;
+          std::vector<double> exchangeEnergyDensity, corrEnergyDensity;
           std::vector<double> derExchEnergyWithInputDensity,
             derCorrEnergyWithInputDensity;
           std::vector<double> derExchEnergyWithSigmaGradDenInput,
@@ -1083,23 +1097,30 @@ namespace dftfe
             sigmaWithInputGradDensity;
           std::vector<double> gradXCRhoInDotgradRhoOut;
 
-          std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
-          std::map<rhoDataAttributes,const std::vector<double>*>  rhoInData;
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoOutData;
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoInData;
 
-          std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerExchangeEnergy;
-          std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerCorrEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
 
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
-              densityValueInXC.resize(2 *num_quad_points_electronic);
+              densityValueInXC.resize(2 * num_quad_points_electronic);
               densityValueOutXC.resize(2 * num_quad_points_electronic);
               exchangeEnergyDensity.resize(num_quad_points_electronic);
               corrEnergyDensity.resize(num_quad_points_electronic);
-              derExchEnergyWithInputDensity.resize(2 * num_quad_points_electronic);
-              derCorrEnergyWithInputDensity.resize(2 * num_quad_points_electronic);
-              derExchEnergyWithSigmaGradDenInput.resize(3 * num_quad_points_electronic);
-              derCorrEnergyWithSigmaGradDenInput.resize(3 *num_quad_points_electronic);
+              derExchEnergyWithInputDensity.resize(2 *
+                                                   num_quad_points_electronic);
+              derCorrEnergyWithInputDensity.resize(2 *
+                                                   num_quad_points_electronic);
+              derExchEnergyWithSigmaGradDenInput.resize(
+                3 * num_quad_points_electronic);
+              derCorrEnergyWithSigmaGradDenInput.resize(
+                3 * num_quad_points_electronic);
               sigmaWithOutputGradDensity.resize(3 * num_quad_points_electronic);
               sigmaWithInputGradDensity.resize(3 * num_quad_points_electronic);
               gradXCRhoInDotgradRhoOut.resize(3 * num_quad_points_electronic);
@@ -1341,26 +1362,39 @@ namespace dftfe
                     }
                 }
 
-              rhoOutData [rhoDataAttributes::values] = &densityValueOutXC;
-              rhoOutData [rhoDataAttributes::sigmaGradValue] = &sigmaWithOutputGradDensity;
+              rhoOutData[rhoDataAttributes::values] = &densityValueOutXC;
+              rhoOutData[rhoDataAttributes::sigmaGradValue] =
+                &sigmaWithOutputGradDensity;
 
-              rhoInData [rhoDataAttributes::values] = &densityValueInXC;
-              rhoInData [rhoDataAttributes::sigmaGradValue] = &sigmaWithInputGradDensity;
+              rhoInData[rhoDataAttributes::values] = &densityValueInXC;
+              rhoInData[rhoDataAttributes::sigmaGradValue] =
+                &sigmaWithInputGradDensity;
 
-              outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithInputDensity;
-              outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derExchEnergyWithSigmaGradDenInput;
+              outputDerExchangeEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derExchEnergyWithInputDensity;
+              outputDerExchangeEnergy
+                [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                  &derExchEnergyWithSigmaGradDenInput;
 
-              outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithInputDensity;
-              outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigmaGradDenInput;
+              outputDerCorrEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derCorrEnergyWithInputDensity;
+              outputDerCorrEnergy
+                [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                  &derCorrEnergyWithSigmaGradDenInput;
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                   densityFamilyType::LDA)
             {
-              densityValueInXC.resize(2 *num_quad_points_electronic);
+              densityValueInXC.resize(2 * num_quad_points_electronic);
               densityValueOutXC.resize(2 * num_quad_points_electronic);
               exchangeEnergyDensity.resize(num_quad_points_electronic);
               corrEnergyDensity.resize(num_quad_points_electronic);
-              derExchEnergyWithInputDensity.resize(2 * num_quad_points_electronic);
-              derCorrEnergyWithInputDensity.resize(2 * num_quad_points_electronic);
+              derExchEnergyWithInputDensity.resize(2 *
+                                                   num_quad_points_electronic);
+              derCorrEnergyWithInputDensity.resize(2 *
+                                                   num_quad_points_electronic);
 
               if (d_dftParams.nonLinearCoreCorrection == true)
                 {
@@ -1410,15 +1444,17 @@ namespace dftfe
                 }
 
 
-              rhoOutData [rhoDataAttributes::values] = &densityValueOutXC;
+              rhoOutData[rhoDataAttributes::values] = &densityValueOutXC;
 
-              rhoInData [rhoDataAttributes::values] = &densityValueInXC;
+              rhoInData[rhoDataAttributes::values] = &densityValueInXC;
 
-              outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithInputDensity;
+              outputDerExchangeEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derExchEnergyWithInputDensity;
 
-              outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithInputDensity;
-
-
+              outputDerCorrEnergy
+                [VeffOutputDataAttributes::derEnergyWithDensity] =
+                  &derCorrEnergyWithInputDensity;
             }
 
 
@@ -1429,13 +1465,13 @@ namespace dftfe
             exchangeEnergyDensity,
             corrEnergyDensity);
 
-          excFunctionalPtr->computeDensityBasedVxc(
-            num_quad_points_electronic,
-            rhoInData,
-            outputDerExchangeEnergy,
-            outputDerCorrEnergy);
+          excFunctionalPtr->computeDensityBasedVxc(num_quad_points_electronic,
+                                                   rhoInData,
+                                                   outputDerExchangeEnergy,
+                                                   outputDerCorrEnergy);
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               for (unsigned int q_point = 0;
                    q_point < num_quad_points_electronic;
@@ -1495,7 +1531,8 @@ namespace dftfe
                     feValuesElectronic.JxW(q_point);
                 }
             }
-          else if(excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                   densityFamilyType::LDA)
             {
               for (unsigned int q_point = 0;
                    q_point < num_quad_points_electronic;
@@ -1533,7 +1570,6 @@ namespace dftfe
                     (rhoOutValues.find(cellElectronic->id())->second[q_point]) *
                     feValuesElectronic.JxW(q_point);
                 }
-
             }
 
           if (d_dftParams.isPseudopotential || smearedNuclearCharges)
@@ -1549,7 +1585,7 @@ namespace dftfe
                   feValuesElectronicLpsp.JxW(q_point);
             }
 
-        } //cell loop
+        } // cell loop
 
 
     for (; cellElectrostatic != endcElectrostatic; ++cellElectrostatic)

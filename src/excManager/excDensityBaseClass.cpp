@@ -23,21 +23,20 @@ namespace dftfe
 {
   excDensityBaseClass::excDensityBaseClass(xc_func_type funcX,
                                            xc_func_type funcC,
-                                           bool scaleExchange,
-                                           bool computeCorrelation,
-                                           double scaleExchangeFactor)
-  :d_funcX(funcX),
-    d_funcC(funcC),
-    d_scaleExchange(scaleExchange),
-    d_computeCorrelation(computeCorrelation),
-    d_scaleExchangeFactor(scaleExchangeFactor)
-  {
+                                           bool         scaleExchange,
+                                           bool         computeCorrelation,
+                                           double       scaleExchangeFactor)
+    : d_funcX(funcX)
+    , d_funcC(funcC)
+    , d_scaleExchange(scaleExchange)
+    , d_computeCorrelation(computeCorrelation)
+    , d_scaleExchangeFactor(scaleExchangeFactor)
+  {}
 
-  }
-
-  densityFamilyType excDensityBaseClass::getDensityBasedFamilyType() const
+  densityFamilyType
+  excDensityBaseClass::getDensityBasedFamilyType() const
   {
     return d_familyType;
   }
 
-}
+} // namespace dftfe

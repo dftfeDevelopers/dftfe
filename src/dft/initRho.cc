@@ -173,7 +173,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
       rhoOutVals.push_back(std::map<dealii::CellId, std::vector<double>>());
       rhoOutValues = &(rhoOutVals.back());
 
-      if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+      if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          densityFamilyType::GGA)
         {
           gradRhoOutVals.push_back(
             std::map<dealii::CellId, std::vector<double>>());
@@ -186,7 +187,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
             std::map<dealii::CellId, std::vector<double>>());
           rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               gradRhoOutValsSpinPolarized.push_back(
                 std::map<dealii::CellId, std::vector<double>>());
@@ -337,7 +339,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
         *rhoInValues,
         *gradRhoInValues,
         *gradRhoInValues,
-        excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+        excFunctionalPtr->getDensityBasedFamilyType() ==
+          densityFamilyType::GGA);
 
       if (d_dftParamsPtr->spinPolarized == 1)
         {
@@ -373,7 +376,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
             *rhoInValuesSpinPolarized,
             *gradRhoInValuesSpinPolarized,
             *gradRhoInValuesSpinPolarized,
-            excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+            excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA);
         }
 
       normalizeRhoInQuadValues();
@@ -464,7 +468,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
 
 
       // loop over elements
-      if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+      if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          densityFamilyType::GGA)
         {
           //
           cell = dofHandler.begin_active();
@@ -721,7 +726,8 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
 
 
 
-        if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA) // GGA
+        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA) // GGA
           {
             (*gradRhoInValues)[cell->id()] =
               std::vector<double>(3 * num_quad_points);
@@ -1239,14 +1245,16 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoInQuadValues()
             {
               (*rhoInValues)[cell->id()][q] *= scaling;
 
-              if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   (*gradRhoInValues)[cell->id()][3 * q + idim] *= scaling;
               if (d_dftParamsPtr->spinPolarized == 1)
                 {
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q + 1] *= scaling;
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q] *= scaling;
-                  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     for (unsigned int idim = 0; idim < 3; ++idim)
                       {
                         (*gradRhoInValuesSpinPolarized)[cell->id()]
@@ -1295,7 +1303,8 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoOutQuadValues()
             {
               (*rhoOutValues)[cell->id()][q] *= scaling;
 
-              if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   (*gradRhoOutValues)[cell->id()][3 * q + idim] *= scaling;
               if (d_dftParamsPtr->spinPolarized == 1)
@@ -1303,7 +1312,8 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoOutQuadValues()
                   (*rhoOutValuesSpinPolarized)[cell->id()][2 * q + 1] *=
                     scaling;
                   (*rhoOutValuesSpinPolarized)[cell->id()][2 * q] *= scaling;
-                  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     for (unsigned int idim = 0; idim < 3; ++idim)
                       {
                         (*gradRhoOutValuesSpinPolarized)[cell->id()]

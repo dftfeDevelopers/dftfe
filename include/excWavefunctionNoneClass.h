@@ -22,23 +22,24 @@
 
 namespace dftfe
 {
-class excWavefunctionNoneClass : public excWavefunctionBaseClass
-{
-	public:
-  excWavefunctionNoneClass(
-    densityFamilyType densityFamilyTypeObj,
-    xc_func_type funcX,
-                           xc_func_type funcC,
-                           double factorForWavefunctionDependent,
-                           bool scaleExchange,
-                           bool computeCorrelation,
-                           double scaleExchangeFactor);
+  class excWavefunctionNoneClass : public excWavefunctionBaseClass
+  {
+  public:
+    excWavefunctionNoneClass(densityFamilyType densityFamilyTypeObj,
+                             xc_func_type      funcX,
+                             xc_func_type      funcC,
+                             double            factorForWavefunctionDependent,
+                             bool              scaleExchange,
+                             bool              computeCorrelation,
+                             double            scaleExchangeFactor);
 
-  void applyWaveFunctionDependentVxc() const override;
-  void updateWaveFunctionDependentVxc() const override;
-  double computeWaveFunctionDependentExcEnergy() const override;
-
-};
-}
+    void
+    applyWaveFunctionDependentVxc() const override;
+    void
+    updateWaveFunctionDependentVxc() const override;
+    double
+    computeWaveFunctionDependentExcEnergy() const override;
+  };
+} // namespace dftfe
 
 #endif // DFTFE_EXCWAVEFUNCTIONNONECLASS_H

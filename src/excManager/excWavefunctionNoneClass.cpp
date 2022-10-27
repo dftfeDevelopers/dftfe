@@ -21,33 +21,38 @@
 
 namespace dftfe
 {
-  excWavefunctionNoneClass::excWavefunctionNoneClass(densityFamilyType densityFamilyTypeObj,
-                                                     xc_func_type funcX,
-                           xc_func_type funcC,
-			   double factorForWavefunctionDependent,
-                           bool scaleExchange,
-                           bool computeCorrelation,
-                           double scaleExchangeFactor)
-  :excWavefunctionBaseClass(densityFamilyTypeObj,
-                               funcX,funcC,
-			       factorForWavefunctionDependent,
+  excWavefunctionNoneClass::excWavefunctionNoneClass(
+    densityFamilyType densityFamilyTypeObj,
+    xc_func_type      funcX,
+    xc_func_type      funcC,
+    double            factorForWavefunctionDependent,
+    bool              scaleExchange,
+    bool              computeCorrelation,
+    double            scaleExchangeFactor)
+    : excWavefunctionBaseClass(densityFamilyTypeObj,
+                               funcX,
+                               funcC,
+                               factorForWavefunctionDependent,
                                scaleExchange,
                                computeCorrelation,
                                scaleExchangeFactor)
   {
     d_wavefunctionFamilyType = wavefunctionFamilyType::NONE;
   }
-  void excWavefunctionNoneClass::applyWaveFunctionDependentVxc() const
+  void
+  excWavefunctionNoneClass::applyWaveFunctionDependentVxc() const
   {
-    //Do nothing
+    // Do nothing
   }
-  void excWavefunctionNoneClass::updateWaveFunctionDependentVxc() const
+  void
+  excWavefunctionNoneClass::updateWaveFunctionDependentVxc() const
   {
-    //Do nothing
+    // Do nothing
   }
-  double excWavefunctionNoneClass::computeWaveFunctionDependentExcEnergy() const
+  double
+  excWavefunctionNoneClass::computeWaveFunctionDependentExcEnergy() const
   {
-    //Do nothing
+    // Do nothing
   }
 
-}
+} // namespace dftfe

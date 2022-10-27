@@ -137,7 +137,8 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
         rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
       computing_timer.leave_subsection("nscf: VEff Computation");
     }
-  else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+  else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+           densityFamilyType::GGA)
     {
       computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(rhoInValues,

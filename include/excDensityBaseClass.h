@@ -53,35 +53,48 @@ namespace dftfe
 
   class excDensityBaseClass
   {
-  public :
-    excDensityBaseClass(xc_func_type funcX, xc_func_type funcC, bool scaleExchange,
-                        bool computeCorrelation, double scaleExchangeFactor);
+  public:
+    excDensityBaseClass(xc_func_type funcX,
+                        xc_func_type funcC,
+                        bool         scaleExchange,
+                        bool         computeCorrelation,
+                        double       scaleExchangeFactor);
 
-    virtual void computeDensityBasedEnergyDensity(unsigned int sizeInput,
-                            const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                            std::vector<double> &outputExchangeEnergyDensity,
-                            std::vector<double> &outputCorrEnergyDensity) const = 0 ;
+    virtual void
+    computeDensityBasedEnergyDensity(
+      unsigned int                                                    sizeInput,
+      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+      std::vector<double> &outputExchangeEnergyDensity,
+      std::vector<double> &outputCorrEnergyDensity) const = 0;
 
-    virtual void computeDensityBasedVxc(unsigned int sizeInput,
-                                     const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
-                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const = 0 ;
+    virtual void
+    computeDensityBasedVxc(
+      unsigned int                                                    sizeInput,
+      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+      std::map<VeffOutputDataAttributes, std::vector<double> *>
+        &outputDerExchangeEnergy,
+      std::map<VeffOutputDataAttributes, std::vector<double> *>
+        &outputDerCorrEnergy) const = 0;
 
-    virtual void computeDensityBasedFxc(unsigned int sizeInput,
-                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
-                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const = 0 ;
+    virtual void
+    computeDensityBasedFxc(
+      unsigned int                                                    sizeInput,
+      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+      std::map<fxcOutputDataAttributes, std::vector<double> *>
+        &outputDer2ExchangeEnergy,
+      std::map<fxcOutputDataAttributes, std::vector<double> *>
+        &outputDer2CorrEnergy) const = 0;
 
-    densityFamilyType getDensityBasedFamilyType() const ;
+    densityFamilyType
+    getDensityBasedFamilyType() const;
 
-  protected :
+  protected:
     densityFamilyType d_familyType;
-    xc_func_type d_funcX, d_funcC;
-    bool d_scaleExchange, d_computeCorrelation;
-    double d_scaleExchangeFactor;
-
+    xc_func_type      d_funcX, d_funcC;
+    bool              d_scaleExchange, d_computeCorrelation;
+    double            d_scaleExchangeFactor;
   };
 
-}
+} // namespace dftfe
 
 #endif // DFTFE_EXCDENSITYBASECLASS_H

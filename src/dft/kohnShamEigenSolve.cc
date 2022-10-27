@@ -145,7 +145,8 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtHX(
       kohnShamDFTEigenOperator.computeVEff(
         rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
     }
-  else if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+  else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+           densityFamilyType::GGA)
     {
       kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                            gradRhoInValues,

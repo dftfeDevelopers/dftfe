@@ -24,31 +24,40 @@ namespace dftfe
 {
   class excDensityLDAClass : public excDensityBaseClass
   {
-	  public:
+  public:
     excDensityLDAClass(xc_func_type funcX,
-                        xc_func_type funcC,
-                        bool scaleExchange,
-                        bool computeCorrelation,
-                        double scaleExchangeFactor);
-    void computeDensityBasedEnergyDensity(unsigned int sizeInput,
-                                     const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                                     std::vector<double> &outputExchangeEnergyDensity,
-                                     std::vector<double> &outputCorrEnergyDensity) const override ;
+                       xc_func_type funcC,
+                       bool         scaleExchange,
+                       bool         computeCorrelation,
+                       double       scaleExchangeFactor);
+    void
+    computeDensityBasedEnergyDensity(
+      unsigned int                                                    sizeInput,
+      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+      std::vector<double> &outputExchangeEnergyDensity,
+      std::vector<double> &outputCorrEnergyDensity) const override;
 
-    void computeDensityBasedVxc(unsigned int sizeInput,
-                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
-                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const override;
+    void
+    computeDensityBasedVxc(
+      unsigned int                                                    sizeInput,
+      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+      std::map<VeffOutputDataAttributes, std::vector<double> *>
+        &outputDerExchangeEnergy,
+      std::map<VeffOutputDataAttributes, std::vector<double> *>
+        &outputDerCorrEnergy) const override;
 
-    void computeDensityBasedFxc(unsigned int sizeInput,
-                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
-                           std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const override ;
+    void
+    computeDensityBasedFxc(
+      unsigned int                                                    sizeInput,
+      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+      std::map<fxcOutputDataAttributes, std::vector<double> *>
+        &outputDer2ExchangeEnergy,
+      std::map<fxcOutputDataAttributes, std::vector<double> *>
+        &outputDer2CorrEnergy) const override;
 
 
   private:
-
   };
-}
+} // namespace dftfe
 
 #endif // DFTFE_EXCDENSIYLDACLASS_H

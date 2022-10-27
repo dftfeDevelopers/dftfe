@@ -1428,7 +1428,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     {
                       const std::vector<double> &temp3 =
                         (*dftPtr->gradRhoOutValuesSpinPolarized)
@@ -1462,7 +1463,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
@@ -1477,25 +1479,37 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                                            gradRhoOutQuadsXCSpin1[q]);
                         }
 
-                      std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
+                      std::map<rhoDataAttributes, const std::vector<double> *>
+                        rhoOutData;
 
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerExchangeEnergy;
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerCorrEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerExchangeEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerCorrEnergy;
 
-                      rhoOutData [rhoDataAttributes::values] = &rhoOutQuadsXC;
-                      rhoOutData [rhoDataAttributes::sigmaGradValue] = &sigmaValRhoOut;
+                      rhoOutData[rhoDataAttributes::values] = &rhoOutQuadsXC;
+                      rhoOutData[rhoDataAttributes::sigmaGradValue] =
+                        &sigmaValRhoOut;
 
-                      outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithDensityValRhoOut;
-                      outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derExchEnergyWithSigmaRhoOut;
+                      outputDerExchangeEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &derExchEnergyWithDensityValRhoOut;
+                      outputDerExchangeEnergy[VeffOutputDataAttributes::
+                                                derEnergyWithSigmaGradDensity] =
+                        &derExchEnergyWithSigmaRhoOut;
 
-                      outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithDensityValRhoOut;
-                      outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigmaRhoOut;
+                      outputDerCorrEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &derCorrEnergyWithDensityValRhoOut;
+                      outputDerCorrEnergy[VeffOutputDataAttributes::
+                                            derEnergyWithSigmaGradDensity] =
+                        &derCorrEnergyWithSigmaRhoOut;
 
-                      dftPtr->excFunctionalPtr->computeDensityBasedEnergyDensity(
-                        numQuadPoints,
-                        rhoOutData,
-                        exchValRhoOut,
-                        corrValRhoOut);
+                      dftPtr->excFunctionalPtr
+                        ->computeDensityBasedEnergyDensity(numQuadPoints,
+                                                           rhoOutData,
+                                                           exchValRhoOut,
+                                                           corrValRhoOut);
 
                       dftPtr->excFunctionalPtr->computeDensityBasedVxc(
                         numQuadPoints,
@@ -1542,24 +1556,33 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             }
                         }
                     }
-                  else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+                  else if (dftPtr->excFunctionalPtr
+                             ->getDensityBasedFamilyType() ==
+                           densityFamilyType::LDA)
                     {
-                      std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
+                      std::map<rhoDataAttributes, const std::vector<double> *>
+                        rhoOutData;
 
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerExchangeEnergy;
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerCorrEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerExchangeEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerCorrEnergy;
 
-                      rhoOutData [rhoDataAttributes::values] = &rhoOutQuadsXC;
+                      rhoOutData[rhoDataAttributes::values] = &rhoOutQuadsXC;
 
-                      outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &exchPotValRhoOut;
+                      outputDerExchangeEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &exchPotValRhoOut;
 
-                      outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &corrPotValRhoOut;
+                      outputDerCorrEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &corrPotValRhoOut;
 
-                      dftPtr->excFunctionalPtr->computeDensityBasedEnergyDensity(
-                        numQuadPoints,
-                        rhoOutData,
-                        exchValRhoOut,
-                        corrValRhoOut);
+                      dftPtr->excFunctionalPtr
+                        ->computeDensityBasedEnergyDensity(numQuadPoints,
+                                                           rhoOutData,
+                                                           exchValRhoOut,
+                                                           corrValRhoOut);
 
                       dftPtr->excFunctionalPtr->computeDensityBasedVxc(
                         numQuadPoints,
@@ -1589,7 +1612,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
-                          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                          if (dftPtr->excFunctionalPtr
+                                ->getDensityBasedFamilyType() ==
+                              densityFamilyType::GGA)
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -1633,7 +1658,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       derExchCorrEnergyWithGradRhoOutSpin1Quads,
                       gradRhoCoreAtoms,
                       hessianRhoCoreAtoms,
-                      dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+                      dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                        densityFamilyType::GGA);
                 }
 
               for (unsigned int iSubCell = 0; iSubCell < numSubCells;
@@ -1744,7 +1770,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     {
                       const std::vector<double> &temp3 =
                         gradRhoOutValues.find(subCellId)->second;
@@ -1769,30 +1796,43 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     }
 
-                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                  if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     {
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();
 
-                      std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
+                      std::map<rhoDataAttributes, const std::vector<double> *>
+                        rhoOutData;
 
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerExchangeEnergy;
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerCorrEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerExchangeEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerCorrEnergy;
 
-                      rhoOutData [rhoDataAttributes::values] = &rhoOutQuadsXC;
-                      rhoOutData [rhoDataAttributes::sigmaGradValue] = &sigmaValRhoOut;
+                      rhoOutData[rhoDataAttributes::values] = &rhoOutQuadsXC;
+                      rhoOutData[rhoDataAttributes::sigmaGradValue] =
+                        &sigmaValRhoOut;
 
-                      outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &derExchEnergyWithDensityValRhoOut;
-                      outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derExchEnergyWithSigmaRhoOut;
+                      outputDerExchangeEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &derExchEnergyWithDensityValRhoOut;
+                      outputDerExchangeEnergy[VeffOutputDataAttributes::
+                                                derEnergyWithSigmaGradDensity] =
+                        &derExchEnergyWithSigmaRhoOut;
 
-                      outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &derCorrEnergyWithDensityValRhoOut;
-                      outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] = &derCorrEnergyWithSigmaRhoOut;
+                      outputDerCorrEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &derCorrEnergyWithDensityValRhoOut;
+                      outputDerCorrEnergy[VeffOutputDataAttributes::
+                                            derEnergyWithSigmaGradDensity] =
+                        &derCorrEnergyWithSigmaRhoOut;
 
-                      dftPtr->excFunctionalPtr->computeDensityBasedEnergyDensity(
-                        numQuadPoints,
-                        rhoOutData,
-                        exchValRhoOut,
-                        corrValRhoOut);
+                      dftPtr->excFunctionalPtr
+                        ->computeDensityBasedEnergyDensity(numQuadPoints,
+                                                           rhoOutData,
+                                                           exchValRhoOut,
+                                                           corrValRhoOut);
 
                       dftPtr->excFunctionalPtr->computeDensityBasedVxc(
                         numQuadPoints,
@@ -1820,24 +1860,33 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             }
                         }
                     }
-                  else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+                  else if (dftPtr->excFunctionalPtr
+                             ->getDensityBasedFamilyType() ==
+                           densityFamilyType::LDA)
                     {
-                      std::map<rhoDataAttributes,const std::vector<double>*>  rhoOutData;
+                      std::map<rhoDataAttributes, const std::vector<double> *>
+                        rhoOutData;
 
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerExchangeEnergy;
-                      std::map<VeffOutputDataAttributes,std::vector<double>*> outputDerCorrEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerExchangeEnergy;
+                      std::map<VeffOutputDataAttributes, std::vector<double> *>
+                        outputDerCorrEnergy;
 
-                      rhoOutData [rhoDataAttributes::values] = &rhoOutQuadsXC;
+                      rhoOutData[rhoDataAttributes::values] = &rhoOutQuadsXC;
 
-                      outputDerExchangeEnergy[VeffOutputDataAttributes::derEnergyWithDensity]  = &exchPotValRhoOut;
+                      outputDerExchangeEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &exchPotValRhoOut;
 
-                      outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] = &corrPotValRhoOut;
+                      outputDerCorrEnergy
+                        [VeffOutputDataAttributes::derEnergyWithDensity] =
+                          &corrPotValRhoOut;
 
-                       dftPtr->excFunctionalPtr->computeDensityBasedEnergyDensity( 
-		        numQuadPoints,
-                        rhoOutData,
-                        exchValRhoOut,
-                        corrValRhoOut);
+                      dftPtr->excFunctionalPtr
+                        ->computeDensityBasedEnergyDensity(numQuadPoints,
+                                                           rhoOutData,
+                                                           exchValRhoOut,
+                                                           corrValRhoOut);
 
                       dftPtr->excFunctionalPtr->computeDensityBasedVxc(
                         numQuadPoints,
@@ -1866,7 +1915,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim];
 
-                          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+                          if (dftPtr->excFunctionalPtr
+                                ->getDensityBasedFamilyType() ==
+                              densityFamilyType::GGA)
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;

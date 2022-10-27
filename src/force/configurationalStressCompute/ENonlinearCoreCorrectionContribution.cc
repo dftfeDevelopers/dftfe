@@ -113,7 +113,9 @@ void forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA && !isCellOutsideCoreRhoTail)
+          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA &&
+              !isCellOutsideCoreRhoTail)
             {
               std::map<dealii::CellId, std::vector<double>>::const_iterator
                 it2 = hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);
@@ -272,7 +274,9 @@ void forceClass<FEOrder, FEOrderElectro>::
                 }
             }
 
-          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA && !isCellOutsideCoreRhoTail)
+          if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA &&
+              !isCellOutsideCoreRhoTail)
             {
               std::map<dealii::CellId, std::vector<double>>::const_iterator
                 it2 = hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);

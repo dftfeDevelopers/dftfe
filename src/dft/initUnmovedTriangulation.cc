@@ -307,12 +307,12 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     }
 
 
-  excManager::createExcClassObj(d_dftParamsPtr->xc_id  ,
+  excManager::createExcClassObj(d_dftParamsPtr->xc_id,
                                 isSpinPolarized,
-                                0.0, // exx factor
+                                0.0,   // exx factor
                                 false, // scale exchange
-                                1.0, // scale exchange factor
-                                true,// computeCorrelation
+                                1.0,   // scale exchange factor
+                                true,  // computeCorrelation
                                 excFunctionalPtr);
   /*
   exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
@@ -320,11 +320,11 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   excFunctionalPtr = new excWavefunctionNoneClass (densityFamilyType::LDA,
                                                      funcX,
                                                      funcC,
-						     0.0,
+                 0.0,
                                                      false,
                                                      true,
                                                      1.0);
-						     */
+                 */
 
   computing_timer.leave_subsection("unmoved setup");
 }

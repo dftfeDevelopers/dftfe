@@ -24,15 +24,16 @@ namespace dftfe
 {
   class excManager
   {
-	  public:
-    static void createExcClassObj(unsigned int xc_id,
-                      int isSpinPolarized,
-                      unsigned int exxFactor,
-                      bool scaleExchange,
-                      unsigned int scaleExchangeFactor,
-                      bool computeCorrelation,
-                      excWavefunctionBaseClass * &excClassPtr);
+  public:
+    static void
+    createExcClassObj(unsigned int               xc_id,
+                      int                        isSpinPolarized,
+                      unsigned int               exxFactor,
+                      bool                       scaleExchange,
+                      unsigned int               scaleExchangeFactor,
+                      bool                       computeCorrelation,
+                      excWavefunctionBaseClass *&excClassPtr);
   };
-}
+} // namespace dftfe
 
 #endif // DFTFE_EXCMANAGER_H

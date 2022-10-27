@@ -23,83 +23,97 @@ namespace dftfe
 {
   excDensityLDAClass::excDensityLDAClass(xc_func_type funcX,
                                          xc_func_type funcC,
-                                         bool scaleExchange,
-                                         bool computeCorrelation,
-                                         double scaleExchangeFactor):
-    excDensityBaseClass(funcX,funcC, scaleExchange, computeCorrelation,scaleExchangeFactor )
+                                         bool         scaleExchange,
+                                         bool         computeCorrelation,
+                                         double       scaleExchangeFactor)
+    : excDensityBaseClass(funcX,
+                          funcC,
+                          scaleExchange,
+                          computeCorrelation,
+                          scaleExchangeFactor)
   {
-
     d_familyType = densityFamilyType::LDA;
   }
 
-  void excDensityLDAClass::computeDensityBasedEnergyDensity(unsigned int sizeInput,
-                                   const std::map<rhoDataAttributes,const std::vector<double> *> &rhoData,
-                                   std::vector<double> &outputExchangeEnergyDensity,
-                                   std::vector<double> &outputCorrEnergyDensity) const
-    {
+  void
+  excDensityLDAClass::computeDensityBasedEnergyDensity(
+    unsigned int                                                    sizeInput,
+    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+    std::vector<double> &outputExchangeEnergyDensity,
+    std::vector<double> &outputCorrEnergyDensity) const
+  {
+    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
 
-      auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+    xc_lda_exc(&d_funcX,
+               sizeInput,
+               &(*rhoValues)[0],
+               &outputExchangeEnergyDensity[0]);
+    xc_lda_exc(&d_funcC,
+               sizeInput,
+               &(*rhoValues)[0],
+               &outputCorrEnergyDensity[0]);
+  }
 
-      xc_lda_exc(&d_funcX,
-                 sizeInput,
-                 &(*rhoValues)[0],
-                 &outputExchangeEnergyDensity[0]);
-      xc_lda_exc(&d_funcC,
-                 sizeInput,
-                 &(*rhoValues)[0],
-                 &outputCorrEnergyDensity[0]);
-    }
+  void
+  excDensityLDAClass::computeDensityBasedVxc(
+    unsigned int                                                    sizeInput,
+    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+    std::map<VeffOutputDataAttributes, std::vector<double> *>
+      &outputDerExchangeEnergy,
+    std::map<VeffOutputDataAttributes, std::vector<double> *>
+      &outputDerCorrEnergy) const
+  {
+    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
 
-    void excDensityLDAClass::computeDensityBasedVxc(unsigned int sizeInput,
-                           const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerExchangeEnergy,
-                           std::map<VeffOutputDataAttributes,std::vector<double>*> &outputDerCorrEnergy) const
-    {
-      auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+    auto exchangePotentialVal =
+      outputDerExchangeEnergy
+        .find(VeffOutputDataAttributes::derEnergyWithDensity)
+        ->second;
 
-      auto exchangePotentialVal = outputDerExchangeEnergy.
-                                  find(VeffOutputDataAttributes::derEnergyWithDensity)->second;
+    auto corrPotentialVal =
+      outputDerCorrEnergy.find(VeffOutputDataAttributes::derEnergyWithDensity)
+        ->second;
 
-      auto corrPotentialVal = outputDerCorrEnergy.
-                                  find(VeffOutputDataAttributes::derEnergyWithDensity)->second;
+    xc_lda_vxc(&d_funcX,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*exchangePotentialVal)[0]);
+    xc_lda_vxc(&d_funcC, sizeInput, &(*rhoValues)[0], &(*corrPotentialVal)[0]);
+  }
 
-      xc_lda_vxc(&d_funcX,
-                 sizeInput,
-                 &(*rhoValues)[0],
-                 &(*exchangePotentialVal)[0]);
-      xc_lda_vxc(&d_funcC,
-                 sizeInput,
-                 &(*rhoValues)[0],
-                 &(*corrPotentialVal)[0]);
+  void
+  excDensityLDAClass::computeDensityBasedFxc(
+    unsigned int                                                    sizeInput,
+    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+    std::map<fxcOutputDataAttributes, std::vector<double> *>
+      &outputDer2ExchangeEnergy,
+    std::map<fxcOutputDataAttributes, std::vector<double> *>
+      &outputDer2CorrEnergy) const
+  {
+    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
 
-    }
+    auto der2ExchangeEnergyWithDensity =
+      outputDer2ExchangeEnergy
+        .find(fxcOutputDataAttributes::der2EnergyWithDensity)
+        ->second;
 
-    void excDensityLDAClass::computeDensityBasedFxc(unsigned int sizeInput,
-                                               const std::map<rhoDataAttributes,const std::vector<double>*> &rhoData,
-                                               std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2ExchangeEnergy,
-                                               std::map<fxcOutputDataAttributes,std::vector<double>*> &outputDer2CorrEnergy) const
-    {
-      auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
-
-      auto der2ExchangeEnergyWithDensity = outputDer2ExchangeEnergy.
-                                           find(fxcOutputDataAttributes::der2EnergyWithDensity)->second;
-
-      auto der2CorrEnergyWithDensity = outputDer2CorrEnergy.
-                                       find(fxcOutputDataAttributes::der2EnergyWithDensity)->second;
-
-
-
-      xc_lda_fxc(&d_funcX,
-                 sizeInput,
-                 &(*rhoValues)[0],
-                 &(*der2ExchangeEnergyWithDensity)[0]);
-
-      xc_lda_fxc(&d_funcC,
-                 sizeInput,
-                 &(*rhoValues)[0],
-                 &(*der2CorrEnergyWithDensity)[0]);
-    }
+    auto der2CorrEnergyWithDensity =
+      outputDer2CorrEnergy.find(fxcOutputDataAttributes::der2EnergyWithDensity)
+        ->second;
 
 
 
-}
+    xc_lda_fxc(&d_funcX,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*der2ExchangeEnergyWithDensity)[0]);
+
+    xc_lda_fxc(&d_funcC,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*der2CorrEnergyWithDensity)[0]);
+  }
+
+
+
+} // namespace dftfe
