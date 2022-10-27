@@ -130,14 +130,15 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
 
   computing_timer.leave_subsection("nscf: phiTot solve");
   //
-  if (d_dftParamsPtr->xcFamilyType == "LDA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
     {
       computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(
         rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
       computing_timer.leave_subsection("nscf: VEff Computation");
     }
-  else if (d_dftParamsPtr->xcFamilyType == "GGA")
+  else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+           densityFamilyType::GGA)
     {
       computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(rhoInValues,

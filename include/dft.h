@@ -53,6 +53,8 @@
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
 #include <xc.h>
+#include <excWavefunctionBaseClass.h>
+#include <excManager.h>
 #include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
@@ -1000,7 +1002,9 @@ namespace dftfe
 
 
     /// objects for various exchange-correlations (from libxc package)
-    xc_func_type funcX, funcC;
+    // xc_func_type funcX, funcC;
+
+    excWavefunctionBaseClass *excFunctionalPtr;
 
     /**
      * stores required data for Kohn-Sham problem

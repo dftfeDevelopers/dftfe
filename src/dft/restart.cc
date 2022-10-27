@@ -36,7 +36,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
   for (auto it = rhoOutVals.cbegin(); it != rhoOutVals.cend(); it++)
     cellQuadDataContainerIn.push_back(&(*it));
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       for (auto it = gradRhoInVals.cbegin(); it != gradRhoInVals.cend(); it++)
         cellQuadDataContainerIn.push_back(&(*it));
@@ -58,7 +58,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
         cellQuadDataContainerIn.push_back(&(*it));
     }
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA &&
       d_dftParamsPtr->spinPolarized == 1)
     {
       for (auto it = gradRhoInValsSpinPolarized.cbegin();
@@ -270,7 +270,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
         std::map<dealii::CellId, std::vector<double>>());
     }
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -302,7 +302,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
         }
     }
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA &&
       d_dftParamsPtr->spinPolarized == 1)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
@@ -339,7 +339,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
     }
   rhoOutValues = &(rhoOutVals.back());
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)
         {
@@ -371,7 +371,7 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
       rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
     }
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA" &&
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA &&
       d_dftParamsPtr->spinPolarized == 1)
     {
       for (unsigned int i = 0; i < mixingHistorySize; i++)

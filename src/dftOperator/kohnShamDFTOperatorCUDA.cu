@@ -1501,14 +1501,27 @@ namespace dftfe
           const std::vector<double> &tempPhi =
             phiValues.find(cellPtr->id())->second;
 
-          xc_lda_vxc(&(dftPtr->funcX),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &exchangePotentialVal[0]);
-          xc_lda_vxc(&(dftPtr->funcC),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &corrPotentialVal[0]);
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
+
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
+
+          rhoData[rhoDataAttributes::values] = &densityValue;
+
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithDensity] =
+              &exchangePotentialVal;
+
+          outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] =
+            &corrPotentialVal;
+
+          dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+            numberQuadraturePoints,
+            rhoData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
@@ -1603,18 +1616,36 @@ namespace dftfe
                 gradRhoX * gradRhoX + gradRhoY * gradRhoY + gradRhoZ * gradRhoZ;
             }
 
-          xc_gga_vxc(&(dftPtr->funcX),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &derExchEnergyWithDensityVal[0],
-                     &derExchEnergyWithSigmaVal[0]);
-          xc_gga_vxc(&(dftPtr->funcC),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &derCorrEnergyWithDensityVal[0],
-                     &derCorrEnergyWithSigmaVal[0]);
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
+
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
+
+
+          rhoData[rhoDataAttributes::values]         = &densityValue;
+          rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithDensity] =
+              &derExchEnergyWithDensityVal;
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+              &derExchEnergyWithSigmaVal;
+
+          outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] =
+            &derCorrEnergyWithDensityVal;
+          outputDerCorrEnergy
+            [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+              &derCorrEnergyWithSigmaVal;
+
+          dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+            numberQuadraturePoints,
+            rhoData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
+
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
@@ -1711,14 +1742,28 @@ namespace dftfe
                 }
             }
 
-          xc_lda_vxc(&(dftPtr->funcX),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &exchangePotentialVal[0]);
-          xc_lda_vxc(&(dftPtr->funcC),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &corrPotentialVal[0]);
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
+
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
+
+          rhoData[rhoDataAttributes::values] = &densityValue;
+
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithDensity] =
+              &exchangePotentialVal;
+
+          outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] =
+            &corrPotentialVal;
+
+          dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+            numberQuadraturePoints,
+            rhoData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
+
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
@@ -1832,18 +1877,35 @@ namespace dftfe
                                       gradRhoZ2 * gradRhoZ2;
             }
 
-          xc_gga_vxc(&(dftPtr->funcX),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &derExchEnergyWithDensityVal[0],
-                     &derExchEnergyWithSigmaVal[0]);
-          xc_gga_vxc(&(dftPtr->funcC),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &derCorrEnergyWithDensityVal[0],
-                     &derCorrEnergyWithSigmaVal[0]);
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
+
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
+
+
+          rhoData[rhoDataAttributes::values]         = &densityValue;
+          rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithDensity] =
+              &derExchEnergyWithDensityVal;
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+              &derExchEnergyWithSigmaVal;
+
+          outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] =
+            &derCorrEnergyWithDensityVal;
+          outputDerCorrEnergy
+            [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+              &derCorrEnergyWithSigmaVal;
+
+          dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+            numberQuadraturePoints,
+            rhoData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
@@ -2003,15 +2065,31 @@ namespace dftfe
                   }
               }
 
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_lda_fxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &der2ExchEnergyWithDensityVal[0]);
-            xc_lda_fxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &der2CorrEnergyWithDensityVal[0]);
+            std::map<fxcOutputDataAttributes, std::vector<double> *>
+              outputDer2ExchangeEnergy;
+            std::map<fxcOutputDataAttributes, std::vector<double> *>
+              outputDer2CorrEnergy;
+
+
+            rhoData[rhoDataAttributes::values] = &densityValue;
+
+            outputDer2ExchangeEnergy
+              [fxcOutputDataAttributes::der2EnergyWithDensity] =
+                &der2ExchEnergyWithDensityVal;
+
+            outputDer2CorrEnergy
+              [fxcOutputDataAttributes::der2EnergyWithDensity] =
+                &der2CorrEnergyWithDensityVal;
+
+
+            dftPtr->excFunctionalPtr->computeDensityBasedFxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDer2ExchangeEnergy,
+              outputDer2CorrEnergy);
+
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2097,16 +2175,28 @@ namespace dftfe
                   2.0 * lambda * dirperturb1[2 * q + 1];
               }
 
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_lda_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derExchEnergyWithDensityVal[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
 
-            xc_lda_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derCorrEnergyWithDensityVal[0]);
+            rhoData[rhoDataAttributes::values] = &densityValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2158,16 +2248,29 @@ namespace dftfe
                 densityValue[2 * q + 1] += lambda * dirperturb1[2 * q + 1];
               }
 
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_lda_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derExchEnergyWithDensityVal[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
 
-            xc_lda_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derCorrEnergyWithDensityVal[0]);
+            rhoData[rhoDataAttributes::values] = &densityValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
+
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2221,16 +2324,28 @@ namespace dftfe
                   2.0 * lambda * dirperturb1[2 * q + 1];
               }
 
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_lda_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derExchEnergyWithDensityVal[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
 
-            xc_lda_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derCorrEnergyWithDensityVal[0]);
+            rhoData[rhoDataAttributes::values] = &densityValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2284,17 +2399,29 @@ namespace dftfe
                 densityValue[2 * q + 1] -= lambda * dirperturb1[2 * q + 1];
               }
 
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
 
-            xc_lda_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derExchEnergyWithDensityVal[0]);
+            rhoData[rhoDataAttributes::values] = &densityValue;
 
-            xc_lda_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &derCorrEnergyWithDensityVal[0]);
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
+
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2404,34 +2531,67 @@ namespace dftfe
               sigmaValue[q] =
                 gradRhoX * gradRhoX + gradRhoY * gradRhoY + gradRhoZ * gradRhoZ;
             }
+          std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-          xc_gga_vxc(&(dftPtr->funcX),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &derExchEnergyWithDensityVal[0],
-                     &derExchEnergyWithSigmaVal[0]);
-          xc_gga_vxc(&(dftPtr->funcC),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &derCorrEnergyWithDensityVal[0],
-                     &derCorrEnergyWithSigmaVal[0]);
 
-          xc_gga_fxc(&(dftPtr->funcX),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &der2ExchEnergyWithDensityVal[0],
-                     &der2ExchEnergyWithDensitySigmaVal[0],
-                     &der2ExchEnergyWithSigmaVal[0]);
-          xc_gga_fxc(&(dftPtr->funcC),
-                     numberQuadraturePoints,
-                     &densityValue[0],
-                     &sigmaValue[0],
-                     &der2CorrEnergyWithDensityVal[0],
-                     &der2CorrEnergyWithDensitySigmaVal[0],
-                     &der2CorrEnergyWithSigmaVal[0]);
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerExchangeEnergy;
+          std::map<VeffOutputDataAttributes, std::vector<double> *>
+            outputDerCorrEnergy;
+
+          std::map<fxcOutputDataAttributes, std::vector<double> *>
+            outputDer2ExchangeEnergy;
+          std::map<fxcOutputDataAttributes, std::vector<double> *>
+            outputDer2CorrEnergy;
+
+
+          rhoData[rhoDataAttributes::values]         = &densityValue;
+          rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithDensity] =
+              &derExchEnergyWithDensityVal;
+          outputDerExchangeEnergy
+            [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+              &derExchEnergyWithSigmaVal;
+
+          outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] =
+            &derCorrEnergyWithDensityVal;
+          outputDerCorrEnergy
+            [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+              &derCorrEnergyWithSigmaVal;
+
+          outputDer2ExchangeEnergy
+            [fxcOutputDataAttributes::der2EnergyWithDensity] =
+              &der2ExchEnergyWithDensityVal;
+          outputDer2ExchangeEnergy
+            [fxcOutputDataAttributes::der2EnergyWithDensitySigma] =
+              &der2ExchEnergyWithDensitySigmaVal;
+          outputDer2ExchangeEnergy
+            [fxcOutputDataAttributes::der2EnergyWithSigma] =
+              &der2ExchEnergyWithSigmaVal;
+
+          outputDer2CorrEnergy[fxcOutputDataAttributes::der2EnergyWithDensity] =
+            &der2CorrEnergyWithDensityVal;
+          outputDer2CorrEnergy
+            [fxcOutputDataAttributes::der2EnergyWithDensitySigma] =
+              &der2CorrEnergyWithDensitySigmaVal;
+          outputDer2CorrEnergy[fxcOutputDataAttributes::der2EnergyWithSigma] =
+            &der2CorrEnergyWithSigmaVal;
+
+
+          dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+            numberQuadraturePoints,
+            rhoData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
+
+          dftPtr->excFunctionalPtr->computeDensityBasedFxc(
+            numberQuadraturePoints,
+            rhoData,
+            outputDer2ExchangeEnergy,
+            outputDer2CorrEnergy);
+
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
@@ -2642,19 +2802,37 @@ namespace dftfe
                                         gradRhoZ2 * gradRhoZ2;
               }
 
-            xc_gga_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derExchEnergyWithDensityVal[0],
-                       &derExchEnergyWithSigma[0]);
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_gga_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derCorrEnergyWithDensityVal[0],
-                       &derCorrEnergyWithSigma[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
+
+
+            rhoData[rhoDataAttributes::values]         = &densityValue;
+            rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derExchEnergyWithSigma;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derCorrEnergyWithSigma;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
+
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2784,19 +2962,37 @@ namespace dftfe
                                         gradRhoZ2 * gradRhoZ2;
               }
 
-            xc_gga_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derExchEnergyWithDensityVal[0],
-                       &derExchEnergyWithSigma[0]);
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_gga_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derCorrEnergyWithDensityVal[0],
-                       &derCorrEnergyWithSigma[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
+
+
+            rhoData[rhoDataAttributes::values]         = &densityValue;
+            rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derExchEnergyWithSigma;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derCorrEnergyWithSigma;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
+
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -2931,19 +3127,36 @@ namespace dftfe
                                         gradRhoZ2 * gradRhoZ2;
               }
 
-            xc_gga_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derExchEnergyWithDensityVal[0],
-                       &derExchEnergyWithSigma[0]);
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_gga_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derCorrEnergyWithDensityVal[0],
-                       &derCorrEnergyWithSigma[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
+
+
+            rhoData[rhoDataAttributes::values]         = &densityValue;
+            rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derExchEnergyWithSigma;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derCorrEnergyWithSigma;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
@@ -3078,19 +3291,36 @@ namespace dftfe
                                         gradRhoZ2 * gradRhoZ2;
               }
 
-            xc_gga_vxc(&(dftPtr->funcX),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derExchEnergyWithDensityVal[0],
-                       &derExchEnergyWithSigma[0]);
+            std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
-            xc_gga_vxc(&(dftPtr->funcC),
-                       numberQuadraturePoints,
-                       &densityValue[0],
-                       &sigmaValue[0],
-                       &derCorrEnergyWithDensityVal[0],
-                       &derCorrEnergyWithSigma[0]);
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerExchangeEnergy;
+            std::map<VeffOutputDataAttributes, std::vector<double> *>
+              outputDerCorrEnergy;
+
+
+            rhoData[rhoDataAttributes::values]         = &densityValue;
+            rhoData[rhoDataAttributes::sigmaGradValue] = &sigmaValue;
+
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derExchEnergyWithDensityVal;
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derExchEnergyWithSigma;
+
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithDensity] =
+                &derCorrEnergyWithDensityVal;
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derCorrEnergyWithSigma;
+
+            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+              numberQuadraturePoints,
+              rhoData,
+              outputDerExchangeEnergy,
+              outputDerCorrEnergy);
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)

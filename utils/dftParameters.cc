@@ -1230,7 +1230,6 @@ namespace dftfe
     reuseLanczosUpperBoundFromFirstCall            = false;
     allowMultipleFilteringPassesAfterFirstScf      = true;
     useELPAGPUKernel                               = false;
-    xcFamilyType                                   = "";
     gpuMemOptMode                                  = false;
     // New Paramters for moleculardyynamics class
     startingTempBOMD           = 300;
@@ -1589,7 +1588,6 @@ namespace dftfe
 
     //
     setAutoParameters(mpi_comm_parent);
-    setXCFamilyType();
   }
 
 
@@ -1887,29 +1885,5 @@ namespace dftfe
       }
   }
 
-  void
-  dftParameters::setXCFamilyType()
-  {
-    if (xc_id == 1)
-      {
-        xcFamilyType = "LDA";
-      }
-    else if (xc_id == 2)
-      {
-        xcFamilyType = "LDA";
-      }
-    else if (xc_id == 3)
-      {
-        xcFamilyType = "LDA";
-      }
-    else if (xc_id == 4)
-      {
-        xcFamilyType = "GGA";
-      }
-    else if (xc_id == 5)
-      {
-        xcFamilyType = "GGA";
-      }
-  }
 
 } // namespace dftfe

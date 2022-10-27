@@ -158,7 +158,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     rhoPrimeValues,
     gradRhoPrimeValues,
     dummy,
-    d_dftParamsPtr->xcFamilyType == "GGA");
+    excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
   std::map<dealii::CellId, std::vector<double>> rhoPrimeValuesSpinPolarized;
   std::map<dealii::CellId, std::vector<double>> gradRhoPrimeValuesSpinPolarized;
@@ -176,12 +176,14 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         rhoPrimeValuesSpinPolarized,
         gradRhoPrimeValuesSpinPolarized,
         dummy,
-        d_dftParamsPtr->xcFamilyType == "GGA");
+        excFunctionalPtr->getDensityBasedFamilyType() ==
+          densityFamilyType::GGA);
     }
 
   for (unsigned int s = 0; s < (1 + d_dftParamsPtr->spinPolarized); ++s)
     {
-      if (d_dftParamsPtr->xcFamilyType == "LDA")
+      if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          densityFamilyType::LDA)
         {
           computing_timer.enter_subsection("VEffPrime Computation");
 #ifdef DFTFE_WITH_GPU
@@ -221,7 +223,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
           computing_timer.leave_subsection("VEffPrime Computation");
         }
-      else if (d_dftParamsPtr->xcFamilyType == "GGA")
+      else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+               densityFamilyType::GGA)
         {
           computing_timer.enter_subsection("VEffPrime Computation");
 #ifdef DFTFE_WITH_GPU
