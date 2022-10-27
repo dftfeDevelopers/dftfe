@@ -130,9 +130,9 @@ namespace dftfe
   } // namespace internalWrapper
 
   void
-  dftfeWrapper::globalHandlesInitialize()
+  dftfeWrapper::globalHandlesInitialize(const MPI_Comm &mpi_comm_world)
   {
-    sc_init(MPI_COMM_WORLD, 0, 0, nullptr, SC_LP_SILENT);
+    sc_init(mpi_comm_world, 0, 0, nullptr, SC_LP_SILENT);
     p4est_init(nullptr, SC_LP_SILENT);
 
 #ifdef USE_PETSC
@@ -162,6 +162,17 @@ namespace dftfe
     AssertThrow(error == ELPA_OK,
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
   }
+
+
+  //
+  // constructor
+  //
+  dftfeWrapper::dftfeWrapper()
+    : d_dftfeBasePtr(nullptr)
+    , d_dftfeParamsPtr(nullptr)
+    , d_mpi_comm_parent(MPI_COMM_NULL)
+    , d_isGPUToMPITaskBindingSetInternally(false)
+  {}
 
   //
   // constructor
@@ -347,7 +358,13 @@ namespace dftfe
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
-      MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+      {
+        int ierr = MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
+        if (ierr != 0)
+          {
+            throw std::runtime_error("MPI_Comm_dup failed.");
+          }
+      }
 
     createScratchFolder();
 
@@ -655,7 +672,9 @@ namespace dftfe
                                            d_mpi_comm_parent,
                                            false,
                                            "GS");
+#ifdef DFTFE_WITH_GPU
         d_dftfeParamsPtr->useGPU = useGPU;
+#endif
       }
     initialize(setGPUToMPITaskBindingInternally);
   }
@@ -850,6 +869,9 @@ namespace dftfe
           delete d_dftfeParamsPtr;
         MPI_Comm_free(&d_mpi_comm_parent);
       }
+    d_dftfeBasePtr    = nullptr;
+    d_dftfeParamsPtr  = nullptr;
+    d_mpi_comm_parent = MPI_COMM_NULL;
   }
 
   void
@@ -876,6 +898,18 @@ namespace dftfe
                            std::get<0>(t),
                            std::get<1>(t));
   }
+
+
+  double
+  dftfeWrapper::getDFTFreeEnergy() const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    return d_dftfeBasePtr->getFreeEnergy();
+  }
+
 
   double
   dftfeWrapper::getElectronicEntropicEnergy() const

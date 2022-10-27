@@ -61,7 +61,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
   // create new gradRhoValue tables
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -79,7 +79,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
 
 
-          if (d_dftParamsPtr->xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             (*gradRhoInValues)[cell->id()] =
               std::vector<double>(3 * num_quad_points);
 
@@ -100,7 +101,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
                            (*rhoOutValues)[cell->id()][q_point]);
 
 
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 {
                   ((*gradRhoInValues)[cell->id()][3 * q_point + 0]) =
                     ((1 - d_dftParamsPtr->mixingParameter) *
@@ -287,7 +289,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
   // compute gradRho for GGA using mixing constants from rho mixing
 
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
         *gradRhoInValues;
@@ -438,7 +440,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
   std::map<dealii::CellId, std::vector<double>> delRho, delGradRho;
   dFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
   uBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       graddFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
       gradUBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -464,7 +466,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
           if (N == 1)
             FBroyden[cell->id()] = std::vector<double>(num_quad_points);
           //
-          if (d_dftParamsPtr->xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               (graddFBroyden[N - 1])[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -481,7 +484,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
                   FOld = ((rhoOutVals[0])[cell->id()][q_point]) -
                          ((rhoInVals[0])[cell->id()][q_point]);
                   w0Loc += FOld * FOld * fe_values.JxW(q_point);
-                  if (d_dftParamsPtr->xcFamilyType == "GGA")
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     {
                       for (unsigned int dir = 0; dir < 3; ++dir)
                         gradFOld[dir] =
@@ -492,7 +496,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               else
                 {
                   FOld = FBroyden[cell->id()][q_point];
-                  if (d_dftParamsPtr->xcFamilyType == "GGA")
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       gradFOld[dir] =
                         gradFBroyden[cell->id()][3 * q_point + dir];
@@ -507,7 +512,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               //
               (dFBroyden[N - 1])[cell->id()][q_point] =
                 FBroyden[cell->id()][q_point] - FOld;
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 {
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     {
@@ -561,7 +567,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
     if (cell->is_locally_owned())
       {
         (uBroyden[N - 1])[cell->id()] = std::vector<double>(num_quad_points);
-        if (d_dftParamsPtr->xcFamilyType == "GGA")
+        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA)
           (gradUBroyden[N - 1])[cell->id()] =
             std::vector<double>(3 * num_quad_points);
         fe_values.reinit(cell);
@@ -574,7 +581,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               G * (dFBroyden[N - 1])[cell->id()][q_point] +
               delRho[cell->id()][q_point];
             //
-            if (d_dftParamsPtr->xcFamilyType == "GGA")
+            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA)
               {
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   {
@@ -636,7 +644,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
   rhoInValues = &(rhoInVals.back());
   //
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -649,7 +657,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
       if (cell->is_locally_owned())
         {
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
-          if (d_dftParamsPtr->xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             (*gradRhoInValues)[cell->id()] =
               std::vector<double>(3 * num_quad_points);
           fe_values.reinit(cell);
@@ -664,7 +673,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
               (*rhoInValues)[cell->id()][q_point] =
                 rhoInValuesOld[cell->id()][q_point] +
                 G * FBroyden[cell->id()][q_point];
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   (*gradRhoInValues)[cell->id()][3 * q_point + dir] =
                     gradRhoInValuesOld[cell->id()][3 * q_point + dir] +
@@ -675,7 +685,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
                   (*rhoInValues)[cell->id()][q_point] -=
                     wtBroyden[i] * gamma[i] *
                     (uBroyden[i])[cell->id()][q_point];
-                  if (d_dftParamsPtr->xcFamilyType == "GGA")
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       (*gradRhoInValues)[cell->id()][3 * q_point + dir] -=
                         wtBroyden[i] * gamma[i] *
@@ -710,7 +721,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
   std::map<dealii::CellId, std::vector<double>> delRho, delGradRho;
   dFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
   uBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       graddFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
       gradUBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -737,7 +748,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
           if (N == 1)
             FBroyden[cell->id()] = std::vector<double>(2 * num_quad_points);
           //
-          if (d_dftParamsPtr->xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               (graddFBroyden[N - 1])[cell->id()] =
                 std::vector<double>(6 * num_quad_points);
@@ -756,7 +768,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
                          ((rhoInValsSpinPolarized[0])[cell->id()][q_point]);
                   // w0Loc += FOld * FOld * fe_values.JxW(q_point) ;
                   // F[cell->id()]=std::vector<double>(num_quad_points);
-                  if (d_dftParamsPtr->xcFamilyType == "GGA")
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     {
                       // gradF[cell->id()]=std::vector<double>(6*num_quad_points);
                       for (unsigned int dir = 0; dir < 3; ++dir)
@@ -771,7 +784,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               else
                 {
                   FOld = FBroyden[cell->id()][q_point];
-                  if (d_dftParamsPtr->xcFamilyType == "GGA")
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       gradFOld[dir] =
                         gradFBroyden[cell->id()][3 * q_point + dir];
@@ -786,7 +800,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               //
               (dFBroyden[N - 1])[cell->id()][q_point] =
                 FBroyden[cell->id()][q_point] - FOld;
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 {
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     {
@@ -859,7 +874,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
       {
         (uBroyden[N - 1])[cell->id()] =
           std::vector<double>(2 * num_quad_points);
-        if (d_dftParamsPtr->xcFamilyType == "GGA")
+        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA)
           (gradUBroyden[N - 1])[cell->id()] =
             std::vector<double>(6 * num_quad_points);
         fe_values.reinit(cell);
@@ -878,7 +894,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               G * (dFBroyden[N - 1])[cell->id()][2 * q_point + 1] +
               delRho[cell->id()][2 * q_point + 1];
             //
-            if (d_dftParamsPtr->xcFamilyType == "GGA")
+            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA)
               {
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   {
@@ -962,7 +979,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
   //
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOldSpinPolarized;
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -982,7 +999,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
           (*rhoInValuesSpinPolarized)[cell->id()] =
             std::vector<double>(2 * num_quad_points);
-          if (d_dftParamsPtr->xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               (*gradRhoInValues)[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -1004,7 +1022,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
                 rhoInValuesOldSpinPolarized[cell->id()][2 * q_point + 1] +
                 G * FBroyden[cell->id()][2 * q_point + 1];
               //
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   {
                     (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
@@ -1027,7 +1046,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] -=
                     wtBroyden[i] * gamma[i] *
                     (uBroyden[i])[cell->id()][2 * q_point + 1];
-                  if (d_dftParamsPtr->xcFamilyType == "GGA")
+                  if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA)
                     for (unsigned int dir = 0; dir < 3; ++dir)
                       {
                         (*gradRhoInValuesSpinPolarized)[cell->id()]
@@ -1044,7 +1064,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               (*rhoInValues)[cell->id()][q_point] =
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] +
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1];
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 for (unsigned int dir = 0; dir < 3; ++dir)
                   (*gradRhoInValues)[cell->id()][3 * q_point + dir] =
                     (*gradRhoInValuesSpinPolarized)[cell->id()]
@@ -1090,7 +1111,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
   std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOldSpinPolarized;
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       gradRhoInValuesOld = *gradRhoInValues;
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
@@ -1116,7 +1137,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
           (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
           // }
 
-          if (d_dftParamsPtr->xcFamilyType == "GGA")
+          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
             {
               (*gradRhoInValues)[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -1153,7 +1175,8 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
                                     2.0) *
                            fe_values.JxW(q_point);
 
-              if (d_dftParamsPtr->xcFamilyType == "GGA")
+              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
                 {
                   for (unsigned int i = 0; i < 6; ++i)
                     {
@@ -1408,7 +1431,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
   // compute gradRho for GGA using mixing constants from rho mixing
 
 
-  if (d_dftParamsPtr->xcFamilyType == "GGA")
+  if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
       std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
         *gradRhoInValues;

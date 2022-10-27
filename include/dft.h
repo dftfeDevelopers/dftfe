@@ -53,6 +53,8 @@
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
 #include <xc.h>
+#include <excWavefunctionBaseClass.h>
+#include <excManager.h>
 #include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
@@ -75,11 +77,11 @@ namespace dftfe
 
   struct orbital
   {
-    unsigned int                 atomID;
-    unsigned int                 waveID;
-    unsigned int                 Z, n, l;
-    int                          m;
-    alglib::spline1dinterpolant *psi;
+    unsigned int                atomID;
+    unsigned int                waveID;
+    unsigned int                Z, n, l;
+    int                         m;
+    alglib::spline1dinterpolant psi;
   };
 
   /* code that must be skipped by Doxygen */
@@ -1000,7 +1002,9 @@ namespace dftfe
 
 
     /// objects for various exchange-correlations (from libxc package)
-    xc_func_type funcX, funcC;
+    // xc_func_type funcX, funcC;
+
+    excWavefunctionBaseClass *excFunctionalPtr;
 
     /**
      * stores required data for Kohn-Sham problem
@@ -1141,7 +1145,7 @@ namespace dftfe
     std::vector<orbital> waveFunctionsVector;
     std::map<unsigned int,
              std::map<unsigned int,
-                      std::map<unsigned int, alglib::spline1dinterpolant *>>>
+                      std::map<unsigned int, alglib::spline1dinterpolant>>>
       radValues;
     std::map<unsigned int,
              std::map<unsigned int, std::map<unsigned int, double>>>

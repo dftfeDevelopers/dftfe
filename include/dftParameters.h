@@ -154,7 +154,6 @@ namespace dftfe
     bool         reuseLanczosUpperBoundFromFirstCall;
     bool         allowMultipleFilteringPassesAfterFirstScf;
     bool         useELPAGPUKernel;
-    std::string  xcFamilyType;
     bool         gpuMemOptMode;
 
     unsigned int dc_dispersioncorrectiontype;
@@ -205,12 +204,6 @@ namespace dftfe
     void
     setAutoParameters(const MPI_Comm &mpi_comm_parent);
 
-    /**
-     * set family type exchange correlation functional
-     *
-     */
-    void
-    setXCFamilyType();
   }; // class dftParameters
 
 } // namespace dftfe

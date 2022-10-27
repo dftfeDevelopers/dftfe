@@ -29,6 +29,7 @@ ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
 
 #Paths for optional external libraries
 NCCL_PATH=""
+mdiPath="/home/dsambit/exaaltInterfaceRelated/MDI_Library/install"
 
 
 #Toggle GPU compilation
@@ -36,6 +37,7 @@ withGPU=OFF
 
 #Option to link to NCCL library (Only for GPU compilation)
 withNCCL=OFF
+withMDI=OFF
 
 #Compiler options and flags
 cxx_compiler=mpicxx
@@ -69,6 +71,7 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
+  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
@@ -84,7 +87,8 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
+  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath\
+  -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
 	-DWITH_COMPLEX=ON \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
