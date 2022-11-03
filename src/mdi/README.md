@@ -18,7 +18,7 @@ Steps to interface MolSSI-MDI with DFT-FE
 * Example usage of MDI in TCP mode using compiled `driver_cxx` and `dftfe` executables
 ```
 mpirun -np 1 driver_cxx -mdi "-role DRIVER -name driver -method TCP -out driver.out -port 8021" &
-mpirun -np 36 dftfe -mdi "-role ENGINE -name engine1 -method TCP -out engine1.out -port 8021 -hostname localhost"
+mpirun -np 36 dftfe -mdi "-role ENGINE -name engine1 -method TCP -out engine1.out -port 8021 -hostname localhost" &
 ```
 
 * DFT-FE's MDI interface currently only sets up GGA PBE ground-state DFT calculations using ONCV pseudopotentials (http://www.pseudo-dojo.org for example) on either CPU only or hybrid CPU-GPU architecture. Fermi-dirac smearing with 500 K smearing temperature is used by default.
