@@ -976,8 +976,6 @@ namespace dftfe
     for (int i = threadIdx.x; i < dim * dim; i += blockDim.x)
       sharedJ[i] = J[i + blockIdx.x * dim * dim];
 
-    Type detJ;
-
     __syncthreads();
 
     // Gemm with Jacobian Action
@@ -992,11 +990,6 @@ namespace dftfe
         sharedY[i] = sharedJ[6] * v[0] + sharedJ[7] * v[1] + sharedJ[8] * v[2];
         sharedZ[i] = sharedJ[3] * v[0] + sharedJ[4] * v[1] + sharedJ[5] * v[2];
         sharedT[i] = sharedJ[0] * v[0] + sharedJ[1] * v[1] + sharedJ[2] * v[2];
-
-        detJ =
-          sharedJ[0] * (sharedJ[4] * sharedJ[8] - sharedJ[5] * sharedJ[7]) -
-          sharedJ[1] * (sharedJ[3] * sharedJ[8] - sharedJ[5] * sharedJ[6]) +
-          sharedJ[2] * (sharedJ[3] * sharedJ[7] - sharedJ[4] * sharedJ[6]);
       }
 
     __syncthreads();
@@ -1173,9 +1166,10 @@ namespace dftfe
   void
   poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::setupMatrixFree()
   {
-    constexpr int p   = FEOrderElectro + 1;
-    constexpr int dim = 3;
-    constexpr int q   = p;
+    constexpr int    p              = FEOrderElectro + 1;
+    constexpr int    dim            = 3;
+    constexpr int    q              = p;
+    constexpr double coeffLaplacian = 1.0 / (4.0 * M_PI);
 
     // shape info helps to obtain reference cell basis function and lex
     // numbering
@@ -1281,7 +1275,7 @@ namespace dftfe
             for (int i = 0; i < qPoints; i++)
               detJacobian[i + cellIdx * qPoints] =
                 fe_values.JxW(lexMap3D[i]) /
-                quadrature_formula.weight(lexMap3D[i]);
+                quadrature_formula.weight(lexMap3D[i]) * coeffLaplacian;
 
             cellIdx++;
           }
