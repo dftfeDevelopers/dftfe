@@ -1,7 +1,7 @@
 DFT-FE can be interfaced with [MolSSI-MDI](https://github.com/MolSSI-MDI/MDI_Library). The MolSSI Driver Interface (MDI) project provides a standardized API for fast, on-the-fly communication between computational chemistry codes. DFT-FE can be used as a QM engine through MDI and the interface adheres to the [MDI Standard](https://molssi-mdi.github.io/MDI_Library/html/mdi_standard.html). Currently only the TCP communication route has been tested. 
 
 
-Steps INTERFACE MolSSI-MDI with DFT-FE
+Steps to interface MolSSI-MDI with DFT-FE
 ==========================================
 
 * Install MDI library from [MolSSI-MDI](https://github.com/MolSSI-MDI/MDI_Library).
