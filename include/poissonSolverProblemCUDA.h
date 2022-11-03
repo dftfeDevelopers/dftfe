@@ -160,6 +160,13 @@ namespace dftfe
     void
     copyXfromDeviceToHost();
 
+    /**
+     * @brief Sets up the constraints matrix
+     *
+     */
+    void
+    setupconstraints();
+
   private:
     /**
      * @brief Compute the diagonal of A.
@@ -221,9 +228,8 @@ namespace dftfe
     distributedGPUVec<double>  d_xDevice;
 
     // shape function value, gradient, weights, jacobian and map for matrixfree
-    thrust::device_vector<double> d_shapeFunctionValue, d_shapeFunctionGradient,
-      d_jacobianAction;
-    thrust::device_vector<int> d_map;
+    thrust::device_vector<double> d_shapeFunctionAll, d_jacobianAction;
+    thrust::device_vector<int>    d_map;
 
     // cuBLAS handle for cuBLAS operations
     cublasHandle_t *d_cublasHandlePtr;
@@ -233,12 +239,11 @@ namespace dftfe
 
     // number of cells local to each mpi task, number of degrees of freedom
     // locally owned and total degrees of freedom including ghost
-    int d_nLocalCells, d_xLenLocalDof, d_xLen;
+    int d_nLocalCells, d_xLocalDof, d_xLen;
 
     // Pointers to shape function value, gradient, weights, jacobian and map for
     // matrixfree on device
-    double *shapeFunctionValuePtr;
-    double *shapeFunctionGradientPtr;
+    double *shapeFunctionAllPtr;
     double *jacobianActionPtr;
     int *   mapPtr;
 

@@ -768,8 +768,7 @@ namespace dftfe
                   const Type *U,
                   const Type *P,
                   const Type *J,
-                  const int * map,
-                  Type        coeffHelmholtz)
+                  const int * map)
   {
     // V = AU
     // gridDim.x = cells;
@@ -1012,7 +1011,7 @@ namespace dftfe
     // Z Direction
     for (int i = threadIdx.x; i < N * N; i += blockDim.x)
       {
-        Type x[N], y[N], h[N];
+        Type x[N], y[N];
 
 #pragma unroll
         for (int j = 0; j < N; j++)
@@ -1029,10 +1028,7 @@ namespace dftfe
 
 #pragma unroll
         for (int j = 0; j < N; j++)
-          {
-            h[j]                   = sharedX[i + j * N * N];
-            sharedX[i + j * N * N] = coeffHelmholtz * detJ * h[j] + x[j];
-          }
+          sharedX[i + j * N * N] = x[j];
       }
 
     __syncthreads();
@@ -1175,11 +1171,7 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::setupMatrixFree(
-    const int & nVec,
-    const int & nQuad,
-    const bool &cellFlag,
-    const int & newNewLayout)
+  poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::setupMatrixFree()
   {
     constexpr int p   = FEOrderElectro + 1;
     constexpr int dim = 3;
@@ -1213,6 +1205,8 @@ namespace dftfe
 
     for (int j = 0; j < q; j++)
       quadWeights[j] = quad.weight(lexMap1D[j]);
+
+    thrust::host_vector<double> spVG(2 * p * q + 2 * q * q);
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)

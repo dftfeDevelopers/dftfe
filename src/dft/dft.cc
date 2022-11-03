@@ -2266,6 +2266,9 @@ namespace dftfe
 
                 // Setup MatrixFree Mesh
                 d_phiTotalSolverProblemCUDA.setupMatrixFree();
+
+                // Setup MatrixFree Constraints
+                d_phiTotalSolverProblemCUDA.setupconstraints();
               }
 #endif
           }
