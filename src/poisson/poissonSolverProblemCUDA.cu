@@ -137,6 +137,12 @@ namespace dftfe
                                        matrixFreeVectorComponent),
                                      constraintMatrix);
 
+        // Setup MatrixFree Mesh
+        setupMatrixFree();
+
+        // Setup MatrixFree Constraints
+        setupconstraints();
+
         d_isFastConstraintsInitialized = true;
       }
   }
@@ -154,7 +160,7 @@ namespace dftfe
   void
   poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::distributeX()
   {
-    constraintsTotalPotentialInfo.distribute(d_xDevice, 1);
+    d_constraintsTotalPotentialInfo.distribute(d_xDevice, 1);
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(d_xDevice);
@@ -752,10 +758,10 @@ namespace dftfe
   void
   poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::setupconstraints()
   {
-    constraintsTotalPotentialInfo.initialize(
+    d_constraintsTotalPotentialInfo.initialize(
       d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent),
       *d_constraintMatrixPtr);
-    constraintsTotalPotentialInfo.precomputeMaps(
+    d_constraintsTotalPotentialInfo.precomputeMaps(
       d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent),
       d_xPtr->get_partitioner(),
       1);
@@ -806,7 +812,7 @@ namespace dftfe
     //////////////////////////////////////////////////////////////
     // First index is the fastest
     // Interpolation combined with Extraction
-    // T -> PPPU
+    // T -> UPPP
     // X -> TD1
     // Y -> TD2
     // Z -> TD3
@@ -967,14 +973,16 @@ namespace dftfe
           sharedT[j + i * N] = t[j];
       }
 
-      //////////////////////////////////////////////////////////////////
-      // sharedT, sharedZ, sharedY have the respective gemms of X, Y, Z
-      // directions
+    //////////////////////////////////////////////////////////////////
+    // sharedT, sharedZ, sharedY have the respective gemms of X, Y, Z
+    // directions
 
-      // Copy Jacobian Action to shared memory
+    const int JShift = blockIdx.x * dim * dim;
+
+    // Copy Jacobian Action to shared memory
 #pragma unroll
     for (int i = threadIdx.x; i < dim * dim; i += blockDim.x)
-      sharedJ[i] = J[i + blockIdx.x * dim * dim];
+      sharedJ[i] = J[i + JShift];
 
     __syncthreads();
 
@@ -998,7 +1006,7 @@ namespace dftfe
     // X -> TDT1
     // Y -> TDT2
     // Z -> TDT3
-    // T -> PPPU
+    // V -> TPTPTPT
 
     // 1st GEMM of DT
     // Z Direction
@@ -1295,9 +1303,9 @@ namespace dftfe
     d_jacobianAction   = jacobianAction;
     d_map              = map;
 
-    shapeFunctionAllPtr = thrust::raw_pointer_cast(d_shapeFunctionAll.data());
-    jacobianActionPtr   = thrust::raw_pointer_cast(d_jacobianAction.data());
-    mapPtr              = thrust::raw_pointer_cast(d_map.data());
+    d_shapeFunctionAllPtr = thrust::raw_pointer_cast(d_shapeFunctionAll.data());
+    d_jacobianActionPtr   = thrust::raw_pointer_cast(d_jacobianAction.data());
+    d_mapPtr              = thrust::raw_pointer_cast(d_map.data());
 
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double) +
@@ -1334,12 +1342,16 @@ namespace dftfe
 
     x.updateGhostValues();
 
-    constraintsTotalPotentialInfo.distribute(x, 1);
+    d_constraintsTotalPotentialInfo.distribute(x, 1);
 
-    computeAXKernel<double, p * p, q, p, dim><<<blocks, threads, smem>>>(
-      Ax.begin(), x.begin(), shapeFunctionAllPtr, jacobianActionPtr, mapPtr);
+    computeAXKernel<double, p * p, q, p, dim>
+      <<<blocks, threads, smem>>>(Ax.begin(),
+                                  x.begin(),
+                                  d_shapeFunctionAllPtr,
+                                  d_jacobianActionPtr,
+                                  d_mapPtr);
 
-    constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
+    d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 
     Ax.compressAdd();
 

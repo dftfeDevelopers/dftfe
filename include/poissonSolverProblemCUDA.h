@@ -45,7 +45,6 @@ namespace dftfe
     /// Constructor
     poissonSolverProblemCUDA(const MPI_Comm &mpi_comm);
 
-
     /**
      * @brief clears all datamembers and reset to original state.
      *
@@ -53,7 +52,6 @@ namespace dftfe
      */
     void
     clear();
-
 
     /**
      * @brief reinitialize data structures for total electrostatic potential solve.
@@ -85,6 +83,20 @@ namespace dftfe
       const bool         reuseSmearedChargeRhs            = false,
       const bool         reinitializeFastConstraints      = false);
 
+    /**
+     * @brief Compute A matrix multipled by x.
+     *
+     */
+    void
+    computeAX(distributedGPUVec<double> &Ax, distributedGPUVec<double> &x);
+
+    /**
+     * @brief Compute right hand side vector for the problem Ax = rhs.
+     *
+     * @param rhs vector for the right hand side values
+     */
+    void
+    computeRhs(distributedCPUVec<double> &rhs);
 
     /**
      * @brief get the reference to x field
@@ -103,26 +115,11 @@ namespace dftfe
     getPreconditioner();
 
     /**
-     * @brief Sets up the matrixfree shapefunction, gradient, weights, jacobian and map for matrixfree computeAX
+     * @brief Copies x from Device to Host
      *
      */
     void
-    setupMatrixFree();
-
-    /**
-     * @brief Compute A matrix multipled by x.
-     *
-     */
-    void
-    computeAX(distributedGPUVec<double> &Ax, distributedGPUVec<double> &x);
-
-    /**
-     * @brief Compute right hand side vector for the problem Ax = rhs.
-     *
-     * @param rhs vector for the right hand side values
-     */
-    void
-    computeRhs(distributedCPUVec<double> &rhs);
+    copyXfromDeviceToHost();
 
     /**
      * @brief distribute x to the constrained nodes.
@@ -153,12 +150,14 @@ namespace dftfe
     void
     setX();
 
+
+  private:
     /**
-     * @brief Copies x from Device to Host
+     * @brief Sets up the matrixfree shapefunction, gradient, weights, jacobian and map for matrixfree computeAX
      *
      */
     void
-    copyXfromDeviceToHost();
+    setupMatrixFree();
 
     /**
      * @brief Sets up the constraints matrix
@@ -167,7 +166,6 @@ namespace dftfe
     void
     setupconstraints();
 
-  private:
     /**
      * @brief Compute the diagonal of A.
      *
@@ -235,7 +233,7 @@ namespace dftfe
     cublasHandle_t *d_cublasHandlePtr;
 
     // constraints
-    dftUtils::constraintMatrixInfoCUDA constraintsTotalPotentialInfo;
+    dftUtils::constraintMatrixInfoCUDA d_constraintsTotalPotentialInfo;
 
     // number of cells local to each mpi task, number of degrees of freedom
     // locally owned and total degrees of freedom including ghost
@@ -243,9 +241,9 @@ namespace dftfe
 
     // Pointers to shape function value, gradient, weights, jacobian and map for
     // matrixfree on device
-    double *shapeFunctionAllPtr;
-    double *jacobianActionPtr;
-    int *   mapPtr;
+    double *d_shapeFunctionAllPtr;
+    double *d_jacobianActionPtr;
+    int *   d_mapPtr;
 
     /// pointer to dealii dealii::AffineConstraints<double> object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
