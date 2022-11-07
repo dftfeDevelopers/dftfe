@@ -606,42 +606,22 @@ namespace dftfe
 
 
     void
-    FnlGammaAtomsElementalContribution(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionFnlGammaAtoms,
-      FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &             forceEval,
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                   3> &  forceEvalNLP,
-      const unsigned int numberMacroCells,
-      const unsigned int cell,
+    FnlGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double>> &forceContributionFnlGammaAtoms,
+        const MatrixFree<3, double> &                    matrixFreeData,
+        FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
+          &                forceEvalNLP,
+        const unsigned int numberMacroCells,
+        const unsigned int cell,
+        const std::map<dealii::CellId, unsigned int>
+           & cellIdToCellNumberMap,
 #ifdef USE_COMPLEX
-      const unsigned int kpointIndex,
-      const dealii::AlignedVector<dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
-        &zetaDeltaVQuads,
-      const dealii::AlignedVector<dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-      const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
-      const Tensor<1, 3, VectorizedArray<double>> kcoord,
-#else
-      const dealii::AlignedVector<
-        dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
-        &zetaDeltaVQuads,
-      const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+        const std::vector<dataTypes::number> 
+          &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-      const std::vector<bool> &        isAtomInCell,
-      const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
+        const std::vector<dataTypes::number>
+          &zetaDeltaVQuadsFlattened,
+        const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
 
     void

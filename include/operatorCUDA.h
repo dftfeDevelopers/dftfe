@@ -152,6 +152,16 @@ namespace dftfe
     reinit(const unsigned int wavefunBlockSize, bool flag) = 0;
 
     /**
+     * @brief sets the data member to appropriate kPoint and spin Index
+     *
+     * @param kPointIndex  k-point Index to set
+     */
+    virtual void
+    reinitkPointSpinIndex(const unsigned int kPointIndex,
+                          const unsigned int spinIndex)=0;
+
+
+    /**
      * @brief compute diagonal mass matrix
      *
      * @param dofHandler dofHandler associated with the current mesh

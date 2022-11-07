@@ -156,7 +156,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
         {
           subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
           dealii::CellId subCellId = subCellPtr->id();
-
+          /*
           std::set<unsigned int> s;
           std::set_union(
             mergedSet.begin(),
@@ -167,6 +167,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
               .end(),
             std::inserter(s, s.begin()));
           mergedSet = s;
+          */
         }
       macroIdToNonlocalAtomsSetMap[cell] =
         std::vector<unsigned int>(mergedSet.begin(), mergedSet.end());
@@ -554,7 +555,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
         {
           MPI_Barrier(d_mpiCommParent);
           double gpu_time = MPI_Wtime();
-
+/*
           for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
             {
               kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
@@ -596,7 +597,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                 true,
                 d_dftParams);
             }
-
+*/
           MPI_Barrier(d_mpiCommParent);
           gpu_time = MPI_Wtime() - gpu_time;
 

@@ -1218,15 +1218,14 @@ namespace dftfe
     gpuPortedForceKernelsAllH(
       operatorDFTCUDAClass &      operatorMatrix,
       const dataTypes::numberGPU *X,
-      const double *              eigenValuesH,
-      const double *              partialOccupanciesH,
-#ifdef USE_COMPLEX
-      const double kcoordx,
-      const double kcoordy,
-      const double kcoordz,
-#endif
+      const unsigned int spinPolarizedFlag, 
+      const unsigned int spinIndex,
+      const std::vector<std::vector<double>>  & eigenValuesH,
+      const std::vector<std::vector<double>> &  partialOccupanciesH,
+      const std::vector<double> & kPointCoordinates,   
       const unsigned int *nonTrivialIdToElemIdMapH,
       const unsigned int *projecterKetTimesFlattenedVectorLocalIdsH,
+      const unsigned int MLoc,
       const unsigned int  N,
       const unsigned int  numCells,
       const unsigned int  numQuads,
@@ -1350,19 +1349,6 @@ namespace dftfe
             innerBlockSizeEnlp * numQuadsNLP * 3 *
               sizeof(dataTypes::numberGPU)));
 
-          std::fill(
-            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
-            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH +
-              totalNonTrivialPseudoWfcs * numQuadsNLP * 3,
-            dataTypes::number(0.0));
-
-#ifdef USE_COMPLEX
-          std::fill(
-            projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
-            projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH +
-              totalNonTrivialPseudoWfcs * numQuadsNLP,
-            dataTypes::number(0.0));
-#endif
 
           cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
                      nonTrivialIdToElemIdMapH,
@@ -1377,99 +1363,129 @@ namespace dftfe
                      cudaMemcpyHostToDevice);
         }
 
+        const unsigned numKPoints=kPointCoordinates.size()/3;
+        for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
+          {
+            //spin index update is not required
+            operatorMatrix.reinitkPointSpinIndex(kPoint, 0);
 
-      for (unsigned int ivec = 0; ivec < N; ivec += blockSize)
-        {
-          if ((ivec + blockSize) <=
-                bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-              (ivec + blockSize) >
-                bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
+            const double  kcoordx = kPointCoordinates[kPoint * 3 + 0];
+            const double  kcoordy = kPointCoordinates[kPoint * 3 + 1];
+            const double  kcoordz = kPointCoordinates[kPoint * 3 + 2];
+
+          if (totalNonTrivialPseudoWfcs > 0)
             {
-              std::vector<double> blockedEigenValues(blockSize, 0.0);
-              std::vector<double> blockedPartialOccupancies(blockSize, 0.0);
-              for (unsigned int iWave = 0; iWave < blockSize; ++iWave)
+
+              std::fill(
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH
+                +kPoint * totalNonTrivialPseudoWfcs*numQuadsNLP * 3,
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH
+                + (kPoint+1) * totalNonTrivialPseudoWfcs*numQuadsNLP * 3,
+                dataTypes::number(0.0));
+
+#ifdef USE_COMPLEX
+              std::fill(
+                projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH
+                +kPoint * totalNonTrivialPseudoWfcs*numQuadsNLP,
+                projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH 
+                +(kPoint+1) * totalNonTrivialPseudoWfcs*numQuadsNLP,
+                dataTypes::number(0.0));
+#endif
+            }
+
+            for (unsigned int ivec = 0; ivec < N; ivec += blockSize)
+            {
+              if ((ivec + blockSize) <=
+                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
+                  (ivec + blockSize) >
+                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  blockedEigenValues[iWave] = eigenValuesH[ivec + iWave];
-                  blockedPartialOccupancies[iWave] =
-                    partialOccupanciesH[ivec + iWave];
-                }
+                  std::vector<double> blockedEigenValues(blockSize, 0.0);
+                  std::vector<double> blockedPartialOccupancies(blockSize, 0.0);
+                  for (unsigned int iWave = 0; iWave < blockSize; ++iWave)
+                    {
+                      blockedEigenValues[iWave] = eigenValuesH[kPoint][spinIndex *N+ivec + iWave];
+                      blockedPartialOccupancies[iWave] =
+                        partialOccupanciesH[kPoint][spinIndex *N+ivec + iWave];
+                    }
 
-              cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
-                         &blockedEigenValues[0],
-                         blockSize * sizeof(double),
-                         cudaMemcpyHostToDevice);
+                  cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
+                             &blockedEigenValues[0],
+                             blockSize * sizeof(double),
+                             cudaMemcpyHostToDevice);
 
-              cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-                         &blockedPartialOccupancies[0],
-                         blockSize * sizeof(double),
-                         cudaMemcpyHostToDevice);
+                  cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+                             &blockedPartialOccupancies[0],
+                             blockSize * sizeof(double),
+                             cudaMemcpyHostToDevice);
 
-              // cudaDeviceSynchronize();
-              // MPI_Barrier(d_mpiCommParent);
-              // double kernel_time = MPI_Wtime();
+                  // cudaDeviceSynchronize();
+                  // MPI_Barrier(d_mpiCommParent);
+                  // double kernel_time = MPI_Wtime();
 
-              gpuPortedForceKernelsAllD(
-                operatorMatrix,
-                cudaFlattenedArrayBlock,
-                projectorKetTimesVectorD,
-                X,
-                eigenValuesD,
-                partialOccupanciesD,
+                  gpuPortedForceKernelsAllD(
+                    operatorMatrix,
+                    cudaFlattenedArrayBlock,
+                    projectorKetTimesVectorD,
+                    X+((1 +spinPolarizedFlag) * kPoint + spinIndex) *MLoc * N,
+                    eigenValuesD,
+                    partialOccupanciesD,
 #ifdef USE_COMPLEX
-                kcoordx,
-                kcoordy,
-                kcoordz,
+                    kcoordx,
+                    kcoordy,
+                    kcoordz,
 #endif
-                onesVecD,
-                onesVecDNLP,
-                nonTrivialIdToElemIdMapD,
-                projecterKetTimesFlattenedVectorLocalIdsD,
-                ivec,
-                N,
-                blockSize,
-                numCells,
-                numQuads,
-                numQuadsNLP,
-                numNodesPerElement,
-                totalNonTrivialPseudoWfcs,
-                psiQuadsFlatD,
-                gradPsiQuadsXFlatD,
-                gradPsiQuadsYFlatD,
-                gradPsiQuadsZFlatD,
+                    onesVecD,
+                    onesVecDNLP,
+                    nonTrivialIdToElemIdMapD,
+                    projecterKetTimesFlattenedVectorLocalIdsD,
+                    ivec,
+                    N,
+                    blockSize,
+                    numCells,
+                    numQuads,
+                    numQuadsNLP,
+                    numNodesPerElement,
+                    totalNonTrivialPseudoWfcs,
+                    psiQuadsFlatD,
+                    gradPsiQuadsXFlatD,
+                    gradPsiQuadsYFlatD,
+                    gradPsiQuadsZFlatD,
 #ifdef USE_COMPLEX
-                psiQuadsNLPD,
+                    psiQuadsNLPD,
 #endif
-                gradPsiQuadsNLPFlatD,
-                eshelbyTensorContributionsD,
-                elocWfcEshelbyTensorQuadValuesD,
-                nlpContractionContributionD,
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+                    gradPsiQuadsNLPFlatD,
+                    eshelbyTensorContributionsD,
+                    elocWfcEshelbyTensorQuadValuesD,
+                    nlpContractionContributionD,
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH+kPoint * totalNonTrivialPseudoWfcs*numQuadsNLP * 3,
 #ifdef USE_COMPLEX
-                projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock,
-                projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+                    projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock,
+                    projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH+kPoint * totalNonTrivialPseudoWfcs*numQuadsNLP,
 #endif
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
-                cellsBlockSize,
-                innerBlockSizeEnlp,
-                isPsp,
-                isFloatingChargeForces,
-                addEk);
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
+                    cellsBlockSize,
+                    innerBlockSizeEnlp,
+                    isPsp,
+                    isFloatingChargeForces,
+                    addEk);
 
-              // cudaDeviceSynchronize();
-              // MPI_Barrier(d_mpiCommParent);
-              // kernel_time = MPI_Wtime() - kernel_time;
+                  // cudaDeviceSynchronize();
+                  // MPI_Barrier(d_mpiCommParent);
+                  // kernel_time = MPI_Wtime() - kernel_time;
 
-              // if (this_process==0 && dftParameters::verbosity>=5)
-              //   std::cout<<"Time for force kernels all insided block loop:
-              //   "<<kernel_time<<std::endl;
-            } // band parallelization
-        }     // ivec loop
+                  // if (this_process==0 && dftParameters::verbosity>=5)
+                  //   std::cout<<"Time for force kernels all insided block loop:
+                  //   "<<kernel_time<<std::endl;
+                } // band parallelization
+            }     // ivec loop
 
-      cudaMemcpy(eshelbyTensorQuadValuesH,
-                 thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD[0]),
-                 numCells * numQuads * 9 * sizeof(double),
-                 cudaMemcpyDeviceToHost);
+          cudaMemcpy(eshelbyTensorQuadValuesH+kPoint * numCells *numQuads * 9,
+                     thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD[0]),
+                     numCells * numQuads * 9 * sizeof(double),
+                     cudaMemcpyDeviceToHost);
+      }//k point loop
 
       if (totalNonTrivialPseudoWfcs > 0)
         CUDACHECK(cudaFreeHost(

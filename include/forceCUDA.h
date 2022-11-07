@@ -31,15 +31,14 @@ namespace dftfe
     gpuPortedForceKernelsAllH(
       operatorDFTCUDAClass &      operatorMatrix,
       const dataTypes::numberGPU *X,
-      const double *              eigenValuesH,
-      const double *              partialOccupanciesH,
-#    ifdef USE_COMPLEX
-      const double kcoordx,
-      const double kcoordy,
-      const double kcoordz,
-#    endif
+      const unsigned int spinPolarizedFlag, 
+      const unsigned int spinIndex,
+      const std::vector<std::vector<double>>  & eigenValuesH,
+      const std::vector<std::vector<double>> &  partialOccupanciesH,
+      const std::vector<double> & kPointCoordinates,         
       const unsigned int *nonTrivialIdToElemIdMapH,
       const unsigned int *projecterKetTimesFlattenedVectorLocalIdsH,
+      const unsigned int MLoc,
       const unsigned int  N,
       const unsigned int  numCells,
       const unsigned int  numQuads,
