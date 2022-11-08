@@ -52,6 +52,7 @@ SET(TARGET_SRC
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc
+  ./src/neb/nudgedElasticBandClass.cc
   ./src/geoOpt/geometryOptimizationClass.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
