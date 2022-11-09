@@ -75,7 +75,7 @@ namespace dftfe
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
-#include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/FnlGammaElementalContribution.cc"
 #include "configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc"
 #include "configurationalForceCompute/computeFloatingAtomsForces.cc"
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"

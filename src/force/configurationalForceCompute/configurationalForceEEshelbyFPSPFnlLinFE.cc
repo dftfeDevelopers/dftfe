@@ -102,15 +102,12 @@ forceClass<FEOrder, FEOrderElectro>::
   zeroTensor1[1] = make_vectorized_array(0.0);
   Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> zeroTensor2;
   Tensor<1, 3, VectorizedArray<double>>               zeroTensor3;
-  Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> zeroTensor3Complex;
   Tensor<2, 3, VectorizedArray<double>>               zeroTensor4;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
       zeroTensor2[0][idim]        = make_vectorized_array(0.0);
       zeroTensor2[1][idim]        = make_vectorized_array(0.0);
       zeroTensor3[idim]           = make_vectorized_array(0.0);
-      zeroTensor3Complex[0][idim] = make_vectorized_array(0.0);
-      zeroTensor3Complex[1][idim] = make_vectorized_array(0.0);
     }
   for (unsigned int idim = 0; idim < 3; idim++)
     {
@@ -288,6 +285,7 @@ forceClass<FEOrder, FEOrderElectro>::
             {
               forceEval.reinit(cell);
 
+              std::fill(EQuad.begin(),EQuad.end(),zeroTensor4);
 
               const unsigned int numSubCells =
                  matrixFreeData.n_components_filled(cell);
@@ -344,6 +342,8 @@ forceClass<FEOrder, FEOrderElectro>::
         }
 
       if (isPseudopotential)
+      {
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> FVectQuads(numQuadPointsNLP,zeroTensor3); 
         for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
              ++cell)
           {
@@ -354,7 +354,6 @@ forceClass<FEOrder, FEOrderElectro>::
               forceContributionFnlGammaAtoms,
               matrixFreeData,
               forceEvalNLP,
-              matrixFreeData.n_macro_cells(),
               cell,
               cellIdToCellNumberMap,
 #ifdef USE_COMPLEX                  
@@ -362,7 +361,31 @@ forceClass<FEOrder, FEOrderElectro>::
 #endif
               dftPtr->d_nonLocalPSP_ZetalmDeltaVl,
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
+
+
+            if (!d_dftParams.floatingNuclearCharges)
+              {
+                FnlGammaxElementalContribution(FVectQuads,
+                                matrixFreeData,
+                                numQuadPointsNLP,
+                                cell,
+                                cellIdToCellNumberMap,
+                                dftPtr->d_nonLocalPSP_ZetalmDeltaVl,
+                                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
+
+                for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
+                   forceEvalNLP.submit_value(spinPolarizedFactorVect*FVectQuads[q], q); 
+                
+                forceEvalNLP.integrate(true, false);
+
+#ifdef USE_COMPLEX
+                forceEvalNLP.distribute_local_to_global(d_configForceVectorLinFEKPoints);
+#else
+                forceEvalNLP.distribute_local_to_global(d_configForceVectorLinFE);
+#endif
+              }//no floating charges check
           } // macro cell loop
+      }//pseudopotential check
     }       // spin index
 
   // add global Fnl contribution due to Gamma(Rj) to the configurational force

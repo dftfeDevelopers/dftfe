@@ -1366,12 +1366,14 @@ namespace dftfe
         const unsigned numKPoints=kPointCoordinates.size()/3;
         for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
           {
-            //spin index update is not required
-            operatorMatrix.reinitkPointSpinIndex(kPoint, 0);
 
-            const double  kcoordx = kPointCoordinates[kPoint * 3 + 0];
-            const double  kcoordy = kPointCoordinates[kPoint * 3 + 1];
-            const double  kcoordz = kPointCoordinates[kPoint * 3 + 2];
+          thrust::fill(elocWfcEshelbyTensorQuadValuesD.begin(),elocWfcEshelbyTensorQuadValuesD.end(),0.);
+          //spin index update is not required
+          operatorMatrix.reinitkPointSpinIndex(kPoint, 0);
+
+          const double  kcoordx = kPointCoordinates[kPoint * 3 + 0];
+          const double  kcoordy = kPointCoordinates[kPoint * 3 + 1];
+          const double  kcoordz = kPointCoordinates[kPoint * 3 + 2];
 
           if (totalNonTrivialPseudoWfcs > 0)
             {

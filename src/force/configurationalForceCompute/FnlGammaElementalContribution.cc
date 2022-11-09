@@ -25,7 +25,6 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   const MatrixFree<3, double> &                    matrixFreeData,
   FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     &                forceEvalNLP,
-  const unsigned int numberMacroCells,
   const unsigned int cell,
   const std::map<dealii::CellId, unsigned int>
      & cellIdToCellNumberMap,
@@ -160,6 +159,100 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
                                             [idim] +=
                 forceContributionFnlGammaiAtomCells[idim][iSubCell];
         }
+    } // iAtom loop
+}
+
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+forceClass<FEOrder, FEOrderElectro>::FnlGammaxElementalContribution(
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> & FVectQuads,
+  const MatrixFree<3, double> &                    matrixFreeData,
+  const unsigned int numQuadPoints,
+  const unsigned int cell,
+  const std::map<dealii::CellId, unsigned int>
+     & cellIdToCellNumberMap,
+  const std::vector<dataTypes::number>
+    &zetaDeltaVQuadsFlattened,
+  const std::vector<dataTypes::number>
+    &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
+{
+  const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+  const unsigned int numSubCells =matrixFreeData.n_components_filled(cell);
+
+  const unsigned int numNonLocalAtomsCurrentProcess =
+    dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+  DoFHandler<3>::active_cell_iterator   subCellPtr;
+
+  Tensor<1, 3, VectorizedArray<double>>               zeroTensor3;
+  for (unsigned int idim = 0; idim < 3; idim++)
+    {
+      zeroTensor3[idim]           = make_vectorized_array(0.0);
+    }
+  std::fill(FVectQuads.begin(),FVectQuads.end(),zeroTensor3);
+
+  for (int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
+    {
+      //
+      // get the global charge Id of the current nonlocal atom
+      //
+      const int nonLocalAtomId =
+        dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const int globalChargeIdNonLocalAtom =
+        dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
+
+
+
+      for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+        ++iSubCell)
+      {  
+        subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
+        bool  isPseudoWfcsAtomInCell = false;
+        const unsigned int elementId=cellIdToCellNumberMap.find(subCellPtr->id())->second;
+        for (unsigned int i = 0;
+           i < dftPtr->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[elementId].size();
+           i++)
+        if (dftPtr->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[elementId][i] == iAtom)
+          {
+            isPseudoWfcsAtomInCell  = true;
+            break;
+          }
+
+        if (isPseudoWfcsAtomInCell)
+          {
+
+            for (unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+            {
+              const unsigned int startingPseudoWfcIdFlattened =
+                 kPoint*dftPtr->d_sumNonTrivialPseudoWfcsOverAllCellsZetaDeltaVQuads *numQuadPoints
+                      +dftPtr->d_nonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads[elementId]*numQuadPoints+ dftPtr->d_atomIdToNonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads[iAtom][elementId]*numQuadPoints;
+
+              const unsigned int numberPseudoWaveFunctions= dftPtr->d_numberPseudoAtomicWaveFunctions[nonLocalAtomId];
+              std::vector<dataTypes::number> temp2(3);
+              for (unsigned int q = 0; q < numQuadPoints; ++q)
+                {
+                  std::vector<dataTypes::number> F(3,dataTypes::number(0.0));
+
+                  for (unsigned int iPseudoWave = 0;
+                       iPseudoWave < numberPseudoWaveFunctions;
+                       ++iPseudoWave)
+                    {
+                      const dataTypes::number temp1=zetaDeltaVQuadsFlattened[startingPseudoWfcIdFlattened+iPseudoWave*numQuadPoints+q];
+                      temp2[0]=projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+0];
+                      temp2[1]=projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+1];
+                      temp2[2]=projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+2];
+                      F[0] -= 2.0 *(temp1*temp2[0]);
+                      F[1] -= 2.0 *(temp1*temp2[1]);
+                      F[2] -= 2.0 *(temp1*temp2[2]);                          
+                    }//pseudowavefunctions loop
+
+                  FVectQuads[q][0][iSubCell]+=dftPtr->d_kPointWeights[kPoint]*2.0*realPart(F[0]);
+                  FVectQuads[q][1][iSubCell]+=dftPtr->d_kPointWeights[kPoint]*2.0*realPart(F[1]); 
+                  FVectQuads[q][2][iSubCell]+=dftPtr->d_kPointWeights[kPoint]*2.0*realPart(F[2]);
+                }//quad-loop
+             }//kpoint loop
+          }//non-trivial cell check
+        }//subcell loop
     } // iAtom loop
 }
 

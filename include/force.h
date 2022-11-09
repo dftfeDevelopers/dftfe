@@ -610,7 +610,6 @@ namespace dftfe
         const MatrixFree<3, double> &                    matrixFreeData,
         FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
           &                forceEvalNLP,
-        const unsigned int numberMacroCells,
         const unsigned int cell,
         const std::map<dealii::CellId, unsigned int>
            & cellIdToCellNumberMap,
@@ -623,6 +622,18 @@ namespace dftfe
         const std::vector<dataTypes::number>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
+
+    void
+    FnlGammaxElementalContribution(dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> & FVectQuads,
+        const MatrixFree<3, double> &                    matrixFreeData,
+        const unsigned int numQuadPoints,
+        const unsigned int cell,
+        const std::map<dealii::CellId, unsigned int>
+           & cellIdToCellNumberMap,
+        const std::vector<dataTypes::number>
+          &zetaDeltaVQuadsFlattened,
+        const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
     void
     distributeForceContributionFnlGammaAtoms(
