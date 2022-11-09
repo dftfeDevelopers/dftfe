@@ -66,8 +66,6 @@ namespace dftfe
     const double *
     getInvSqrtMassVec();
 
-    thrust::device_vector<unsigned int> &
-    getBoundaryIdToLocalIdMap();
 
     distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle();
@@ -122,9 +120,6 @@ namespace dftfe
 
     thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice();
-
-    thrust::device_vector<unsigned int> &
-    getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice();
 
 
     /**
@@ -573,9 +568,6 @@ namespace dftfe
 
     thrust::device_vector<unsigned int>
       d_locallyOwnedProcBoundaryNodesVectorDevice;
-
-    thrust::device_vector<unsigned int>
-      d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
 
     bool                   d_isMallocCalled = false;
     dataTypes::numberGPU **d_A, **d_B, **d_C;

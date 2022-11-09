@@ -76,9 +76,6 @@ namespace dftfe
     virtual const double *
     getInvSqrtMassVec() = 0;
 
-    virtual thrust::device_vector<unsigned int> &
-    getBoundaryIdToLocalIdMap() = 0;
-
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
 
@@ -132,9 +129,6 @@ namespace dftfe
 
     virtual thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
-
-    virtual thrust::device_vector<unsigned int> &
-    getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice() = 0;
 
     /**
      * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
@@ -416,9 +410,6 @@ namespace dftfe
     /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
     /// gradients
     thrust::device_vector<double> d_glShapeFunctionValueInvertedDevice;
-
-    thrust::device_vector<unsigned int> d_boundaryIdToLocalIdMapDevice;
-
 
 
     thrust::device_vector<dealii::types::global_dof_index>
