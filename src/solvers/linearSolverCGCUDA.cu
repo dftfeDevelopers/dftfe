@@ -58,9 +58,21 @@ namespace dftfe
 
     distributedGPUVec<double> rhs_device;
     rhs_device.reinit(rhs_host.get_partitioner(), 1);
+
     cudaUtils::copyHostVecToCUDAVec<double>(rhs_host.begin(),
                                             rhs_device.begin(),
                                             rhs_device.locallyOwnedDofsSize());
+
+    CUDACHECK(cudaPeekAtLastError());
+
+    pcout << "\nrhs_device.locallyOwnedDofsSize: "
+          << rhs_device.locallyOwnedDofsSize()
+          << "\nrhs_host: " << rhs_host.l2_norm() << "\nGPU rhs_device: "
+          << cudaUtils::l2_norm(rhs_device.begin(),
+                                rhs_device.locallyOwnedDofsSize(),
+                                mpi_communicator,
+                                cublasHandle)
+          << "\n";
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
@@ -82,7 +94,21 @@ namespace dftfe
 
     try
       {
+        pcout << "1. x: "
+              << cudaUtils::l2_norm(x.begin(),
+                                    d_xLocalDof,
+                                    mpi_communicator,
+                                    cublasHandle)
+              << "\n";
+
         x.updateGhostValues();
+
+        pcout << "2. x: "
+              << cudaUtils::l2_norm(x.begin(),
+                                    d_xLocalDof,
+                                    mpi_communicator,
+                                    cublasHandle)
+              << "\n";
 
         if (d_type == CG)
           {
@@ -109,6 +135,13 @@ namespace dftfe
                            -1.,
                            d_xLocalDof,
                            cublasHandle);
+
+            pcout << "3. d_rvec: "
+                  << cudaUtils::l2_norm(d_rvec.begin(),
+                                        d_xLocalDof,
+                                        mpi_communicator,
+                                        cublasHandle)
+                  << "\n";
 
             // res = r.r
             res = cudaUtils::l2_norm(d_rvec.begin(),

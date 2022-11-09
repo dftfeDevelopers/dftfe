@@ -66,7 +66,6 @@
 #ifdef DFTFE_WITH_GPU
 #  include <densityCalculatorCUDA.h>
 #  include <linearAlgebraOperationsCUDA.h>
-#  include <linearSolverCGCUDA.h>
 #endif
 
 extern "C"
@@ -107,6 +106,11 @@ namespace dftfe
 #include "lowrankApproxScfDielectricMatrixInv.cc"
 #include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
 #include "computeOutputDensityDirectionalDerivative.cc"
+
+  // Include cu files
+#ifdef DFTFE_WITH_GPU
+#  include "nodalDensityMixingSchemesCUDA.cu"
+#endif
 
   //
   // dft constructor
@@ -1959,8 +1963,8 @@ namespace dftfe
                                 mpi_communicator,
                                 dealiiLinearSolver::CG);
 
-#ifdef DFTFE_WITH_GPU
     // set up linear solver CUDA
+#ifdef DFTFE_WITH_GPU
     linearSolverCGCUDA CGSolverCUDA(d_mpiCommParent,
                                     mpi_communicator,
                                     linearSolverCGCUDA::CG);
@@ -1973,14 +1977,35 @@ namespace dftfe
     kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
       kerkerPreconditionedResidualSolverProblem(d_mpiCommParent,
                                                 mpi_communicator);
+
+    // set up solver functions for Helmholtz CUDA
+#ifdef DFTFE_WITH_GPU
+    kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+      kerkerPreconditionedResidualSolverProblemCUDA(d_mpiCommParent,
+                                                    mpi_communicator);
+#endif
+
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
-      kerkerPreconditionedResidualSolverProblem.init(
-        d_matrixFreeDataPRefined,
-        d_constraintsForHelmholtzRhoNodal,
-        d_preCondResidualVector,
-        d_dftParamsPtr->kerkerParameter,
-        d_helmholtzDofHandlerIndexElectro,
-        d_densityQuadratureIdElectro);
+      {
+        if (d_dftParamsPtr->useGPU and
+            d_dftParamsPtr->floatingNuclearCharges and
+            not d_dftParamsPtr->pinnedNodeForPBC)
+          kerkerPreconditionedResidualSolverProblemCUDA.init(
+            d_matrixFreeDataPRefined,
+            d_constraintsForHelmholtzRhoNodal,
+            d_preCondResidualVector,
+            d_dftParamsPtr->kerkerParameter,
+            d_helmholtzDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro);
+        else
+          kerkerPreconditionedResidualSolverProblem.init(
+            d_matrixFreeDataPRefined,
+            d_constraintsForHelmholtzRhoNodal,
+            d_preCondResidualVector,
+            d_dftParamsPtr->kerkerParameter,
+            d_helmholtzDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro);
+      }
 
     // FIXME: Check if this call can be removed
     d_phiTotalSolverProblem.clear();
@@ -2141,8 +2166,18 @@ namespace dftfe
                 else
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
-                      norm = nodalDensity_mixing_simple_kerker(
-                        kerkerPreconditionedResidualSolverProblem, CGSolver);
+                      {
+                        if (d_dftParamsPtr->useGPU and
+                            d_dftParamsPtr->floatingNuclearCharges and
+                            not d_dftParamsPtr->pinnedNodeForPBC)
+                          norm = nodalDensity_mixing_simple_kerker(
+                            kerkerPreconditionedResidualSolverProblemCUDA,
+                            CGSolverCUDA);
+                        else
+                          norm = nodalDensity_mixing_simple_kerker(
+                            kerkerPreconditionedResidualSolverProblem,
+                            CGSolver);
+                      }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
@@ -2184,8 +2219,18 @@ namespace dftfe
                       norm = mixing_broyden();
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
-                      norm = nodalDensity_mixing_anderson_kerker(
-                        kerkerPreconditionedResidualSolverProblem, CGSolver);
+                      {
+                        if (d_dftParamsPtr->useGPU and
+                            d_dftParamsPtr->floatingNuclearCharges and
+                            not d_dftParamsPtr->pinnedNodeForPBC)
+                          norm = nodalDensity_mixing_anderson_kerker(
+                            kerkerPreconditionedResidualSolverProblemCUDA,
+                            CGSolverCUDA);
+                        else
+                          norm = nodalDensity_mixing_anderson_kerker(
+                            kerkerPreconditionedResidualSolverProblem,
+                            CGSolver);
+                      }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
@@ -2230,7 +2275,7 @@ namespace dftfe
                 d_bQuadValuesAllAtoms,
                 d_smearedChargeQuadratureIdElectro,
                 *rhoInValues,
-                d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
                 false,
                 false,
                 d_dftParamsPtr->smearedNuclearCharges,
@@ -2252,7 +2297,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   *rhoInValues,
-                  d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                  kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
                   true,
                   d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
                     d_dftParamsPtr->periodicZ &&
@@ -2322,7 +2367,7 @@ namespace dftfe
             CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
                                d_dftParamsPtr->absLinearSolverTolerance,
                                d_dftParamsPtr->maxLinearSolverIterations,
-                               d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                               kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
                                d_dftParamsPtr->verbosity);
 #endif
           }
@@ -3065,7 +3110,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   *rhoOutValues,
-                  d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                  kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
                   false,
                   false,
                   d_dftParamsPtr->smearedNuclearCharges,
@@ -3079,7 +3124,7 @@ namespace dftfe
                   d_phiTotalSolverProblemCUDA,
                   d_dftParamsPtr->absLinearSolverTolerance,
                   d_dftParamsPtr->maxLinearSolverIterations,
-                  d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                  kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
                   d_dftParamsPtr->verbosity);
 #endif
               }
@@ -3286,7 +3331,7 @@ namespace dftfe
               d_bQuadValuesAllAtoms,
               d_smearedChargeQuadratureIdElectro,
               *rhoOutValues,
-              d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+              kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
               false,
               false,
               d_dftParamsPtr->smearedNuclearCharges,
@@ -3299,7 +3344,7 @@ namespace dftfe
             CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
                                d_dftParamsPtr->absLinearSolverTolerance,
                                d_dftParamsPtr->maxLinearSolverIterations,
-                               d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                               kohnShamDFTEigenOperatorCUDA.getCublasHandle(),
                                d_dftParamsPtr->verbosity);
 #endif
           }

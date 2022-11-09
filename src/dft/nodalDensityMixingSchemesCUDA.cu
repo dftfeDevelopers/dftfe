@@ -14,16 +14,16 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri
+// @author Gourab Panigrahi
 //
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
-  kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-    &                 kerkerPreconditionedResidualSolverProblem,
-  dealiiLinearSolver &CGSolver)
+  kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+    &                 kerkerPreconditionedResidualSolverProblemCUDA,
+  linearSolverCGCUDA &CGSolverCUDA)
 {
   double normValue = 0.0;
 
@@ -96,25 +96,26 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 
   // initialize helmholtz solver function object with the quantity required for
   // computing rhs, solution vector and mixing constant
-  kerkerPreconditionedResidualSolverProblem.reinit(
+  kerkerPreconditionedResidualSolverProblemCUDA.reinit(
     d_preCondResidualVector, gradDensityResidualValuesMap);
 
   //////////////////////////////////////////////////////
   ///////////////// Test Kerker/////////////////////////
 
-  // pcout << "\nCPU:"
+  // pcout << "\nGPU:"
   //       << "\nBefore CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
+  //       << d_preCondResidualVector.l2_norm() << "\n";
 
   // solve the Helmholtz system to compute preconditioned residual
-  CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                 d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                 d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                 d_dftParamsPtr->verbosity,
-                 false);
+  CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
+                     d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                     d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                     d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                     d_dftParamsPtr->verbosity,
+                     false);
 
   // pcout << "\nAfter CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
+  //       << d_preCondResidualVector.l2_norm() << "\n";
 
   //////////////////////////////////////////////////////
 
@@ -192,9 +193,9 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
-  kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-    &                 kerkerPreconditionedResidualSolverProblem,
-  dealiiLinearSolver &CGSolver)
+  kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+    &                 kerkerPreconditionedResidualSolverProblemCUDA,
+  linearSolverCGCUDA &CGSolverCUDA)
 {
   double normValue = 0.0;
 
@@ -373,28 +374,29 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
       << "Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "
       << std::endl;
 
-  kerkerPreconditionedResidualSolverProblem.reinit(
+  kerkerPreconditionedResidualSolverProblemCUDA.reinit(
     d_preCondResidualVector, gradDensityResidualValuesMap);
 
   //////////////////////////////////////////////////////
   ///////////////// Test Kerker/////////////////////////
 
-  // pcout << "\nCPU:"
+  // pcout << "\nGPU:"
   //       << "\nBefore CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
+  //       << d_preCondResidualVector.l2_norm() << "\n";
+
 
   // solve the Helmholtz system to compute preconditioned residual
-  CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                 d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                 d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                 d_dftParamsPtr->verbosity,
-                 false);
+  CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
+                     d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                     d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                     d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                     d_dftParamsPtr->verbosity,
+                     false);
 
   // pcout << "\nAfter CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
+  //       << d_preCondResidualVector.l2_norm() << "\n";
 
   //////////////////////////////////////////////////////
-
 
 
   // rhoIn += mixingScalar*residual for Kerker
