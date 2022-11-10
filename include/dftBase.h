@@ -112,6 +112,9 @@ namespace dftfe
     getAtomLocationsFrac() const = 0;
 
 
+
+
+
     /**
      * @brief Gets the current cell lattice vectors
      *

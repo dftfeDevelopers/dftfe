@@ -117,6 +117,7 @@ namespace dftfe
             unsigned int optimizermatItr;
             double       Forcecutoff;
             unsigned int d_countrelaxationFlags;
+            std::map<int,std::vector<std::vector<double>>>                d_atomLocationsInitial;
             std::vector<unsigned int> d_relaxationFlags;
              std::vector<double>       d_externalForceOnAtom;
             std::vector<double> d_ForceonImages;

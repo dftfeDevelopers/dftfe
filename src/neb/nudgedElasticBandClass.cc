@@ -37,7 +37,7 @@ namespace dftfe
     const MPI_Comm &  mpi_comm_parent,
     const bool        restart,
     const int         verbosity,
-    int numberOfImages,
+    int d_numberOfImages,
     bool imageFreeze,
     double Kmax,
     double Kmin,
@@ -50,7 +50,7 @@ namespace dftfe
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_restartFilesPath(restartFilesPath)
     , d_verbosity(verbosity) 
-    , d_numberOfImages(numberOfImages)
+    , d_numberOfImages(d_numberOfImages)
     , d_imageFreeze(imageFreeze)
     , d_kmax(Kmax)
     , d_kmin(Kmin)
@@ -107,20 +107,20 @@ namespace dftfe
   void
     nudgedElasticBandClass::CalculatePathTangent(int image ,  std::vector<double> &tangent )
   {
- /*     unsigned int count = 0;
-      if(image !=0 && image != numberofImages-1)
+      unsigned int count = 0;
+      if(image !=0 && image != d_numberOfImages-1)
       {
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,atomLocationsiplus;
-          atomLocationsi=dftPtr[image]->getAtomLocationsCart();
-          atomLocationsiminus=dftPtr[image-1]->getAtomLocationsCart();
-          atomLocationsiplus=dftPtr[image+1]->getAtomLocationsCart();
+          atomLocationsi=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
+          atomLocationsiminus=(d_dftfeWrapper[image-1]->getDftfeBasePtr())->getAtomLocationsCart();
+          atomLocationsiplus=(d_dftfeWrapper[image+1]->getDftfeBasePtr())->getAtomLocationsCart();
         double GSEnergyminus, GSEnergyplus,GSEnergy;
-        GSEnergyminus = dftPtr[image-1]->getInternalEnergy() ;
-        GSEnergyplus = dftPtr[image+1]->getInternalEnergy() ;
-        GSEnergy = dftPtr[image]->getInternalEnergy();
+        GSEnergyminus = (d_dftfeWrapper[image-1]->getDftfeBasePtr())->getInternalEnergy() ;
+        GSEnergyplus = (d_dftfeWrapper[image+1]->getDftfeBasePtr())->getInternalEnergy() ;
+        GSEnergy = (d_dftfeWrapper[image]->getDftfeBasePtr())->getInternalEnergy();
         if(GSEnergyplus > GSEnergy && GSEnergy > GSEnergyminus)
             {
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -149,7 +149,7 @@ namespace dftfe
             }
         else if(GSEnergyminus > GSEnergy && GSEnergy > GSEnergyplus)
             {
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -186,7 +186,7 @@ namespace dftfe
 
             if(GSEnergyplus > GSEnergyminus)
             {
-              for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+              for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
               {
                 for(int j = 0;j < 3; j++)
                   {
@@ -235,7 +235,7 @@ namespace dftfe
               }
               else if(GSEnergyplus < GSEnergyminus)
               {
-                for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+                for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
                   {
                     for(int j = 0;j < 3; j++)
                       {
@@ -282,7 +282,7 @@ namespace dftfe
               }                  
         
               else
-                for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+                for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
                   {
                     for(int j = 0;j < 3; j++)
                       {
@@ -310,14 +310,14 @@ namespace dftfe
                   }                         
           }
 
-        ReturnNormedVector(tangent, countrelaxationFlags);
+        ReturnNormedVector(tangent, d_countrelaxationFlags);
       }
       else if(image == 0)
         {
             std::vector<std::vector<double>> atomLocationsi,atomLocationsiplus;
-             atomLocationsi=dftPtr[image]->getAtomLocationsCart();
-             atomLocationsiplus=dftPtr[image+1]->getAtomLocationsCart();
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+             atomLocationsi=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
+             atomLocationsiplus=(d_dftfeWrapper[image+1]->getDftfeBasePtr())->getAtomLocationsCart();
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -343,15 +343,15 @@ namespace dftfe
               }
             }  
           }        
-            ReturnNormedVector(tangent, countrelaxationFlags);
+            ReturnNormedVector(tangent, d_countrelaxationFlags);
 
         }  
-       else if(image == numberofImages-1 )  
+       else if(image == d_numberOfImages-1 )  
        {
             std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus;
-            atomLocationsi=dftPtr[image]->getAtomLocationsCart();
-             atomLocationsiminus=dftPtr[image-1]->getAtomLocationsCart();
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+            atomLocationsi=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
+             atomLocationsiminus=(d_dftfeWrapper[image-1]->getDftfeBasePtr())->getAtomLocationsCart();
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -377,17 +377,17 @@ namespace dftfe
               }
             } 
           }
-            ReturnNormedVector(tangent,countrelaxationFlags);          
+            ReturnNormedVector(tangent,d_countrelaxationFlags);          
        } 
 
-    */
+    
   
   }
    
   void
     nudgedElasticBandClass::ReturnNormedVector(std::vector<double> &v, int len )
   {
-      /*int i;
+      int i;
        double norm = 0.0000;
       for(i = 0; i <len;i++)
       {
@@ -401,7 +401,7 @@ namespace dftfe
       {
         v[i] = v[i]/norm;
       }      
-    */
+    
 
   }  
 
@@ -410,20 +410,20 @@ namespace dftfe
     nudgedElasticBandClass::CalculateSpringForce(int image , std::vector<double> & ForceSpring, std::vector<double> tangent )
   {
       
-      /*unsigned int count = 0;
+      unsigned int count = 0;
       double innerproduct = 0.0;
-      if(image != 0 && image != numberofImages-1 )
+      if(image != 0 && image != d_numberOfImages-1 )
       { 
         double norm1=0.0;
         double norm2 = 0.0;
-        std::vector<double> v1(countrelaxationFlags,0.0);
-        std::vector<double> v2(countrelaxationFlags,0.0);
+        std::vector<double> v1(d_countrelaxationFlags,0.0);
+        std::vector<double> v2(d_countrelaxationFlags,0.0);
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,atomLocationsiplus;
-        atomLocationsi=dftPtr[image]->getAtomLocationsCart( );
-          atomLocationsiminus=dftPtr[image-1]->getAtomLocationsCart();
-         atomLocationsiplus=dftPtr[image+1]->getAtomLocationsCart();
+        atomLocationsi=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart( );
+          atomLocationsiminus=(d_dftfeWrapper[image-1]->getDftfeBasePtr())->getAtomLocationsCart();
+         atomLocationsiplus=(d_dftfeWrapper[image+1]->getDftfeBasePtr())->getAtomLocationsCart();
           int count = 0;
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -455,8 +455,8 @@ namespace dftfe
 
 
           }
-          LNorm(norm1,v1,2,countrelaxationFlags);
-          LNorm(norm2,v2,2,countrelaxationFlags);
+          LNorm(norm1,v1,2,d_countrelaxationFlags);
+          LNorm(norm2,v2,2,d_countrelaxationFlags);
 
           double kplus,kminus,k;
           CalculateSpringConstant(image+1,kplus);
@@ -469,11 +469,11 @@ namespace dftfe
       {
         double norm1=0.0;
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,atomLocationsiplus;
-        std::vector<double> v1(countrelaxationFlags,0.0);
-        atomLocationsi=dftPtr[image]->getAtomLocationsCart( );
-        atomLocationsiplus=dftPtr[image+1]->getAtomLocationsCart(  );
+        std::vector<double> v1(d_countrelaxationFlags,0.0);
+        atomLocationsi=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart( );
+        atomLocationsiplus=(d_dftfeWrapper[image+1]->getDftfeBasePtr())->getAtomLocationsCart( );
         int count = 0;
-        for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+        for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -492,22 +492,22 @@ namespace dftfe
 
 
           }
-          LNorm(norm1,v1,2,countrelaxationFlags);
+          LNorm(norm1,v1,2,d_countrelaxationFlags);
           double k,kplus;
           CalculateSpringConstant(image+1,kplus);
           CalculateSpringConstant(image,k);          
           innerproduct = 0.5*(kplus+k)*norm1;
          
       }
-      else if(image == numberofImages -1)
+      else if(image == d_numberOfImages -1)
       {
         double norm2 = 0.0;
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,atomLocationsplus;
-        std::vector<double> v2(countrelaxationFlags,0.0);
-         atomLocationsi=dftPtr[image]->getAtomLocationsCart();
-       atomLocationsiminus= dftPtr[image-1]->getAtomLocationsCart( );
+        std::vector<double> v2(d_countrelaxationFlags,0.0);
+         atomLocationsi=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
+       atomLocationsiminus= (d_dftfeWrapper[image-1]->getDftfeBasePtr())->getAtomLocationsCart();
         int count = 0;
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0;j < 3; j++)
             {
@@ -526,7 +526,7 @@ namespace dftfe
 
 
           }
-            LNorm(norm2,v2,2,countrelaxationFlags);
+            LNorm(norm2,v2,2,d_countrelaxationFlags);
              double k, kminus;
              CalculateSpringConstant(image,k);
              CalculateSpringConstant(image-1,kminus);             
@@ -534,13 +534,13 @@ namespace dftfe
 
       }
       pcout<<"Spring Force on image: "<<image<<std::endl;
-      for(count = 0; count < countrelaxationFlags; count++)
+      for(count = 0; count < d_countrelaxationFlags; count++)
       { 
         ForceSpring[count] = innerproduct*tangent[count];
         //pcout<<ForceSpring[count]<<"  "<<tangent[count]<<std::endl;
 
       }
-    */
+    
   
   }
 
@@ -548,14 +548,14 @@ namespace dftfe
   void
     nudgedElasticBandClass::CalculateForceparallel(int image , std::vector<double> & Forceparallel, std::vector<double> tangent )
  {
-      /*if(true)
+      if(true)
       {
-        std::vector<double> forceonAtoms(3 * numberGlobalCharges, 0.0);
-         forceonAtoms=dftPtr[image]->getForceonAtoms();
+        std::vector<double> forceonAtoms(3 * d_numberGlobalCharges, 0.0);
+         forceonAtoms=(d_dftfeWrapper[image]->getDftfeBasePtr())->getForceonAtoms();
          double Innerproduct = 0.0;
          unsigned int count = 0;
 
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0; j < 3; j++)
             { 
@@ -568,7 +568,7 @@ namespace dftfe
 
 
           }
-          for(count = 0; count < countrelaxationFlags; count++)
+          for(count = 0; count < d_countrelaxationFlags; count++)
           {
 
               Forceparallel[count] = Innerproduct*tangent[count];
@@ -576,7 +576,7 @@ namespace dftfe
 
           }
 
-      } */
+      } 
  }
 
    
@@ -584,11 +584,11 @@ namespace dftfe
     nudgedElasticBandClass::CalculateForceperpendicular(int image , std::vector<double> & Forceperpendicular, std::vector<double>  Forceparallel, std::vector<double> tangent )
  {
 
-        /*std::vector<double> forceonAtoms(3 * numberGlobalCharges, 0.0);
-         forceonAtoms=dftPtr[image]->getForceonAtoms();
+        std::vector<double> forceonAtoms(3 * d_numberGlobalCharges, 0.0);
+         forceonAtoms=(d_dftfeWrapper[image]->getDftfeBasePtr())->getForceonAtoms();
          unsigned int count = 0; 
 
-          for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
+          for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for(int j = 0; j < 3 ; j++)
             {
@@ -601,7 +601,7 @@ namespace dftfe
 
 
           }
-        */
+        
 
  }
 
@@ -700,12 +700,12 @@ namespace dftfe
 
 
 
-    d_ImageError.resize(numberofImages);
+    d_ImageError.resize(d_numberOfImages);
     double Force;
     MPI_Barrier(d_mpiCommParent);
     step_time = MPI_Wtime(); 
     
-    for(int i = 0; i < numberofImages; i++)
+    for(int i = 0; i < d_numberOfImages; i++)
       {  
         NEBImageno = i;
         dftPtr[NEBImageno]->solve(true,false,false,false); 
@@ -718,7 +718,7 @@ namespace dftfe
             pcout<<"    "<<" Image No "<<"    "<<"Force perpendicular in eV/A"<<"    "<<"Internal Energy in eV"<<"    "<<std::endl;
             ForceonImages.clear();
             int count = 0;
-            for (int i = 0; i < numberofImages; i++)
+            for (int i = 0; i < d_numberOfImages; i++)
             {   
                 NEBImageno = i;
                 std::vector<std::vector<double>> atomLocations;
@@ -728,7 +728,7 @@ namespace dftfe
                 double Energy = (dftPtr[i]->getInternalEnergy() )*haToeV;
                 pcout<<"    "<<i<<"    "<<Force*haPerBohrToeVPerAng<<"    "<<Energy<<"    "<<std::endl;
                 ForceonImages.push_back(Force);
-              if (Force > Forcecutoff && i > 0 && i < numberofImages-1)
+              if (Force > Forcecutoff && i > 0 && i < d_numberOfImages-1)
                   {  flag = false;
                       
                   }
@@ -753,7 +753,7 @@ namespace dftfe
       dftParameters::maxLineSearchIterCGPRP;
     const double       maxDisplacmentInAnyComponent = 0.5; // Bohr
     const unsigned int debugLevel =
-      Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 ?
+      Utilities::MPI::d_this_mpi_process(MPI_COMM_WORLD) == 0 ?
         dftParameters::verbosity :
         0;
 
@@ -808,7 +808,7 @@ namespace dftfe
           {
             cg_descent.set_step(0.8);
             cg_descent.set_lbfgs(true);
-            if (this_mpi_process == 0)
+            if (d_this_mpi_process == 0)
               cg_descent.set_PrintLevel(2);
 
             unsigned int memory =
@@ -825,7 +825,7 @@ namespace dftfe
         else
           {
             cg_descent.set_step(0.8);
-            if (this_mpi_process == 0)
+            if (d_this_mpi_process == 0)
               cg_descent.set_PrintLevel(2);
             cg_descent.set_AWolfe(true);
 
@@ -864,9 +864,9 @@ namespace dftfe
             ForceonImages.clear();
 
             count = 0;
-            std::vector<std::vector<double>> filePositionData(numberGlobalCharges*numberofImages,
+            std::vector<std::vector<double>> filePositionData(numberGlobalCharges*d_numberOfImages,
                                                   std::vector<double>(5,0.0));
-            for (int i = 0; i < numberofImages; i++)
+            for (int i = 0; i < d_numberOfImages; i++)
             {   
                 NEBImageno = i;
                 std::vector<std::vector<double>> atomLocations;
@@ -876,7 +876,7 @@ namespace dftfe
                 double Energy = (dftPtr[i]->getInternalEnergy())*haToeV;
                 pcout<<"    "<<i<<"    "<<Force*haPerBohrToeVPerAng<<"    "<<Energy<<"    "<<std::endl;
                 ForceonImages.push_back(Force);
-              if (Force > Forcecutoff && i > 0 && i < numberofImages-1)
+              if (Force > Forcecutoff && i > 0 && i < d_numberOfImages-1)
                   {  flag = false;
                       
                   }
@@ -902,12 +902,12 @@ namespace dftfe
         
       
           pcout<<"--------------Final Ground State Results-------------"<<std::endl; 
-          for(int i = 0; i < numberofImages; i++)
+          for(int i = 0; i < d_numberOfImages; i++)
             {  
               pcout<<"Internal Energy of Image: "<<i+1<<"  = "<<dftPtr[i]->getInternalEnergy()<<std::endl;
             }     
           pcout<<"--------------Final Error Results(eV/A)-------------"<<std::endl; 
-          for(int i = 0; i < numberofImages; i++)
+          for(int i = 0; i < d_numberOfImages; i++)
           {
              NEBImageno = i;
             std::vector<double> tangent(countrelaxationFlags,0.0); 
@@ -964,14 +964,14 @@ void
 void
   nudgedElasticBandClass::gradient(std::vector<double> &gradient)
     {
-    /*gradient.clear();
-    std::vector<int> flagmultiplier(numberofImages,1);
+    gradient.clear();
+    std::vector<int> flagmultiplier(d_numberOfImages,1);
     bool flag = false;
     pcout<<"    "<<" Image No "<<"    "<<"Internal Energy in eV"<<"    "<<"Free Energy in eV"<<"    "<<std::endl;
-    for(int i=0; i < numberofImages; i++)
+    for(int i=0; i < d_numberOfImages; i++)
     {
-        double FreeEnergy = (dftPtr[i]->getInternalEnergy() - dftPtr[i]->getEntropicEnergy())*haToeV;
-        double InternalEnergy = (dftPtr[i]->getInternalEnergy())*haToeV;
+        double FreeEnergy = ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy() - (d_dftfeWrapper[i]->getDftfeBasePtr())->getEntropicEnergy())*haToeV;
+        double InternalEnergy = ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy())*haToeV;
          pcout<<"    "<<i<<"    "<<InternalEnergy<<"    "<<FreeEnergy<<"    "<<std::endl;
     }
     pcout<<"************Error in gradient***************"<<std::endl;
@@ -979,7 +979,7 @@ void
     ImageError(0,Force);
     d_ImageError[0]=Force;
 
-    for(int i = 1; i < numberofImages-1; i++)
+    for(int i = 1; i < d_numberOfImages-1; i++)
     { 
       
       NEBImageno = i;  
@@ -987,32 +987,32 @@ void
       d_ImageError[i]=Force;
 
       pcout<<"The Force on image no. "<<NEBImageno<<" is "<<Force*haPerBohrToeVPerAng<<" in eV/Ang"<<std::endl;
-      if(Force < 0.95*optimizertolerance && dftParameters::freezeImages)
+      if(Force < 0.95*d_optimizertolerance && d_imageFreeze)
         flagmultiplier[i] = 0;  
-      if(Force <= optimizertolerance)  
+      if(Force <= d_optimizertolerance)  
       {  
         flag = true;
-        pcout<<"Image no. "<<i+1<<" has converged with value of"<<Force<<" vs tolerance of"<<optimizertolerance<<std::endl;
+        pcout<<"Image no. "<<i+1<<" has converged with value of"<<Force<<" vs tolerance of"<<d_optimizertolerance<<std::endl;
       }
-      else if(Force > optimizertolerance )
+      else if(Force > d_optimizertolerance )
         flag = false;     
     
     }
 
-    ImageError(numberofImages-1,Force);
-    d_ImageError[numberofImages-1]=Force;  
+    ImageError(d_numberOfImages-1,Force);
+    d_ImageError[d_numberOfImages-1]=Force;  
 
     if(flag == true)
       pcout<<"Optimization Criteria Met!!"<<std::endl;
 
     pcout<<"Image No. Norm of F_per   Norm of Spring Force"<<std::endl;
-    for(int image = 1; image< numberofImages-1; image++)
+    for(int image = 1; image< d_numberOfImages-1; image++)
     {
-      std::vector<double> tangent(countrelaxationFlags,0.0); 
-      std::vector<double> Forceparallel(countrelaxationFlags,0.0);
-      std::vector<double> Forceperpendicular(countrelaxationFlags,0.0);
-      std::vector<double> SpringForce(countrelaxationFlags,0.0); 
-      std::vector<double> ForceonImage(countrelaxationFlags,0.0);
+      std::vector<double> tangent(d_countrelaxationFlags,0.0); 
+      std::vector<double> Forceparallel(d_countrelaxationFlags,0.0);
+      std::vector<double> Forceperpendicular(d_countrelaxationFlags,0.0);
+      std::vector<double> SpringForce(d_countrelaxationFlags,0.0); 
+      std::vector<double> ForceonImage(d_countrelaxationFlags,0.0);
       CalculatePathTangent(image, tangent);
       CalculateForceparallel(image, Forceparallel, tangent);
       CalculateForceperpendicular(image,Forceperpendicular,Forceparallel,tangent);
@@ -1020,13 +1020,13 @@ void
       CalculateForceonImage(Forceperpendicular,SpringForce,ForceonImage);
       double F_spring = 0.0;
       double F_per = 0.0;
-      LNorm(F_per,Forceperpendicular,0,countrelaxationFlags);
-      LNorm(F_spring,SpringForce,0,countrelaxationFlags);
+      LNorm(F_per,Forceperpendicular,0,d_countrelaxationFlags);
+      LNorm(F_spring,SpringForce,0,d_countrelaxationFlags);
       pcout<<image<<"  "<<F_per<<"  "<<F_spring<<std::endl;
 
       //pcout<<"Before start of optimization Image Force: "<<Force<<" Ha/Bohr" <<std:endl;
 
-      for(int i = 0; i < countrelaxationFlags; i++)
+      for(int i = 0; i < d_countrelaxationFlags; i++)
         {   
               if(flag == false)
                 gradient.push_back(-ForceonImage[i]*flagmultiplier[image]);
@@ -1037,7 +1037,7 @@ void
       
     } 
     pcout<<"##Frozen images are: ";
-    for(int image = 1; image <numberofImages-1; image++)
+    for(int image = 1; image <d_numberOfImages-1; image++)
     {
       if(flagmultiplier[image]== 0)
         pcout<<" "<<image<<" ";
@@ -1054,7 +1054,7 @@ void
           d_maximumAtomForceToBeRelaxed = temp;
       }
       pcout<<std::endl<<"Maximum Force "<<d_maximumAtomForceToBeRelaxed*haPerBohrToeVPerAng<<"in eV/Ang"<<std::endl;
-      */
+      
 
     }
     
@@ -1063,10 +1063,10 @@ void
   nudgedElasticBandClass::CalculateForceonImage(std::vector<double> Forceperpendicular, std::vector<double> SpringForce, 
                                                         std::vector<double> &ForceonImage)
     { 
-      /*unsigned int count = 0;  
+      unsigned int count = 0;  
                // pcout<<"Forces on Image "<<NEBImageno<<std::endl;
-                for(count = 0; count < countrelaxationFlags; count++)
-                { if(NEBImageno > 0 && NEBImageno < numberofImages )
+                for(count = 0; count < d_countrelaxationFlags; count++)
+                { if(NEBImageno > 0 && NEBImageno < d_numberOfImages )
                     ForceonImage[count] = SpringForce[count] +Forceperpendicular[count];
                   else
                     ForceonImage[count] = Forceperpendicular[count];
@@ -1075,7 +1075,7 @@ void
                 }  
                // pcout<<"****************************"<<std::endl;   
 
-      */
+      
     }
 
  
@@ -1085,14 +1085,14 @@ void
                                             const bool                 useSingleAtomSolutionsInitialGuess)
     {
     
-    /*std::vector<Tensor<1,3,double>> globalAtomsDisplacements(numberGlobalCharges);
+    std::vector<Tensor<1,3,double>> globalAtomsDisplacements(d_numberGlobalCharges);
 
-    for(int image = 1; image< numberofImages-1; image++)
+    for(int image = 1; image< d_numberOfImages-1; image++)
     { 
       int multiplier = 1;
       pcout<<"Update called for image: "<<image<<std::endl;
 
-      if(d_ImageError[image] < 0.95*optimizertolerance && dftParameters::freezeImages )
+      if(d_ImageError[image] < 0.95*d_optimizertolerance && d_imageFreeze )
       {    
         multiplier = 0;
         pcout<<"!!Frozen image "<<image<<" with Image force: "<<d_ImageError[image]*haPerBohrToeVPerAng<<std::endl;
@@ -1103,17 +1103,17 @@ void
           &multiplier, 1, MPI_INT, 0, MPI_COMM_WORLD);
       int count = 0;
       pcout<<"###Displacements for image: "<<image<<std::endl;
-      for (unsigned int i = 0; i < numberGlobalCharges; ++i)
+      for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
           {
             
-            if (this_mpi_process == 0)
+            if (d_this_mpi_process == 0)
               {
                 globalAtomsDisplacements[i][j] = 0.0;
                 if (d_relaxationFlags[3 * i + j] == 1)
                   {
-                    globalAtomsDisplacements[i][j] = solution[(image-1)*countrelaxationFlags +count]*multiplier;
+                    globalAtomsDisplacements[i][j] = solution[(image-1)*d_countrelaxationFlags +count]*multiplier;
                   if(globalAtomsDisplacements[i][j] > 0.4)
                       globalAtomsDisplacements[i][j] = 0.4;
                   else if (globalAtomsDisplacements[i][j] < -0.4)
@@ -1144,12 +1144,12 @@ void
         if(multiplier == 1)
         { 
           MPI_Barrier(d_mpiCommParent);   
-          dftPtr[image]->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,
+          (d_dftfeWrapper[image]->getDftfeBasePtr())->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,
                                            factor,
                                            useSingleAtomSolutionsInitialGuess);
           pcout<<"--Positions of image: "<<image<<" updated--"<<std::endl;                                 
           MPI_Barrier(d_mpiCommParent); 
-          dftPtr[image]->solve(true,false,false,false);   
+          (d_dftfeWrapper[image]->getDftfeBasePtr())->solve(true,false);   
         }                                          
 
         
@@ -1157,7 +1157,7 @@ void
     
     }
     d_totalUpdateCalls += 1; 
-    */
+    
   }
 
 
@@ -1182,18 +1182,18 @@ void
   void
     nudgedElasticBandClass::solution(std::vector<double> &solution)
   {
-   /* // AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    // AssertThrow(false,dftUtils::ExcNotImplementedYet());
    solution.clear();
    pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;
    pcout<<"Size of relaxation flags: "<<d_relaxationFlags.size()<<std::endl;
-   for(int image = 1; image <numberofImages-1; image++)
+   for(int image = 1; image <d_numberOfImages-1; image++)
    {
      pcout<<"Image no.: "<<image<<std::endl;
     std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
-    atomLocations=dftPtr[image]->getAtomLocationsCart(); 
-    dftPtr[image]->getAtomLocationsinitial(atomLocationsInitial); 
+    atomLocations=(d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart(); 
+    atomLocationsInitial = d_atomLocationsInitial[image]; 
     pcout<<"AtomLocation size  "<<atomLocations.size()<<" "<<atomLocationsInitial.size()<<std::endl;
-    for (int i = 0; i < numberGlobalCharges; ++i)
+    for (int i = 0; i < d_numberGlobalCharges; ++i)
       {
         for (int j = 0; j < 3; ++j)
           {
@@ -1206,7 +1206,7 @@ void
           }
       }
    } 
-  // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;  */
+  // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;  
   }
 
 
@@ -1222,7 +1222,7 @@ void
             pcout<<"    "<<" Image No "<<"    "<<"Force perpendicular in eV/A"<<"    "<<"Internal Energy in eV"<<"    "<<"Free Energy in eV "<<std::endl;
             ForceonImages.clear();
             double Force;
-            for (int i = 0; i < numberofImages; i++)
+            for (int i = 0; i < d_numberOfImages; i++)
             {   
                 NEBImageno = i;
                 std::vector<std::vector<double>> atomLocations;
@@ -1271,7 +1271,7 @@ void
     nudgedElasticBandClass::getNumberUnknowns() const
   {
 
-    //return (countrelaxationFlags*(numberofImages-2));
+    return (d_countrelaxationFlags*(d_numberOfImages-2));
   }
 
 
@@ -1279,16 +1279,16 @@ void
   void
     nudgedElasticBandClass::CalculatePathLength(double & length)  
   {
-    /*length = 0.0;
+    length = 0.0;
     std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
 
-    for (int i = 0 ; i < numberofImages-1; i++)
+    for (int i = 0 ; i < d_numberOfImages-1; i++)
       {
-        atomLocations=dftPtr[i+1]->getAtomLocationsCart(); 
-        atomLocationsInitial=dftPtr[i]->getAtomLocationsCart();
+        atomLocations=(d_dftfeWrapper[i+1]->getDftfeBasePtr())->getAtomLocationsCart(); 
+        atomLocationsInitial=(d_dftfeWrapper[i]->getDftfeBasePtr())->getAtomLocationsCart();
         double tempx,tempy,tempz,temp;
         temp=0.0;
-        for(int iCharge = 0; iCharge < numberGlobalCharges ; iCharge++)
+        for(int iCharge = 0; iCharge < d_numberGlobalCharges ; iCharge++)
           {
 
             tempx =  std::fabs(atomLocations[iCharge][2]-atomLocationsInitial[iCharge][2]);
@@ -1306,27 +1306,27 @@ void
 
 
       }
-     */
+     
   }
  
 void
   nudgedElasticBandClass::CalculateSpringConstant( int NEBImage, double & SpringConstant)
 {
-  /*SpringConstant = 0.0;
+  SpringConstant = 0.0;
   double Emin,ksum,kdiff,deltaE,Emax;
-  ksum = kmax+kmin;
-  kdiff = kmax-kmin;
+  ksum = d_kmax+d_kmin;
+  kdiff = d_kmax-d_kmin;
   double Ei;
   Emax = -5000000;
   Emin = 500;
-for (int image = 0; image < numberofImages-1; image++)
+for (int image = 0; image < d_numberOfImages-1; image++)
 {
-  Emax = std::max(Emax,dftPtr[image]->getInternalEnergy() - dftPtr[image]->getEntropicEnergy() );
-  Emin = std::min(Emin,dftPtr[image]->getInternalEnergy() - dftPtr[image]->getEntropicEnergy());
+  Emax = std::max(Emax,(d_dftfeWrapper[image]->getDftfeBasePtr())->getInternalEnergy() - (d_dftfeWrapper[image]->getDftfeBasePtr())->getEntropicEnergy() );
+  Emin = std::min(Emin,(d_dftfeWrapper[image]->getDftfeBasePtr())->getInternalEnergy() - (d_dftfeWrapper[image]->getDftfeBasePtr())->getEntropicEnergy());
 }
 deltaE = Emax-Emin;
 
-Ei = dftPtr[NEBImage]->getInternalEnergy() - dftPtr[NEBImage]->getEntropicEnergy();
+Ei = (d_dftfeWrapper[NEBImage]->getDftfeBasePtr())->getInternalEnergy() - (d_dftfeWrapper[NEBImage]->getDftfeBasePtr())->getEntropicEnergy();
 
 
 
@@ -1334,7 +1334,7 @@ SpringConstant =0.5*( ksum - kdiff*std::cos(pi*(Ei - Emin)/(deltaE)));
 
 pcout<<"Image number "<<NEBImage<<" Spring Constant: "<<SpringConstant<<std::endl;
 
-*/
+
 
 }  
 
@@ -1352,16 +1352,16 @@ void
     std::string newFolder3 = Folder + "/" + "step.chk";
     dftUtils::writeDataIntoFile(stepIndexData, newFolder3,d_mpiCommParent);
     std::string cordFolder = tempfolder + "/";
-    for(int i=0; i < numberofImages; i++)
+    for(int i=0; i < d_numberOfImages; i++)
     {
       dftPtr[i]->NEBwriteDomainAndAtomCoordinates(cordFolder,std::to_string(i));
     }
     dftUtils::writeDataIntoFile(stepIndexData, newFolder3,d_mpiCommParent);
-        if(this_mpi_process == 0)
+        if(d_this_mpi_process == 0)
         {
           std::ofstream outfile;
           outfile.open(tempfolder+"/coordinates.inp", std::ios_base::app);
-          for(int i=0; i < numberofImages; i++)
+          for(int i=0; i < d_numberOfImages; i++)
           {
             std::vector<std::vector<double>> atomLocations;
             std::string coordinatesfolder = tempfolder+"/coordinates.inp"+std::to_string(i);
@@ -1380,15 +1380,15 @@ void
 void
   nudgedElasticBandClass::ImageError(int image, double &Force)
 {
-  /*Force = 0.0;
-  std::vector<double> tangent(countrelaxationFlags,0.0); 
-  std::vector<double> Forceparallel(countrelaxationFlags,0.0);
-  std::vector<double> Forceperpendicular(countrelaxationFlags,0.0); 
+  Force = 0.0;
+  std::vector<double> tangent(d_countrelaxationFlags,0.0); 
+  std::vector<double> Forceparallel(d_countrelaxationFlags,0.0);
+  std::vector<double> Forceperpendicular(d_countrelaxationFlags,0.0); 
   CalculatePathTangent(image, tangent);
   CalculateForceparallel(image, Forceparallel, tangent);
   CalculateForceperpendicular(image,Forceperpendicular,Forceparallel,tangent);      
-  LNorm(Force,Forceperpendicular,0,countrelaxationFlags);
-  */
+  LNorm(Force,Forceperpendicular,0,d_countrelaxationFlags);
+  
 }
 
 bool
