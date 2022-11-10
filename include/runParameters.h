@@ -36,6 +36,13 @@ namespace dftfe
     std::string solvermode;
     bool        restart;
     std::string restartFilesPath;
+    int numberOfImages;
+    bool imageFreeze;
+    double Kmax;
+    double Kmin;
+    double pathThreshold;
+    int maximumNEBiteration;
+    std::string coordinatesFileNEB, domainVectorsFileNEB;
     runParameters() = default;
 
     /**

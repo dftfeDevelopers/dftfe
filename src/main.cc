@@ -23,6 +23,7 @@
 #include "dftfeWrapper.h"
 #include "runParameters.h"
 #include "molecularDynamicsClass.h"
+#include "nudgedElasticBandClass.h"
 #include "geometryOptimizationClass.h"
 
 //
@@ -169,7 +170,14 @@ main(int argc, char *argv[])
     }
 
   else if (runParams.solvermode == "NEB")
-    {}
+    {
+      dftfe::nudgedElasticBandClass nebClass(parameter_file,runParams.restartFilesPath,MPI_COMM_WORLD,runParams.restart,runParams.verbosity,
+                                              runParams.numberOfImages, runParams.imageFreeze,runParams.Kmax,runParams.Kmin,runParams.pathThreshold,
+                                               runParams.maximumNEBiteration, runParams.coordinatesFileNEB, runParams.domainVectorsFileNEB);
+
+      int status = nebClass.runNEB();                                    
+
+    }
   else if (runParams.solvermode == "GEOOPT")
     {
       dftfe::geometryOptimizationClass geoOpt(parameter_file,

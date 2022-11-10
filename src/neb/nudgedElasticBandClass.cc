@@ -1,93 +1,113 @@
-#include <boost/generator_iterator.hpp>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/random.hpp>
-#include <boost/random/normal_distribution.hpp>
 
-#include <dft.h>
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Kartick Ramakrishnan
+//
 #include <cgPRPNonLinearSolver.h>
-#include <cg_descent_wrapper.h>
 #include <BFGSNonLinearSolver.h>
-#include <dftParameters.h>
+#include <LBFGSNonLinearSolver.h>
+#include <dft.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <force.h>
-#include <vector>
-#include <cmath>
 #include "nudgedElasticBandClass.h"
-#include <fstream>
-#include <iostream>
-#include <sstream>
 #include <sys/stat.h>
 
  
 namespace dftfe
 {
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  nebGlobalClass<FEOrder, FEOrderElectro>::nebGlobalClass(
-    std::vector<dftClass<FEOrder, FEOrderElectro>*> &_dftPtr,
-    const MPI_Comm &mpi_comm_parent,
-    int startStep)
+   
+    nudgedElasticBandClass::nudgedElasticBandClass(
+    const std::string parameter_file,
+    const std::string restartFilesPath,
+    const MPI_Comm &  mpi_comm_parent,
+    const bool        restart,
+    const int         verbosity,
+    int numberOfImages,
+    bool imageFreeze,
+    double Kmax,
+    double Kmin,
+    double pathThreshold,
+    int maximumNEBIteration,
+    const std::string & coordinatesFileNEB,
+    const std::string & domainVectorsFile )
     : d_mpiCommParent(mpi_comm_parent)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
-             !dftParameters::reproducible_output))    
+    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_restartFilesPath(restartFilesPath)
+    , d_verbosity(verbosity) 
+    , d_numberOfImages(numberOfImages)
+    , d_imageFreeze(imageFreeze)
+    , d_kmax(Kmax)
+    , d_kmin(Kmin)
+    , d_optimizertolerance(pathThreshold)
+    , d_maximumNEBIteration(maximumNEBIteration) 
+
         {
-            dftPtr = _dftPtr;
-            numberGlobalCharges      = 
-                    dftParameters::natoms;  
-            numberofImages           =
-                    dftParameters::TotalImages;   
-            kmax=dftParameters::k_max;
-            kmin = dftParameters::k_min;
-            Forcecutoff     =dftParameters::cutoffForce/haPerBohrToeVPerAng;  
-            d_maximumAtomForceToBeRelaxed =   numberGlobalCharges; 
-            optimizertolerance          =dftParameters::optimizer_tolerance/haPerBohrToeVPerAng;
-            maximumIterationNEB = dftParameters::maximumNEBiteration;
-            optimizermatItr =dftParameters::maximumOptimizeriteration + startStep;  
-            d_startStep = startStep;  
-            pcout<<"Optimizer Tolerance set to: "<<optimizertolerance<<" Ha/bohr"<<std::endl;
-            if(dftfe::dftParameters::restartNEBFromChk)   
-            {     
-                    std::vector<std::vector<double>> s1;
-                    int step;
-                    pcout<<" NEB Global is in Restart Mode"<<std::endl;
-                    dftfe::dftUtils::readFile(1, s1, "nebRestart/step.chk");
-                    std::string tempfolder = "nebRestart/Step"; 
-                    step = s1[0][0]; 
-                    startStep=step;
-                    std::string path = tempfolder + std::to_string(step) + "/";
-                    std::string FileName= path+dftfe::dftParameters::coordinatesFile; 
-                    std::vector<std::vector<double>> initialatomLocations;
-                    dftfe::dftUtils::readFile(5,initialatomLocations,FileName);
-                    AssertThrow(
-                    dftfe::dftParameters::natoms*numberofImages == initialatomLocations.size(),
-                    ExcMessage(
-                    "DFT-FE Error: The number atoms"
-                    "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
-                    "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
-                    "blank row at the end can cause this issue too."));
-                    pcout << "number of atoms: " << initialatomLocations.size() << "\n";   
-                    dftfe::dftParameters::coordinatesFile = FileName;               
+ 
+            pcout<<"Optimizer Tolerance set to: "<<d_optimizertolerance<<" Ha/bohr"<<std::endl;
+
+
+            //Read Coordinates file and create coordinates for each image
+
+            
+
+
+            for(int Image = 0; Image < d_numberOfImages ; Image++)
+            {
+              std::string coordinatesFile, domainVectorsFile;
+              //Write coordinatesFile
+              //Write domainVectors File
+              
+              d_dftfeWrapper.push_back(std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                coordinatesFile,
+                                                domainVectorsFile,
+                                                d_mpiCommParent,
+                                                true,
+                                                true,
+                                                "MD",
+                                                d_restartFilesPath,
+                                                false));
+              // d_dftPtr.push_back(d_dftfeWrapper->getDftfeBasePtr()));                                 
+
+            
+            
             }
-
-
+        
+        
+        
         }  
-  
-  
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  int
+  nudgedElasticBandClass::runNEB()
+  {
+    pcout<<"Here"<<std::endl;
+  }
+   
   const MPI_Comm &
-  nebGlobalClass<FEOrder, FEOrderElectro>::getMPICommunicator()
+    nudgedElasticBandClass::getMPICommunicator()
   {
     return d_mpiCommParent;
   }  
   
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::CalculatePathTangent(int image ,  std::vector<double> &tangent )
+    nudgedElasticBandClass::CalculatePathTangent(int image ,  std::vector<double> &tangent )
   {
-      unsigned int count = 0;
+ /*     unsigned int count = 0;
       if(image !=0 && image != numberofImages-1)
       {
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,atomLocationsiplus;
@@ -360,14 +380,14 @@ namespace dftfe
             ReturnNormedVector(tangent,countrelaxationFlags);          
        } 
 
-
+    */
   
   }
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::ReturnNormedVector(std::vector<double> &v, int len )
+    nudgedElasticBandClass::ReturnNormedVector(std::vector<double> &v, int len )
   {
-      int i;
+      /*int i;
        double norm = 0.0000;
       for(i = 0; i <len;i++)
       {
@@ -381,16 +401,16 @@ namespace dftfe
       {
         v[i] = v[i]/norm;
       }      
-
+    */
 
   }  
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::CalculateSpringForce(int image , std::vector<double> & ForceSpring, std::vector<double> tangent )
+    nudgedElasticBandClass::CalculateSpringForce(int image , std::vector<double> & ForceSpring, std::vector<double> tangent )
   {
       
-      unsigned int count = 0;
+      /*unsigned int count = 0;
       double innerproduct = 0.0;
       if(image != 0 && image != numberofImages-1 )
       { 
@@ -520,15 +540,15 @@ namespace dftfe
         //pcout<<ForceSpring[count]<<"  "<<tangent[count]<<std::endl;
 
       }
-  
+    */
   
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::CalculateForceparallel(int image , std::vector<double> & Forceparallel, std::vector<double> tangent )
+    nudgedElasticBandClass::CalculateForceparallel(int image , std::vector<double> & Forceparallel, std::vector<double> tangent )
  {
-      if(true)
+      /*if(true)
       {
         std::vector<double> forceonAtoms(3 * numberGlobalCharges, 0.0);
          forceonAtoms=dftPtr[image]->getForceonAtoms();
@@ -556,15 +576,15 @@ namespace dftfe
 
           }
 
-      }
+      } */
  }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::CalculateForceperpendicular(int image , std::vector<double> & Forceperpendicular, std::vector<double>  Forceparallel, std::vector<double> tangent )
+    nudgedElasticBandClass::CalculateForceperpendicular(int image , std::vector<double> & Forceperpendicular, std::vector<double>  Forceparallel, std::vector<double> tangent )
  {
 
-        std::vector<double> forceonAtoms(3 * numberGlobalCharges, 0.0);
+        /*std::vector<double> forceonAtoms(3 * numberGlobalCharges, 0.0);
          forceonAtoms=dftPtr[image]->getForceonAtoms();
          unsigned int count = 0; 
 
@@ -581,20 +601,13 @@ namespace dftfe
 
 
           }
-            /*pcout<<"----Computing Forceparallel.Forceperpendicular---"<<std::endl;
-            double product = 0.0;
-            for(int i = 0; i <countrelaxationFlags; i++ )
-            {
-                product += (Forceparallel[i]*Forceperpendicular[i]);
-            }
-            pcout<<"Product is: "<<product<<std::endl;
-            pcout<<"----------- ---------------"<<std::endl;*/
+        */
 
  }
 
- template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  /*
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::runNEB()
+    nudgedElasticBandClass::runNEB()
   {
       // Freezing of atoms to be implemented later....
     double step_time;
@@ -919,11 +932,11 @@ namespace dftfe
   
   }
 
+  */
 
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::LNorm(double & norm, std::vector<double> v, int L, int len)
+  nudgedElasticBandClass::LNorm(double & norm, std::vector<double> v, int L, int len)
 {
     norm = 0.0;
     if(L == 2)
@@ -947,11 +960,11 @@ nebGlobalClass<FEOrder, FEOrderElectro>::LNorm(double & norm, std::vector<double
 
 }
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::gradient(std::vector<double> &gradient)
+  nudgedElasticBandClass::gradient(std::vector<double> &gradient)
     {
-    gradient.clear();
+    /*gradient.clear();
     std::vector<int> flagmultiplier(numberofImages,1);
     bool flag = false;
     pcout<<"    "<<" Image No "<<"    "<<"Internal Energy in eV"<<"    "<<"Free Energy in eV"<<"    "<<std::endl;
@@ -1041,16 +1054,16 @@ nebGlobalClass<FEOrder, FEOrderElectro>::gradient(std::vector<double> &gradient)
           d_maximumAtomForceToBeRelaxed = temp;
       }
       pcout<<std::endl<<"Maximum Force "<<d_maximumAtomForceToBeRelaxed*haPerBohrToeVPerAng<<"in eV/Ang"<<std::endl;
-
+      */
 
     }
     
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::CalculateForceonImage(std::vector<double> Forceperpendicular, std::vector<double> SpringForce, 
+  nudgedElasticBandClass::CalculateForceonImage(std::vector<double> Forceperpendicular, std::vector<double> SpringForce, 
                                                         std::vector<double> &ForceonImage)
     { 
-      unsigned int count = 0;  
+      /*unsigned int count = 0;  
                // pcout<<"Forces on Image "<<NEBImageno<<std::endl;
                 for(count = 0; count < countrelaxationFlags; count++)
                 { if(NEBImageno > 0 && NEBImageno < numberofImages )
@@ -1062,17 +1075,17 @@ nebGlobalClass<FEOrder, FEOrderElectro>::CalculateForceonImage(std::vector<doubl
                 }  
                // pcout<<"****************************"<<std::endl;   
 
-
+      */
     }
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solution,
+  nudgedElasticBandClass::update(const std::vector<double> &solution,
                                             const bool                 computeForces,
                                             const bool                 useSingleAtomSolutionsInitialGuess)
     {
     
-    std::vector<Tensor<1,3,double>> globalAtomsDisplacements(numberGlobalCharges);
+    /*std::vector<Tensor<1,3,double>> globalAtomsDisplacements(numberGlobalCharges);
 
     for(int image = 1; image< numberofImages-1; image++)
     { 
@@ -1144,17 +1157,17 @@ nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solut
     
     }
     d_totalUpdateCalls += 1; 
-
+    */
   }
 
 
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::precondition(
+    nudgedElasticBandClass::precondition(
     std::vector<double> &      s,
-    const std::vector<double> &gradient) const
+    const std::vector<double> &gradient) 
   {
    s.clear();
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
@@ -1165,11 +1178,11 @@ nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solut
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::solution(std::vector<double> &solution)
+    nudgedElasticBandClass::solution(std::vector<double> &solution)
   {
-    // AssertThrow(false,dftUtils::ExcNotImplementedYet());
+   /* // AssertThrow(false,dftUtils::ExcNotImplementedYet());
    solution.clear();
    pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;
    pcout<<"Size of relaxation flags: "<<d_relaxationFlags.size()<<std::endl;
@@ -1193,15 +1206,15 @@ nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solut
           }
       }
    } 
-  // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;  
+  // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;  */
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::save()
+    nudgedElasticBandClass::save()
   {
-
+      /*
     d_startStep++;
     WriteRestartFiles(d_startStep);
             pcout<<std::endl<<"-------------------------------------------------------------------------------"<<std::endl;
@@ -1225,20 +1238,20 @@ nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solut
             CalculatePathLength(Length);
             pcout<<std::endl<<"--Path Length: "<<Length<<" Bohr"<<std::endl;
             pcout<<std::endl<<"-------------------------------------------------------------------------------"<<std::endl;    
-
+    */
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   std::vector<unsigned int>
-  nebGlobalClass<FEOrder, FEOrderElectro>::getUnknownCountFlag() const
+    nudgedElasticBandClass::getUnknownCountFlag() const
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::value(std::vector<double> &functionValue)
+    nudgedElasticBandClass::value(std::vector<double> &functionValue)
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
@@ -1248,25 +1261,25 @@ nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solut
     // as that would not work in case of restarted CGPRP
 
 
-    functionValue.push_back( dftPtr[3]->getInternalEnergy());
+    //functionValue.push_back( dftPtr[3]->getInternalEnergy());
 
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   unsigned int
-  nebGlobalClass<FEOrder, FEOrderElectro>::getNumberUnknowns() const
+    nudgedElasticBandClass::getNumberUnknowns() const
   {
 
-    return (countrelaxationFlags*(numberofImages-2));
+    //return (countrelaxationFlags*(numberofImages-2));
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+   
   void
-  nebGlobalClass<FEOrder, FEOrderElectro>::CalculatePathLength(double & length)  
+    nudgedElasticBandClass::CalculatePathLength(double & length)  
   {
-    length = 0.0;
+    /*length = 0.0;
     std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
 
     for (int i = 0 ; i < numberofImages-1; i++)
@@ -1293,13 +1306,13 @@ nebGlobalClass<FEOrder, FEOrderElectro>::update(const std::vector<double> &solut
 
 
       }
-     
+     */
   }
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::CalculateSpringConstant( int NEBImage, double & SpringConstant)
+  nudgedElasticBandClass::CalculateSpringConstant( int NEBImage, double & SpringConstant)
 {
-  SpringConstant = 0.0;
+  /*SpringConstant = 0.0;
   double Emin,ksum,kdiff,deltaE,Emax;
   ksum = kmax+kmin;
   kdiff = kmax-kmin;
@@ -1321,15 +1334,15 @@ SpringConstant =0.5*( ksum - kdiff*std::cos(pi*(Ei - Emin)/(deltaE)));
 
 pcout<<"Image number "<<NEBImage<<" Spring Constant: "<<SpringConstant<<std::endl;
 
-
+*/
 
 }  
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::WriteRestartFiles(int step)
+  nudgedElasticBandClass::WriteRestartFiles(int step)
 {
-  std::vector<std::vector<double>> stepIndexData(1, std::vector<double>(1, 0));
+  /*std::vector<std::vector<double>> stepIndexData(1, std::vector<double>(1, 0));
   stepIndexData[0][0] = double(step);
   pcout<<"Writing restart files for step: "<<step<<std::endl;
   std::string Folder = "nebRestart/Step";
@@ -1361,13 +1374,13 @@ nebGlobalClass<FEOrder, FEOrderElectro>::WriteRestartFiles(int step)
           }
           outfile.close();
         }  
-
+  */
 }
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
+ 
 void
-nebGlobalClass<FEOrder, FEOrderElectro>::ImageError(int image, double &Force)
+  nudgedElasticBandClass::ImageError(int image, double &Force)
 {
-  Force = 0.0;
+  /*Force = 0.0;
   std::vector<double> tangent(countrelaxationFlags,0.0); 
   std::vector<double> Forceparallel(countrelaxationFlags,0.0);
   std::vector<double> Forceperpendicular(countrelaxationFlags,0.0); 
@@ -1375,8 +1388,11 @@ nebGlobalClass<FEOrder, FEOrderElectro>::ImageError(int image, double &Force)
   CalculateForceparallel(image, Forceparallel, tangent);
   CalculateForceperpendicular(image,Forceperpendicular,Forceparallel,tangent);      
   LNorm(Force,Forceperpendicular,0,countrelaxationFlags);
+  */
 }
 
+bool
+nudgedElasticBandClass::isConverged() const
+{}
 
-#include "nebGlobalClass.inst.cc"
 }
