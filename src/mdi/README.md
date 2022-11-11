@@ -9,9 +9,9 @@ Steps to interface MolSSI-MDI with DFT-FE
 * Install DFT-FE current development branch (publicGithubDevelop) from [DFT-FE github repo](https://github.com/dftfeDevelopers/dftfe). The installation instructions for DFT-FE and its dependencies are provied in the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf). To link the dftfe library to MDI set the `mdiPath` variable to the MDI installation path in [setupUser.sh](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/helpers/setupUser.sh) and also set the variable `withMDI` to `ON`. Please note that two separate libdftfe.so files will be created in, one for real datatype (Gamma point) in `yourBuildDir/release/real/` and the other for the complex datatype (multiple k-points) in `yourBuildDir/release/complex/`.
 
 
-* Create and compile a MDI Driver. Please refer to MDI library documentation for details regarding setup a driver. We also refer to an [example cxx driver](https://github.com/dsambit/MDI_Library/blob/master/driverTestDFTFEPlugin/testcxxplugin/driver_plug_cxx/driver_plug_cxx.cpp) for ground-state QM calculation that has been tested with DFT-FE as the QM engine. This driver is written for the plugin mode.
+* Create and compile a MDI Driver. Please refer to MDI library documentation for details regarding setup a driver for plugin mode. We also refer to an [example cxx driver](https://github.com/dsambit/MDI_Library/blob/master/driverTestDFTFEPlugin/testcxxplugin/driver_plug_cxx/driver_plug_cxx.cpp) for ground-state QM calculation that has been tested with DFT-FE as the QM engine. This driver is written for the plugin mode.
 
-* MDI create_system in DFT-FE requires for the following mandatory commands: `>CELL, >DIMENSIONS, >NATOMS, >ELEMENTS, >COORDS >MONKHORST-PACK_NPOINTS >MONKHORST-PACK_SHIFT >SPIN_POLARIZATION`.
+* MDI create_system in DFT-FE requires for the following mandatory commands: `>CELL, >DIMENSIONS, >NATOMS, >ELEMENTS, >COORDS, >MONKHORST-PACK_NPOINTS >MONKHORST-PACK_SHIFT, >SPIN_POLARIZATION`.
 
 * `>COORDS` must be with respect to origin at the cell corner.
 
@@ -22,7 +22,7 @@ Steps to interface MolSSI-MDI with DFT-FE
 ```
 srun -n 16 -c 8 --cpu-bind=cores ./driver_plug_cxx -driver_nranks 0 -plugin_nranks 16 -plugin_name "dftfe" -mdi "-role DRIVER -name driver -method LINK -plugin_path /global/project/projectdirs/m2360/softwaresDFTFE/intel19knl/dftfemdi/build/release/real"
 ```
-
+Please note that plugin_path above points to the location of libdftfe.so.
 
 * DFT-FE's MDI interface currently only sets up GGA PBE ground-state DFT calculations using ONCV pseudopotentials (http://www.pseudo-dojo.org for example) on either CPU only or hybrid CPU-GPU architecture. Fermi-dirac smearing with 500 K smearing temperature is used by default.
 
