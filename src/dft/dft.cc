@@ -3583,7 +3583,7 @@ namespace dftfe
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
 #endif
-    
+
     if (d_dftParamsPtr->isPseudopotential ||
         d_dftParamsPtr->smearedNuclearCharges)
       {
