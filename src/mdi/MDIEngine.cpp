@@ -116,6 +116,7 @@ namespace dftfe
     // endless engine loop, responding to driver commands
 
     d_mode         = DEFAULT;
+    d_node_match   = true;
     d_exit_command = false;
 
     while (true)
@@ -336,6 +337,17 @@ namespace dftfe
           }
         MPI_Barrier(d_dftfeMPIComm);
       }
+    else if (strcmp(command, "@") == 0)
+      {
+        strncpy(d_node_driver, "\0", MDI_COMMAND_LENGTH);
+        d_node_match = false;
+      }
+    else if (strcmp(command, "@DEFAULT") == 0)
+      {
+        d_mode = DEFAULT;
+        strncpy(d_node_driver, command, MDI_COMMAND_LENGTH);
+        d_node_match = false;
+      }
     else if (strcmp(command, "EXIT") == 0)
       {
         d_exit_command = true;
@@ -369,7 +381,9 @@ namespace dftfe
     // default node, MDI standard commands
 
     MDI_Register_node("@DEFAULT");
+    MDI_Register_command("@DEFAULT", "@");
     MDI_Register_command("@DEFAULT", "<@");
+    MDI_Register_command("@DEFAULT", "<NAME");
     MDI_Register_command("@DEFAULT", "<ENERGY");
     MDI_Register_command("@DEFAULT", "<FORCES");
     MDI_Register_command("@DEFAULT", "<STRESS");
