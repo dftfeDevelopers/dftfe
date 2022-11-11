@@ -20,7 +20,7 @@ Steps to interface MolSSI-MDI with DFT-FE
 * Example usage of MDI interfacing with DFT-FE in plugin mode using the [driver](https://github.com/dsambit/MDI_Library/blob/master/driverTestDFTFEPlugin/testcxxplugin/driver_plug_cxx/driver_plug_cxx.cpp):
 (using NERSC Cori interactive job)
 ```
-srun -n 16 -c 8 --cpu-bind=cores ./driver_plug_cxx -driver_nranks 0 -plugin_nranks 16 -plugin_name "dftfe" -mdi "-role DRIVER -name driver -method LINK -plugin_path /global/project/projectdirs/m2360/softwaresDFTFE/intel19knl/dftfemdi/build/release/real"
+srun -n 256 -c 4 --cpu-bind=cores ./driver_plug_cxx -driver_nranks 0 -plugin_nranks 256 -plugin_name "dftfe" -mdi "-role DRIVER -name driver -method LINK -plugin_path /global/project/projectdirs/m2360/softwaresDFTFE/intel19knl/dftfemdi/build/release/complex"
 ```
 Please note that plugin_path above points to the location of libdftfe.so.
 
