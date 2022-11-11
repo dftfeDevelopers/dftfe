@@ -27,7 +27,14 @@
 extern "C"
 {
   int
-  MDI_Plugin_init_dftfe();
+  MDI_Plugin_init_dftfe(void *plugin_state);
+
+  int
+  MDI_Plugin_open_dftfe(void *plugin_state);
+
+  int
+  MDI_Plugin_close_dftfe();
+
   int
   dftfe_execute_mdi_command(const char *, MDI_Comm, void *);
 }

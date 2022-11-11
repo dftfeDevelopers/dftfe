@@ -55,6 +55,7 @@
 #include <xc.h>
 #include <excWavefunctionBaseClass.h>
 #include <excManager.h>
+#include <dftd.h>
 #include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
@@ -188,8 +189,11 @@ namespace dftfe
      */
     std::tuple<bool, double>
     solve(const bool computeForces                 = true,
-          const bool computeStress                 = true,
+          const bool computestress                 = true,
           const bool restartGroundStateCalcFromChk = false);
+
+    void
+    computeStress();
 
     void
     trivialSolveForStress();
@@ -1017,6 +1021,7 @@ namespace dftfe
     // xc_func_type funcX, funcC;
 
     excWavefunctionBaseClass *excFunctionalPtr;
+    dispersionCorrection      d_dispersionCorr;
 
     /**
      * stores required data for Kohn-Sham problem

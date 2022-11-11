@@ -3,8 +3,8 @@
 ##
 
 # Set the name of the project and target:
-SET(TARGET "dftfe")
-SET(TARGETLIB "dftfem")
+SET(TARGET "dftfe_exe")
+SET(TARGETLIB "dftfe")
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 # Declare all source files the target consists of:
@@ -235,6 +235,7 @@ ENDIF()
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 
 ADD_EXECUTABLE(${TARGET}   src/main.cc)
+set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
 DEAL_II_SETUP_TARGET(${TARGETLIB})
 DEAL_II_SETUP_TARGET(${TARGET})
