@@ -107,11 +107,6 @@ namespace dftfe
 #include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
 #include "computeOutputDensityDirectionalDerivative.cc"
 
-  // Include cu files
-#ifdef DFTFE_WITH_GPU
-#  include "nodalDensityMixingSchemesCUDA.cu"
-#endif
-
   //
   // dft constructor
   //
@@ -1987,16 +1982,18 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-        if (d_dftParamsPtr->useGPU and
-            d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
-          kerkerPreconditionedResidualSolverProblemCUDA.init(
-            d_matrixFreeDataPRefined,
-            d_constraintsForHelmholtzRhoNodal,
-            d_preCondResidualVector,
-            d_dftParamsPtr->kerkerParameter,
-            d_helmholtzDofHandlerIndexElectro,
-            d_densityQuadratureIdElectro);
+        if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+          {
+#ifdef DFTFE_WITH_GPU
+            kerkerPreconditionedResidualSolverProblemCUDA.init(
+              d_matrixFreeDataPRefined,
+              d_constraintsForHelmholtzRhoNodal,
+              d_preCondResidualVector,
+              d_dftParamsPtr->kerkerParameter,
+              d_helmholtzDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro);
+#endif
+          }
         else
           kerkerPreconditionedResidualSolverProblem.init(
             d_matrixFreeDataPRefined,
@@ -2167,16 +2164,13 @@ namespace dftfe
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
                       {
-                        if (d_dftParamsPtr->useGPU and
-                            d_dftParamsPtr->floatingNuclearCharges and
-                            not d_dftParamsPtr->pinnedNodeForPBC)
-                          norm = nodalDensity_mixing_simple_kerker(
-                            kerkerPreconditionedResidualSolverProblemCUDA,
-                            CGSolverCUDA);
-                        else
-                          norm = nodalDensity_mixing_simple_kerker(
-                            kerkerPreconditionedResidualSolverProblem,
-                            CGSolver);
+                        norm = nodalDensity_mixing_simple_kerker(
+#ifdef DFTFE_WITH_GPU
+                          kerkerPreconditionedResidualSolverProblemCUDA,
+                          CGSolverCUDA,
+#endif
+                          kerkerPreconditionedResidualSolverProblem,
+                          CGSolver);
                       }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
@@ -2220,16 +2214,13 @@ namespace dftfe
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       {
-                        if (d_dftParamsPtr->useGPU and
-                            d_dftParamsPtr->floatingNuclearCharges and
-                            not d_dftParamsPtr->pinnedNodeForPBC)
-                          norm = nodalDensity_mixing_anderson_kerker(
-                            kerkerPreconditionedResidualSolverProblemCUDA,
-                            CGSolverCUDA);
-                        else
-                          norm = nodalDensity_mixing_anderson_kerker(
-                            kerkerPreconditionedResidualSolverProblem,
-                            CGSolver);
+                        norm = nodalDensity_mixing_anderson_kerker(
+#ifdef DFTFE_WITH_GPU
+                          kerkerPreconditionedResidualSolverProblemCUDA,
+                          CGSolverCUDA,
+#endif
+                          kerkerPreconditionedResidualSolverProblem,
+                          CGSolver);
                       }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")

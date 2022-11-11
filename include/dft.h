@@ -872,29 +872,28 @@ namespace dftfe
     mixing_broyden();
     double
     mixing_broyden_spinPolarized();
-    double
-    nodalDensity_mixing_simple_kerker(
-      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 solverProblem,
-      dealiiLinearSolver &dealiiLinearSolver);
-    double
-    nodalDensity_mixing_anderson_kerker(
-      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 solverProblem,
-      dealiiLinearSolver &dealiiLinearSolver);
 
-#ifdef DFTFE_WITH_GPU
     double
     nodalDensity_mixing_simple_kerker(
+#ifdef DFTFE_WITH_GPU
       kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 solverProblem,
-      linearSolverCGCUDA &CGSolverCUDA);
+        &                 kerkerPreconditionedResidualSolverProblemCUDA,
+      linearSolverCGCUDA &CGSolverCUDA,
+#endif
+      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblem,
+      dealiiLinearSolver &CGSolver);
+
     double
     nodalDensity_mixing_anderson_kerker(
+#ifdef DFTFE_WITH_GPU
       kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 solverProblem,
-      linearSolverCGCUDA &CGSolverCUDA);
+        &                 kerkerPreconditionedResidualSolverProblemCUDA,
+      linearSolverCGCUDA &CGSolverCUDA,
 #endif
+      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblem,
+      dealiiLinearSolver &CGSolver);
 
     double
     lowrankApproxScfDielectricMatrixInv(const unsigned int scfIter);
