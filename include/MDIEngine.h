@@ -80,12 +80,17 @@ namespace dftfe
     int d_flag_natoms, d_flag_elements;
     int d_flag_cell, d_flag_dimensions, d_flag_cell_displ;
     int d_flag_charges, d_flag_coords;
+    int d_flag_mpGrid, d_flag_mpShift;
+    int d_flag_spin;
 
     int                 d_sys_natoms;
     int                 d_sys_dimensions[3];
     std::vector<int>    d_sys_elements;
     std::vector<double> d_sys_coords;
     double              d_sys_cell[9], d_sys_cell_displ[3];
+    int                 d_mpGrid[3];
+    double              d_mpShift[3];
+    int                 d_spinPolarization;
 
     // class methods
     void
@@ -112,6 +117,25 @@ namespace dftfe
     receive_elements();
     void
     receive_dimensions();
+    void
+    receive_mpGrid();
+    void
+    receive_mpShift();
+    void
+    receive_spinPolarization();
+
+    void
+    send_name();
+    void
+    send_cell();
+    void
+    send_coords();
+    void
+    send_natoms();
+    void
+    send_elements();
+    void
+    send_spinPolarization();
 
     void
     send_energy();

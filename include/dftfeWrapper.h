@@ -224,6 +224,9 @@ namespace dftfe
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
 
+    void
+    computeStress();
+
     /**
      * @brief Get DFT free energy (in Hartree units). This function can
      * only be called after calling computeDFTFreeEnergy
