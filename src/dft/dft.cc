@@ -3577,6 +3577,13 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::computeStress()
   {
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
+#endif
+    
     if (d_dftParamsPtr->isPseudopotential ||
         d_dftParamsPtr->smearedNuclearCharges)
       {
