@@ -1490,6 +1490,8 @@ namespace dftfe
                             mapPtr,
                             d_xLen);
 
+    constraintsTotalPotentialInfo.set_zero(x, 1);
+
     constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 
     Ax.compressAdd();
