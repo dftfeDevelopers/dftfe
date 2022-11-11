@@ -99,26 +99,12 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   kerkerPreconditionedResidualSolverProblem.reinit(
     d_preCondResidualVector, gradDensityResidualValuesMap);
 
-  //////////////////////////////////////////////////////
-  ///////////////// Test Kerker/////////////////////////
-
-  // pcout << "\nCPU:"
-  //       << "\nBefore CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
-
   // solve the Helmholtz system to compute preconditioned residual
   CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
                  d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                  d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                  d_dftParamsPtr->verbosity,
                  false);
-
-  // pcout << "\nAfter CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
-
-  //////////////////////////////////////////////////////
-
-
 
   // compute rhoIn to being the current SCF iteration using the preconditioned
   // residual
@@ -376,26 +362,12 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
   kerkerPreconditionedResidualSolverProblem.reinit(
     d_preCondResidualVector, gradDensityResidualValuesMap);
 
-  //////////////////////////////////////////////////////
-  ///////////////// Test Kerker/////////////////////////
-
-  // pcout << "\nCPU:"
-  //       << "\nBefore CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
-
   // solve the Helmholtz system to compute preconditioned residual
   CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
                  d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                  d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                  d_dftParamsPtr->verbosity,
                  false);
-
-  // pcout << "\nAfter CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm();
-
-  //////////////////////////////////////////////////////
-
-
 
   // rhoIn += mixingScalar*residual for Kerker
   d_rhoInNodalValues = 0.0;

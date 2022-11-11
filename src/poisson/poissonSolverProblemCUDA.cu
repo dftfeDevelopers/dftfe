@@ -1351,6 +1351,8 @@ namespace dftfe
                                   d_jacobianActionPtr,
                                   d_mapPtr);
 
+    d_constraintsTotalPotentialInfo.set_zero(x, 1);
+
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 
     Ax.compressAdd();

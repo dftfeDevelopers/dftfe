@@ -99,13 +99,6 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   kerkerPreconditionedResidualSolverProblemCUDA.reinit(
     d_preCondResidualVector, gradDensityResidualValuesMap);
 
-  //////////////////////////////////////////////////////
-  ///////////////// Test Kerker/////////////////////////
-
-  // pcout << "\nGPU:"
-  //       << "\nBefore CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm() << "\n";
-
   // solve the Helmholtz system to compute preconditioned residual
   CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
                      d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
@@ -113,13 +106,6 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
                      d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
                      d_dftParamsPtr->verbosity,
                      false);
-
-  // pcout << "\nAfter CG d_preCondResidualVector: "
-  //       << d_preCondResidualVector.l2_norm() << "\n";
-
-  //////////////////////////////////////////////////////
-
-
 
   // compute rhoIn to being the current SCF iteration using the preconditioned
   // residual

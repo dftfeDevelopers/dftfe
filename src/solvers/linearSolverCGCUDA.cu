@@ -63,17 +63,6 @@ namespace dftfe
                                             rhs_device.begin(),
                                             rhs_device.locallyOwnedDofsSize());
 
-    CUDACHECK(cudaPeekAtLastError());
-
-    pcout << "\nrhs_device.locallyOwnedDofsSize: "
-          << rhs_device.locallyOwnedDofsSize()
-          << "\nrhs_host: " << rhs_host.l2_norm() << "\nGPU rhs_device: "
-          << cudaUtils::l2_norm(rhs_device.begin(),
-                                rhs_device.locallyOwnedDofsSize(),
-                                mpi_communicator,
-                                cublasHandle)
-          << "\n";
-
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
@@ -94,21 +83,7 @@ namespace dftfe
 
     try
       {
-        pcout << "1. x: "
-              << cudaUtils::l2_norm(x.begin(),
-                                    d_xLocalDof,
-                                    mpi_communicator,
-                                    cublasHandle)
-              << "\n";
-
         x.updateGhostValues();
-
-        pcout << "2. x: "
-              << cudaUtils::l2_norm(x.begin(),
-                                    d_xLocalDof,
-                                    mpi_communicator,
-                                    cublasHandle)
-              << "\n";
 
         if (d_type == CG)
           {
@@ -135,13 +110,6 @@ namespace dftfe
                            -1.,
                            d_xLocalDof,
                            cublasHandle);
-
-            pcout << "3. d_rvec: "
-                  << cudaUtils::l2_norm(d_rvec.begin(),
-                                        d_xLocalDof,
-                                        mpi_communicator,
-                                        cublasHandle)
-                  << "\n";
 
             // res = r.r
             res = cudaUtils::l2_norm(d_rvec.begin(),
@@ -264,7 +232,7 @@ namespace dftfe
   applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
                                               Type *      d_devSum,
                                               const Type *d_rvec,
-                                              const Type *jacobi,
+                                              const Type *d_jacobi,
                                               const int   N)
   {
     __shared__ Type smem[blockSize];
@@ -278,21 +246,21 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_jacobi = jacobi[idx];
-        Type d_r      = d_rvec[idx];
+        Type jacobi = d_jacobi[idx];
+        Type r      = d_rvec[idx];
 
-        localSum    = d_jacobi * d_r * d_r;
-        d_dvec[idx] = d_jacobi * d_r;
+        localSum    = jacobi * r * r;
+        d_dvec[idx] = jacobi * r;
       }
     else
       localSum = 0;
 
     if (idx + blockSize < N)
       {
-        Type d_jacobi = jacobi[idx + blockSize];
-        Type d_r      = d_rvec[idx + blockSize];
-        localSum += d_jacobi * d_r * d_r;
-        d_dvec[idx + blockSize] = d_jacobi * d_r;
+        Type jacobi = d_jacobi[idx + blockSize];
+        Type r      = d_rvec[idx + blockSize];
+        localSum += jacobi * r * r;
+        d_dvec[idx + blockSize] = jacobi * r;
       }
 
     smem[tid] = localSum;
@@ -328,7 +296,7 @@ namespace dftfe
   applyPreconditionComputeDotProductAndSaddKernel(Type *      d_qvec,
                                                   Type *      d_devSum,
                                                   const Type *d_rvec,
-                                                  const Type *jacobi,
+                                                  const Type *d_jacobi,
                                                   const int   N)
   {
     __shared__ Type smem[blockSize];
@@ -342,21 +310,21 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_jacobi = jacobi[idx];
-        Type d_r      = d_rvec[idx];
+        Type jacobi = d_jacobi[idx];
+        Type r      = d_rvec[idx];
 
-        localSum    = d_jacobi * d_r * d_r;
-        d_qvec[idx] = -1 * d_jacobi * d_r;
+        localSum    = jacobi * r * r;
+        d_qvec[idx] = -1 * jacobi * r;
       }
     else
       localSum = 0;
 
     if (idx + blockSize < N)
       {
-        Type d_jacobi = jacobi[idx + blockSize];
-        Type d_r      = d_rvec[idx + blockSize];
-        localSum += d_jacobi * d_r * d_r;
-        d_qvec[idx + blockSize] = -1 * d_jacobi * d_r;
+        Type jacobi = d_jacobi[idx + blockSize];
+        Type r      = d_rvec[idx + blockSize];
+        localSum += jacobi * r * r;
+        d_qvec[idx + blockSize] = -1 * jacobi * r;
       }
 
     smem[tid] = localSum;
@@ -408,20 +376,24 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_r = d_rvec[idx];
-        localSum = d_r * d_r;
+        Type rNew;
+        Type rOld = d_rvec[idx];
         x[idx] += alpha * d_qvec[idx];
-        d_rvec[idx] += alpha * d_dvec[idx];
+        rNew        = rOld + alpha * d_dvec[idx];
+        localSum    = rNew * rNew;
+        d_rvec[idx] = rNew;
       }
     else
       localSum = 0;
 
     if (idx + blockSize < N)
       {
-        Type d_r = d_rvec[idx + blockSize];
-        localSum += d_r * d_r;
+        Type rNew;
+        Type rOld = d_rvec[idx + blockSize];
         x[idx + blockSize] += alpha * d_qvec[idx + blockSize];
-        d_rvec[idx + blockSize] += alpha * d_dvec[idx + blockSize];
+        rNew = rOld + alpha * d_dvec[idx + blockSize];
+        localSum += rNew * rNew;
+        d_rvec[idx + blockSize] = rNew;
       }
 
     smem[tid] = localSum;
@@ -454,7 +426,7 @@ namespace dftfe
 
   double
   linearSolverCGCUDA::applyPreconditionAndComputeDotProduct(
-    const double *jacobi)
+    const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
     const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
@@ -465,7 +437,7 @@ namespace dftfe
     applyPreconditionAndComputeDotProductKernel<double,
                                                 cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(
-        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), jacobi, d_xLocalDof);
+        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     local_sum = d_devSum[0];
 
@@ -477,7 +449,7 @@ namespace dftfe
 
   double
   linearSolverCGCUDA::applyPreconditionComputeDotProductAndSadd(
-    const double *jacobi)
+    const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
     const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
@@ -488,7 +460,7 @@ namespace dftfe
     applyPreconditionComputeDotProductAndSaddKernel<double,
                                                     cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(
-        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), jacobi, d_xLocalDof);
+        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     local_sum = d_devSum[0];
 

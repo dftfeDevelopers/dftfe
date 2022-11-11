@@ -54,9 +54,6 @@ namespace dftfe
     distributedCPUVec<double> rhs;
     problem.computeRhs(rhs);
 
-    pcout << "rhs local_size: " << rhs.local_size()
-          << "\nCPU rhs: " << rhs.l2_norm() << "\n";
-
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
@@ -72,11 +69,7 @@ namespace dftfe
 
     try
       {
-        pcout << "1. x: " << x.l2_norm() << "\n";
-
         x.update_ghost_values();
-
-        pcout << "2. x: " << x.l2_norm() << "\n";
 
         if (d_type == CG)
           {
@@ -109,8 +102,6 @@ namespace dftfe
                 for (unsigned int i = 0; i < gvec.local_size(); i++)
                   gvec.local_element(i) = -rhs.local_element(i);
               }
-
-            pcout << "3. gvec: " << gvec.l2_norm() << "\n";
 
             res         = gvec.l2_norm();
             initial_res = res;

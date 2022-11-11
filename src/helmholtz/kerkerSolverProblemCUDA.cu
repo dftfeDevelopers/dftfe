@@ -79,22 +79,12 @@ namespace dftfe
     distributedCPUVec<double> &                          x,
     const std::map<dealii::CellId, std::vector<double>> &quadPointValues)
   {
-    d_xPtr = &x;
-    d_xDevice.reinit(x.get_partitioner(), 1);
-
-    d_xLocalDof = d_xDevice.locallyOwnedDofsSize();
-    d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
-
+    d_xPtr                      = &x;
     d_quadGradResidualValuesPtr = &quadPointValues;
+
     cudaUtils::copyHostVecToCUDAVec<double>(d_xPtr->begin(),
                                             d_xDevice.begin(),
                                             d_xLocalDof);
-
-    // Setup MatrixFree Mesh
-    setupMatrixFree();
-
-    // Setup MatrixFree Constraints
-    setupconstraints();
   }
 
 
@@ -875,6 +865,8 @@ namespace dftfe
                                   d_jacobianActionPtr,
                                   d_mapPtr,
                                   coeffHelmholtz);
+
+    d_constraintsTotalPotentialInfo.set_zero(x, 1);
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 
