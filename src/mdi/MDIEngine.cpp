@@ -52,6 +52,16 @@ namespace dftfe
   MDIEngine::MDIEngine(MPI_Comm &dftfeMPIComm, int argc, char *argv[])
     : d_dftfeMPIComm(dftfeMPIComm)
   {
+    d_spinPolarization = 0;
+    d_mpGrid[0]        = 1;
+    d_mpGrid[1]        = 1;
+    d_mpGrid[2]        = 1;
+    d_mpShift[0]       = 0;
+    d_mpShift[1]       = 0;
+    d_mpShift[2]       = 0;
+    d_sys_natoms       = 0;
+    std::fill(d_sys_cell, d_sys_cell + 8, 0.0);
+
     // confirm DFTFE is being run as an engine
 
     int role;
@@ -81,6 +91,9 @@ namespace dftfe
     d_flag_natoms   = 0;
     d_flag_elements = d_flag_coords = 0;
     d_flag_cell = d_flag_cell_displ = 0;
+    d_flag_mpGrid                   = 0;
+    d_flag_mpShift                  = 0;
+    d_flag_spin                     = 0;
 
     d_actionflag = 0;
 
@@ -235,6 +248,10 @@ namespace dftfe
       {
         receive_cell();
       }
+    else if (strcmp(command, "<CELL") == 0)
+      {
+        send_cell();
+      }
     else if (strcmp(command, ">CELL_DISPL") == 0)
       {
         receive_cell_displ();
@@ -243,17 +260,49 @@ namespace dftfe
       {
         receive_coords();
       }
+    else if (strcmp(command, "<COORDS") == 0)
+      {
+        send_coords();
+      }
     else if (strcmp(command, ">NATOMS") == 0)
       {
         receive_natoms();
+      }
+    else if (strcmp(command, "<NATOMS") == 0)
+      {
+        send_natoms();
       }
     else if (strcmp(command, ">ELEMENTS") == 0)
       {
         receive_elements();
       }
+    else if (strcmp(command, "<ELEMENTS") == 0)
+      {
+        send_elements();
+      }
     else if (strcmp(command, ">DIMENSIONS") == 0)
       {
         receive_dimensions();
+      }
+    else if (strcmp(command, ">MONKHORST-PACK_NPOINTS") == 0)
+      {
+        receive_mpGrid();
+      }
+    else if (strcmp(command, ">MONKHORST-PACK_SHIFT") == 0)
+      {
+        receive_mpShift();
+      }
+    else if (strcmp(command, ">SPIN_POLARIZATION") == 0)
+      {
+        receive_spinPolarization();
+      }
+    else if (strcmp(command, "<SPIN_POLARIZATION") == 0)
+      {
+        send_spinPolarization();
+      }
+    else if (strcmp(command, "<NAME") == 0)
+      {
+        send_name();
       }
     else if (strcmp(command, "<ENERGY") == 0)
       {
@@ -275,8 +324,17 @@ namespace dftfe
           evaluate();
         d_actionflag = 1;
         send_stress();
-
-        // exit command
+      }
+    else if (strcmp(command, "<@") == 0)
+      {
+        if (d_root == 1)
+          {
+            int ierr =
+              MDI_Send(d_node_engine, MDI_NAME_LENGTH, MDI_CHAR, d_mdicomm);
+            if (ierr)
+              AssertThrow(false, dealii::ExcMessage("MDI: <@ data"));
+          }
+        MPI_Barrier(d_dftfeMPIComm);
       }
     else if (strcmp(command, "EXIT") == 0)
       {
@@ -311,14 +369,23 @@ namespace dftfe
     // default node, MDI standard commands
 
     MDI_Register_node("@DEFAULT");
+    MDI_Register_command("@DEFAULT", "<@");
     MDI_Register_command("@DEFAULT", "<ENERGY");
     MDI_Register_command("@DEFAULT", "<FORCES");
     MDI_Register_command("@DEFAULT", "<STRESS");
     MDI_Register_command("@DEFAULT", ">CELL");
+    MDI_Register_command("@DEFAULT", "<CELL");
     MDI_Register_command("@DEFAULT", ">COORDS");
+    MDI_Register_command("@DEFAULT", "<COORDS");
     MDI_Register_command("@DEFAULT", ">NATOMS");
+    MDI_Register_command("@DEFAULT", "<NATOMS");
     MDI_Register_command("@DEFAULT", ">ELEMENTS");
+    MDI_Register_command("@DEFAULT", "<ELEMENTS");
     MDI_Register_command("@DEFAULT", ">DIMENSIONS");
+    MDI_Register_command("@DEFAULT", ">MONKHORST-PACK_NPOINTS");
+    MDI_Register_command("@DEFAULT", ">MONKHORST-PACK_SHIFT");
+    MDI_Register_command("@DEFAULT", ">SPIN_POLARIZATION");
+    MDI_Register_command("@DEFAULT", "<SPIN_POLARIZATION");
     MDI_Register_command("@DEFAULT", "EXIT");
   }
 
@@ -332,8 +399,9 @@ namespace dftfe
   void
   MDIEngine::evaluate()
   {
-    int flag_create = d_flag_natoms | d_flag_elements | d_flag_dimensions;
-    int flag_other  = d_flag_cell | d_flag_cell_displ | d_flag_coords;
+    int flag_create = d_flag_natoms | d_flag_elements | d_flag_dimensions |
+                      d_flag_mpGrid | d_flag_mpShift | d_flag_spin;
+    int flag_other = d_flag_cell | d_flag_cell_displ | d_flag_coords;
 
     // create new system or incrementally update system
     // NOTE: logic here is as follows
@@ -362,6 +430,9 @@ namespace dftfe
 
     d_flag_natoms = d_flag_elements = 0;
     d_flag_cell = d_flag_dimensions = d_flag_cell_displ = d_flag_coords = 0;
+    d_flag_mpGrid                                                       = 0;
+    d_flag_mpShift                                                      = 0;
+    d_flag_spin                                                         = 0;
   }
 
   /* ----------------------------------------------------------------------
@@ -376,14 +447,12 @@ namespace dftfe
     // check requirements
 
     if (d_flag_cell == 0 || d_flag_dimensions == 0 || d_flag_natoms == 0 ||
-        d_flag_elements == 0 || d_flag_coords == 0)
+        d_flag_elements == 0 || d_flag_coords == 0 || d_flag_mpGrid == 0 ||
+        d_flag_mpShift == 0 || d_flag_spin == 0)
       AssertThrow(
         false,
         dealii::ExcMessage(
-          "MDI create_system requires >CELL, >DIMENSIONS, >NATOMS, >ELEMENTS, >COORDS MDI commands"));
-    // error->all(FLERR,
-    //           "MDI create_system requires >CELL, >NATOMS, >ELEMENTS, >COORDS
-    //           " "MDI commands");
+          "MDI create_system requires >CELL, >DIMENSIONS, >NATOMS, >ELEMENTS, >COORDS >MONKHORST-PACK_NPOINTS >MONKHORST-PACK_SHIFT >SPIN_POLARIZATION MDI commands"));
 
     // create new system
     // NOTE: here is where you wipeout the old system
@@ -434,6 +503,36 @@ namespace dftfe
           }
       }
 
+    std::vector<unsigned int> mpGrid(3);
+    for (int idim = 0; idim < 3; idim++)
+      {
+        if (d_mpGrid[idim] > 1 && pbc[idim] == false)
+          AssertThrow(
+            false,
+            dealii::ExcMessage(
+              "MONKHORST-PACK_NPOINTS can only be greater than 1 along periodic cell vectors."));
+        mpGrid[idim] = d_mpGrid[idim];
+      }
+
+    const double      tol = 1e-6;
+    std::vector<bool> mpShift(3);
+    for (unsigned int idim = 0; idim < 3; idim++)
+      {
+        if (d_mpShift[idim] > tol && pbc[idim] == false)
+          AssertThrow(
+            false,
+            dealii::ExcMessage(
+              "MONKHORST-PACK_SHIFT can only be greater than 0.0 along periodic cell vectors."));
+
+        if (std::fabs(d_mpShift[idim] - 0.0) < tol)
+          mpShift[idim] = false;
+        else if (std::fabs(d_mpShift[idim] - 0.5) < tol)
+          mpShift[idim] = true;
+        else
+          AssertThrow(false,
+                      dealii::ExcMessage(
+                        "Only MONKHORST-PACK_SHIFT values of 0 or 0.5."));
+      }
 
     // constructs dftfe wrapper object
     d_dftfeWrapper.reinit(d_dftfeMPIComm,
@@ -441,11 +540,11 @@ namespace dftfe
                           atomicPositionsCart,
                           atomicNumbers,
                           cell,
-                          pbc,                                // pbc
-                          std::vector<unsigned int>{1, 1, 1}, // MP grid
-                          std::vector<bool>{false,
-                                            false,
-                                            false}); // MP grid shift
+                          pbc,    // pbc
+                          mpGrid, // MP grid
+                          mpShift,
+                          d_spinPolarization == 1 ? true : false,
+                          d_spinPolarization == 1 ? 0.1 : 0.0); // MP grid shift
   }
 
   void
@@ -534,6 +633,7 @@ namespace dftfe
     //  std::cout << "cell: " << d_sys_cell[i] << std::endl;
   }
 
+
   /* ----------------------------------------------------------------------
      >CELL_DISPL command
      reset simulation box lower left corner
@@ -582,6 +682,7 @@ namespace dftfe
     // for (int i = 0; i < n; i++)
     //  std::cout << "coord: " << d_sys_coords[i] << std::endl;
   }
+
 
   /* ----------------------------------------------------------------------
      >NATOMS command
@@ -647,6 +748,55 @@ namespace dftfe
     // for (int i = 0; i < d_sys_natoms; i++)
     //  std::cout << "element: " << d_sys_elements[i] << std::endl;
   }
+
+  void
+  MDIEngine::receive_mpGrid()
+  {
+    d_actionflag  = 0;
+    d_flag_mpGrid = 1;
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(d_mpGrid, 3, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false,
+                      dealii::ExcMessage("MDI: >MONKHORST-PACK_NPOINTS data"));
+      }
+
+    MPI_Bcast(d_mpGrid, 3, MPI_INT, 0, d_dftfeMPIComm);
+  }
+
+  void
+  MDIEngine::receive_mpShift()
+  {
+    d_actionflag   = 0;
+    d_flag_mpShift = 1;
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(d_mpShift, 3, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false,
+                      dealii::ExcMessage("MDI: >MONKHORST-PACK_SHIFT data"));
+      }
+
+    MPI_Bcast(d_mpShift, 3, MPI_DOUBLE, 0, d_dftfeMPIComm);
+  }
+
+  void
+  MDIEngine::receive_spinPolarization()
+  {
+    d_actionflag = 0;
+    d_flag_spin  = 1;
+    if (d_root == 1)
+      {
+        int ierr = MDI_Recv(&d_spinPolarization, 1, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false,
+                      dealii::ExcMessage("MDI: >SPIN POLARIZATION data"));
+      }
+
+    MPI_Bcast(&d_spinPolarization, 1, MPI_INT, 0, d_dftfeMPIComm);
+  }
+
   // ----------------------------------------------------------------------
   // ----------------------------------------------------------------------
   // MDI "<" driver commands that request data
@@ -658,6 +808,83 @@ namespace dftfe
   // MDI "<" driver commands that request data
   // ----------------------------------------------------------------------
   // ----------------------------------------------------------------------
+
+  void
+  MDIEngine::send_name()
+  {
+    if (d_root == 1)
+      {
+        std::string str = "dftfe";
+        int ierr = MDI_Send(str.c_str(), MDI_NAME_LENGTH, MDI_CHAR, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <NAME data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
+  }
+
+  void
+  MDIEngine::send_cell()
+  {
+    if (d_root == 1)
+      {
+        int ierr = MDI_Send(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <CELL data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
+  }
+
+
+  void
+  MDIEngine::send_coords()
+  {
+    if (d_root == 1)
+      {
+        int ierr =
+          MDI_Send(&d_sys_coords[0], d_sys_natoms * 3, MDI_DOUBLE, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <COORDS data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
+  }
+
+  void
+  MDIEngine::send_natoms()
+  {
+    if (d_root == 1)
+      {
+        int ierr = MDI_Send(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <NATOMS data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
+  }
+
+  void
+  MDIEngine::send_elements()
+  {
+    if (d_root == 1)
+      {
+        int ierr =
+          MDI_Send(&d_sys_elements[0], d_sys_natoms, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false, dealii::ExcMessage("MDI: <ELEMENTS data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
+  }
+
+  void
+  MDIEngine::send_spinPolarization()
+  {
+    if (d_root == 1)
+      {
+        int ierr = MDI_Send(&d_spinPolarization, 1, MDI_INT, d_mdicomm);
+        if (ierr)
+          AssertThrow(false,
+                      dealii::ExcMessage("MDI: <SPIN_POLARIZATION data"));
+      }
+    MPI_Barrier(d_dftfeMPIComm);
+  }
 
   /* ----------------------------------------------------------------------
      <ENERGY command
@@ -714,6 +941,8 @@ namespace dftfe
   void
   MDIEngine::send_stress()
   {
+    d_dftfeWrapper.computeStress();
+
     // NOTE: vtensor should be QM virial values (symmetric tensor)
     std::vector<std::vector<double>> stressTensor =
       d_dftfeWrapper.getCellStress();
