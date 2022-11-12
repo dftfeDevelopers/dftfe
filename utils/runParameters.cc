@@ -56,43 +56,42 @@ namespace dftfe
                         "[Standard] Folder to store restart files.");
       prm.enter_subsection("NEB");
       {
-   
         prm.declare_entry(
           "ALLOW IMAGE FREEZING",
           "false",
           Patterns::Bool(),
-          "If true images less than threshold will freeze for optimization step");            
-        
+          "If true images less than threshold will freeze for optimization step");
+
         prm.declare_entry(
           "NUMBER OF IMAGES",
           "1",
-          Patterns::Integer(1,50),
-          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");          
+          Patterns::Integer(1, 50),
+          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");
 
-          prm.declare_entry(
-            "MAXIMUM SPRING CONSTANT",
-            "1e-1",
-            Patterns::Double(),
-            "[Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)");
+        prm.declare_entry(
+          "MAXIMUM SPRING CONSTANT",
+          "1e-1",
+          Patterns::Double(),
+          "[Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)");
 
-          prm.declare_entry(
-            "MINIMUM SPRING CONSTANT",
-            "5e-2",
-            Patterns::Double(),
-            "[Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)");
+        prm.declare_entry(
+          "MINIMUM SPRING CONSTANT",
+          "5e-2",
+          Patterns::Double(),
+          "[Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)");
 
-          prm.declare_entry(
-            "PATH THRESHOLD",
-            "1e-1",
-            Patterns::Double(),
-            "[Standard] Simulation stops when the error(norm of force orthogonal to path in eV/A) is less than PATH THRESHOLD ");
+        prm.declare_entry(
+          "PATH THRESHOLD",
+          "1e-1",
+          Patterns::Double(),
+          "[Standard] Simulation stops when the error(norm of force orthogonal to path in eV/A) is less than PATH THRESHOLD ");
 
 
         prm.declare_entry(
           "MAXIMUM NUMBER OF NEB ITERATIONS",
           "100",
           Patterns::Integer(1, 250),
-          "[Standard] Maximum number of NEB iterations that will be performed in the simulation");  
+          "[Standard] Maximum number of NEB iterations that will be performed in the simulation");
 
         prm.declare_entry(
           "NEB COORDINATES FILE",
@@ -104,10 +103,9 @@ namespace dftfe
           "NEB DOMAIN VECTORS FILE",
           "",
           Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");  
-
+          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
       }
-      prm.leave_subsection();                        
+      prm.leave_subsection();
     }
   } // namespace internalRunParameters
 
@@ -124,20 +122,16 @@ namespace dftfe
     solvermode       = prm.get("SOLVER MODE");
     restart          = prm.get_bool("RESTART");
     restartFilesPath = prm.get("RESTART FOLDER");
-      prm.enter_subsection("NEB");
-      {
-        numberOfImages = prm.get_integer("NUMBER OF IMAGES");
-        imageFreeze = prm.get_bool("ALLOW IMAGE FREEZING");
-        Kmax = prm.get_double("MAXIMUM SPRING CONSTANT");
-        Kmin = prm.get_double("MINIMUM SPRING CONSTANT");
-        pathThreshold = prm.get_double("maximumNEBiteration");
-        coordinatesFileNEB = prm.get("NEB COORDINATES FILE");
-        domainVectorsFileNEB = prm.get("NEB DOMAIN VECTORS FILE");
-      
-      }
-
-
-
+    prm.enter_subsection("NEB");
+    {
+      numberOfImages       = prm.get_integer("NUMBER OF IMAGES");
+      imageFreeze          = prm.get_bool("ALLOW IMAGE FREEZING");
+      Kmax                 = prm.get_double("MAXIMUM SPRING CONSTANT");
+      Kmin                 = prm.get_double("MINIMUM SPRING CONSTANT");
+      pathThreshold        = prm.get_double("maximumNEBiteration");
+      coordinatesFileNEB   = prm.get("NEB COORDINATES FILE");
+      domainVectorsFileNEB = prm.get("NEB DOMAIN VECTORS FILE");
+    }
 
 
 

@@ -346,8 +346,6 @@ namespace dftfe
 
 
 
-
-
     /**
      * @brief Gets the current cell lattice vectors
      *
@@ -1022,7 +1020,8 @@ namespace dftfe
 
     /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
-      d_reciprocalLatticeVectors, d_domainBoundingVectors,d_atomLocationsInitial;
+      d_reciprocalLatticeVectors, d_domainBoundingVectors,
+      d_atomLocationsInitial;
     std::vector<std::vector<double>> d_atomLocationsAutoMesh;
     std::vector<std::vector<double>> d_imagePositionsAutoMesh;
 

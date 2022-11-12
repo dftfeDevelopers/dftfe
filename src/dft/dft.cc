@@ -978,7 +978,6 @@ namespace dftfe
                              d_imagePositionsTrunc,
                              d_globalChargeIdToImageIdMapTrunc);
       }
-
   }
 
   // dft init
@@ -992,7 +991,7 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "Entering init");
 
     initImageChargesUpdateKPoints();
-    //Set Initial atomLocations
+    // Set Initial atomLocations
     d_atomLocationsInitial = atomLocations;
     calculateNearestAtomDistances();
 

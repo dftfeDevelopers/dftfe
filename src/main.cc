@@ -171,12 +171,21 @@ main(int argc, char *argv[])
 
   else if (runParams.solvermode == "NEB")
     {
-      dftfe::nudgedElasticBandClass nebClass(parameter_file,runParams.restartFilesPath,MPI_COMM_WORLD,runParams.restart,runParams.verbosity,
-                                              runParams.numberOfImages, runParams.imageFreeze,runParams.Kmax,runParams.Kmin,runParams.pathThreshold,
-                                               runParams.maximumNEBiteration, runParams.coordinatesFileNEB, runParams.domainVectorsFileNEB);
+      dftfe::nudgedElasticBandClass nebClass(parameter_file,
+                                             runParams.restartFilesPath,
+                                             MPI_COMM_WORLD,
+                                             runParams.restart,
+                                             runParams.verbosity,
+                                             runParams.numberOfImages,
+                                             runParams.imageFreeze,
+                                             runParams.Kmax,
+                                             runParams.Kmin,
+                                             runParams.pathThreshold,
+                                             runParams.maximumNEBiteration,
+                                             runParams.coordinatesFileNEB,
+                                             runParams.domainVectorsFileNEB);
 
-      int status = nebClass.runNEB();                                    
-
+      int status = nebClass.run();
     }
   else if (runParams.solvermode == "GEOOPT")
     {

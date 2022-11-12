@@ -113,8 +113,6 @@ namespace dftfe
 
 
 
-
-
     /**
      * @brief Gets the current cell lattice vectors
      *
