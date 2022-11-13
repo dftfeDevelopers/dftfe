@@ -55,7 +55,7 @@ namespace dftfe
     solve(linearSolverProblemCUDA &problem,
           const double             relTolerance,
           const unsigned int       maxNumberIterations,
-          const int       debugLevel = 0);
+          const int                debugLevel = 0);
 
   private:
     const MPI_Comm             mpi_communicator;

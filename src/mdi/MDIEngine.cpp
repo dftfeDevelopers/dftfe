@@ -60,7 +60,7 @@ namespace dftfe
     d_mpShift[1]       = 0;
     d_mpShift[2]       = 0;
     d_sys_natoms       = 0;
-    //std::fill(d_sys_cell, d_sys_cell + 8, 0.0);
+    // std::fill(d_sys_cell, d_sys_cell + 8, 0.0);
 
     // confirm DFTFE is being run as an engine
 

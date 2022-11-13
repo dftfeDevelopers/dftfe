@@ -43,7 +43,7 @@ namespace dftfe
                             const double             absTolerance,
                             const unsigned int       maxNumberIterations,
                             cublasHandle_t &         cublasHandle,
-                            const int       debugLevel,
+                            const int                debugLevel,
                             bool                     distributeFlag)
   {
     int this_process;
