@@ -42,7 +42,7 @@ namespace dftfe
   cgLinearSolverCUDA::solve(linearSolverProblemCUDA &problem,
                             const double             relTolerance,
                             const unsigned int       maxNumberIterations,
-                            const unsigned int       debugLevel)
+                            const int       debugLevel)
   {
     // initialize certain variables
     double       delta_new, delta_old, delta_0, alpha, beta, residualNorm;

@@ -51,7 +51,7 @@ namespace dftfe
           const double             absTolerance,
           const unsigned int       maxNumberIterations,
           cublasHandle_t &         handle,
-          const unsigned int       debugLevel     = 0,
+          const int       debugLevel     = 0,
           bool                     distributeFlag = true) = 0;
 
   private:
