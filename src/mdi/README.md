@@ -15,12 +15,12 @@ Steps to interface MolSSI-MDI with DFT-FE
 
 * `>COORDS` must be with respect to origin at the cell corner.
 
-* Before using the interface set `DFTFE_PSP_PATH` environment variable using export to a pseudopotential directory. The pseudpotential directory must contain ONCV files in the format: *AtomicSymbol.upf*
+* Before using the interface set `DFTFE_PSP_PATH` environment variable using export to a pseudopotential directory. The pseudpotential directory must contain ONCV format files in the format: *AtomicSymbol.upf*
 
 * Example usage of MDI interfacing with DFT-FE in plugin mode using the [driver](https://github.com/dsambit/MDI_Library/blob/master/driverTestDFTFEPlugin/testcxxplugin/driver_plug_cxx/driver_plug_cxx.cpp):
 (using NERSC Cori interactive job)
 ```
-srun -n 256 -c 4 --cpu-bind=cores ./driver_plug_cxx -driver_nranks 0 -plugin_nranks 256 -plugin_name "dftfe" -mdi "-role DRIVER -name driver -method LINK -plugin_path /global/project/projectdirs/m2360/softwaresDFTFE/intel19knl/dftfemdi/build/release/complex"
+srun -n 256 -c 4 --cpu-bind=cores ./driver_plug_cxx -driver_nranks 0 -plugin_nranks 256 -plugin_name "dftfe" -mdi "-role DRIVER -name driver -method LINK -plugin_path /global/project/projectdirs/m2360/softwaresDFTFE/intel19knl/dftfemdi/build/release/complex" > driveroutput
 ```
 Please note that plugin_path above points to the location of libdftfe.so.
 
