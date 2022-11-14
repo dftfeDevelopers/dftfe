@@ -784,25 +784,19 @@ namespace dftfe
 
     extern __shared__ Type SMem[];
 
-    Type *sharedX   = SMem;
-    Type *sharedY   = &sharedX[M * K];
-    Type *sharedZ   = &sharedY[M * K];
-    Type *sharedT   = &sharedZ[M * K];
-    Type *sharedPT  = &sharedT[M * K];
-    Type *sharedD   = &sharedPT[N * K];
-    Type *sharedP   = &sharedD[N * N];
-    Type *sharedDT  = &sharedP[K * N];
-    Type *sharedJ   = &sharedDT[N * N];
-    int * sharedMap = (int *)&sharedJ[dim * dim];
+    Type *sharedX  = SMem;
+    Type *sharedY  = &sharedX[M * K];
+    Type *sharedZ  = &sharedY[M * K];
+    Type *sharedT  = &sharedZ[M * K];
+    Type *sharedPT = &sharedT[M * K];
+    Type *sharedD  = &sharedPT[N * K];
+    Type *sharedP  = &sharedD[N * N];
+    Type *sharedDT = &sharedP[K * N];
+    Type *sharedJ  = &sharedDT[N * N];
 
     const int mapShift = blockIdx.x * M * K;
 
-    // Copy Map to shared memory
-#pragma unroll
-    for (int i = threadIdx.x; i < M * K; i += blockDim.x)
-      sharedMap[i] = map[i + mapShift];
-
-      // Copy Shape Function Values and Gradients to shared memory
+    // Copy Shape Function Values and Gradients to shared memory
 #pragma unroll
     for (int i = threadIdx.x; i < 2 * N * (K + N); i += blockDim.x)
       sharedPT[i] = P[i];
@@ -829,7 +823,7 @@ namespace dftfe
 
         for (int k = 0; k < K; k++)
           {
-            u[k] = U[sharedMap[i + k * M]];
+            u[k] = U[map[i + k * M + mapShift]];
 
 #pragma unroll
             for (int j = 0; j < N; j++)
@@ -1165,7 +1159,7 @@ namespace dftfe
 
 #pragma unroll
         for (int j = 0; j < K; j++)
-          atomicAdd(&V[sharedMap[j + i * K]], y[j]);
+          atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
       }
   }
 
@@ -1308,10 +1302,7 @@ namespace dftfe
     d_mapPtr              = thrust::raw_pointer_cast(d_map.data());
 
     constexpr size_t smem =
-      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double) +
-      p * p * p * sizeof(int);
-
-    cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
+      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
@@ -1326,14 +1317,14 @@ namespace dftfe
     distributedGPUVec<double> &Ax,
     distributedGPUVec<double> &x)
   {
-    constexpr int    dim     = 3;
-    constexpr int    p       = FEOrderElectro + 1;
-    constexpr int    q       = p;
-    constexpr int    threads = (FEOrderElectro == 8 ? 192 : 128);
-    const int        blocks  = d_nLocalCells;
+    constexpr int dim = 3;
+    constexpr int p   = FEOrderElectro + 1;
+    constexpr int q   = p;
+    constexpr int threads =
+      (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
+    const int        blocks = d_nLocalCells;
     constexpr size_t smem =
-      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double) +
-      p * p * p * sizeof(int);
+      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
     cudaUtils::set<double>(Ax.begin(), 0, d_xLen);
 
