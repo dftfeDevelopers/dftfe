@@ -82,6 +82,7 @@ namespace dftfe
 #include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
 #include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
 #include "configurationalStressCompute/ENonlinearCoreCorrectionContribution.cc"
+#include "configurationalStressCompute/EnlStressContribution.cc"
 #include "configurationalStressCompute/EPSPStressContribution.cc"
 #include "configurationalStressCompute/ESmearedStressContribution.cc"
 #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"

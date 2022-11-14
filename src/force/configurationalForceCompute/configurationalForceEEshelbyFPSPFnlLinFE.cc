@@ -156,12 +156,13 @@ forceClass<FEOrder, FEOrderElectro>::
 
   const unsigned int numMacroCells    = matrixFreeData.n_macro_cells();
 
-
+//FIXME: This check is no longer needed
+#ifdef DFTFE_WITH_GPU
   AssertThrow(
     numMacroCells == numPhysicalCells,
     ExcMessage(
       "DFT-FE Error: dealii for GPU DFT-FE must be compiled without any vectorization enabled."));
-
+#endif
 
 
   std::vector<std::vector<double>> partialOccupancies(

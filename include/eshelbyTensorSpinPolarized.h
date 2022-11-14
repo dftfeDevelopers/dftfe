@@ -54,46 +54,6 @@ namespace dftfe
    */
   namespace eshelbyTensorSP
   {
-    /// Local part of the Eshelby tensor for periodic case (only considers terms
-    /// which are summed over k points)
-    Tensor<2, 3, VectorizedArray<double>>
-      getELocWfcEshelbyTensorPeriodicKPoints(
-        dealii::AlignedVector<
-          Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiSpin0Begin,
-        dealii::AlignedVector<
-          Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiSpin1Begin,
-        dealii::AlignedVector<
-          Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-          gradPsiSpin0Begin,
-        dealii::AlignedVector<
-          Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                                gradPsiSpin1Begin,
-        const std::vector<double> &             kPointCoordinates,
-        const std::vector<double> &             kPointWeights,
-        const std::vector<std::vector<double>> &eigenValues_,
-        const double                            fermiEnergy_,
-        const double                            fermiEnergyUp_,
-        const double                            fermiEnergyDown_,
-        const double                            tVal,
-        const bool                              constraintMagnetization);
-
-    /// Local part of the Eshelby tensor for non-periodic case
-    Tensor<2, 3, VectorizedArray<double>>
-    getELocWfcEshelbyTensorNonPeriodic(
-      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
-        psiSpin0Begin,
-      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
-        psiSpin1Begin,
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>::
-        const_iterator gradPsiSpin0Begin,
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>::
-        const_iterator           gradPsiSpin1Begin,
-      const std::vector<double> &eigenValues_,
-      const double               fermiEnergy_,
-      const double               fermiEnergyUp_,
-      const double               fermiEnergyDown_,
-      const double               tVal,
-      const bool                 constraintMagnetization);
 
     /// exchange-correlation and psp part of the ELoc Eshelby tensor
     Tensor<2, 3, VectorizedArray<double>>
@@ -106,74 +66,6 @@ namespace dftfe
       const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin1);
 
 
-    /// EK Eshelby tensor (used only for stress computation)
-    Tensor<2, 3, VectorizedArray<double>> getEKStress(
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiSpin0Begin,
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiSpin1Begin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-        gradPsiSpin0Begin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                              gradPsiSpin1Begin,
-      const std::vector<double> &             kPointCoordinates,
-      const std::vector<double> &             kPointWeights,
-      const std::vector<std::vector<double>> &eigenValues_,
-      const double                            fermiEnergy_,
-      const double                            fermiEnergyUp_,
-      const double                            fermiEnergyDown_,
-      const double                            tVal,
-      const bool                              constraintMagnetization);
-
-    /// Nonlocal pseudopotential Eshelby tensor (used only for stress
-    /// computation), multiple k point and complex mode
-    Tensor<2, 3, VectorizedArray<double>>
-    getEnlStress(
-      const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>>
-        &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiSpin0Begin,
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiSpin1Begin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-        gradPsiSpin0Begin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                       gradPsiSpin1Begin,
-      const std::vector<double> &      kPointWeights,
-      const std::vector<double> &      kPointCoordinates,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
-      const unsigned int               numBlockedEigenvectors);
-
-    /// Nonlocal pseudopotential Eshelby tensor (used only for stress
-    /// computation), Gamma point case
-    Tensor<2, 3, VectorizedArray<double>>
-    getEnlStress(
-      const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
-        &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<std::vector<std::vector<double>>>
-        &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
-      const std::vector<std::vector<std::vector<double>>>
-        &projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
-        psiSpin0Begin,
-      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
-        psiSpin1Begin,
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>::
-        const_iterator gradPsiSpin0Begin,
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>::
-        const_iterator                 gradPsiSpin1Begin,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
-      const unsigned int               numBlockedEigenvectors);
 
     /// Nonlocal core correction pseudopotential force contribution
     Tensor<1, 3, VectorizedArray<double>>

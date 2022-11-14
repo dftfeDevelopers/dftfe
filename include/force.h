@@ -641,6 +641,25 @@ namespace dftfe
         &forceContributionFnlGammaAtoms);
 
     void
+      stressEnlElementalContribution(
+  Tensor<2, 3, double> & stressContribution,
+  const MatrixFree<3, double> &                    matrixFreeData,
+  const unsigned int numQuadPoints,
+  const std::vector<double> & jxwQuadsSubCells,
+  const unsigned int cell,
+  const std::map<dealii::CellId, unsigned int>
+     & cellIdToCellNumberMap,
+  const std::vector<dataTypes::number>
+    &zetalmDeltaVlProductDistImageAtoms,
+#ifdef USE_COMPLEX
+        const std::vector<dataTypes::number> 
+          &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+#endif    
+  const std::vector<dataTypes::number>
+    &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
+    const bool isSpinPolarized);
+
+    void
     computeAtomsForcesGaussianGenerator(
       bool allowGaussianOverlapOnAtoms = false);
 

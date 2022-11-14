@@ -1551,7 +1551,7 @@ namespace dftfe
       d_nonLocalPSP_ZetalmDeltaVl;
 
 
-    /* Storage for precomputed nonlocal pseudopotential quadrature data. This is
+    /* Flattened Storage for precomputed nonlocal pseudopotential quadrature data. This is
      * to speedup the configurational stress computation. Data format:
      * vector(numNonLocalAtomsCurrentProcess with non-zero compact support,
      * vector(number pseudo wave
@@ -1562,8 +1562,8 @@ namespace dftfe
      * expressions also extend to the Optimized Norm-Conserving Vanderbilt
      * (ONCV) pseudopotentials.
      */
-    std::vector<std::vector<std::map<dealii::CellId, std::vector<double>>>>
-      d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;
+    std::vector<dataTypes::number>
+      d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms;
 
 
     /// map from cell number to set of non local atom ids (local numbering)
