@@ -991,8 +991,7 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "Entering init");
 
     initImageChargesUpdateKPoints();
-    // Set Initial atomLocations
-    d_atomLocationsInitial = atomLocations;
+
     calculateNearestAtomDistances();
 
     computing_timer.enter_subsection("mesh generation");

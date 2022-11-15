@@ -124,12 +124,13 @@ namespace dftfe
     restartFilesPath = prm.get("RESTART FOLDER");
     prm.enter_subsection("NEB");
     {
-      numberOfImages       = prm.get_integer("NUMBER OF IMAGES");
-      imageFreeze          = prm.get_bool("ALLOW IMAGE FREEZING");
-      Kmax                 = prm.get_double("MAXIMUM SPRING CONSTANT");
-      Kmin                 = prm.get_double("MINIMUM SPRING CONSTANT");
-      pathThreshold        = prm.get_double("maximumNEBiteration");
-      coordinatesFileNEB   = prm.get("NEB COORDINATES FILE");
+      numberOfImages      = prm.get_integer("NUMBER OF IMAGES");
+      imageFreeze         = prm.get_bool("ALLOW IMAGE FREEZING");
+      Kmax                = prm.get_double("MAXIMUM SPRING CONSTANT");
+      Kmin                = prm.get_double("MINIMUM SPRING CONSTANT");
+      pathThreshold       = prm.get_double("PATH THRESHOLD");
+      maximumNEBiteration = prm.get_integer("MAXIMUM NUMBER OF NEB ITERATIONS");
+      coordinatesFileNEB  = prm.get("NEB COORDINATES FILE");
       domainVectorsFileNEB = prm.get("NEB DOMAIN VECTORS FILE");
     }
 

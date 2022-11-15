@@ -43,7 +43,7 @@ namespace dftfe
     double             pathThreshold,
     int                maximumNEBIteration,
     const std::string &coordinatesFileNEB,
-    const std::string &domainVectorsFile)
+    const std::string &domainVectorsFileNEB)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
@@ -59,46 +59,105 @@ namespace dftfe
 
   {
     // Read Coordinates file and create coordinates for each image
-
-
-
-    for (int Image = 0; Image < d_numberOfImages; Image++)
+    if (d_this_mpi_process == 0)
       {
-        std::string coordinatesFile, domainVectorsFile;
-        // Write coordinatesFile
-        // Write domainVectors File
-
-        d_dftfeWrapper.push_back(
-          std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                coordinatesFile,
-                                                domainVectorsFile,
-                                                d_mpiCommParent,
-                                                true,
-                                                true,
-                                                "NEB",
-                                                d_restartFilesPath,
-                                                false));
-        // d_dftPtr.push_back(d_dftfeWrapper->getDftfeBasePtr()));
+        if (d_restartFilesPath != ".")
+          {
+            mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+          }
+        else
+          {
+            d_restartFilesPath = "./nebRestart";
+            mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+          }
       }
-    d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
-    /*
+    MPI_Barrier(d_mpiCommParent);
+    if (!d_isRestart)
+      {
+        std::string Folder = d_restartFilesPath + "/Step0";
+        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+          mkdir(Folder.c_str(), ACCESSPERMS);
+
+
+        std::vector<std::vector<double>> initialatomLocations;
+        std::vector<std::vector<double>> LatticeVectors;
+        dftUtils::readFile(5, initialatomLocations, coordinatesFileNEB);
+        dftUtils::readFile(3, LatticeVectors, domainVectorsFileNEB);
+        d_numberGlobalCharges = initialatomLocations.size() / d_numberOfImages;
+        for (int Image = 0; Image < d_numberOfImages; Image++)
+          {
+            std::string coordinatesFile, domainVectorsFile;
+            coordinatesFile =
+              "./nebRestart/Step0/coordinates" + std::to_string(Image) + ".inp";
+            domainVectorsFile = "./nebRestart/Step0/domainVectors" +
+                                std::to_string(Image) + ".inp";
+            std::vector<std::vector<double>> coordinates, domainVectors;
+            for (int i = Image * d_numberGlobalCharges;
+                 i < (Image + 1) * d_numberGlobalCharges;
+                 i++)
+              coordinates.push_back(initialatomLocations[i]);
+            if (LatticeVectors.size() == 3)
+              {
+                for (int i = 0; i < 3; i++)
+                  domainVectors.push_back(LatticeVectors[i]);
+              }
+            else
+              {
+                for (int i = Image * 3; i < (Image + 1) * 3; i++)
+                  domainVectors.push_back(LatticeVectors[i]);
+              }
+
+            dftUtils::writeDataIntoFile(coordinates,
+                                        coordinatesFile,
+                                        d_mpiCommParent);
+            dftUtils::writeDataIntoFile(domainVectors,
+                                        domainVectorsFile,
+                                        d_mpiCommParent);
+
+            d_dftfeWrapper.push_back(
+              std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                    coordinatesFile,
+                                                    domainVectorsFile,
+                                                    d_mpiCommParent,
+                                                    Image == 0 ? true : false,
+                                                    true,
+                                                    "NEB",
+                                                    d_restartFilesPath,
+                                                    false));
+          }
+        d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
+        AssertThrow(
+          d_dftPtr->getParametersObject().natoms == d_numberGlobalCharges,
+          ExcMessage(
+            "DFT-FE Error: The number atoms"
+            "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
+            "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
+            "blank row at the end can cause this issue too."));
+
         std::vector<std::vector<double>> temp_domainBoundingVectors;
-        dftUtils::readFile(3,
-                           temp_domainBoundingVectors,
-                           dftParameters::domainBoundingVectorsFile);
+        dftUtils::readFile(
+          3,
+          temp_domainBoundingVectors,
+          d_dftPtr->getParametersObject().domainBoundingVectorsFile);
 
         for (int i = 0; i < 3; i++)
           {
-            double temp =
-              temp_domainBoundingVectors[i][0] *
-       temp_domainBoundingVectors[i][0] + temp_domainBoundingVectors[i][1] *
-       temp_domainBoundingVectors[i][1] + temp_domainBoundingVectors[i][2] *
-       temp_domainBoundingVectors[i][2]; d_Length.push_back(pow(temp, 0.5));
+            double temp = temp_domainBoundingVectors[i][0] *
+                            temp_domainBoundingVectors[i][0] +
+                          temp_domainBoundingVectors[i][1] *
+                            temp_domainBoundingVectors[i][1] +
+                          temp_domainBoundingVectors[i][2] *
+                            temp_domainBoundingVectors[i][2];
+            d_Length.push_back(pow(temp, 0.5));
           }
         pcout << "--$ Domain Length$ --" << std::endl;
         pcout << "Lx:= " << d_Length[0] << " Ly:=" << d_Length[1]
-              << " Lz:=" << d_Length[2] << std::endl; */
-    init();
+              << " Lz:=" << d_Length[2] << std::endl;
+
+
+
+        init();
+      }
   }
 
 
@@ -900,7 +959,7 @@ namespace dftfe
             pcout << "!!Frozen image " << image << " with Image force: "
                   << d_ImageError[image] * haPerBohrToeVPerAng << std::endl;
           }
-        MPI_Bcast(&multiplier, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
         pcout << "###Displacements for image: " << image << std::endl;
         for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
@@ -932,7 +991,7 @@ namespace dftfe
                       3,
                       MPI_DOUBLE,
                       0,
-                      MPI_COMM_WORLD);
+                      d_mpiCommParent);
           }
 
 
@@ -987,8 +1046,8 @@ namespace dftfe
   void
   nudgedElasticBandClass::solution(std::vector<double> &solution)
   {
-    // AssertThrow(false,dftUtils::ExcNotImplementedYet());
-    solution.clear();
+    AssertThrow(false, dftUtils::ExcNotImplementedYet());
+    /*solution.clear();
     pcout << "The size of solution vector is: " << solution.size() << std::endl;
     pcout << "Size of relaxation flags: " << d_relaxationFlags.size()
           << std::endl;
@@ -1013,7 +1072,7 @@ namespace dftfe
               }
           }
       }
-    // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl;
+    // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl; */
   }
 
 
@@ -1305,6 +1364,7 @@ namespace dftfe
           }
         pcout << " --------------------------------------------------"
               << std::endl;
+        pcout << " Hi 1361" << std::endl;
       }
     else
       {
@@ -1318,254 +1378,250 @@ namespace dftfe
                 d_externalForceOnAtom.push_back(0.0);
               }
           }
+      }
+    d_countrelaxationFlags = 0;
+    for (int i = 0; i < d_relaxationFlags.size(); i++)
+      {
+        if (d_relaxationFlags[i] == 1)
+          d_countrelaxationFlags++;
+      }
 
-        d_countrelaxationFlags = 0;
-        for (int i = 0; i < d_relaxationFlags.size(); i++)
+    pcout << " Hi 1382" << std::endl;
+
+    d_totalUpdateCalls = 0;
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+      mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+    std::vector<std::vector<double>> ionOptData(2 + d_numberGlobalCharges * 3,
+                                                std::vector<double>(1, 0.0));
+    ionOptData[0][0] = d_solver;
+    ionOptData[1][0] =
+      d_dftPtr->getParametersObject().usePreconditioner ? 1 : 0;
+    for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+      {
+        for (unsigned int j = 0; j < 3; ++j)
           {
-            if (d_relaxationFlags[i] == 1)
-              d_countrelaxationFlags++;
+            ionOptData[i * 3 + j + 2][0] = d_relaxationFlags[i * 3 + j];
           }
+      }
+    /*if (!d_dftPtr->getParametersObject().reproducible_output)
+      dftUtils::writeDataIntoFile(ionOptData,
+                                  d_restartPath + "/ionOpt.dat",
+                                  mpi_communicator);*/
+    d_ImageError.resize(d_numberOfImages);
+    double Force;
+    MPI_Barrier(d_mpiCommParent);
+    step_time = MPI_Wtime();
+
+    for (int i = 0; i < d_numberOfImages; i++)
+      {
+        pcout << "Here line 1410" << std::endl;
+        d_NEBImageno = i;
+        (d_dftfeWrapper[d_NEBImageno]->getDftfeBasePtr())->solve(true, false);
+        pcout << "##Completed initial GS of image: " << d_NEBImageno
+              << std::endl;
+      }
+    bool flag = true;
+    pcout
+      << std::endl
+      << "-------------------------------------------------------------------------------"
+      << std::endl;
+    pcout << " --------------------Initial NEB Data "
+          << "---------------------------------------" << std::endl;
+    pcout << "    "
+          << " Image No "
+          << "    "
+          << "Force perpendicular in eV/A"
+          << "    "
+          << "Internal Energy in eV"
+          << "    " << std::endl;
+    std::vector<double> ForceonImages;
+    ForceonImages.clear();
+    int count = 0;
+    for (int i = 0; i < d_numberOfImages; i++)
+      {
+        d_NEBImageno = i;
+        std::vector<std::vector<double>> atomLocations;
+        atomLocations =
+          (d_dftfeWrapper[i]->getDftfeBasePtr())->getAtomLocationsCart();
+        Force = 0.0;
+        ImageError(d_NEBImageno, Force);
+        double Energy =
+          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) *
+          haToeV;
+        pcout << "    " << i << "    " << Force * haPerBohrToeVPerAng << "    "
+              << Energy << "    " << std::endl;
+        ForceonImages.push_back(Force);
+        if (Force > Forcecutoff && i > 0 && i < d_numberOfImages - 1)
+          {
+            flag = false;
+          }
+      }
+    MPI_Barrier(d_mpiCommParent);
+    double Length = 0.0;
+    CalculatePathLength(Length);
+    pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
+    step_time = MPI_Wtime() - step_time;
+    pcout << "Time taken for initial dft solve of all images: " << step_time
+          << std::endl;
+    pcout
+      << std::endl
+      << "-------------------------------------------------------------------------------"
+      << std::endl;
 
 
 
-        d_totalUpdateCalls = 0;
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-        std::vector<std::vector<double>> ionOptData(
-          2 + d_numberGlobalCharges * 3, std::vector<double>(1, 0.0));
-        ionOptData[0][0] = d_solver;
-        ionOptData[1][0] =
-          d_dftPtr->getParametersObject().usePreconditioner ? 1 : 0;
+    if (d_solver == 0)
+      d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
+        d_dftPtr->getParametersObject().usePreconditioner,
+        d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().verbosity,
+        d_mpiCommParent,
+        d_dftPtr->getParametersObject().maxIonUpdateStep);
+    else if (d_solver == 1)
+      d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
+        d_dftPtr->getParametersObject().usePreconditioner,
+        d_dftPtr->getParametersObject().maxIonUpdateStep,
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().lbfgsNumPastSteps,
+        d_dftPtr->getParametersObject().verbosity,
+        d_mpiCommParent);
+    else
+      d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
+        d_dftPtr->getParametersObject().maxOptIter,
+        d_dftPtr->getParametersObject().verbosity,
+        d_mpiCommParent,
+        1e-4,
+        d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
+        0.8,
+        d_dftPtr->getParametersObject().maxIonUpdateStep);
+    // print relaxation flags
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
+      {
+        pcout << " --------------Ion force relaxation flags----------------"
+              << std::endl;
         for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
           {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                ionOptData[i * 3 + j + 2][0] = d_relaxationFlags[i * 3 + j];
-              }
+            pcout << d_relaxationFlags[i * 3] << "  "
+                  << d_relaxationFlags[i * 3 + 1] << "  "
+                  << d_relaxationFlags[i * 3 + 2] << std::endl;
           }
-        /*if (!d_dftPtr->getParametersObject().reproducible_output)
-          dftUtils::writeDataIntoFile(ionOptData,
-                                      d_restartPath + "/ionOpt.dat",
-                                      mpi_communicator);*/
-        d_ImageError.resize(d_numberOfImages);
-        double Force;
-        MPI_Barrier(d_mpiCommParent);
-        step_time = MPI_Wtime();
-
-        for (int i = 0; i < d_numberOfImages; i++)
-          {
-            d_NEBImageno = i;
-            (d_dftfeWrapper[d_NEBImageno]->getDftfeBasePtr())
-              ->solve(true, false);
-            pcout << "##Completed initial GS of image: " << d_NEBImageno + 1
-                  << std::endl;
-          }
-        bool flag = true;
-        pcout
-          << std::endl
-          << "-------------------------------------------------------------------------------"
-          << std::endl;
-        pcout << " --------------------Initial NEB Data "
-              << "---------------------------------------" << std::endl;
-        pcout << "    "
-              << " Image No "
-              << "    "
-              << "Force perpendicular in eV/A"
-              << "    "
-              << "Internal Energy in eV"
-              << "    " << std::endl;
-        std::vector<double> ForceonImages;
-        ForceonImages.clear();
-        int count = 0;
-        for (int i = 0; i < d_numberOfImages; i++)
-          {
-            d_NEBImageno = i;
-            std::vector<std::vector<double>> atomLocations;
-            atomLocations =
-              (d_dftfeWrapper[i]->getDftfeBasePtr())->getAtomLocationsCart();
-            Force = 0.0;
-            ImageError(d_NEBImageno, Force);
-            double Energy =
-              ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) *
-              haToeV;
-            pcout << "    " << i << "    " << Force * haPerBohrToeVPerAng
-                  << "    " << Energy << "    " << std::endl;
-            ForceonImages.push_back(Force);
-            if (Force > Forcecutoff && i > 0 && i < d_numberOfImages - 1)
-              {
-                flag = false;
-              }
-          }
-        MPI_Barrier(d_mpiCommParent);
-        double Length = 0.0;
-        CalculatePathLength(Length);
-        pcout << std::endl
-              << "--Path Length: " << Length << " Bohr" << std::endl;
-        step_time = MPI_Wtime() - step_time;
-        pcout << "Time taken for initial dft solve of all images: " << step_time
+        pcout << " --------------------------------------------------------"
               << std::endl;
-        pcout
-          << std::endl
-          << "-------------------------------------------------------------------------------"
-          << std::endl;
-
-
-
+        pcout << " Total No. of relaxation flags: " << d_countrelaxationFlags
+              << std::endl;
+        pcout << " --------------------------------------------------"
+              << std::endl;
+      }
+    if (d_dftPtr->getParametersObject().verbosity >= 1)
+      {
         if (d_solver == 0)
-          d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
-            d_dftPtr->getParametersObject().usePreconditioner,
-            d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
-            d_dftPtr->getParametersObject().maxOptIter,
-            d_dftPtr->getParametersObject().verbosity,
-            d_mpiCommParent,
-            d_dftPtr->getParametersObject().maxIonUpdateStep);
-        else if (d_solver == 1)
-          d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
-            d_dftPtr->getParametersObject().usePreconditioner,
-            d_dftPtr->getParametersObject().maxIonUpdateStep,
-            d_dftPtr->getParametersObject().maxOptIter,
-            d_dftPtr->getParametersObject().lbfgsNumPastSteps,
-            d_dftPtr->getParametersObject().verbosity,
-            d_mpiCommParent);
-        else
-          d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
-            d_dftPtr->getParametersObject().maxOptIter,
-            d_dftPtr->getParametersObject().verbosity,
-            d_mpiCommParent,
-            1e-4,
-            d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
-            0.8,
-            d_dftPtr->getParametersObject().maxIonUpdateStep);
-        // print relaxation flags
-        if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
-            pcout << " --------------Ion force relaxation flags----------------"
+            pcout << "   ---Non-linear BFGS Parameters-----------  "
                   << std::endl;
-            for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-              {
-                pcout << d_relaxationFlags[i * 3] << "  "
-                      << d_relaxationFlags[i * 3 + 1] << "  "
-                      << d_relaxationFlags[i * 3 + 2] << std::endl;
-              }
-            pcout << " --------------------------------------------------------"
+            pcout << "      stopping tol: " << d_optimizertolerance
                   << std::endl;
-            pcout << " Total No. of relaxation flags: "
-                  << d_countrelaxationFlags << std::endl;
-            pcout << " --------------------------------------------------"
+
+            pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
+
+            pcout << "      preconditioner: "
+                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << std::endl;
+
+            pcout << "      step method: "
+                  << d_dftPtr->getParametersObject().bfgsStepMethod
+                  << std::endl;
+
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << std::endl;
+
+
+            pcout << "   -----------------------------------------  "
                   << std::endl;
           }
-        if (d_dftPtr->getParametersObject().verbosity >= 1)
+        if (d_solver == 1)
           {
-            if (d_solver == 0)
-              {
-                pcout << "   ---Non-linear BFGS Parameters-----------  "
-                      << std::endl;
-                pcout << "      stopping tol: " << d_optimizertolerance
-                      << std::endl;
-
-                pcout << "      maxIter: " << d_maximumNEBIteration
-                      << std::endl;
-
-                pcout << "      preconditioner: "
-                      << d_dftPtr->getParametersObject().usePreconditioner
-                      << std::endl;
-
-                pcout << "      step method: "
-                      << d_dftPtr->getParametersObject().bfgsStepMethod
-                      << std::endl;
-
-                pcout << "      maxiumum step length: "
-                      << d_dftPtr->getParametersObject().maxIonUpdateStep
-                      << std::endl;
-
-
-                pcout << "   -----------------------------------------  "
-                      << std::endl;
-              }
-            if (d_solver == 1)
-              {
-                pcout << "   ---Non-linear LBFGS Parameters----------  "
-                      << std::endl;
-                pcout << "      stopping tol: " << d_optimizertolerance
-                      << std::endl;
-                pcout << "      maxIter: " << d_maximumNEBIteration
-                      << std::endl;
-                pcout << "      preconditioner: "
-                      << d_dftPtr->getParametersObject().usePreconditioner
-                      << std::endl;
-                pcout << "      lbfgs history: "
-                      << d_dftPtr->getParametersObject().lbfgsNumPastSteps
-                      << std::endl;
-                pcout << "      maxiumum step length: "
-                      << d_dftPtr->getParametersObject().maxIonUpdateStep
-                      << std::endl;
-                pcout << "   -----------------------------------------  "
-                      << std::endl;
-              }
+            pcout << "   ---Non-linear LBFGS Parameters----------  "
+                  << std::endl;
+            pcout << "      stopping tol: " << d_optimizertolerance
+                  << std::endl;
+            pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
+            pcout << "      preconditioner: "
+                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << std::endl;
+            pcout << "      lbfgs history: "
+                  << d_dftPtr->getParametersObject().lbfgsNumPastSteps
+                  << std::endl;
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << std::endl;
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+        if (d_solver == 2)
+          {
+            pcout << "   ---Non-linear CG Parameters--------------  "
+                  << std::endl;
+            pcout << "      stopping tol: " << d_optimizertolerance
+                  << std::endl;
+            pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
+            pcout << "      lineSearch tol: " << 1e-4 << std::endl;
+            pcout << "      lineSearch maxIter: "
+                  << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
+                  << std::endl;
+            pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
+            pcout << "      maxiumum step length: "
+                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << std::endl;
+            pcout << "   -----------------------------------------  "
+                  << std::endl;
+          }
+        if (d_isRestart)
+          {
             if (d_solver == 2)
               {
-                pcout << "   ---Non-linear CG Parameters--------------  "
-                      << std::endl;
-                pcout << "      stopping tol: " << d_optimizertolerance
-                      << std::endl;
-                pcout << "      maxIter: " << d_maximumNEBIteration
-                      << std::endl;
-                pcout << "      lineSearch tol: " << 1e-4 << std::endl;
-                pcout << "      lineSearch maxIter: "
-                      << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
-                      << std::endl;
-                pcout << "      lineSearch damping parameter: " << 0.8
-                      << std::endl;
-                pcout << "      maxiumum step length: "
-                      << d_dftPtr->getParametersObject().maxIonUpdateStep
-                      << std::endl;
-                pcout << "   -----------------------------------------  "
-                      << std::endl;
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear CG solver... "
+                  << std::endl;
               }
-            if (d_isRestart)
+            else if (d_solver == 0)
               {
-                if (d_solver == 2)
-                  {
-                    pcout
-                      << " Re starting Ion force relaxation using nonlinear CG solver... "
-                      << std::endl;
-                  }
-                else if (d_solver == 0)
-                  {
-                    pcout
-                      << " Re starting Ion force relaxation using nonlinear BFGS solver... "
-                      << std::endl;
-                  }
-                else if (d_solver == 1)
-                  {
-                    pcout
-                      << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
-                      << std::endl;
-                  }
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear BFGS solver... "
+                  << std::endl;
               }
-            else
+            else if (d_solver == 1)
               {
-                if (d_solver == 2)
-                  {
-                    pcout
-                      << " Starting Ion force relaxation using nonlinear CG solver... "
-                      << std::endl;
-                  }
-                else if (d_solver == 0)
-                  {
-                    pcout
-                      << " Starting Ion force relaxation using nonlinear BFGS solver... "
-                      << std::endl;
-                  }
-                else if (d_solver == 1)
-                  {
-                    pcout
-                      << " Starting Ion force relaxation using nonlinear LBFGS solver... "
-                      << std::endl;
-                  }
+                pcout
+                  << " Re starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << std::endl;
               }
           }
-        d_isRestart = false;
+        else
+          {
+            if (d_solver == 2)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear CG solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 0)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear BFGS solver... "
+                  << std::endl;
+              }
+            else if (d_solver == 1)
+              {
+                pcout
+                  << " Starting Ion force relaxation using nonlinear LBFGS solver... "
+                  << std::endl;
+              }
+          }
       }
+    d_isRestart = false;
   }
+
+
 } // namespace dftfe

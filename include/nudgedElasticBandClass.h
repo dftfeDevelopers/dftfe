@@ -42,7 +42,7 @@ namespace dftfe
                            double             pathThreshold,
                            int                maximumNEBIteration,
                            const std::string &coordinatesFileNEB,
-                           const std::string &domainVectorsFile);
+                           const std::string &domainVectorsFileNEB);
     //~nudgedElasticBandClass();
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
     const double haToeV              = 27.211386245988;
