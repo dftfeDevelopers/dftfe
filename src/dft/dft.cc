@@ -562,6 +562,32 @@ namespace dftfe
             d_dftParamsPtr->chebyWfcBlockSize = eigenvaluesInBandGroup;
             d_dftParamsPtr->wfcBlockSize      = eigenvaluesInBandGroup;
           }
+        else if (eigenvaluesInBandGroup <= 600)
+          {
+            std::vector<int> temp1(4, 0);
+            std::vector<int> temp2(4, 0);
+            temp1[0] = std::ceil(eigenvaluesInBandGroup / 90.0) * 90.0 *
+                       numberBandGroups;
+            temp1[1] = std::ceil(eigenvaluesInBandGroup / 100.0) * 100.0 *
+                       numberBandGroups;
+            temp1[2] = std::ceil(eigenvaluesInBandGroup / 110.0) * 110.0 *
+                       numberBandGroups;
+            temp1[3] = std::ceil(eigenvaluesInBandGroup / 120.0) * 120.0 *
+                       numberBandGroups;
+
+            temp2[0] = 90;
+            temp2[1] = 100;
+            temp2[2] = 110;
+            temp2[3] = 120;
+
+            int minElementIndex =
+              std::min_element(temp1.begin(), temp1.end()) - temp1.begin();
+            int minElement = *std::min_element(temp1.begin(), temp1.end());
+
+            d_numEigenValues                  = minElement;
+            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex];
+            d_dftParamsPtr->wfcBlockSize      = temp2[minElementIndex];
+          }
         else if (eigenvaluesInBandGroup <= 1000)
           {
             std::vector<int> temp1(4, 0);
