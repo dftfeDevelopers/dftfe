@@ -61,7 +61,7 @@ namespace dftfe
       prm.declare_entry(
         "SOLVER MODE",
         "GS",
-        Patterns::Selection("GS|MD|NEB|GEOOPT"),
+        Patterns::Selection("GS|MD|NEB|GEOOPT|MESH"),
         "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation.");
 
       prm.declare_entry(

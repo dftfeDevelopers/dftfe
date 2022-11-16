@@ -4231,5 +4231,117 @@ namespace dftfe
     d_rhoOutNodalValuesSplit = OutDensity;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeMesh()
+  {
+    //
+    // compute nodal electron-density from quad data
+    //
+    distributedCPUVec<double> rhoNodalField;
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      rhoNodalField, d_densityDofHandlerIndexElectro);
+    rhoNodalField = 0;
+    std::function<
+      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+             const unsigned int                                          q)>
+      funcRho =
+        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+            const unsigned int                                          q) {
+          return (*rhoOutValues).find(cell->id())->second[q];
+        };
+    dealii::VectorTools::project<3, distributedCPUVec<double>>(
+      dealii::MappingQ1<3, 3>(),
+      d_dofHandlerRhoNodal,
+      d_constraintsRhoNodal,
+      d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+      funcRho,
+      rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
+    distributedCPUVec<double> rhoNodalFieldSpin0;
+    distributedCPUVec<double> rhoNodalFieldSpin1;
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        rhoNodalFieldSpin0.reinit(rhoNodalField);
+        rhoNodalFieldSpin0 = 0;
+        std::function<double(
+          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+          const unsigned int                                          q)>
+          funcRhoSpin0 = [&](const typename dealii::DoFHandler<
+                               3>::active_cell_iterator &cell,
+                             const unsigned int          q) {
+            return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2 * q];
+          };
+        dealii::VectorTools::project<3, distributedCPUVec<double>>(
+          dealii::MappingQ1<3, 3>(),
+          d_dofHandlerRhoNodal,
+          d_constraintsRhoNodal,
+          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+          funcRhoSpin0,
+          rhoNodalFieldSpin0);
+        rhoNodalFieldSpin0.update_ghost_values();
+
+
+        rhoNodalFieldSpin1.reinit(rhoNodalField);
+        rhoNodalFieldSpin1 = 0;
+        std::function<double(
+          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+          const unsigned int                                          q)>
+          funcRhoSpin1 =
+            [&](
+              const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+              const unsigned int                                          q) {
+              return (*rhoOutValuesSpinPolarized)
+                .find(cell->id())
+                ->second[2 * q + 1];
+            };
+        dealii::VectorTools::project<3, distributedCPUVec<double>>(
+          dealii::MappingQ1<3, 3>(),
+          d_dofHandlerRhoNodal,
+          d_constraintsRhoNodal,
+          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+          funcRhoSpin1,
+          rhoNodalFieldSpin1);
+        rhoNodalFieldSpin1.update_ghost_values();
+      }
+
+    //
+    // only generate output for electron-density
+    //
+    DataOut<3> dataOutRho;
+    dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
+    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        dataOutRho.add_data_vector(rhoNodalFieldSpin0,
+                                   std::string("density_0"));
+        dataOutRho.add_data_vector(rhoNodalFieldSpin1,
+                                   std::string("density_1"));
+      }
+    dataOutRho.build_patches(FEOrder);
+
+    std::string tempFolder = "meshOutputFolder";
+    mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+    dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
+                                               dataOutRho,
+                                               d_mpiCommParent,
+                                               mpi_communicator,
+                                               interpoolcomm,
+                                               interBandGroupComm,
+                                               tempFolder,
+                                               "intialDensityOutput");
+
+
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout
+        << std::endl
+        << "------------------DFT-FE mesh file creation completed---------------------------"
+        << std::endl;
+  }
+
+
 #include "dft.inst.cc"
 } // namespace dftfe

@@ -176,6 +176,12 @@ namespace dftfe
     run();
 
     /**
+     * @brief Write Mesh without calling solve
+     */
+    void
+    writeMesh();
+
+    /**
      * @brief compute approximation to ground-state without solving the SCF iteration
      */
     void
