@@ -4248,7 +4248,7 @@ namespace dftfe
       funcRho =
         [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
             const unsigned int                                          q) {
-          return (*rhoOutValues).find(cell->id())->second[q];
+          return (*rhoInValues).find(cell->id())->second[q];
         };
     dealii::VectorTools::project<3, distributedCPUVec<double>>(
       dealii::MappingQ1<3, 3>(),
@@ -4271,7 +4271,7 @@ namespace dftfe
           funcRhoSpin0 = [&](const typename dealii::DoFHandler<
                                3>::active_cell_iterator &cell,
                              const unsigned int          q) {
-            return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2 * q];
+            return (*rhoInValuesSpinPolarized).find(cell->id())->second[2 * q];
           };
         dealii::VectorTools::project<3, distributedCPUVec<double>>(
           dealii::MappingQ1<3, 3>(),
@@ -4292,7 +4292,7 @@ namespace dftfe
             [&](
               const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
               const unsigned int                                          q) {
-              return (*rhoOutValuesSpinPolarized)
+              return (*rhoInValuesSpinPolarized)
                 .find(cell->id())
                 ->second[2 * q + 1];
             };

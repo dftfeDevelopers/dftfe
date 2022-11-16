@@ -214,6 +214,13 @@ namespace dftfe
     run();
 
     /**
+     * @brief Calss dftBasepointer write Mesh
+     */
+    void
+    writeMesh();
+
+
+    /**
      * @brief solve ground-state and return DFT free energy which is sum of internal
      * energy and negative of electronic entropic energy (in Hartree units)
      *
