@@ -20,7 +20,7 @@
 
 #include <force.h>
 #ifdef DFTFE_WITH_GPU
-#  include <forceCUDA.h>
+#  include <forceWfcContractionsCUDA.h>
 #endif
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 

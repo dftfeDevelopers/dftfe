@@ -84,7 +84,7 @@ SET(CUDA_SRC
   ./src/linAlg/linearAlgebraOperationsCUDA.cu
   ./src/linAlg/pseudoGSCUDA.cu
   ./src/linAlg/rayleighRitzCUDA.cu
-  ./src/force/forceCUDA.cu
+  ./src/force/forceWfcContractionsCUDA.cu
   ./utils/constraintMatrixInfoCUDA.cu
   ./src/solvers/linearSolverCUDA.cu
   ./src/solvers/linearSolverCGCUDA.cu

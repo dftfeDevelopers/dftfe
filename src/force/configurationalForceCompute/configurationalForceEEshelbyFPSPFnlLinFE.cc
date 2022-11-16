@@ -232,7 +232,7 @@ forceClass<FEOrder, FEOrderElectro>::
           MPI_Barrier(d_mpiCommParent);
           double gpu_time = MPI_Wtime();
 
-          forceCUDA::gpuPortedForceKernelsAllH(
+          forceCUDA::wfcContractionsForceKernelsAllH(
             kohnShamDFTEigenOperator,
             dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
             d_dftParams.spinPolarized,

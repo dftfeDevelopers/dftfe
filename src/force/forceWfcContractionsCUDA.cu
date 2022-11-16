@@ -20,7 +20,7 @@
 // source file for force related computations
 #include "constants.h"
 #include "dftUtils.h"
-#include "forceCUDA.h"
+#include "forceWfcContractionsCUDA.h"
 #include "vectorUtilities.h"
 #include "cudaHelpers.h"
 #include "linearAlgebraOperationsCUDA.h"
@@ -1215,7 +1215,7 @@ namespace dftfe
     } // namespace
 
     void
-    gpuPortedForceKernelsAllH(
+    wfcContractionsForceKernelsAllH(
       operatorDFTCUDAClass &      operatorMatrix,
       const dataTypes::numberGPU *X,
       const unsigned int spinPolarizedFlag, 
