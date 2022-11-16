@@ -84,7 +84,7 @@ namespace dftfe
           "PATH THRESHOLD",
           "1e-1",
           Patterns::Double(),
-          "[Standard] Simulation stops when the error(norm of force orthogonal to path in eV/A) is less than PATH THRESHOLD ");
+          "[Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD ");
 
 
         prm.declare_entry(

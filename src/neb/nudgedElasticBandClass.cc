@@ -691,7 +691,7 @@ namespace dftfe
     nonLinearSolver::ReturnValueType solverReturn =
       d_nonLinearSolverPtr->solve(*this,
                                   d_restartFilesPath + "/ionRelax.chk",
-                                  d_restartFlag);
+                                  false);
 
     if (solverReturn == nonLinearSolver::SUCCESS &&
         d_dftPtr->getParametersObject().verbosity >= 1)
@@ -709,7 +709,7 @@ namespace dftfe
                   << (d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()
                   << std::endl;
           }
-        pcout << "--------------Final Error Results(eV/A)-------------"
+        pcout << "--------------Final Error Results(Ha/bohr)-------------"
               << std::endl;
         for (int i = 0; i < d_numberOfImages; i++)
           {
@@ -727,7 +727,7 @@ namespace dftfe
                                         tangent);
             LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
             pcout << "Error of Image: " << i + 1 << "  = "
-                  << Force * haPerBohrToeVPerAng << " eV/A" << std::endl;
+                  << Force  << " Ha/bohr" << std::endl;
           }
         return d_totalUpdateCalls;
       }
@@ -752,7 +752,7 @@ namespace dftfe
               << (d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()
               << std::endl;
       }
-    pcout << "--------------Error Results(eV/A)-------------" << std::endl;
+    pcout << "--------------Error Results(Ha/bohr)-------------" << std::endl;
     for (int i = 0; i < d_numberOfImages; i++)
       {
         d_NEBImageno = i;
@@ -769,7 +769,7 @@ namespace dftfe
                                     tangent);
         LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
         pcout << "Error of Image: " << i + 1 << "  = "
-              << Force * haPerBohrToeVPerAng << " eV/A" << std::endl;
+              << Force  << " Ha/bohr" << std::endl;
       }
     return d_totalUpdateCalls;
   }
@@ -813,19 +813,17 @@ namespace dftfe
     pcout << "    "
           << " Image No "
           << "    "
-          << "Internal Energy in eV"
+          << "Internal Energy in Ha"
           << "    "
-          << "Free Energy in eV"
+          << "Free Energy in Ha"
           << "    " << std::endl;
     for (int i = 0; i < d_numberOfImages; i++)
       {
         double FreeEnergy =
           ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy() -
-           (d_dftfeWrapper[i]->getDftfeBasePtr())->getEntropicEnergy()) *
-          haToeV;
+           (d_dftfeWrapper[i]->getDftfeBasePtr())->getEntropicEnergy());
         double InternalEnergy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) *
-          haToeV;
+          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy());
         pcout << "    " << i << "    " << InternalEnergy << "    " << FreeEnergy
               << "    " << std::endl;
       }
@@ -841,7 +839,7 @@ namespace dftfe
         d_ImageError[i] = Force;
 
         pcout << "The Force on image no. " << d_NEBImageno << " is "
-              << Force * haPerBohrToeVPerAng << " in eV/Ang" << std::endl;
+              << Force << " in Ha/bohr" << std::endl;
         if (Force < 0.95 * d_optimizertolerance && d_imageFreeze)
           flagmultiplier[i] = 0;
         if (Force <= d_optimizertolerance)
@@ -914,7 +912,7 @@ namespace dftfe
       }
     pcout << std::endl
           << "Maximum Force "
-          << d_maximumAtomForceToBeRelaxed * haPerBohrToeVPerAng << "in eV/Ang"
+          << d_maximumAtomForceToBeRelaxed  << "in Ha/bohr"
           << std::endl;
   }
 
@@ -957,7 +955,7 @@ namespace dftfe
           {
             multiplier = 0;
             pcout << "!!Frozen image " << image << " with Image force: "
-                  << d_ImageError[image] * haPerBohrToeVPerAng << std::endl;
+                  << d_ImageError[image] << std::endl;
           }
         MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
@@ -1019,11 +1017,15 @@ namespace dftfe
             MPI_Barrier(d_mpiCommParent);
             (d_dftfeWrapper[image]->getDftfeBasePtr())->solve(true, false);
           }
+
+      }
+      for(int image = 0; image < d_numberOfImages; image++)
+      {
         double Force = 0.0;
         d_NEBImageno = image;
         ImageError(d_NEBImageno, Force);
         d_forceOnImages.push_back(Force);
-      }
+      }      
     d_totalUpdateCalls += 1;
   }
 
@@ -1120,12 +1122,12 @@ namespace dftfe
   void
   nudgedElasticBandClass::value(std::vector<double> &functionValue)
   {
-    // AssertThrow(false,dftUtils::ExcNotImplementedYet());
+
     functionValue.clear();
 
+    int midImage = d_NEBImageno/2;
+    functionValue.push_back( (d_dftfeWrapper[midImage]->getDftfeBasePtr())->getInternalEnergy() - (d_dftfeWrapper[midImage]->getDftfeBasePtr())->getEntropicEnergy());
 
-    // Relative to initial free energy supressed in case of CGPRP
-    // as that would not work in case of restarted CGPRP
 
 
     // functionValue.push_back( dftPtr[3]->getInternalEnergy());
@@ -1281,9 +1283,9 @@ namespace dftfe
     pcout << "    "
           << " Image No "
           << "    "
-          << "Force perpendicular in eV/A"
+          << "Force perpendicular in Ha/bohr"
           << "    "
-          << "Internal Energy in eV"
+          << "Internal Energy in Ha"
           << "    " << std::endl;
 
 
@@ -1291,9 +1293,8 @@ namespace dftfe
       {
         double Force = d_forceOnImages[i];
         double Energy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) *
-          haToeV;
-        pcout << "    " << i << "    " << Force * haPerBohrToeVPerAng << "    "
+          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) ;
+        pcout << "    " << i << "    " << Force << "    "
               << Energy << "    " << std::endl;
         if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
@@ -1364,7 +1365,6 @@ namespace dftfe
           }
         pcout << " --------------------------------------------------"
               << std::endl;
-        pcout << " Hi 1361" << std::endl;
       }
     else
       {
@@ -1386,7 +1386,6 @@ namespace dftfe
           d_countrelaxationFlags++;
       }
 
-    pcout << " Hi 1382" << std::endl;
 
     d_totalUpdateCalls = 0;
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
@@ -1430,12 +1429,13 @@ namespace dftfe
     pcout << "    "
           << " Image No "
           << "    "
-          << "Force perpendicular in eV/A"
+          << "Force perpendicular in Ha/bohr"
           << "    "
-          << "Internal Energy in eV"
+          << "Internal Energy in Ha"
           << "    " << std::endl;
-    std::vector<double> ForceonImages;
-    ForceonImages.clear();
+
+    d_forceOnImages.clear();
+
     int count = 0;
     for (int i = 0; i < d_numberOfImages; i++)
       {
@@ -1446,11 +1446,10 @@ namespace dftfe
         Force = 0.0;
         ImageError(d_NEBImageno, Force);
         double Energy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) *
-          haToeV;
-        pcout << "    " << i << "    " << Force * haPerBohrToeVPerAng << "    "
+          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy());
+        pcout << "    " << i << "    " << Force << "    "
               << Energy << "    " << std::endl;
-        ForceonImages.push_back(Force);
+        d_forceOnImages.push_back(Force);
         if (Force > Forcecutoff && i > 0 && i < d_numberOfImages - 1)
           {
             flag = false;
@@ -1477,7 +1476,7 @@ namespace dftfe
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
-        d_dftPtr->getParametersObject().maxIonUpdateStep);
+        d_dftPtr->getParametersObject().maxIonUpdateStep,true);
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
@@ -1485,7 +1484,7 @@ namespace dftfe
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
         d_dftPtr->getParametersObject().verbosity,
-        d_mpiCommParent);
+        d_mpiCommParent,true);
     else
       d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
         d_dftPtr->getParametersObject().maxOptIter,
@@ -1494,7 +1493,7 @@ namespace dftfe
         1e-4,
         d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
         0.8,
-        d_dftPtr->getParametersObject().maxIonUpdateStep);
+        d_dftPtr->getParametersObject().maxIonUpdateStep,true);
     // print relaxation flags
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       {

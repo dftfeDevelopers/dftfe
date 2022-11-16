@@ -49,7 +49,8 @@ namespace dftfe
                          const unsigned int maxNumberIterations,
                          const int          maxNumPastSteps,
                          const unsigned int debugLevel,
-                         const MPI_Comm &   mpi_comm_parent);
+                         const MPI_Comm &   mpi_comm_parent,
+                         const bool isGradientOnlyOptimization = false);
 
     /**
      * @brief Destructor.
@@ -202,6 +203,11 @@ namespace dftfe
     const bool d_usePreconditioner;
 
     bool d_useSingleAtomSolutionsInitialGuess, d_noHistory;
+
+    //
+    bool d_isGradientOnlyOptimization;
+
+
 
     // parallel objects
     MPI_Comm                   mpi_communicator;

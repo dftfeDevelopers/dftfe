@@ -131,7 +131,6 @@ namespace dftfe
     std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;
     std::vector<unsigned int>                       d_relaxationFlags;
     std::vector<double>                             d_externalForceOnAtom;
-    std::vector<double>                             d_ForceonImages;
     std::vector<double>                             d_ImageError;
     std::vector<double>                             d_Length;
     std::string d_coordinatesFileNEB, d_domainVectorsFileNEB;

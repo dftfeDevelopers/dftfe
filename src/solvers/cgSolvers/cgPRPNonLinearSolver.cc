@@ -32,7 +32,8 @@ namespace dftfe
     const double       lineSearchTolerance,
     const unsigned int lineSearchMaxIterations,
     const double       lineSearchDampingParameter,
-    const double       maxIncrementSolLinf)
+    const double       maxIncrementSolLinf,
+    const bool isGradientOnlyOptimization)
     : d_lineSearchTolerance(lineSearchTolerance)
     , d_lineSearchMaxIterations(lineSearchMaxIterations)
     , d_lineSearchDampingParameter(lineSearchDampingParameter)
@@ -44,6 +45,7 @@ namespace dftfe
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_isGradientOnlyOptimization(isGradientOnlyOptimization)        
   {
     d_isCGRestartDueToLargeIncrement     = false;
     d_useSingleAtomSolutionsInitialGuess = false;

@@ -52,7 +52,8 @@ namespace dftfe
                          const double       lineSearchTolerance       = 1.0e-6,
                          const unsigned int lineSearchMaxIterations   = 10,
                          const double       lineSeachDampingParameter = 1.0,
-                         const double       maxIncrementSolLinf       = 1e+6);
+                         const double       maxIncrementSolLinf       = 1e+6,
+                         const bool isGradientOnlyOptimization= false);
 
     /**
      * @brief Destructor.
@@ -267,6 +268,9 @@ namespace dftfe
 
     ///
     bool d_useSingleAtomSolutionsInitialGuess;
+
+    //
+    bool d_isGradientOnlyOptimization;
 
     // parallel objects
     MPI_Comm                   mpi_communicator;
