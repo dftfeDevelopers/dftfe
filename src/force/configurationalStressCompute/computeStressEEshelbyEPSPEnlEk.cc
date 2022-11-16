@@ -252,7 +252,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             dftPtr->interBandGroupComm,
             isPseudopotential,
             d_dftParams.floatingNuclearCharges,
-            false,
+            true,
             d_dftParams);
           MPI_Barrier(d_mpiCommParent);
           gpu_time = MPI_Wtime() - gpu_time;
