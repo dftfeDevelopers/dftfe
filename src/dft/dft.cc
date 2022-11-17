@@ -2451,7 +2451,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                     if (d_dftParamsPtr->useGPU)
                     {
-                      computing_timer.leave_subsection(
+                      computing_timer.enter_subsection(
                          "Hamiltonian Matrix Computation");
                       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(s);
                       computing_timer.leave_subsection(
@@ -2770,7 +2770,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                     if (d_dftParamsPtr->useGPU)
                     {
-                      computing_timer.leave_subsection(
+                      computing_timer.enter_subsection(
                          "Hamiltonian Matrix Computation");
                       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(0);
                       computing_timer.leave_subsection(
