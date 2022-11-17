@@ -4259,52 +4259,7 @@ namespace dftfe
       rhoNodalField);
     rhoNodalField.update_ghost_values();
 
-    distributedCPUVec<double> rhoNodalFieldSpin0;
-    distributedCPUVec<double> rhoNodalFieldSpin1;
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        rhoNodalFieldSpin0.reinit(rhoNodalField);
-        rhoNodalFieldSpin0 = 0;
-        std::function<double(
-          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-          const unsigned int                                          q)>
-          funcRhoSpin0 = [&](const typename dealii::DoFHandler<
-                               3>::active_cell_iterator &cell,
-                             const unsigned int          q) {
-            return (*rhoInValuesSpinPolarized).find(cell->id())->second[2 * q];
-          };
-        dealii::VectorTools::project<3, distributedCPUVec<double>>(
-          dealii::MappingQ1<3, 3>(),
-          d_dofHandlerRhoNodal,
-          d_constraintsRhoNodal,
-          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
-          funcRhoSpin0,
-          rhoNodalFieldSpin0);
-        rhoNodalFieldSpin0.update_ghost_values();
 
-
-        rhoNodalFieldSpin1.reinit(rhoNodalField);
-        rhoNodalFieldSpin1 = 0;
-        std::function<double(
-          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-          const unsigned int                                          q)>
-          funcRhoSpin1 =
-            [&](
-              const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-              const unsigned int                                          q) {
-              return (*rhoInValuesSpinPolarized)
-                .find(cell->id())
-                ->second[2 * q + 1];
-            };
-        dealii::VectorTools::project<3, distributedCPUVec<double>>(
-          dealii::MappingQ1<3, 3>(),
-          d_dofHandlerRhoNodal,
-          d_constraintsRhoNodal,
-          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
-          funcRhoSpin1,
-          rhoNodalFieldSpin1);
-        rhoNodalFieldSpin1.update_ghost_values();
-      }
 
     //
     // only generate output for electron-density
@@ -4312,13 +4267,7 @@ namespace dftfe
     DataOut<3> dataOutRho;
     dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
     dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        dataOutRho.add_data_vector(rhoNodalFieldSpin0,
-                                   std::string("density_0"));
-        dataOutRho.add_data_vector(rhoNodalFieldSpin1,
-                                   std::string("density_1"));
-      }
+
     dataOutRho.build_patches(FEOrder);
 
     std::string tempFolder = "meshOutputFolder";
