@@ -139,17 +139,17 @@ namespace dftfe
     void
     CalculatePathTangent(int, std::vector<double> &);
     void
-    CalculateForceparallel(int, std::vector<double> &, std::vector<double>);
+    CalculateForceparallel(int, std::vector<double> &, const std::vector<double>&);
     void
     CalculateForceperpendicular(int,
                                 std::vector<double> &,
-                                std::vector<double>,
-                                std::vector<double>);
+                                const std::vector<double>&,
+                                const std::vector<double>&);
     void
     CalculateSpringForce(int, std::vector<double> &, std::vector<double>);
     void
-    CalculateForceonImage(std::vector<double>,
-                          std::vector<double>,
+    CalculateForceonImage(const std::vector<double>&,
+                          const std::vector<double>&,
                           std::vector<double> &);
     void
     CalculatePathLength(double &) const;
@@ -172,6 +172,12 @@ namespace dftfe
      */
     bool
     isConverged() const;
+
+    int
+    checkRestart(std::string &coordinatesFile,
+                                       std::string &domainVectorsFile,
+                                       bool &       scfRestart);
+
   };
 
 
