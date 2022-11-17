@@ -28,7 +28,7 @@ namespace dftfe
 {
   namespace internalDftParameters
   {
-    void
+    /*void
     declare_parameters(ParameterHandler &prm)
     {
       prm.declare_entry(
@@ -62,7 +62,7 @@ namespace dftfe
         "SOLVER MODE",
         "GS",
         Patterns::Selection("GS|MD|NEB|GEOOPT|MESH"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation.");
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.");
 
       prm.declare_entry(
         "RESTART",
@@ -73,7 +73,7 @@ namespace dftfe
       prm.declare_entry("RESTART FOLDER",
                         ".",
                         Patterns::Anything(),
-                        "[Standard] Folder to store restart files.");
+                        "[Standard] Folder to store restart files."); */
 
       prm.enter_subsection("GPU");
       {

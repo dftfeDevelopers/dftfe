@@ -179,13 +179,13 @@ main(int argc, char *argv[])
                                               runParams.verbosity);
       geoOpt.runOpt();
     }
-    else if (runParams.solvermode == "MESH")
+    else if (runParams.solvermode == "NONE")
     {
       dftfe::dftfeWrapper dftfeWrapped(parameter_file,
                                        MPI_COMM_WORLD,
                                        true,
                                        true,
-                                       "MESH",
+                                       "NONE",
                                        runParams.restartFilesPath);
       dftfeWrapped.writeMesh();      
     }
