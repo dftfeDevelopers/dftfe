@@ -978,8 +978,8 @@ namespace dftfe
                                  const bool                 computeForces,
                                  const bool useSingleAtomSolutionsInitialGuess)
   {
-    std::vector<Tensor<1, 3, double>> globalAtomsDisplacements(
-      d_numberGlobalCharges);
+    std::vector<std::vector<double>> globalAtomsDisplacements(
+      d_numberGlobalCharges,std::vector<double>(3, 0.0));
     d_forceOnImages.clear();
     for (int image = 1; image < d_numberOfImages - 1; image++)
       {
@@ -1041,12 +1041,10 @@ namespace dftfe
         factor = 1.0;*/
         if (multiplier == 1)
           {
-            /*MPI_Barrier(d_mpiCommParent);
-            (d_dftfeWrapper[image]->getDftfeBasePtr())
-              ->updateAtomPositionsAndMoveMesh(
-                globalAtomsDisplacements,
-                factor,
-                useSingleAtomSolutionsInitialGuess); */
+            MPI_Barrier(d_mpiCommParent);
+            (d_dftfeWrapper[image])
+              ->updateAtomPositions(
+                globalAtomsDisplacements); 
 
             pcout << "--Positions of image: " << image << " updated--"
                   << std::endl;
