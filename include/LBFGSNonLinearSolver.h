@@ -50,7 +50,7 @@ namespace dftfe
                          const int          maxNumPastSteps,
                          const unsigned int debugLevel,
                          const MPI_Comm &   mpi_comm_parent,
-                         const bool isGradientOnlyOptimization = false);
+                         const bool         isGradientOnlyOptimization = false);
 
     /**
      * @brief Destructor.

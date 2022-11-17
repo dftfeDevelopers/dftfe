@@ -1106,4 +1106,17 @@ namespace dftfe
     return d_dftfeBasePtr;
   }
 
+
+  void
+  dftfeWrapper::writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    d_dftfeBasePtr->writeDomainAndAtomCoordinatesFloatingCharges(Path);
+  }
+
+
+
 } // namespace dftfe

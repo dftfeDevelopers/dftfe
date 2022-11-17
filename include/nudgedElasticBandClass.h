@@ -113,7 +113,7 @@ namespace dftfe
     bool        d_imageFreeze;
 
     /// total number of calls to update()
-    unsigned int        d_totalUpdateCalls;
+    int                 d_totalUpdateCalls;
     int                 d_startStep;
     int                 d_solver;
     bool                d_isRestart;

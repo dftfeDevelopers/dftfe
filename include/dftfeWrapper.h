@@ -339,6 +339,13 @@ namespace dftfe
     getValenceElectronNumbers() const;
 
 
+    /**
+     * @brief Writes the domainVectors data and atom coordinates to files in path provided.
+     */
+    void
+    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+
+
     dftBase *
     getDftfeBasePtr();
 

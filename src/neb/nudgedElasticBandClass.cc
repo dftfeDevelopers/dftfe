@@ -59,21 +59,24 @@ namespace dftfe
 
   {
     // Read Coordinates file and create coordinates for each image
-    if (d_this_mpi_process == 0)
-      {
-        if (d_restartFilesPath != ".")
-          {
-            mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-          }
-        else
-          {
-            d_restartFilesPath = "./nebRestart";
-            mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-          }
-      }
+
     MPI_Barrier(d_mpiCommParent);
     if (!d_isRestart)
       {
+        if (d_this_mpi_process == 0)
+          {
+            if (d_restartFilesPath != ".")
+              {
+                mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+              }
+            else
+              {
+                d_restartFilesPath = "./nebRestart";
+                mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
+              }
+          }
+
+
         std::string Folder = d_restartFilesPath + "/Step0";
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir(Folder.c_str(), ACCESSPERMS);
@@ -87,10 +90,11 @@ namespace dftfe
         for (int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
-            coordinatesFile =
-              "./nebRestart/Step0/coordinates" + std::to_string(Image) + ".inp";
-            domainVectorsFile = "./nebRestart/Step0/domainVectors" +
-                                std::to_string(Image) + ".inp";
+            coordinatesFile = d_restartFilesPath +
+                              "/Step0/Image"+ std::to_string(Image) +
+                              "coordinates.inp";
+            domainVectorsFile = d_restartFilesPath + "/Step0/Image" +
+                                std::to_string(Image) + "domainVectors.inp";
             std::vector<std::vector<double>> coordinates, domainVectors;
             for (int i = Image * d_numberGlobalCharges;
                  i < (Image + 1) * d_numberGlobalCharges;
@@ -125,39 +129,37 @@ namespace dftfe
                                                     d_restartFilesPath,
                                                     false));
           }
-        d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
-        AssertThrow(
-          d_dftPtr->getParametersObject().natoms == d_numberGlobalCharges,
-          ExcMessage(
-            "DFT-FE Error: The number atoms"
-            "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
-            "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
-            "blank row at the end can cause this issue too."));
-
-        std::vector<std::vector<double>> temp_domainBoundingVectors;
-        dftUtils::readFile(
-          3,
-          temp_domainBoundingVectors,
-          d_dftPtr->getParametersObject().domainBoundingVectorsFile);
-
-        for (int i = 0; i < 3; i++)
-          {
-            double temp = temp_domainBoundingVectors[i][0] *
-                            temp_domainBoundingVectors[i][0] +
-                          temp_domainBoundingVectors[i][1] *
-                            temp_domainBoundingVectors[i][1] +
-                          temp_domainBoundingVectors[i][2] *
-                            temp_domainBoundingVectors[i][2];
-            d_Length.push_back(pow(temp, 0.5));
-          }
-        pcout << "--$ Domain Length$ --" << std::endl;
-        pcout << "Lx:= " << d_Length[0] << " Ly:=" << d_Length[1]
-              << " Lz:=" << d_Length[2] << std::endl;
-
-
-
-        init();
       }
+    d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
+    AssertThrow(
+      d_dftPtr->getParametersObject().natoms == d_numberGlobalCharges,
+      ExcMessage(
+        "DFT-FE Error: The number atoms"
+        "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
+        "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
+        "blank row at the end can cause this issue too."));
+
+    std::vector<std::vector<double>> temp_domainBoundingVectors;
+    dftUtils::readFile(
+      3,
+      temp_domainBoundingVectors,
+      d_dftPtr->getParametersObject().domainBoundingVectorsFile);
+
+    for (int i = 0; i < 3; i++)
+      {
+        double temp =
+          temp_domainBoundingVectors[i][0] * temp_domainBoundingVectors[i][0] +
+          temp_domainBoundingVectors[i][1] * temp_domainBoundingVectors[i][1] +
+          temp_domainBoundingVectors[i][2] * temp_domainBoundingVectors[i][2];
+        d_Length.push_back(pow(temp, 0.5));
+      }
+    pcout << "--$ Domain Length$ --" << std::endl;
+    pcout << "Lx:= " << d_Length[0] << " Ly:=" << d_Length[1]
+          << " Lz:=" << d_Length[2] << std::endl;
+
+
+
+    init();
   }
 
 
@@ -177,19 +179,15 @@ namespace dftfe
       {
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,
           atomLocationsiplus;
-        atomLocationsi =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsiminus = (d_dftfeWrapper[image - 1]->getDftfeBasePtr())
-                                ->getAtomLocationsCart();
-        atomLocationsiplus = (d_dftfeWrapper[image + 1]->getDftfeBasePtr())
-                               ->getAtomLocationsCart();
+        atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
+        atomLocationsiminus =
+          (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
+        atomLocationsiplus =
+          (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
         double GSEnergyminus, GSEnergyplus, GSEnergy;
-        GSEnergyminus =
-          (d_dftfeWrapper[image - 1]->getDftfeBasePtr())->getInternalEnergy();
-        GSEnergyplus =
-          (d_dftfeWrapper[image + 1]->getDftfeBasePtr())->getInternalEnergy();
-        GSEnergy =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getInternalEnergy();
+        GSEnergyminus = (d_dftfeWrapper[image - 1])->getDFTFreeEnergy();
+        GSEnergyplus  = (d_dftfeWrapper[image + 1])->getDFTFreeEnergy();
+        GSEnergy      = (d_dftfeWrapper[image])->getDFTFreeEnergy();
         if (GSEnergyplus > GSEnergy && GSEnergy > GSEnergyminus)
           {
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -392,10 +390,9 @@ namespace dftfe
     else if (image == 0)
       {
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiplus;
-        atomLocationsi =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsiplus = (d_dftfeWrapper[image + 1]->getDftfeBasePtr())
-                               ->getAtomLocationsCart();
+        atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
+        atomLocationsiplus =
+          (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for (int j = 0; j < 3; j++)
@@ -428,10 +425,9 @@ namespace dftfe
     else if (image == d_numberOfImages - 1)
       {
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus;
-        atomLocationsi =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsiminus = (d_dftfeWrapper[image - 1]->getDftfeBasePtr())
-                                ->getAtomLocationsCart();
+        atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
+        atomLocationsiminus =
+          (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             for (int j = 0; j < 3; j++)
@@ -500,12 +496,11 @@ namespace dftfe
         std::vector<double>              v2(d_countrelaxationFlags, 0.0);
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,
           atomLocationsiplus;
-        atomLocationsi =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsiminus = (d_dftfeWrapper[image - 1]->getDftfeBasePtr())
-                                ->getAtomLocationsCart();
-        atomLocationsiplus = (d_dftfeWrapper[image + 1]->getDftfeBasePtr())
-                               ->getAtomLocationsCart();
+        atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
+        atomLocationsiminus =
+          (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
+        atomLocationsiplus =
+          (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
         int count = 0;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -550,10 +545,9 @@ namespace dftfe
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,
           atomLocationsiplus;
         std::vector<double> v1(d_countrelaxationFlags, 0.0);
-        atomLocationsi =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsiplus = (d_dftfeWrapper[image + 1]->getDftfeBasePtr())
-                               ->getAtomLocationsCart();
+        atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
+        atomLocationsiplus =
+          (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
         int count = 0;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -585,10 +579,9 @@ namespace dftfe
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,
           atomLocationsplus;
         std::vector<double> v2(d_countrelaxationFlags, 0.0);
-        atomLocationsi =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsiminus = (d_dftfeWrapper[image - 1]->getDftfeBasePtr())
-                                ->getAtomLocationsCart();
+        atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
+        atomLocationsiminus =
+          (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
         int count = 0;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -631,9 +624,8 @@ namespace dftfe
   {
     if (true)
       {
-        std::vector<double> forceonAtoms(3 * d_numberGlobalCharges, 0.0);
-        forceonAtoms =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getForceonAtoms();
+        std::vector<std::vector<double>> forceonAtoms =
+          (d_dftfeWrapper[image])->getForcesAtoms();
         double       Innerproduct = 0.0;
         unsigned int count        = 0;
 
@@ -643,9 +635,8 @@ namespace dftfe
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
-                    Innerproduct =
-                      Innerproduct -
-                      forceonAtoms[3 * iCharge + j] * tangent[count];
+                    Innerproduct = Innerproduct - forceonAtoms[3 * iCharge][j] *
+                                                    tangent[count];
                     count++;
                   }
               }
@@ -665,9 +656,8 @@ namespace dftfe
     std::vector<double>  Forceparallel,
     std::vector<double>  tangent)
   {
-    std::vector<double> forceonAtoms(3 * d_numberGlobalCharges, 0.0);
-    forceonAtoms =
-      (d_dftfeWrapper[image]->getDftfeBasePtr())->getForceonAtoms();
+    std::vector<std::vector<double>> forceonAtoms =
+      (d_dftfeWrapper[image])->getForcesAtoms();
     unsigned int count = 0;
 
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -677,7 +667,7 @@ namespace dftfe
             if (d_relaxationFlags[3 * iCharge + j] == 1)
               {
                 Forceperpendicular[count] =
-                  -forceonAtoms[3 * iCharge + j] - Forceparallel[count];
+                  -forceonAtoms[3 * iCharge][j] - Forceparallel[count];
                 count++;
               }
           }
@@ -705,9 +695,8 @@ namespace dftfe
               << std::endl;
         for (int i = 0; i < d_numberOfImages; i++)
           {
-            pcout << "Internal Energy of Image: " << i + 1 << "  = "
-                  << (d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()
-                  << std::endl;
+            pcout << "Free Energy of Image: " << i + 1 << "  = "
+                  << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
           }
         pcout << "--------------Final Error Results(Ha/bohr)-------------"
               << std::endl;
@@ -726,8 +715,8 @@ namespace dftfe
                                         Forceparallel,
                                         tangent);
             LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
-            pcout << "Error of Image: " << i + 1 << "  = "
-                  << Force  << " Ha/bohr" << std::endl;
+            pcout << "Error of Image: " << i + 1 << "  = " << Force
+                  << " Ha/bohr" << std::endl;
           }
         return d_totalUpdateCalls;
       }
@@ -748,9 +737,8 @@ namespace dftfe
     pcout << "--------------Ground State Results-------------" << std::endl;
     for (int i = 0; i < d_numberOfImages; i++)
       {
-        pcout << "Internal Energy of Image: " << i + 1 << "  = "
-              << (d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()
-              << std::endl;
+        pcout << "Free Energy of Image: " << i + 1 << "  = "
+              << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
       }
     pcout << "--------------Error Results(Ha/bohr)-------------" << std::endl;
     for (int i = 0; i < d_numberOfImages; i++)
@@ -768,8 +756,8 @@ namespace dftfe
                                     Forceparallel,
                                     tangent);
         LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
-        pcout << "Error of Image: " << i + 1 << "  = "
-              << Force  << " Ha/bohr" << std::endl;
+        pcout << "Error of Image: " << i + 1 << "  = " << Force << " Ha/bohr"
+              << std::endl;
       }
     return d_totalUpdateCalls;
   }
@@ -819,11 +807,10 @@ namespace dftfe
           << "    " << std::endl;
     for (int i = 0; i < d_numberOfImages; i++)
       {
-        double FreeEnergy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy() -
-           (d_dftfeWrapper[i]->getDftfeBasePtr())->getEntropicEnergy());
+        double FreeEnergy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
         double InternalEnergy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy());
+          (d_dftfeWrapper[i])->getDFTFreeEnergy() +
+          (d_dftfeWrapper[i])->getElectronicEntropicEnergy();
         pcout << "    " << i << "    " << InternalEnergy << "    " << FreeEnergy
               << "    " << std::endl;
       }
@@ -838,8 +825,8 @@ namespace dftfe
         ImageError(d_NEBImageno, Force);
         d_ImageError[i] = Force;
 
-        pcout << "The Force on image no. " << d_NEBImageno << " is "
-              << Force << " in Ha/bohr" << std::endl;
+        pcout << "The Force on image no. " << d_NEBImageno << " is " << Force
+              << " in Ha/bohr" << std::endl;
         if (Force < 0.95 * d_optimizertolerance && d_imageFreeze)
           flagmultiplier[i] = 0;
         if (Force <= d_optimizertolerance)
@@ -911,8 +898,7 @@ namespace dftfe
           d_maximumAtomForceToBeRelaxed = temp;
       }
     pcout << std::endl
-          << "Maximum Force "
-          << d_maximumAtomForceToBeRelaxed  << "in Ha/bohr"
+          << "Maximum Force " << d_maximumAtomForceToBeRelaxed << "in Ha/bohr"
           << std::endl;
   }
 
@@ -954,8 +940,8 @@ namespace dftfe
         if (d_ImageError[image] < 0.95 * d_optimizertolerance && d_imageFreeze)
           {
             multiplier = 0;
-            pcout << "!!Frozen image " << image << " with Image force: "
-                  << d_ImageError[image] << std::endl;
+            pcout << "!!Frozen image " << image
+                  << " with Image force: " << d_ImageError[image] << std::endl;
           }
         MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
@@ -994,7 +980,7 @@ namespace dftfe
 
 
 
-        double factor;
+        /*double factor;
         if (d_maximumAtomForceToBeRelaxed >= 1e-03)
           factor = 1.30; // Modified
         else if (d_maximumAtomForceToBeRelaxed < 1e-03 &&
@@ -1003,29 +989,33 @@ namespace dftfe
         else if (d_maximumAtomForceToBeRelaxed < 1e-04)
           factor = 1.15;
         // MPI_Barrier required here...
-        factor = 1.0;
+        factor = 1.0;*/
         if (multiplier == 1)
           {
-            MPI_Barrier(d_mpiCommParent);
+            /*MPI_Barrier(d_mpiCommParent);
             (d_dftfeWrapper[image]->getDftfeBasePtr())
               ->updateAtomPositionsAndMoveMesh(
                 globalAtomsDisplacements,
                 factor,
-                useSingleAtomSolutionsInitialGuess);
+                useSingleAtomSolutionsInitialGuess); */
+
             pcout << "--Positions of image: " << image << " updated--"
                   << std::endl;
             MPI_Barrier(d_mpiCommParent);
-            (d_dftfeWrapper[image]->getDftfeBasePtr())->solve(true, false);
+            std::tuple<double, bool, double> groundStateOutput =
+              (d_dftfeWrapper[image])->computeDFTFreeEnergy(true, false);
+            if (!std::get<1>(groundStateOutput))
+              pcout << " NEB Warning!!: Ground State of Image: " << d_NEBImageno
+                    << " did not converge" << std::endl;
           }
-
       }
-      for(int image = 0; image < d_numberOfImages; image++)
+    for (int image = 0; image < d_numberOfImages; image++)
       {
         double Force = 0.0;
         d_NEBImageno = image;
         ImageError(d_NEBImageno, Force);
         d_forceOnImages.push_back(Force);
-      }      
+      }
     d_totalUpdateCalls += 1;
   }
 
@@ -1058,7 +1048,7 @@ namespace dftfe
         pcout << "Image no.: " << image << std::endl;
         std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
         atomLocations =
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getAtomLocationsCart();
+          (d_dftfeWrapper[image])->getAtomPositionsCart();
         atomLocationsInitial = d_atomLocationsInitial[image];
         pcout << "AtomLocation size  " << atomLocations.size() << " "
               << atomLocationsInitial.size() << std::endl;
@@ -1082,32 +1072,31 @@ namespace dftfe
   void
   nudgedElasticBandClass::save()
   {
-    /*
-  d_startStep++;
-  WriteRestartFiles(d_startStep);
-          pcout<<std::endl<<"-------------------------------------------------------------------------------"<<std::endl;
-          pcout<<" -------------------- NEB Step "<<d_startStep<<
-  "---------------------------------------"<<std::endl; pcout<<"    "<<" Image
-  No "<<"    "<<"Force perpendicular in eV/A"<<"    "<<"Internal Energy in
-  eV"<<"    "<<"Free Energy in eV "<<std::endl; ForceonImages.clear(); double
-  Force; for (int i = 0; i < d_numberOfImages; i++)
-          {
-              d_NEBImageno = i;
-              std::vector<std::vector<double>> atomLocations;
-              atomLocations=dftPtr[i]->getAtomLocationsCart();
-              Force = 0.0;
-              ImageError(d_NEBImageno,Force);
-              double Energy = (dftPtr[i]->getInternalEnergy() )*haToeV;
-              pcout<<"    "<<i<<"    "<<Force*haPerBohrToeVPerAng<<"
-  "<<Energy<<"    "<<Energy - dftPtr[i]->getEntropicEnergy()<<std::endl;
-              ForceonImages.push_back(Force);
+    if (!d_dftPtr->getParametersObject().reproducible_output)
+      {
+        std::string savePath =
+          d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
+        if (d_this_mpi_process == 0)
+          mkdir(savePath.c_str(), ACCESSPERMS);
 
-          }
-          double Length = 0.0;
-          CalculatePathLength(Length);
-          pcout<<std::endl<<"--Path Length: "<<Length<<" Bohr"<<std::endl;
-          pcout<<std::endl<<"-------------------------------------------------------------------------------"<<std::endl;
-  */
+        std::vector<std::vector<double>> forceData(1,
+                                                   std::vector<double>(1, 0.0));
+        forceData[0][0] = d_maximumAtomForceToBeRelaxed;
+        dftUtils::writeDataIntoFile(forceData,
+                                    savePath + "/maxForce.chk",
+                                    d_mpiCommParent);
+        for(int i = 0; i < d_numberOfImages; i++)
+          {
+            d_dftfeWrapper[i]->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/Image"+std::to_string(i));
+          }        
+        d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
+        std::vector<std::vector<double>> tmpData(1,
+                                                 std::vector<double>(1, 0.0));
+        tmpData[0][0] = d_totalUpdateCalls;
+        dftUtils::writeDataIntoFile(tmpData,
+                                    d_restartFilesPath + "/step.chk",
+                                    d_mpiCommParent);
+      }
   }
 
 
@@ -1122,11 +1111,10 @@ namespace dftfe
   void
   nudgedElasticBandClass::value(std::vector<double> &functionValue)
   {
-
     functionValue.clear();
 
-    int midImage = d_NEBImageno/2;
-    functionValue.push_back( (d_dftfeWrapper[midImage]->getDftfeBasePtr())->getInternalEnergy() - (d_dftfeWrapper[midImage]->getDftfeBasePtr())->getEntropicEnergy());
+    int midImage = d_numberOfImages / 2;
+    functionValue.push_back((d_dftfeWrapper[midImage])->getDFTFreeEnergy());
 
 
 
@@ -1151,10 +1139,8 @@ namespace dftfe
 
     for (int i = 0; i < d_numberOfImages - 1; i++)
       {
-        atomLocations =
-          (d_dftfeWrapper[i + 1]->getDftfeBasePtr())->getAtomLocationsCart();
-        atomLocationsInitial =
-          (d_dftfeWrapper[i]->getDftfeBasePtr())->getAtomLocationsCart();
+        atomLocations        = (d_dftfeWrapper[i + 1])->getAtomPositionsCart();
+        atomLocationsInitial = (d_dftfeWrapper[i])->getAtomPositionsCart();
         double tempx, tempy, tempz, temp;
         temp = 0.0;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -1190,19 +1176,12 @@ namespace dftfe
     Emin = 500;
     for (int image = 0; image < d_numberOfImages - 1; image++)
       {
-        Emax = std::max(
-          Emax,
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getInternalEnergy() -
-            (d_dftfeWrapper[image]->getDftfeBasePtr())->getEntropicEnergy());
-        Emin = std::min(
-          Emin,
-          (d_dftfeWrapper[image]->getDftfeBasePtr())->getInternalEnergy() -
-            (d_dftfeWrapper[image]->getDftfeBasePtr())->getEntropicEnergy());
+        Emax = std::max(Emax, (d_dftfeWrapper[image])->getDFTFreeEnergy());
+        Emin = std::min(Emin, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
     deltaE = Emax - Emin;
 
-    Ei = (d_dftfeWrapper[NEBImage]->getDftfeBasePtr())->getInternalEnergy() -
-         (d_dftfeWrapper[NEBImage]->getDftfeBasePtr())->getEntropicEnergy();
+    Ei = (d_dftfeWrapper[NEBImage])->getDFTFreeEnergy();
 
 
 
@@ -1285,17 +1264,16 @@ namespace dftfe
           << "    "
           << "Force perpendicular in Ha/bohr"
           << "    "
-          << "Internal Energy in Ha"
+          << "Free Energy in Ha"
           << "    " << std::endl;
 
 
     for (int i = 0; i < d_numberOfImages; i++)
       {
-        double Force = d_forceOnImages[i];
-        double Energy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy()) ;
-        pcout << "    " << i << "    " << Force << "    "
-              << Energy << "    " << std::endl;
+        double Force  = d_forceOnImages[i];
+        double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
+        pcout << "    " << i << "    " << Force << "    " << Energy << "    "
+              << std::endl;
         if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
             flag = false;
@@ -1404,7 +1382,7 @@ namespace dftfe
       }
     /*if (!d_dftPtr->getParametersObject().reproducible_output)
       dftUtils::writeDataIntoFile(ionOptData,
-                                  d_restartPath + "/ionOpt.dat",
+                                  d_restartFilesPath + "/ionOpt.dat",
                                   mpi_communicator);*/
     d_ImageError.resize(d_numberOfImages);
     double Force;
@@ -1413,9 +1391,12 @@ namespace dftfe
 
     for (int i = 0; i < d_numberOfImages; i++)
       {
-        pcout << "Here line 1410" << std::endl;
         d_NEBImageno = i;
-        (d_dftfeWrapper[d_NEBImageno]->getDftfeBasePtr())->solve(true, false);
+        auto groundState =
+          (d_dftfeWrapper[d_NEBImageno])->computeDFTFreeEnergy(true, false);
+        if (!std::get<1>(groundState))
+          pcout << " NEB Warning!!: Ground State of Image: " << d_NEBImageno
+                << " did not converge" << std::endl;
         pcout << "##Completed initial GS of image: " << d_NEBImageno
               << std::endl;
       }
@@ -1441,14 +1422,12 @@ namespace dftfe
       {
         d_NEBImageno = i;
         std::vector<std::vector<double>> atomLocations;
-        atomLocations =
-          (d_dftfeWrapper[i]->getDftfeBasePtr())->getAtomLocationsCart();
-        Force = 0.0;
+        atomLocations = (d_dftfeWrapper[i])->getAtomPositionsCart();
+        Force         = 0.0;
         ImageError(d_NEBImageno, Force);
-        double Energy =
-          ((d_dftfeWrapper[i]->getDftfeBasePtr())->getInternalEnergy());
-        pcout << "    " << i << "    " << Force << "    "
-              << Energy << "    " << std::endl;
+        double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
+        pcout << "    " << i << "    " << Force << "    " << Energy << "    "
+              << std::endl;
         d_forceOnImages.push_back(Force);
         if (Force > Forcecutoff && i > 0 && i < d_numberOfImages - 1)
           {
@@ -1476,7 +1455,8 @@ namespace dftfe
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
-        d_dftPtr->getParametersObject().maxIonUpdateStep,true);
+        d_dftPtr->getParametersObject().maxIonUpdateStep,
+        true);
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
@@ -1484,7 +1464,8 @@ namespace dftfe
         d_dftPtr->getParametersObject().maxOptIter,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
         d_dftPtr->getParametersObject().verbosity,
-        d_mpiCommParent,true);
+        d_mpiCommParent,
+        true);
     else
       d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
         d_dftPtr->getParametersObject().maxOptIter,
@@ -1493,7 +1474,8 @@ namespace dftfe
         1e-4,
         d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
         0.8,
-        d_dftPtr->getParametersObject().maxIonUpdateStep,true);
+        d_dftPtr->getParametersObject().maxIonUpdateStep,
+        true);
     // print relaxation flags
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       {

@@ -49,11 +49,11 @@ namespace dftfe
     cgPRPNonLinearSolver(const unsigned int maxNumberIterations,
                          const unsigned int debugLevel,
                          const MPI_Comm &   mpi_comm_parent,
-                         const double       lineSearchTolerance       = 1.0e-6,
-                         const unsigned int lineSearchMaxIterations   = 10,
-                         const double       lineSeachDampingParameter = 1.0,
-                         const double       maxIncrementSolLinf       = 1e+6,
-                         const bool isGradientOnlyOptimization= false);
+                         const double       lineSearchTolerance        = 1.0e-6,
+                         const unsigned int lineSearchMaxIterations    = 10,
+                         const double       lineSeachDampingParameter  = 1.0,
+                         const double       maxIncrementSolLinf        = 1e+6,
+                         const bool         isGradientOnlyOptimization = false);
 
     /**
      * @brief Destructor.

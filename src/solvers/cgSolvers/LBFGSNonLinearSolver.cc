@@ -32,7 +32,7 @@ namespace dftfe
     const int          maxNumPastSteps,
     const unsigned int debugLevel,
     const MPI_Comm &   mpi_comm_parent,
-    const bool isGradientOnlyOptimization)
+    const bool         isGradientOnlyOptimization)
     : nonLinearSolver(debugLevel, maxNumberIterations)
     , d_maxStepLength(maxUpdate)
     , mpi_communicator(mpi_comm_parent)
@@ -40,7 +40,7 @@ namespace dftfe
     , d_usePreconditioner(usePreconditioner)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
-     , d_isGradientOnlyOptimization(isGradientOnlyOptimization)       
+    , d_isGradientOnlyOptimization(isGradientOnlyOptimization)
   {
     d_useSingleAtomSolutionsInitialGuess = false;
   }
@@ -503,23 +503,23 @@ namespace dftfe
   {
     double gtdx  = internalLBFGS::dot(d_deltaXNew, d_gradient);
     double gntdx = internalLBFGS::dot(d_deltaXNew, d_gradientNew);
-    if(!d_isGradientOnlyOptimization)
+    if (!d_isGradientOnlyOptimization)
       d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
     else
-       d_wolfeSufficientDec = false; 
-    if(!d_isGradientOnlyOptimization)
-      d_wolfeCurvature     = std::abs(gntdx) < 0.9 * std::abs(gtdx);
+      d_wolfeSufficientDec = false;
+    if (!d_isGradientOnlyOptimization)
+      d_wolfeCurvature = std::abs(gntdx) < 0.9 * std::abs(gtdx);
     else
-       d_wolfeCurvature =  std::abs(gntdx) < std::abs(gtdx);
-    d_wolfeSatisfied     = d_wolfeSufficientDec && d_wolfeCurvature;
+      d_wolfeCurvature = std::abs(gntdx) < std::abs(gtdx);
+    d_wolfeSatisfied = d_wolfeSufficientDec && d_wolfeCurvature;
     if (d_debugLevel >= 1)
       {
         if (d_wolfeSatisfied && !d_isGradientOnlyOptimization)
           pcout << "Wolfe conditions satisfied." << std::endl;
         else if (d_wolfeSufficientDec && !d_isGradientOnlyOptimization)
           pcout << "Only Armijo condition satisfied." << std::endl;
-        else if(d_isGradientOnlyOptimization && d_wolfeCurvature)
-          pcout << "Curvature condition satisfied." << std::endl; 
+        else if (d_isGradientOnlyOptimization && d_wolfeCurvature)
+          pcout << "Curvature condition satisfied." << std::endl;
       }
   }
 
@@ -542,10 +542,11 @@ namespace dftfe
     else
       {
         double gtdx = internalLBFGS::dot(d_deltaX, d_gradient);
-        if(!d_isGradientOnlyOptimization)
-          d_alpha = -0.5 * gtdx * d_alpha / ((d_valueNew[0] - d_value[0]) - gtdx);
+        if (!d_isGradientOnlyOptimization)
+          d_alpha =
+            -0.5 * gtdx * d_alpha / ((d_valueNew[0] - d_value[0]) - gtdx);
         else
-          d_alpha/=2;  
+          d_alpha /= 2;
         if (d_alpha < 0.1)
           {
             if (d_debugLevel >= 1)
@@ -863,7 +864,8 @@ namespace dftfe
         // update trust radius and hessian
         //
         checkWolfe();
-        d_stepAccepted = d_isGradientOnlyOptimization?d_wolfeCurvature:d_wolfeSufficientDec;
+        d_stepAccepted = d_isGradientOnlyOptimization ? d_wolfeCurvature :
+                                                        d_wolfeSufficientDec;
         if (d_stepAccepted)
           {
             updateHistory();
@@ -876,14 +878,15 @@ namespace dftfe
           {
             if (d_debugLevel >= 1)
               {
-                if(!d_isGradientOnlyOptimization)
-                pcout << "Step rejected as Armijo condition was not satisfied."
+                if (!d_isGradientOnlyOptimization)
+                  pcout
+                    << "Step rejected as Armijo condition was not satisfied."
                     << std::endl;
-                 else 
-                      pcout << "Step rejected as Curvature condition was not satisfied."
+                else
+                  pcout
+                    << "Step rejected as Curvature condition was not satisfied."
                     << std::endl;
-
-              } 
+              }
 
             d_deltaX = d_deltaXNew;
           }
