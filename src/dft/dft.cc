@@ -4240,5 +4240,66 @@ namespace dftfe
     d_rhoOutNodalValuesSplit = OutDensity;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeMesh()
+  {
+    //
+    // compute nodal electron-density from quad data
+    //
+    distributedCPUVec<double> rhoNodalField;
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      rhoNodalField, d_densityDofHandlerIndexElectro);
+    rhoNodalField = 0;
+    std::function<
+      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+             const unsigned int                                          q)>
+      funcRho =
+        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+            const unsigned int                                          q) {
+          return (*rhoInValues).find(cell->id())->second[q];
+        };
+    dealii::VectorTools::project<3, distributedCPUVec<double>>(
+      dealii::MappingQ1<3, 3>(),
+      d_dofHandlerRhoNodal,
+      d_constraintsRhoNodal,
+      d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+      funcRho,
+      rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
+
+
+    //
+    // only generate output for electron-density
+    //
+    DataOut<3> dataOutRho;
+    dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
+    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
+
+    dataOutRho.build_patches(FEOrder);
+
+    std::string tempFolder = "meshOutputFolder";
+    mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+    dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
+                                               dataOutRho,
+                                               d_mpiCommParent,
+                                               mpi_communicator,
+                                               interpoolcomm,
+                                               interBandGroupComm,
+                                               tempFolder,
+                                               "intialDensityOutput");
+
+
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout
+        << std::endl
+        << "------------------DFT-FE mesh file creation completed---------------------------"
+        << std::endl;
+  }
+
+
 #include "dft.inst.cc"
 } // namespace dftfe

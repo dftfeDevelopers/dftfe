@@ -176,6 +176,12 @@ namespace dftfe
     run();
 
     /**
+     * @brief Writes inital density and mesh to file.
+     */
+    void
+    writeMesh();
+
+    /**
      * @brief compute approximation to ground-state without solving the SCF iteration
      */
     void
