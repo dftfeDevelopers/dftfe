@@ -49,6 +49,9 @@ namespace dftfe
     run() = 0;
 
     virtual void
+    writeMesh() = 0;
+
+    virtual void
     updateAtomPositionsAndMoveMesh(
       const std::vector<dealii::Tensor<1, 3, double>> &globalAtomsDisplacements,
       const double maxJacobianRatioFactor         = 1.25,
