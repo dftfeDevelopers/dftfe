@@ -214,7 +214,7 @@ namespace dftfe
     run();
 
     /**
-     * @brief Calss dftBasepointer write Mesh
+     * @brief Calls dftBasepointer public function writeMesh(). Here the inital density and mesh are stored in a file. Useful for visluiing meshes without running solve.
      */
     void
     writeMesh();

@@ -179,7 +179,7 @@ main(int argc, char *argv[])
                                               runParams.verbosity);
       geoOpt.runOpt();
     }
-    else if (runParams.solvermode == "NONE")
+  else if (runParams.solvermode == "NONE")
     {
       dftfe::dftfeWrapper dftfeWrapped(parameter_file,
                                        MPI_COMM_WORLD,
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
                                        true,
                                        "NONE",
                                        runParams.restartFilesPath);
-      dftfeWrapped.writeMesh();      
+      dftfeWrapped.writeMesh();
     }
 
   else

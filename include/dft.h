@@ -176,7 +176,7 @@ namespace dftfe
     run();
 
     /**
-     * @brief Writes inital density and mesh to file. 
+     * @brief Writes inital density and mesh to file.
      */
     void
     writeMesh();

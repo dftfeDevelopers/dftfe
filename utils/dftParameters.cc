@@ -73,7 +73,7 @@ namespace dftfe
       prm.declare_entry("RESTART FOLDER",
                         ".",
                         Patterns::Anything(),
-                        "[Standard] Folder to store restart files."); 
+                        "[Standard] Folder to store restart files.");
 
       prm.enter_subsection("GPU");
       {
