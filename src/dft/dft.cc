@@ -915,14 +915,12 @@ namespace dftfe
         generateImageCharges(d_pspCutOff,
                              d_imageIds,
                              d_imageCharges,
-                             d_imagePositions,
-                             d_globalChargeIdToImageIdMap);
+                             d_imagePositions);
 
         generateImageCharges(d_pspCutOffTrunc,
                              d_imageIdsTrunc,
                              d_imageChargesTrunc,
-                             d_imagePositionsTrunc,
-                             d_globalChargeIdToImageIdMapTrunc);
+                             d_imagePositionsTrunc);
 
         if ((d_dftParamsPtr->verbosity >= 4 ||
              d_dftParamsPtr->reproducible_output))
@@ -974,14 +972,12 @@ namespace dftfe
         generateImageCharges(d_pspCutOff,
                              d_imageIds,
                              d_imageCharges,
-                             d_imagePositions,
-                             d_globalChargeIdToImageIdMap);
+                             d_imagePositions);
 
         generateImageCharges(d_pspCutOffTrunc,
                              d_imageIdsTrunc,
                              d_imageChargesTrunc,
-                             d_imagePositionsTrunc,
-                             d_globalChargeIdToImageIdMapTrunc);
+                             d_imagePositionsTrunc);
       }
   }
 

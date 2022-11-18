@@ -335,8 +335,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   const double                      pspCutOff,
   std::vector<int> &                imageIds,
   std::vector<double> &             imageCharges,
-  std::vector<std::vector<double>> &imagePositions,
-  std::vector<std::vector<int>> &   globalChargeIdToImageIdMap)
+  std::vector<std::vector<double>> &imagePositions)
 {
   const double tol       = 1e-4;
   const bool   periodicX = d_dftParamsPtr->periodicX;
@@ -411,91 +410,143 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   imagePositions.clear();
   imageCharges.clear();
 
+  std::vector<int>    imageIdsKptPool;
+  std::vector<double> imagePositionsFlattenedKptPool;  
+  std::vector<double> imagePositionsFlattened;
+
+  // kpoint group parallelization data structures
+  const unsigned int numberKptGroups =
+    dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
+
+
+  const unsigned int kptGroupTaskId =
+    dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+  std::vector<unsigned int> kptGroupLowHighPlusOneIndices;
+  dftUtils::createBandParallelizationIndices(interpoolcomm,
+                                             atomLocations.size(),
+                                             kptGroupLowHighPlusOneIndices);
+
   for (int i = 0; i < atomLocations.size(); ++i)
     {
-      const int    iCharge = i;
-      const double fracX   = atomLocations[i][2];
-      const double fracY   = atomLocations[i][3];
-      const double fracZ   = atomLocations[i][4];
+  
+      if (i < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          i >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+      {
+  
+        const int    iCharge = i;
+        const double fracX   = atomLocations[i][2];
+        const double fracY   = atomLocations[i][3];
+        const double fracZ   = atomLocations[i][4];
 
-      int izmin = -numberLayers;
-      int iymin = -numberLayers;
-      int ixmin = -numberLayers;
+        int izmin = -numberLayers;
+        int iymin = -numberLayers;
+        int ixmin = -numberLayers;
 
-      int izmax = numberLayers + 1;
-      int iymax = numberLayers + 1;
-      int ixmax = numberLayers + 1;
-
-
-
-      for (int iz = izmin; iz < izmax; ++iz)
-        {
-          if (periodicZ == 0)
-            iz = izmax;
-          for (int iy = iymin; iy < iymax; ++iy)
-            {
-              if (periodicY == 0)
-                iy = iymax;
-              for (int ix = ixmin; ix < ixmax; ++ix)
-                {
-                  if (periodicX == 0)
-                    ix = ixmax;
-
-                  if ((periodicX * ix) != 0 || (periodicY * iy) != 0 ||
-                      (periodicZ * iz) != 0)
-                    {
-                      const double newFracZ = periodicZ * iz + fracZ;
-                      const double newFracY = periodicY * iy + fracY;
-                      const double newFracX = periodicX * ix + fracX;
-
-                      std::vector<double> newFrac(3);
-                      newFrac[0] = newFracX;
-                      newFrac[1] = newFracY;
-                      newFrac[2] = newFracZ;
-
-                      bool outsideCell  = true;
-                      bool withinCutoff = false;
+        int izmax = numberLayers + 1;
+        int iymax = numberLayers + 1;
+        int ixmax = numberLayers + 1;
 
 
-                      if (outsideCell)
-                        {
-                          const double distanceFromCell =
-                            internaldft::getMinDistanceFromImageToCell(
-                              latticeVectors, newFrac);
 
-                          if (distanceFromCell < pspCutOff)
-                            withinCutoff = true;
-                        }
+        for (int iz = izmin; iz < izmax; ++iz)
+          {
+            if (periodicZ == 0)
+              iz = izmax;
+            for (int iy = iymin; iy < iymax; ++iy)
+              {
+                if (periodicY == 0)
+                  iy = iymax;
+                for (int ix = ixmin; ix < ixmax; ++ix)
+                  {
+                    if (periodicX == 0)
+                      ix = ixmax;
 
-                      std::vector<double> currentImageChargePosition(3, 0.0);
+                    if ((periodicX * ix) != 0 || (periodicY * iy) != 0 ||
+                        (periodicZ * iz) != 0)
+                      {
+                        const double newFracZ = periodicZ * iz + fracZ;
+                        const double newFracY = periodicY * iy + fracY;
+                        const double newFracX = periodicX * ix + fracX;
 
-                      if (outsideCell && withinCutoff)
-                        {
-                          imageIds.push_back(iCharge);
+                        std::vector<double> newFrac(3);
+                        newFrac[0] = newFracX;
+                        newFrac[1] = newFracY;
+                        newFrac[2] = newFracZ;
 
-                          for (int ii = 0; ii < 3; ++ii)
-                            for (int jj = 0; jj < 3; ++jj)
-                              currentImageChargePosition[ii] +=
-                                d_domainBoundingVectors[jj][ii] * newFrac[jj];
+                        bool outsideCell  = true;
+                        bool withinCutoff = false;
 
-                          for (int ii = 0; ii < 3; ++ii)
-                            currentImageChargePosition[ii] -= shift[ii];
 
-                          imagePositions.push_back(currentImageChargePosition);
+                        if (outsideCell)
+                          {
+                            const double distanceFromCell =
+                              internaldft::getMinDistanceFromImageToCell(
+                                latticeVectors, newFrac);
 
-                          /*if((newFracX >= -tol && newFracX <= 1+tol) &&
-                            (newFracY >= -tol && newFracY <= 1+tol) &&
-                            (newFracZ >= -tol && newFracZ <= 1+tol))
-                            outsideCell = false;*/
-                        }
-                    }
-                }
-            }
+                            if (distanceFromCell < pspCutOff)
+                              withinCutoff = true;
+                          }
+
+                        std::vector<double> currentImageChargePosition(3, 0.0);
+
+                        if (outsideCell && withinCutoff)
+                          {
+                            imageIdsKptPool.push_back(iCharge);
+
+                            for (int ii = 0; ii < 3; ++ii)
+                              for (int jj = 0; jj < 3; ++jj)
+                                currentImageChargePosition[ii] +=
+                                  d_domainBoundingVectors[jj][ii] * newFrac[jj];
+
+                            for (int ii = 0; ii < 3; ++ii)
+                              currentImageChargePosition[ii] -= shift[ii];
+
+                            //imagePositions.push_back(currentImageChargePosition);
+
+                            imagePositionsFlattenedKptPool.insert(imagePositionsFlattened.end(), currentImageChargePosition.begin(), currentImageChargePosition.end());
+                            /*if((newFracX >= -tol && newFracX <= 1+tol) &&
+                              (newFracY >= -tol && newFracY <= 1+tol) &&
+                              (newFracZ >= -tol && newFracZ <= 1+tol))
+                              outsideCell = false;*/
+                          }
+                      }
+                  }
+              }
+          }
         }
     }
 
-  const int numImageCharges = imageIds.size();
 
+  std::vector<int> recvCounts(numberKptGroups,0);
+  const int sendCount=imageIdsKptPool.size();
+  MPI_Allgather(&sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT,
+              interpoolcomm);
+
+  const int numImageCharges = std::accumulate(recvCounts.begin(),recvCounts.end(),0);
+
+  imageIds.resize(numImageCharges,0);
+  imagePositionsFlattened.resize(numImageCharges*3,0);
+
+  std::vector<int> displacementsImageIds(numberKptGroups,0);
+  std::vector<int> displacementsImagePos(numberKptGroups,0);
+  std::vector<int> recvCountsPos(numberKptGroups,0);
+  int disp=0;
+  for (int i = 0; i < numberKptGroups; ++i)
+  {
+     displacementsImageIds[i]=disp;
+     displacementsImagePos[i]=disp*3;    
+     disp+=recvCounts[i];
+     recvCountsPos[i]=recvCounts[i]*3;
+  }
+
+
+  MPI_Allgatherv(&imageIdsKptPool[0],sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
+
+  const int sendCountPos=sendCount*3;
+  MPI_Allgatherv(&imagePositionsFlattenedKptPool[0],sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
+
+  imageCharges.resize(numImageCharges);
+  imagePositions.resize(numImageCharges,std::vector<double>(3,0.0));
   for (int i = 0; i < numImageCharges; ++i)
     {
       double atomCharge;
@@ -504,7 +555,10 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
       else
         atomCharge = atomLocations[imageIds[i]][0];
 
-      imageCharges.push_back(atomCharge);
+      imageCharges[i]=atomCharge;
+      imagePositions[i][0]=imagePositionsFlattened[3*i+0];
+      imagePositions[i][1]=imagePositionsFlattened[3*i+1];
+      imagePositions[i][2]=imagePositionsFlattened[3*i+2];      
     }
 }
 

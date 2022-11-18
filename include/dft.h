@@ -445,8 +445,7 @@ namespace dftfe
       const double                      pspCutOff,
       std::vector<int> &                imageIds,
       std::vector<double> &             imageCharges,
-      std::vector<std::vector<double>> &imagePositions,
-      std::vector<std::vector<int>> &   globalChargeIdToImageIdMap);
+      std::vector<std::vector<double>> &imagePositions);
 
     void
     createMasterChargeIdToImageIdMaps(
