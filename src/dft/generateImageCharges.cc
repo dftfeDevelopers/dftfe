@@ -418,7 +418,6 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   const unsigned int numberKptGroups =
     dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
-  //std::cout<<"hello: "<<numberKptGroups<<std::endl;
   const unsigned int kptGroupTaskId =
     dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
   std::vector<int> kptGroupLowHighPlusOneIndices;
@@ -426,7 +425,6 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
                                              atomLocations.size(),
                                              kptGroupLowHighPlusOneIndices);
 
-  //std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[1]<<std::endl;
   for (int i = 0; i < atomLocations.size(); ++i)
     {
   
@@ -504,7 +502,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
 
                             //imagePositions.push_back(currentImageChargePosition);
 
-                            imagePositionsFlattenedKptPool.insert(imagePositionsFlattened.end(), currentImageChargePosition.begin(), currentImageChargePosition.end());
+                            imagePositionsFlattenedKptPool.insert(imagePositionsFlattenedKptPool.end(), currentImageChargePosition.begin(), currentImageChargePosition.end());
                             /*if((newFracX >= -tol && newFracX <= 1+tol) &&
                               (newFracY >= -tol && newFracY <= 1+tol) &&
                               (newFracZ >= -tol && newFracZ <= 1+tol))
@@ -517,7 +515,6 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
         }
     }
 
-  //std::cout<<"hello3: "<<std::endl;
 
   std::vector<int> recvCounts(numberKptGroups,0);
   const int sendCount=imageIdsKptPool.size();
@@ -526,44 +523,47 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
 
   const int numImageCharges = std::accumulate(recvCounts.begin(),recvCounts.end(),0);
 
-  imageIds.resize(numImageCharges,0);
-  imagePositionsFlattened.resize(numImageCharges*3,0);
-
-  std::vector<int> displacementsImageIds(numberKptGroups,0);
-  std::vector<int> displacementsImagePos(numberKptGroups,0);
-  std::vector<int> recvCountsPos(numberKptGroups,0);
-  int disp=0;
-  for (int i = 0; i < numberKptGroups; ++i)
+  if (numImageCharges>0)
   {
-     displacementsImageIds[i]=disp;
-     displacementsImagePos[i]=disp*3;    
-     disp+=recvCounts[i];
-     recvCountsPos[i]=recvCounts[i]*3;
-  }
+    imageIds.resize(numImageCharges,0);
+    imagePositionsFlattened.resize(numImageCharges*3,0);
 
-  const int dummy1=0;
-  const double dummy2=0;
-
-  MPI_Allgatherv(sendCount>0?&imageIdsKptPool[0]:&dummy1,sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
-
-  const int sendCountPos=sendCount*3;
-  MPI_Allgatherv(sendCountPos>0?&imagePositionsFlattenedKptPool[0]:&dummy2,sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
-
-  imageCharges.resize(numImageCharges);
-  imagePositions.resize(numImageCharges,std::vector<double>(3,0.0));
-  for (int i = 0; i < numImageCharges; ++i)
+    std::vector<int> displacementsImageIds(numberKptGroups,0);
+    std::vector<int> displacementsImagePos(numberKptGroups,0);
+    std::vector<int> recvCountsPos(numberKptGroups,0);
+    int disp=0;
+    for (int i = 0; i < numberKptGroups; ++i)
     {
-      double atomCharge;
-      if (d_dftParamsPtr->isPseudopotential)
-        atomCharge = atomLocations[imageIds[i]][1];
-      else
-        atomCharge = atomLocations[imageIds[i]][0];
-
-      imageCharges[i]=atomCharge;
-      imagePositions[i][0]=imagePositionsFlattened[3*i+0];
-      imagePositions[i][1]=imagePositionsFlattened[3*i+1];
-      imagePositions[i][2]=imagePositionsFlattened[3*i+2];      
+       displacementsImageIds[i]=disp;
+       displacementsImagePos[i]=disp*3;    
+       disp+=recvCounts[i];
+       recvCountsPos[i]=recvCounts[i]*3;
     }
+
+    const int dummy1=0;
+    const double dummy2=0;
+
+    MPI_Allgatherv(sendCount>0?&imageIdsKptPool[0]:&dummy1,sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
+
+    const int sendCountPos=sendCount*3;
+    MPI_Allgatherv(sendCountPos>0?&imagePositionsFlattenedKptPool[0]:&dummy2,sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
+
+    imageCharges.resize(numImageCharges);
+    imagePositions.resize(numImageCharges,std::vector<double>(3,0.0));
+    for (int i = 0; i < numImageCharges; ++i)
+      {
+        double atomCharge;
+        if (d_dftParamsPtr->isPseudopotential)
+          atomCharge = atomLocations[imageIds[i]][1];
+        else
+          atomCharge = atomLocations[imageIds[i]][0];
+
+        imageCharges[i]=atomCharge;
+        imagePositions[i][0]=imagePositionsFlattened[3*i+0];
+        imagePositions[i][1]=imagePositionsFlattened[3*i+1];
+        imagePositions[i][2]=imagePositionsFlattened[3*i+2];      
+      }
+  }
 }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
