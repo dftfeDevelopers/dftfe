@@ -255,6 +255,13 @@ namespace dftfe
       const unsigned int         numBands,
       std::vector<unsigned int> &bandGroupLowHighPlusOneIndices);
 
+    void
+    createKpointParallelizationIndices(
+      const MPI_Comm &           interKptPoolComm,
+      const  int         numberIndices,
+      std::vector<int> &kptGroupLowHighPlusOneIndices);
+
+
     /** @brief Wrapper to print current memory usage (prints only the maximum across mpiComm)
      * using PetscMemoryGetCurrentUsage
      *

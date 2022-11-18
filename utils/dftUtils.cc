@@ -239,6 +239,37 @@ namespace dftfe
       bandGroupLowHighPlusOneIndices[2 * numberBandGroups - 1] = numBands;
     }
 
+
+    void
+    createKpointParallelizationIndices(
+      const MPI_Comm &           interKptPoolComm,
+      const int         numberIndices,
+      std::vector<int> &kptGroupLowHighPlusOneIndices)
+    {
+      kptGroupLowHighPlusOneIndices.clear();
+      const int numberKptGroups =
+        dealii::Utilities::MPI::n_mpi_processes(interKptPoolComm);
+      const  int indicesKptGroup = std::ceil(numberIndices / numberKptGroups);
+      kptGroupLowHighPlusOneIndices.resize(numberKptGroups * 2);
+      int indicesRemaining=numberIndices;
+      for (int i = 0; i < numberKptGroups; i++)
+        {
+          if (indicesRemaining>0)
+          {
+            kptGroupLowHighPlusOneIndices[2 * i] = i * indicesKptGroup;
+            kptGroupLowHighPlusOneIndices[2 * i + 1] =indicesRemaining>indicesKptGroup?
+               (i +1)*indicesKptGroup:(i*indicesKptGroup+indicesRemaining);
+          }
+          else
+          {
+            kptGroupLowHighPlusOneIndices[2 * i] = -1;
+            kptGroupLowHighPlusOneIndices[2 * i + 1] =-1;
+          }
+          indicesRemaining-=indicesKptGroup;
+        }
+    }
+
+
     Pool::Pool(const MPI_Comm &   mpi_communicator,
                const unsigned int npool,
                const int          verbosity)

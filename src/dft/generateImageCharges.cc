@@ -418,14 +418,15 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   const unsigned int numberKptGroups =
     dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
-
+  std::cout<<"hello: "<<numberKptGroups<<std::endl;
   const unsigned int kptGroupTaskId =
     dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-  std::vector<unsigned int> kptGroupLowHighPlusOneIndices;
-  dftUtils::createBandParallelizationIndices(interpoolcomm,
+  std::vector<int> kptGroupLowHighPlusOneIndices;
+  dftUtils::createKpointParallelizationIndices(interpoolcomm,
                                              atomLocations.size(),
                                              kptGroupLowHighPlusOneIndices);
 
+  std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[1]<<std::endl;
   for (int i = 0; i < atomLocations.size(); ++i)
     {
   
@@ -516,6 +517,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
         }
     }
 
+  std::cout<<"hello3: "<<std::endl;
 
   std::vector<int> recvCounts(numberKptGroups,0);
   const int sendCount=imageIdsKptPool.size();
@@ -539,11 +541,13 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
      recvCountsPos[i]=recvCounts[i]*3;
   }
 
+  const int dummy1=0;
+  const double dummy2=0;
 
-  MPI_Allgatherv(&imageIdsKptPool[0],sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
+  MPI_Allgatherv(sendCount>0?&imageIdsKptPool[0]:&dummy1,sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
 
   const int sendCountPos=sendCount*3;
-  MPI_Allgatherv(&imagePositionsFlattenedKptPool[0],sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
+  MPI_Allgatherv(sendCountPos>0?&imagePositionsFlattenedKptPool[0]:&dummy2,sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
 
   imageCharges.resize(numImageCharges);
   imagePositions.resize(numImageCharges,std::vector<double>(3,0.0));
