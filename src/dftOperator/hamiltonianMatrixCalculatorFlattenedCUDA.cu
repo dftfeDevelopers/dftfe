@@ -118,8 +118,8 @@ namespace
     const unsigned int numDofsPerCell,
     const unsigned int numQuadPoints,
     const unsigned int spinIndex,
-    const unsigned int nspin,    
-    const unsigned int numkPoints,    
+    const unsigned int nspin,
+    const unsigned int numkPoints,
     const double *     shapeFunctionValues,
     const double *     shapeFunctionValuesInverted,
     const double *     shapeFunctionGradientValuesXInverted,
@@ -149,11 +149,11 @@ namespace
         const unsigned int cellDofIndexJ =
           flattenedCellDofIndex % numDofsPerCell;
 
-        double val     = 0.0;
-        double valRealKpt=0.0;   
-        double valImagKptX=0;
-        double valImagKptY=0;
-        double valImagKptZ=0;
+        double val         = 0.0;
+        double valRealKpt  = 0.0;
+        double valImagKptX = 0;
+        double valImagKptY = 0;
+        double valImagKptZ = 0;
 
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
@@ -178,29 +178,37 @@ namespace
                                                    numDofsPerCell * q +
                                                    cellDofIndexI];
 
-            val +=
-              vEffJxW[cellIndex * numQuadPoints + q]*shapeI * shapeJ;
+            val += vEffJxW[cellIndex * numQuadPoints + q] * shapeI * shapeJ;
 
-            valRealKpt +=
-                 JxW[cellIndex * numQuadPoints + q] *
-                shapeI * shapeJ;   
+            valRealKpt += JxW[cellIndex * numQuadPoints + q] * shapeI * shapeJ;
 
-            valImagKptX -=gradShapeXI*shapeJ * JxW[cellIndex * numQuadPoints + q];
-            valImagKptY -=gradShapeYI*shapeJ * JxW[cellIndex * numQuadPoints + q];
-            valImagKptZ -=gradShapeZI*shapeJ * JxW[cellIndex * numQuadPoints + q];            
+            valImagKptX -=
+              gradShapeXI * shapeJ * JxW[cellIndex * numQuadPoints + q];
+            valImagKptY -=
+              gradShapeYI * shapeJ * JxW[cellIndex * numQuadPoints + q];
+            valImagKptZ -=
+              gradShapeZI * shapeJ * JxW[cellIndex * numQuadPoints + q];
           }
 
         for (unsigned int ikpt = 0; ikpt < numkPoints; ++ikpt)
-        {
-          const unsigned int startIndex=(nspin*ikpt+spinIndex)*numCells*numDofsPerCell*numDofsPerCell;
-          cellHamiltonianMatrixFlattened[startIndex+index] = make_cuDoubleComplex(
-            0.5 * cellShapeFunctionGradientIntegral[index] + val+kSquareTimesHalfVec[ikpt]*valRealKpt, kPointCoordsVec[3*ikpt+0]*valImagKptX+kPointCoordsVec[3*ikpt+1]*valImagKptY+kPointCoordsVec[3*ikpt+2]*valImagKptZ);
-          if (externalPotCorr)
-            cellHamiltonianMatrixFlattened[startIndex+index] = make_cuDoubleComplex(
-              cellHamiltonianMatrixFlattened[startIndex+index].x +
-                cellHamiltonianMatrixExternalPotCorrFlattened[index],
-              cellHamiltonianMatrixFlattened[startIndex+index].y);
-        }
+          {
+            const unsigned int startIndex = (nspin * ikpt + spinIndex) *
+                                            numCells * numDofsPerCell *
+                                            numDofsPerCell;
+            cellHamiltonianMatrixFlattened[startIndex + index] =
+              make_cuDoubleComplex(
+                0.5 * cellShapeFunctionGradientIntegral[index] + val +
+                  kSquareTimesHalfVec[ikpt] * valRealKpt,
+                kPointCoordsVec[3 * ikpt + 0] * valImagKptX +
+                  kPointCoordsVec[3 * ikpt + 1] * valImagKptY +
+                  kPointCoordsVec[3 * ikpt + 2] * valImagKptZ);
+            if (externalPotCorr)
+              cellHamiltonianMatrixFlattened[startIndex + index] =
+                make_cuDoubleComplex(
+                  cellHamiltonianMatrixFlattened[startIndex + index].x +
+                    cellHamiltonianMatrixExternalPotCorrFlattened[index],
+                  cellHamiltonianMatrixFlattened[startIndex + index].y);
+          }
       }
   }
 
@@ -298,10 +306,14 @@ namespace
                    (gradShapeZI * shapeJ + gradShapeZJ * shapeI));
           }
 
-        cellHamiltonianMatrixFlattened[spinIndex*numCells*numDofsPerCell*numDofsPerCell+index] =
+        cellHamiltonianMatrixFlattened[spinIndex * numCells * numDofsPerCell *
+                                         numDofsPerCell +
+                                       index] =
           0.5 * cellShapeFunctionGradientIntegral[index] + val;
         if (externalPotCorr)
-          cellHamiltonianMatrixFlattened[spinIndex*numCells*numDofsPerCell*numDofsPerCell+index] +=
+          cellHamiltonianMatrixFlattened[spinIndex * numCells * numDofsPerCell *
+                                           numDofsPerCell +
+                                         index] +=
             cellHamiltonianMatrixExternalPotCorrFlattened[index];
       }
   }
@@ -313,8 +325,8 @@ namespace
     const unsigned int numDofsPerCell,
     const unsigned int numQuadPoints,
     const unsigned int spinIndex,
-    const unsigned int nspin,    
-    const unsigned int numkPoints,    
+    const unsigned int nspin,
+    const unsigned int numkPoints,
     const double *     shapeFunctionValues,
     const double *     shapeFunctionValuesInverted,
     const double *     shapeFunctionGradientValuesXInverted,
@@ -345,11 +357,11 @@ namespace
         const unsigned int cellDofIndexJ =
           flattenedCellDofIndex % numDofsPerCell;
 
-        double val     = 0.0;
-        double valRealKpt=0;        
-        double valImagKptX=0;
-        double valImagKptY=0;
-        double valImagKptZ=0;
+        double val         = 0.0;
+        double valRealKpt  = 0;
+        double valImagKptX = 0;
+        double valImagKptY = 0;
+        double valImagKptZ = 0;
 
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
@@ -392,7 +404,7 @@ namespace
 
 
             val +=
-              vEffJxW[cellIndex * numQuadPoints + q]*shapeI * shapeJ +
+              vEffJxW[cellIndex * numQuadPoints + q] * shapeI * shapeJ +
               2.0 *
                 (derExcWithSigmaTimesGradRhoJxW[cellIndex * numQuadPoints * 3 +
                                                 3 * q] *
@@ -404,26 +416,35 @@ namespace
                                                 3 * q + 2] *
                    (gradShapeZI * shapeJ + gradShapeZJ * shapeI));
 
-            valRealKpt +=
-                 JxW[cellIndex * numQuadPoints + q] *
-                shapeI * shapeJ;   
+            valRealKpt += JxW[cellIndex * numQuadPoints + q] * shapeI * shapeJ;
 
-            valImagKptX -=gradShapeXI*shapeJ * JxW[cellIndex * numQuadPoints + q];
-            valImagKptY -=gradShapeYI*shapeJ * JxW[cellIndex * numQuadPoints + q];
-            valImagKptZ -=gradShapeZI*shapeJ * JxW[cellIndex * numQuadPoints + q];            
+            valImagKptX -=
+              gradShapeXI * shapeJ * JxW[cellIndex * numQuadPoints + q];
+            valImagKptY -=
+              gradShapeYI * shapeJ * JxW[cellIndex * numQuadPoints + q];
+            valImagKptZ -=
+              gradShapeZI * shapeJ * JxW[cellIndex * numQuadPoints + q];
           }
 
         for (unsigned int ikpt = 0; ikpt < numkPoints; ++ikpt)
-        {
-          const unsigned int startIndex=(nspin*ikpt+spinIndex)*numCells*numDofsPerCell*numDofsPerCell;
-          cellHamiltonianMatrixFlattened[startIndex+index] = make_cuDoubleComplex(
-            0.5 * cellShapeFunctionGradientIntegral[index] + val+kSquareTimesHalfVec[ikpt]*valRealKpt, kPointCoordsVec[3*ikpt+0]*valImagKptX+kPointCoordsVec[3*ikpt+1]*valImagKptY+kPointCoordsVec[3*ikpt+2]*valImagKptZ);
-          if (externalPotCorr)
-            cellHamiltonianMatrixFlattened[startIndex+index] = make_cuDoubleComplex(
-              cellHamiltonianMatrixFlattened[startIndex+index].x +
-                cellHamiltonianMatrixExternalPotCorrFlattened[index],
-              cellHamiltonianMatrixFlattened[startIndex+index].y);
-        }
+          {
+            const unsigned int startIndex = (nspin * ikpt + spinIndex) *
+                                            numCells * numDofsPerCell *
+                                            numDofsPerCell;
+            cellHamiltonianMatrixFlattened[startIndex + index] =
+              make_cuDoubleComplex(
+                0.5 * cellShapeFunctionGradientIntegral[index] + val +
+                  kSquareTimesHalfVec[ikpt] * valRealKpt,
+                kPointCoordsVec[3 * ikpt + 0] * valImagKptX +
+                  kPointCoordsVec[3 * ikpt + 1] * valImagKptY +
+                  kPointCoordsVec[3 * ikpt + 2] * valImagKptZ);
+            if (externalPotCorr)
+              cellHamiltonianMatrixFlattened[startIndex + index] =
+                make_cuDoubleComplex(
+                  cellHamiltonianMatrixFlattened[startIndex + index].x +
+                    cellHamiltonianMatrixExternalPotCorrFlattened[index],
+                  cellHamiltonianMatrixFlattened[startIndex + index].y);
+          }
       }
   }
 
@@ -704,9 +725,10 @@ namespace
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
-kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatricesAllkpt(
-  const unsigned int spinIndex,
-  const bool         onlyHPrimePartForFirstOrderDensityMatResponse)
+kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+  computeHamiltonianMatricesAllkpt(
+    const unsigned int spinIndex,
+    const bool         onlyHPrimePartForFirstOrderDensityMatResponse)
 {
   dealii::TimerOutput computingTimerStandard(
     this->getMPICommunicator(),
@@ -818,7 +840,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrice
           d_numQuadPoints,
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
-          dftPtr->d_kPointWeights.size(),          
+          dftPtr->d_kPointWeights.size(),
           thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
           thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
           thrust::raw_pointer_cast(
@@ -836,10 +858,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrice
             &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
           reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
             &d_cellHamiltonianMatrixFlattenedDevice[0])),
-          thrust::raw_pointer_cast(
-            &d_kpointCoordsVecDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_kSquareTimesHalfVecDevice[0]),
+          thrust::raw_pointer_cast(&d_kpointCoordsVecDevice[0]),
+          thrust::raw_pointer_cast(&d_kSquareTimesHalfVecDevice[0]),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
       else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
@@ -871,10 +891,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrice
             &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
           reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
             &d_cellHamiltonianMatrixFlattenedDevice[0])),
-          thrust::raw_pointer_cast(
-            &d_kpointCoordsVecDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_kSquareTimesHalfVecDevice[0]),
+          thrust::raw_pointer_cast(&d_kpointCoordsVecDevice[0]),
+          thrust::raw_pointer_cast(&d_kSquareTimesHalfVecDevice[0]),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
     }

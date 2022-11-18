@@ -522,11 +522,9 @@ namespace dftfe
     thrust::device_vector<dataTypes::numberThrustGPU>
       d_cellHamMatrixTimesWaveMatrix;
 
-    thrust::device_vector<double>
-      d_kpointCoordsVecDevice;
+    thrust::device_vector<double> d_kpointCoordsVecDevice;
 
-    thrust::device_vector<double>
-      d_kSquareTimesHalfVecDevice;
+    thrust::device_vector<double> d_kSquareTimesHalfVecDevice;
 
     /// for non local
 

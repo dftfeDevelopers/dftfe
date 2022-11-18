@@ -292,8 +292,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                 "Hamiltonian matrix prime computation");
 #ifdef DFTFE_WITH_GPU
               if (d_dftParamsPtr->useGPU)
-                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(s,
-                                                                      true);
+                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(
+                  s, true);
 #endif
               if (!d_dftParamsPtr->useGPU)
                 kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
