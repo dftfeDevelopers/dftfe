@@ -418,13 +418,15 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   const unsigned int numberKptGroups =
     dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
+  //std::cout<<"hello: "<<numberKptGroups<<std::endl;
   const unsigned int kptGroupTaskId =
     dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
   std::vector<int> kptGroupLowHighPlusOneIndices;
   dftUtils::createKpointParallelizationIndices(interpoolcomm,
                                              atomLocations.size(),
                                              kptGroupLowHighPlusOneIndices);
-
+  //std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId]<<std::endl;
+  //std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1]<<std::endl;
   for (int i = 0; i < atomLocations.size(); ++i)
     {
   
@@ -525,6 +527,8 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
 
   if (numImageCharges>0)
   {
+    //std::cout<<"num image charges: "<<numImageCharges<<std::endl;
+
     imageIds.resize(numImageCharges,0);
     imagePositionsFlattened.resize(numImageCharges*3,0);
 
