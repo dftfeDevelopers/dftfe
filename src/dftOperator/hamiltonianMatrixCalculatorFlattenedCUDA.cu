@@ -179,8 +179,7 @@ namespace
                                                    cellDofIndexI];
 
             val +=
-              vEffJxW[cellIndex * numQuadPoints + q]*JxW[cellIndex * numQuadPoints + q] *
-                shapeI * shapeJ;
+              vEffJxW[cellIndex * numQuadPoints + q]*shapeI * shapeJ;
 
             valRealKpt +=
                  JxW[cellIndex * numQuadPoints + q] *
@@ -393,8 +392,7 @@ namespace
 
 
             val +=
-              vEffJxW[cellIndex * numQuadPoints + q]*JxW[cellIndex * numQuadPoints + q] *
-                shapeI * shapeJ +
+              vEffJxW[cellIndex * numQuadPoints + q]*shapeI * shapeJ +
               2.0 *
                 (derExcWithSigmaTimesGradRhoJxW[cellIndex * numQuadPoints * 3 +
                                                 3 * q] *

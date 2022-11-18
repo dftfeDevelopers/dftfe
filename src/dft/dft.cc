@@ -2768,29 +2768,37 @@ namespace dftfe
               }
 
 #ifdef DFTFE_WITH_GPU
-                    if (d_dftParamsPtr->useGPU)
-                    {
-                      computing_timer.enter_subsection(
-                         "Hamiltonian Matrix Computation");
-                      kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(0);
-                      computing_timer.leave_subsection(
-                        "Hamiltonian Matrix Computation");
-                    }
+              if (d_dftParamsPtr->useGPU)
+              {
+                computing_timer.enter_subsection(
+                   "Hamiltonian Matrix Computation");
+                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(0);
+                computing_timer.leave_subsection(
+                  "Hamiltonian Matrix Computation");
+              }
 #endif
 
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               {
+                
+#ifdef DFTFE_WITH_GPU
+                if (d_dftParamsPtr->useGPU)
+                  kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint, 0);
+#endif
+                if (!d_dftParamsPtr->useGPU)
+                  kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
 
-                    if (!d_dftParamsPtr->useGPU)
-                    {
-                      computing_timer.enter_subsection(
-                      "Hamiltonian Matrix Computation");                      
-                      kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
-                                                                        0);
-                      computing_timer.leave_subsection(
-                        "Hamiltonian Matrix Computation");                      
-                    }
+
+                if (!d_dftParamsPtr->useGPU)
+                {
+                  computing_timer.enter_subsection(
+                  "Hamiltonian Matrix Computation");                      
+                  kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
+                                                                    0);
+                  computing_timer.leave_subsection(
+                    "Hamiltonian Matrix Computation");                      
+                }
 
 
                 for (unsigned int j = 0; j < 1; ++j)
