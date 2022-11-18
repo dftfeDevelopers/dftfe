@@ -520,8 +520,12 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
 
   std::vector<int> recvCounts(numberKptGroups,0);
   const int sendCount=imageIdsKptPool.size();
-  MPI_Allgather(&sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT,
+  int ierr=MPI_Allgather(&sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT,
               interpoolcomm);
+
+  if (ierr)
+     AssertThrow(false, dealii::ExcMessage("DFT-FE Error: MPI Error in generate image charges"));
+  
 
   const int numImageCharges = std::accumulate(recvCounts.begin(),recvCounts.end(),0);
 
@@ -547,10 +551,15 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
     const int dummy1=0;
     const double dummy2=0;
 
-    MPI_Allgatherv(sendCount>0?&imageIdsKptPool[0]:&dummy1,sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
+    ierr=MPI_Allgatherv(sendCount>0?&imageIdsKptPool[0]:&dummy1,sendCount, MPI_INT, &imageIds[0],&recvCounts[0], &displacementsImageIds[0], MPI_INT, interpoolcomm);
 
+    if (ierr)
+     AssertThrow(false, dealii::ExcMessage("DFT-FE Error: MPI Error in generate image charges"));
     const int sendCountPos=sendCount*3;
-    MPI_Allgatherv(sendCountPos>0?&imagePositionsFlattenedKptPool[0]:&dummy2,sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
+    ierr=MPI_Allgatherv(sendCountPos>0?&imagePositionsFlattenedKptPool[0]:&dummy2,sendCountPos, MPI_DOUBLE, &imagePositionsFlattened[0],&recvCountsPos[0], &displacementsImagePos[0], MPI_DOUBLE, interpoolcomm);  
+
+    if (ierr)
+      AssertThrow(false, dealii::ExcMessage("DFT-FE Error: MPI Error in generate image charges"));
 
     imageCharges.resize(numImageCharges);
     imagePositions.resize(numImageCharges,std::vector<double>(3,0.0));
