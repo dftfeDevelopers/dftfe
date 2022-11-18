@@ -418,7 +418,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   const unsigned int numberKptGroups =
     dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
-  std::cout<<"hello: "<<numberKptGroups<<std::endl;
+  //std::cout<<"hello: "<<numberKptGroups<<std::endl;
   const unsigned int kptGroupTaskId =
     dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
   std::vector<int> kptGroupLowHighPlusOneIndices;
@@ -426,7 +426,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
                                              atomLocations.size(),
                                              kptGroupLowHighPlusOneIndices);
 
-  std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[1]<<std::endl;
+  //std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[1]<<std::endl;
   for (int i = 0; i < atomLocations.size(); ++i)
     {
   
@@ -517,7 +517,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
         }
     }
 
-  std::cout<<"hello3: "<<std::endl;
+  //std::cout<<"hello3: "<<std::endl;
 
   std::vector<int> recvCounts(numberKptGroups,0);
   const int sendCount=imageIdsKptPool.size();
