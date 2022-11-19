@@ -146,7 +146,7 @@ namespace dftfe
              dftParams)
     , d_affineTransformMesh(mpi_comm_parent, mpi_comm_domain, dftParams)
     , d_gaussianMovePar(mpi_comm_parent, mpi_comm_domain, dftParams)
-    , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain, dftParams)
+    , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain,_interpoolcomm, dftParams)
     , d_dispersionCorr(mpi_comm_parent,
                        mpi_comm_domain,
                        _interpoolcomm,
