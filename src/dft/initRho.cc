@@ -276,8 +276,10 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
       const unsigned int kptGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
       std::vector<int> kptGroupLowHighPlusOneIndices;
-      dftUtils::createKpointParallelizationIndices(
-        interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
+
+      if (numberDofs>0)
+        dftUtils::createKpointParallelizationIndices(
+          interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
 
       d_rhoInNodalValues = 0;
       for (unsigned int dof = 0; dof < numberDofs; ++dof)
@@ -328,12 +330,13 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
             }
         }
 
-      MPI_Allreduce(MPI_IN_PLACE,
-                    d_rhoInNodalValues.begin(),
-                    numberDofs,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    interpoolcomm);
+      if (numberDofs>0)
+        MPI_Allreduce(MPI_IN_PLACE,
+                      d_rhoInNodalValues.begin(),
+                      numberDofs,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      interpoolcomm);
       MPI_Barrier(interpoolcomm);
 
       d_rhoInNodalValues.update_ghost_values();

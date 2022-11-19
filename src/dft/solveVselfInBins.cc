@@ -969,8 +969,10 @@ namespace dftfe
     const unsigned int kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(d_mpiInterCommKpts);
     std::vector<int> kptGroupLowHighPlusOneIndices;
-    dftUtils::createKpointParallelizationIndices(
-      d_mpiInterCommKpts, numberBins, kptGroupLowHighPlusOneIndices);
+
+    if (numberBins>0)
+      dftUtils::createKpointParallelizationIndices(
+        d_mpiInterCommKpts, numberBins, kptGroupLowHighPlusOneIndices);
 
     //
     // compute rhs for each bin and store in rhsFlattened
@@ -1299,12 +1301,13 @@ namespace dftfe
           }//intercomm parallelization check
       } // bin loop
 
-    MPI_Allreduce(MPI_IN_PLACE,
-                    &rhsFlattened[0],
-                    localSize * numberPoissonSolves,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    d_mpiInterCommKpts);
+    if (localSize>0)
+      MPI_Allreduce(MPI_IN_PLACE,
+                      &rhsFlattened[0],
+                      localSize * numberPoissonSolves,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpiInterCommKpts);
     MPI_Barrier(d_mpiInterCommKpts);
 
     //
