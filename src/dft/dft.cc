@@ -2220,7 +2220,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC and false)
+            not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_GPU
             if (scfIter > 0)
@@ -2324,7 +2324,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC and false)
+            not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_GPU
             CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
@@ -3059,7 +3059,7 @@ namespace dftfe
 
             if (d_dftParamsPtr->useGPU and
                 d_dftParamsPtr->floatingNuclearCharges and
-                not d_dftParamsPtr->pinnedNodeForPBC and false)
+                not d_dftParamsPtr->pinnedNodeForPBC)
               {
 #ifdef DFTFE_WITH_GPU
                 d_phiTotalSolverProblemCUDA.reinit(
@@ -3280,7 +3280,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC and false)
+            not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_GPU
             d_phiTotalSolverProblemCUDA.reinit(
