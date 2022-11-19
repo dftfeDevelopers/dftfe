@@ -257,8 +257,8 @@ namespace dftfe
 
     void
     createKpointParallelizationIndices(
-      const MPI_Comm &           interKptPoolComm,
-      const  int         numberIndices,
+      const MPI_Comm &  interKptPoolComm,
+      const int         numberIndices,
       std::vector<int> &kptGroupLowHighPlusOneIndices);
 
 

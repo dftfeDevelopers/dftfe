@@ -441,11 +441,10 @@ namespace dftfe
 
     /// creates datastructures related to periodic image charges
     void
-    generateImageCharges(
-      const double                      pspCutOff,
-      std::vector<int> &                imageIds,
-      std::vector<double> &             imageCharges,
-      std::vector<std::vector<double>> &imagePositions);
+    generateImageCharges(const double                      pspCutOff,
+                         std::vector<int> &                imageIds,
+                         std::vector<double> &             imageCharges,
+                         std::vector<std::vector<double>> &imagePositions);
 
     void
     createMasterChargeIdToImageIdMaps(

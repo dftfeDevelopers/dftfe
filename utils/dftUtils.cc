@@ -242,32 +242,34 @@ namespace dftfe
 
     void
     createKpointParallelizationIndices(
-      const MPI_Comm &           interKptPoolComm,
+      const MPI_Comm &  interKptPoolComm,
       const int         numberIndices,
       std::vector<int> &kptGroupLowHighPlusOneIndices)
     {
       kptGroupLowHighPlusOneIndices.clear();
       const int numberKptGroups =
         dealii::Utilities::MPI::n_mpi_processes(interKptPoolComm);
-      const  int indicesKptGroup =numberIndices / numberKptGroups+1;
+      const int indicesKptGroup = numberIndices / numberKptGroups + 1;
       kptGroupLowHighPlusOneIndices.resize(numberKptGroups * 2);
-      int indicesRemaining=numberIndices;
+      int indicesRemaining = numberIndices;
       for (int i = 0; i < numberKptGroups; i++)
         {
-          if (indicesRemaining>0)
-          {
-            kptGroupLowHighPlusOneIndices[2 * i] = i * indicesKptGroup;
-            if (i==(numberKptGroups-1))
-               kptGroupLowHighPlusOneIndices[2 * i + 1] =i*indicesKptGroup+indicesRemaining;
-            else
-               kptGroupLowHighPlusOneIndices[2 * i + 1]=(i +1)*indicesKptGroup;              
-          }
+          if (indicesRemaining > 0)
+            {
+              kptGroupLowHighPlusOneIndices[2 * i] = i * indicesKptGroup;
+              if (i == (numberKptGroups - 1))
+                kptGroupLowHighPlusOneIndices[2 * i + 1] =
+                  i * indicesKptGroup + indicesRemaining;
+              else
+                kptGroupLowHighPlusOneIndices[2 * i + 1] =
+                  (i + 1) * indicesKptGroup;
+            }
           else
-          {
-            kptGroupLowHighPlusOneIndices[2 * i] = -1;
-            kptGroupLowHighPlusOneIndices[2 * i + 1] =-1;
-          }
-          indicesRemaining-=indicesKptGroup;
+            {
+              kptGroupLowHighPlusOneIndices[2 * i]     = -1;
+              kptGroupLowHighPlusOneIndices[2 * i + 1] = -1;
+            }
+          indicesRemaining -= indicesKptGroup;
         }
     }
 
