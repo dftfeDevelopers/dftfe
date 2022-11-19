@@ -276,60 +276,64 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
       const unsigned int kptGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
       std::vector<int> kptGroupLowHighPlusOneIndices;
-      dftUtils::createKpointParallelizationIndices(interpoolcomm,
-                                                   numberDofs,
-                                                   kptGroupLowHighPlusOneIndices);
-    
-      d_rhoInNodalValues=0;    
+      dftUtils::createKpointParallelizationIndices(
+        interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
+
+      d_rhoInNodalValues = 0;
       for (unsigned int dof = 0; dof < numberDofs; ++dof)
         {
-
           if (dof < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
               dof >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
             {
+              const dealii::types::global_dof_index dofID =
+                locallyOwnedDOFs[dof];
+              const Point<3> &nodalCoor = supportPointsRhoNodal[dofID];
+              if (!d_constraintsRhoNodal.is_constrained(dofID))
+                {
+                  // loop over atoms and superimpose electron-density at a given
+                  // dof from all atoms
+                  double rhoNodalValue = 0.0;
+                  int    chargeId;
+                  double distanceToAtom;
+                  double diffx;
+                  double diffy;
+                  double diffz;
 
-            const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-            const Point<3> &nodalCoor = supportPointsRhoNodal[dofID];
-            if (!d_constraintsRhoNodal.is_constrained(dofID))
-              {
-                // loop over atoms and superimpose electron-density at a given dof
-                // from all atoms
-                double rhoNodalValue = 0.0;
-                int    chargeId;
-                double distanceToAtom;
-                double diffx;
-                double diffy;
-                double diffz;
+                  for (unsigned int iAtom = 0;
+                       iAtom < atomsImagesChargeIds.size();
+                       ++iAtom)
+                    {
+                      diffx =
+                        nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
+                      diffy =
+                        nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
+                      diffz =
+                        nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
 
-                for (unsigned int iAtom = 0; iAtom < atomsImagesChargeIds.size();
-                     ++iAtom)
-                  {
-                    diffx = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
-                    diffy = nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
-                    diffz = nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
+                      distanceToAtom = std::sqrt(diffx * diffx + diffy * diffy +
+                                                 diffz * diffz);
 
-                    distanceToAtom =
-                      std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
+                      chargeId = atomsImagesChargeIds[iAtom];
 
-                    chargeId = atomsImagesChargeIds[iAtom];
+                      if (distanceToAtom <=
+                          outerMostPointDen[atomLocations[chargeId][0]])
+                        rhoNodalValue += alglib::spline1dcalc(
+                          denSpline[atomLocations[chargeId][0]],
+                          distanceToAtom);
+                    }
 
-                    if (distanceToAtom <=
-                        outerMostPointDen[atomLocations[chargeId][0]])
-                      rhoNodalValue += alglib::spline1dcalc(
-                        denSpline[atomLocations[chargeId][0]], distanceToAtom);
-                  }
-
-                d_rhoInNodalValues.local_element(dof) = std::abs(rhoNodalValue);
-              }
+                  d_rhoInNodalValues.local_element(dof) =
+                    std::abs(rhoNodalValue);
+                }
             }
         }
 
       MPI_Allreduce(MPI_IN_PLACE,
-                  d_rhoInNodalValues.begin(),
-                  numberDofs,
-                  MPI_DOUBLE,
-                  MPI_SUM,
-                  interpoolcomm);
+                    d_rhoInNodalValues.begin(),
+                    numberDofs,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    interpoolcomm);
       MPI_Barrier(interpoolcomm);
 
       d_rhoInNodalValues.update_ghost_values();
