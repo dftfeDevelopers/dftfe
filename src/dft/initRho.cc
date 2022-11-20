@@ -330,7 +330,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
             }
         }
 
-      if (numberDofs>0)
+      if (numberDofs>0 && numberKptGroups>1)
         MPI_Allreduce(MPI_IN_PLACE,
                       d_rhoInNodalValues.begin(),
                       numberDofs,
