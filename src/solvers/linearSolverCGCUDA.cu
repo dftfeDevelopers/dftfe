@@ -207,22 +207,24 @@ namespace dftfe
             "DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters. In rare cases for all-electron problems this can also occur due to a known parallel constraints issue in dealii library. Try using set CONSTRAINTS FROM SERIAL DOFHANDLER=true under the Boundary conditions subsection."));
         pcout
           << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
-        pcout << "Current abs. residual: " << res << std::endl;
+        pcout << "Current abs. residual in GPU: " << res << std::endl;
       }
 
     if (debugLevel >= 2)
       {
         pcout << std::endl;
-        pcout << "initial abs. residual: " << initial_res
-              << " , current abs. residual: " << res << " , nsteps: " << it
-              << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
+        pcout << "initial abs. residual in GPU: " << initial_res
+              << " , current abs. residual in GPU: " << res
+              << " , nsteps: " << it
+              << " , abs. tolerance criterion in GPU:  " << absTolerance
+              << "\n\n";
       }
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime() - time;
 
     if (debugLevel >= 4)
-      pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
+      pcout << "Time for GPU Poisson/Helmholtz problem CG iterations: " << time
             << std::endl;
   }
 

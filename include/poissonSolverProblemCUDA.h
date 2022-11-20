@@ -153,7 +153,7 @@ namespace dftfe
 
   private:
     /**
-     * @brief Sets up the matrixfree shapefunction, gradient, weights, jacobian and map for matrixfree computeAX
+     * @brief Sets up the matrixfree shapefunction, gradient, jacobian and map for matrixfree computeAX
      *
      */
     void
@@ -225,25 +225,25 @@ namespace dftfe
     distributedCPUVec<double> *d_xPtr;
     distributedGPUVec<double>  d_xDevice;
 
-    // shape function value, gradient, weights, jacobian and map for matrixfree
-    thrust::device_vector<double> d_shapeFunctionAll, d_jacobianAction;
+    // number of cells local to each mpi task, number of degrees of freedom
+    // locally owned and total degrees of freedom including ghost
+    int d_nLocalCells, d_xLocalDof, d_xLen;
+
+    // shape function value, gradient, jacobian and map for matrixfree
+    thrust::device_vector<double> d_shapeFunction, d_jacobianFactor;
     thrust::device_vector<int>    d_map;
+
+    // Pointers to shape function value, gradient, jacobian and map for
+    // matrixfree
+    double *d_shapeFunctionPtr;
+    double *d_jacobianFactorPtr;
+    int *   d_mapPtr;
 
     // cuBLAS handle for cuBLAS operations
     cublasHandle_t *d_cublasHandlePtr;
 
     // constraints
     dftUtils::constraintMatrixInfoCUDA d_constraintsTotalPotentialInfo;
-
-    // number of cells local to each mpi task, number of degrees of freedom
-    // locally owned and total degrees of freedom including ghost
-    int d_nLocalCells, d_xLocalDof, d_xLen;
-
-    // Pointers to shape function value, gradient, weights, jacobian and map for
-    // matrixfree on device
-    double *d_shapeFunctionAllPtr;
-    double *d_jacobianActionPtr;
-    int *   d_mapPtr;
 
     /// pointer to dealii dealii::AffineConstraints<double> object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;

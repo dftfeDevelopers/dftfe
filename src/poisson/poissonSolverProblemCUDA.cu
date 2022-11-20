@@ -780,18 +780,18 @@ namespace dftfe
     // gridDim.x = cells;
     // First index is fastest convention used
     // sharedT is used to temporarily store UP^T/UP
-    // PT(q*p), D(q*q), P(p*q), DT(q*q)
+    // P(q*p), D(q*q), PT(p*q), DT(q*q)
 
     extern __shared__ Type SMem[];
 
     Type *sharedX  = SMem;
-    Type *sharedY  = &sharedX[M * K];
-    Type *sharedZ  = &sharedY[M * K];
-    Type *sharedT  = &sharedZ[M * K];
-    Type *sharedPT = &sharedT[M * K];
-    Type *sharedD  = &sharedPT[N * K];
-    Type *sharedP  = &sharedD[N * N];
-    Type *sharedDT = &sharedP[K * N];
+    Type *sharedY  = &sharedX[N * N * N];
+    Type *sharedZ  = &sharedY[N * N * N];
+    Type *sharedT  = &sharedZ[N * N * N];
+    Type *sharedP  = &sharedT[N * N * N];
+    Type *sharedD  = &sharedP[N * K];
+    Type *sharedPT = &sharedD[N * N];
+    Type *sharedDT = &sharedPT[K * N];
     Type *sharedJ  = &sharedDT[N * N];
 
     const int mapShift = blockIdx.x * M * K;
@@ -799,17 +799,16 @@ namespace dftfe
     // Copy Shape Function Values and Gradients to shared memory
 #pragma unroll
     for (int i = threadIdx.x; i < 2 * N * (K + N); i += blockDim.x)
-      sharedPT[i] = P[i];
+      sharedP[i] = P[i];
 
     __syncthreads();
 
     //////////////////////////////////////////////////////////////
-    // First index is the fastest
     // Interpolation combined with Extraction
-    // T -> UPPP
-    // X -> TD1
-    // Y -> TD2
-    // Z -> TD3
+    // V -> UPPP
+    // Z -> VDz
+    // Y -> VDy
+    // X -> VDx
 
     // 1st GEMM of P
     // Z Direction
@@ -827,7 +826,7 @@ namespace dftfe
 
 #pragma unroll
             for (int j = 0; j < N; j++)
-              x[j] += sharedPT[j + k * N] * u[k];
+              x[j] += sharedP[j + k * N] * u[k];
           }
 
 #pragma unroll
@@ -856,12 +855,12 @@ namespace dftfe
 
 #pragma unroll
             for (int j = 0; j < N; j++)
-              y[j] += sharedPT[j + k * N] * x[k];
+              y[j] += sharedP[j + k * N] * x[k];
           }
 
 #pragma unroll
         for (int j = 0; j < N; j++)
-          sharedY[a + j * K + b * K * N] = y[j];
+          sharedY[a + (j + b * N) * K] = y[j];
       }
 
     __syncthreads();
@@ -882,7 +881,7 @@ namespace dftfe
 
 #pragma unroll
             for (int j = 0; j < N; j++)
-              x[j] += sharedPT[j + k * N] * y[k];
+              x[j] += sharedP[j + k * N] * y[k];
           }
 
 #pragma unroll
@@ -931,7 +930,7 @@ namespace dftfe
 
         for (int k = 0; k < N; k++)
           {
-            x[k] = sharedX[a + k * N + b * N * N];
+            x[k] = sharedX[a + (k + b * N) * N];
 
 #pragma unroll
             for (int j = 0; j < N; j++)
@@ -940,7 +939,7 @@ namespace dftfe
 
 #pragma unroll
         for (int j = 0; j < N; j++)
-          sharedZ[a + j * N + b * N * N] = z[j];
+          sharedZ[a + (j + b * N) * N] = z[j];
       }
 
     // 3rd GEMM of D
@@ -973,18 +972,19 @@ namespace dftfe
 
     const int JShift = blockIdx.x * dim * dim;
 
-    // Copy Jacobian Action to shared memory
+    // Copy Jacobian Factor to shared memory
 #pragma unroll
     for (int i = threadIdx.x; i < dim * dim; i += blockDim.x)
       sharedJ[i] = J[i + JShift];
 
     __syncthreads();
 
-    // Gemm with Jacobian Action
+    // Gemm with Jacobian Factor
 #pragma unroll
     for (int i = threadIdx.x; i < N * N * N; i += blockDim.x)
       {
         Type v[3];
+
         v[2] = sharedY[i];
         v[1] = sharedZ[i];
         v[0] = sharedT[i];
@@ -997,10 +997,10 @@ namespace dftfe
     __syncthreads();
 
     // Integration
-    // X -> TDT1
-    // Y -> TDT2
-    // Z -> TDT3
-    // V -> TPTPTPT
+    // Z -> Z(DT)z
+    // Y -> Y(DT)y
+    // X -> X(DT)x
+    // V -> (Z + Y + X)(PT)(PT)(PT)
 
     // 1st GEMM of DT
     // Z Direction
@@ -1043,7 +1043,7 @@ namespace dftfe
 
         for (int k = 0; k < N; k++)
           {
-            z[k] = sharedZ[a + k * N + b * N * N];
+            z[k] = sharedZ[a + (k + b * N) * N];
 
 #pragma unroll
             for (int j = 0; j < N; j++)
@@ -1052,7 +1052,7 @@ namespace dftfe
 
 #pragma unroll
         for (int j = 0; j < N; j++)
-          sharedX[a + j * N + b * N * N] += y[j];
+          sharedX[a + (j + b * N) * N] += y[j];
       }
 
     __syncthreads();
@@ -1099,7 +1099,7 @@ namespace dftfe
 
 #pragma unroll
             for (int j = 0; j < K; j++)
-              y[j] += sharedP[j + k * K] * x[k];
+              y[j] += sharedPT[j + k * K] * x[k];
           }
 
 #pragma unroll
@@ -1124,16 +1124,16 @@ namespace dftfe
 
         for (int k = 0; k < N; k++)
           {
-            y[k] = sharedY[a + k * N + b * N * N];
+            y[k] = sharedY[a + (k + b * N) * N];
 
 #pragma unroll
             for (int j = 0; j < K; j++)
-              x[j] += sharedP[j + k * K] * y[k];
+              x[j] += sharedPT[j + k * K] * y[k];
           }
 
 #pragma unroll
         for (int j = 0; j < K; j++)
-          sharedX[a + j * N + b * N * K] = x[j];
+          sharedX[a + (j + b * K) * N] = x[j];
       }
 
     __syncthreads();
@@ -1154,7 +1154,7 @@ namespace dftfe
 
 #pragma unroll
             for (int j = 0; j < K; j++)
-              y[j] += sharedP[j + k * K] * x[k];
+              y[j] += sharedPT[j + k * K] * x[k];
           }
 
 #pragma unroll
@@ -1169,137 +1169,89 @@ namespace dftfe
   poissonSolverProblemCUDA<FEOrder, FEOrderElectro>::setupMatrixFree()
   {
     constexpr int    p              = FEOrderElectro + 1;
-    constexpr int    dim            = 3;
     constexpr int    q              = p;
+    constexpr int    nDofsPerCell   = p * p * p;
+    constexpr int    dim            = 3;
     constexpr double coeffLaplacian = 1.0 / (4.0 * M_PI);
 
-    // shape info helps to obtain reference cell basis function and lex
-    // numbering
-    const dealii::DoFHandler<3> &dofHandler =
-      d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
-    const int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+    auto dofInfo =
+      d_matrixFreeDataPtr->get_dof_info(d_matrixFreeVectorComponent);
+    auto shapeInfo =
+      d_matrixFreeDataPtr->get_shape_info(d_matrixFreeVectorComponent,
+                                          d_matrixFreeQuadratureComponentAX);
+    auto mappingData = d_matrixFreeDataPtr->get_mapping_info()
+                         .cell_data[d_matrixFreeQuadratureComponentAX];
+    auto shapeData = shapeInfo.get_shape_data();
 
-    dealii::internal::MatrixFreeFunctions::ShapeInfo<double> shapeInfo;
-
-    const dealii::Quadrature<3> &quadrature =
-      d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentAX);
-
-    int numQuadPoints = std::cbrt(quadrature.size());
-
-    dealii::QGauss<1> quad(numQuadPoints);
-    shapeInfo.reinit(quad, dofHandler.get_fe());
-    std::vector<unsigned int> lexMap3D = shapeInfo.lexicographic_numbering;
-
-    const auto shapeValue = shapeInfo.data.front().shape_values;
-    const auto shapeGradquad =
-      shapeInfo.data.front().shape_gradients_collocation;
-
-    dealii::FE_Q<1> feCell1D(FEOrderElectro);
-    shapeInfo.reinit(quad, feCell1D);
-    std::vector<unsigned int> lexMap1D = shapeInfo.lexicographic_numbering;
-    std::vector<double>       quadWeights(q);
-
-    for (int j = 0; j < q; j++)
-      quadWeights[j] = quad.weight(lexMap1D[j]);
-
-    thrust::host_vector<double> spVG(2 * p * q + 2 * q * q);
+    // Shape Function Values, Gradients and their Transposes
+    // P(q*p), D(q*q), PT(p*q), DT(q*q)
+    thrust::host_vector<double> shapeFunction(2 * q * (p + q));
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
         {
-          // PT(q*p), DT(q*q), P(p*q), D(q*q)
-          double value =
-            shapeValue[lexMap1D[j] + i * p] * std::sqrt(quadWeights[j]);
-          double grad = shapeGradquad[lexMap1D[j] + lexMap1D[i] * p] *
-                        std::sqrt(quadWeights[j]) / std::sqrt(quadWeights[i]);
-
-          spVG[j + i * q]                     = value;
-          spVG[j + i * q + q * p]             = grad;
-          spVG[i + j * p + q * p + q * q]     = value;
-          spVG[i + j * q + 2 * q * p + q * q] = grad;
+          double value = shapeData.shape_values[j + i * q][0] *
+                         std::sqrt(shapeData.quadrature.weight(j));
+          shapeFunction[j + i * q]               = value;
+          shapeFunction[i + j * p + q * (p + q)] = value;
         }
 
-    // Map making
-    thrust::host_vector<int> map(dofs_per_cell * d_nLocalCells);
-    std::vector<dealii::types::global_dof_index> local_dof_globalIndices(
-      dofs_per_cell);
-
-    // Lexicographic Map making
-    int cellIdx = 0;
-    for (const auto &cell : dofHandler.active_cell_iterators())
-      {
-        if (cell->is_locally_owned())
-          {
-            cell->get_dof_indices(local_dof_globalIndices);
-
-            for (int dofIdx = 0; dofIdx < dofs_per_cell; dofIdx++)
-              {
-                dealii::types::global_dof_index globalIdx =
-                  local_dof_globalIndices[lexMap3D[dofIdx]];
-                int localIdx =
-                  d_xPtr->get_partitioner()->global_to_local(globalIdx);
-                map[dofIdx + cellIdx * dofs_per_cell] = localIdx;
-              }
-            cellIdx++;
-          }
-      }
+    for (int i = 0; i < q; i++)
+      for (int j = 0; j < q; j++)
+        {
+          double grad = shapeData.shape_gradients_collocation[j + i * q][0] *
+                        std::sqrt(shapeData.quadrature.weight(j)) /
+                        std::sqrt(shapeData.quadrature.weight(i));
+          shapeFunction[j + i * q + q * p]           = grad;
+          shapeFunction[i + j * q + (2 * p + q) * q] = grad;
+        }
 
     // Jacobian
-    dealii::QGauss<dim> quadrature_formula(dofHandler.get_fe().degree + 1);
-    const int           qPoints = quadrature_formula.size();
+    thrust::host_vector<double> jacobianFactor(dim * dim * d_nLocalCells);
 
-    dealii::FEValues<dim> fe_values(dofHandler.get_fe(),
-                                    quadrature_formula,
-                                    dealii::update_inverse_jacobians |
-                                      dealii::update_values |
-                                      dealii::update_gradients |
-                                      dealii::update_JxW_values |
-                                      dealii::update_quadrature_points);
-
-    std::vector<dealii::DerivativeForm<1, dim, dim>> inv_jacobians_tensor;
-    std::vector<double> detJacobian(d_nLocalCells * qPoints),
-      invJac(d_nLocalCells * dim * dim);
-    thrust::host_vector<double> jacobianAction(d_nLocalCells * dim * dim);
-
-    cellIdx = 0;
-    for (const auto &cell : dofHandler.active_cell_iterators())
-      {
-        if (cell->is_locally_owned())
-          {
-            fe_values.reinit(cell);
-            inv_jacobians_tensor = fe_values.get_inverse_jacobians();
-
-            for (int d = 0; d < dim; d++)
-              for (int e = 0; e < dim; e++)
-                invJac[d + e * dim + cellIdx * dim * dim] =
-                  inv_jacobians_tensor[0][d][e];
-
-            for (int i = 0; i < qPoints; i++)
-              detJacobian[i + cellIdx * qPoints] =
-                fe_values.JxW(lexMap3D[i]) /
-                quadrature_formula.weight(lexMap3D[i]) * coeffLaplacian;
-
-            cellIdx++;
-          }
-      }
+    auto cellOffsets = mappingData.data_index_offsets;
 
     for (int cellIdx = 0; cellIdx < d_nLocalCells; cellIdx++)
-      for (int d = 0; d < dim; d++)
-        for (int e = 0; e < dim; e++)
-          for (int f = 0; f < dim; f++)
-            jacobianAction[e + d * dim + cellIdx * dim * dim] +=
-              invJac[d + f * dim + cellIdx * dim * dim] *
-              invJac[e + f * dim + cellIdx * dim * dim] *
-              detJacobian[cellIdx * qPoints];
+      for (int k = 0; k < dim; k++)
+        for (int i = 0; i < dim; i++)
+          for (int j = 0; j < dim; j++)
+            jacobianFactor[j + i * dim + cellIdx * dim * dim] +=
+              coeffLaplacian *
+              mappingData
+                .JxW_values[cellOffsets[cellIdx / dofInfo.vectorization_length]]
+                           [0] *
+              mappingData
+                .jacobians[0]
+                          [cellOffsets[cellIdx / dofInfo.vectorization_length]]
+                          [k][j][0] *
+              mappingData
+                .jacobians[0]
+                          [cellOffsets[cellIdx / dofInfo.vectorization_length]]
+                          [k][i][0];
+
+    // Map making
+    thrust::host_vector<int> map(nDofsPerCell * d_nLocalCells);
+
+    for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
+      std::memcpy(map.data() + cellIdx * nDofsPerCell,
+                  ((dofInfo.row_starts[cellIdx].second ==
+                    dofInfo.row_starts[cellIdx + 1].second) &&
+                   (dofInfo.row_starts_plain_indices[cellIdx] ==
+                    dealii::numbers::invalid_unsigned_int)) ?
+                    dofInfo.dof_indices.data() +
+                      dofInfo.row_starts[cellIdx].first :
+                    dofInfo.plain_dof_indices.data() +
+                      dofInfo.row_starts_plain_indices[cellIdx],
+                  nDofsPerCell * sizeof(unsigned int));
 
     // Construct the device vectors
-    d_shapeFunctionAll = spVG;
-    d_jacobianAction   = jacobianAction;
-    d_map              = map;
+    d_shapeFunction  = shapeFunction;
+    d_jacobianFactor = jacobianFactor;
+    d_map            = map;
 
-    d_shapeFunctionAllPtr = thrust::raw_pointer_cast(d_shapeFunctionAll.data());
-    d_jacobianActionPtr   = thrust::raw_pointer_cast(d_jacobianAction.data());
-    d_mapPtr              = thrust::raw_pointer_cast(d_map.data());
+    d_shapeFunctionPtr  = thrust::raw_pointer_cast(d_shapeFunction.data());
+    d_jacobianFactorPtr = thrust::raw_pointer_cast(d_jacobianFactor.data());
+    d_mapPtr            = thrust::raw_pointer_cast(d_map.data());
 
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
@@ -1335,12 +1287,8 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
 
-    computeAXKernel<double, p * p, q, p, dim>
-      <<<blocks, threads, smem>>>(Ax.begin(),
-                                  x.begin(),
-                                  d_shapeFunctionAllPtr,
-                                  d_jacobianActionPtr,
-                                  d_mapPtr);
+    computeAXKernel<double, p * p, q, p, dim><<<blocks, threads, smem>>>(
+      Ax.begin(), x.begin(), d_shapeFunctionPtr, d_jacobianFactorPtr, d_mapPtr);
 
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 

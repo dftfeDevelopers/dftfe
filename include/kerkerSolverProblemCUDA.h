@@ -155,7 +155,7 @@ namespace dftfe
 
   private:
     /**
-     * @brief Sets up the matrixfree shapefunction, gradient, weights, jacobian and map for matrixfree computeAX
+     * @brief Sets up the matrixfree shapefunction, gradient, jacobian and map for matrixfree computeAX
      *
      */
     void
@@ -186,25 +186,25 @@ namespace dftfe
     /// GPU x vector being solved for
     distributedGPUVec<double> d_xDevice;
 
-    // shape function value, gradient, weights, jacobian and map for matrixfree
-    thrust::device_vector<double> d_shapeFunctionAll, d_jacobianAction;
-    thrust::device_vector<int>    d_map;
-
-    // constraints
-    dftUtils::constraintMatrixInfoCUDA d_constraintsTotalPotentialInfo;
-
-    // kerker mixing constant
-    double d_gamma;
-
     // number of cells local to each mpi task, number of degrees of freedom
     // locally owned and total degrees of freedom including ghost
     int d_nLocalCells, d_xLocalDof, d_xLen;
 
-    // Pointers to shape function value, gradient, weights, jacobian and map for
-    // matrixfree on device
-    double *d_shapeFunctionAllPtr;
-    double *d_jacobianActionPtr;
+    // kerker mixing constant
+    double d_gamma;
+
+    // shape function value, gradient, jacobian and map for matrixfree
+    thrust::device_vector<double> d_shapeFunction, d_jacobianFactor;
+    thrust::device_vector<int>    d_map;
+
+    // Pointers to shape function value, gradient, jacobian and map for
+    // matrixfree
+    double *d_shapeFunctionPtr;
+    double *d_jacobianFactorPtr;
     int *   d_mapPtr;
+
+    // constraints
+    dftUtils::constraintMatrixInfoCUDA d_constraintsTotalPotentialInfo;
 
     /// matrix free index required to access the DofHandler and
     /// dealii::AffineConstraints<double> objects corresponding to the problem
