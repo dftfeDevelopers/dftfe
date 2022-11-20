@@ -1271,7 +1271,7 @@ namespace dftfe
 
             for (int d = 0; d < dim; d++)
               for (int e = 0; e < dim; e++)
-                invJac[e + d * dim + cellIdx * dim * dim] =
+                invJac[d + e * dim + cellIdx * dim * dim] =
                   inv_jacobians_tensor[0][d][e];
 
             for (int i = 0; i < qPoints; i++)
@@ -1288,7 +1288,7 @@ namespace dftfe
         for (int e = 0; e < dim; e++)
           for (int f = 0; f < dim; f++)
             jacobianAction[e + d * dim + cellIdx * dim * dim] +=
-              invJac[f + d * dim + cellIdx * dim * dim] *
+              invJac[d + f * dim + cellIdx * dim * dim] *
               invJac[e + f * dim + cellIdx * dim * dim] *
               detJacobian[cellIdx * qPoints];
 
