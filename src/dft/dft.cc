@@ -2480,6 +2480,20 @@ namespace dftfe
                         d_lpspQuadratureId);
                     computing_timer.leave_subsection("VEff Computation");
                   }
+
+#ifdef DFTFE_WITH_GPU
+                if (d_dftParamsPtr->useGPU)
+                  {
+                    computing_timer.enter_subsection(
+                      "Hamiltonian Matrix Computation");
+                    kohnShamDFTEigenOperatorCUDA
+                      .computeHamiltonianMatricesAllkpt(s);
+                    computing_timer.leave_subsection(
+                      "Hamiltonian Matrix Computation");
+                  }
+#endif
+
+
                 for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                      ++kPoint)
                   {
@@ -2491,22 +2505,18 @@ namespace dftfe
                     if (!d_dftParamsPtr->useGPU)
                       kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
 
-                    computing_timer.enter_subsection(
-                      "Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-                    if (d_dftParamsPtr->useGPU)
-                      kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(
-                        kPoint, s);
-#endif
-                    if (!d_dftParamsPtr->useGPU)
-                      kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
-                                                                        s);
-                    computing_timer.leave_subsection(
-                      "Hamiltonian Matrix Computation");
 
-                    if (d_dftParamsPtr->verbosity >= 4)
-                      dftUtils::printCurrentMemoryUsage(
-                        mpi_communicator, "Hamiltonian Matrix computed");
+
+                    if (!d_dftParamsPtr->useGPU)
+                      {
+                        computing_timer.enter_subsection(
+                          "Hamiltonian Matrix Computation");
+                        kohnShamDFTEigenOperator.computeHamiltonianMatrix(
+                          kPoint, s);
+                        computing_timer.leave_subsection(
+                          "Hamiltonian Matrix Computation");
+                      }
+
 
                     for (unsigned int j = 0; j < 1; ++j)
                       {
@@ -2791,6 +2801,18 @@ namespace dftfe
                 computing_timer.leave_subsection("VEff Computation");
               }
 
+#ifdef DFTFE_WITH_GPU
+            if (d_dftParamsPtr->useGPU)
+              {
+                computing_timer.enter_subsection(
+                  "Hamiltonian Matrix Computation");
+                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(
+                  0);
+                computing_timer.leave_subsection(
+                  "Hamiltonian Matrix Computation");
+              }
+#endif
+
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               {
@@ -2801,21 +2823,17 @@ namespace dftfe
                 if (!d_dftParamsPtr->useGPU)
                   kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
 
-                computing_timer.enter_subsection(
-                  "Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-                if (d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,
-                                                                        0);
-#endif
-                if (!d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint, 0);
-                computing_timer.leave_subsection(
-                  "Hamiltonian Matrix Computation");
 
-                if (d_dftParamsPtr->verbosity >= 4)
-                  dftUtils::printCurrentMemoryUsage(
-                    mpi_communicator, "Hamiltonian Matrix computed");
+                if (!d_dftParamsPtr->useGPU)
+                  {
+                    computing_timer.enter_subsection(
+                      "Hamiltonian Matrix Computation");
+                    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
+                                                                      0);
+                    computing_timer.leave_subsection(
+                      "Hamiltonian Matrix Computation");
+                  }
+
 
                 for (unsigned int j = 0; j < 1; ++j)
                   {
@@ -4263,6 +4281,67 @@ namespace dftfe
   {
     d_rhoOutNodalValuesSplit = OutDensity;
   }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeMesh()
+  {
+    //
+    // compute nodal electron-density from quad data
+    //
+    distributedCPUVec<double> rhoNodalField;
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      rhoNodalField, d_densityDofHandlerIndexElectro);
+    rhoNodalField = 0;
+    std::function<
+      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+             const unsigned int                                          q)>
+      funcRho =
+        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+            const unsigned int                                          q) {
+          return (*rhoInValues).find(cell->id())->second[q];
+        };
+    dealii::VectorTools::project<3, distributedCPUVec<double>>(
+      dealii::MappingQ1<3, 3>(),
+      d_dofHandlerRhoNodal,
+      d_constraintsRhoNodal,
+      d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+      funcRho,
+      rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
+
+
+    //
+    // only generate output for electron-density
+    //
+    DataOut<3> dataOutRho;
+    dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
+    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
+
+    dataOutRho.build_patches(FEOrder);
+
+    std::string tempFolder = "meshOutputFolder";
+    mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+    dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
+                                               dataOutRho,
+                                               d_mpiCommParent,
+                                               mpi_communicator,
+                                               interpoolcomm,
+                                               interBandGroupComm,
+                                               tempFolder,
+                                               "intialDensityOutput");
+
+
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout
+        << std::endl
+        << "------------------DFT-FE mesh file creation completed---------------------------"
+        << std::endl;
+  }
+
 
 #include "dft.inst.cc"
 } // namespace dftfe
