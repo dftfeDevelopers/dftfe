@@ -862,27 +862,27 @@ namespace dftfe
             fe_values.reinit(cell);
             inv_jacobians_tensor = fe_values.get_inverse_jacobians();
 
-            for (int d = 0; d < dim; d++)
-              for (int e = 0; e < dim; e++)
-                invJac[e + d * dim + cellIdx * dim * dim] =
-                  inv_jacobians_tensor[0][d][e];
+            for (int i = 0; i < dim; i++)
+              for (int j = 0; j < dim; j++)
+                invJac[j + i * dim + cellIdx * dim * dim] =
+                  inv_jacobians_tensor[0][j][i];
 
-            for (int q = 0; q < qPoints; q++)
-              detJacobian[q + cellIdx * qPoints] =
-                fe_values.JxW(lexMap3D[q]) /
-                quadrature_formula.weight(lexMap3D[q]) * coeffLaplacian;
+            for (int i = 0; i < qPoints; i++)
+              detJacobian[i + cellIdx * qPoints] =
+                fe_values.JxW(lexMap3D[i]) /
+                quadrature_formula.weight(lexMap3D[i]) * coeffLaplacian;
 
             cellIdx++;
           }
       }
 
     for (int cellIdx = 0; cellIdx < d_nLocalCells; cellIdx++)
-      for (int d = 0; d < dim; d++)
-        for (int e = 0; e < dim; e++)
-          for (int f = 0; f < dim; f++)
-            jacobianAction[e + d * dim + cellIdx * dim * dim] +=
-              invJac[f + d * dim + cellIdx * dim * dim] *
-              invJac[e + f * dim + cellIdx * dim * dim] *
+      for (int i = 0; i < dim; i++)
+        for (int j = 0; j < dim; j++)
+          for (int k = 0; k < dim; k++)
+            jacobianAction[j + i * dim + cellIdx * dim * dim] +=
+              invJac[i + k * dim + cellIdx * dim * dim] *
+              invJac[j + k * dim + cellIdx * dim * dim] *
               detJacobian[cellIdx * qPoints];
 
     // Construct the device vectors
