@@ -476,7 +476,7 @@ namespace dftfe
   vselfBinsManager<FEOrder, FEOrderElectro>::vselfBinsManager(
     const MPI_Comm &     mpi_comm_parent,
     const MPI_Comm &     mpi_comm_domain,
-    const MPI_Comm &     mpi_intercomm_kpts,    
+    const MPI_Comm &     mpi_intercomm_kpts,
     const dftParameters &dftParams)
     : mpi_communicator(mpi_comm_domain)
     , d_mpiCommParent(mpi_comm_parent)

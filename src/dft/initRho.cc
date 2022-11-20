@@ -277,7 +277,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
         dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
       std::vector<int> kptGroupLowHighPlusOneIndices;
 
-      if (numberDofs>0)
+      if (numberDofs > 0)
         dftUtils::createKpointParallelizationIndices(
           interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
 
@@ -330,7 +330,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
             }
         }
 
-      if (numberDofs>0 && numberKptGroups>1)
+      if (numberDofs > 0 && numberKptGroups > 1)
         MPI_Allreduce(MPI_IN_PLACE,
                       d_rhoInNodalValues.begin(),
                       numberDofs,

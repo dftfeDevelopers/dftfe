@@ -350,7 +350,7 @@ namespace dftfe
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
-    const MPI_Comm             d_mpiInterCommKpts;    
+    const MPI_Comm             d_mpiInterCommKpts;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;
