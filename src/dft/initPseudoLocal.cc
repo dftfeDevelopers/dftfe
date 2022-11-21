@@ -683,7 +683,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         {
           sendCount = (2 + n_q_points);
           sendData.resize(sendCount, 0);
-          sendData[0] = -1.0;
+          sendData[0] = -1;
         }
 
       std::vector<int> recvCounts(numberKptGroups, 0);
