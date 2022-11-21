@@ -411,6 +411,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   imageCharges.clear();
 
   std::vector<int>    imageIdsKptPool;
+  std::vector<int>    imageIdsGathered;
   std::vector<double> imagePositionsFlattenedKptPool;
   std::vector<double> imagePositionsFlattened;
 
@@ -523,8 +524,14 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
 
 
   std::vector<int> recvCounts(numberKptGroups, 0);
-  const int        sendCount = imageIdsKptPool.size();
-  int              ierr      = MPI_Allgather(
+  int              sendCount = imageIdsKptPool.size();
+  if (sendCount == 0)
+    {
+      sendCount == 1;
+      imageIdsKptPool.resize(1, -1);
+      imagePositionsFlattenedKptPool.resize(3, 0.0);
+    }
+  int ierr = MPI_Allgather(
     &sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT, interpoolcomm);
 
   if (ierr)
@@ -540,7 +547,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
     {
       // std::cout<<"num image charges: "<<numImageCharges<<std::endl;
 
-      imageIds.resize(numImageCharges, 0);
+      imageIdsGathered.resize(numImageCharges, 0);
       imagePositionsFlattened.resize(numImageCharges * 3, 0);
 
       std::vector<int> displacementsImageIds(numberKptGroups, 0);
@@ -555,13 +562,11 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
           recvCountsPos[i] = recvCounts[i] * 3;
         }
 
-      const int    dummy1 = 0;
-      const double dummy2 = 0;
 
-      ierr = MPI_Allgatherv(sendCount > 0 ? &imageIdsKptPool[0] : &dummy1,
+      ierr = MPI_Allgatherv(&imageIdsKptPool[0],
                             sendCount,
                             MPI_INT,
-                            &imageIds[0],
+                            &imageIdsGathered[0],
                             &recvCounts[0],
                             &displacementsImageIds[0],
                             MPI_INT,
@@ -572,25 +577,36 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
                     dealii::ExcMessage(
                       "DFT-FE Error: MPI Error in generate image charges"));
       const int sendCountPos = sendCount * 3;
-      ierr =
-        MPI_Allgatherv(sendCountPos > 0 ? &imagePositionsFlattenedKptPool[0] :
-                                          &dummy2,
-                       sendCountPos,
-                       MPI_DOUBLE,
-                       &imagePositionsFlattened[0],
-                       &recvCountsPos[0],
-                       &displacementsImagePos[0],
-                       MPI_DOUBLE,
-                       interpoolcomm);
+      ierr = MPI_Allgatherv(&imagePositionsFlattenedKptPool[0],
+                            sendCountPos,
+                            MPI_DOUBLE,
+                            &imagePositionsFlattened[0],
+                            &recvCountsPos[0],
+                            &displacementsImagePos[0],
+                            MPI_DOUBLE,
+                            interpoolcomm);
 
       if (ierr)
         AssertThrow(false,
                     dealii::ExcMessage(
                       "DFT-FE Error: MPI Error in generate image charges"));
 
-      imageCharges.resize(numImageCharges);
-      imagePositions.resize(numImageCharges, std::vector<double>(3, 0.0));
+      int              numNonTrivialImageCharges = 0;
+      std::vector<int> nonTrivialToFullIndexMap;
       for (int i = 0; i < numImageCharges; ++i)
+        {
+          if (imageIdsGathered[i] != -1)
+            {
+              imageIds.push_back(imageIdsGathered[i]);
+              nonTrivialToFullIndexMap.push_back(i);
+              numNonTrivialImageCharges++;
+            }
+        }
+
+      imageCharges.resize(numNonTrivialImageCharges);
+      imagePositions.resize(numNonTrivialImageCharges,
+                            std::vector<double>(3, 0.0));
+      for (int i = 0; i < numNonTrivialImageCharges; ++i)
         {
           double atomCharge;
           if (d_dftParamsPtr->isPseudopotential)
@@ -598,10 +614,13 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
           else
             atomCharge = atomLocations[imageIds[i]][0];
 
-          imageCharges[i]      = atomCharge;
-          imagePositions[i][0] = imagePositionsFlattened[3 * i + 0];
-          imagePositions[i][1] = imagePositionsFlattened[3 * i + 1];
-          imagePositions[i][2] = imagePositionsFlattened[3 * i + 2];
+          imageCharges[i] = atomCharge;
+          imagePositions[i][0] =
+            imagePositionsFlattened[3 * nonTrivialToFullIndexMap[i] + 0];
+          imagePositions[i][1] =
+            imagePositionsFlattened[3 * nonTrivialToFullIndexMap[i] + 1];
+          imagePositions[i][2] =
+            imagePositionsFlattened[3 * nonTrivialToFullIndexMap[i] + 2];
         }
     }
   MPI_Barrier(interpoolcomm);

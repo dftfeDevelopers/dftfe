@@ -678,6 +678,14 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         } // iatom loop
 
       sendCount = sendCount * (2 + n_q_points);
+
+      if (sendCount == 0)
+        {
+          sendCount = (2 + n_q_points);
+          sendData.resize(sendCount, 0);
+          sendData[0] = -1.0;
+        }
+
       std::vector<int> recvCounts(numberKptGroups, 0);
       int              ierr = MPI_Allgather(
         &sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT, interpoolcomm);
@@ -702,8 +710,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
 
       std::vector<double> recvData(recvDataSize, 0.0);
 
-      const double dummy = 0;
-      ierr               = MPI_Allgatherv(sendCount > 0 ? &sendData[0] : &dummy,
+      ierr = MPI_Allgatherv(&sendData[0],
                             sendCount,
                             MPI_DOUBLE,
                             &recvData[0],
@@ -720,19 +727,22 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
 
       for (unsigned int i = 0; i < recvDataSize / (2 + n_q_points); i++)
         {
-          const unsigned int iatom =
-            std::round(recvData[i * (2 + n_q_points) + 0]);
+          const int iatom = std::round(recvData[i * (2 + n_q_points) + 0]);
           const unsigned int elementId =
             std::round(recvData[i * (2 + n_q_points) + 1]);
 
-          const dealii::CellId writeCellId = elemIdToCellIdMap[elementId];
-          if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
-              _pseudoValuesAtoms[iatom].end())
-            {
-              for (unsigned int q = 0; q < n_q_points; ++q)
-                pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 2 + q];
 
-              _pseudoValuesAtoms[iatom][writeCellId] = pseudoVLocAtom;
+          if (iatom != -1)
+            {
+              const dealii::CellId writeCellId = elemIdToCellIdMap[elementId];
+              if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
+                  _pseudoValuesAtoms[iatom].end())
+                {
+                  for (unsigned int q = 0; q < n_q_points; ++q)
+                    pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 2 + q];
+
+                  _pseudoValuesAtoms[iatom][writeCellId] = pseudoVLocAtom;
+                }
             }
         }
 
