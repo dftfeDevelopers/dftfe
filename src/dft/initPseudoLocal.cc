@@ -656,26 +656,26 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
            iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
            iAtom++)
         {
-          ielem = 0;
-          cell  = _dofHandler.begin_active();
-          for (; cell != endc; ++cell)
-            if (cell->is_locally_owned())
-              {
-                if (_pseudoValuesAtoms.find(iAtom) != _pseudoValuesAtoms.end())
-                  if (_pseudoValuesAtoms[iAtom].find(cell->id()) !=
-                      _pseudoValuesAtoms[iAtom].end())
-                    {
-                      sendCount++;
-                      pseudoVLocAtom = _pseudoValuesAtoms[iAtom][cell->id()];
-                      sendData.push_back(iAtom);
-                      sendData.push_back(ielem);
-                      sendData.insert(sendData.end(),
-                                      pseudoVLocAtom.begin(),
-                                      pseudoVLocAtom.end());
-                    }
-                ielem++;
-              } // cell locally owned loop
-        }       // iatom loop
+          if (_pseudoValuesAtoms.find(iAtom) != _pseudoValuesAtoms.end())
+            {
+              cell = _dofHandler.begin_active();
+              for (; cell != endc; ++cell)
+                if (cell->is_locally_owned())
+                  {
+                    if (_pseudoValuesAtoms[iAtom].find(cell->id()) !=
+                        _pseudoValuesAtoms[iAtom].end())
+                      {
+                        sendCount++;
+                        pseudoVLocAtom = _pseudoValuesAtoms[iAtom][cell->id()];
+                        sendData.push_back(iAtom);
+                        sendData.push_back(cellIdToElemIdMap[cell->id()]);
+                        sendData.insert(sendData.end(),
+                                        pseudoVLocAtom.begin(),
+                                        pseudoVLocAtom.end());
+                      }
+                  } // cell locally owned loop
+            }
+        } // iatom loop
 
       sendCount = sendCount * (2 + n_q_points);
       std::vector<int> recvCounts(numberKptGroups, 0);
@@ -725,11 +725,15 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
           const unsigned int elementId =
             std::round(recvData[i * (2 + n_q_points) + 1]);
 
-          for (unsigned int q = 0; q < n_q_points; ++q)
-            pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 2 + q];
+          const dealii::CellId writeCellId = elemIdToCellIdMap[elementId];
+          if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
+              _pseudoValuesAtoms[iatom].end())
+            {
+              for (unsigned int q = 0; q < n_q_points; ++q)
+                pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 2 + q];
 
-          _pseudoValuesAtoms[iatom][elemIdToCellIdMap[elementId]] =
-            pseudoVLocAtom;
+              _pseudoValuesAtoms[iatom][writeCellId] = pseudoVLocAtom;
+            }
         }
 
       MPI_Barrier(interpoolcomm);
