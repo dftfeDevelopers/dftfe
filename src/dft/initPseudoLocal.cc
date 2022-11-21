@@ -551,9 +551,9 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
     {
       if (cell->is_locally_owned())
         {
-          if (ielem <
-                kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
-              ielem >= kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId])
+          if ((ielem <
+                 kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
+               ielem >= kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
             {
               // compute values for the current elements
               fe_values.reinit(cell);
@@ -726,7 +726,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
             std::round(recvData[i * (2 + n_q_points) + 1]);
 
           for (unsigned int q = 0; q < n_q_points; ++q)
-            pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 1 + q];
+            pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 2 + q];
 
           _pseudoValuesAtoms[iatom][elemIdToCellIdMap[elementId]] =
             pseudoVLocAtom;
