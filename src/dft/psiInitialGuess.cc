@@ -407,150 +407,168 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
       Point<3>                              node  = d_supportPoints[dofID];
       if (!constraintsNone.is_constrained(dofID))
         {
-          // unsigned int waveFunction=0;
-          for (std::vector<orbital>::iterator it =
-                 waveFunctionsVectorTruncated.begin();
-               it < waveFunctionsVectorTruncated.end();
-               it++)
+          //
+          // loop over wave functions
+          //
+          for (int kPoint = 0;
+               kPoint < (d_dftParamsPtr->reproducible_output ?
+                           ((1 + d_dftParamsPtr->spinPolarized) *
+                            d_kPointWeights.size()) :
+                           (1 + d_dftParamsPtr->spinPolarized));
+               ++kPoint)
             {
-              //
-              // get the imageIdmap information corresponding to
-              // globalChargeId (Fix me: Examine whether periodic image
-              // contributions have to be included or not) currently not
-              // including
-              std::vector<int> imageIdsList;
-              if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
-                  d_dftParamsPtr->periodicZ)
-                {
-                  imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
-                }
-              else
-                {
-                  imageIdsList.push_back(it->atomID);
-                }
-
-              const unsigned int waveId = it->waveID;
-              for (int iImageAtomCount = 0;
-                   iImageAtomCount < imageIdsList.size();
-                   ++iImageAtomCount)
+              // unsigned int waveFunction=0;
+              for (std::vector<orbital>::iterator it =
+                     waveFunctionsVectorTruncated.begin();
+                   it < waveFunctionsVectorTruncated.end();
+                   it++)
                 {
                   //
-                  // find coordinates of atom correspoding to this wave
-                  // function and imageAtom
-                  //
-                  int      chargeId = imageIdsList[iImageAtomCount];
-                  Point<3> atomCoord;
-
-                  if (chargeId < numberGlobalAtoms)
+                  // get the imageIdmap information corresponding to
+                  // globalChargeId (Fix me: Examine whether periodic image
+                  // contributions have to be included or not) currently not
+                  // including
+                  std::vector<int> imageIdsList;
+                  if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+                      d_dftParamsPtr->periodicZ)
                     {
-                      atomCoord[0] = atomLocations[chargeId][2];
-                      atomCoord[1] = atomLocations[chargeId][3];
-                      atomCoord[2] = atomLocations[chargeId][4];
+                      imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
                     }
                   else
                     {
-                      atomCoord[0] =
-                        d_imagePositions[chargeId - numberGlobalAtoms][0];
-                      atomCoord[1] =
-                        d_imagePositions[chargeId - numberGlobalAtoms][1];
-                      atomCoord[2] =
-                        d_imagePositions[chargeId - numberGlobalAtoms][2];
+                      imageIdsList.push_back(it->atomID);
                     }
 
-                  double x = node[0] - atomCoord[0];
-                  double y = node[1] - atomCoord[1];
-                  double z = node[2] - atomCoord[2];
-
-
-                  double r     = sqrt(x * x + y * y + z * z);
-                  double theta = acos(z / r);
-                  double phi   = atan2(y, x);
-
-                  if (r == 0)
+                  const unsigned int waveId = it->waveID;
+                  for (int iImageAtomCount = 0;
+                       iImageAtomCount < imageIdsList.size();
+                       ++iImageAtomCount)
                     {
-                      theta = 0;
-                      phi   = 0;
-                    }
+                      //
+                      // find coordinates of atom correspoding to this wave
+                      // function and imageAtom
+                      //
+                      int      chargeId = imageIdsList[iImageAtomCount];
+                      Point<3> atomCoord;
 
-                  double R = 0.0;
-                  if (r <=
-                      d_wfcInitTruncation) // outerValues[it->Z][it->n][it->l])
-                    {
-                      // radial part
-                      R = alglib::spline1dcalc((it->psi), r);
-                      // spherical part
-                      if (it->m > 0)
+                      if (chargeId < numberGlobalAtoms)
                         {
-                          d_eigenVectorsFlattenedSTL[0][dof * d_numEigenValues +
-                                                        waveId] +=
-                            dataTypes::number(R * std::sqrt(2) *
-                                              boost::math::spherical_harmonic_r(
-                                                it->l, it->m, theta, phi));
-                        }
-                      else if (it->m == 0)
-                        {
-                          d_eigenVectorsFlattenedSTL[0][dof * d_numEigenValues +
-                                                        waveId] +=
-                            dataTypes::number(R *
-                                              boost::math::spherical_harmonic_r(
-                                                it->l, it->m, theta, phi));
+                          atomCoord[0] = atomLocations[chargeId][2];
+                          atomCoord[1] = atomLocations[chargeId][3];
+                          atomCoord[2] = atomLocations[chargeId][4];
                         }
                       else
                         {
-                          d_eigenVectorsFlattenedSTL[0][dof * d_numEigenValues +
-                                                        waveId] +=
-                            dataTypes::number(R * std::sqrt(2) *
-                                              boost::math::spherical_harmonic_i(
-                                                it->l, -(it->m), theta, phi));
+                          atomCoord[0] =
+                            d_imagePositions[chargeId - numberGlobalAtoms][0];
+                          atomCoord[1] =
+                            d_imagePositions[chargeId - numberGlobalAtoms][1];
+                          atomCoord[2] =
+                            d_imagePositions[chargeId - numberGlobalAtoms][2];
+                        }
+
+                      double x = node[0] - atomCoord[0];
+                      double y = node[1] - atomCoord[1];
+                      double z = node[2] - atomCoord[2];
+
+
+                      double r     = sqrt(x * x + y * y + z * z);
+                      double theta = acos(z / r);
+                      double phi   = atan2(y, x);
+
+                      if (r == 0)
+                        {
+                          theta = 0;
+                          phi   = 0;
+                        }
+
+                      double R = 0.0;
+                      if (
+                        r <=
+                        d_wfcInitTruncation) // outerValues[it->Z][it->n][it->l])
+                        {
+                          // radial part
+                          R = alglib::spline1dcalc((it->psi), r);
+                          // spherical part
+                          if (it->m > 0)
+                            {
+                              d_eigenVectorsFlattenedSTL
+                                [kPoint][dof * d_numEigenValues + waveId] +=
+                                dataTypes::number(
+                                  R * std::sqrt(2) *
+                                  boost::math::spherical_harmonic_r(
+                                    it->l, it->m, theta, phi));
+                            }
+                          else if (it->m == 0)
+                            {
+                              d_eigenVectorsFlattenedSTL
+                                [kPoint][dof * d_numEigenValues + waveId] +=
+                                dataTypes::number(
+                                  R * boost::math::spherical_harmonic_r(
+                                        it->l, it->m, theta, phi));
+                            }
+                          else
+                            {
+                              d_eigenVectorsFlattenedSTL
+                                [kPoint][dof * d_numEigenValues + waveId] +=
+                                dataTypes::number(
+                                  R * std::sqrt(2) *
+                                  boost::math::spherical_harmonic_i(
+                                    it->l, -(it->m), theta, phi));
+                            }
                         }
                     }
+                  // waveFunction++;
                 }
-              // waveFunction++;
-            }
 
-          d_nonAtomicWaveFunctions = 0;
-          if (waveFunctionsVector.size() < d_numEigenValues)
-            {
-              d_nonAtomicWaveFunctions =
-                d_numEigenValues - waveFunctionsVector.size();
-
-              //
-              // assign the rest of the wavefunctions using a standard
-              // normal distribution
-              //
-              // boost::math::normal normDist;
-
-              std::vector<dataTypes::number> &temp =
-                d_eigenVectorsFlattenedSTL[0];
-              for (unsigned int iWave = waveFunctionsVector.size();
-                   iWave < d_numEigenValues;
-                   ++iWave)
+              d_nonAtomicWaveFunctions = 0;
+              if (waveFunctionsVector.size() < d_numEigenValues)
                 {
-                  double z     = (-0.5 + (rand() + 0.0) / (RAND_MAX)) * 3.0;
-                  double value = boost::math::pdf(normDist, z);
-                  if (rand() % 2 == 0)
-                    value = -1.0 * value;
+                  d_nonAtomicWaveFunctions =
+                    d_numEigenValues - waveFunctionsVector.size();
 
-                  temp[dof * d_numEigenValues + iWave] =
-                    dataTypes::number(value);
+                  //
+                  // assign the rest of the wavefunctions using a standard
+                  // normal distribution
+                  //
+                  // boost::math::normal normDist;
+
+                  std::vector<dataTypes::number> &temp =
+                    d_eigenVectorsFlattenedSTL[kPoint];
+                  for (unsigned int iWave = waveFunctionsVector.size();
+                       iWave < d_numEigenValues;
+                       ++iWave)
+                    {
+                      double z     = (-0.5 + (rand() + 0.0) / (RAND_MAX)) * 3.0;
+                      double value = boost::math::pdf(normDist, z);
+                      if (rand() % 2 == 0)
+                        value = -1.0 * value;
+
+                      temp[dof * d_numEigenValues + iWave] =
+                        dataTypes::number(value);
+                    }
                 }
             }
         }
     }
 
-  for (unsigned int kPoint = 1;
-       kPoint < (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-       ++kPoint)
+  if (!d_dftParamsPtr->reproducible_output)
     {
-      std::vector<dataTypes::number> &temp1 =
-        d_eigenVectorsFlattenedSTL[kPoint];
+      for (unsigned int kPoint = 1;
+           kPoint <
+           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+           ++kPoint)
+        {
+          std::vector<dataTypes::number> &temp1 =
+            d_eigenVectorsFlattenedSTL[kPoint];
 
-      std::vector<dataTypes::number> &temp2 = d_eigenVectorsFlattenedSTL[0];
+          std::vector<dataTypes::number> &temp2 = d_eigenVectorsFlattenedSTL[0];
 
-      for (unsigned int idof = 0; idof < numberDofs; idof++)
-        for (unsigned int iwave = 0; iwave < d_numEigenValues; iwave++)
-          temp1[idof * d_numEigenValues + iwave] =
-            temp2[idof * d_numEigenValues + iwave];
+          for (unsigned int idof = 0; idof < numberDofs; idof++)
+            for (unsigned int iwave = 0; iwave < d_numEigenValues; iwave++)
+              temp1[idof * d_numEigenValues + iwave] =
+                temp2[idof * d_numEigenValues + iwave];
+        }
     }
 
   if (d_dftParamsPtr->startingWFCType == "RANDOM")
