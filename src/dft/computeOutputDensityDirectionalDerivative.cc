@@ -83,7 +83,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
   // Reuses diagonalA and mean value constraints
   if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
-      not d_dftParamsPtr->pinnedNodeForPBC and false)
+      not d_dftParamsPtr->pinnedNodeForPBC)
     {
 #ifdef DFTFE_WITH_GPU
       d_phiTotalSolverProblemCUDA.reinit(
@@ -120,7 +120,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     }
 
   if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
-      not d_dftParamsPtr->pinnedNodeForPBC and false)
+      not d_dftParamsPtr->pinnedNodeForPBC)
     {
 #ifdef DFTFE_WITH_GPU
       CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
@@ -292,9 +292,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                 "Hamiltonian matrix prime computation");
 #ifdef DFTFE_WITH_GPU
               if (d_dftParamsPtr->useGPU)
-                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,
-                                                                      s,
-                                                                      true);
+                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(
+                  s, true);
 #endif
               if (!d_dftParamsPtr->useGPU)
                 kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
