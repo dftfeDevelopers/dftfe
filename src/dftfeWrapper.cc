@@ -884,6 +884,17 @@ namespace dftfe
     d_dftfeBasePtr->run();
   }
 
+  void
+  dftfeWrapper::writeMesh()
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    d_dftfeBasePtr->writeMesh();
+  }
+
+
   std::tuple<double, bool, double>
   dftfeWrapper::computeDFTFreeEnergy(const bool computeIonForces,
                                      const bool computeCellStress)
@@ -899,6 +910,16 @@ namespace dftfe
                            std::get<1>(t));
   }
 
+  void
+  dftfeWrapper::computeStress()
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+
+    d_dftfeBasePtr->computeStress();
+  }
 
   double
   dftfeWrapper::getDFTFreeEnergy() const

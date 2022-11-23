@@ -1,24 +1,23 @@
 #!/bin/bash
-#SBATCH --qos=regular
-#SBATCH --time=00:15:00
-#SBATCH --nodes=1
-#SBATCH --ntasks=6
-#SBATCH --cpus-per-task=10
-#SBATCH --constraint=gpu
-#SBATCH -G 6
-#SBATCH -A m1759
-#SBATCH -q special
-#SBATCH --exclusive
-#SBATCH --mail-user=dsambit@umich.edu
-#SBATCH --mail-type=begin
-#SBATCH --mail-type=end
-#SBATCH -J testGPU1
-#SBATCH -o testGPU1.o%j
+#SBATCH -A m3979_g
+#SBATCH -C gpu
+#SBATCH -q early_science
+#SBATCH --job-name realtests
+#SBATCH -t 00:40:00
+#SBATCH -n 6
+#SBATCH --ntasks-per-node=3
+#SBATCH -c 32
+#SBATCH --gpus-per-node=3
+#SBATCH --gpu-bind=map_gpu:0*1,1*1,2*1,3*0
 
-# setup and run
-echo "Job $SLURM_JOB_NAME, ID $SLURM_JOB_ID"
-cd $SLURM_SUBMIT_DIR
 
+export SLURM_CPU_BIND="cores"
+#module load PrgEnv-gnu
+#module load cpe-cuda
+#module load cudatoolkit/21.9_11.4
+#module unload cray-libsci/21.08.1.2
+#module load cmake/3.22.0
+#module load nccl/2.11.4
 export OMP_NUM_THREADS=1
 
 srun ./dftfe parameterFileN2_1.prm > outputN2_1

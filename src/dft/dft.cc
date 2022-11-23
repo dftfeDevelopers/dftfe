@@ -26,7 +26,6 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <energyCalculator.h>
-#include <dftd.h>
 #include <fileReaders.h>
 #include <force.h>
 #include <kohnShamDFTOperator.h>
@@ -147,7 +146,15 @@ namespace dftfe
              dftParams)
     , d_affineTransformMesh(mpi_comm_parent, mpi_comm_domain, dftParams)
     , d_gaussianMovePar(mpi_comm_parent, mpi_comm_domain, dftParams)
-    , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain, dftParams)
+    , d_vselfBinsManager(mpi_comm_parent,
+                         mpi_comm_domain,
+                         _interpoolcomm,
+                         dftParams)
+    , d_dispersionCorr(mpi_comm_parent,
+                       mpi_comm_domain,
+                       _interpoolcomm,
+                       _interBandGroupComm,
+                       dftParams)
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0) &&
               dftParams.verbosity >= 0)
@@ -935,14 +942,12 @@ namespace dftfe
         generateImageCharges(d_pspCutOff,
                              d_imageIds,
                              d_imageCharges,
-                             d_imagePositions,
-                             d_globalChargeIdToImageIdMap);
+                             d_imagePositions);
 
         generateImageCharges(d_pspCutOffTrunc,
                              d_imageIdsTrunc,
                              d_imageChargesTrunc,
-                             d_imagePositionsTrunc,
-                             d_globalChargeIdToImageIdMapTrunc);
+                             d_imagePositionsTrunc);
 
         if ((d_dftParamsPtr->verbosity >= 4 ||
              d_dftParamsPtr->reproducible_output))
@@ -994,14 +999,12 @@ namespace dftfe
         generateImageCharges(d_pspCutOff,
                              d_imageIds,
                              d_imageCharges,
-                             d_imagePositions,
-                             d_globalChargeIdToImageIdMap);
+                             d_imagePositions);
 
         generateImageCharges(d_pspCutOffTrunc,
                              d_imageIdsTrunc,
                              d_imageChargesTrunc,
-                             d_imagePositionsTrunc,
-                             d_globalChargeIdToImageIdMapTrunc);
+                             d_imagePositionsTrunc);
       }
   }
 
@@ -1738,6 +1741,12 @@ namespace dftfe
 
     solve(true, true, d_isRestartGroundStateCalcFromChk);
 
+    if (d_dftParamsPtr->writeWfcSolutionFields)
+      outputWfc();
+
+    if (d_dftParamsPtr->writeDensitySolutionFields)
+      outputDensity();
+
     if (d_dftParamsPtr->writeDosFile)
       compute_tdos(eigenValues, "dosData.out");
 
@@ -1952,7 +1961,7 @@ namespace dftfe
   std::tuple<bool, double>
   dftClass<FEOrder, FEOrderElectro>::solve(
     const bool computeForces,
-    const bool computeStress,
+    const bool computestress,
     const bool isRestartGroundStateCalcFromChk)
   {
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -1972,11 +1981,6 @@ namespace dftfe
                                 interBandGroupComm,
                                 *d_dftParamsPtr);
 
-    dispersionCorrection dispersionCorr(d_mpiCommParent,
-                                        mpi_communicator,
-                                        interpoolcomm,
-                                        interBandGroupComm,
-                                        *d_dftParamsPtr);
 
     // set up linear solver
     dealiiLinearSolver CGSolver(d_mpiCommParent,
@@ -2239,7 +2243,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
+            not d_dftParamsPtr->pinnedNodeForPBC and false)
           {
 #ifdef DFTFE_WITH_GPU
             if (scfIter > 0)
@@ -2343,7 +2347,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
+            not d_dftParamsPtr->pinnedNodeForPBC and false)
           {
 #ifdef DFTFE_WITH_GPU
             CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
@@ -3078,7 +3082,7 @@ namespace dftfe
 
             if (d_dftParamsPtr->useGPU and
                 d_dftParamsPtr->floatingNuclearCharges and
-                not d_dftParamsPtr->pinnedNodeForPBC)
+                not d_dftParamsPtr->pinnedNodeForPBC and false)
               {
 #ifdef DFTFE_WITH_GPU
                 d_phiTotalSolverProblemCUDA.reinit(
@@ -3155,8 +3159,8 @@ namespace dftfe
 
             const Quadrature<3> &quadrature =
               matrix_free_data.get_quadrature(d_densityQuadratureId);
-            dispersionCorr.computeDispresionCorrection(atomLocations,
-                                                       d_domainBoundingVectors);
+            d_dispersionCorr.computeDispresionCorrection(
+              atomLocations, d_domainBoundingVectors);
             const double totalEnergy =
               d_dftParamsPtr->spinPolarized == 0 ?
                 energyCalc.computeEnergy(
@@ -3172,7 +3176,7 @@ namespace dftfe
                   d_kPointWeights,
                   fermiEnergy,
                   excFunctionalPtr,
-                  dispersionCorr,
+                  d_dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
                   *rhoInValues,
@@ -3210,7 +3214,7 @@ namespace dftfe
                   fermiEnergyUp,
                   fermiEnergyDown,
                   excFunctionalPtr,
-                  dispersionCorr,
+                  d_dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
                   *rhoInValues,
@@ -3299,7 +3303,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
+            not d_dftParamsPtr->pinnedNodeForPBC and false)
           {
 #ifdef DFTFE_WITH_GPU
             d_phiTotalSolverProblemCUDA.reinit(
@@ -3366,8 +3370,8 @@ namespace dftfe
     // compute and print ground state energy or energy after max scf
     // iterations
     //
-    dispersionCorr.computeDispresionCorrection(atomLocations,
-                                               d_domainBoundingVectors);
+    d_dispersionCorr.computeDispresionCorrection(atomLocations,
+                                                 d_domainBoundingVectors);
     const double totalEnergy =
       d_dftParamsPtr->spinPolarized == 0 ?
         energyCalc.computeEnergy(d_dofHandlerPRefined,
@@ -3382,7 +3386,7 @@ namespace dftfe
                                  d_kPointWeights,
                                  fermiEnergy,
                                  excFunctionalPtr,
-                                 dispersionCorr,
+                                 d_dispersionCorr,
                                  d_phiInValues,
                                  d_phiTotRhoOut,
                                  *rhoInValues,
@@ -3419,7 +3423,7 @@ namespace dftfe
           fermiEnergyUp,
           fermiEnergyDown,
           excFunctionalPtr,
-          dispersionCorr,
+          d_dispersionCorr,
           d_phiInValues,
           d_phiTotRhoOut,
           *rhoInValues,
@@ -3520,7 +3524,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                          kohnShamDFTEigenOperatorCUDA,
 #endif
-                                         dispersionCorr,
+                                         d_dispersionCorr,
                                          d_eigenDofHandlerIndex,
                                          d_smearedChargeQuadratureIdElectro,
                                          d_lpspQuadratureIdElectro,
@@ -3562,50 +3566,11 @@ namespace dftfe
             << d_dftParamsPtr->selfConsistentSolverTolerance
             << ", recommended to use TOLERANCE below 1e-4." << std::endl;
 
-        if (computeStress)
+        if (computestress)
           {
             computing_timer.enter_subsection("Cell stress computation");
             computingTimerStandard.enter_subsection("Cell stress computation");
-
-            if (d_dftParamsPtr->isPseudopotential ||
-                d_dftParamsPtr->smearedNuclearCharges)
-              {
-                computeVselfFieldGateauxDerFD(
-#ifdef DFTFE_WITH_GPU
-                  kohnShamDFTEigenOperatorCUDA
-#endif
-                );
-              }
-
-            forcePtr->computeStress(matrix_free_data,
-#ifdef DFTFE_WITH_GPU
-                                    kohnShamDFTEigenOperatorCUDA,
-#endif
-                                    dispersionCorr,
-                                    d_eigenDofHandlerIndex,
-                                    d_smearedChargeQuadratureIdElectro,
-                                    d_lpspQuadratureIdElectro,
-                                    d_matrixFreeDataPRefined,
-                                    d_phiTotDofHandlerIndexElectro,
-                                    d_phiTotRhoOut,
-                                    *rhoOutValues,
-                                    *gradRhoOutValues,
-                                    d_gradRhoOutValuesLpspQuad,
-                                    *rhoOutValues,
-                                    d_rhoOutValuesLpspQuad,
-                                    *gradRhoOutValues,
-                                    d_gradRhoOutValuesLpspQuad,
-                                    d_pseudoVLoc,
-                                    d_pseudoVLocAtoms,
-                                    d_rhoCore,
-                                    d_gradRhoCore,
-                                    d_hessianRhoCore,
-                                    d_gradRhoCoreAtoms,
-                                    d_hessianRhoCoreAtoms,
-                                    d_constraintsPRefined,
-                                    d_vselfBinsManager);
-            if (d_dftParamsPtr->verbosity >= 0)
-              forcePtr->printStress();
+            computeStress();
             computingTimerStandard.leave_subsection("Cell stress computation");
             computing_timer.leave_subsection("Cell stress computation");
           }
@@ -3618,13 +3583,6 @@ namespace dftfe
 #endif
       );
 
-    if (d_dftParamsPtr->writeWfcSolutionFields)
-      outputWfc();
-
-    if (d_dftParamsPtr->writeDensitySolutionFields)
-      outputDensity();
-
-
 #ifdef USE_COMPLEX
     if (!(d_dftParamsPtr->kPointDataFile == ""))
       {
@@ -3635,6 +3593,59 @@ namespace dftfe
       }
 #endif
     return std::make_tuple(scfConverged, norm);
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeStress()
+  {
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
+#endif
+
+    if (d_dftParamsPtr->isPseudopotential ||
+        d_dftParamsPtr->smearedNuclearCharges)
+      {
+        computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+          kohnShamDFTEigenOperatorCUDA
+#endif
+        );
+      }
+
+    forcePtr->computeStress(matrix_free_data,
+#ifdef DFTFE_WITH_GPU
+                            kohnShamDFTEigenOperatorCUDA,
+#endif
+                            d_dispersionCorr,
+                            d_eigenDofHandlerIndex,
+                            d_smearedChargeQuadratureIdElectro,
+                            d_lpspQuadratureIdElectro,
+                            d_matrixFreeDataPRefined,
+                            d_phiTotDofHandlerIndexElectro,
+                            d_phiTotRhoOut,
+                            *rhoOutValues,
+                            *gradRhoOutValues,
+                            d_gradRhoOutValuesLpspQuad,
+                            *rhoOutValues,
+                            d_rhoOutValuesLpspQuad,
+                            *gradRhoOutValues,
+                            d_gradRhoOutValuesLpspQuad,
+                            d_pseudoVLoc,
+                            d_pseudoVLocAtoms,
+                            d_rhoCore,
+                            d_gradRhoCore,
+                            d_hessianRhoCore,
+                            d_gradRhoCoreAtoms,
+                            d_hessianRhoCoreAtoms,
+                            d_constraintsPRefined,
+                            d_vselfBinsManager);
+    if (d_dftParamsPtr->verbosity >= 0)
+      forcePtr->printStress();
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -4242,6 +4253,67 @@ namespace dftfe
   {
     d_rhoOutNodalValuesSplit = OutDensity;
   }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeMesh()
+  {
+    //
+    // compute nodal electron-density from quad data
+    //
+    distributedCPUVec<double> rhoNodalField;
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      rhoNodalField, d_densityDofHandlerIndexElectro);
+    rhoNodalField = 0;
+    std::function<
+      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+             const unsigned int                                          q)>
+      funcRho =
+        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
+            const unsigned int                                          q) {
+          return (*rhoInValues).find(cell->id())->second[q];
+        };
+    dealii::VectorTools::project<3, distributedCPUVec<double>>(
+      dealii::MappingQ1<3, 3>(),
+      d_dofHandlerRhoNodal,
+      d_constraintsRhoNodal,
+      d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+      funcRho,
+      rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
+
+
+    //
+    // only generate output for electron-density
+    //
+    DataOut<3> dataOutRho;
+    dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
+    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
+
+    dataOutRho.build_patches(FEOrder);
+
+    std::string tempFolder = "meshOutputFolder";
+    mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+    dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
+                                               dataOutRho,
+                                               d_mpiCommParent,
+                                               mpi_communicator,
+                                               interpoolcomm,
+                                               interBandGroupComm,
+                                               tempFolder,
+                                               "intialDensityOutput");
+
+
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout
+        << std::endl
+        << "------------------DFT-FE mesh file creation completed---------------------------"
+        << std::endl;
+  }
+
 
 #include "dft.inst.cc"
 } // namespace dftfe

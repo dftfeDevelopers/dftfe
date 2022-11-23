@@ -49,6 +49,9 @@ namespace dftfe
     run() = 0;
 
     virtual void
+    writeMesh() = 0;
+
+    virtual void
     updateAtomPositionsAndMoveMesh(
       const std::vector<dealii::Tensor<1, 3, double>> &globalAtomsDisplacements,
       const double maxJacobianRatioFactor         = 1.25,
@@ -69,6 +72,9 @@ namespace dftfe
     solve(const bool computeForces                   = true,
           const bool computeStress                   = true,
           const bool isRestartGroundStateCalcFromChk = false) = 0;
+
+    virtual void
+    computeStress() = 0;
 
     virtual void
     trivialSolveForStress() = 0;

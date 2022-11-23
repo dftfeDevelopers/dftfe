@@ -214,6 +214,13 @@ namespace dftfe
     run();
 
     /**
+     * @brief Calls dftBasepointer public function writeMesh(). Here the inital density and mesh are stored in a file. Useful for visluiing meshes without running solve.
+     */
+    void
+    writeMesh();
+
+
+    /**
      * @brief solve ground-state and return DFT free energy which is sum of internal
      * energy and negative of electronic entropic energy (in Hartree units)
      *
@@ -223,6 +230,9 @@ namespace dftfe
     std::tuple<double, bool, double>
     computeDFTFreeEnergy(const bool computeIonForces  = true,
                          const bool computeCellStress = false);
+
+    void
+    computeStress();
 
     /**
      * @brief Get DFT free energy (in Hartree units). This function can

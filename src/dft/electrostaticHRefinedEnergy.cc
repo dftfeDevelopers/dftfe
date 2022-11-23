@@ -392,7 +392,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   // with atoms belonging to a given bin
 
   vselfBinsManager<FEOrder, FEOrderElectro> vselfBinsManagerHRefined(
-    d_mpiCommParent, mpi_communicator, *d_dftParamsPtr);
+    d_mpiCommParent, mpi_communicator, interpoolcomm, *d_dftParamsPtr);
   vselfBinsManagerHRefined.createAtomBins(
     matrixFreeConstraintsInputVector,
     onlyHangingNodeConstraints,
