@@ -15,22 +15,21 @@
 // ---------------------------------------------------------------------
 //
 
-#if defined(DFTFE_WITH_GPU)
-#  ifndef forceCUDA_H_
-#    define forceCUDA_H_
+#  ifndef forceWfcContractions_H_
+#    define forceWfcContractions_H_
 
 #    include "headers.h"
-#    include "operatorCUDA.h"
+#    include "operator.h"
 #    include "dftParameters.h"
 
 namespace dftfe
 {
-  namespace forceCUDA
+  namespace force
   {
     void
-    gpuPortedForceKernelsAllH(
-      operatorDFTCUDAClass &      operatorMatrix,
-      const dataTypes::numberGPU *X,
+    wfcContractionsForceKernelsAllH(
+      operatorDFTClass &      operatorMatrix,
+      const std::vector<std::vector<dataTypes::number>> & X,
       const unsigned int spinPolarizedFlag, 
       const unsigned int spinIndex,
       const std::vector<std::vector<double>>  & eigenValuesH,
@@ -58,7 +57,6 @@ namespace dftfe
       const bool           isFloatingChargeForces,
       const bool           addEk,
       const dftParameters &dftParams);
-  } // namespace forceCUDA
+  } // namespace force
 } // namespace dftfe
 #  endif
-#endif

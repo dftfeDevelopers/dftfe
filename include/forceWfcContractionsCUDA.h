@@ -16,8 +16,8 @@
 //
 
 #if defined(DFTFE_WITH_GPU)
-#  ifndef forceCUDA_H_
-#    define forceCUDA_H_
+#  ifndef forceWfcContractionsCUDA_H_
+#    define forceWfcContractionsCUDA_H_
 
 #    include "headers.h"
 #    include "operatorCUDA.h"
