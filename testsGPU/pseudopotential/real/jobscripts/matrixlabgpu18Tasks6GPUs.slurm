@@ -28,6 +28,7 @@ srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/real/dftfe paramete
 srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/real/dftfe parameterFileMg2x_7.prm > outputMg2x_7
 srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/real/dftfe parameterFileMg2x_12.prm > outputMg2x_12
 srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/real/dftfe parameterFileMg2x_13.prm > outputMg2x_13
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/real/dftfe parameterFileBe.prm > outputBe
 
 srun -n 6 --mpi=pmi2  /home/gourab/build/release/real/dftfe parameterFileN2_1.prm > outputN2_1
 srun -n 6 --mpi=pmi2  /home/gourab/build/release/real/dftfe parameterFileN2_2.prm > outputN2_2
