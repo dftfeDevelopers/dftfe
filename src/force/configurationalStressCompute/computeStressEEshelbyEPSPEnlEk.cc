@@ -251,7 +251,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             d_mpiCommParent,
             dftPtr->interBandGroupComm,
             isPseudopotential,
-            d_dftParams.floatingNuclearCharges,
+            false,
             true,
             d_dftParams);
           MPI_Barrier(d_mpiCommParent);
