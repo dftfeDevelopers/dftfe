@@ -236,8 +236,10 @@ namespace dftfe
     void
     set(NumberType *x, const NumberType &alpha, const int size)
     {
-      const int gridSize = (size / WARPSIZE) + (size % WARPSIZE == 0 ? 0 : 1);
-      setKernel<NumberType><<<gridSize, WARPSIZE>>>(size, alpha, x);
+      const int gridSize = (size / cudaConstants::blockSize) +
+                           (size % cudaConstants::blockSize == 0 ? 0 : 1);
+      setKernel<NumberType>
+        <<<gridSize, cudaConstants::blockSize>>>(size, alpha, x);
     }
 
 
