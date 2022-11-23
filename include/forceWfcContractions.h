@@ -15,12 +15,12 @@
 // ---------------------------------------------------------------------
 //
 
-#  ifndef forceWfcContractions_H_
-#    define forceWfcContractions_H_
+#ifndef forceWfcContractions_H_
+#define forceWfcContractions_H_
 
-#    include "headers.h"
-#    include "operator.h"
-#    include "dftParameters.h"
+#include "headers.h"
+#include "operator.h"
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -28,16 +28,16 @@ namespace dftfe
   {
     void
     wfcContractionsForceKernelsAllH(
-      operatorDFTClass &      operatorMatrix,
-      const std::vector<std::vector<dataTypes::number>> & X,
-      const unsigned int spinPolarizedFlag, 
-      const unsigned int spinIndex,
-      const std::vector<std::vector<double>>  & eigenValuesH,
-      const std::vector<std::vector<double>> &  partialOccupanciesH,
-      const std::vector<double> & kPointCoordinates,         
+      operatorDFTClass &                                 operatorMatrix,
+      const std::vector<std::vector<dataTypes::number>> &X,
+      const unsigned int                                 spinPolarizedFlag,
+      const unsigned int                                 spinIndex,
+      const std::vector<std::vector<double>> &           eigenValuesH,
+      const std::vector<std::vector<double>> &           partialOccupanciesH,
+      const std::vector<double> &                        kPointCoordinates,
       const unsigned int *nonTrivialIdToElemIdMapH,
       const unsigned int *projecterKetTimesFlattenedVectorLocalIdsH,
-      const unsigned int MLoc,
+      const unsigned int  MLoc,
       const unsigned int  N,
       const unsigned int  numCells,
       const unsigned int  numQuads,
@@ -47,10 +47,10 @@ namespace dftfe
       double *            eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
-#    ifdef USE_COMPLEX
+#ifdef USE_COMPLEX
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
-#    endif
+#endif
       const MPI_Comm &     mpiCommParent,
       const MPI_Comm &     interBandGroupComm,
       const bool           isPsp,
@@ -59,4 +59,4 @@ namespace dftfe
       const dftParameters &dftParams);
   } // namespace force
 } // namespace dftfe
-#  endif
+#endif

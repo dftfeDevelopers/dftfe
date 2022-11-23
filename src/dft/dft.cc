@@ -618,7 +618,7 @@ namespace dftfe
             int minElement = *std::min_element(temp1.begin(), temp1.end());
 
             d_numEigenValues                  = minElement;
-            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex]/2;
+            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex] / 2;
             d_dftParamsPtr->wfcBlockSize      = temp2[minElementIndex];
           }
         else if (eigenvaluesInBandGroup <= 2000)
@@ -644,7 +644,7 @@ namespace dftfe
             int minElement = *std::min_element(temp1.begin(), temp1.end());
 
             d_numEigenValues                  = minElement;
-            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex]/2;
+            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex] / 2;
             d_dftParamsPtr->wfcBlockSize      = temp2[minElementIndex];
           }
         else
@@ -670,8 +670,8 @@ namespace dftfe
             int minElement = *std::min_element(temp1.begin(), temp1.end());
 
             d_numEigenValues                  = minElement;
-            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex]/2;
-            d_dftParamsPtr->wfcBlockSize = temp2[minElementIndex];
+            d_dftParamsPtr->chebyWfcBlockSize = temp2[minElementIndex] / 2;
+            d_dftParamsPtr->wfcBlockSize      = temp2[minElementIndex];
           }
 
         if (d_dftParamsPtr->algoType == "FAST")

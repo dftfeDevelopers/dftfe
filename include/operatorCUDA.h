@@ -152,7 +152,7 @@ namespace dftfe
      */
     virtual void
     reinitkPointSpinIndex(const unsigned int kPointIndex,
-                          const unsigned int spinIndex)=0;
+                          const unsigned int spinIndex) = 0;
 
 
     /**

@@ -54,7 +54,6 @@ namespace dftfe
    */
   namespace eshelbyTensorSP
   {
-
     /// exchange-correlation and psp part of the ELoc Eshelby tensor
     Tensor<2, 3, VectorizedArray<double>>
     getELocXcEshelbyTensor(

@@ -106,8 +106,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   // configurational stress contribution from nuclear self energy. This is
   // handled separately as it involves
   // a surface integral over the vself ball surface
-  if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm) ==
-        0)
+  if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm) == 0)
     computeStressEself(matrixFreeDataElectro.get_dof_handler(
                          phiTotDofHandlerIndexElectro),
                        vselfBinsManagerElectro,
@@ -116,8 +115,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
 
   // Sum all processor contributions and distribute to all processors
   d_stress = Utilities::MPI::sum(d_stress, mpi_communicator);
-  d_stress =
-    Utilities::MPI::sum(d_stress, dftPtr->interBandGroupComm);
+  d_stress = Utilities::MPI::sum(d_stress, dftPtr->interBandGroupComm);
   d_stress = Utilities::MPI::sum(d_stress, dftPtr->interpoolcomm);
 
   // Sum k point stress contribution over all processors

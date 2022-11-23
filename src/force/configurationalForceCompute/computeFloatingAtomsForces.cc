@@ -35,14 +35,14 @@ forceClass<FEOrder, FEOrderElectro>::computeFloatingAtomsForces()
                 MPI_DOUBLE,
                 MPI_SUM,
                 dftPtr->interBandGroupComm);
-  
+
   MPI_Allreduce(MPI_IN_PLACE,
                 &(d_forceAtomsFloating[0]),
                 numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 dftPtr->interpoolcomm);
-  
+
 
 
 #ifdef USE_COMPLEX

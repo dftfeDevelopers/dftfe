@@ -19,39 +19,35 @@
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
-  Tensor<2, 3, double> & stressContribution,
-  const MatrixFree<3, double> &                    matrixFreeData,
-  const unsigned int numQuadPoints,
-  const std::vector<double> & jxwQuadsSubCells,
-  const unsigned int cell,
-  const std::map<dealii::CellId, unsigned int>
-     & cellIdToCellNumberMap,
-  const std::vector<dataTypes::number>
-    &zetalmDeltaVlProductDistImageAtoms,
+void forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
+  Tensor<2, 3, double> &                        stressContribution,
+  const MatrixFree<3, double> &                 matrixFreeData,
+  const unsigned int                            numQuadPoints,
+  const std::vector<double> &                   jxwQuadsSubCells,
+  const unsigned int                            cell,
+  const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
+  const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
 #ifdef USE_COMPLEX
-        const std::vector<dataTypes::number> 
-          &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
-#endif    
+  const std::vector<dataTypes::number>
+    &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+#endif
   const std::vector<dataTypes::number>
     &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
-    const bool isSpinPolarized)
+  const bool isSpinPolarized)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numSubCells =matrixFreeData.n_components_filled(cell);
+  const unsigned int numSubCells = matrixFreeData.n_components_filled(cell);
 
-  const double spinPolarizedFactor =
-    isSpinPolarized? 0.5 : 1.0;
+  const double spinPolarizedFactor = isSpinPolarized ? 0.5 : 1.0;
 
   const unsigned int numNonLocalAtomsCurrentProcess =
     dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
-  DoFHandler<3>::active_cell_iterator   subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  Tensor<1, 3, VectorizedArray<double>>               zeroTensor3;
+  Tensor<1, 3, VectorizedArray<double>> zeroTensor3;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
-      zeroTensor3[idim]           = make_vectorized_array(0.0);
+      zeroTensor3[idim] = make_vectorized_array(0.0);
     }
 
   for (int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
@@ -66,74 +62,117 @@ forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
 
 
 
-      for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-        ++iSubCell)
-      {  
-        subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-        bool  isPseudoWfcsAtomInCell = false;
-        const unsigned int elementId=cellIdToCellNumberMap.find(subCellPtr->id())->second;
-        for (unsigned int i = 0;
-           i < dftPtr->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[elementId].size();
-           i++)
-        if (dftPtr->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[elementId][i] == iAtom)
-          {
-            isPseudoWfcsAtomInCell  = true;
-            break;
-          }
+      for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        {
+          subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
+          bool               isPseudoWfcsAtomInCell = false;
+          const unsigned int elementId =
+            cellIdToCellNumberMap.find(subCellPtr->id())->second;
+          for (unsigned int i = 0;
+               i <
+               dftPtr
+                 ->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[elementId]
+                 .size();
+               i++)
+            if (dftPtr
+                  ->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[elementId]
+                                                                   [i] == iAtom)
+              {
+                isPseudoWfcsAtomInCell = true;
+                break;
+              }
 
-        if (isPseudoWfcsAtomInCell)
-          {
-
-            for (unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+          if (isPseudoWfcsAtomInCell)
             {
-              std::vector<double> kcoord(3,0.0);
-              kcoord[0] = dftPtr->d_kPointCoordinates[kPoint * 3 + 0];
-              kcoord[1] = dftPtr->d_kPointCoordinates[kPoint * 3 + 1];
-              kcoord[2] = dftPtr->d_kPointCoordinates[kPoint * 3 + 2];
-
-              const unsigned int startingPseudoWfcIdFlattened =
-                 kPoint*dftPtr->d_sumNonTrivialPseudoWfcsOverAllCellsZetaDeltaVQuads *numQuadPoints
-                      +dftPtr->d_nonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads[elementId]*numQuadPoints+ dftPtr->d_atomIdToNonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads[iAtom][elementId]*numQuadPoints;
-
-              const unsigned int numberPseudoWaveFunctions= dftPtr->d_numberPseudoAtomicWaveFunctions[nonLocalAtomId];
-              std::vector<dataTypes::number> temp1(3);              
-              std::vector<dataTypes::number> temp2(3);
-              for (unsigned int q = 0; q < numQuadPoints; ++q)
+              for (unsigned int kPoint = 0;
+                   kPoint < dftPtr->d_kPointWeights.size();
+                   ++kPoint)
                 {
-                  //row major storage
-                  std::vector<dataTypes::number> E(9,dataTypes::number(0.0));
+                  std::vector<double> kcoord(3, 0.0);
+                  kcoord[0] = dftPtr->d_kPointCoordinates[kPoint * 3 + 0];
+                  kcoord[1] = dftPtr->d_kPointCoordinates[kPoint * 3 + 1];
+                  kcoord[2] = dftPtr->d_kPointCoordinates[kPoint * 3 + 2];
 
-                  for (unsigned int iPseudoWave = 0;
-                       iPseudoWave < numberPseudoWaveFunctions;
-                       ++iPseudoWave)
+                  const unsigned int startingPseudoWfcIdFlattened =
+                    kPoint *
+                      dftPtr
+                        ->d_sumNonTrivialPseudoWfcsOverAllCellsZetaDeltaVQuads *
+                      numQuadPoints +
+                    dftPtr->d_nonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads
+                        [elementId] *
+                      numQuadPoints +
+                    dftPtr
+                        ->d_atomIdToNonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads
+                          [iAtom][elementId] *
+                      numQuadPoints;
+
+                  const unsigned int numberPseudoWaveFunctions =
+                    dftPtr->d_numberPseudoAtomicWaveFunctions[nonLocalAtomId];
+                  std::vector<dataTypes::number> temp1(3);
+                  std::vector<dataTypes::number> temp2(3);
+                  for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      temp1[0]=zetalmDeltaVlProductDistImageAtoms[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+0];
-                      temp1[1]=zetalmDeltaVlProductDistImageAtoms[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+1];
-                      temp1[2]=zetalmDeltaVlProductDistImageAtoms[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+2];
+                      // row major storage
+                      std::vector<dataTypes::number> E(9,
+                                                       dataTypes::number(0.0));
 
-                      temp2[0]=projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+0];
-                      temp2[1]=projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+1];
-                      temp2[2]=projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[startingPseudoWfcIdFlattened*3+iPseudoWave*numQuadPoints*3+q*3+2];
-#ifdef USE_COMPLEX       
-                      const dataTypes::number temp3=projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[startingPseudoWfcIdFlattened+iPseudoWave*numQuadPoints+q];
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                         for (unsigned int jdim = 0; jdim < 3; ++jdim)
-                            E[idim*3+jdim] -= 2.0 *(temp2[idim]*temp1[jdim]-dataTypes::number(0.0,1.0)*temp3* temp1[idim]*dataTypes::number(kcoord[jdim]));
+                      for (unsigned int iPseudoWave = 0;
+                           iPseudoWave < numberPseudoWaveFunctions;
+                           ++iPseudoWave)
+                        {
+                          temp1[0] = zetalmDeltaVlProductDistImageAtoms
+                            [startingPseudoWfcIdFlattened * 3 +
+                             iPseudoWave * numQuadPoints * 3 + q * 3 + 0];
+                          temp1[1] = zetalmDeltaVlProductDistImageAtoms
+                            [startingPseudoWfcIdFlattened * 3 +
+                             iPseudoWave * numQuadPoints * 3 + q * 3 + 1];
+                          temp1[2] = zetalmDeltaVlProductDistImageAtoms
+                            [startingPseudoWfcIdFlattened * 3 +
+                             iPseudoWave * numQuadPoints * 3 + q * 3 + 2];
+
+                          temp2[0] =
+                            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                              [startingPseudoWfcIdFlattened * 3 +
+                               iPseudoWave * numQuadPoints * 3 + q * 3 + 0];
+                          temp2[1] =
+                            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                              [startingPseudoWfcIdFlattened * 3 +
+                               iPseudoWave * numQuadPoints * 3 + q * 3 + 1];
+                          temp2[2] =
+                            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                              [startingPseudoWfcIdFlattened * 3 +
+                               iPseudoWave * numQuadPoints * 3 + q * 3 + 2];
+#ifdef USE_COMPLEX
+                          const dataTypes::number temp3 =
+                            projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                              [startingPseudoWfcIdFlattened +
+                               iPseudoWave * numQuadPoints + q];
+                          for (unsigned int idim = 0; idim < 3; ++idim)
+                            for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                              E[idim * 3 + jdim] -=
+                                2.0 * (temp2[idim] * temp1[jdim] -
+                                       dataTypes::number(0.0, 1.0) * temp3 *
+                                         temp1[idim] *
+                                         dataTypes::number(kcoord[jdim]));
 #else
+                          for (unsigned int idim = 0; idim < 3; ++idim)
+                            for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                              E[idim * 3 + jdim] -=
+                                2.0 * (temp2[idim] * temp1[jdim]);
+#endif
+                        } // pseudowavefunctions loop
+
+                      const double factor =
+                        spinPolarizedFactor * dftPtr->d_kPointWeights[kPoint] *
+                        jxwQuadsSubCells[iSubCell * numQuadPoints + q];
+
                       for (unsigned int idim = 0; idim < 3; ++idim)
-                         for (unsigned int jdim = 0; jdim < 3; ++jdim)                                                     E[idim*3+jdim] -= 2.0 *(temp2[idim]*temp1[jdim]);
-#endif                       
-                    }//pseudowavefunctions loop
-
-                  const double factor=spinPolarizedFactor *dftPtr->d_kPointWeights[kPoint]*jxwQuadsSubCells[iSubCell*numQuadPoints+q];
-
-                  for (unsigned int idim = 0; idim < 3; ++idim)
-                     for (unsigned int jdim = 0; jdim < 3; ++jdim)   
-                        stressContribution[idim][jdim] +=factor*2.0*realPart(E[idim*3+jdim]);
-                }//quad-loop
-             }//kpoint loop
-          }//non-trivial cell check
-        }//subcell loop
-    } // iAtom loop
+                        for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                          stressContribution[idim][jdim] +=
+                            factor * 2.0 * realPart(E[idim * 3 + jdim]);
+                    } // quad-loop
+                }     // kpoint loop
+            }         // non-trivial cell check
+        }             // subcell loop
+    }                 // iAtom loop
 }
-

@@ -606,58 +606,55 @@ namespace dftfe
 
 
     void
-    FnlGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double>> &forceContributionFnlGammaAtoms,
-        const MatrixFree<3, double> &                    matrixFreeData,
-        FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
-          &                forceEvalNLP,
-        const unsigned int cell,
-        const std::map<dealii::CellId, unsigned int>
-           & cellIdToCellNumberMap,
+    FnlGammaAtomsElementalContribution(
+      std::map<unsigned int, std::vector<double>>
+        &                          forceContributionFnlGammaAtoms,
+      const MatrixFree<3, double> &matrixFreeData,
+      FEEvaluation<3,
+                   1,
+                   C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
+                   3> &            forceEvalNLP,
+      const unsigned int           cell,
+      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
 #ifdef USE_COMPLEX
-        const std::vector<dataTypes::number> 
-          &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+      const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-        const std::vector<dataTypes::number>
-          &zetaDeltaVQuadsFlattened,
-        const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
+      const std::vector<dataTypes::number> &zetaDeltaVQuadsFlattened,
+      const std::vector<dataTypes::number> &
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
 
-    void
-    FnlGammaxElementalContribution(dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> & FVectQuads,
-        const MatrixFree<3, double> &                    matrixFreeData,
-        const unsigned int numQuadPoints,
-        const unsigned int cell,
-        const std::map<dealii::CellId, unsigned int>
-           & cellIdToCellNumberMap,
-        const std::vector<dataTypes::number>
-          &zetaDeltaVQuadsFlattened,
-        const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
+    void FnlGammaxElementalContribution(
+      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> &FVectQuads,
+      const MatrixFree<3, double> &                 matrixFreeData,
+      const unsigned int                            numQuadPoints,
+      const unsigned int                            cell,
+      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
+      const std::vector<dataTypes::number> &        zetaDeltaVQuadsFlattened,
+      const std::vector<dataTypes::number> &
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
     void
     distributeForceContributionFnlGammaAtoms(
       const std::map<unsigned int, std::vector<double>>
         &forceContributionFnlGammaAtoms);
 
-    void
-      stressEnlElementalContribution(
-  Tensor<2, 3, double> & stressContribution,
-  const MatrixFree<3, double> &                    matrixFreeData,
-  const unsigned int numQuadPoints,
-  const std::vector<double> & jxwQuadsSubCells,
-  const unsigned int cell,
-  const std::map<dealii::CellId, unsigned int>
-     & cellIdToCellNumberMap,
-  const std::vector<dataTypes::number>
-    &zetalmDeltaVlProductDistImageAtoms,
+    void stressEnlElementalContribution(
+      Tensor<2, 3, double> &                        stressContribution,
+      const MatrixFree<3, double> &                 matrixFreeData,
+      const unsigned int                            numQuadPoints,
+      const std::vector<double> &                   jxwQuadsSubCells,
+      const unsigned int                            cell,
+      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
+      const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
 #ifdef USE_COMPLEX
-        const std::vector<dataTypes::number> 
-          &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
-#endif    
-  const std::vector<dataTypes::number>
-    &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
-    const bool isSpinPolarized);
+      const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+#endif
+      const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
+      const bool isSpinPolarized);
 
     void
     computeAtomsForcesGaussianGenerator(
