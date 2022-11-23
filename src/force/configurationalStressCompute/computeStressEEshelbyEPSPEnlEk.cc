@@ -348,6 +348,19 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   ////////////////////
   if (bandGroupTaskId == 0)
     {
+
+      // kpoint group parallelization data structures
+      const unsigned int numberKptGroups =
+        dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
+
+      const unsigned int kptGroupTaskId =
+        dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
+      std::vector<int> kptGroupLowHighPlusOneIndices;
+
+      if (numMacroCells > 0)
+        dftUtils::createKpointParallelizationIndices(
+          dftPtr->interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndices);
+
       if (d_dftParams.spinPolarized == 1)
         {
           dealii::AlignedVector<VectorizedArray<double>> rhoXCQuadsVect(
@@ -376,6 +389,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
             {
+            if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+              {              
               forceEval.reinit(cell);
 
               std::fill(rhoXCQuadsVect.begin(),
@@ -704,6 +720,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                     {
                       d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
                     }
+              }//kpt paral 
             } // macrocell loop
         }
       else
@@ -730,6 +747,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
             {
+        if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+        {
               forceEval.reinit(cell);
 
               std::fill(rhoQuads.begin(),
@@ -1001,6 +1021,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                     {
                       d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
                     }
+        }//kpt paral
             } // cell loop
         }
 
@@ -1143,9 +1164,26 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                                                  gradRhoQuadsElectroLpsp(numQuadPointsLpsp, zeroTensor);
   dealii::AlignedVector<VectorizedArray<double>> pseudoVLocQuadsElectro(
     numQuadPointsLpsp, make_vectorized_array(0.0));
+
+
+      // kpoint group parallelization data structures
+      const unsigned int numberKptGroups =
+        dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
+
+      const unsigned int kptGroupTaskId =
+        dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
+      std::vector<int> kptGroupLowHighPlusOneIndices;
+
+      if (matrixFreeDataElectro.n_macro_cells() > 0)
+        dftUtils::createKpointParallelizationIndices(
+          dftPtr->interpoolcomm, matrixFreeDataElectro.n_macro_cells(), kptGroupLowHighPlusOneIndices);
+
   for (unsigned int cell = 0; cell < matrixFreeDataElectro.n_macro_cells();
        ++cell)
     {
+                  if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+              { 
       std::set<unsigned int> nonTrivialSmearedChargeAtomImageIdsMacroCell;
 
       const unsigned int numSubCells =
@@ -1312,6 +1350,6 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
             dftPtr->d_bQuadAtomIdsAllAtomsImages,
             smearedbQuads);
         }
-
+    }//kpt paral
     } // cell loop
 }

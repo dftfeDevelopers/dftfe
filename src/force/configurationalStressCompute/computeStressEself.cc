@@ -50,28 +50,46 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
 
   std::vector<Tensor<1, 3, double>> gradVselfQuad(numQuadPoints);
 
+  // kpoint group parallelization data structures
+  const unsigned int numberKptGroups =
+    dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
+
+  const unsigned int kptGroupTaskId =
+    dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
+  std::vector<int> kptGroupLowHighPlusOneIndices;
+
+  if (numberBins > 0)
+    dftUtils::createKpointParallelizationIndices(
+      dftPtr->interpoolcomm, numberBins, kptGroupLowHighPlusOneIndices);
+
+
+
   for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      const std::vector<DoFHandler<3>::active_cell_iterator>
-        &cellsVselfBallDofHandler = d_cellsVselfBallsDofHandlerElectro[iBin];
-      const distributedCPUVec<double> &iBinVselfField =
-        vselfBinsManagerElectro.getVselfFieldBins()[iBin];
-      std::vector<DoFHandler<3>::active_cell_iterator>::const_iterator iter1;
-      for (iter1 = cellsVselfBallDofHandler.begin();
-           iter1 != cellsVselfBallDofHandler.end();
-           ++iter1)
+      if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
         {
-          DoFHandler<3>::active_cell_iterator cell = *iter1;
-          feVselfValues.reinit(cell);
-          feVselfValues.get_function_gradients(iBinVselfField, gradVselfQuad);
+        const std::vector<DoFHandler<3>::active_cell_iterator>
+          &cellsVselfBallDofHandler = d_cellsVselfBallsDofHandlerElectro[iBin];
+        const distributedCPUVec<double> &iBinVselfField =
+          vselfBinsManagerElectro.getVselfFieldBins()[iBin];
+        std::vector<DoFHandler<3>::active_cell_iterator>::const_iterator iter1;
+        for (iter1 = cellsVselfBallDofHandler.begin();
+             iter1 != cellsVselfBallDofHandler.end();
+             ++iter1)
+          {
+            DoFHandler<3>::active_cell_iterator cell = *iter1;
+            feVselfValues.reinit(cell);
+            feVselfValues.get_function_gradients(iBinVselfField, gradVselfQuad);
 
-          for (unsigned int qPoint = 0; qPoint < numQuadPoints; ++qPoint)
-            {
-              d_stress += eshelbyTensor::getVselfBallEshelbyTensor(
-                            gradVselfQuad[qPoint]) *
-                          feVselfValues.JxW(qPoint);
-            } // q point loop
-        }     // cell loop
+            for (unsigned int qPoint = 0; qPoint < numQuadPoints; ++qPoint)
+              {
+                d_stress += eshelbyTensor::getVselfBallEshelbyTensor(
+                              gradVselfQuad[qPoint]) *
+                            feVselfValues.JxW(qPoint);
+              } // q point loop
+          }     // cell loop
+        }//kpt paral loop
     }         // bin loop
 
 
@@ -91,80 +109,84 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
 
   for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      const std::map<DoFHandler<3>::active_cell_iterator,
-                     std::vector<unsigned int>>
-        &cellsVselfBallSurfacesDofHandler =
-          d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
-      const distributedCPUVec<double> &iBinVselfField =
-        vselfBinsManagerElectro.getVselfFieldBins()[iBin];
-      std::map<DoFHandler<3>::active_cell_iterator,
-               std::vector<unsigned int>>::const_iterator iter1;
-      for (iter1 = cellsVselfBallSurfacesDofHandler.begin();
-           iter1 != cellsVselfBallSurfacesDofHandler.end();
-           ++iter1)
-        {
-          DoFHandler<3>::active_cell_iterator cell = iter1->first;
-          const int                           closestAtomId =
-            d_cellsVselfBallsClosestAtomIdDofHandlerElectro[iBin][cell->id()];
-          double   closestAtomCharge;
-          Point<3> closestAtomLocation;
-          if (closestAtomId < numberGlobalAtoms)
+      if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+        {      
+          const std::map<DoFHandler<3>::active_cell_iterator,
+                         std::vector<unsigned int>>
+            &cellsVselfBallSurfacesDofHandler =
+              d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
+          const distributedCPUVec<double> &iBinVselfField =
+            vselfBinsManagerElectro.getVselfFieldBins()[iBin];
+          std::map<DoFHandler<3>::active_cell_iterator,
+                   std::vector<unsigned int>>::const_iterator iter1;
+          for (iter1 = cellsVselfBallSurfacesDofHandler.begin();
+               iter1 != cellsVselfBallSurfacesDofHandler.end();
+               ++iter1)
             {
-              closestAtomLocation[0] = atomLocations[closestAtomId][2];
-              closestAtomLocation[1] = atomLocations[closestAtomId][3];
-              closestAtomLocation[2] = atomLocations[closestAtomId][4];
-              if (d_dftParams.isPseudopotential)
-                closestAtomCharge = atomLocations[closestAtomId][1];
-              else
-                closestAtomCharge = atomLocations[closestAtomId][0];
-            }
-          else
-            {
-              const int imageId      = closestAtomId - numberGlobalAtoms;
-              closestAtomCharge      = imageCharges[imageId];
-              closestAtomLocation[0] = imagePositions[imageId][0];
-              closestAtomLocation[1] = imagePositions[imageId][1];
-              closestAtomLocation[2] = imagePositions[imageId][2];
-            }
-
-          const std::vector<unsigned int> &dirichletFaceIds = iter1->second;
-          for (unsigned int index = 0; index < dirichletFaceIds.size(); index++)
-            {
-              const unsigned int faceId = dirichletFaceIds[index];
-              feVselfFaceValues.reinit(cell, faceId);
-
-              for (unsigned int qPoint = 0; qPoint < numFaceQuadPoints;
-                   ++qPoint)
+              DoFHandler<3>::active_cell_iterator cell = iter1->first;
+              const int                           closestAtomId =
+                d_cellsVselfBallsClosestAtomIdDofHandlerElectro[iBin][cell->id()];
+              double   closestAtomCharge;
+              Point<3> closestAtomLocation;
+              if (closestAtomId < numberGlobalAtoms)
                 {
-                  const Point<3> quadPoint =
-                    feVselfFaceValues.quadrature_point(qPoint);
-                  const Tensor<1, 3, double> dispClosestAtom =
-                    quadPoint - closestAtomLocation;
-                  const double               dist = dispClosestAtom.norm();
-                  const Tensor<1, 3, double> gradVselfFaceQuadExact =
-                    closestAtomCharge * dispClosestAtom / dist / dist / dist;
-                  d_stress -=
-                    outer_product(dispClosestAtom,
-                                  eshelbyTensor::getVselfBallEshelbyTensor(
-                                    gradVselfFaceQuadExact) *
-                                    feVselfFaceValues.normal_vector(qPoint)) *
-                    feVselfFaceValues.JxW(qPoint);
+                  closestAtomLocation[0] = atomLocations[closestAtomId][2];
+                  closestAtomLocation[1] = atomLocations[closestAtomId][3];
+                  closestAtomLocation[2] = atomLocations[closestAtomId][4];
+                  if (d_dftParams.isPseudopotential)
+                    closestAtomCharge = atomLocations[closestAtomId][1];
+                  else
+                    closestAtomCharge = atomLocations[closestAtomId][0];
+                }
+              else
+                {
+                  const int imageId      = closestAtomId - numberGlobalAtoms;
+                  closestAtomCharge      = imageCharges[imageId];
+                  closestAtomLocation[0] = imagePositions[imageId][0];
+                  closestAtomLocation[1] = imagePositions[imageId][1];
+                  closestAtomLocation[2] = imagePositions[imageId][2];
+                }
+
+              const std::vector<unsigned int> &dirichletFaceIds = iter1->second;
+              for (unsigned int index = 0; index < dirichletFaceIds.size(); index++)
+                {
+                  const unsigned int faceId = dirichletFaceIds[index];
+                  feVselfFaceValues.reinit(cell, faceId);
+
+                  for (unsigned int qPoint = 0; qPoint < numFaceQuadPoints;
+                       ++qPoint)
+                    {
+                      const Point<3> quadPoint =
+                        feVselfFaceValues.quadrature_point(qPoint);
+                      const Tensor<1, 3, double> dispClosestAtom =
+                        quadPoint - closestAtomLocation;
+                      const double               dist = dispClosestAtom.norm();
+                      const Tensor<1, 3, double> gradVselfFaceQuadExact =
+                        closestAtomCharge * dispClosestAtom / dist / dist / dist;
+                      d_stress -=
+                        outer_product(dispClosestAtom,
+                                      eshelbyTensor::getVselfBallEshelbyTensor(
+                                        gradVselfFaceQuadExact) *
+                                        feVselfFaceValues.normal_vector(qPoint)) *
+                        feVselfFaceValues.JxW(qPoint);
 #ifdef DEBUG
-                  dummyTest +=
-                    scalar_product(gradVselfFaceQuadExact,
-                                   feVselfFaceValues.normal_vector(qPoint)) *
-                    feVselfFaceValues.JxW(qPoint);
-                  dummyVec += feVselfFaceValues.normal_vector(qPoint) *
-                              feVselfFaceValues.JxW(qPoint);
-                  dummyTensor +=
-                    outer_product(gradVselfFaceQuadExact,
-                                  feVselfFaceValues.normal_vector(qPoint)) *
-                    feVselfFaceValues.JxW(qPoint);
+                      dummyTest +=
+                        scalar_product(gradVselfFaceQuadExact,
+                                       feVselfFaceValues.normal_vector(qPoint)) *
+                        feVselfFaceValues.JxW(qPoint);
+                      dummyVec += feVselfFaceValues.normal_vector(qPoint) *
+                                  feVselfFaceValues.JxW(qPoint);
+                      dummyTensor +=
+                        outer_product(gradVselfFaceQuadExact,
+                                      feVselfFaceValues.normal_vector(qPoint)) *
+                        feVselfFaceValues.JxW(qPoint);
 #endif
 
-                } // q point loop
-            }     // face loop
-        }         // cell loop
+                    } // q point loop
+                }     // face loop
+            }         // cell loop
+        }//kpt paral loop
     }             // bin loop
 
   //
@@ -204,96 +226,100 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
 
       for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
         {
-          FEEvaluation<3, -1> vselfEvalSmearedCharge(
-            matrixFreeDataElectro,
-            dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
-            smearedChargeQuadratureId);
+        if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+            iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+          {            
+            FEEvaluation<3, -1> vselfEvalSmearedCharge(
+              matrixFreeDataElectro,
+              dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
+              smearedChargeQuadratureId);
 
-          const std::set<int> &atomImageIdsInBin =
-            atomImageIdsBins.find(iBin)->second;
-          for (unsigned int cell = 0;
-               cell < matrixFreeDataElectro.n_macro_cells();
-               ++cell)
-            {
-              std::set<unsigned int>
-                                 nonTrivialSmearedChargeAtomImageIdsMacroCell;
-              const unsigned int numSubCells =
-                matrixFreeDataElectro.n_components_filled(cell);
-              for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                   ++iSubCell)
-                {
-                  subCellPtr =
-                    matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
-                  dealii::CellId                   subCellId = subCellPtr->id();
-                  const std::vector<unsigned int> &temp =
-                    dftPtr->d_bCellNonTrivialAtomImageIdsBins[iBin]
-                      .find(subCellId)
-                      ->second;
-                  for (int i = 0; i < temp.size(); i++)
-                    nonTrivialSmearedChargeAtomImageIdsMacroCell.insert(
-                      temp[i]);
-                }
+            const std::set<int> &atomImageIdsInBin =
+              atomImageIdsBins.find(iBin)->second;
+            for (unsigned int cell = 0;
+                 cell < matrixFreeDataElectro.n_macro_cells();
+                 ++cell)
+              {
+                std::set<unsigned int>
+                                   nonTrivialSmearedChargeAtomImageIdsMacroCell;
+                const unsigned int numSubCells =
+                  matrixFreeDataElectro.n_components_filled(cell);
+                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                     ++iSubCell)
+                  {
+                    subCellPtr =
+                      matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
+                    dealii::CellId                   subCellId = subCellPtr->id();
+                    const std::vector<unsigned int> &temp =
+                      dftPtr->d_bCellNonTrivialAtomImageIdsBins[iBin]
+                        .find(subCellId)
+                        ->second;
+                    for (int i = 0; i < temp.size(); i++)
+                      nonTrivialSmearedChargeAtomImageIdsMacroCell.insert(
+                        temp[i]);
+                  }
 
-              if (nonTrivialSmearedChargeAtomImageIdsMacroCell.size() == 0)
-                continue;
+                if (nonTrivialSmearedChargeAtomImageIdsMacroCell.size() == 0)
+                  continue;
 
-              std::fill(smearedbQuads.begin(),
-                        smearedbQuads.end(),
-                        make_vectorized_array(0.0));
-              std::fill(gradVselfSmearedChargeQuads.begin(),
-                        gradVselfSmearedChargeQuads.end(),
-                        zeroTensor);
+                std::fill(smearedbQuads.begin(),
+                          smearedbQuads.end(),
+                          make_vectorized_array(0.0));
+                std::fill(gradVselfSmearedChargeQuads.begin(),
+                          gradVselfSmearedChargeQuads.end(),
+                          zeroTensor);
 
-              bool isCellNonTrivial = false;
-              for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                   ++iSubCell)
-                {
-                  subCellPtr =
-                    matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
-                  dealii::CellId subCellId = subCellPtr->id();
+                bool isCellNonTrivial = false;
+                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                     ++iSubCell)
+                  {
+                    subCellPtr =
+                      matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
+                    dealii::CellId subCellId = subCellPtr->id();
 
-                  const std::vector<int> &bQuadAtomIdsCell =
-                    dftPtr->d_bQuadAtomIdsAllAtoms.find(subCellId)->second;
-                  const std::vector<double> &bQuadValuesCell =
-                    dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
+                    const std::vector<int> &bQuadAtomIdsCell =
+                      dftPtr->d_bQuadAtomIdsAllAtoms.find(subCellId)->second;
+                    const std::vector<double> &bQuadValuesCell =
+                      dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
 
-                  for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
-                    {
-                      if (atomImageIdsInBin.find(bQuadAtomIdsCell[q]) !=
-                          atomImageIdsInBin.end())
-                        {
-                          isCellNonTrivial           = true;
-                          smearedbQuads[q][iSubCell] = bQuadValuesCell[q];
-                        }
-                    } // quad loop
-                }     // subcell loop
+                    for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
+                      {
+                        if (atomImageIdsInBin.find(bQuadAtomIdsCell[q]) !=
+                            atomImageIdsInBin.end())
+                          {
+                            isCellNonTrivial           = true;
+                            smearedbQuads[q][iSubCell] = bQuadValuesCell[q];
+                          }
+                      } // quad loop
+                  }     // subcell loop
 
-              if (!isCellNonTrivial)
-                continue;
+                if (!isCellNonTrivial)
+                  continue;
 
-              forceEvalSmearedCharge.reinit(cell);
-              vselfEvalSmearedCharge.reinit(cell);
-              vselfEvalSmearedCharge.read_dof_values_plain(
-                vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-              vselfEvalSmearedCharge.evaluate(false, true);
+                forceEvalSmearedCharge.reinit(cell);
+                vselfEvalSmearedCharge.reinit(cell);
+                vselfEvalSmearedCharge.read_dof_values_plain(
+                  vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
+                vselfEvalSmearedCharge.evaluate(false, true);
 
-              for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
-                {
-                  gradVselfSmearedChargeQuads[q] =
-                    vselfEvalSmearedCharge.get_gradient(q);
-                }
+                for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
+                  {
+                    gradVselfSmearedChargeQuads[q] =
+                      vselfEvalSmearedCharge.get_gradient(q);
+                  }
 
-              addEVselfSmearedStressContribution(
-                forceEvalSmearedCharge,
-                matrixFreeDataElectro,
-                cell,
-                gradVselfSmearedChargeQuads,
-                std::vector<unsigned int>(
-                  nonTrivialSmearedChargeAtomImageIdsMacroCell.begin(),
-                  nonTrivialSmearedChargeAtomImageIdsMacroCell.end()),
-                dftPtr->d_bQuadAtomIdsAllAtomsImages,
-                smearedbQuads);
-            } // macrocell loop
+                addEVselfSmearedStressContribution(
+                  forceEvalSmearedCharge,
+                  matrixFreeDataElectro,
+                  cell,
+                  gradVselfSmearedChargeQuads,
+                  std::vector<unsigned int>(
+                    nonTrivialSmearedChargeAtomImageIdsMacroCell.begin(),
+                    nonTrivialSmearedChargeAtomImageIdsMacroCell.end()),
+                  dftPtr->d_bQuadAtomIdsAllAtomsImages,
+                  smearedbQuads);
+              } // macrocell loop
+          }//kpt paral loop
         }     // bin loop
     }
 }

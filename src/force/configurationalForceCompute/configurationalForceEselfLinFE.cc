@@ -55,6 +55,18 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   std::vector<unsigned int> baseIndexDofsVec(forceBaseIndicesPerCell * 3);
   Tensor<1, 3, double>      baseIndexForceVec;
 
+  // kpoint group parallelization data structures
+  const unsigned int numberKptGroups =
+    dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
+
+  const unsigned int kptGroupTaskId =
+    dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
+  std::vector<int> kptGroupLowHighPlusOneIndices;
+
+  if (numberBins > 0)
+    dftUtils::createKpointParallelizationIndices(
+      dftPtr->interpoolcomm, numberBins, kptGroupLowHighPlusOneIndices);
+
   if (!d_dftParams.floatingNuclearCharges)
     {
       for (unsigned int ibase = 0; ibase < forceBaseIndicesPerCell; ++ibase)
@@ -65,6 +77,9 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
         }
 
       for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+        {
+      if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
         {
           const std::vector<DoFHandler<3>::active_cell_iterator> &
             cellsVselfBallDofHandler = d_cellsVselfBallsDofHandlerElectro[iBin];
@@ -115,6 +130,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                 forceLocalDofIndices,
                 d_configForceVectorLinFEElectro);
             } // cell loop
+        }//kpt paral
         }     // bin loop
     }
 
@@ -157,6 +173,9 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
         forceContributionSmearedChargesGammaAtoms;
 
       for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+        {
+                if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
         {
           FEEvaluation<3, -1> vselfEvalSmearedCharge(
             matrixFreeDataElectro,
@@ -273,6 +292,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
               d_atomsForceDofsElectro,
               d_constraintsNoneForceElectro,
               d_configForceVectorLinFEElectro);
+        }//kpt paral
         } // bin loop
     }
 
@@ -316,6 +336,9 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                                     baseComponentIndexPair.first] = iFaceDof;
         }
       for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+        {
+                if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
         {
           const std::map<DoFHandler<3>::active_cell_iterator,
                          std::vector<unsigned int>>
@@ -418,6 +441,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                     d_configForceVectorLinFEElectro);
                 } // face loop
             }     // cell loop
+        }//kpt paral
         }         // bin loop
     }
 }

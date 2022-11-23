@@ -424,6 +424,18 @@ forceClass<FEOrder, FEOrderElectro>::
   ////////////////////
   if (bandGroupTaskId == 0)
     {
+      // kpoint group parallelization data structures
+      const unsigned int numberKptGroups =
+        dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
+
+      const unsigned int kptGroupTaskId =
+        dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
+      std::vector<int> kptGroupLowHighPlusOneIndices;
+
+      if (numMacroCells > 0)
+        dftUtils::createKpointParallelizationIndices(
+          dftPtr->interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndices);
+
       if (d_dftParams.spinPolarized == 1)
         {
           dealii::AlignedVector<VectorizedArray<double>> rhoXCQuadsVect(
@@ -460,6 +472,9 @@ forceClass<FEOrder, FEOrderElectro>::
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
             {
+            if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+              {               
               forceEval.reinit(cell);
 
               std::fill(rhoXCQuadsVect.begin(),
@@ -810,7 +825,8 @@ forceClass<FEOrder, FEOrderElectro>::
               forceEval.integrate(true, true);
               forceEval.distribute_local_to_global(
                 d_configForceVectorLinFE); // also takes care of constraints
-            }
+              }//kpt paral
+            }//cell loop
 
           if (d_dftParams.nonLinearCoreCorrection)
             {
@@ -870,6 +886,9 @@ forceClass<FEOrder, FEOrderElectro>::
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
             {
+                          if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+              { 
               forceEval.reinit(cell);
 
               std::fill(rhoQuads.begin(),
@@ -1192,6 +1211,7 @@ forceClass<FEOrder, FEOrderElectro>::
               forceEval.integrate(true, true);
               forceEval.distribute_local_to_global(
                 d_configForceVectorLinFE); // also takes care of constraints
+              }//kpt paral
             }                              // cell loop
 
 
@@ -1412,9 +1432,25 @@ forceClass<FEOrder, FEOrderElectro>::
   dealii::AlignedVector<VectorizedArray<double>> pseudoVLocQuadsElectro(
     numQuadPointsLpsp, make_vectorized_array(0.0));
 
+      // kpoint group parallelization data structures
+      const unsigned int numberKptGroups =
+        dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
+
+      const unsigned int kptGroupTaskId =
+        dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
+      std::vector<int> kptGroupLowHighPlusOneIndices;
+
+      if (matrixFreeDataElectro.n_macro_cells() > 0)
+        dftUtils::createKpointParallelizationIndices(
+          dftPtr->interpoolcomm, matrixFreeDataElectro.n_macro_cells(), kptGroupLowHighPlusOneIndices);
+
   for (unsigned int cell = 0; cell < matrixFreeDataElectro.n_macro_cells();
        ++cell)
     {
+
+                  if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+              {       
       std::set<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
 
       const unsigned int numSubCells =
@@ -1633,7 +1669,7 @@ forceClass<FEOrder, FEOrderElectro>::
             dftPtr->d_bQuadAtomIdsAllAtoms,
             smearedbQuads);
         }
-
+      }//kpt paral
     } // macro cell loop
 
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational

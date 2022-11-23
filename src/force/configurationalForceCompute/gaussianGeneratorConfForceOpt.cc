@@ -609,13 +609,22 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                 MPI_SUM,
                 mpi_communicator);
 
-  // Sum over band parallelization
+  // Sum over band parallelization and k point pools
   MPI_Allreduce(MPI_IN_PLACE,
                 &(d_globalAtomsForces[0]),
                 numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 dftPtr->interBandGroupComm);
+  
+  MPI_Allreduce(MPI_IN_PLACE,
+                &(d_globalAtomsForces[0]),
+                numberGlobalAtoms * 3,
+                MPI_DOUBLE,
+                MPI_SUM,
+                dftPtr->interpoolcomm);
+  
+
 
 #ifdef USE_COMPLEX
   // Sum all processor contributions and distribute to all processors
