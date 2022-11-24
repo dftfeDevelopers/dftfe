@@ -335,8 +335,7 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   const double                      pspCutOff,
   std::vector<int> &                imageIds,
   std::vector<double> &             imageCharges,
-  std::vector<std::vector<double>> &imagePositions,
-  std::vector<std::vector<int>> &   globalChargeIdToImageIdMap)
+  std::vector<std::vector<double>> &imagePositions)
 {
   const double tol       = 1e-4;
   const bool   periodicX = d_dftParamsPtr->periodicX;
@@ -411,82 +410,111 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
   imagePositions.clear();
   imageCharges.clear();
 
+  std::vector<int>    imageIdsKptPool;
+  std::vector<int>    imageIdsGathered;
+  std::vector<double> imagePositionsFlattenedKptPool;
+  std::vector<double> imagePositionsFlattened;
+
+  // kpoint group parallelization data structures
+  const unsigned int numberKptGroups =
+    dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
+
+  // std::cout<<"hello: "<<numberKptGroups<<std::endl;
+  const unsigned int kptGroupTaskId =
+    dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+  std::vector<int> kptGroupLowHighPlusOneIndices;
+  dftUtils::createKpointParallelizationIndices(interpoolcomm,
+                                               atomLocations.size(),
+                                               kptGroupLowHighPlusOneIndices);
+  // std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[2 *
+  // kptGroupTaskId]<<std::endl; std::cout<<"hello2:
+  // "<<kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1]<<std::endl;
   for (int i = 0; i < atomLocations.size(); ++i)
     {
-      const int    iCharge = i;
-      const double fracX   = atomLocations[i][2];
-      const double fracY   = atomLocations[i][3];
-      const double fracZ   = atomLocations[i][4];
-
-      int izmin = -numberLayers;
-      int iymin = -numberLayers;
-      int ixmin = -numberLayers;
-
-      int izmax = numberLayers + 1;
-      int iymax = numberLayers + 1;
-      int ixmax = numberLayers + 1;
-
-
-
-      for (int iz = izmin; iz < izmax; ++iz)
+      if (i < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+          i >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
         {
-          if (periodicZ == 0)
-            iz = izmax;
-          for (int iy = iymin; iy < iymax; ++iy)
+          const int    iCharge = i;
+          const double fracX   = atomLocations[i][2];
+          const double fracY   = atomLocations[i][3];
+          const double fracZ   = atomLocations[i][4];
+
+          int izmin = -numberLayers;
+          int iymin = -numberLayers;
+          int ixmin = -numberLayers;
+
+          int izmax = numberLayers + 1;
+          int iymax = numberLayers + 1;
+          int ixmax = numberLayers + 1;
+
+
+
+          for (int iz = izmin; iz < izmax; ++iz)
             {
-              if (periodicY == 0)
-                iy = iymax;
-              for (int ix = ixmin; ix < ixmax; ++ix)
+              if (periodicZ == 0)
+                iz = izmax;
+              for (int iy = iymin; iy < iymax; ++iy)
                 {
-                  if (periodicX == 0)
-                    ix = ixmax;
-
-                  if ((periodicX * ix) != 0 || (periodicY * iy) != 0 ||
-                      (periodicZ * iz) != 0)
+                  if (periodicY == 0)
+                    iy = iymax;
+                  for (int ix = ixmin; ix < ixmax; ++ix)
                     {
-                      const double newFracZ = periodicZ * iz + fracZ;
-                      const double newFracY = periodicY * iy + fracY;
-                      const double newFracX = periodicX * ix + fracX;
+                      if (periodicX == 0)
+                        ix = ixmax;
 
-                      std::vector<double> newFrac(3);
-                      newFrac[0] = newFracX;
-                      newFrac[1] = newFracY;
-                      newFrac[2] = newFracZ;
-
-                      bool outsideCell  = true;
-                      bool withinCutoff = false;
-
-
-                      if (outsideCell)
+                      if ((periodicX * ix) != 0 || (periodicY * iy) != 0 ||
+                          (periodicZ * iz) != 0)
                         {
-                          const double distanceFromCell =
-                            internaldft::getMinDistanceFromImageToCell(
-                              latticeVectors, newFrac);
+                          const double newFracZ = periodicZ * iz + fracZ;
+                          const double newFracY = periodicY * iy + fracY;
+                          const double newFracX = periodicX * ix + fracX;
 
-                          if (distanceFromCell < pspCutOff)
-                            withinCutoff = true;
-                        }
+                          std::vector<double> newFrac(3);
+                          newFrac[0] = newFracX;
+                          newFrac[1] = newFracY;
+                          newFrac[2] = newFracZ;
 
-                      std::vector<double> currentImageChargePosition(3, 0.0);
+                          bool outsideCell  = true;
+                          bool withinCutoff = false;
 
-                      if (outsideCell && withinCutoff)
-                        {
-                          imageIds.push_back(iCharge);
 
-                          for (int ii = 0; ii < 3; ++ii)
-                            for (int jj = 0; jj < 3; ++jj)
-                              currentImageChargePosition[ii] +=
-                                d_domainBoundingVectors[jj][ii] * newFrac[jj];
+                          if (outsideCell)
+                            {
+                              const double distanceFromCell =
+                                internaldft::getMinDistanceFromImageToCell(
+                                  latticeVectors, newFrac);
 
-                          for (int ii = 0; ii < 3; ++ii)
-                            currentImageChargePosition[ii] -= shift[ii];
+                              if (distanceFromCell < pspCutOff)
+                                withinCutoff = true;
+                            }
 
-                          imagePositions.push_back(currentImageChargePosition);
+                          std::vector<double> currentImageChargePosition(3,
+                                                                         0.0);
 
-                          /*if((newFracX >= -tol && newFracX <= 1+tol) &&
-                            (newFracY >= -tol && newFracY <= 1+tol) &&
-                            (newFracZ >= -tol && newFracZ <= 1+tol))
-                            outsideCell = false;*/
+                          if (outsideCell && withinCutoff)
+                            {
+                              imageIdsKptPool.push_back(iCharge);
+
+                              for (int ii = 0; ii < 3; ++ii)
+                                for (int jj = 0; jj < 3; ++jj)
+                                  currentImageChargePosition[ii] +=
+                                    d_domainBoundingVectors[jj][ii] *
+                                    newFrac[jj];
+
+                              for (int ii = 0; ii < 3; ++ii)
+                                currentImageChargePosition[ii] -= shift[ii];
+
+                              // imagePositions.push_back(currentImageChargePosition);
+
+                              imagePositionsFlattenedKptPool.insert(
+                                imagePositionsFlattenedKptPool.end(),
+                                currentImageChargePosition.begin(),
+                                currentImageChargePosition.end());
+                              /*if((newFracX >= -tol && newFracX <= 1+tol) &&
+                                (newFracY >= -tol && newFracY <= 1+tol) &&
+                                (newFracZ >= -tol && newFracZ <= 1+tol))
+                                outsideCell = false;*/
+                            }
                         }
                     }
                 }
@@ -494,18 +522,108 @@ dftClass<FEOrder, FEOrderElectro>::generateImageCharges(
         }
     }
 
-  const int numImageCharges = imageIds.size();
 
-  for (int i = 0; i < numImageCharges; ++i)
+  std::vector<int> recvCounts(numberKptGroups, 0);
+  int              sendCount = imageIdsKptPool.size();
+  if (sendCount == 0)
     {
-      double atomCharge;
-      if (d_dftParamsPtr->isPseudopotential)
-        atomCharge = atomLocations[imageIds[i]][1];
-      else
-        atomCharge = atomLocations[imageIds[i]][0];
-
-      imageCharges.push_back(atomCharge);
+      sendCount == 1;
+      imageIdsKptPool.resize(1, -1);
+      imagePositionsFlattenedKptPool.resize(3, 0.0);
     }
+  int ierr = MPI_Allgather(
+    &sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT, interpoolcomm);
+
+  if (ierr)
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: MPI Error in generate image charges"));
+
+
+  const int numImageCharges =
+    std::accumulate(recvCounts.begin(), recvCounts.end(), 0);
+
+  if (numImageCharges > 0)
+    {
+      // std::cout<<"num image charges: "<<numImageCharges<<std::endl;
+
+      imageIdsGathered.resize(numImageCharges, 0);
+      imagePositionsFlattened.resize(numImageCharges * 3, 0);
+
+      std::vector<int> displacementsImageIds(numberKptGroups, 0);
+      std::vector<int> displacementsImagePos(numberKptGroups, 0);
+      std::vector<int> recvCountsPos(numberKptGroups, 0);
+      int              disp = 0;
+      for (int i = 0; i < numberKptGroups; ++i)
+        {
+          displacementsImageIds[i] = disp;
+          displacementsImagePos[i] = disp * 3;
+          disp += recvCounts[i];
+          recvCountsPos[i] = recvCounts[i] * 3;
+        }
+
+
+      ierr = MPI_Allgatherv(&imageIdsKptPool[0],
+                            sendCount,
+                            MPI_INT,
+                            &imageIdsGathered[0],
+                            &recvCounts[0],
+                            &displacementsImageIds[0],
+                            MPI_INT,
+                            interpoolcomm);
+
+      if (ierr)
+        AssertThrow(false,
+                    dealii::ExcMessage(
+                      "DFT-FE Error: MPI Error in generate image charges"));
+      const int sendCountPos = sendCount * 3;
+      ierr = MPI_Allgatherv(&imagePositionsFlattenedKptPool[0],
+                            sendCountPos,
+                            MPI_DOUBLE,
+                            &imagePositionsFlattened[0],
+                            &recvCountsPos[0],
+                            &displacementsImagePos[0],
+                            MPI_DOUBLE,
+                            interpoolcomm);
+
+      if (ierr)
+        AssertThrow(false,
+                    dealii::ExcMessage(
+                      "DFT-FE Error: MPI Error in generate image charges"));
+
+      int              numNonTrivialImageCharges = 0;
+      std::vector<int> nonTrivialToFullIndexMap;
+      for (int i = 0; i < numImageCharges; ++i)
+        {
+          if (imageIdsGathered[i] != -1)
+            {
+              imageIds.push_back(imageIdsGathered[i]);
+              nonTrivialToFullIndexMap.push_back(i);
+              numNonTrivialImageCharges++;
+            }
+        }
+
+      imageCharges.resize(numNonTrivialImageCharges);
+      imagePositions.resize(numNonTrivialImageCharges,
+                            std::vector<double>(3, 0.0));
+      for (int i = 0; i < numNonTrivialImageCharges; ++i)
+        {
+          double atomCharge;
+          if (d_dftParamsPtr->isPseudopotential)
+            atomCharge = atomLocations[imageIds[i]][1];
+          else
+            atomCharge = atomLocations[imageIds[i]][0];
+
+          imageCharges[i] = atomCharge;
+          imagePositions[i][0] =
+            imagePositionsFlattened[3 * nonTrivialToFullIndexMap[i] + 0];
+          imagePositions[i][1] =
+            imagePositionsFlattened[3 * nonTrivialToFullIndexMap[i] + 1];
+          imagePositions[i][2] =
+            imagePositionsFlattened[3 * nonTrivialToFullIndexMap[i] + 2];
+        }
+    }
+  MPI_Barrier(interpoolcomm);
 }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
