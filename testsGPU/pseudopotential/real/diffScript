@@ -1,2 +1,2 @@
 #!/bin/bash
-for file in output*; do diff -P "$file" "accuracyBenchmarks/${file}"; done
+for file in output*; do echo "$file"; diff -P "$file" "accuracyBenchmarks/${file}"; done

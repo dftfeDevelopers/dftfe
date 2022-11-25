@@ -53,23 +53,23 @@ namespace dftfe
     double time;
 
     // compute RHS
-    distributedCPUVec<double> rhs_host;
-    problem.computeRhs(rhs_host);
+    distributedCPUVec<double> rhsHost;
+    problem.computeRhs(rhsHost);
 
-    distributedGPUVec<double> rhs_device;
-    rhs_device.reinit(rhs_host.get_partitioner(), 1);
+    distributedGPUVec<double> rhsDevice;
+    rhsDevice.reinit(rhsHost.get_partitioner(), 1);
 
-    cudaUtils::copyHostVecToCUDAVec<double>(rhs_host.begin(),
-                                            rhs_device.begin(),
-                                            rhs_device.locallyOwnedDofsSize());
+    cudaUtils::copyHostVecToCUDAVec<double>(rhsHost.begin(),
+                                            rhsDevice.begin(),
+                                            rhsDevice.locallyOwnedDofsSize());
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
     if (debugLevel >= 4)
-      pcout << "Time for compute rhs_host: " << time - start_time << std::endl;
+      pcout << "Time for compute rhsHost and copy to GPU: " << time - start_time
+            << std::endl;
 
-    bool conv = false;
 
     distributedGPUVec<double> &x        = problem.getX();
     distributedGPUVec<double> &d_Jacobi = problem.getPreconditioner();
@@ -79,7 +79,8 @@ namespace dftfe
     d_xLocalDof = x.locallyOwnedDofsSize();
 
     double res = 0.0, initial_res = 0.0;
-    int    it = 0;
+    bool   conv = false;
+    int    it   = 0;
 
     try
       {
@@ -106,7 +107,7 @@ namespace dftfe
 
             // r = Ax - rhs
             cudaUtils::add(d_rvec.begin(),
-                           rhs_device.begin(),
+                           rhsDevice.begin(),
                            -1.,
                            d_xLocalDof,
                            cublasHandle);
@@ -434,7 +435,7 @@ namespace dftfe
     const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    d_devSum[0] = 0.0;
+    cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionAndComputeDotProductKernel<double,
                                                 cudaConstants::blockSize>
@@ -457,7 +458,7 @@ namespace dftfe
     const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    d_devSum[0] = 0.0;
+    cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionComputeDotProductAndSaddKernel<double,
                                                     cudaConstants::blockSize>
@@ -479,7 +480,7 @@ namespace dftfe
     const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    d_devSum[0] = 0.0;
+    cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     scaleXRandComputeNormKernel<double, cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(x,

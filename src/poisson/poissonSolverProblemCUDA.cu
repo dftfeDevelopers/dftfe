@@ -482,9 +482,9 @@ namespace dftfe
     if (d_isMeanValueConstraintComputed)
       if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
           d_meanValueConstraintProcId)
-        cudaUtils::set<double>(vec.begin() + d_meanValueConstraintNodeIdLocal,
-                               0,
-                               1);
+        cudaMemset(vec.begin() + d_meanValueConstraintNodeIdLocal,
+                   0,
+                   sizeof(double));
   }
 
   // Distribute value at mean value constrained dof (u_o) to all other dofs
@@ -1278,7 +1278,7 @@ namespace dftfe
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
-    cudaUtils::set<double>(Ax.begin(), 0, d_xLen);
+    cudaMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(x);

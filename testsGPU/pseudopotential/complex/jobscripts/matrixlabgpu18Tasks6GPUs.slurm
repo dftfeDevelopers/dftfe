@@ -15,9 +15,10 @@ module load gcc9.2 cmake3.19 cuda11gcc9.2 mkl/2021.2.0 openmpicuda11
 
 export UCX_LOG_LEVEL=ERROR
 
-srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/helmholtz/build/release/complex/dftfe parameterFileMg2x_1.prm > outputMg2x_1
-srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/helmholtz/build/release/complex/dftfe parameterFileMg2x_2.prm > outputMg2x_2
-srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/helmholtz/build/release/complex/dftfe parameterFileMg2x_3.prm > outputMg2x_3
-srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/helmholtz/build/release/complex/dftfe parameterFileMg2x_4.prm > outputMg2x_4
-srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/helmholtz/build/release/complex/dftfe parameterFileMg2x_5.prm > outputMg2x_5
-srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/helmholtz/build/release/complex/dftfe parameterFileMg2x_6.prm > outputMg2x_6
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileMg2x_2.prm > outputMg2x_2
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileMg2x_3.prm > outputMg2x_3
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileMg2x_4.prm > outputMg2x_4
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileMg2x_5.prm > outputMg2x_5
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileMg2x_6.prm > outputMg2x_6
+srun -n $SLURM_NTASKS --mpi=pmi2  /home/gourab/build/release/complex/dftfe parameterFileBe.prm     > outputBe
