@@ -2374,6 +2374,8 @@ namespace dftfe
                            d_dftParamsPtr->verbosity);
           }
 
+        d_phiTotRhoIn.update_ghost_values();
+
         std::map<dealii::CellId, std::vector<double>> dummy;
         interpolateElectroNodalDataToQuadratureDataGeneral(
           d_matrixFreeDataPRefined,
