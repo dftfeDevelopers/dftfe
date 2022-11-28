@@ -287,7 +287,6 @@ namespace dftfe
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
       MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
-    // if(!(printParams == false && mode =="NEB"))
     createScratchFolder();
 
     if (d_mpi_comm_parent != MPI_COMM_NULL)

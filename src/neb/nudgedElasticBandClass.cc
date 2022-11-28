@@ -127,7 +127,7 @@ namespace dftfe
                                                     domainVectorsFile,
                                                     d_mpiCommParent,
                                                     Image == 0 ? true : false,
-                                                    true,
+                                                    Image == 0 ? true : false,
                                                     "NEB",
                                                     d_restartFilesPath,
                                                     false));
@@ -1192,12 +1192,12 @@ namespace dftfe
         temp = 0.0;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            tempx = std::fabs(atomLocations[iCharge][2] -
+            tempx = std::fabs(atomLocations[iCharge][0] -
+                              atomLocationsInitial[iCharge][0]);
+            tempy = std::fabs(atomLocations[iCharge][1] -
+                              atomLocationsInitial[iCharge][1]);
+            tempz = std::fabs(atomLocations[iCharge][2] -
                               atomLocationsInitial[iCharge][2]);
-            tempy = std::fabs(atomLocations[iCharge][3] -
-                              atomLocationsInitial[iCharge][3]);
-            tempz = std::fabs(atomLocations[iCharge][4] -
-                              atomLocationsInitial[iCharge][4]);
             if (d_Length[0] / 2 <= tempx)
               tempx -= d_Length[0];
             if (d_Length[1] / 2 <= tempy)
