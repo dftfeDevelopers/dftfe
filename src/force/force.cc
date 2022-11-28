@@ -323,12 +323,11 @@ namespace dftfe
     const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperator,
-#else
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+      &kohnShamDFTEigenOperatorGPU,
 #endif
-    const dispersionCorrection &     dispersionCorr,
-    const unsigned int               eigenDofHandlerIndex,
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    const dispersionCorrection &                       dispersionCorr,
+    const unsigned int                                 eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
     const MatrixFree<3, double> &    matrixFreeDataElectro,
@@ -375,6 +374,9 @@ namespace dftfe
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
     computeConfigurationalForceTotalLinFE(matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                                          kohnShamDFTEigenOperatorGPU,
+#endif
                                           kohnShamDFTEigenOperator,
                                           eigenDofHandlerIndex,
                                           smearedChargeQuadratureId,
@@ -513,11 +515,10 @@ namespace dftfe
     const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperator,
-#else
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+      &kohnShamDFTEigenOperatorGPU,
 #endif
-    const unsigned int               eigenDofHandlerIndex,
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    const unsigned int                                 eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
     const MatrixFree<3, double> &    matrixFreeDataElectro,
@@ -556,6 +557,9 @@ namespace dftfe
     // nuclear self energy
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTEigenOperatorGPU,
+#endif
       kohnShamDFTEigenOperator,
       eigenDofHandlerIndex,
       smearedChargeQuadratureId,

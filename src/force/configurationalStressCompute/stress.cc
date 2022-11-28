@@ -23,15 +23,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperator,
-#else
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    &kohnShamDFTEigenOperatorGPU,
 #endif
-  const dispersionCorrection &     dispersionCorr,
-  const unsigned int               eigenDofHandlerIndex,
-  const unsigned int               smearedChargeQuadratureId,
-  const unsigned int               lpspQuadratureIdElectro,
-  const MatrixFree<3, double> &    matrixFreeDataElectro,
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+  const dispersionCorrection &                       dispersionCorr,
+  const unsigned int                                 eigenDofHandlerIndex,
+  const unsigned int                                 smearedChargeQuadratureId,
+  const unsigned int                                 lpspQuadratureIdElectro,
+  const MatrixFree<3, double> &                      matrixFreeDataElectro,
   const unsigned int               phiTotDofHandlerIndexElectro,
   const distributedCPUVec<double> &phiTotRhoOutElectro,
   const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -80,6 +79,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   // configurational stress contribution from all terms except those from
   // nuclear self energy
   computeStressEEshelbyEPSPEnlEk(matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                                 kohnShamDFTEigenOperatorGPU,
+#endif
                                  kohnShamDFTEigenOperator,
                                  eigenDofHandlerIndex,
                                  smearedChargeQuadratureId,

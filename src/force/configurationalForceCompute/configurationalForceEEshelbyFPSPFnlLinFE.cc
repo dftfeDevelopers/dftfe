@@ -27,11 +27,10 @@ forceClass<FEOrder, FEOrderElectro>::
     const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperator,
-#else
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+      &kohnShamDFTEigenOperatorGPU,
 #endif
-    const unsigned int               eigenDofHandlerIndex,
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    const unsigned int                                 eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
     const MatrixFree<3, double> &    matrixFreeDataElectro,
@@ -236,7 +235,7 @@ forceClass<FEOrder, FEOrderElectro>::
           double gpu_time = MPI_Wtime();
 
           forceCUDA::wfcContractionsForceKernelsAllH(
-            kohnShamDFTEigenOperator,
+            kohnShamDFTEigenOperatorGPU,
             dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
             d_dftParams.spinPolarized,
             spinIndex,

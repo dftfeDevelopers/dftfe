@@ -155,7 +155,6 @@ namespace dftfe
               i * numQuadsNLP * 3 * numNodesPerElement);
 
 
-
         for (int iblock = 0; iblock < (numberBlocks + 1); iblock++)
           {
             const unsigned int currentBlockSize =
@@ -328,8 +327,7 @@ namespace dftfe
                             for (unsigned int idim = 0; idim < 3; idim++)
                               for (unsigned int jdim = 0; jdim < 3; jdim++)
                                 {
-                                  eshelbyTensorContributions[startingId *
-                                                               numQuads * 9 +
+                                  eshelbyTensorContributions[iquad * 9 +
                                                              idim * 3 + jdim] =
                                     partOcc *
                                       realPart(
@@ -343,8 +341,7 @@ namespace dftfe
                                         (gradPsiQuad[idim] * kcoord[jdim]));
 
                                   if (idim == jdim)
-                                    eshelbyTensorContributions[startingId *
-                                                                 numQuads * 9 +
+                                    eshelbyTensorContributions[iquad * 9 +
                                                                idim * 3 +
                                                                jdim] +=
                                       identityFactor;
@@ -355,9 +352,9 @@ namespace dftfe
                                 for (unsigned int idim = 0; idim < 3; idim++)
                                   for (unsigned int jdim = 0; jdim < 3; jdim++)
                                     {
-                                      eshelbyTensorContributions
-                                        [startingId * numQuads * 9 + idim * 3 +
-                                         jdim] +=
+                                      eshelbyTensorContributions[iquad * 9 +
+                                                                 idim * 3 +
+                                                                 jdim] +=
                                         2.0 * partOcc *
                                           imagPart(complexConj(psiQuad) *
                                                    (kcoord[idim] *
@@ -626,7 +623,7 @@ namespace dftfe
         operatorDFTClass &                    operatorMatrix,
         distributedCPUVec<dataTypes::number> &flattenedArrayBlock,
         distributedCPUVec<dataTypes::number> &projectorKetTimesVector,
-        const dataTypes::number *             X,
+        const std::vector<dataTypes::number> &X,
         const std::vector<double> &           eigenValues,
         const std::vector<double> &           partialOccupancies,
         const std::vector<double> &           kcoord,
@@ -678,7 +675,6 @@ namespace dftfe
         (operatorMatrix.getOverloadedConstraintMatrix())
           ->distribute(flattenedArrayBlock, numPsi);
 
-
         interpolatePsiComputeELocWfcEshelbyTensor(operatorMatrix,
                                                   flattenedArrayBlock,
                                                   numPsi,
@@ -705,7 +701,7 @@ namespace dftfe
                                                   isFloatingChargeForces,
                                                   addEk);
 
-        if (isPsp)
+        if (isPsp && false)
           {
             operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(
               flattenedArrayBlock, projectorKetTimesVector, numPsi);
@@ -850,7 +846,7 @@ namespace dftfe
 #endif
         }
 
-      const unsigned numKPoints = kPointCoordinates.size() / 3;
+      const unsigned int numKPoints = kPointCoordinates.size() / 3;
       for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
         {
           std::fill(elocWfcEshelbyTensorQuadValuesH.begin(),
@@ -915,7 +911,7 @@ namespace dftfe
                     operatorMatrix,
                     flattenedArrayBlock,
                     projectorKetTimesVector,
-                    &X[(1 + spinPolarizedFlag) * kPoint + spinIndex][0],
+                    X[(1 + spinPolarizedFlag) * kPoint + spinIndex],
                     blockedEigenValues,
                     blockedPartialOccupancies,
                     kcoord,

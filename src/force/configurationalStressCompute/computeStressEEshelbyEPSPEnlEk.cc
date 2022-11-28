@@ -24,14 +24,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperator,
-#else
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    &kohnShamDFTEigenOperatorGPU,
 #endif
-  const unsigned int               eigenDofHandlerIndex,
-  const unsigned int               smearedChargeQuadratureId,
-  const unsigned int               lpspQuadratureIdElectro,
-  const MatrixFree<3, double> &    matrixFreeDataElectro,
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+  const unsigned int                                 eigenDofHandlerIndex,
+  const unsigned int                                 smearedChargeQuadratureId,
+  const unsigned int                                 lpspQuadratureIdElectro,
+  const MatrixFree<3, double> &                      matrixFreeDataElectro,
   const unsigned int               phiTotDofHandlerIndexElectro,
   const distributedCPUVec<double> &phiTotRhoOutElectro,
   const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -229,7 +228,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
           double gpu_time = MPI_Wtime();
 
           forceCUDA::wfcContractionsForceKernelsAllH(
-            kohnShamDFTEigenOperator,
+            kohnShamDFTEigenOperatorGPU,
             dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
             d_dftParams.spinPolarized,
             spinIndex,

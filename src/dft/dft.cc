@@ -3541,9 +3541,8 @@ namespace dftfe
             forcePtr->computeAtomsForces(matrix_free_data,
 #ifdef DFTFE_WITH_GPU
                                          kohnShamDFTEigenOperatorCUDA,
-#else
-                                         kohnShamDFTEigenOperator,
 #endif
+                                         kohnShamDFTEigenOperator,
                                          d_dispersionCorr,
                                          d_eigenDofHandlerIndex,
                                          d_smearedChargeQuadratureIdElectro,
@@ -3640,9 +3639,8 @@ namespace dftfe
     forcePtr->computeStress(matrix_free_data,
 #ifdef DFTFE_WITH_GPU
                             kohnShamDFTEigenOperatorCUDA,
-#else
-                            kohnShamDFTEigenOperator,
 #endif
+                            kohnShamDFTEigenOperator,
                             d_dispersionCorr,
                             d_eigenDofHandlerIndex,
                             d_smearedChargeQuadratureIdElectro,

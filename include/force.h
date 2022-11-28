@@ -132,11 +132,10 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
-#else
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+        &kohnShamDFTEigenOperatorGPU,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
@@ -212,11 +211,10 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
-#else
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+        &kohnShamDFTEigenOperatorGPU,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
@@ -316,11 +314,10 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
-#else
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+        &kohnShamDFTEigenOperatorGPU,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -398,11 +395,10 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
-#else
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+        &kohnShamDFTEigenOperatorGPU,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -688,11 +684,10 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
-#else
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+        &kohnShamDFTEigenOperatorGPU,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
