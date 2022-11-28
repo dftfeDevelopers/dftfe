@@ -1,9 +1,11 @@
 set SOLVER MODE = GS
 set VERBOSITY = 0
-set REPRODUCIBLE OUTPUT=true
+set REPRODUCIBLE OUTPUT = true
+set H REFINED ELECTROSTATICS = false
 
 subsection GPU
-  set USE GPU=true
+  set USE GPU = false
+  set AUTO GPU BLOCK SIZES = false
 end
 
 subsection Geometry
@@ -43,7 +45,10 @@ subsection SCF parameters
   set MIXING METHOD    = ANDERSON_WITH_KERKER
   set MIXING PARAMETER = 0.5
   subsection Eigen-solver parameters
-    set CHEBYSHEV POLYNOMIAL DEGREE = 15
     set CHEBYSHEV FILTER TOLERANCE  = 1e-4
+    set CHEBYSHEV POLYNOMIAL DEGREE = 15
+    set CHEBY WFC BLOCK SIZE = 45
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
+    set WFC BLOCK SIZE = 45
   end
 end
