@@ -315,52 +315,52 @@ namespace dftfe
         }
 
 
-      NumberType *shapeFunctionValuesInvertedDevice;
+      NumberType *shapeFunctionValuesTransposedDevice;
 
       CUDACHECK(
-        cudaMalloc((void **)&shapeFunctionValuesInvertedDevice,
+        cudaMalloc((void **)&shapeFunctionValuesTransposedDevice,
                    numNodesPerElement * numQuadPoints * sizeof(NumberType)));
       CUDACHECK(
-        cudaMemset(shapeFunctionValuesInvertedDevice,
+        cudaMemset(shapeFunctionValuesTransposedDevice,
                    0,
                    numNodesPerElement * numQuadPoints * sizeof(NumberType)));
 
       copyDoubleToNumber(thrust::raw_pointer_cast(
-                           &(operatorMatrix.getShapeFunctionValuesInverted(
+                           &(operatorMatrix.getShapeFunctionValuesTransposed(
                              use2pPlusOneGLQuad)[0])),
                          numNodesPerElement * numQuadPoints,
-                         shapeFunctionValuesInvertedDevice);
+                         shapeFunctionValuesTransposedDevice);
 
 
-      NumberType *shapeFunctionGradientValuesXInvertedDevice;
-      NumberType *shapeFunctionGradientValuesYInvertedDevice;
-      NumberType *shapeFunctionGradientValuesZInvertedDevice;
+      NumberType *shapeFunctionGradientValuesXTransposedDevice;
+      NumberType *shapeFunctionGradientValuesYTransposedDevice;
+      NumberType *shapeFunctionGradientValuesZTransposedDevice;
 
       if (isEvaluateGradRho)
         {
           CUDACHECK(
-            cudaMalloc((void **)&shapeFunctionGradientValuesXInvertedDevice,
+            cudaMalloc((void **)&shapeFunctionGradientValuesXTransposedDevice,
                        cellsBlockSize * numNodesPerElement * numQuadPoints *
                          sizeof(NumberType)));
-          CUDACHECK(cudaMemset(shapeFunctionGradientValuesXInvertedDevice,
+          CUDACHECK(cudaMemset(shapeFunctionGradientValuesXTransposedDevice,
                                0,
                                cellsBlockSize * numNodesPerElement *
                                  numQuadPoints * sizeof(NumberType)));
 
           CUDACHECK(
-            cudaMalloc((void **)&shapeFunctionGradientValuesYInvertedDevice,
+            cudaMalloc((void **)&shapeFunctionGradientValuesYTransposedDevice,
                        cellsBlockSize * numNodesPerElement * numQuadPoints *
                          sizeof(NumberType)));
-          CUDACHECK(cudaMemset(shapeFunctionGradientValuesYInvertedDevice,
+          CUDACHECK(cudaMemset(shapeFunctionGradientValuesYTransposedDevice,
                                0,
                                cellsBlockSize * numNodesPerElement *
                                  numQuadPoints * sizeof(NumberType)));
 
           CUDACHECK(
-            cudaMalloc((void **)&shapeFunctionGradientValuesZInvertedDevice,
+            cudaMalloc((void **)&shapeFunctionGradientValuesZTransposedDevice,
                        cellsBlockSize * numNodesPerElement * numQuadPoints *
                          sizeof(NumberType)));
-          CUDACHECK(cudaMemset(shapeFunctionGradientValuesZInvertedDevice,
+          CUDACHECK(cudaMemset(shapeFunctionGradientValuesZTransposedDevice,
                                0,
                                cellsBlockSize * numNodesPerElement *
                                  numQuadPoints * sizeof(NumberType)));
@@ -540,7 +540,7 @@ namespace dftfe
                                 cellWaveFunctionMatrix,
                                 BVec,
                                 strideA,
-                                shapeFunctionValuesInvertedDevice,
+                                shapeFunctionValuesTransposedDevice,
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -557,32 +557,32 @@ namespace dftfe
                                   copyDoubleToNumber(
                                     thrust::raw_pointer_cast(&(
                                       operatorMatrix
-                                        .getShapeFunctionGradientValuesXInverted()
+                                        .getShapeFunctionGradientValuesXTransposed()
                                           [startingCellId * numNodesPerElement *
                                            numQuadPoints])),
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesXInvertedDevice);
+                                    shapeFunctionGradientValuesXTransposedDevice);
 
                                   copyDoubleToNumber(
                                     thrust::raw_pointer_cast(&(
                                       operatorMatrix
-                                        .getShapeFunctionGradientValuesYInverted()
+                                        .getShapeFunctionGradientValuesYTransposed()
                                           [startingCellId * numNodesPerElement *
                                            numQuadPoints])),
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesYInvertedDevice);
+                                    shapeFunctionGradientValuesYTransposedDevice);
 
                                   copyDoubleToNumber(
                                     thrust::raw_pointer_cast(&(
                                       operatorMatrix
-                                        .getShapeFunctionGradientValuesZInverted()
+                                        .getShapeFunctionGradientValuesZTransposed()
                                           [startingCellId * numNodesPerElement *
                                            numQuadPoints])),
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesZInvertedDevice);
+                                    shapeFunctionGradientValuesZTransposedDevice);
 
                                   cublasXgemmStridedBatched(
                                     operatorMatrix.getCublasHandle(),
@@ -595,7 +595,7 @@ namespace dftfe
                                     cellWaveFunctionMatrix,
                                     BVec,
                                     strideA,
-                                    shapeFunctionGradientValuesXInvertedDevice,
+                                    shapeFunctionGradientValuesXTransposedDevice,
                                     numNodesPerElement,
                                     strideB,
                                     &scalarCoeffBeta,
@@ -616,7 +616,7 @@ namespace dftfe
                                     cellWaveFunctionMatrix,
                                     BVec,
                                     strideA,
-                                    shapeFunctionGradientValuesYInvertedDevice,
+                                    shapeFunctionGradientValuesYTransposedDevice,
                                     numNodesPerElement,
                                     strideB,
                                     &scalarCoeffBeta,
@@ -636,7 +636,7 @@ namespace dftfe
                                     cellWaveFunctionMatrix,
                                     BVec,
                                     strideA,
-                                    shapeFunctionGradientValuesZInvertedDevice,
+                                    shapeFunctionGradientValuesZTransposedDevice,
                                     numNodesPerElement,
                                     strideB,
                                     &scalarCoeffBeta,
@@ -856,7 +856,7 @@ namespace dftfe
                                 cellWaveFunctionMatrix,
                                 BVec,
                                 strideA,
-                                shapeFunctionValuesInvertedDevice,
+                                shapeFunctionValuesTransposedDevice,
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -874,32 +874,32 @@ namespace dftfe
                                   copyDoubleToNumber(
                                     thrust::raw_pointer_cast(&(
                                       operatorMatrix
-                                        .getShapeFunctionGradientValuesXInverted()
+                                        .getShapeFunctionGradientValuesXTransposed()
                                           [startingCellId * numNodesPerElement *
                                            numQuadPoints])),
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesXInvertedDevice);
+                                    shapeFunctionGradientValuesXTransposedDevice);
 
                                   copyDoubleToNumber(
                                     thrust::raw_pointer_cast(&(
                                       operatorMatrix
-                                        .getShapeFunctionGradientValuesYInverted()
+                                        .getShapeFunctionGradientValuesYTransposed()
                                           [startingCellId * numNodesPerElement *
                                            numQuadPoints])),
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesYInvertedDevice);
+                                    shapeFunctionGradientValuesYTransposedDevice);
 
                                   copyDoubleToNumber(
                                     thrust::raw_pointer_cast(&(
                                       operatorMatrix
-                                        .getShapeFunctionGradientValuesZInverted()
+                                        .getShapeFunctionGradientValuesZTransposed()
                                           [startingCellId * numNodesPerElement *
                                            numQuadPoints])),
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesZInvertedDevice);
+                                    shapeFunctionGradientValuesZTransposedDevice);
 
                                   cublasXgemmStridedBatched(
                                     operatorMatrix.getCublasHandle(),
@@ -912,7 +912,7 @@ namespace dftfe
                                     cellWaveFunctionMatrix,
                                     BVec,
                                     strideA,
-                                    shapeFunctionGradientValuesXInvertedDevice,
+                                    shapeFunctionGradientValuesXTransposedDevice,
                                     numNodesPerElement,
                                     strideB,
                                     &scalarCoeffBeta,
@@ -933,7 +933,7 @@ namespace dftfe
                                     cellWaveFunctionMatrix,
                                     BVec,
                                     strideA,
-                                    shapeFunctionGradientValuesYInvertedDevice,
+                                    shapeFunctionGradientValuesYTransposedDevice,
                                     numNodesPerElement,
                                     strideB,
                                     &scalarCoeffBeta,
@@ -953,7 +953,7 @@ namespace dftfe
                                     cellWaveFunctionMatrix,
                                     BVec,
                                     strideA,
-                                    shapeFunctionGradientValuesZInvertedDevice,
+                                    shapeFunctionGradientValuesZTransposedDevice,
                                     numNodesPerElement,
                                     strideB,
                                     &scalarCoeffBeta,
@@ -1282,13 +1282,13 @@ namespace dftfe
 
 
 
-      CUDACHECK(cudaFree(shapeFunctionValuesInvertedDevice));
+      CUDACHECK(cudaFree(shapeFunctionValuesTransposedDevice));
 
       if (isEvaluateGradRho)
         {
-          CUDACHECK(cudaFree(shapeFunctionGradientValuesXInvertedDevice));
-          CUDACHECK(cudaFree(shapeFunctionGradientValuesYInvertedDevice));
-          CUDACHECK(cudaFree(shapeFunctionGradientValuesZInvertedDevice));
+          CUDACHECK(cudaFree(shapeFunctionGradientValuesXTransposedDevice));
+          CUDACHECK(cudaFree(shapeFunctionGradientValuesYTransposedDevice));
+          CUDACHECK(cudaFree(shapeFunctionGradientValuesZTransposedDevice));
         }
 
       cudaDeviceSynchronize();

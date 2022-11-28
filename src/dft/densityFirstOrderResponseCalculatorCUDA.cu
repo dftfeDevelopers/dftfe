@@ -423,21 +423,21 @@ namespace dftfe
     cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
       cellWaveFunctionMatrix(cellsBlockSize * numNodesPerElement * BVec, zero);
 
-    NumberTypeLowPrec *shapeFunctionValuesInvertedDevice;
+    NumberTypeLowPrec *shapeFunctionValuesTransposedDevice;
 
-    CUDACHECK(cudaMalloc((void **)&shapeFunctionValuesInvertedDevice,
+    CUDACHECK(cudaMalloc((void **)&shapeFunctionValuesTransposedDevice,
                          numNodesPerElement * numQuadPoints *
                            sizeof(NumberTypeLowPrec)));
-    CUDACHECK(cudaMemset(shapeFunctionValuesInvertedDevice,
+    CUDACHECK(cudaMemset(shapeFunctionValuesTransposedDevice,
                          0,
                          numNodesPerElement * numQuadPoints *
                            sizeof(NumberTypeLowPrec)));
 
     copyDoubleToNumber(thrust::raw_pointer_cast(
-                         &(operatorMatrix.getShapeFunctionValuesInverted(
+                         &(operatorMatrix.getShapeFunctionValuesTransposed(
                            true)[0])),
                        numNodesPerElement * numQuadPoints,
-                       shapeFunctionValuesInvertedDevice);
+                       shapeFunctionValuesTransposedDevice);
 
     for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
@@ -552,7 +552,7 @@ namespace dftfe
                               cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
-                              shapeFunctionValuesInvertedDevice,
+                              shapeFunctionValuesTransposedDevice,
                               numNodesPerElement,
                               strideB,
                               &scalarCoeffBeta,
@@ -586,7 +586,7 @@ namespace dftfe
                               cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
-                              shapeFunctionValuesInvertedDevice,
+                              shapeFunctionValuesTransposedDevice,
                               numNodesPerElement,
                               strideB,
                               &scalarCoeffBeta,
@@ -800,7 +800,7 @@ namespace dftfe
           iElem++;
         }
 
-    CUDACHECK(cudaFree(shapeFunctionValuesInvertedDevice));
+    CUDACHECK(cudaFree(shapeFunctionValuesTransposedDevice));
     cudaDeviceSynchronize();
     MPI_Barrier(mpiCommParent);
     gpu_time = MPI_Wtime() - gpu_time;

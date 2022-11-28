@@ -845,21 +845,6 @@ namespace dftfe
     void
     computeElementalNonLocalPseudoOVDataForce();
 
-    void
-    computeNonLocalProjectorKetTimesPsiTimesV(
-      const std::vector<distributedCPUVec<double>> &src,
-      std::vector<std::vector<double>> &projectorKetTimesPsiTimesVReal,
-      std::vector<std::vector<std::complex<double>>>
-        &                projectorKetTimesPsiTimesVComplex,
-      const unsigned int kPointIndex);
-
-    void
-    computeNonLocalProjectorKetTimesPsiTimesVFlattened(
-      const distributedCPUVec<dataTypes::number> & src,
-      const unsigned int                           numberWaveFunctions,
-      std::vector<std::vector<dataTypes::number>> &projectorKetTimesPsiTimesV,
-      const unsigned int                           kPointIndex,
-      const std::vector<double> &                  partialOccupancies);
 
     /// Parallel distributed vector field which stores the configurational force
     /// for each fem node corresponding to linear shape function generator (see

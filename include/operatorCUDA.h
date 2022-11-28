@@ -89,22 +89,22 @@ namespace dftfe
     getShapeFunctionValues() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad = false) = 0;
+    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false) = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionValuesNLPInverted() = 0;
+    getShapeFunctionValuesNLPTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesXInverted() = 0;
+    getShapeFunctionGradientValuesXTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesYInverted() = 0;
+    getShapeFunctionGradientValuesYTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZInverted() = 0;
+    getShapeFunctionGradientValuesZTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesNLPInverted() = 0;
+    getShapeFunctionGradientValuesNLPTransposed() = 0;
 
     virtual thrust::device_vector<double> &
     getInverseJacobiansNLP() = 0;
@@ -393,23 +393,23 @@ namespace dftfe
 
     thrust::device_vector<double> d_shapeFunctionValueDevice;
 
-    thrust::device_vector<double> d_shapeFunctionValueInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionValueTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionValueNLPInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionValueNLPTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueXInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueXTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueYInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueYTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueZInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueZTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueNLPInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueNLPTransposedDevice;
 
     thrust::device_vector<double> d_inverseJacobiansNLPDevice;
 
     /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
     /// gradients
-    thrust::device_vector<double> d_glShapeFunctionValueInvertedDevice;
+    thrust::device_vector<double> d_glShapeFunctionValueTransposedDevice;
 
 
     thrust::device_vector<dealii::types::global_dof_index>

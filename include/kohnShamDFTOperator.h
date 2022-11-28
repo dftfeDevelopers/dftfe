@@ -377,6 +377,9 @@ node is stored
     const std::vector<dealii::types::global_dof_index> &
     getFlattenedArrayCellLocalProcIndexIdMap() const;
 
+    distributedCPUVec<dataTypes::number> &
+    getParallelProjectorKetTimesBlockVector();
+
     const std::vector<double> &
     getShapeFunctionValuesDensityGaussQuad() const;
 
@@ -386,6 +389,26 @@ node is stored
     const std::vector<double> &
     getShapeFunctionValuesDensityGaussLobattoQuad() const;
 
+    const std::vector<double> &
+    getShapeFunctionValuesDensityTransposed() const;
+
+    const std::vector<double> &
+    getShapeFunctionValuesNLPTransposed() const;
+
+    const std::vector<double> &
+    getShapeFunctionGradientValuesXDensityTransposed() const;
+
+    const std::vector<double> &
+    getShapeFunctionGradientValuesYDensityTransposed() const;
+
+    const std::vector<double> &
+    getShapeFunctionGradientValuesZDensityTransposed() const;
+
+    const std::vector<double> &
+    getShapeFunctionGradientValuesNLPTransposed() const;
+
+    const std::vector<double> &
+    getInverseJacobiansNLP() const;
 
     /**
      * @brief Computes diagonal mass matrix
@@ -500,6 +523,11 @@ node is stored
       distributedCPUVec<dataTypes::number> &      dst,
       const double                                scalar = 1.0) const;
 
+    void
+    computeNonLocalProjectorKetTimesXTimesV(
+      distributedCPUVec<dataTypes::number> &src,
+      distributedCPUVec<dataTypes::number> &projectorKetTimesVectorFlattened,
+      const unsigned int                       numberWaveFunctions);
 
 
     /// pointer to dft class
@@ -529,7 +557,6 @@ node is stored
     std::vector<double> d_cellShapeFunctionGradientIntegral;
 
     /// storage for shapefunctions
-    std::vector<double>       d_shapeFunctionValue;
     std::vector<unsigned int> d_blockiNodeIndex;
     std::vector<unsigned int> d_blockjNodeIndex;
     std::vector<unsigned int> d_blockiNodeIndexNoSym;
@@ -541,7 +568,6 @@ node is stored
     std::vector<double>       d_shapeFunctionGradientValueRefZ;
 
     /// storage for shapefunctions
-    std::vector<double> d_shapeFunctionValueLpspQuad;
     std::vector<double> d_NiNjIntegral;
 
 

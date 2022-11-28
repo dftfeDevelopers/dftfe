@@ -89,7 +89,6 @@ namespace dftfe
 #include "configurationalStressCompute/computeStressEself.cc"
 #include "configurationalStressCompute/stress.cc"
 #include "createBinObjectsForce.cc"
-#include "initPseudoForce.cc"
 #include "locateAtomCoreNodesForce.cc"
 
   namespace internalForce

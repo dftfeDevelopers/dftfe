@@ -698,50 +698,50 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
+    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad)
   {
-    return use2pPlusOneGLQuad ? d_glShapeFunctionValueInvertedDevice :
-                                d_shapeFunctionValueInvertedDevice;
+    return use2pPlusOneGLQuad ? d_glShapeFunctionValueTransposedDevice :
+                                d_shapeFunctionValueTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionValuesNLPInverted()
+    getShapeFunctionValuesNLPTransposed()
   {
-    return d_shapeFunctionValueNLPInvertedDevice;
+    return d_shapeFunctionValueNLPTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesXInverted()
+    getShapeFunctionGradientValuesXTransposed()
   {
-    return d_shapeFunctionGradientValueXInvertedDevice;
+    return d_shapeFunctionGradientValueXTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesYInverted()
+    getShapeFunctionGradientValuesYTransposed()
   {
-    return d_shapeFunctionGradientValueYInvertedDevice;
+    return d_shapeFunctionGradientValueYTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZInverted()
+    getShapeFunctionGradientValuesZTransposed()
   {
-    return d_shapeFunctionGradientValueZInvertedDevice;
+    return d_shapeFunctionGradientValueZTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesNLPInverted()
+    getShapeFunctionGradientValuesNLPTransposed()
   {
-    return d_shapeFunctionGradientValueNLPInvertedDevice;
+    return d_shapeFunctionGradientValueNLPTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

@@ -497,30 +497,30 @@ namespace dftfe
 
         copyDoubleToNumber(
           thrust::raw_pointer_cast(
-            &(operatorMatrix.getShapeFunctionValuesInverted())[0]),
+            &(operatorMatrix.getShapeFunctionValuesTransposed())[0]),
           numQuads * numNodesPerElement,
           reinterpret_cast<dataTypes::numberGPU *>(
             thrust::raw_pointer_cast(&shapeFunctionValuesReferenceD[0])));
 
         copyDoubleToNumber(
           thrust::raw_pointer_cast(
-            &(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
+            &(operatorMatrix.getShapeFunctionValuesNLPTransposed())[0]),
           numQuadsNLP * numNodesPerElement,
           reinterpret_cast<dataTypes::numberGPU *>(
             thrust::raw_pointer_cast(&shapeFunctionValuesNLPReferenceD[0])));
 
         thrust::device_vector<dataTypes::numberThrustGPU>
-          shapeFunctionGradientValuesXInvertedDevice(
+          shapeFunctionGradientValuesXTransposedDevice(
             blockSize * numQuads * numNodesPerElement,
             dataTypes::numberThrustGPU(0.0));
 
         thrust::device_vector<dataTypes::numberThrustGPU>
-          shapeFunctionGradientValuesYInvertedDevice(
+          shapeFunctionGradientValuesYTransposedDevice(
             blockSize * numQuads * numNodesPerElement,
             dataTypes::numberThrustGPU(0.0));
 
         thrust::device_vector<dataTypes::numberThrustGPU>
-          shapeFunctionGradientValuesZInvertedDevice(
+          shapeFunctionGradientValuesZTransposedDevice(
             blockSize * numQuads * numNodesPerElement,
             dataTypes::numberThrustGPU(0.0));
 
@@ -535,8 +535,8 @@ namespace dftfe
 
         for (unsigned int i = 0; i < blockSize; i++)
           thrust::copy(
-            operatorMatrix.getShapeFunctionGradientValuesNLPInverted().begin(),
-            operatorMatrix.getShapeFunctionGradientValuesNLPInverted().end(),
+            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed().begin(),
+            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed().end(),
             shapeFunctionGradientValuesNLPReferenceD.begin() +
               i * numQuadsNLP * 3 * numNodesPerElement);
 
@@ -596,12 +596,12 @@ namespace dftfe
                     copyDoubleToNumber(
                       thrust::raw_pointer_cast(
                         &(operatorMatrix
-                            .getShapeFunctionGradientValuesXInverted())
+                            .getShapeFunctionGradientValuesXTransposed())
                           [startingId * numQuads * numNodesPerElement]),
                       currentBlockSize * numQuads * numNodesPerElement,
                       reinterpret_cast<dataTypes::numberGPU *>(
                         thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesXInvertedDevice[0])));
+                          &shapeFunctionGradientValuesXTransposedDevice[0])));
 
                     dftfe::cublasXgemmStridedBatched(
                       operatorMatrix.getCublasHandle(),
@@ -620,7 +620,7 @@ namespace dftfe
                       strideA,
                       reinterpret_cast<const dataTypes::numberGPU *>(
                         thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesXInvertedDevice[0])),
+                          &shapeFunctionGradientValuesXTransposedDevice[0])),
                       numNodesPerElement,
                       strideB,
                       reinterpret_cast<const dataTypes::numberGPU *>(
@@ -634,12 +634,12 @@ namespace dftfe
                     copyDoubleToNumber(
                       thrust::raw_pointer_cast(
                         &(operatorMatrix
-                            .getShapeFunctionGradientValuesYInverted())
+                            .getShapeFunctionGradientValuesYTransposed())
                           [startingId * numQuads * numNodesPerElement]),
                       currentBlockSize * numQuads * numNodesPerElement,
                       reinterpret_cast<dataTypes::numberGPU *>(
                         thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesYInvertedDevice[0])));
+                          &shapeFunctionGradientValuesYTransposedDevice[0])));
 
                     dftfe::cublasXgemmStridedBatched(
                       operatorMatrix.getCublasHandle(),
@@ -658,7 +658,7 @@ namespace dftfe
                       strideA,
                       reinterpret_cast<const dataTypes::numberGPU *>(
                         thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesYInvertedDevice[0])),
+                          &shapeFunctionGradientValuesYTransposedDevice[0])),
                       numNodesPerElement,
                       strideB,
                       reinterpret_cast<const dataTypes::numberGPU *>(
@@ -672,12 +672,12 @@ namespace dftfe
                     copyDoubleToNumber(
                       thrust::raw_pointer_cast(
                         &(operatorMatrix
-                            .getShapeFunctionGradientValuesZInverted())
+                            .getShapeFunctionGradientValuesZTransposed())
                           [startingId * numQuads * numNodesPerElement]),
                       currentBlockSize * numQuads * numNodesPerElement,
                       reinterpret_cast<dataTypes::numberGPU *>(
                         thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesZInvertedDevice[0])));
+                          &shapeFunctionGradientValuesZTransposedDevice[0])));
 
                     dftfe::cublasXgemmStridedBatched(
                       operatorMatrix.getCublasHandle(),
@@ -696,7 +696,7 @@ namespace dftfe
                       strideA,
                       reinterpret_cast<const dataTypes::numberGPU *>(
                         thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesZInvertedDevice[0])),
+                          &shapeFunctionGradientValuesZTransposedDevice[0])),
                       numNodesPerElement,
                       strideB,
                       reinterpret_cast<const dataTypes::numberGPU *>(
