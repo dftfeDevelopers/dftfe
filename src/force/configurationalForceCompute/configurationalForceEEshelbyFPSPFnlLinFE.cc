@@ -28,6 +28,8 @@ forceClass<FEOrder, FEOrderElectro>::
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator,
+#else
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
 #endif
     const unsigned int               eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
@@ -269,10 +271,55 @@ forceClass<FEOrder, FEOrderElectro>::
           gpu_time = MPI_Wtime() - gpu_time;
 
           if (this_process == 0 && d_dftParams.verbosity >= 4)
-            std::cout << "Time for gpuPortedForceKernelsAllH: " << gpu_time
+            std::cout << "Time for wfc contractions in forces: " << gpu_time
                       << std::endl;
         }
+      else
 #endif
+        {
+          MPI_Barrier(d_mpiCommParent);
+          double host_time = MPI_Wtime();
+
+          force::wfcContractionsForceKernelsAllH(
+            kohnShamDFTEigenOperator,
+            dftPtr->d_eigenVectorsFlattenedSTL,
+            d_dftParams.spinPolarized,
+            spinIndex,
+            dftPtr->eigenValues,
+            partialOccupancies,
+            dftPtr->d_kPointCoordinates,
+            &dftPtr->d_nonTrivialAllCellsPseudoWfcIdToElemIdMap[0],
+            &dftPtr->d_projecterKetTimesFlattenedVectorLocalIds[0],
+            localVectorSize,
+            numEigenVectors,
+            numPhysicalCells,
+            numQuadPoints,
+            numQuadPointsNLP,
+            dftPtr->matrix_free_data.get_dofs_per_cell(
+              dftPtr->d_densityDofHandlerIndex),
+            dftPtr->d_sumNonTrivialPseudoWfcsOverAllCellsZetaDeltaVQuads,
+            &elocWfcEshelbyTensorQuadValuesH[0],
+            &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+              [0],
+#ifdef USE_COMPLEX
+            &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+              [0],
+#endif
+            d_mpiCommParent,
+            dftPtr->interBandGroupComm,
+            isPseudopotential,
+            d_dftParams.floatingNuclearCharges,
+            false,
+            d_dftParams);
+
+          MPI_Barrier(d_mpiCommParent);
+          host_time = MPI_Wtime() - host_time;
+
+          if (this_process == 0 && d_dftParams.verbosity >= 4)
+            std::cout << "Time for wfc contractions in forces: " << host_time
+                      << std::endl;
+        }
+
 
       // dataTypes::number
       // check1=std::accumulate(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened.begin(),projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened.end(),dataTypes::number(0.0));

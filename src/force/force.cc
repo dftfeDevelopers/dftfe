@@ -19,6 +19,7 @@
 
 
 #include <force.h>
+#include <forceWfcContractions.h>
 #ifdef DFTFE_WITH_GPU
 #  include <forceWfcContractionsCUDA.h>
 #endif
@@ -323,6 +324,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator,
+#else
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
 #endif
     const dispersionCorrection &     dispersionCorr,
     const unsigned int               eigenDofHandlerIndex,
@@ -372,9 +375,7 @@ namespace dftfe
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
     computeConfigurationalForceTotalLinFE(matrixFreeData,
-#ifdef DFTFE_WITH_GPU
                                           kohnShamDFTEigenOperator,
-#endif
                                           eigenDofHandlerIndex,
                                           smearedChargeQuadratureId,
                                           lpspQuadratureIdElectro,
@@ -513,6 +514,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator,
+#else
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
 #endif
     const unsigned int               eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
@@ -553,9 +556,7 @@ namespace dftfe
     // nuclear self energy
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       matrixFreeData,
-#ifdef DFTFE_WITH_GPU
       kohnShamDFTEigenOperator,
-#endif
       eigenDofHandlerIndex,
       smearedChargeQuadratureId,
       lpspQuadratureIdElectro,

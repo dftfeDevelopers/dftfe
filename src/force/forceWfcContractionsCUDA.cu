@@ -535,7 +535,8 @@ namespace dftfe
 
         for (unsigned int i = 0; i < blockSize; i++)
           thrust::copy(
-            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed().begin(),
+            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed()
+              .begin(),
             operatorMatrix.getShapeFunctionGradientValuesNLPTransposed().end(),
             shapeFunctionGradientValuesNLPReferenceD.begin() +
               i * numQuadsNLP * 3 * numNodesPerElement);

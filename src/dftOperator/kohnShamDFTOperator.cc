@@ -29,7 +29,7 @@
 namespace dftfe
 {
 #include "computeLocalAndNonLocalHamiltonianTimesX.cc"
-#include "computeNonLocalProjectorKetTimesXTimesV.cc"  
+#include "computeNonLocalProjectorKetTimesXTimesV.cc"
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 #include "hamiltonianMatrixCalculator.cc"
 #include "matrixVectorProductImplementations.cc"
@@ -358,7 +358,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::vector<double> &
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradValuesDensityGaussQuad(const unsigned int idim) const
+    getShapeFunctionGradValuesDensityGaussQuad() const
   {
     return d_densityGaussQuadShapeFunctionGradientValues;
   }
@@ -388,29 +388,6 @@ namespace dftfe
     return d_shapeFunctionValueNLPTransposed;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<double> &
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesXDensityTransposed() const
-  {
-    return d_shapeFunctionGradientValueXDensityTransposed;
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<double> &
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesYDensityTransposed() const
-  {
-    return d_shapeFunctionGradientValueYDensityTransposed;
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<double> &
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZDensityTransposed() const
-  {
-    return d_shapeFunctionGradientValueZDensityTransposed;
-  }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::vector<double> &
@@ -423,8 +400,8 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::vector<double> &
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getInverseJacobiansNLP() const
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::getInverseJacobiansNLP()
+    const
   {
     return d_inverseJacobiansNLP;
   }

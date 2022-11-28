@@ -24,6 +24,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
 #ifdef DFTFE_WITH_GPU
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
+#else
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
 #endif
   const dispersionCorrection &     dispersionCorr,
   const unsigned int               eigenDofHandlerIndex,
@@ -78,9 +80,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   // configurational stress contribution from all terms except those from
   // nuclear self energy
   computeStressEEshelbyEPSPEnlEk(matrixFreeData,
-#ifdef DFTFE_WITH_GPU
                                  kohnShamDFTEigenOperator,
-#endif
                                  eigenDofHandlerIndex,
                                  smearedChargeQuadratureId,
                                  lpspQuadratureIdElectro,

@@ -164,19 +164,19 @@ namespace
 
             const double gradShapeXI =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeYI =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeZI =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
 
             val += vEffJxW[cellIndex * numQuadPoints + q] * shapeI * shapeJ;
 
@@ -261,35 +261,35 @@ namespace
 
             const double gradShapeXI =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeYI =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeZI =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
 
             const double gradShapeXJ =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeYJ =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeZJ =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
 
 
             val +=
@@ -372,35 +372,35 @@ namespace
 
             const double gradShapeXI =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeYI =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeZI =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
 
             const double gradShapeXJ =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeYJ =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeZJ =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
 
 
             val +=
@@ -497,11 +497,11 @@ namespace
                           const unsigned int numQuadPoints,
                           const double *     shapeFunctionValues,
                           const double *     shapeFunctionValuesTransposed,
-                          const double *   shapeFunctionGradientValuesXTransposed,
-                          const double *   shapeFunctionGradientValuesYTransposed,
-                          const double *   shapeFunctionGradientValuesZTransposed,
-                          const double *   vEffPrimeJxW,
-                          const double *   JxW,
+                          const double *shapeFunctionGradientValuesXTransposed,
+                          const double *shapeFunctionGradientValuesYTransposed,
+                          const double *shapeFunctionGradientValuesZTransposed,
+                          const double *vEffPrimeJxW,
+                          const double *JxW,
                           cuDoubleComplex *cellHamiltonianPrimeMatrixFlattened)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -576,35 +576,35 @@ namespace
 
             const double gradShapeXI =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeYI =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeZI =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
 
             const double gradShapeXJ =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeYJ =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeZJ =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
 
 
             val +=
@@ -669,35 +669,35 @@ namespace
 
             const double gradShapeXI =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeYI =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
             const double gradShapeZI =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexI];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexI];
 
             const double gradShapeXJ =
               shapeFunctionGradientValuesXTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeYJ =
               shapeFunctionGradientValuesYTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
             const double gradShapeZJ =
               shapeFunctionGradientValuesZTransposed[cellIndex * numQuadPoints *
-                                                     numDofsPerCell +
-                                                   numDofsPerCell * q +
-                                                   cellDofIndexJ];
+                                                       numDofsPerCell +
+                                                     numDofsPerCell * q +
+                                                     cellDofIndexJ];
 
 
             val +=

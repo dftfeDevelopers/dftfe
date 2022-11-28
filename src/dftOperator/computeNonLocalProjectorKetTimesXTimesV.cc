@@ -22,10 +22,10 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    computeNonLocalProjectorKetTimesXTimesV(
-      distributedCPUVec<std::complex<double>> &src,
-      distributedCPUVec<std::complex<double>> &projectorKetTimesVectorFlattened,
-      const unsigned int                       numberWaveFunctions)
+  computeNonLocalProjectorKetTimesXTimesV(
+    distributedCPUVec<std::complex<double>> &src,
+    distributedCPUVec<std::complex<double>> &projectorKetTimesVectorFlattened,
+    const unsigned int                       numberWaveFunctions)
 {
   std::map<unsigned int, std::vector<std::complex<double>>>
     projectorKetTimesVector;
@@ -115,8 +115,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell loop
 
-  projectorKetTimesVectorFlattened =
-    std::complex<double>(0.0, 0.0);
+  projectorKetTimesVectorFlattened = std::complex<double>(0.0, 0.0);
 
 
   for (unsigned int iAtom = 0;
@@ -135,14 +134,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           const unsigned int id =
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
-          zcopy_(
-            &numberWaveFunctions,
-            &projectorKetTimesVector[atomId]
-                                    [numberWaveFunctions * iPseudoAtomicWave],
-            &inc,
-            &projectorKetTimesVectorFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
+          zcopy_(&numberWaveFunctions,
+                 &projectorKetTimesVector[atomId][numberWaveFunctions *
+                                                  iPseudoAtomicWave],
+                 &inc,
+                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 &inc);
         }
     }
 
@@ -175,13 +172,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
 
-          zscal_(
-            &numberWaveFunctions,
-            &nonlocalConstantV,
-            &projectorKetTimesVectorFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
-
+          zscal_(&numberWaveFunctions,
+                 &nonlocalConstantV,
+                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 &inc);
         }
     }
 }
@@ -189,10 +183,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    computeNonLocalProjectorKetTimesXTimesV(
-      distributedCPUVec<double> &src,
-      distributedCPUVec<double> &projectorKetTimesVectorFlattened,
-      const unsigned int                       numberWaveFunctions)
+  computeNonLocalProjectorKetTimesXTimesV(
+    distributedCPUVec<double> &src,
+    distributedCPUVec<double> &projectorKetTimesVectorFlattened,
+    const unsigned int         numberWaveFunctions)
 {
   std::map<unsigned int, std::vector<double>> projectorKetTimesVector;
 
@@ -300,14 +294,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
 
-          dcopy_(
-            &numberWaveFunctions,
-            &projectorKetTimesVector[atomId]
-                                    [numberWaveFunctions * iPseudoAtomicWave],
-            &inc,
-            &projectorKetTimesVectorFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
+          dcopy_(&numberWaveFunctions,
+                 &projectorKetTimesVector[atomId][numberWaveFunctions *
+                                                  iPseudoAtomicWave],
+                 &inc,
+                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 &inc);
         }
     }
 
@@ -337,16 +329,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
 
-          dscal_(
-            &numberWaveFunctions,
-            &nonlocalConstantV,
-            &projectorKetTimesVectorFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
-
+          dscal_(&numberWaveFunctions,
+                 &nonlocalConstantV,
+                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 &inc);
         }
     }
-
 }
 
 #endif

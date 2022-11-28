@@ -23,6 +23,7 @@
 #include "constants.h"
 #include "headers.h"
 #include "meshMovementGaussian.h"
+#include "kohnShamDFTOperator.h"
 #ifdef DFTFE_WITH_GPU
 #  include "kohnShamDFTOperatorCUDA.h"
 #endif
@@ -132,6 +133,9 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
+#else
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperator,
 #endif
       const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
@@ -208,6 +212,9 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperator,
+#else
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
       const dispersionCorrection &     dispersionCorr,
@@ -310,6 +317,9 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
+#else
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperator,
 #endif
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
@@ -388,6 +398,9 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperator,
+#else
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
       const unsigned int               eigenDofHandlerIndex,
@@ -675,6 +688,9 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_GPU
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperator,
+#else
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
       const unsigned int               eigenDofHandlerIndex,

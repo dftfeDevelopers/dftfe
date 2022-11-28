@@ -26,6 +26,7 @@ SET(TARGET_SRC
   ./src/dftOperator/kohnShamDFTOperator.cc
   ./src/dftOperator/operator.cc
   ./src/force/force.cc
+  ./src/force/forceWfcContractions.cc  
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
   ./src/triangulation/meshMovement/meshMovement.cc

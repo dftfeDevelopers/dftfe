@@ -403,7 +403,8 @@ namespace dftfe
 
     thrust::device_vector<double> d_shapeFunctionGradientValueZTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueNLPTransposedDevice;
+    thrust::device_vector<double>
+      d_shapeFunctionGradientValueNLPTransposedDevice;
 
     thrust::device_vector<double> d_inverseJacobiansNLPDevice;
 

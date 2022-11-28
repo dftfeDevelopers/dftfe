@@ -384,7 +384,7 @@ node is stored
     getShapeFunctionValuesDensityGaussQuad() const;
 
     const std::vector<double> &
-    getShapeFunctionGradValuesDensityGaussQuad(const unsigned int idim) const;
+    getShapeFunctionGradValuesDensityGaussQuad() const;
 
     const std::vector<double> &
     getShapeFunctionValuesDensityGaussLobattoQuad() const;
@@ -394,15 +394,6 @@ node is stored
 
     const std::vector<double> &
     getShapeFunctionValuesNLPTransposed() const;
-
-    const std::vector<double> &
-    getShapeFunctionGradientValuesXDensityTransposed() const;
-
-    const std::vector<double> &
-    getShapeFunctionGradientValuesYDensityTransposed() const;
-
-    const std::vector<double> &
-    getShapeFunctionGradientValuesZDensityTransposed() const;
 
     const std::vector<double> &
     getShapeFunctionGradientValuesNLPTransposed() const;
@@ -527,7 +518,7 @@ node is stored
     computeNonLocalProjectorKetTimesXTimesV(
       distributedCPUVec<dataTypes::number> &src,
       distributedCPUVec<dataTypes::number> &projectorKetTimesVectorFlattened,
-      const unsigned int                       numberWaveFunctions);
+      const unsigned int                    numberWaveFunctions);
 
 
     /// pointer to dft class

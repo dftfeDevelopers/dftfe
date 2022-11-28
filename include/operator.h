@@ -72,6 +72,9 @@ namespace dftfe
     virtual void
     reinit(const unsigned int wavefunBlockSize) = 0;
 
+    virtual void
+    reinitkPointSpinIndex(const unsigned int kPointIndex,
+                          const unsigned int spinIndex) = 0;
 
     virtual void
     initCellWaveFunctionMatrix(
@@ -151,7 +154,7 @@ namespace dftfe
     computeNonLocalProjectorKetTimesXTimesV(
       distributedCPUVec<dataTypes::number> &src,
       distributedCPUVec<dataTypes::number> &projectorKetTimesVectorFlattened,
-      const unsigned int                       numberWaveFunctions) = 0;
+      const unsigned int                    numberWaveFunctions) = 0;
 
 
     /**
@@ -256,8 +259,7 @@ namespace dftfe
     getShapeFunctionValuesDensityGaussQuad() const = 0;
 
     virtual const std::vector<double> &
-    getShapeFunctionGradValuesDensityGaussQuad(
-      const unsigned int idim) const = 0;
+    getShapeFunctionGradValuesDensityGaussQuad() const = 0;
 
     virtual const std::vector<double> &
     getShapeFunctionValuesDensityGaussLobattoQuad() const = 0;
@@ -269,19 +271,10 @@ namespace dftfe
     getShapeFunctionValuesNLPTransposed() const = 0;
 
     virtual const std::vector<double> &
-    getShapeFunctionGradientValuesXDensityTransposed() const= 0;
+    getShapeFunctionGradientValuesNLPTransposed() const = 0;
 
     virtual const std::vector<double> &
-    getShapeFunctionGradientValuesYDensityTransposed() const= 0;
-
-    virtual const std::vector<double> &
-    getShapeFunctionGradientValuesZDensityTransposed() const= 0;
-
-    virtual const std::vector<double> &
-    getShapeFunctionGradientValuesNLPTransposed() const= 0;
-
-    virtual const std::vector<double> &
-    getInverseJacobiansNLP() const= 0;
+    getInverseJacobiansNLP() const = 0;
 
 
   protected:
@@ -330,12 +323,6 @@ namespace dftfe
     std::vector<double> d_shapeFunctionValueDensityTransposed;
 
     std::vector<double> d_shapeFunctionValueNLPTransposed;
-
-    std::vector<double> d_shapeFunctionGradientValueXDensityTransposed;
-
-    std::vector<double> d_shapeFunctionGradientValueYDensityTransposed;
-
-    std::vector<double> d_shapeFunctionGradientValueZDensityTransposed;
 
     std::vector<double> d_shapeFunctionGradientValueNLPTransposed;
 
