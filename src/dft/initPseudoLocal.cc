@@ -208,90 +208,133 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         }
     }
 
+  typename DoFHandler<3>::active_cell_iterator cell =
+                                                 _dofHandler.begin_active(),
+                                               endc     = _dofHandler.end();
+  int                                    numberElements = 0;
+  std::map<dealii::CellId, unsigned int> cellIdToElemIdMap;
+  std::map<unsigned int, dealii::CellId> elemIdToCellIdMap;
+  for (; cell != endc; ++cell)
+    if (cell->is_locally_owned())
+      {
+        cellIdToElemIdMap[cell->id()]     = numberElements;
+        elemIdToCellIdMap[numberElements] = cell->id();
+
+        std::vector<double> &pseudoVLoc = _pseudoValues[cell->id()];
+        pseudoVLoc.resize(n_q_points, 0.0);
+        numberElements++;
+      }
+
+  const int numberDofs = phiExt.local_size();
+  // kpoint group parallelization data structures
+  const unsigned int numberKptGroups =
+    dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
+
+  const unsigned int kptGroupTaskId =
+    dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+  std::vector<int> kptGroupLowHighPlusOneIndicesStep1;
+
+  if (numberDofs > 0)
+    dftUtils::createKpointParallelizationIndices(
+      interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndicesStep1);
+
   for (unsigned int localDofId = 0; localDofId < phiExt.local_size();
        ++localDofId)
     {
-      const dealii::types::global_dof_index dofId =
-        partitioner->local_to_global(localDofId);
-      const Point<3> &nodalCoor = _supportPoints.find(dofId)->second;
-      if (!_phiExtConstraintMatrix.is_constrained(dofId))
+      if (localDofId <
+            kptGroupLowHighPlusOneIndicesStep1[2 * kptGroupTaskId + 1] &&
+          localDofId >= kptGroupLowHighPlusOneIndicesStep1[2 * kptGroupTaskId])
         {
-          Point<3> atom;
-          double   atomCharge;
-          int      atomicNumber;
-          int      chargeId;
-          double   distanceToAtom;
-          double   sumVal = 0.0;
-          double   val;
-          double   diffx;
-          double   diffy;
-          double   diffz;
-          for (unsigned int iAtom = 0;
-               iAtom < (atomLocations.size() + numberImageCharges);
-               ++iAtom)
+          const dealii::types::global_dof_index dofId =
+            partitioner->local_to_global(localDofId);
+          const Point<3> &nodalCoor = _supportPoints.find(dofId)->second;
+          if (!_phiExtConstraintMatrix.is_constrained(dofId))
             {
-              diffx      = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
-              diffy      = nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
-              diffz      = nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
-              atomCharge = atomsImagesCharges[iAtom];
-
-              distanceToAtom =
-                std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
-
-              if (distanceToAtom < cutOffForPsp)
+              Point<3> atom;
+              double   atomCharge;
+              int      atomicNumber;
+              int      chargeId;
+              double   distanceToAtom;
+              double   sumVal = 0.0;
+              double   val;
+              double   diffx;
+              double   diffy;
+              double   diffz;
+              for (unsigned int iAtom = 0;
+                   iAtom < (atomLocations.size() + numberImageCharges);
+                   ++iAtom)
                 {
-                  if (iAtom < numberGlobalCharges)
-                    {
-                      chargeId = iAtom;
-                    }
-                  else
-                    {
-                      const unsigned int iImageCharge =
-                        iAtom - numberGlobalCharges;
-                      chargeId = d_imageIds[iImageCharge];
-                    }
+                  diffx = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
+                  diffy = nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
+                  diffz = nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
+                  atomCharge = atomsImagesCharges[iAtom];
 
-                  if (atomIdBinIdMap.find(chargeId) != atomIdBinIdMap.end())
-                    {
-                      const unsigned int binId =
-                        atomIdBinIdMap.find(chargeId)->second;
-                      const int boundaryFlagChargeId =
-                        boundaryNodeMapBinsOnlyChargeId[binId]
-                          .find(dofId)
-                          ->second;
+                  distanceToAtom =
+                    std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
 
-                      if (boundaryFlagChargeId == chargeId)
+                  if (distanceToAtom < cutOffForPsp)
+                    {
+                      if (iAtom < numberGlobalCharges)
                         {
-                          atom[0] = atomsImagesPositions[iAtom * 3 + 0];
-                          atom[1] = atomsImagesPositions[iAtom * 3 + 1];
-                          atom[2] = atomsImagesPositions[iAtom * 3 + 2];
+                          chargeId = iAtom;
+                        }
+                      else
+                        {
+                          const unsigned int iImageCharge =
+                            iAtom - numberGlobalCharges;
+                          chargeId = d_imageIds[iImageCharge];
+                        }
 
-                          if (dofClosestChargeLocationMapBins[binId]
-                                .find(dofId)
-                                ->second.distance(atom) < 1e-5)
+                      if (atomIdBinIdMap.find(chargeId) != atomIdBinIdMap.end())
+                        {
+                          const unsigned int binId =
+                            atomIdBinIdMap.find(chargeId)->second;
+                          const int boundaryFlagChargeId =
+                            boundaryNodeMapBinsOnlyChargeId[binId]
+                              .find(dofId)
+                              ->second;
+
+                          if (boundaryFlagChargeId == chargeId)
                             {
-                              const distributedCPUVec<double> &vselfBin =
-                                vselfBinManager.getVselfFieldBins()[binId];
-                              val = vselfBin.local_element(localDofId);
+                              atom[0] = atomsImagesPositions[iAtom * 3 + 0];
+                              atom[1] = atomsImagesPositions[iAtom * 3 + 1];
+                              atom[2] = atomsImagesPositions[iAtom * 3 + 2];
+
+                              if (dofClosestChargeLocationMapBins[binId]
+                                    .find(dofId)
+                                    ->second.distance(atom) < 1e-5)
+                                {
+                                  const distributedCPUVec<double> &vselfBin =
+                                    vselfBinManager.getVselfFieldBins()[binId];
+                                  val = vselfBin.local_element(localDofId);
+                                }
+                              else
+                                val = -atomCharge / distanceToAtom;
                             }
                           else
                             val = -atomCharge / distanceToAtom;
                         }
-                      else
-                        val = -atomCharge / distanceToAtom;
                     }
-                }
-              else
-                {
-                  val = -atomCharge / distanceToAtom;
-                }
+                  else
+                    {
+                      val = -atomCharge / distanceToAtom;
+                    }
 
-              sumVal += val;
+                  sumVal += val;
+                }
+              phiExt.local_element(localDofId) = sumVal;
             }
-          phiExt.local_element(localDofId) = sumVal;
-        }
-    }
+        } // interpool comm parallelization
+    }     // dof loop
 
+  if (numberDofs > 0 && numberKptGroups > 1)
+    MPI_Allreduce(MPI_IN_PLACE,
+                  phiExt.begin(),
+                  numberDofs,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  interpoolcomm);
+  MPI_Barrier(interpoolcomm);
 
   _phiExtConstraintMatrix.distribute(phiExt);
   phiExt.update_ghost_values();
@@ -316,97 +359,104 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
 
+  const int numMacroCells = _matrix_free_data.n_macro_cells();
+
+  std::vector<int> kptGroupLowHighPlusOneIndicesStep2;
+
+  if (numMacroCells > 0)
+    dftUtils::createKpointParallelizationIndices(
+      interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndicesStep2);
+
   for (unsigned int macrocell = 0;
        macrocell < _matrix_free_data.n_macro_cells();
        ++macrocell)
     {
-      feEvalObj.reinit(macrocell);
-      feEvalObj.read_dof_values(phiExt);
-      feEvalObj.evaluate(true, false);
-
-      for (unsigned int iSubCell = 0;
-           iSubCell < _matrix_free_data.n_components_filled(macrocell);
-           ++iSubCell)
+      if (macrocell <
+            kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
+          macrocell >= kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
         {
-          subCellPtr =
-            _matrix_free_data.get_cell_iterator(macrocell,
-                                                iSubCell,
-                                                _phiExtDofHandlerIndex);
-          dealii::CellId subCellId = subCellPtr->id();
+          feEvalObj.reinit(macrocell);
+          feEvalObj.read_dof_values(phiExt);
+          feEvalObj.evaluate(true, false);
 
-          std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-          pseudoVLoc.resize(n_q_points, 0.0);
-        }
-
-      Point<3> atom;
-      int      atomicNumber;
-      double   atomCharge;
+          Point<3> atom;
+          int      atomicNumber;
+          double   atomCharge;
 
 
-      for (unsigned int iSubCell = 0;
-           iSubCell < _matrix_free_data.n_components_filled(macrocell);
-           ++iSubCell)
-        {
-          subCellPtr =
-            _matrix_free_data.get_cell_iterator(macrocell,
-                                                iSubCell,
-                                                _phiExtDofHandlerIndex);
-          dealii::CellId subCellId = subCellPtr->id();
-
-          std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-
-          Point<3> quadPoint;
-          double   value, distanceToAtom, distanceToAtomInv;
-
-          fe_values.reinit(subCellPtr);
-
-
-          // loop over quad points
-          for (unsigned int q = 0; q < n_q_points; ++q)
+          for (unsigned int iSubCell = 0;
+               iSubCell < _matrix_free_data.n_components_filled(macrocell);
+               ++iSubCell)
             {
-              const Point<3> &quadPoint = fe_values.quadrature_point(q);
+              subCellPtr =
+                _matrix_free_data.get_cell_iterator(macrocell,
+                                                    iSubCell,
+                                                    _phiExtDofHandlerIndex);
+              dealii::CellId subCellId = subCellPtr->id();
 
-              double temp;
-              double tempVal = 0.0;
-              double diffx;
-              double diffy;
-              double diffz;
-              // loop over atoms
-              for (unsigned int iAtom = 0;
-                   iAtom < numberGlobalCharges + numberImageCharges;
-                   iAtom++)
+              std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
+
+              Point<3> quadPoint;
+              double   value, distanceToAtom, distanceToAtomInv;
+
+              fe_values.reinit(subCellPtr);
+
+
+              // loop over quad points
+              for (unsigned int q = 0; q < n_q_points; ++q)
                 {
-                  diffx = quadPoint[0] - atomsImagesPositions[iAtom * 3 + 0];
-                  diffy = quadPoint[1] - atomsImagesPositions[iAtom * 3 + 1];
-                  diffz = quadPoint[2] - atomsImagesPositions[iAtom * 3 + 2];
+                  const Point<3> &quadPoint = fe_values.quadrature_point(q);
 
-                  atomCharge = atomsImagesCharges[iAtom];
-
-                  distanceToAtom =
-                    std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
-                  distanceToAtomInv = 1.0 / distanceToAtom;
-
-                  if (distanceToAtom <= maxTail)
+                  double temp;
+                  double tempVal = 0.0;
+                  double diffx;
+                  double diffy;
+                  double diffz;
+                  // loop over atoms
+                  for (unsigned int iAtom = 0;
+                       iAtom < numberGlobalCharges + numberImageCharges;
+                       iAtom++)
                     {
-                      if (iAtom < numberGlobalCharges)
-                        {
-                          atomicNumber = std::round(atomLocations[iAtom][0]);
-                        }
-                      else
-                        {
-                          const unsigned int iImageCharge =
-                            iAtom - numberGlobalCharges;
-                          atomicNumber = std::round(
-                            atomLocations[d_imageIds[iImageCharge]][0]);
-                        }
+                      diffx =
+                        quadPoint[0] - atomsImagesPositions[iAtom * 3 + 0];
+                      diffy =
+                        quadPoint[1] - atomsImagesPositions[iAtom * 3 + 1];
+                      diffz =
+                        quadPoint[2] - atomsImagesPositions[iAtom * 3 + 2];
 
-                      if (distanceToAtom <= outerMostDataPoint[atomicNumber])
+                      atomCharge = atomsImagesCharges[iAtom];
+
+                      distanceToAtom = std::sqrt(diffx * diffx + diffy * diffy +
+                                                 diffz * diffz);
+                      distanceToAtomInv = 1.0 / distanceToAtom;
+
+                      if (distanceToAtom <= maxTail)
                         {
-                          if (d_dftParamsPtr->isPseudopotential)
+                          if (iAtom < numberGlobalCharges)
                             {
-                              value =
-                                alglib::spline1dcalc(pseudoSpline[atomicNumber],
-                                                     distanceToAtom);
+                              atomicNumber =
+                                std::round(atomLocations[iAtom][0]);
+                            }
+                          else
+                            {
+                              const unsigned int iImageCharge =
+                                iAtom - numberGlobalCharges;
+                              atomicNumber = std::round(
+                                atomLocations[d_imageIds[iImageCharge]][0]);
+                            }
+
+                          if (distanceToAtom <=
+                              outerMostDataPoint[atomicNumber])
+                            {
+                              if (d_dftParamsPtr->isPseudopotential)
+                                {
+                                  value = alglib::spline1dcalc(
+                                    pseudoSpline[atomicNumber], distanceToAtom);
+                                }
+                              else
+                                {
+                                  value = -atomCharge * distanceToAtomInv;
+                                }
                             }
                           else
                             {
@@ -417,34 +467,67 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                         {
                           value = -atomCharge * distanceToAtomInv;
                         }
-                    }
-                  else
-                    {
-                      value = -atomCharge * distanceToAtomInv;
-                    }
-                  tempVal += value;
-                } // atom loop
-              pseudoVLoc[q] = tempVal;
-            } // quad loop
-        }     // subcell loop
+                      tempVal += value;
+                    } // atom loop
+                  pseudoVLoc[q] = tempVal;
+                } // quad loop
+            }     // subcell loop
 
-      for (unsigned int iSubCell = 0;
-           iSubCell < _matrix_free_data.n_components_filled(macrocell);
-           ++iSubCell)
-        {
-          subCellPtr =
-            _matrix_free_data.get_cell_iterator(macrocell,
-                                                iSubCell,
-                                                _phiExtDofHandlerIndex);
-          dealii::CellId       subCellId  = subCellPtr->id();
-          std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-          // loop over quad points
-          for (unsigned int q = 0; q < n_q_points; ++q)
+          for (unsigned int iSubCell = 0;
+               iSubCell < _matrix_free_data.n_components_filled(macrocell);
+               ++iSubCell)
             {
-              pseudoVLoc[q] -= feEvalObj.get_value(q)[iSubCell];
-            } // loop over quad points
-        }     // subcell loop
-    }         // cell loop
+              subCellPtr =
+                _matrix_free_data.get_cell_iterator(macrocell,
+                                                    iSubCell,
+                                                    _phiExtDofHandlerIndex);
+              dealii::CellId       subCellId  = subCellPtr->id();
+              std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
+              // loop over quad points
+              for (unsigned int q = 0; q < n_q_points; ++q)
+                {
+                  pseudoVLoc[q] -= feEvalObj.get_value(q)[iSubCell];
+                } // loop over quad points
+            }     // subcell loop
+        }         // intercomm paral
+    }             // cell loop
+
+  if (numMacroCells > 0 && numberKptGroups > 1)
+    {
+      std::vector<double> tempPseudoValuesFlattened(numberElements * n_q_points,
+                                                    0.0);
+
+      cell = _dofHandler.begin_active();
+      for (; cell != endc; ++cell)
+        if (cell->is_locally_owned())
+          {
+            const unsigned int   elemId     = cellIdToElemIdMap[cell->id()];
+            std::vector<double> &pseudoVLoc = _pseudoValues[cell->id()];
+            for (unsigned int q = 0; q < n_q_points; ++q)
+              tempPseudoValuesFlattened[elemId * n_q_points + q] =
+                pseudoVLoc[q];
+          }
+
+      MPI_Allreduce(MPI_IN_PLACE,
+                    &tempPseudoValuesFlattened[0],
+                    numberElements * n_q_points,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    interpoolcomm);
+      MPI_Barrier(interpoolcomm);
+
+      cell = _dofHandler.begin_active();
+      for (; cell != endc; ++cell)
+        if (cell->is_locally_owned())
+          {
+            const unsigned int   elemId     = cellIdToElemIdMap[cell->id()];
+            std::vector<double> &pseudoVLoc = _pseudoValues[cell->id()];
+            for (unsigned int q = 0; q < n_q_points; ++q)
+              pseudoVLoc[q] =
+                tempPseudoValuesFlattened[elemId * n_q_points + q];
+          }
+    }
+
 
   MPI_Barrier(d_mpiCommParent);
   init_2 = MPI_Wtime() - init_2;
@@ -455,101 +538,216 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   MPI_Barrier(d_mpiCommParent);
   init_3 = MPI_Wtime();
 
-  std::vector<double>                          pseudoVLocAtom(n_q_points);
-  typename DoFHandler<3>::active_cell_iterator cell =
-                                                 _dofHandler.begin_active(),
-                                               endc = _dofHandler.end();
+  std::vector<int> kptGroupLowHighPlusOneIndicesStep3;
+
+  if (numberElements > 0)
+    dftUtils::createKpointParallelizationIndices(
+      interpoolcomm, numberElements, kptGroupLowHighPlusOneIndicesStep3);
+
+  std::vector<double> pseudoVLocAtom(n_q_points);
+  unsigned int        ielem = 0;
+  cell                      = _dofHandler.begin_active();
   for (; cell != endc; ++cell)
     {
       if (cell->is_locally_owned())
         {
-          // compute values for the current elements
-          fe_values.reinit(cell);
-
-          Point<3> atom;
-          int      atomicNumber;
-          double   atomCharge;
-
-          // loop over atoms
-          for (unsigned int iAtom = 0;
-               iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
-               iAtom++)
+          if ((ielem <
+                 kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
+               ielem >= kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
             {
-              if (iAtom < numberGlobalCharges)
+              // compute values for the current elements
+              fe_values.reinit(cell);
+
+              Point<3> atom;
+              int      atomicNumber;
+              double   atomCharge;
+
+              // loop over atoms
+              for (unsigned int iAtom = 0;
+                   iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
+                   iAtom++)
                 {
-                  atom[0] = atomLocations[iAtom][2];
-                  atom[1] = atomLocations[iAtom][3];
-                  atom[2] = atomLocations[iAtom][4];
-                  if (d_dftParamsPtr->isPseudopotential)
-                    atomCharge = atomLocations[iAtom][1];
-                  else
-                    atomCharge = atomLocations[iAtom][0];
-                  atomicNumber = std::round(atomLocations[iAtom][0]);
-                }
-              else
-                {
-                  const unsigned int iImageCharge = iAtom - numberGlobalCharges;
-                  atom[0] = d_imagePositionsTrunc[iImageCharge][0];
-                  atom[1] = d_imagePositionsTrunc[iImageCharge][1];
-                  atom[2] = d_imagePositionsTrunc[iImageCharge][2];
-                  if (d_dftParamsPtr->isPseudopotential)
-                    atomCharge =
-                      atomLocations[d_imageIdsTrunc[iImageCharge]][1];
-                  else
-                    atomCharge =
-                      atomLocations[d_imageIdsTrunc[iImageCharge]][0];
-                  atomicNumber =
-                    std::round(atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
-                }
-
-
-              boundaryPoints.first  = atom - tempDisp;
-              boundaryPoints.second = atom + tempDisp;
-              dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
-
-              if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) ==
-                  NeighborType::not_neighbors)
-                continue;
-
-              bool         isPseudoDataInCell = false;
-              Point<3>     quadPoint;
-              double       value, distanceToAtom;
-              const double cutoff = outerMostDataPoint[atomicNumber];
-              // loop over quad points
-              for (unsigned int q = 0; q < n_q_points; ++q)
-                {
-                  const Point<3> &quadPoint = fe_values.quadrature_point(q);
-                  distanceToAtom            = quadPoint.distance(atom);
-                  if (distanceToAtom <= cutoff)
+                  if (iAtom < numberGlobalCharges)
                     {
+                      atom[0] = atomLocations[iAtom][2];
+                      atom[1] = atomLocations[iAtom][3];
+                      atom[2] = atomLocations[iAtom][4];
                       if (d_dftParamsPtr->isPseudopotential)
+                        atomCharge = atomLocations[iAtom][1];
+                      else
+                        atomCharge = atomLocations[iAtom][0];
+                      atomicNumber = std::round(atomLocations[iAtom][0]);
+                    }
+                  else
+                    {
+                      const unsigned int iImageCharge =
+                        iAtom - numberGlobalCharges;
+                      atom[0] = d_imagePositionsTrunc[iImageCharge][0];
+                      atom[1] = d_imagePositionsTrunc[iImageCharge][1];
+                      atom[2] = d_imagePositionsTrunc[iImageCharge][2];
+                      if (d_dftParamsPtr->isPseudopotential)
+                        atomCharge =
+                          atomLocations[d_imageIdsTrunc[iImageCharge]][1];
+                      else
+                        atomCharge =
+                          atomLocations[d_imageIdsTrunc[iImageCharge]][0];
+                      atomicNumber = std::round(
+                        atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
+                    }
+
+
+                  boundaryPoints.first  = atom - tempDisp;
+                  boundaryPoints.second = atom + tempDisp;
+                  dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+                  if (boundingBoxTria.get_neighbor_type(
+                        boundingBoxAroundAtom) == NeighborType::not_neighbors)
+                    continue;
+
+                  bool         isPseudoDataInCell = false;
+                  Point<3>     quadPoint;
+                  double       value, distanceToAtom;
+                  const double cutoff = outerMostDataPoint[atomicNumber];
+                  // loop over quad points
+                  for (unsigned int q = 0; q < n_q_points; ++q)
+                    {
+                      const Point<3> &quadPoint = fe_values.quadrature_point(q);
+                      distanceToAtom            = quadPoint.distance(atom);
+                      if (distanceToAtom <= cutoff)
                         {
-                          value =
-                            alglib::spline1dcalc(pseudoSpline[atomicNumber],
-                                                 distanceToAtom);
+                          if (d_dftParamsPtr->isPseudopotential)
+                            {
+                              value =
+                                alglib::spline1dcalc(pseudoSpline[atomicNumber],
+                                                     distanceToAtom);
+                            }
+                          else
+                            {
+                              value = -atomCharge / distanceToAtom;
+                            }
                         }
                       else
                         {
                           value = -atomCharge / distanceToAtom;
                         }
-                    }
-                  else
+
+                      if (distanceToAtom <= cutOffForPsp)
+                        isPseudoDataInCell = true;
+
+                      pseudoVLocAtom[q] = value;
+                    } // loop over quad points
+                  if (isPseudoDataInCell)
                     {
-                      value = -atomCharge / distanceToAtom;
+                      _pseudoValuesAtoms[iAtom][cell->id()] = pseudoVLocAtom;
                     }
+                } // loop over atoms
+            }     // kpt paral loop
+          ielem++;
+        } // cell locally owned check
+    }     // cell loop
 
-                  if (distanceToAtom <= cutOffForPsp)
-                    isPseudoDataInCell = true;
+  if (numberElements > 0 && numberKptGroups > 1)
+    {
+      // arranged as iAtom, elemid, and quad data
+      std::vector<double> sendData;
+      int                 sendCount = 0;
+      // loop over atoms
+      for (unsigned int iAtom = 0;
+           iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
+           iAtom++)
+        {
+          if (_pseudoValuesAtoms.find(iAtom) != _pseudoValuesAtoms.end())
+            {
+              cell = _dofHandler.begin_active();
+              for (; cell != endc; ++cell)
+                if (cell->is_locally_owned())
+                  {
+                    if (_pseudoValuesAtoms[iAtom].find(cell->id()) !=
+                        _pseudoValuesAtoms[iAtom].end())
+                      {
+                        sendCount++;
+                        pseudoVLocAtom = _pseudoValuesAtoms[iAtom][cell->id()];
+                        sendData.push_back(iAtom);
+                        sendData.push_back(cellIdToElemIdMap[cell->id()]);
+                        sendData.insert(sendData.end(),
+                                        pseudoVLocAtom.begin(),
+                                        pseudoVLocAtom.end());
+                      }
+                  } // cell locally owned loop
+            }
+        } // iatom loop
 
-                  pseudoVLocAtom[q] = value;
-                } // loop over quad points
-              if (isPseudoDataInCell)
+      sendCount = sendCount * (2 + n_q_points);
+
+      if (sendCount == 0)
+        {
+          sendCount = (2 + n_q_points);
+          sendData.resize(sendCount, 0);
+          sendData[0] = -1;
+        }
+
+      std::vector<int> recvCounts(numberKptGroups, 0);
+      int              ierr = MPI_Allgather(
+        &sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT, interpoolcomm);
+
+      if (ierr)
+        AssertThrow(false,
+                    dealii::ExcMessage(
+                      "DFT-FE Error: MPI Error in init local psp"));
+
+
+      const int recvDataSize =
+        std::accumulate(recvCounts.begin(), recvCounts.end(), 0);
+
+
+      std::vector<int> displacements(numberKptGroups, 0);
+      int              disp = 0;
+      for (int i = 0; i < numberKptGroups; ++i)
+        {
+          displacements[i] = disp;
+          disp += recvCounts[i];
+        }
+
+      std::vector<double> recvData(recvDataSize, 0.0);
+
+      ierr = MPI_Allgatherv(&sendData[0],
+                            sendCount,
+                            MPI_DOUBLE,
+                            &recvData[0],
+                            &recvCounts[0],
+                            &displacements[0],
+                            MPI_DOUBLE,
+                            interpoolcomm);
+
+      if (ierr)
+        AssertThrow(false,
+                    dealii::ExcMessage(
+                      "DFT-FE Error: MPI Error in init local psp"));
+
+
+      for (unsigned int i = 0; i < recvDataSize / (2 + n_q_points); i++)
+        {
+          const int iatom = std::round(recvData[i * (2 + n_q_points) + 0]);
+          const unsigned int elementId =
+            std::round(recvData[i * (2 + n_q_points) + 1]);
+
+
+          if (iatom != -1)
+            {
+              const dealii::CellId writeCellId = elemIdToCellIdMap[elementId];
+              if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
+                  _pseudoValuesAtoms[iatom].end())
                 {
-                  _pseudoValuesAtoms[iAtom][cell->id()] = pseudoVLocAtom;
+                  for (unsigned int q = 0; q < n_q_points; ++q)
+                    pseudoVLocAtom[q] = recvData[i * (2 + n_q_points) + 2 + q];
+
+                  _pseudoValuesAtoms[iatom][writeCellId] = pseudoVLocAtom;
                 }
-            } // loop over atoms
-        }     // cell locally owned check
-    }         // cell loop
+            }
+        }
+
+      MPI_Barrier(interpoolcomm);
+    }
 
   MPI_Barrier(d_mpiCommParent);
   init_3 = MPI_Wtime() - init_3;

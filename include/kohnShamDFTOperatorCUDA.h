@@ -474,8 +474,7 @@ namespace dftfe
 
 
     void
-    computeHamiltonianMatrix(
-      const unsigned int kPointIndex,
+    computeHamiltonianMatricesAllkpt(
       const unsigned int spinIndex,
       const bool         onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
@@ -522,6 +521,10 @@ namespace dftfe
       d_cellHamiltonianMatrixFlattenedDevice;
     thrust::device_vector<dataTypes::numberThrustGPU>
       d_cellHamMatrixTimesWaveMatrix;
+
+    thrust::device_vector<double> d_kpointCoordsVecDevice;
+
+    thrust::device_vector<double> d_kSquareTimesHalfVecDevice;
 
     /// for non local
 

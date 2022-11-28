@@ -866,6 +866,24 @@ namespace dftfe
     const unsigned int numberWaveFunctions,
     bool               flag)
   {
+    d_kpointCoordsVecDevice.resize(dftPtr->d_kPointCoordinates.size());
+    d_kpointCoordsVecDevice = dftPtr->d_kPointCoordinates;
+
+    std::vector<double> kpointSquareTimesHalfTemp(
+      dftPtr->d_kPointWeights.size());
+    for (unsigned int i = 0; i < dftPtr->d_kPointWeights.size(); ++i)
+      {
+        kpointSquareTimesHalfTemp[i] =
+          0.5 * (dftPtr->d_kPointCoordinates[3 * i + 0] *
+                   dftPtr->d_kPointCoordinates[3 * i + 0] +
+                 dftPtr->d_kPointCoordinates[3 * i + 1] *
+                   dftPtr->d_kPointCoordinates[3 * i + 1] +
+                 dftPtr->d_kPointCoordinates[3 * i + 2] *
+                   dftPtr->d_kPointCoordinates[3 * i + 2]);
+      }
+    d_kSquareTimesHalfVecDevice.resize(kpointSquareTimesHalfTemp.size());
+    d_kSquareTimesHalfVecDevice = kpointSquareTimesHalfTemp;
+
     distributedCPUVec<dataTypes::number> flattenedArray;
     if (flag)
       vectorTools::createDealiiVector<dataTypes::number>(

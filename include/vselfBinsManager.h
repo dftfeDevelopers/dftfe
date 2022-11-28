@@ -45,6 +45,7 @@ namespace dftfe
      */
     vselfBinsManager(const MPI_Comm &     mpi_comm_parent,
                      const MPI_Comm &     mpi_comm_domain,
+                     const MPI_Comm &     mpi_intercomm_kpts,
                      const dftParameters &dftParams);
 
 
@@ -349,6 +350,7 @@ namespace dftfe
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
+    const MPI_Comm             d_mpiInterCommKpts;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;

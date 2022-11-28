@@ -145,7 +145,10 @@ namespace dftfe
              dftParams)
     , d_affineTransformMesh(mpi_comm_parent, mpi_comm_domain, dftParams)
     , d_gaussianMovePar(mpi_comm_parent, mpi_comm_domain, dftParams)
-    , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain, dftParams)
+    , d_vselfBinsManager(mpi_comm_parent,
+                         mpi_comm_domain,
+                         _interpoolcomm,
+                         dftParams)
     , d_dispersionCorr(mpi_comm_parent,
                        mpi_comm_domain,
                        _interpoolcomm,
@@ -914,14 +917,12 @@ namespace dftfe
         generateImageCharges(d_pspCutOff,
                              d_imageIds,
                              d_imageCharges,
-                             d_imagePositions,
-                             d_globalChargeIdToImageIdMap);
+                             d_imagePositions);
 
         generateImageCharges(d_pspCutOffTrunc,
                              d_imageIdsTrunc,
                              d_imageChargesTrunc,
-                             d_imagePositionsTrunc,
-                             d_globalChargeIdToImageIdMapTrunc);
+                             d_imagePositionsTrunc);
 
         if ((d_dftParamsPtr->verbosity >= 4 ||
              d_dftParamsPtr->reproducible_output))
@@ -973,14 +974,12 @@ namespace dftfe
         generateImageCharges(d_pspCutOff,
                              d_imageIds,
                              d_imageCharges,
-                             d_imagePositions,
-                             d_globalChargeIdToImageIdMap);
+                             d_imagePositions);
 
         generateImageCharges(d_pspCutOffTrunc,
                              d_imageIdsTrunc,
                              d_imageChargesTrunc,
-                             d_imagePositionsTrunc,
-                             d_globalChargeIdToImageIdMapTrunc);
+                             d_imagePositionsTrunc);
       }
   }
 
@@ -2219,7 +2218,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC and false)
+            not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_GPU
             if (scfIter > 0)
@@ -2323,7 +2322,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC and false)
+            not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_GPU
             CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
@@ -2446,6 +2445,20 @@ namespace dftfe
                         d_lpspQuadratureId);
                     computing_timer.leave_subsection("VEff Computation");
                   }
+
+#ifdef DFTFE_WITH_GPU
+                if (d_dftParamsPtr->useGPU)
+                  {
+                    computing_timer.enter_subsection(
+                      "Hamiltonian Matrix Computation");
+                    kohnShamDFTEigenOperatorCUDA
+                      .computeHamiltonianMatricesAllkpt(s);
+                    computing_timer.leave_subsection(
+                      "Hamiltonian Matrix Computation");
+                  }
+#endif
+
+
                 for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                      ++kPoint)
                   {
@@ -2457,22 +2470,18 @@ namespace dftfe
                     if (!d_dftParamsPtr->useGPU)
                       kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
 
-                    computing_timer.enter_subsection(
-                      "Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-                    if (d_dftParamsPtr->useGPU)
-                      kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(
-                        kPoint, s);
-#endif
-                    if (!d_dftParamsPtr->useGPU)
-                      kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
-                                                                        s);
-                    computing_timer.leave_subsection(
-                      "Hamiltonian Matrix Computation");
 
-                    if (d_dftParamsPtr->verbosity >= 4)
-                      dftUtils::printCurrentMemoryUsage(
-                        mpi_communicator, "Hamiltonian Matrix computed");
+
+                    if (!d_dftParamsPtr->useGPU)
+                      {
+                        computing_timer.enter_subsection(
+                          "Hamiltonian Matrix Computation");
+                        kohnShamDFTEigenOperator.computeHamiltonianMatrix(
+                          kPoint, s);
+                        computing_timer.leave_subsection(
+                          "Hamiltonian Matrix Computation");
+                      }
+
 
                     for (unsigned int j = 0; j < 1; ++j)
                       {
@@ -2757,6 +2766,18 @@ namespace dftfe
                 computing_timer.leave_subsection("VEff Computation");
               }
 
+#ifdef DFTFE_WITH_GPU
+            if (d_dftParamsPtr->useGPU)
+              {
+                computing_timer.enter_subsection(
+                  "Hamiltonian Matrix Computation");
+                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(
+                  0);
+                computing_timer.leave_subsection(
+                  "Hamiltonian Matrix Computation");
+              }
+#endif
+
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               {
@@ -2767,21 +2788,17 @@ namespace dftfe
                 if (!d_dftParamsPtr->useGPU)
                   kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
 
-                computing_timer.enter_subsection(
-                  "Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-                if (d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,
-                                                                        0);
-#endif
-                if (!d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint, 0);
-                computing_timer.leave_subsection(
-                  "Hamiltonian Matrix Computation");
 
-                if (d_dftParamsPtr->verbosity >= 4)
-                  dftUtils::printCurrentMemoryUsage(
-                    mpi_communicator, "Hamiltonian Matrix computed");
+                if (!d_dftParamsPtr->useGPU)
+                  {
+                    computing_timer.enter_subsection(
+                      "Hamiltonian Matrix Computation");
+                    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
+                                                                      0);
+                    computing_timer.leave_subsection(
+                      "Hamiltonian Matrix Computation");
+                  }
+
 
                 for (unsigned int j = 0; j < 1; ++j)
                   {
@@ -3058,7 +3075,7 @@ namespace dftfe
 
             if (d_dftParamsPtr->useGPU and
                 d_dftParamsPtr->floatingNuclearCharges and
-                not d_dftParamsPtr->pinnedNodeForPBC and false)
+                not d_dftParamsPtr->pinnedNodeForPBC)
               {
 #ifdef DFTFE_WITH_GPU
                 d_phiTotalSolverProblemCUDA.reinit(
@@ -3279,7 +3296,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useGPU and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC and false)
+            not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_GPU
             d_phiTotalSolverProblemCUDA.reinit(
