@@ -539,12 +539,12 @@ namespace dftfe
                                                      3 * numPsi +
                                                    iquad * numPsi + iwfc] =
                           complexConj(gradPsiQuadsNLP
-                                        [nonTrivialIdToElemIdMap[ipseudowfc] *
+                                        [nonTrivialIdToElemIdMap[startingIdNlp+ipseudowfc] *
                                            numQuadsNLP * 3 * numPsi +
                                          iquad * numPsi + iwfc]) *
                           projectorKetTimesVectorParFlattened
                             [projecterKetTimesFlattenedVectorLocalIds
-                                 [ipseudowfc] *
+                                 [startingIdNlp+ipseudowfc] *
                                numPsi +
                              iwfc];
                       }
@@ -586,12 +586,12 @@ namespace dftfe
                                                    numPsi +
                                                  iquad * numPsi + iwfc] =
                         complexConj(
-                          psiQuadsNLP[nonTrivialIdToElemIdMap[ipseudowfc] *
+                          psiQuadsNLP[nonTrivialIdToElemIdMap[startingIdNlp+ipseudowfc] *
                                         numQuadsNLP * numPsi +
                                       iquad * numPsi + iwfc]) *
                         projectorKetTimesVectorParFlattened
                           [projecterKetTimesFlattenedVectorLocalIds
-                               [ipseudowfc] *
+                               [startingIdNlp+ipseudowfc] *
                              numPsi +
                            iwfc];
 
