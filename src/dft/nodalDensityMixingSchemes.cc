@@ -14,13 +14,18 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri
+// @author Phani Motamarri, Gourab Panigrahi
 //
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
+#ifdef DFTFE_WITH_GPU
+  kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+    &                 kerkerPreconditionedResidualSolverProblemCUDA,
+  linearSolverCGCUDA &CGSolverCUDA,
+#endif
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
   dealiiLinearSolver &CGSolver)
@@ -96,17 +101,35 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 
   // initialize helmholtz solver function object with the quantity required for
   // computing rhs, solution vector and mixing constant
-  kerkerPreconditionedResidualSolverProblem.reinit(
-    d_preCondResidualVector, gradDensityResidualValuesMap);
-
+  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+    {
+#ifdef DFTFE_WITH_GPU
+      kerkerPreconditionedResidualSolverProblemCUDA.reinit(
+        d_preCondResidualVector, gradDensityResidualValuesMap);
+#endif
+    }
+  else
+    kerkerPreconditionedResidualSolverProblem.reinit(
+      d_preCondResidualVector, gradDensityResidualValuesMap);
 
   // solve the Helmholtz system to compute preconditioned residual
-  CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                 d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                 d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                 d_dftParamsPtr->verbosity,
-                 false);
-
+  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+    {
+#ifdef DFTFE_WITH_GPU
+      CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
+                         d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                         d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                         d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                         d_dftParamsPtr->verbosity,
+                         false);
+#endif
+    }
+  else
+    CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
+                   d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                   d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                   d_dftParamsPtr->verbosity,
+                   false);
 
   // compute rhoIn to being the current SCF iteration using the preconditioned
   // residual
@@ -180,6 +203,11 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
+#ifdef DFTFE_WITH_GPU
+  kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+    &                 kerkerPreconditionedResidualSolverProblemCUDA,
+  linearSolverCGCUDA &CGSolverCUDA,
+#endif
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
   dealiiLinearSolver &CGSolver)
@@ -361,17 +389,35 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
       << "Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "
       << std::endl;
 
-  kerkerPreconditionedResidualSolverProblem.reinit(
-    d_preCondResidualVector, gradDensityResidualValuesMap);
-
+  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+    {
+#ifdef DFTFE_WITH_GPU
+      kerkerPreconditionedResidualSolverProblemCUDA.reinit(
+        d_preCondResidualVector, gradDensityResidualValuesMap);
+#endif
+    }
+  else
+    kerkerPreconditionedResidualSolverProblem.reinit(
+      d_preCondResidualVector, gradDensityResidualValuesMap);
 
   // solve the Helmholtz system to compute preconditioned residual
-  CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
-                 d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                 d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                 d_dftParamsPtr->verbosity,
-                 false);
-
+  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+    {
+#ifdef DFTFE_WITH_GPU
+      CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
+                         d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                         d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                         d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+                         d_dftParamsPtr->verbosity,
+                         false);
+#endif
+    }
+  else
+    CGSolver.solve(kerkerPreconditionedResidualSolverProblem,
+                   d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                   d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                   d_dftParamsPtr->verbosity,
+                   false);
 
   // rhoIn += mixingScalar*residual for Kerker
   d_rhoInNodalValues = 0.0;

@@ -1,0 +1,16 @@
+template class kerkerSolverProblemCUDA<1>;
+template class kerkerSolverProblemCUDA<2>;
+template class kerkerSolverProblemCUDA<3>;
+template class kerkerSolverProblemCUDA<4>;
+template class kerkerSolverProblemCUDA<5>;
+template class kerkerSolverProblemCUDA<6>;
+template class kerkerSolverProblemCUDA<7>;
+template class kerkerSolverProblemCUDA<8>;
+template class kerkerSolverProblemCUDA<9>;
+template class kerkerSolverProblemCUDA<10>;
+template class kerkerSolverProblemCUDA<11>;
+template class kerkerSolverProblemCUDA<12>;
+template class kerkerSolverProblemCUDA<13>;
+template class kerkerSolverProblemCUDA<14>;
+template class kerkerSolverProblemCUDA<15>;
+template class kerkerSolverProblemCUDA<16>;

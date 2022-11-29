@@ -76,7 +76,7 @@ namespace dftfe
     /// define some temporary vectors
     distributedGPUVec<double> d_qvec, d_rvec, d_dvec;
 
-    int                           d_xLenLocalDof;
+    int                           d_xLocalDof;
     double *                      d_devSumPtr;
     thrust::device_vector<double> d_devSum;
 

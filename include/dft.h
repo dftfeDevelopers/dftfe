@@ -35,8 +35,8 @@
 #  include <kohnShamDFTOperatorCUDA.h>
 #  include "cudaHelpers.h"
 #  include <poissonSolverProblemCUDA.h>
-
-
+#  include <kerkerSolverProblemCUDA.h>
+#  include <linearSolverCGCUDA.h>
 #  include "gpuDirectCCLWrapper.h"
 #endif
 
@@ -880,16 +880,28 @@ namespace dftfe
     mixing_broyden();
     double
     mixing_broyden_spinPolarized();
+
     double
     nodalDensity_mixing_simple_kerker(
+#ifdef DFTFE_WITH_GPU
+      kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblemCUDA,
+      linearSolverCGCUDA &CGSolverCUDA,
+#endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 solverProblem,
-      dealiiLinearSolver &dealiiLinearSolver);
+        &                 kerkerPreconditionedResidualSolverProblem,
+      dealiiLinearSolver &CGSolver);
+
     double
     nodalDensity_mixing_anderson_kerker(
+#ifdef DFTFE_WITH_GPU
+      kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblemCUDA,
+      linearSolverCGCUDA &CGSolverCUDA,
+#endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 solverProblem,
-      dealiiLinearSolver &dealiiLinearSolver);
+        &                 kerkerPreconditionedResidualSolverProblem,
+      dealiiLinearSolver &CGSolver);
 
     double
     lowrankApproxScfDielectricMatrixInv(const unsigned int scfIter);

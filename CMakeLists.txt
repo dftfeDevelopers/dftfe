@@ -91,6 +91,7 @@ SET(CUDA_SRC
   ./src/solvers/linearSolverCGCUDA.cu
   ./src/solvers/linearSolverProblemCUDA.cu
   ./src/poisson/poissonSolverProblemCUDA.cu
+  ./src/helmholtz/kerkerSolverProblemCUDA.cu
   )
 
 IF (WITH_GPU)
@@ -365,7 +366,7 @@ ENDIF()
 
 
 #
-# MDI. 
+# MDI.
 #
 IF (WITH_MDI)
   find_library(MDI_LIBRARY
