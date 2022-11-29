@@ -310,6 +310,12 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       << std::endl;
         }
 
+      dataTypes::number check1 =
+        std::accumulate(elocWfcEshelbyTensorQuadValuesH.begin(),
+                        elocWfcEshelbyTensorQuadValuesH.end(),
+                        dataTypes::number(0.0));
+      std::cout << "check1: " << check1 << std::endl;
+
       for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
         {
           forceEval.reinit(cell);
@@ -320,14 +326,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
           std::vector<double>     jxwQuadsSubCells(numSubCells * numQuadPoints,
                                                0.0);
-          VectorizedArray<double> jxwQuadsVect;
+          VectorizedArray<double> jxwQuadsVect = make_vectorized_array(0.0);
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             {
               jxwQuadsVect = forceEval.JxW(q);
               for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                    ++iSubCell)
                 jxwQuadsSubCells[iSubCell * numQuadPoints + q] =
-                  jxwQuadsVect[q];
+                  jxwQuadsVect[iSubCell];
             }
 
           for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
@@ -370,14 +376,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
               std::vector<double>     jxwQuadsSubCells(numSubCells *
                                                      numQuadPointsNLP,
                                                    0.0);
-              VectorizedArray<double> jxwQuadsVect;
+              VectorizedArray<double> jxwQuadsVect = make_vectorized_array(0.0);
               for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
                 {
                   jxwQuadsVect = forceEvalNLP.JxW(q);
                   for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                        ++iSubCell)
                     jxwQuadsSubCells[iSubCell * numQuadPointsNLP + q] =
-                      jxwQuadsVect[q];
+                      jxwQuadsVect[iSubCell];
                 }
 
               stressEnlElementalContribution(

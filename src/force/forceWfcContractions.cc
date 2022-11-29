@@ -94,7 +94,7 @@ namespace dftfe
         const bool                      addEk)
       {
         std::vector<dataTypes::number> cellWaveFunctionMatrix(
-          numCells*numNodesPerElement * BVec, dataTypes::number(0.0));
+          numCells * numNodesPerElement * BVec, dataTypes::number(0.0));
 
         for (int icell = 0; icell < numCells; icell++)
           {
@@ -107,7 +107,8 @@ namespace dftfe
                     operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()
                       [icell * numNodesPerElement + iNode],
                   &inc,
-                  &cellWaveFunctionMatrix[icell*numNodesPerElement * BVec+iNode*BVec],
+                  &cellWaveFunctionMatrix[icell * numNodesPerElement * BVec +
+                                          iNode * BVec],
                   &inc);
               }
           }
@@ -147,8 +148,12 @@ namespace dftfe
           dataTypes::number(0.0));
 
         for (unsigned int i = 0; i < blockSize; i++)
-          for (unsigned int j = 0; j < (numQuadsNLP * 3* numNodesPerElement); ++j)          
-            shapeFunctionGradientValuesNLPReference[i*numQuadsNLP * 3* numNodesPerElement+j]=(operatorMatrix.getShapeFunctionGradientValuesNLPTransposed())[j];
+          for (unsigned int j = 0; j < (numQuadsNLP * 3 * numNodesPerElement);
+               ++j)
+            shapeFunctionGradientValuesNLPReference[i * numQuadsNLP * 3 *
+                                                      numNodesPerElement +
+                                                    j] =
+              (operatorMatrix.getShapeFunctionGradientValuesNLPTransposed())[j];
 
         for (int iblock = 0; iblock < (numberBlocks + 1); iblock++)
           {
@@ -288,18 +293,23 @@ namespace dftfe
                       for (unsigned int iquad = 0; iquad < numQuads; iquad++)
                         for (unsigned int iwfc = 0; iwfc < BVec; iwfc++)
                           {
-                            const dataTypes::number psiQuad =psiQuadsFlat[j * numQuads * BVec + iquad * BVec +          iwfc];
+                            const dataTypes::number psiQuad =
+                              psiQuadsFlat[j * numQuads * BVec + iquad * BVec +
+                                           iwfc];
                             const double partOcc    = partialOccupancies[iwfc];
                             const double eigenValue = eigenValues[iwfc];
 
                             std::vector<dataTypes::number> gradPsiQuad(3);
-                            gradPsiQuad[0] =gradPsiQuadsXFlat[j * numQuads * BVec +
+                            gradPsiQuad[0] =
+                              gradPsiQuadsXFlat[j * numQuads * BVec +
                                                 iquad * BVec + iwfc];
-                            gradPsiQuad[1] =gradPsiQuadsYFlat[j * numQuads * BVec +
+                            gradPsiQuad[1] =
+                              gradPsiQuadsYFlat[j * numQuads * BVec +
                                                 iquad * BVec + iwfc];
 
-                            gradPsiQuad[2] =gradPsiQuadsZFlat[j * numQuads * BVec +
-                                               iquad * BVec + iwfc];
+                            gradPsiQuad[2] =
+                              gradPsiQuadsZFlat[j * numQuads * BVec +
+                                                iquad * BVec + iwfc];
 
                             const double identityFactor =
                               partOcc *
@@ -317,23 +327,26 @@ namespace dftfe
                             for (unsigned int idim = 0; idim < 3; idim++)
                               for (unsigned int jdim = 0; jdim < 3; jdim++)
                                 {
-                                  eshelbyTensorContributions[j * numQuads * 9*BVec+iquad * 9*BVec +
-                                                             idim * 3*BVec + jdim*BVec+iwfc] =
-                                    -partOcc *
-                                      realPart(
-                                        complexConj(gradPsiQuad[idim]) *
-                                          gradPsiQuad[jdim] +
-                                        gradPsiQuad[idim] *
-                                          complexConj(gradPsiQuad[jdim])) -
-                                    2.0 * partOcc *
-                                      imagPart(
-                                        complexConj(psiQuad) *
-                                        (gradPsiQuad[idim] * kcoord[jdim]));
+                                  eshelbyTensorContributions
+                                    [j * numQuads * 9 * BVec +
+                                     iquad * 9 * BVec + idim * 3 * BVec +
+                                     jdim * BVec + iwfc] =
+                                      -partOcc *
+                                        realPart(
+                                          complexConj(gradPsiQuad[idim]) *
+                                            gradPsiQuad[jdim] +
+                                          gradPsiQuad[idim] *
+                                            complexConj(gradPsiQuad[jdim])) -
+                                      2.0 * partOcc *
+                                        imagPart(
+                                          complexConj(psiQuad) *
+                                          (gradPsiQuad[idim] * kcoord[jdim]));
 
                                   if (idim == jdim)
-                                    eshelbyTensorContributions[j * numQuads * 9*BVec+iquad * 9*BVec +
-                                                             idim * 3*BVec + jdim*BVec+iwfc] +=
-                                      identityFactor;
+                                    eshelbyTensorContributions
+                                      [j * numQuads * 9 * BVec +
+                                       iquad * 9 * BVec + idim * 3 * BVec +
+                                       jdim * BVec + iwfc] += identityFactor;
                                 }
 #ifdef USE_COMPLEX
                             if (addEk)
@@ -341,8 +354,10 @@ namespace dftfe
                                 for (unsigned int idim = 0; idim < 3; idim++)
                                   for (unsigned int jdim = 0; jdim < 3; jdim++)
                                     {
-                                      eshelbyTensorContributions[j * numQuads * 9*BVec+iquad * 9*BVec +
-                                                             idim * 3*BVec + jdim*BVec+iwfc] +=
+                                      eshelbyTensorContributions
+                                        [j * numQuads * 9 * BVec +
+                                         iquad * 9 * BVec + idim * 3 * BVec +
+                                         jdim * BVec + iwfc] +=
                                         2.0 * partOcc *
                                           imagPart(complexConj(psiQuad) *
                                                    (kcoord[idim] *
@@ -516,22 +531,23 @@ namespace dftfe
                 for (unsigned int ipseudowfc = 0;
                      ipseudowfc < currentBlockSizeNlp;
                      ipseudowfc++)
-                  for (unsigned int iquad = 0; iquad < (numQuadsNLP * 3); iquad++)
+                  for (unsigned int iquad = 0; iquad < (numQuadsNLP * 3);
+                       iquad++)
                     for (unsigned int iwfc = 0; iwfc < numPsi; iwfc++)
-                    {
-                      nlpContractionContribution[ipseudowfc * numQuadsNLP * 3 *
-                                                   numPsi +
-                                                 iquad * numPsi + iwfc] =                   
-                        complexConj(
-                          gradPsiQuadsNLP[nonTrivialIdToElemIdMap[ipseudowfc] *
-                                            numQuadsNLP * 3 * numPsi +
-                                          iquad * numPsi + iwfc]) *
-                        projectorKetTimesVectorParFlattened
-                          [projecterKetTimesFlattenedVectorLocalIds
-                               [ipseudowfc] *
-                             numPsi +
-                           iwfc];
-                    }
+                      {
+                        nlpContractionContribution[ipseudowfc * numQuadsNLP *
+                                                     3 * numPsi +
+                                                   iquad * numPsi + iwfc] =
+                          complexConj(gradPsiQuadsNLP
+                                        [nonTrivialIdToElemIdMap[ipseudowfc] *
+                                           numQuadsNLP * 3 * numPsi +
+                                         iquad * numPsi + iwfc]) *
+                          projectorKetTimesVectorParFlattened
+                            [projecterKetTimesFlattenedVectorLocalIds
+                                 [ipseudowfc] *
+                               numPsi +
+                             iwfc];
+                      }
 
                 unsigned int m = 1;
                 unsigned int n = currentBlockSizeNlp * numQuadsNLP * 3;
@@ -946,8 +962,10 @@ namespace dftfe
                 } // band parallelization
             }     // ivec loop
 
-          for (unsigned int icopy=0;(icopy<numCells * numQuads * 9);icopy++)
-            eshelbyTensorQuadValuesH[kPoint * numCells * numQuads * 9+icopy]=elocWfcEshelbyTensorQuadValuesH[icopy];
+          for (unsigned int icopy = 0; (icopy < numCells * numQuads * 9);
+               icopy++)
+            eshelbyTensorQuadValuesH[kPoint * numCells * numQuads * 9 + icopy] =
+              elocWfcEshelbyTensorQuadValuesH[icopy];
 
         } // k point loop
     }
