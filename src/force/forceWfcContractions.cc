@@ -538,13 +538,15 @@ namespace dftfe
                         nlpContractionContribution[ipseudowfc * numQuadsNLP *
                                                      3 * numPsi +
                                                    iquad * numPsi + iwfc] =
-                          complexConj(gradPsiQuadsNLP
-                                        [nonTrivialIdToElemIdMap[startingIdNlp+ipseudowfc] *
-                                           numQuadsNLP * 3 * numPsi +
-                                         iquad * numPsi + iwfc]) *
+                          partialOccupancies[iwfc] *
+                          complexConj(
+                            gradPsiQuadsNLP[nonTrivialIdToElemIdMap
+                                                [startingIdNlp + ipseudowfc] *
+                                              numQuadsNLP * 3 * numPsi +
+                                            iquad * numPsi + iwfc]) *
                           projectorKetTimesVectorParFlattened
                             [projecterKetTimesFlattenedVectorLocalIds
-                                 [startingIdNlp+ipseudowfc] *
+                                 [startingIdNlp + ipseudowfc] *
                                numPsi +
                              iwfc];
                       }
@@ -570,7 +572,7 @@ namespace dftfe
 
 
                 for (unsigned int i = 0;
-                     i < currentBlockSizeNlp * numQuadsNLP * 3;
+                     i < (currentBlockSizeNlp * numQuadsNLP * 3);
                      i++)
                   projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                     [startingIdNlp * numQuadsNLP * 3 + i] +=
@@ -585,13 +587,15 @@ namespace dftfe
                       nlpContractionContribution[ipseudowfc * numQuadsNLP *
                                                    numPsi +
                                                  iquad * numPsi + iwfc] =
+                        partialOccupancies[iwfc] *
                         complexConj(
-                          psiQuadsNLP[nonTrivialIdToElemIdMap[startingIdNlp+ipseudowfc] *
+                          psiQuadsNLP[nonTrivialIdToElemIdMap[startingIdNlp +
+                                                              ipseudowfc] *
                                         numQuadsNLP * numPsi +
                                       iquad * numPsi + iwfc]) *
                         projectorKetTimesVectorParFlattened
                           [projecterKetTimesFlattenedVectorLocalIds
-                               [startingIdNlp+ipseudowfc] *
+                               [startingIdNlp + ipseudowfc] *
                              numPsi +
                            iwfc];
 
