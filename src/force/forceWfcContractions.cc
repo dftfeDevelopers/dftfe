@@ -317,7 +317,7 @@ namespace dftfe
                             for (unsigned int idim = 0; idim < 3; idim++)
                               for (unsigned int jdim = 0; jdim < 3; jdim++)
                                 {
-                                  eshelbyTensorContributions[iquad * 9*BVec +
+                                  eshelbyTensorContributions[j * numQuads * 9*BVec+iquad * 9*BVec +
                                                              idim * 3*BVec + jdim*BVec+iwfc] =
                                     -partOcc *
                                       realPart(
@@ -331,7 +331,7 @@ namespace dftfe
                                         (gradPsiQuad[idim] * kcoord[jdim]));
 
                                   if (idim == jdim)
-                                    eshelbyTensorContributions[iquad * 9*BVec +
+                                    eshelbyTensorContributions[j * numQuads * 9*BVec+iquad * 9*BVec +
                                                              idim * 3*BVec + jdim*BVec+iwfc] +=
                                       identityFactor;
                                 }
@@ -341,7 +341,7 @@ namespace dftfe
                                 for (unsigned int idim = 0; idim < 3; idim++)
                                   for (unsigned int jdim = 0; jdim < 3; jdim++)
                                     {
-                                      eshelbyTensorContributions[iquad * 9*BVec +
+                                      eshelbyTensorContributions[j * numQuads * 9*BVec+iquad * 9*BVec +
                                                              idim * 3*BVec + jdim*BVec+iwfc] +=
                                         2.0 * partOcc *
                                           imagPart(complexConj(psiQuad) *
