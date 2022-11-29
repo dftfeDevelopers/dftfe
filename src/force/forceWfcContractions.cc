@@ -147,13 +147,8 @@ namespace dftfe
           dataTypes::number(0.0));
 
         for (unsigned int i = 0; i < blockSize; i++)
-          std::copy(
-            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed()
-              .begin(),
-            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed().end(),
-            shapeFunctionGradientValuesNLPReference.begin() +
-              i * numQuadsNLP * 3 * numNodesPerElement);
-
+          for (unsigned int j = 0; j < (numQuadsNLP * 3* numNodesPerElement); ++j)          
+            shapeFunctionGradientValuesNLPReference[i*numQuadsNLP * 3* numNodesPerElement+j]=(operatorMatrix.getShapeFunctionGradientValuesNLPTransposed())[j];
 
         for (int iblock = 0; iblock < (numberBlocks + 1); iblock++)
           {
@@ -329,12 +324,12 @@ namespace dftfe
                                 {
                                   eshelbyTensorContributions[iquad * 9 +
                                                              idim * 3 + jdim] =
-                                    partOcc *
+                                    -partOcc *
                                       realPart(
                                         complexConj(gradPsiQuad[idim]) *
                                           gradPsiQuad[jdim] +
                                         gradPsiQuad[idim] *
-                                          complexConj(gradPsiQuad[jdim])) +
+                                          complexConj(gradPsiQuad[jdim])) -
                                     2.0 * partOcc *
                                       imagPart(
                                         complexConj(psiQuad) *
@@ -528,11 +523,12 @@ namespace dftfe
                 for (unsigned int ipseudowfc = 0;
                      ipseudowfc < currentBlockSizeNlp;
                      ipseudowfc++)
-                  for (unsigned int iquad = 0; iquad < numQuadsNLP * 3; iquad++)
+                  for (unsigned int iquad = 0; iquad < (numQuadsNLP * 3); iquad++)
                     for (unsigned int iwfc = 0; iwfc < numPsi; iwfc++)
+                    {
                       nlpContractionContribution[ipseudowfc * numQuadsNLP * 3 *
                                                    numPsi +
-                                                 iquad * numPsi + iwfc] =
+                                                 iquad * numPsi + iwfc] =                   
                         complexConj(
                           gradPsiQuadsNLP[nonTrivialIdToElemIdMap[ipseudowfc] *
                                             numQuadsNLP * 3 * numPsi +
@@ -542,6 +538,7 @@ namespace dftfe
                                [ipseudowfc] *
                              numPsi +
                            iwfc];
+                    }
 
                 unsigned int m = 1;
                 unsigned int n = currentBlockSizeNlp * numQuadsNLP * 3;
@@ -701,7 +698,7 @@ namespace dftfe
                                                   isFloatingChargeForces,
                                                   addEk);
 
-        if (isPsp && false)
+        if (isPsp)
           {
             operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(
               flattenedArrayBlock, projectorKetTimesVector, numPsi);
