@@ -327,13 +327,13 @@ forceClass<FEOrder, FEOrderElectro>::
 
 
 
-      dataTypes::number check2 = std::accumulate(
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
-          .begin(),
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
-          .end(),
-        dataTypes::number(0.0));
-      std::cout << "check2: " << check2 << std::endl;
+      // dataTypes::number check2 = std::accumulate(
+      //  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+      //    .begin(),
+      //  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+      //    .end(),
+      //  dataTypes::number(0.0));
+      // std::cout << "check2: " << check2 << std::endl;
 
       // double
       // check2=std::accumulate(dftPtr->d_nonTrivialAllCellsPseudoWfcIdToElemIdMap.begin(),dftPtr->d_nonTrivialAllCellsPseudoWfcIdToElemIdMap.end(),0.0);
