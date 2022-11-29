@@ -310,11 +310,11 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                       << std::endl;
         }
 
-      dataTypes::number check1 =
-        std::accumulate(elocWfcEshelbyTensorQuadValuesH.begin(),
-                        elocWfcEshelbyTensorQuadValuesH.end(),
-                        dataTypes::number(0.0));
-      std::cout << "check1: " << check1 << std::endl;
+      // dataTypes::number check1 =
+      //  std::accumulate(elocWfcEshelbyTensorQuadValuesH.begin(),
+      //                  elocWfcEshelbyTensorQuadValuesH.end(),
+      //                  dataTypes::number(0.0));
+      // std::cout << "check1: " << check1 << std::endl;
 
       for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
         {
