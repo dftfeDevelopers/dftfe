@@ -33,12 +33,12 @@ namespace dftfe
               const NumberType                 s,
               NumberType *                     arr)
     {
-      const dataTypes::local_size_type globalThreadId =
-        blockIdx.x * blockDim.x + threadIdx.x;
+      const dataTypes::local_size_type globalId =
+        threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dataTypes::local_size_type index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        arr[index] = s;
+      for (dataTypes::local_size_type idx = globalId; idx < size;
+           idx += blockDim.x * gridDim.x)
+        arr[idx] = s;
     }
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
@@ -48,14 +48,14 @@ namespace dftfe
                                        NumberTypeReal *         realArr,
                                        NumberTypeReal *         imagArr)
     {
-      const dataTypes::local_size_type globalThreadId =
-        blockIdx.x * blockDim.x + threadIdx.x;
+      const dataTypes::local_size_type globalId =
+        threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dataTypes::local_size_type index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
+      for (dataTypes::local_size_type idx = globalId; idx < size;
+           idx += blockDim.x * gridDim.x)
         {
-          realArr[index] = complexArr[index].x;
-          imagArr[index] = complexArr[index].y;
+          realArr[idx] = complexArr[idx].x;
+          imagArr[idx] = complexArr[idx].y;
         }
     }
 
@@ -66,14 +66,14 @@ namespace dftfe
                                        const NumberTypeReal *           imagArr,
                                        NumberTypeComplex *complexArr)
     {
-      const dataTypes::local_size_type globalThreadId =
-        blockIdx.x * blockDim.x + threadIdx.x;
+      const dataTypes::local_size_type globalId =
+        threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dataTypes::local_size_type index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
+      for (dataTypes::local_size_type idx = globalId; idx < size;
+           idx += blockDim.x * gridDim.x)
         {
-          complexArr[index].x = realArr[index];
-          complexArr[index].y = imagArr[index];
+          complexArr[idx].x = realArr[idx];
+          complexArr[idx].y = imagArr[idx];
         }
     }
   } // namespace
@@ -213,9 +213,9 @@ namespace dftfe
                const NumberType beta,
                const int        size)
     {
-      const int globalThreadId = threadIdx.x + blockIdx.x * blockDim.x;
+      const int globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (int idx = globalThreadId; idx < size; idx += blockDim.x * gridDim.x)
+      for (int idx = globalId; idx < size; idx += blockDim.x * gridDim.x)
         {
           y[idx] = beta * y[idx] - x[idx];
           x[idx] = 0;
@@ -236,9 +236,10 @@ namespace dftfe
     void
     set(NumberType *x, const NumberType &alpha, const int size)
     {
-      const int blockSize = 32;
-      const int gridSize = (size / blockSize) + (size % blockSize == 0 ? 0 : 1);
-      setKernel<NumberType><<<gridSize, blockSize>>>(size, alpha, x);
+      const int gridSize = (size / cudaConstants::blockSize) +
+                           (size % cudaConstants::blockSize == 0 ? 0 : 1);
+      setKernel<NumberType>
+        <<<gridSize, cudaConstants::blockSize>>>(size, alpha, x);
     }
 
 

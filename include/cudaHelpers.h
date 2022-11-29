@@ -55,6 +55,9 @@ namespace dftfe
           }                                                                              \
       }
 
+#    define WARPSIZE 32
+#    define MAXBLOCKSIZE 1024
+
   namespace cudaConstants
   {
     static const int blockSize = 256;

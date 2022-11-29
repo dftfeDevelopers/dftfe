@@ -53,33 +53,34 @@ namespace dftfe
     double time;
 
     // compute RHS
-    distributedCPUVec<double> rhs_host;
-    problem.computeRhs(rhs_host);
+    distributedCPUVec<double> rhsHost;
+    problem.computeRhs(rhsHost);
 
-    distributedGPUVec<double> rhs_device;
-    rhs_device.reinit(rhs_host.get_partitioner(), 1);
-    cudaUtils::copyHostVecToCUDAVec<double>(rhs_host.begin(),
-                                            rhs_device.begin(),
-                                            rhs_device.locallyOwnedDofsSize());
+    distributedGPUVec<double> rhsDevice;
+    rhsDevice.reinit(rhsHost.get_partitioner(), 1);
+
+    cudaUtils::copyHostVecToCUDAVec<double>(rhsHost.begin(),
+                                            rhsDevice.begin(),
+                                            rhsDevice.locallyOwnedDofsSize());
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
     if (debugLevel >= 4)
-      pcout << "Time for compute rhs_host: " << time - start_time << std::endl;
+      pcout << "Time for compute rhsHost and copy to GPU: " << time - start_time
+            << std::endl;
 
-    bool conv = false;
 
     distributedGPUVec<double> &x        = problem.getX();
     distributedGPUVec<double> &d_Jacobi = problem.getPreconditioner();
 
     d_devSum.resize(1);
     d_devSumPtr = thrust::raw_pointer_cast(d_devSum.data());
-
-    d_xLenLocalDof = x.locallyOwnedDofsSize();
+    d_xLocalDof = x.locallyOwnedDofsSize();
 
     double res = 0.0, initial_res = 0.0;
-    int    it = 0;
+    bool   conv = false;
+    int    it   = 0;
 
     try
       {
@@ -101,19 +102,19 @@ namespace dftfe
             double beta  = 0.0;
             double delta = 0.0;
 
-            // d_rvec = Ax
+            // r = Ax
             problem.computeAX(d_rvec, x);
 
-            // d_rvec = Ax - rhs
+            // r = Ax - rhs
             cudaUtils::add(d_rvec.begin(),
-                           rhs_device.begin(),
+                           rhsDevice.begin(),
                            -1.,
-                           d_xLenLocalDof,
+                           d_xLocalDof,
                            cublasHandle);
 
-            // res = l2_norm(d_rvec)
+            // res = r.r
             res = cudaUtils::l2_norm(d_rvec.begin(),
-                                     d_xLenLocalDof,
+                                     d_xLocalDof,
                                      mpi_communicator,
                                      cublasHandle);
 
@@ -134,34 +135,34 @@ namespace dftfe
                     AssertThrow(std::abs(beta) != 0.,
                                 dealii::ExcMessage("Division by zero\n"));
 
-                    // d_dvec = M^(-1)d_rvec
-                    // delta = d_rvec * d_dvec
+                    // d = M^(-1) * r
+                    // delta = d.r
                     delta =
                       applyPreconditionAndComputeDotProduct(d_Jacobi.begin());
 
                     beta = delta / beta;
 
-                    // d_qvec = beta * d_qvec - d_dvec
+                    // q = beta * q - d
                     cudaUtils::sadd<double>(d_qvec.begin(),
                                             d_dvec.begin(),
                                             beta,
-                                            d_xLenLocalDof);
+                                            d_xLocalDof);
                   }
                 else
                   {
-                    // delta = d_rvec * M^(-1)d_rvec
-                    // d_qvec = -M^(-1)d_rvec
+                    // delta = r.(M^(-1) * r)
+                    // q = -M^(-1) * r
                     delta = applyPreconditionComputeDotProductAndSadd(
                       d_Jacobi.begin());
                   }
 
-                // d_dvec = Aq
+                // d = Aq
                 problem.computeAX(d_dvec, d_qvec);
 
-                // alpha = d_qvec * d_dvec
+                // alpha = q.d
                 alpha = cudaUtils::dot(d_qvec.begin(),
                                        d_dvec.begin(),
-                                       d_xLenLocalDof,
+                                       d_xLocalDof,
                                        mpi_communicator,
                                        cublasHandle);
 
@@ -169,9 +170,9 @@ namespace dftfe
                             dealii::ExcMessage("Division by zero\n"));
                 alpha = delta / alpha;
 
-                // x = x + alpha * d_qvec
-                // d_rvec + alpha * d_dvec
-                // res = l2_norm(d_rvec)
+                // res = r.r
+                // r += alpha * d
+                // x += alpha * q
                 res = scaleXRandComputeNorm(x.begin(), alpha);
 
                 if (res < absTolerance)
@@ -207,22 +208,24 @@ namespace dftfe
             "DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters. In rare cases for all-electron problems this can also occur due to a known parallel constraints issue in dealii library. Try using set CONSTRAINTS FROM SERIAL DOFHANDLER=true under the Boundary conditions subsection."));
         pcout
           << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
-        pcout << "Current abs. residual: " << res << std::endl;
+        pcout << "Current abs. residual in GPU: " << res << std::endl;
       }
 
     if (debugLevel >= 2)
       {
         pcout << std::endl;
-        pcout << "initial abs. residual: " << initial_res
-              << " , current abs. residual: " << res << " , nsteps: " << it
-              << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
+        pcout << "initial abs. residual in GPU: " << initial_res
+              << " , current abs. residual in GPU: " << res
+              << " , nsteps: " << it
+              << " , abs. tolerance criterion in GPU:  " << absTolerance
+              << "\n\n";
       }
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime() - time;
 
     if (debugLevel >= 4)
-      pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
+      pcout << "Time for GPU Poisson/Helmholtz problem CG iterations: " << time
             << std::endl;
   }
 
@@ -232,13 +235,13 @@ namespace dftfe
   applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
                                               Type *      d_devSum,
                                               const Type *d_rvec,
-                                              const Type *jacobi,
+                                              const Type *d_jacobi,
                                               const int   N)
   {
     __shared__ Type smem[blockSize];
 
     int tid = threadIdx.x;
-    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
+    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
     cooperative_groups::thread_block block =
       cooperative_groups::this_thread_block();
 
@@ -246,54 +249,44 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_jacobi = jacobi[idx];
-        Type d_r      = d_rvec[idx];
+        Type jacobi = d_jacobi[idx];
+        Type r      = d_rvec[idx];
 
-        localSum    = d_jacobi * d_r * d_r;
-        d_dvec[idx] = d_jacobi * d_r;
+        localSum    = jacobi * r * r;
+        d_dvec[idx] = jacobi * r;
       }
-
     else
-      {
-        localSum = 0;
-      }
+      localSum = 0;
 
     if (idx + blockSize < N)
       {
-        Type d_jacobi = jacobi[idx + blockSize];
-        Type d_r      = d_rvec[idx + blockSize];
-        localSum += d_jacobi * d_r * d_r;
-        d_dvec[idx + blockSize] = d_jacobi * d_r;
+        Type jacobi = d_jacobi[idx + blockSize];
+        Type r      = d_rvec[idx + blockSize];
+        localSum += jacobi * r * r;
+        d_dvec[idx + blockSize] = jacobi * r;
       }
 
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    if ((blockSize >= 512) && (tid < 256))
-      smem[tid] = localSum = localSum + smem[tid + 256];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 256) && (tid < 128))
-      smem[tid] = localSum = localSum + smem[tid + 128];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 128) && (tid < 64))
-      smem[tid] = localSum = localSum + smem[tid + 64];
-
-    cooperative_groups::sync(block);
-
-    cooperative_groups::thread_block_tile<32> tile32 =
-      cooperative_groups::tiled_partition<32>(block);
-
-    if (block.thread_rank() < 32)
+    for (int size = MAXBLOCKSIZE / 2; size >= 4 * WARPSIZE; size /= 2)
       {
-        if (blockSize >= 64)
-          localSum += smem[tid + 32];
+        if ((blockSize >= size) && (tid < size / 2))
+          smem[tid] = localSum = localSum + smem[tid + size / 2];
 
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
-          localSum += tile32.shfl_down(localSum, offset);
+        cooperative_groups::sync(block);
+      }
+
+    cooperative_groups::thread_block_tile<WARPSIZE> tileWarp =
+      cooperative_groups::tiled_partition<WARPSIZE>(block);
+
+    if (block.thread_rank() < WARPSIZE)
+      {
+        if (blockSize >= 2 * WARPSIZE)
+          localSum += smem[tid + WARPSIZE];
+
+        for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
+          localSum += tileWarp.shfl_down(localSum, offset);
       }
 
     if (block.thread_rank() == 0)
@@ -306,13 +299,13 @@ namespace dftfe
   applyPreconditionComputeDotProductAndSaddKernel(Type *      d_qvec,
                                                   Type *      d_devSum,
                                                   const Type *d_rvec,
-                                                  const Type *jacobi,
+                                                  const Type *d_jacobi,
                                                   const int   N)
   {
     __shared__ Type smem[blockSize];
 
     int tid = threadIdx.x;
-    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
+    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
     cooperative_groups::thread_block block =
       cooperative_groups::this_thread_block();
 
@@ -320,54 +313,44 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_jacobi = jacobi[idx];
-        Type d_r      = d_rvec[idx];
+        Type jacobi = d_jacobi[idx];
+        Type r      = d_rvec[idx];
 
-        localSum    = d_jacobi * d_r * d_r;
-        d_qvec[idx] = -1 * d_jacobi * d_r;
+        localSum    = jacobi * r * r;
+        d_qvec[idx] = -1 * jacobi * r;
       }
-
     else
-      {
-        localSum = 0;
-      }
+      localSum = 0;
 
     if (idx + blockSize < N)
       {
-        Type d_jacobi = jacobi[idx + blockSize];
-        Type d_r      = d_rvec[idx + blockSize];
-        localSum += d_jacobi * d_r * d_r;
-        d_qvec[idx + blockSize] = -1 * d_jacobi * d_r;
+        Type jacobi = d_jacobi[idx + blockSize];
+        Type r      = d_rvec[idx + blockSize];
+        localSum += jacobi * r * r;
+        d_qvec[idx + blockSize] = -1 * jacobi * r;
       }
 
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    if ((blockSize >= 512) && (tid < 256))
-      smem[tid] = localSum = localSum + smem[tid + 256];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 256) && (tid < 128))
-      smem[tid] = localSum = localSum + smem[tid + 128];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 128) && (tid < 64))
-      smem[tid] = localSum = localSum + smem[tid + 64];
-
-    cooperative_groups::sync(block);
-
-    cooperative_groups::thread_block_tile<32> tile32 =
-      cooperative_groups::tiled_partition<32>(block);
-
-    if (block.thread_rank() < 32)
+    for (int size = MAXBLOCKSIZE / 2; size >= 4 * WARPSIZE; size /= 2)
       {
-        if (blockSize >= 64)
-          localSum += smem[tid + 32];
+        if ((blockSize >= size) && (tid < size / 2))
+          smem[tid] = localSum = localSum + smem[tid + size / 2];
 
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
-          localSum += tile32.shfl_down(localSum, offset);
+        cooperative_groups::sync(block);
+      }
+
+    cooperative_groups::thread_block_tile<WARPSIZE> tileWarp =
+      cooperative_groups::tiled_partition<WARPSIZE>(block);
+
+    if (block.thread_rank() < WARPSIZE)
+      {
+        if (blockSize >= 2 * WARPSIZE)
+          localSum += smem[tid + WARPSIZE];
+
+        for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
+          localSum += tileWarp.shfl_down(localSum, offset);
       }
 
     if (block.thread_rank() == 0)
@@ -388,7 +371,7 @@ namespace dftfe
     __shared__ Type smem[blockSize];
 
     int tid = threadIdx.x;
-    int idx = blockIdx.x * (blockSize * 2) + threadIdx.x;
+    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
     cooperative_groups::thread_block block =
       cooperative_groups::this_thread_block();
 
@@ -396,53 +379,47 @@ namespace dftfe
 
     if (idx < N)
       {
-        Type d_r = d_rvec[idx];
-        localSum = d_r * d_r;
+        Type rNew;
+        Type rOld = d_rvec[idx];
         x[idx] += alpha * d_qvec[idx];
-        d_rvec[idx] += alpha * d_dvec[idx];
+        rNew        = rOld + alpha * d_dvec[idx];
+        localSum    = rNew * rNew;
+        d_rvec[idx] = rNew;
       }
-
     else
-      {
-        localSum = 0;
-      }
+      localSum = 0;
 
     if (idx + blockSize < N)
       {
-        Type d_r = d_rvec[idx + blockSize];
-        localSum += d_r * d_r;
+        Type rNew;
+        Type rOld = d_rvec[idx + blockSize];
         x[idx + blockSize] += alpha * d_qvec[idx + blockSize];
-        d_rvec[idx + blockSize] += alpha * d_dvec[idx + blockSize];
+        rNew = rOld + alpha * d_dvec[idx + blockSize];
+        localSum += rNew * rNew;
+        d_rvec[idx + blockSize] = rNew;
       }
 
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    if ((blockSize >= 512) && (tid < 256))
-      smem[tid] = localSum = localSum + smem[tid + 256];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 256) && (tid < 128))
-      smem[tid] = localSum = localSum + smem[tid + 128];
-
-    cooperative_groups::sync(block);
-
-    if ((blockSize >= 128) && (tid < 64))
-      smem[tid] = localSum = localSum + smem[tid + 64];
-
-    cooperative_groups::sync(block);
-
-    cooperative_groups::thread_block_tile<32> tile32 =
-      cooperative_groups::tiled_partition<32>(block);
-
-    if (block.thread_rank() < warpSize)
+    for (int size = MAXBLOCKSIZE / 2; size >= 4 * WARPSIZE; size /= 2)
       {
-        if (blockSize >= 64)
-          localSum += smem[tid + 32];
+        if ((blockSize >= size) && (tid < size / 2))
+          smem[tid] = localSum = localSum + smem[tid + size / 2];
 
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
-          localSum += tile32.shfl_down(localSum, offset);
+        cooperative_groups::sync(block);
+      }
+
+    cooperative_groups::thread_block_tile<WARPSIZE> tileWarp =
+      cooperative_groups::tiled_partition<WARPSIZE>(block);
+
+    if (block.thread_rank() < WARPSIZE)
+      {
+        if (blockSize >= 2 * WARPSIZE)
+          localSum += smem[tid + WARPSIZE];
+
+        for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
+          localSum += tileWarp.shfl_down(localSum, offset);
       }
 
     if (block.thread_rank() == 0)
@@ -452,18 +429,18 @@ namespace dftfe
 
   double
   linearSolverCGCUDA::applyPreconditionAndComputeDotProduct(
-    const double *jacobi)
+    const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
+    const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    d_devSum[0] = 0.0;
+    cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionAndComputeDotProductKernel<double,
                                                 cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(
-        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), jacobi, d_xLenLocalDof);
+        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     local_sum = d_devSum[0];
 
@@ -475,18 +452,18 @@ namespace dftfe
 
   double
   linearSolverCGCUDA::applyPreconditionComputeDotProductAndSadd(
-    const double *jacobi)
+    const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
+    const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    d_devSum[0] = 0.0;
+    cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionComputeDotProductAndSaddKernel<double,
                                                     cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(
-        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), jacobi, d_xLenLocalDof);
+        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     local_sum = d_devSum[0];
 
@@ -500,10 +477,10 @@ namespace dftfe
   linearSolverCGCUDA::scaleXRandComputeNorm(double *x, const double &alpha)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLenLocalDof + (cudaConstants::blockSize * 2 - 1)) /
+    const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
                        (cudaConstants::blockSize * 2);
 
-    d_devSum[0] = 0.0;
+    cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     scaleXRandComputeNormKernel<double, cudaConstants::blockSize>
       <<<blocks, cudaConstants::blockSize>>>(x,
@@ -512,7 +489,7 @@ namespace dftfe
                                              d_qvec.begin(),
                                              d_dvec.begin(),
                                              alpha,
-                                             d_xLenLocalDof);
+                                             d_xLocalDof);
 
     local_sum = d_devSum[0];
 
