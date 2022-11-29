@@ -358,7 +358,7 @@ namespace dftfe
                                         [j * numQuads * 9 * BVec +
                                          iquad * 9 * BVec + idim * 3 * BVec +
                                          jdim * BVec + iwfc] +=
-                                        2.0 * partOcc *
+                                        -2.0 * partOcc *
                                           imagPart(complexConj(psiQuad) *
                                                    (kcoord[idim] *
                                                     gradPsiQuad[jdim])) -
