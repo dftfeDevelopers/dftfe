@@ -157,7 +157,7 @@ namespace dftfe
 
             if (dftParams.useELPADeviceKernel)
               {
-                elpa_set_integer(elpaHandle, "nvidia-device", 1, &error);
+                elpa_set_integer(elpaHandle, "nvidia-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
