@@ -20,8 +20,8 @@
 
 #include <force.h>
 #include <forceWfcContractions.h>
-#ifdef DFTFE_WITH_GPU
-#  include <forceWfcContractionsCUDA.h>
+#ifdef DFTFE_WITH_DEVICE
+#  include <forceWfcContractionsDevice.h>
 #endif
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
@@ -321,8 +321,8 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro>::computeAtomsForces(
     const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperatorGPU,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
@@ -374,7 +374,7 @@ namespace dftfe
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
     computeConfigurationalForceTotalLinFE(matrixFreeData,
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
                                           kohnShamDFTEigenOperatorGPU,
 #endif
                                           kohnShamDFTEigenOperator,
@@ -513,8 +513,8 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceTotalLinFE(
     const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperatorGPU,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
@@ -557,7 +557,7 @@ namespace dftfe
     // nuclear self energy
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       matrixFreeData,
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
       kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTEigenOperator,

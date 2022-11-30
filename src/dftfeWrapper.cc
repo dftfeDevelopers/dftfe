@@ -42,7 +42,7 @@
 
 #include "dft.h"
 #include "dftParameters.h"
-#include "cudaHelpers.h"
+#include "deviceHelpers.h"
 #include "dftUtils.h"
 #include "dftfeWrapper.h"
 #include "fileReaders.h"
@@ -672,7 +672,7 @@ namespace dftfe
                                            d_mpi_comm_parent,
                                            false,
                                            "GS");
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
         d_dftfeParamsPtr->useGPU = useGPU;
 #endif
       }
@@ -719,11 +719,11 @@ namespace dftfe
   {
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
         if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally &&
             !d_isGPUToMPITaskBindingSetInternally)
           {
-            dftfe::cudaUtils::setupGPU();
+            dftfe::deviceUtils::setupGPU();
             d_isGPUToMPITaskBindingSetInternally = true;
           }
 #endif

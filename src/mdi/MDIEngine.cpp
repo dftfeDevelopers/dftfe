@@ -550,7 +550,7 @@ namespace dftfe
 
     // constructs dftfe wrapper object
     d_dftfeWrapper.reinit(d_dftfeMPIComm,
-                          true, // use GPU mode if compiled with CUDA
+                          true, // use GPU mode if compiled with Device
                           atomicPositionsCart,
                           atomicNumbers,
                           cell,

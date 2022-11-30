@@ -92,8 +92,8 @@ dftClass<FEOrder, FEOrderElectro>::popOutRhoInRhoOutVals()
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
 #endif
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -104,7 +104,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
       d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
       computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
                              kohnShamDFTEigenOperatorCPU,
                              isConsiderSpectrumSplitting);
@@ -192,11 +192,11 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
               &(gradRhoOutValsSpinPolarized.back());
         }
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
       if (d_dftParamsPtr->useGPU)
-        CUDA::computeRhoFromPSI(
-          d_eigenVectorsFlattenedCUDA.begin(),
-          d_eigenVectorsRotFracFlattenedCUDA.begin(),
+        Device::computeRhoFromPSI(
+          d_eigenVectorsFlattenedDevice.begin(),
+          d_eigenVectorsRotFracFlattenedDevice.begin(),
           d_numEigenValues,
           d_numEigenValuesRR,
           d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
@@ -258,7 +258,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
       if (isGroundState)
         {
           computeRhoNodalFromPSI(
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
             kohnShamDFTEigenOperator,
 #endif
             kohnShamDFTEigenOperatorCPU,
@@ -578,8 +578,8 @@ dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
 #endif
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -671,11 +671,11 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
 
       // compute rho from wavefunctions at nodal locations of 2p DoFHandler
       // nodes in each cell
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
   if (d_dftParamsPtr->useGPU)
-    CUDA::computeRhoFromPSI(
-      d_eigenVectorsFlattenedCUDA.begin(),
-      d_eigenVectorsRotFracFlattenedCUDA.begin(),
+    Device::computeRhoFromPSI(
+      d_eigenVectorsFlattenedDevice.begin(),
+      d_eigenVectorsRotFracFlattenedDevice.begin(),
       d_numEigenValues,
       d_numEigenValuesRR,
       d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,

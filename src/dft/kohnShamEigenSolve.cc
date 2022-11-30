@@ -579,18 +579,18 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
   computing_timer.leave_subsection("Chebyshev solve");
 }
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
 // chebyshev solver
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
   const unsigned int spinType,
   const unsigned int kPointIndex,
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &               kohnShamDFTEigenOperator,
   elpaScalaManager &elpaScala,
-  chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-    &                  subspaceIterationSolverCUDA,
+  chebyshevOrthogonalizedSubspaceIterationSolverDevice
+    &                  subspaceIterationSolverDevice,
   std::vector<double> &residualNormWaveFunctions,
   const bool           computeResidual,
   const unsigned int   numberRayleighRitzAvoidancePasses,
@@ -612,7 +612,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
                                                          d_numEigenValues,
                                        0.0);
 
-  subspaceIterationSolverCUDA.reinitSpectrumBounds(
+  subspaceIterationSolverDevice.reinitSpectrumBounds(
     a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType],
     bLow[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType],
     d_upperBoundUnwantedSpectrumValues[(1 + d_dftParamsPtr->spinPolarized) *
@@ -621,10 +621,10 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
 
   if (numberRayleighRitzAvoidancePasses > 0)
     {
-      subspaceIterationSolverCUDA.solveNoRR(
+      subspaceIterationSolverDevice.solveNoRR(
         kohnShamDFTEigenOperator,
         elpaScala,
-        d_eigenVectorsFlattenedCUDA.begin() +
+        d_eigenVectorsFlattenedDevice.begin() +
           ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
             d_eigenVectorsFlattenedSTL[0].size(),
         d_eigenVectorsFlattenedSTL[0].size(),
@@ -640,13 +640,13 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
       d_upperBoundUnwantedSpectrumValues[(1 + d_dftParamsPtr->spinPolarized) *
                                            kPointIndex +
                                          spinType] =
-        subspaceIterationSolverCUDA.solve(
+        subspaceIterationSolverDevice.solve(
           kohnShamDFTEigenOperator,
           elpaScala,
-          d_eigenVectorsFlattenedCUDA.begin() +
+          d_eigenVectorsFlattenedDevice.begin() +
             ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
               d_eigenVectorsFlattenedSTL[0].size(),
-          d_eigenVectorsRotFracFlattenedCUDA.begin() +
+          d_eigenVectorsRotFracFlattenedDevice.begin() +
             ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
               d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
           d_eigenVectorsFlattenedSTL[0].size(),
@@ -793,7 +793,7 @@ dftClass<FEOrder, FEOrderElectro>::
                                         spinType]);
 }
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
 // chebyshev solver
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -801,11 +801,11 @@ dftClass<FEOrder, FEOrderElectro>::
   kohnShamEigenSpaceFirstOrderDensityMatResponse(
     const unsigned int spinType,
     const unsigned int kPointIndex,
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
       &               kohnShamDFTEigenOperator,
     elpaScalaManager &elpaScala,
-    chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-      &subspaceIterationSolverCUDA)
+    chebyshevOrthogonalizedSubspaceIterationSolverDevice
+      &subspaceIterationSolverDevice)
 {
   if (d_dftParamsPtr->verbosity >= 2)
     {
@@ -821,9 +821,9 @@ dftClass<FEOrder, FEOrderElectro>::
         eigenValues[kPointIndex][spinType * d_numEigenValues + i];
     }
 
-  subspaceIterationSolverCUDA.densityMatrixEigenBasisFirstOrderResponse(
+  subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
     kohnShamDFTEigenOperator,
-    d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin() +
+    d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin() +
       ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
         d_eigenVectorsFlattenedSTL[0].size(),
     d_eigenVectorsFlattenedSTL[0].size(),

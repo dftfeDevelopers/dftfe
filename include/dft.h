@@ -29,14 +29,14 @@
 #include <numeric>
 #include <sstream>
 
-#ifdef DFTFE_WITH_GPU
-#  include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
-#  include <constraintMatrixInfoCUDA.h>
-#  include <kohnShamDFTOperatorCUDA.h>
-#  include "cudaHelpers.h"
-#  include <poissonSolverProblemCUDA.h>
-#  include <kerkerSolverProblemCUDA.h>
-#  include <linearSolverCGCUDA.h>
+#ifdef DFTFE_WITH_DEVICE
+#  include <chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
+#  include <constraintMatrixInfoDevice.h>
+#  include <kohnShamDFTOperatorDevice.h>
+#  include "deviceHelpers.h"
+#  include <poissonSolverProblemDevice.h>
+#  include <kerkerSolverProblemDevice.h>
+#  include <linearSolverCGDevice.h>
 #  include "gpuDirectCCLWrapper.h"
 #endif
 
@@ -106,8 +106,8 @@ namespace dftfe
   {
     friend class kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>;
 
-#ifdef DFTFE_WITH_GPU
-    friend class kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>;
+#ifdef DFTFE_WITH_DEVICE
+    friend class kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>;
 #endif
 
     friend class forceClass<FEOrder, FEOrderElectro>;
@@ -669,8 +669,8 @@ namespace dftfe
      */
     void
     computeRhoNodalFromPSI(
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -680,8 +680,8 @@ namespace dftfe
 
     void
     computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -852,8 +852,8 @@ namespace dftfe
      */
     void
     compute_rhoOut(
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -883,10 +883,10 @@ namespace dftfe
 
     double
     nodalDensity_mixing_simple_kerker(
-#ifdef DFTFE_WITH_GPU
-      kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 kerkerPreconditionedResidualSolverProblemCUDA,
-      linearSolverCGCUDA &CGSolverCUDA,
+#ifdef DFTFE_WITH_DEVICE
+      kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblemDevice,
+      linearSolverCGDevice &CGSolverDevice,
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 kerkerPreconditionedResidualSolverProblem,
@@ -894,10 +894,10 @@ namespace dftfe
 
     double
     nodalDensity_mixing_anderson_kerker(
-#ifdef DFTFE_WITH_GPU
-      kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 kerkerPreconditionedResidualSolverProblemCUDA,
-      linearSolverCGCUDA &CGSolverCUDA,
+#ifdef DFTFE_WITH_DEVICE
+      kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblemDevice,
+      linearSolverCGDevice &CGSolverDevice,
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 kerkerPreconditionedResidualSolverProblem,
@@ -921,8 +921,8 @@ namespace dftfe
      */
     void
     computeElectrostaticEnergyHRefined(
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator
 #endif
     );
@@ -1231,7 +1231,7 @@ namespace dftfe
      * parallel objects
      */
     const MPI_Comm mpi_communicator;
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
     GPUCCLWrapper *d_gpucclMpiCommDomainPtr;
 #endif
     const MPI_Comm     d_mpiCommParent;
@@ -1254,17 +1254,17 @@ namespace dftfe
     elpaScalaManager *d_elpaScala;
 
     poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
-#ifdef DFTFE_WITH_GPU
-    poissonSolverProblemCUDA<FEOrder, FEOrderElectro>
-      d_phiTotalSolverProblemCUDA;
+#ifdef DFTFE_WITH_DEVICE
+    poissonSolverProblemDevice<FEOrder, FEOrderElectro>
+      d_phiTotalSolverProblemDevice;
 #endif
 
     bool d_kohnShamDFTOperatorsInitialized;
 
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> *d_kohnShamDFTOperatorPtr;
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      *d_kohnShamDFTOperatorCUDAPtr;
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+      *d_kohnShamDFTOperatorDevicePtr;
 #endif
 
     const std::string d_dftfeScratchFolderName;
@@ -1274,9 +1274,9 @@ namespace dftfe
      *
      */
     chebyshevOrthogonalizedSubspaceIterationSolver d_subspaceIterationSolver;
-#ifdef DFTFE_WITH_GPU
-    chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-      d_subspaceIterationSolverCUDA;
+#ifdef DFTFE_WITH_DEVICE
+    chebyshevOrthogonalizedSubspaceIterationSolverDevice
+      d_subspaceIterationSolverDevice;
 #endif
 
     /**
@@ -1301,8 +1301,8 @@ namespace dftfe
     dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
 
-#ifdef DFTFE_WITH_GPU
-    dftUtils::constraintMatrixInfoCUDA d_constraintsNoneDataInfoCUDA;
+#ifdef DFTFE_WITH_DEVICE
+    dftUtils::constraintMatrixInfoDevice d_constraintsNoneDataInfoDevice;
 #endif
 
 
@@ -1341,13 +1341,13 @@ namespace dftfe
       d_eigenVectorsDensityMatrixPrimeSTL;
 
     /// cuda eigenvectors
-#ifdef DFTFE_WITH_GPU
-    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
-      d_eigenVectorsFlattenedCUDA;
-    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
-      d_eigenVectorsRotFracFlattenedCUDA;
-    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
-      d_eigenVectorsDensityMatrixPrimeFlattenedCUDA;
+#ifdef DFTFE_WITH_DEVICE
+    deviceUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsFlattenedDevice;
+    deviceUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsRotFracFlattenedDevice;
+    deviceUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsDensityMatrixPrimeFlattenedDevice;
 #endif
 
     /// parallel message stream
@@ -1632,9 +1632,9 @@ namespace dftfe
     /// strain tensor components
     void
     computeVselfFieldGateauxDerFD(
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorCUDA
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorDevice
 #endif
     );
 
@@ -1732,16 +1732,16 @@ namespace dftfe
       const bool                                      isFirstScf      = false);
 
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
     void
     kohnShamEigenSpaceCompute(
       const unsigned int s,
       const unsigned int kPointIndex,
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
-      chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-        &                  subspaceIterationSolverCUDA,
+      chebyshevOrthogonalizedSubspaceIterationSolverDevice
+        &                  subspaceIterationSolverDevice,
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
       const unsigned int   numberRayleighRitzAvoidancePasses = 0,
@@ -1751,16 +1751,16 @@ namespace dftfe
 #endif
 
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
     void
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
       const unsigned int s,
       const unsigned int kPointIndex,
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
-      chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-        &subspaceIterationSolverCUDA);
+      chebyshevOrthogonalizedSubspaceIterationSolverDevice
+        &subspaceIterationSolverDevice);
 
 #endif
 

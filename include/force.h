@@ -24,8 +24,8 @@
 #include "headers.h"
 #include "meshMovementGaussian.h"
 #include "kohnShamDFTOperator.h"
-#ifdef DFTFE_WITH_GPU
-#  include "kohnShamDFTOperatorCUDA.h"
+#ifdef DFTFE_WITH_DEVICE
+#  include "kohnShamDFTOperatorDevice.h"
 #endif
 #include <dftd.h>
 
@@ -130,8 +130,8 @@ namespace dftfe
     void
     computeAtomsForces(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -209,8 +209,8 @@ namespace dftfe
     void
     computeStress(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -312,8 +312,8 @@ namespace dftfe
     void
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -393,8 +393,8 @@ namespace dftfe
     void
     computeConfigurationalForceTotalLinFE(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -682,8 +682,8 @@ namespace dftfe
     void
     computeStressEEshelbyEPSPEnlEk(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperatorGPU,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>

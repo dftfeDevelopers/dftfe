@@ -22,8 +22,8 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperatorGPU,
 #endif
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
@@ -150,7 +150,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   const unsigned int numMacroCells = matrixFreeData.n_macro_cells();
 
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
   AssertThrow(
     numMacroCells == numPhysicalCells,
     ExcMessage(
@@ -221,15 +221,15 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 #endif
 
 
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
       if (d_dftParams.useGPU)
         {
           MPI_Barrier(d_mpiCommParent);
           double gpu_time = MPI_Wtime();
 
-          forceCUDA::wfcContractionsForceKernelsAllH(
+          forceDevice::wfcContractionsForceKernelsAllH(
             kohnShamDFTEigenOperatorGPU,
-            dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
+            dftPtr->d_eigenVectorsFlattenedDevice.begin(),
             d_dftParams.spinPolarized,
             spinIndex,
             dftPtr->eigenValues,

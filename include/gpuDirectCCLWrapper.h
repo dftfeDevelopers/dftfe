@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 // @author Sambit Das, David M. Rogers
 
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
 #  ifndef gpuDirectCCLWrapper_h
 #    define gpuDirectCCLWrapper_h
 

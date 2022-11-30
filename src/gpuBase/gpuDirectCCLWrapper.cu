@@ -17,12 +17,12 @@
 // @author Sambit Das, David M. Rogers
 //
 
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
 
 #  include <iostream>
 
 #  include "gpuDirectCCLWrapper.h"
-#  include "cudaHelpers.h"
+#  include "deviceHelpers.h"
 
 #  if defined(DFTFE_WITH_NCCL)
 #    include <nccl.h>
@@ -140,7 +140,7 @@ namespace dftfe
                                            double *               tempImag,
                                            cudaStream_t &         stream)
   {
-    cudaUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+    deviceUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -160,7 +160,7 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    cudaUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    deviceUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
     return 0;
   }
 
@@ -172,7 +172,7 @@ namespace dftfe
                                            float *               tempImag,
                                            cudaStream_t &        stream)
   {
-    cudaUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+    deviceUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -192,7 +192,7 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    cudaUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    deviceUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
     return 0;
   }
 
@@ -241,9 +241,9 @@ namespace dftfe
     float *                tempImag2,
     cudaStream_t &         stream)
   {
-    cudaUtils::copyComplexArrToRealArrsGPU(size1, send1, tempReal1, tempImag1);
+    deviceUtils::copyComplexArrToRealArrsGPU(size1, send1, tempReal1, tempImag1);
 
-    cudaUtils::copyComplexArrToRealArrsGPU(size2, send2, tempReal2, tempImag2);
+    deviceUtils::copyComplexArrToRealArrsGPU(size2, send2, tempReal2, tempImag2);
 
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
@@ -278,9 +278,9 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    cudaUtils::copyRealArrsToComplexArrGPU(size1, tempReal1, tempImag1, recv1);
+    deviceUtils::copyRealArrsToComplexArrGPU(size1, tempReal1, tempImag1, recv1);
 
-    cudaUtils::copyRealArrsToComplexArrGPU(size2, tempReal2, tempImag2, recv2);
+    deviceUtils::copyRealArrsToComplexArrGPU(size2, tempReal2, tempImag2, recv2);
 
     return 0;
   }

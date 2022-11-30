@@ -1830,7 +1830,7 @@ namespace dftfe
 #endif
 
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
     if (!isPseudopotential && useGPU)
       {
         overlapComputeCommunCheby = false;
@@ -1838,7 +1838,7 @@ namespace dftfe
 #endif
 
 
-#ifndef DFTFE_WITH_GPU
+#ifndef DFTFE_WITH_DEVICE
     useGPU           = false;
     useELPAGPUKernel = false;
 #endif

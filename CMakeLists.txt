@@ -74,24 +74,24 @@ IF (WITH_GPU)
 ENDIF()
 
 SET(CUDA_SRC
-  ./src/gpuBase/cudaHelpers.cu
+  ./src/gpuBase/deviceHelpers.cu
   ./src/gpuBase/gpuDirectCCLWrapper.cu
-  ./src/dft/densityCalculatorCUDA.cu
-  ./src/dft/densityFirstOrderResponseCalculatorCUDA.cu
-  ./src/dftOperator/operatorCUDA.cu
-  ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
-  ./src/dft/solveVselfInBinsCUDA.cu
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-  ./src/linAlg/linearAlgebraOperationsCUDA.cu
-  ./src/linAlg/pseudoGSCUDA.cu
-  ./src/linAlg/rayleighRitzCUDA.cu
-  ./src/force/forceWfcContractionsCUDA.cu
-  ./utils/constraintMatrixInfoCUDA.cu
-  ./src/solvers/linearSolverCUDA.cu
-  ./src/solvers/linearSolverCGCUDA.cu
-  ./src/solvers/linearSolverProblemCUDA.cu
-  ./src/poisson/poissonSolverProblemCUDA.cu
-  ./src/helmholtz/kerkerSolverProblemCUDA.cu
+  ./src/dft/densityCalculatorDevice.cu
+  ./src/dft/densityFirstOrderResponseCalculatorDevice.cu
+  ./src/dftOperator/operatorDevice.cu
+  ./src/dftOperator/kohnShamDFTOperatorDevice.cu
+  ./src/dft/solveVselfInBinsDevice.cu
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cu
+  ./src/linAlg/linearAlgebraOperationsDevice.cu
+  ./src/linAlg/pseudoGSDevice.cu
+  ./src/linAlg/rayleighRitzDevice.cu
+  ./src/force/forceWfcContractionsDevice.cu
+  ./utils/constraintMatrixInfoDevice.cu
+  ./src/solvers/linearSolverDevice.cu
+  ./src/solvers/linearSolverCGDevice.cu
+  ./src/solvers/linearSolverProblemDevice.cu
+  ./src/poisson/poissonSolverProblemDevice.cu
+  ./src/helmholtz/kerkerSolverProblemDevice.cu
   )
 
 IF (WITH_GPU)
@@ -213,7 +213,7 @@ ENDIF()
 #Set GPU compilation flag
 #
 IF (WITH_GPU)
-  ADD_DEFINITIONS(-DDFTFE_WITH_GPU)
+  ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
   MESSAGE(STATUS "DFTFE with GPU")
 
   IF(NOT DEAL_II_WITH_CUDA OR

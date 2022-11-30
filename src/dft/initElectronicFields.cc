@@ -82,9 +82,9 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
                                      constraintsNone);
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
   if (d_dftParamsPtr->useGPU)
-    d_constraintsNoneDataInfoCUDA.initialize(
+    d_constraintsNoneDataInfoDevice.initialize(
       matrix_free_data.get_vector_partitioner(), constraintsNone);
 #endif
 
@@ -136,34 +136,34 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "initRho called");
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
   if (d_dftParamsPtr->useGPU)
     {
-      d_eigenVectorsFlattenedCUDA.resize(d_eigenVectorsFlattenedSTL[0].size() *
+      d_eigenVectorsFlattenedDevice.resize(d_eigenVectorsFlattenedSTL[0].size() *
                                          (1 + d_dftParamsPtr->spinPolarized) *
                                          d_kPointWeights.size());
 
       if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-        d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.resize(
+        d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
           d_eigenVectorsFlattenedSTL[0].size() *
           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
 
       if (d_numEigenValuesRR != d_numEigenValues)
-        d_eigenVectorsRotFracFlattenedCUDA.resize(
+        d_eigenVectorsRotFracFlattenedDevice.resize(
           d_eigenVectorsRotFracDensityFlattenedSTL[0].size() *
           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
       else
-        d_eigenVectorsRotFracFlattenedCUDA.resize(1);
+        d_eigenVectorsRotFracFlattenedDevice.resize(1);
 
       for (unsigned int kPoint = 0;
            kPoint <
            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          cudaUtils::copyHostVecToCUDAVec(
+          deviceUtils::copyHostVecToDeviceVec(
             reinterpret_cast<dataTypes::numberGPU *>(
               &d_eigenVectorsFlattenedSTL[kPoint][0]),
-            d_eigenVectorsFlattenedCUDA.begin() +
+            d_eigenVectorsFlattenedDevice.begin() +
               kPoint * d_eigenVectorsFlattenedSTL[0].size(),
             d_eigenVectorsFlattenedSTL[0].size());
         }

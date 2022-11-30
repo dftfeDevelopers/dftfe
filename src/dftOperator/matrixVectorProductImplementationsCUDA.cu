@@ -26,7 +26,7 @@
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
-kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(
     const dataTypes::numberGPU *src,
     const unsigned int          numberWaveFunctions,
@@ -38,7 +38,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyCUDAKernel<<<(numberWaveFunctions + 255) / 256 * totalLocallyOwnedCells *
+  copyDeviceKernel<<<(numberWaveFunctions + 255) / 256 * totalLocallyOwnedCells *
                      d_numberNodesPerElement,
                    256>>>(numberWaveFunctions,
                           totalLocallyOwnedCells * d_numberNodesPerElement,
@@ -92,7 +92,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          cudaUtils::copyComplexArrToRealArrsGPU(
+          deviceUtils::copyComplexArrToRealArrsGPU(
             (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
              d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
             dst,
@@ -113,7 +113,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
             thrust::raw_pointer_cast(
               &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
-          cudaUtils::copyRealArrsToComplexArrGPU(
+          deviceUtils::copyRealArrsToComplexArrGPU(
             (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
              d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
             thrust::raw_pointer_cast(&d_tempRealVec[0]),

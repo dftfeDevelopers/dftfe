@@ -23,8 +23,8 @@
 #include <dealiiLinearSolver.h>
 #include <dftUtils.h>
 #include <poissonSolverProblem.h>
-#ifdef DFTFE_WITH_GPU
-#  include <solveVselfInBinsCUDA.h>
+#ifdef DFTFE_WITH_DEVICE
+#  include <solveVselfInBinsDevice.h>
 #endif
 
 namespace dftfe
@@ -810,7 +810,7 @@ namespace dftfe
       } // bin loop
   }
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsGPU(
@@ -818,7 +818,7 @@ namespace dftfe
     const unsigned int                       mfBaseDofHandlerIndex,
     const unsigned int                       matrixFreeQuadratureIdAX,
     const unsigned int                       offset,
-    operatorDFTCUDAClass &                   operatorMatrix,
+    operatorDFTDeviceClass &                   operatorMatrix,
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
     const std::vector<std::vector<double>> & imagePositions,
     const std::vector<int> &                 imageIds,
@@ -1391,7 +1391,7 @@ namespace dftfe
     //
     // GPU poisson solve
     //
-    poissonCUDA::solveVselfInBins(operatorMatrix,
+    poissonDevice::solveVselfInBins(operatorMatrix,
                                   matrix_free_data,
                                   mfBaseDofHandlerIndex,
                                   hangingPeriodicConstraintMatrix,
@@ -1413,7 +1413,7 @@ namespace dftfe
     time = MPI_Wtime() - time;
     if (d_dftParams.verbosity >= 4 && this_mpi_process == 0)
       std::cout
-        << "Solve vself in bins: time for poissonCUDA::solveVselfInBins : "
+        << "Solve vself in bins: time for poissonDevice::solveVselfInBins : "
         << time << std::endl;
 
     MPI_Barrier(d_mpiCommParent);
@@ -1622,8 +1622,8 @@ namespace dftfe
     const unsigned int                   mfBaseDofHandlerIndex,
     const unsigned int                   matrixFreeQuadratureIdAX,
     const unsigned int                   offset,
-#ifdef DFTFE_WITH_GPU
-    operatorDFTCUDAClass &operatorMatrix,
+#ifdef DFTFE_WITH_DEVICE
+    operatorDFTDeviceClass &operatorMatrix,
 #endif
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
     const std::vector<std::vector<double>> & imagePositions,
@@ -1648,7 +1648,7 @@ namespace dftfe
                         bCellNonTrivialAtomImageIdsBins;
     std::vector<double> smearedChargeScaling;
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
     if (d_dftParams.useGPU)
       solveVselfInBinsGPU(matrix_free_data,
                           mfBaseDofHandlerIndex,
