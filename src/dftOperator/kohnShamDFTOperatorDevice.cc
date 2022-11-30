@@ -4865,9 +4865,9 @@ namespace dftfe
       }
   }
 
-#include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMDevice.cu"
-#include "hamiltonianMatrixCalculatorFlattenedDevice.cu"
-#include "inst.cu"
-#include "matrixVectorProductImplementationsDevice.cu"
-#include "shapeFunctionDataCalculatorDevice.cu"
+#include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMDevice.cpp"
+#include "hamiltonianMatrixCalculatorFlattenedDevice.cpp"
+#include "instDevice.cpp"
+#include "matrixVectorProductImplementationsDevice.cpp"
+#include "shapeFunctionDataCalculatorDevice.cpp"
 } // namespace dftfe

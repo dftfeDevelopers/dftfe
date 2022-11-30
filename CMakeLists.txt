@@ -69,29 +69,25 @@ SET(TARGET_SRC
   ./src/mdi/libraryMDI.cpp
   )
 
-IF (WITH_GPU)
-    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
-ENDIF()
-
 SET(CUDA_SRC
-  ./src/deviceBase/deviceHelpers.cu
-  ./src/deviceBase/deviceDirectCCLWrapper.cu
-  ./src/dft/densityCalculatorDevice.cu
-  ./src/dft/densityFirstOrderResponseCalculatorDevice.cu
-  ./src/dftOperator/operatorDevice.cu
-  ./src/dftOperator/kohnShamDFTOperatorDevice.cu
-  ./src/dft/solveVselfInBinsDevice.cu
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cu
-  ./src/linAlg/linearAlgebraOperationsDevice.cu
-  ./src/linAlg/pseudoGSDevice.cu
-  ./src/linAlg/rayleighRitzDevice.cu
-  ./src/force/forceWfcContractionsDevice.cu
-  ./utils/constraintMatrixInfoDevice.cu
-  ./src/solvers/linearSolverDevice.cu
-  ./src/solvers/linearSolverCGDevice.cu
-  ./src/solvers/linearSolverProblemDevice.cu
-  ./src/poisson/poissonSolverProblemDevice.cu
-  ./src/helmholtz/kerkerSolverProblemDevice.cu
+  ./src/deviceBase/deviceHelpers.cc
+  ./src/deviceBase/deviceDirectCCLWrapper.cc
+  ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
+  ./src/dftOperator/operatorDevice.cc
+  ./src/dftOperator/kohnShamDFTOperatorDevice.cc
+  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
+  ./src/linAlg/linearAlgebraOperationsDevice.cc
+  ./src/linAlg/pseudoGSDevice.cc
+  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/force/forceWfcContractionsDevice.cc
+  ./utils/constraintMatrixInfoDevice.cc
+  ./src/solvers/linearSolverDevice.cc
+  ./src/solvers/linearSolverCGDevice.cc
+  ./src/solvers/linearSolverProblemDevice.cc
+  ./src/poisson/poissonSolverProblemDevice.cc
+  ./src/helmholtz/kerkerSolverProblemDevice.cc
   )
 
 IF (WITH_GPU)
@@ -100,6 +96,11 @@ IF (WITH_GPU)
 ELSE()
   CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 ENDIF()
+
+IF (WITH_GPU)
+    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
+ENDIF()
+
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 

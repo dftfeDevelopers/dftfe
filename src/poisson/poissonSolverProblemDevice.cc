@@ -1300,5 +1300,5 @@ namespace dftfe
       meanValueConstraintDistributeSlaveToMaster(Ax);
   }
 
-#include "poissonSolverProblemDevice.inst.cu"
+#include "poissonSolverProblemDevice.inst.cpp"
 } // namespace dftfe
