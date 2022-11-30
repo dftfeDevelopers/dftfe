@@ -107,7 +107,7 @@ namespace dftfe
   // template <typename elem_type>
   // using distributedDeviceVec =
   //  dealii::LinearAlgebra::distributed::Vector<elem_type,
-  //                                             dealii::MemorySpace::Device>;
+  //                                             dealii::MemorySpace::CUDA>;
 
   template <typename NumberType>
   using distributedDeviceVec =

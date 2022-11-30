@@ -160,7 +160,7 @@ namespace dftfe
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &                              partitioner,
       const dataTypes::local_size_type numberComponents,
-      dealii::LinearAlgebra::distributed::Vector<T, dealii::MemorySpace::Device>
+      dealii::LinearAlgebra::distributed::Vector<T, dealii::MemorySpace::CUDA>
         &flattenedArray)
     {
       const MPI_Comm &mpi_communicator = partitioner->get_mpi_communicator();
@@ -337,13 +337,13 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
             d_dealiiVecData =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<NumberType, dealii::MemorySpace::Device>);
+                         Vector<NumberType, dealii::MemorySpace::CUDA>);
 
             distributedMulticomponentvecInternal::createDealiiVector(
               partitionerSingleVec,
               d_numberComponents,
               *((dealii::LinearAlgebra::distributed::
-                   Vector<NumberType, dealii::MemorySpace::Device> *)
+                   Vector<NumberType, dealii::MemorySpace::CUDA> *)
                   d_dealiiVecData));
 #endif
           }
@@ -365,46 +365,46 @@ namespace dftfe
           {
             d_dealiiVecTempDataReal =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<double, dealii::MemorySpace::Device>);
+                         Vector<double, dealii::MemorySpace::CUDA>);
             d_dealiiVecTempDataImag =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<double, dealii::MemorySpace::Device>);
+                         Vector<double, dealii::MemorySpace::CUDA>);
 
             distributedMulticomponentvecInternal::createDealiiVector(
               partitionerSingleVec,
               d_numberComponents,
               *((dealii::LinearAlgebra::distributed::
-                   Vector<double, dealii::MemorySpace::Device> *)
+                   Vector<double, dealii::MemorySpace::CUDA> *)
                   d_dealiiVecTempDataReal));
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<double, dealii::MemorySpace::Device> *)
+                            Vector<double, dealii::MemorySpace::CUDA> *)
                            d_dealiiVecTempDataReal));
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             d_dealiiVecTempDataReal =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<float, dealii::MemorySpace::Device>);
+                         Vector<float, dealii::MemorySpace::CUDA>);
             d_dealiiVecTempDataImag =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<float, dealii::MemorySpace::Device>);
+                         Vector<float, dealii::MemorySpace::CUDA>);
 
             distributedMulticomponentvecInternal::createDealiiVector(
               partitionerSingleVec,
               d_numberComponents,
               *((dealii::LinearAlgebra::distributed::
-                   Vector<float, dealii::MemorySpace::Device> *)
+                   Vector<float, dealii::MemorySpace::CUDA> *)
                   d_dealiiVecTempDataReal));
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<float, dealii::MemorySpace::Device> *)
+                            Vector<float, dealii::MemorySpace::CUDA> *)
                            d_dealiiVecTempDataReal));
           }
       }
@@ -451,13 +451,12 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
             d_dealiiVecData =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<NumberType, dealii::MemorySpace::Device>);
+                         Vector<NumberType, dealii::MemorySpace::CUDA>);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<NumberType, dealii::MemorySpace::Device> *)
+                            Vector<NumberType, dealii::MemorySpace::CUDA> *)
                            vec.getDealiiVec()));
 
 #endif
@@ -482,49 +481,49 @@ namespace dftfe
           {
             d_dealiiVecTempDataReal =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<double, dealii::MemorySpace::Device>);
+                         Vector<double, dealii::MemorySpace::CUDA>);
             d_dealiiVecTempDataImag =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<double, dealii::MemorySpace::Device>);
+                         Vector<double, dealii::MemorySpace::CUDA>);
 
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<double, dealii::MemorySpace::Device> *)
+                            Vector<double, dealii::MemorySpace::CUDA> *)
                            vec.getDealiiVec()));
 
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<double, dealii::MemorySpace::Device> *)
+                            Vector<double, dealii::MemorySpace::CUDA> *)
                            vec.getDealiiVec()));
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             d_dealiiVecTempDataReal =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<float, dealii::MemorySpace::Device>);
+                         Vector<float, dealii::MemorySpace::CUDA>);
             d_dealiiVecTempDataImag =
               (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<float, dealii::MemorySpace::Device>);
+                         Vector<float, dealii::MemorySpace::CUDA>);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<float, dealii::MemorySpace::Device> *)
+                            Vector<float, dealii::MemorySpace::CUDA> *)
                            vec.getDealiiVec()));
 
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<float, dealii::MemorySpace::Device> *)
+                            Vector<float, dealii::MemorySpace::CUDA> *)
                            vec.getDealiiVec()));
           }
       }
@@ -582,7 +581,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             return ((dealii::LinearAlgebra::distributed::
-                       Vector<NumberType, dealii::MemorySpace::Device> *)
+                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecData)
               ->begin();
 #endif
@@ -610,7 +609,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             return ((dealii::LinearAlgebra::distributed::
-                       Vector<NumberType, dealii::MemorySpace::Device> *)
+                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecData)
               ->begin();
 #endif
@@ -676,8 +675,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->update_ghost_values();
 #endif
           }
@@ -694,22 +692,22 @@ namespace dftfe
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->update_ghost_values();
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->update_ghost_values();
 
@@ -717,12 +715,12 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                     ->begin() +
                   d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                     ->begin() +
                   d_locallyOwnedSize,
@@ -735,21 +733,21 @@ namespace dftfe
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->update_ghost_values();
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->update_ghost_values();
 
@@ -757,12 +755,12 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                     ->begin() +
                   d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                     ->begin() +
                   d_locallyOwnedSize,
@@ -794,8 +792,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->update_ghost_values_start();
 #endif
           }
@@ -812,21 +809,21 @@ namespace dftfe
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->update_ghost_values_start();
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->update_ghost_values_start();
           }
@@ -837,21 +834,21 @@ namespace dftfe
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->update_ghost_values_start();
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->update_ghost_values_start();
           }
@@ -882,8 +879,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->update_ghost_values_finish();
 #endif
           }
@@ -896,12 +892,12 @@ namespace dftfe
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->update_ghost_values_finish();
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
@@ -910,12 +906,12 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                     ->begin() +
                   d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                     ->begin() +
                   d_locallyOwnedSize,
@@ -924,12 +920,12 @@ namespace dftfe
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->update_ghost_values_finish();
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
@@ -937,12 +933,12 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                     ->begin() +
                   d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                     ->begin() +
                   d_locallyOwnedSize,
@@ -974,8 +970,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->compress(dealii::VectorOperation::add);
 #endif
           }
@@ -992,21 +987,21 @@ namespace dftfe
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->compress(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
@@ -1014,11 +1009,11 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin(),
                 d_vecData);
@@ -1030,21 +1025,21 @@ namespace dftfe
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->compress(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
@@ -1052,11 +1047,11 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin(),
                 d_vecData);
@@ -1086,8 +1081,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->compress_start(dealii::VectorOperation::add);
 #endif
           }
@@ -1104,21 +1098,21 @@ namespace dftfe
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->compress_start(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->compress_start(dealii::VectorOperation::add);
           }
@@ -1129,21 +1123,21 @@ namespace dftfe
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin());
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->compress_start(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->compress_start(dealii::VectorOperation::add);
           }
@@ -1172,8 +1166,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->compress_finish(dealii::VectorOperation::add);
 #endif
           }
@@ -1186,12 +1179,12 @@ namespace dftfe
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->compress_finish(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
@@ -1199,11 +1192,11 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin(),
                 d_vecData);
@@ -1211,12 +1204,12 @@ namespace dftfe
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->compress_finish(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
@@ -1224,11 +1217,11 @@ namespace dftfe
               deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->begin(),
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->begin(),
                 d_vecData);
@@ -1262,7 +1255,7 @@ namespace dftfe
               {
 #if defined(DFTFE_WITH_DEVICE)
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<NumberType, dealii::MemorySpace::Device> *)
+                    Vector<NumberType, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecData)
                   ->zero_out_ghosts();
 #endif
@@ -1280,24 +1273,24 @@ namespace dftfe
             if (std::is_same<NumberType, cuDoubleComplex>::value)
               {
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->zero_out_ghosts();
 
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<double, dealii::MemorySpace::Device> *)
+                    Vector<double, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->zero_out_ghosts();
               }
             else if (std::is_same<NumberType, cuFloatComplex>::value)
               {
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataReal)
                   ->zero_out_ghosts();
 
                 ((dealii::LinearAlgebra::distributed::
-                    Vector<float, dealii::MemorySpace::Device> *)
+                    Vector<float, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecTempDataImag)
                   ->zero_out_ghosts();
               }
@@ -1338,10 +1331,9 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Device> *)
-               d_dealiiVecData)
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<NumberType, dealii::MemorySpace::Device> *)
+                          Vector<NumberType, dealii::MemorySpace::CUDA> *)
                          vec.d_dealiiVecData));
 #endif
           }
@@ -1354,31 +1346,31 @@ namespace dftfe
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<double, dealii::MemorySpace::Device> *)
+                          Vector<double, dealii::MemorySpace::CUDA> *)
                          vec.d_dealiiVecTempDataReal));
             ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::Device> *)
+                Vector<double, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<double, dealii::MemorySpace::Device> *)
+                          Vector<double, dealii::MemorySpace::CUDA> *)
                          vec.d_dealiiVecTempDataImag));
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
               ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<float, dealii::MemorySpace::Device> *)
+                          Vector<float, dealii::MemorySpace::CUDA> *)
                          vec.d_dealiiVecTempDataReal));
             ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::Device> *)
+                Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataImag)
               ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<float, dealii::MemorySpace::Device> *)
+                          Vector<float, dealii::MemorySpace::CUDA> *)
                          vec.d_dealiiVecTempDataImag));
           }
       }
@@ -1458,9 +1450,9 @@ namespace dftfe
         else
           {
 #if defined(DFTFE_WITH_DEVICE)
-            delete (dealii::LinearAlgebra::distributed::
-                      Vector<NumberType, dealii::MemorySpace::Device> *)
-              d_dealiiVecData;
+            delete (
+              dealii::LinearAlgebra::distributed::
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData;
 #endif
           }
       }
@@ -1473,19 +1465,19 @@ namespace dftfe
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             delete (dealii::LinearAlgebra::distributed::
-                      Vector<double, dealii::MemorySpace::Device> *)
+                      Vector<double, dealii::MemorySpace::CUDA> *)
               d_dealiiVecTempDataReal;
             delete (dealii::LinearAlgebra::distributed::
-                      Vector<double, dealii::MemorySpace::Device> *)
+                      Vector<double, dealii::MemorySpace::CUDA> *)
               d_dealiiVecTempDataImag;
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             delete (dealii::LinearAlgebra::distributed::
-                      Vector<float, dealii::MemorySpace::Device> *)
+                      Vector<float, dealii::MemorySpace::CUDA> *)
               d_dealiiVecTempDataReal;
             delete (dealii::LinearAlgebra::distributed::
-                      Vector<float, dealii::MemorySpace::Device> *)
+                      Vector<float, dealii::MemorySpace::CUDA> *)
               d_dealiiVecTempDataImag;
           }
       }
@@ -1521,7 +1513,7 @@ namespace dftfe
           {
 #if defined(DFTFE_WITH_DEVICE)
             return ((dealii::LinearAlgebra::distributed::
-                       Vector<NumberType, dealii::MemorySpace::Device> *)
+                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecData)
               ->get_partitioner();
 #endif
@@ -1535,14 +1527,14 @@ namespace dftfe
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             return ((dealii::LinearAlgebra::distributed::
-                       Vector<double, dealii::MemorySpace::Device> *)
+                       Vector<double, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecTempDataReal)
               ->get_partitioner();
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             return ((dealii::LinearAlgebra::distributed::
-                       Vector<float, dealii::MemorySpace::Device> *)
+                       Vector<float, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecTempDataReal)
               ->get_partitioner();
           }

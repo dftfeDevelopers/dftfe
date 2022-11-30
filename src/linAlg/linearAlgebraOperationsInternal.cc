@@ -163,12 +163,12 @@ namespace dftfe
 
                 elpa_set_integer(elpaHandle,
                                  "real_kernel",
-                                 ELPA_2STAGE_REAL_NVIDIA_Device,
+                                 ELPA_2STAGE_REAL_NVIDIA_GPU,
                                  &error);
 
                 elpa_set_integer(elpaHandle,
                                  "complex_kernel",
-                                 ELPA_2STAGE_COMPLEX_NVIDIA_Device,
+                                 ELPA_2STAGE_COMPLEX_NVIDIA_GPU,
                                  &error);
 
                 AssertThrow(error == ELPA_OK,
