@@ -813,5 +813,5 @@ namespace dftfe
     Ax.compressAdd();
   }
 
-#include "kerkerSolverProblemDevice.inst.cpp"
+#include "kerkerSolverProblemDevice.inst.cc"
 } // namespace dftfe
