@@ -15,31 +15,29 @@
 // ---------------------------------------------------------------------
 //
 
-#if defined(DFTFE_WITH_GPU)
-#  ifndef forceCUDA_H_
-#    define forceCUDA_H_
+#ifndef forceWfcContractions_H_
+#define forceWfcContractions_H_
 
-#    include "headers.h"
-#    include "operatorCUDA.h"
-#    include "dftParameters.h"
+#include "headers.h"
+#include "operator.h"
+#include "dftParameters.h"
 
 namespace dftfe
 {
-  namespace forceCUDA
+  namespace force
   {
     void
-    gpuPortedForceKernelsAllH(
-      operatorDFTCUDAClass &      operatorMatrix,
-      const dataTypes::numberGPU *X,
-      const double *              eigenValuesH,
-      const double *              partialOccupanciesH,
-#    ifdef USE_COMPLEX
-      const double kcoordx,
-      const double kcoordy,
-      const double kcoordz,
-#    endif
+    wfcContractionsForceKernelsAllH(
+      operatorDFTClass &                                 operatorMatrix,
+      const std::vector<std::vector<dataTypes::number>> &X,
+      const unsigned int                                 spinPolarizedFlag,
+      const unsigned int                                 spinIndex,
+      const std::vector<std::vector<double>> &           eigenValuesH,
+      const std::vector<std::vector<double>> &           partialOccupanciesH,
+      const std::vector<double> &                        kPointCoordinates,
       const unsigned int *nonTrivialIdToElemIdMapH,
       const unsigned int *projecterKetTimesFlattenedVectorLocalIdsH,
+      const unsigned int  MLoc,
       const unsigned int  N,
       const unsigned int  numCells,
       const unsigned int  numQuads,
@@ -49,17 +47,16 @@ namespace dftfe
       double *            eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
-#    ifdef USE_COMPLEX
+#ifdef USE_COMPLEX
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
-#    endif
+#endif
       const MPI_Comm &     mpiCommParent,
       const MPI_Comm &     interBandGroupComm,
       const bool           isPsp,
       const bool           isFloatingChargeForces,
       const bool           addEk,
       const dftParameters &dftParams);
-  } // namespace forceCUDA
+  } // namespace force
 } // namespace dftfe
-#  endif
 #endif

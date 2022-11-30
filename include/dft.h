@@ -1490,7 +1490,7 @@ namespace dftfe
 
     //
     // vector to store the number of pseudowave functions/pseudo potentials
-    // associated with an atom
+    // associated with an atom (global nonlocal psp atom id)
     //
     std::vector<int> d_numberPseudoAtomicWaveFunctions;
     std::vector<int> d_numberPseudoPotentials;
@@ -1558,24 +1558,24 @@ namespace dftfe
     //
     std::vector<alglib::spline1dinterpolant> d_deltaVlSplines;
 
-    /* Storage for precomputed nonlocal pseudopotential quadrature data. This is
-     * to speedup the configurational force computation. Data format:
-     * vector(numNonLocalAtomsCurrentProcess with non-zero compact support,
-     * vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
-     * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for
-     * details of the expression of the configurational force terms for the
-     * norm-conserving Troullier-Martins pseudopotential in the
-     * Kleinman-Bylander form. The same expressions also extend to the Optimized
-     * Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+    /* Flattened Storage for precomputed nonlocal pseudopotential quadrature
+     * data. This is to speedup the configurational force computation. Data
+     * format: vector(numNonLocalAtomsCurrentProcess with non-zero compact
+     * support, vector(number pseudo wave
+     * functions,map<cellid,num_quad_points*2>)). Refer to
+     * (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the
+     * expression of the configurational force terms for the norm-conserving
+     * Troullier-Martins pseudopotential in the Kleinman-Bylander form. The same
+     * expressions also extend to the Optimized Norm-Conserving Vanderbilt
+     * (ONCV) pseudopotentials.
      */
-    std::vector<std::vector<std::map<dealii::CellId, std::vector<double>>>>
-      d_nonLocalPSP_ZetalmDeltaVl;
+    std::vector<dataTypes::number> d_nonLocalPSP_ZetalmDeltaVl;
 
 
-    /* Storage for precomputed nonlocal pseudopotential quadrature data. This is
-     * to speedup the configurational stress computation. Data format:
-     * vector(numNonLocalAtomsCurrentProcess with non-zero compact support,
-     * vector(number pseudo wave
+    /* Flattened Storage for precomputed nonlocal pseudopotential quadrature
+     * data. This is to speedup the configurational stress computation. Data
+     * format: vector(numNonLocalAtomsCurrentProcess with non-zero compact
+     * support, vector(number pseudo wave
      * functions,map<cellid,num_quad_points*num_k_points*3*2>)). Refer to
      * (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the
      * expression of the configurational force terms for the norm-conserving
@@ -1583,14 +1583,33 @@ namespace dftfe
      * expressions also extend to the Optimized Norm-Conserving Vanderbilt
      * (ONCV) pseudopotentials.
      */
-    std::vector<std::vector<std::map<dealii::CellId, std::vector<double>>>>
-      d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;
+    std::vector<dataTypes::number>
+      d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms;
 
 
-    /// map from cell id to set of non local atom ids (local numbering)
-    std::map<dealii::CellId, std::set<unsigned int>>
+    /// map from cell number to set of non local atom ids (local numbering)
+    std::map<unsigned int, std::vector<unsigned int>>
       d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
+    /// vector of size num physical cells
+    std::vector<unsigned int> d_nonTrivialPseudoWfcsPerCellZetaDeltaVQuads;
+
+    /// vector of size num physical cell with starting index for each cell for
+    /// the above array
+    std::vector<unsigned int>
+      d_nonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads;
+
+    std::vector<unsigned int> d_nonTrivialAllCellsPseudoWfcIdToElemIdMap;
+
+    /// map from local nonlocal atomid to vector over cells
+    std::map<unsigned int, std::vector<unsigned int>>
+      d_atomIdToNonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads;
+
+    unsigned int d_sumNonTrivialPseudoWfcsOverAllCellsZetaDeltaVQuads;
+
+
+    std::vector<unsigned int> d_projecterKetTimesFlattenedVectorLocalIds;
+    std::vector<std::vector<unsigned int>> d_projectorKetTimesVectorLocalIds;
     //
     // vector of outermost Points for various radial Data
     //

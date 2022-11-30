@@ -338,10 +338,10 @@ namespace dftfe
                               {
                                 shapeFunctionGradValues[i] = T(
                                   operatorMatrix
-                                    .getShapeFunctionGradValuesDensityGaussQuad(
-                                      0)[icell * numNodesPerElement * 3 *
-                                           numQuadPoints +
-                                         i]);
+                                    .getShapeFunctionGradValuesDensityGaussQuad()
+                                      [icell * numNodesPerElement * 3 *
+                                         numQuadPoints +
+                                       i]);
                               }
 
                             xgemm(&transA,
@@ -546,10 +546,10 @@ namespace dftfe
                                 {
                                   shapeFunctionGradValues[i] = T(
                                     operatorMatrix
-                                      .getShapeFunctionGradValuesDensityGaussQuad(
-                                        0)[icell * numNodesPerElement * 3 *
-                                             numQuadPoints +
-                                           i]);
+                                      .getShapeFunctionGradValuesDensityGaussQuad()
+                                        [icell * numNodesPerElement * 3 *
+                                           numQuadPoints +
+                                         i]);
                                 }
 
                               xgemm(&transA,

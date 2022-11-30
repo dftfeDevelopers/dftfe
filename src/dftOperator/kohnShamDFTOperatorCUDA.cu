@@ -698,50 +698,50 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
+    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad)
   {
-    return use2pPlusOneGLQuad ? d_glShapeFunctionValueInvertedDevice :
-                                d_shapeFunctionValueInvertedDevice;
+    return use2pPlusOneGLQuad ? d_glShapeFunctionValueTransposedDevice :
+                                d_shapeFunctionValueTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionValuesNLPInverted()
+    getShapeFunctionValuesNLPTransposed()
   {
-    return d_shapeFunctionValueNLPInvertedDevice;
+    return d_shapeFunctionValueNLPTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesXInverted()
+    getShapeFunctionGradientValuesXTransposed()
   {
-    return d_shapeFunctionGradientValueXInvertedDevice;
+    return d_shapeFunctionGradientValueXTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesYInverted()
+    getShapeFunctionGradientValuesYTransposed()
   {
-    return d_shapeFunctionGradientValueYInvertedDevice;
+    return d_shapeFunctionGradientValueYTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZInverted()
+    getShapeFunctionGradientValuesZTransposed()
   {
-    return d_shapeFunctionGradientValueZInvertedDevice;
+    return d_shapeFunctionGradientValueZTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesNLPInverted()
+    getShapeFunctionGradientValuesNLPTransposed()
   {
-    return d_shapeFunctionGradientValueNLPInvertedDevice;
+    return d_shapeFunctionGradientValueNLPTransposedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -809,21 +809,6 @@ namespace dftfe
     return d_locallyOwnedProcBoundaryNodesVectorDevice;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<unsigned int> &
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
-  {
-    return d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<unsigned int> &
-  kohnShamDFTOperatorCUDAClass<FEOrder,
-                               FEOrderElectro>::getBoundaryIdToLocalIdMap()
-  {
-    return d_boundaryIdToLocalIdMapDevice;
-  }
 
   //
   // initialize kohnShamDFTOperatorCUDAClass object
@@ -961,10 +946,6 @@ namespace dftfe
 
     d_locallyOwnedProcBoundaryNodesVectorDevice.resize(localSize);
 
-    /*cudaMemcpy(thrust::raw_pointer_cast(&d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
-      locallyOwnedProcBoundaryNodesVector.begin(),
-      localSize*sizeof(unsigned int),
-      cudaMemcpyHostToDevice);*/
 
     d_locallyOwnedProcBoundaryNodesVectorDevice =
       locallyOwnedProcBoundaryNodesVector;
@@ -1028,41 +1009,6 @@ namespace dftfe
       {
         d_parallelProjectorKetTimesBlockVectorDevice.reinit(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
-
-
-        thrust::host_vector<unsigned int>
-          locallyOwnedProcProjectorKetBoundaryNodesVector(
-            dftPtr->d_projectorKetTimesVectorPar[0]
-              .get_partitioner()
-              ->local_size(),
-            0);
-
-        const std::vector<std::pair<unsigned int, unsigned int>>
-          &locallyOwnedProcProjectorKetBoundaryNodes =
-            dftPtr->d_projectorKetTimesVectorPar[0]
-              .get_partitioner()
-              ->import_indices();
-
-        for (unsigned int iset = 0;
-             iset < locallyOwnedProcProjectorKetBoundaryNodes.size();
-             ++iset)
-          {
-            const std::pair<unsigned int, unsigned int> &localIndices =
-              locallyOwnedProcProjectorKetBoundaryNodes[iset];
-            for (unsigned int inode = localIndices.first;
-                 inode < localIndices.second;
-                 ++inode)
-              {
-                locallyOwnedProcProjectorKetBoundaryNodesVector[inode] = 1;
-              }
-          }
-
-        d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice.resize(
-          dftPtr->d_projectorKetTimesVectorPar[0]
-            .get_partitioner()
-            ->local_size());
-        d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice =
-          locallyOwnedProcProjectorKetBoundaryNodesVector;
 
 
         d_totalPseudoWfcNonLocal = 0;

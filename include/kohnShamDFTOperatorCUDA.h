@@ -66,8 +66,6 @@ namespace dftfe
     const double *
     getInvSqrtMassVec();
 
-    thrust::device_vector<unsigned int> &
-    getBoundaryIdToLocalIdMap();
 
     distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle();
@@ -82,22 +80,22 @@ namespace dftfe
     getShapeFunctionValues();
 
     thrust::device_vector<double> &
-    getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false);
 
     thrust::device_vector<double> &
-    getShapeFunctionValuesNLPInverted();
+    getShapeFunctionValuesNLPTransposed();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesXInverted();
+    getShapeFunctionGradientValuesXTransposed();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesYInverted();
+    getShapeFunctionGradientValuesYTransposed();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZInverted();
+    getShapeFunctionGradientValuesZTransposed();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesNLPInverted();
+    getShapeFunctionGradientValuesNLPTransposed();
 
     thrust::device_vector<double> &
     getInverseJacobiansNLP();
@@ -122,9 +120,6 @@ namespace dftfe
 
     thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice();
-
-    thrust::device_vector<unsigned int> &
-    getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice();
 
 
     /**
@@ -577,9 +572,6 @@ namespace dftfe
     thrust::device_vector<unsigned int>
       d_locallyOwnedProcBoundaryNodesVectorDevice;
 
-    thrust::device_vector<unsigned int>
-      d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
-
     bool                   d_isMallocCalled = false;
     dataTypes::numberGPU **d_A, **d_B, **d_C;
     dataTypes::numberGPU **h_d_A, **h_d_B, **h_d_C;
@@ -652,20 +644,20 @@ namespace dftfe
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValue;
-    std::vector<double> d_shapeFunctionValueInverted;
+    std::vector<double> d_shapeFunctionValueTransposed;
 
     thrust::device_vector<double> d_shapeFunctionValueLpspDevice;
-    thrust::device_vector<double> d_shapeFunctionValueInvertedLpspDevice;
+    thrust::device_vector<double> d_shapeFunctionValueTransposedLpspDevice;
 
     /// storage for shapefunction gradients
     std::vector<double> d_shapeFunctionGradientValueX;
-    std::vector<double> d_shapeFunctionGradientValueXInverted;
+    std::vector<double> d_shapeFunctionGradientValueXTransposed;
 
     std::vector<double> d_shapeFunctionGradientValueY;
-    std::vector<double> d_shapeFunctionGradientValueYInverted;
+    std::vector<double> d_shapeFunctionGradientValueYTransposed;
 
     std::vector<double> d_shapeFunctionGradientValueZ;
-    std::vector<double> d_shapeFunctionGradientValueZInverted;
+    std::vector<double> d_shapeFunctionGradientValueZTransposed;
 
 
     std::vector<double>           d_cellJxWValues;

@@ -29,6 +29,7 @@
 namespace dftfe
 {
 #include "computeLocalAndNonLocalHamiltonianTimesX.cc"
+#include "computeNonLocalProjectorKetTimesXTimesV.cc"
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 #include "hamiltonianMatrixCalculator.cc"
 #include "matrixVectorProductImplementations.cc"
@@ -338,6 +339,14 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedCPUVec<dataTypes::number> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getParallelProjectorKetTimesBlockVector()
+  {
+    return dftPtr->d_projectorKetTimesVectorParFlattened;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::vector<double> &
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     getShapeFunctionValuesDensityGaussQuad() const
@@ -349,7 +358,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::vector<double> &
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradValuesDensityGaussQuad(const unsigned int idim) const
+    getShapeFunctionGradValuesDensityGaussQuad() const
   {
     return d_densityGaussQuadShapeFunctionGradientValues;
   }
@@ -362,6 +371,41 @@ namespace dftfe
   {
     return d_densityGlQuadShapeFunctionValues;
   }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getShapeFunctionValuesDensityTransposed() const
+  {
+    return d_shapeFunctionValueDensityTransposed;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getShapeFunctionValuesNLPTransposed() const
+  {
+    return d_shapeFunctionValueNLPTransposed;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getShapeFunctionGradientValuesNLPTransposed() const
+  {
+    return d_shapeFunctionGradientValueNLPTransposed;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::getInverseJacobiansNLP()
+    const
+  {
+    return d_inverseJacobiansNLP;
+  }
+
 
 
   //

@@ -26,6 +26,7 @@ SET(TARGET_SRC
   ./src/dftOperator/kohnShamDFTOperator.cc
   ./src/dftOperator/operator.cc
   ./src/force/force.cc
+  ./src/force/forceWfcContractions.cc  
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
   ./src/triangulation/meshMovement/meshMovement.cc
@@ -84,7 +85,7 @@ SET(CUDA_SRC
   ./src/linAlg/linearAlgebraOperationsCUDA.cu
   ./src/linAlg/pseudoGSCUDA.cu
   ./src/linAlg/rayleighRitzCUDA.cu
-  ./src/force/forceCUDA.cu
+  ./src/force/forceWfcContractionsCUDA.cu
   ./utils/constraintMatrixInfoCUDA.cu
   ./src/solvers/linearSolverCUDA.cu
   ./src/solvers/linearSolverCGCUDA.cu

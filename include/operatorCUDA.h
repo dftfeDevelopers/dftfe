@@ -76,9 +76,6 @@ namespace dftfe
     virtual const double *
     getInvSqrtMassVec() = 0;
 
-    virtual thrust::device_vector<unsigned int> &
-    getBoundaryIdToLocalIdMap() = 0;
-
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
 
@@ -92,22 +89,22 @@ namespace dftfe
     getShapeFunctionValues() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad = false) = 0;
+    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false) = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionValuesNLPInverted() = 0;
+    getShapeFunctionValuesNLPTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesXInverted() = 0;
+    getShapeFunctionGradientValuesXTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesYInverted() = 0;
+    getShapeFunctionGradientValuesYTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZInverted() = 0;
+    getShapeFunctionGradientValuesZTransposed() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesNLPInverted() = 0;
+    getShapeFunctionGradientValuesNLPTransposed() = 0;
 
     virtual thrust::device_vector<double> &
     getInverseJacobiansNLP() = 0;
@@ -133,9 +130,6 @@ namespace dftfe
     virtual thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
 
-    virtual thrust::device_vector<unsigned int> &
-    getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice() = 0;
-
     /**
      * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
      *
@@ -150,6 +144,16 @@ namespace dftfe
 
     virtual void
     reinit(const unsigned int wavefunBlockSize, bool flag) = 0;
+
+    /**
+     * @brief sets the data member to appropriate kPoint and spin Index
+     *
+     * @param kPointIndex  k-point Index to set
+     */
+    virtual void
+    reinitkPointSpinIndex(const unsigned int kPointIndex,
+                          const unsigned int spinIndex) = 0;
+
 
     /**
      * @brief compute diagonal mass matrix
@@ -389,26 +393,24 @@ namespace dftfe
 
     thrust::device_vector<double> d_shapeFunctionValueDevice;
 
-    thrust::device_vector<double> d_shapeFunctionValueInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionValueTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionValueNLPInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionValueNLPTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueXInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueXTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueYInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueYTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueZInvertedDevice;
+    thrust::device_vector<double> d_shapeFunctionGradientValueZTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueNLPInvertedDevice;
+    thrust::device_vector<double>
+      d_shapeFunctionGradientValueNLPTransposedDevice;
 
     thrust::device_vector<double> d_inverseJacobiansNLPDevice;
 
     /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
     /// gradients
-    thrust::device_vector<double> d_glShapeFunctionValueInvertedDevice;
-
-    thrust::device_vector<unsigned int> d_boundaryIdToLocalIdMapDevice;
-
+    thrust::device_vector<double> d_glShapeFunctionValueTransposedDevice;
 
 
     thrust::device_vector<dealii::types::global_dof_index>

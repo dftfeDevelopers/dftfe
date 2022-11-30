@@ -341,41 +341,41 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
 
       d_shapeFunctionValue.resize(numberQuadraturePoints * numberDofsPerElement,
                                   0.0);
-      d_shapeFunctionValueInverted.resize(numberQuadraturePoints *
-                                            numberDofsPerElement,
-                                          0.0);
+      d_shapeFunctionValueTransposed.resize(numberQuadraturePoints *
+                                              numberDofsPerElement,
+                                            0.0);
 
       d_shapeFunctionGradientValueX.resize(numberPhysicalCells *
                                              numberQuadraturePoints *
                                              numberDofsPerElement,
                                            0.0);
-      d_shapeFunctionGradientValueXInverted.resize(numberPhysicalCells *
-                                                     numberQuadraturePoints *
-                                                     numberDofsPerElement,
-                                                   0.0);
+      d_shapeFunctionGradientValueXTransposed.resize(numberPhysicalCells *
+                                                       numberQuadraturePoints *
+                                                       numberDofsPerElement,
+                                                     0.0);
 
       d_shapeFunctionGradientValueY.resize(numberPhysicalCells *
                                              numberQuadraturePoints *
                                              numberDofsPerElement,
                                            0.0);
-      d_shapeFunctionGradientValueYInverted.resize(numberPhysicalCells *
-                                                     numberQuadraturePoints *
-                                                     numberDofsPerElement,
-                                                   0.0);
+      d_shapeFunctionGradientValueYTransposed.resize(numberPhysicalCells *
+                                                       numberQuadraturePoints *
+                                                       numberDofsPerElement,
+                                                     0.0);
 
       d_shapeFunctionGradientValueZ.resize(numberPhysicalCells *
                                              numberQuadraturePoints *
                                              numberDofsPerElement,
                                            0.0);
-      d_shapeFunctionGradientValueZInverted.resize(numberPhysicalCells *
-                                                     numberQuadraturePoints *
-                                                     numberDofsPerElement,
-                                                   0.0);
+      d_shapeFunctionGradientValueZTransposed.resize(numberPhysicalCells *
+                                                       numberQuadraturePoints *
+                                                       numberDofsPerElement,
+                                                     0.0);
 
       std::vector<double> shapeFunctionValueLpsp(numberQuadraturePointsLpsp *
                                                    numberDofsPerElement,
                                                  0.0);
-      std::vector<double> shapeFunctionValueInvertedLpsp(
+      std::vector<double> shapeFunctionValueTransposedLpsp(
         numberQuadraturePointsLpsp * numberDofsPerElement, 0.0);
 
 
@@ -411,7 +411,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                                                   numberQuadraturePoints +
                                                 iNode * numberQuadraturePoints +
                                                 q_point] = shape_grad[0];
-                  d_shapeFunctionGradientValueXInverted
+                  d_shapeFunctionGradientValueXTransposed
                     [iElem * numberQuadraturePoints * numberDofsPerElement +
                      q_point * numberDofsPerElement + iNode] = shape_grad[0];
 
@@ -419,7 +419,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                                                   numberQuadraturePoints +
                                                 iNode * numberQuadraturePoints +
                                                 q_point] = shape_grad[1];
-                  d_shapeFunctionGradientValueYInverted
+                  d_shapeFunctionGradientValueYTransposed
                     [iElem * numberQuadraturePoints * numberDofsPerElement +
                      q_point * numberDofsPerElement + iNode] = shape_grad[1];
 
@@ -427,7 +427,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                                                   numberQuadraturePoints +
                                                 iNode * numberQuadraturePoints +
                                                 q_point] = shape_grad[2];
-                  d_shapeFunctionGradientValueZInverted
+                  d_shapeFunctionGradientValueZTransposed
                     [iElem * numberQuadraturePoints * numberDofsPerElement +
                      q_point * numberDofsPerElement + iNode] = shape_grad[2];
                 }
@@ -444,10 +444,10 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                     {
                       const double val = fe_values.shape_value(iNode, q_point);
                       d_shapeFunctionValue[numberQuadraturePoints * iNode +
-                                           q_point]       = val;
-                      d_shapeFunctionValueInverted[q_point *
-                                                     numberDofsPerElement +
-                                                   iNode] = val;
+                                           q_point]         = val;
+                      d_shapeFunctionValueTransposed[q_point *
+                                                       numberDofsPerElement +
+                                                     iNode] = val;
                     }
 
                 for (unsigned int iNode = 0; iNode < numberDofsPerElement;
@@ -460,28 +460,29 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                         fe_values_lpsp.shape_value(iNode, q_point);
                       shapeFunctionValueLpsp[numberQuadraturePointsLpsp *
                                                iNode +
-                                             q_point]       = val;
-                      shapeFunctionValueInvertedLpsp[q_point *
-                                                       numberDofsPerElement +
-                                                     iNode] = val;
+                                             q_point]         = val;
+                      shapeFunctionValueTransposedLpsp[q_point *
+                                                         numberDofsPerElement +
+                                                       iNode] = val;
                     }
               }
 
             iElem++;
           }
 
-      d_shapeFunctionValueDevice         = d_shapeFunctionValue;
-      d_shapeFunctionValueInvertedDevice = d_shapeFunctionValueInverted;
+      d_shapeFunctionValueDevice           = d_shapeFunctionValue;
+      d_shapeFunctionValueTransposedDevice = d_shapeFunctionValueTransposed;
 
-      d_shapeFunctionGradientValueXInvertedDevice =
-        d_shapeFunctionGradientValueXInverted;
-      d_shapeFunctionGradientValueYInvertedDevice =
-        d_shapeFunctionGradientValueYInverted;
-      d_shapeFunctionGradientValueZInvertedDevice =
-        d_shapeFunctionGradientValueZInverted;
+      d_shapeFunctionGradientValueXTransposedDevice =
+        d_shapeFunctionGradientValueXTransposed;
+      d_shapeFunctionGradientValueYTransposedDevice =
+        d_shapeFunctionGradientValueYTransposed;
+      d_shapeFunctionGradientValueZTransposedDevice =
+        d_shapeFunctionGradientValueZTransposed;
 
-      d_shapeFunctionValueLpspDevice         = shapeFunctionValueLpsp;
-      d_shapeFunctionValueInvertedLpspDevice = shapeFunctionValueInvertedLpsp;
+      d_shapeFunctionValueLpspDevice = shapeFunctionValueLpsp;
+      d_shapeFunctionValueTransposedLpspDevice =
+        shapeFunctionValueTransposedLpsp;
 
       // d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
       d_cellJxWValuesDevice = d_cellJxWValues;
@@ -499,7 +500,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
       //
       // resize data members
       //
-      std::vector<double> glShapeFunctionValueInverted(
+      std::vector<double> glShapeFunctionValueTransposed(
         numberQuadraturePointsGl * numberDofsPerElement, 0.0);
 
       cellPtr = dftPtr->matrix_free_data
@@ -512,11 +513,11 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
              ++q_point)
           {
             const double val = fe_valuesGl.shape_value(iNode, q_point);
-            glShapeFunctionValueInverted[q_point * numberDofsPerElement +
-                                         iNode] = val;
+            glShapeFunctionValueTransposed[q_point * numberDofsPerElement +
+                                           iNode] = val;
           }
 
-      d_glShapeFunctionValueInvertedDevice = glShapeFunctionValueInverted;
+      d_glShapeFunctionValueTransposedDevice = glShapeFunctionValueTransposed;
 
       // QGauss<3>  quadratureNLP(C_num1DQuadNLPSP<FEOrder>());
       QIterated<3>       quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
@@ -533,11 +534,11 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
       //
       // resize data members
       //
-      std::vector<double> nlpShapeFunctionValueInverted(
+      std::vector<double> nlpShapeFunctionValueTransposed(
         numberQuadraturePointsNLP * numberDofsPerElement, 0.0);
       std::vector<double> inverseJacobiansNLP(
         numberPhysicalCells * numberQuadraturePointsNLP * 3 * 3, 0.0);
-      std::vector<double> shapeFunctionGradientValueNLPInverted(
+      std::vector<double> shapeFunctionGradientValueNLPTransposed(
         numberQuadraturePointsNLP * numberDofsPerElement * 3, 0.0);
 
       cellPtr = dftPtr->matrix_free_data
@@ -581,9 +582,9 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                     {
                       const double val =
                         fe_valuesNLP.shape_value(iNode, q_point);
-                      nlpShapeFunctionValueInverted[q_point *
-                                                      numberDofsPerElement +
-                                                    iNode] = val;
+                      nlpShapeFunctionValueTransposed[q_point *
+                                                        numberDofsPerElement +
+                                                      iNode] = val;
 
                       const dealii::Tensor<1, 3, double> &shape_grad_real =
                         fe_valuesNLP.shape_grad(iNode, q_point);
@@ -593,14 +594,14 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                         apply_transformation(jacobians[q_point].transpose(),
                                              shape_grad_real);
 
-                      shapeFunctionGradientValueNLPInverted
+                      shapeFunctionGradientValueNLPTransposed
                         [q_point * numberDofsPerElement * 3 + iNode] =
                           shape_grad_reference[0];
-                      shapeFunctionGradientValueNLPInverted
+                      shapeFunctionGradientValueNLPTransposed
                         [q_point * numberDofsPerElement * 3 +
                          numberDofsPerElement + iNode] =
                           shape_grad_reference[1];
-                      shapeFunctionGradientValueNLPInverted
+                      shapeFunctionGradientValueNLPTransposed
                         [q_point * numberDofsPerElement * 3 +
                          numberDofsPerElement * 2 + iNode] =
                           shape_grad_reference[2];
@@ -610,9 +611,9 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
             iElem++;
           }
 
-      d_shapeFunctionValueNLPInvertedDevice = nlpShapeFunctionValueInverted;
-      d_shapeFunctionGradientValueNLPInvertedDevice =
-        shapeFunctionGradientValueNLPInverted;
+      d_shapeFunctionValueNLPTransposedDevice = nlpShapeFunctionValueTransposed;
+      d_shapeFunctionGradientValueNLPTransposedDevice =
+        shapeFunctionGradientValueNLPTransposed;
       d_inverseJacobiansNLPDevice = inverseJacobiansNLP;
     }
 }

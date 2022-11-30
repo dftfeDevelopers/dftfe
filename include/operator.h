@@ -72,6 +72,9 @@ namespace dftfe
     virtual void
     reinit(const unsigned int wavefunBlockSize) = 0;
 
+    virtual void
+    reinitkPointSpinIndex(const unsigned int kPointIndex,
+                          const unsigned int spinIndex) = 0;
 
     virtual void
     initCellWaveFunctionMatrix(
@@ -146,6 +149,14 @@ namespace dftfe
        const double                          scalarB,
        distributedCPUVec<dataTypes::number> &dst,
        std::vector<dataTypes::number> &      cellDstWaveFunctionMatrix) = 0;
+
+    virtual void
+    computeNonLocalProjectorKetTimesXTimesV(
+      distributedCPUVec<dataTypes::number> &src,
+      distributedCPUVec<dataTypes::number> &projectorKetTimesVectorFlattened,
+      const unsigned int                    numberWaveFunctions) = 0;
+
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
@@ -240,15 +251,30 @@ namespace dftfe
     getFlattenedArrayCellLocalProcIndexIdMap() const = 0;
 
 
+    virtual distributedCPUVec<dataTypes::number> &
+    getParallelProjectorKetTimesBlockVector() = 0;
+
+
     virtual const std::vector<double> &
     getShapeFunctionValuesDensityGaussQuad() const = 0;
 
     virtual const std::vector<double> &
-    getShapeFunctionGradValuesDensityGaussQuad(
-      const unsigned int idim) const = 0;
+    getShapeFunctionGradValuesDensityGaussQuad() const = 0;
 
     virtual const std::vector<double> &
     getShapeFunctionValuesDensityGaussLobattoQuad() const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionValuesDensityTransposed() const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionValuesNLPTransposed() const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionGradientValuesNLPTransposed() const = 0;
+
+    virtual const std::vector<double> &
+    getInverseJacobiansNLP() const = 0;
 
 
   protected:
@@ -293,6 +319,14 @@ namespace dftfe
     /// FEOrderRhoNodal+1 Gauss Lobotto quadrature shape function data for
     /// FEOrder mesh with node index being the fastest index
     std::vector<double> d_densityGlQuadShapeFunctionValues;
+
+    std::vector<double> d_shapeFunctionValueDensityTransposed;
+
+    std::vector<double> d_shapeFunctionValueNLPTransposed;
+
+    std::vector<double> d_shapeFunctionGradientValueNLPTransposed;
+
+    std::vector<double> d_inverseJacobiansNLP;
 
     //
     // mpi communicator
