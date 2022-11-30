@@ -18,7 +18,7 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cuda"
+dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cpu"
 dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii/install_complex_cpu"
 alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
 libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/install_libxc5.2.3"
@@ -33,7 +33,7 @@ mdiPath="/home/dsambit/exaaltInterfaceRelated/MDI_Library/install"
 
 
 #Toggle GPU compilation
-withGPU=ON
+withGPU=OFF
 
 #Option to link to NCCL library (Only for GPU compilation)
 withNCCL=OFF
