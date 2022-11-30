@@ -295,7 +295,7 @@ namespace dftfe
     const unsigned int vectorsBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
-    distributedDeviceVec<dataTypes::numberDevice> &cudaFlattenedArrayBlock =
+    distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
     distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector =
@@ -304,9 +304,9 @@ namespace dftfe
 
     if (isFirstFilteringCall || !d_isTemporaryParallelVectorsCreated)
       {
-        d_YArray.reinit(cudaFlattenedArrayBlock);
+        d_YArray.reinit(deviceFlattenedArrayBlock);
 
-        d_cudaFlattenedFloatArrayBlock.reinit(
+        d_deviceFlattenedFloatArrayBlock.reinit(
           operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
           vectorsBlockSize);
 
@@ -318,11 +318,11 @@ namespace dftfe
 
 
         if (d_dftParams.overlapComputeCommunCheby)
-          d_cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
+          d_deviceFlattenedArrayBlock2.reinit(deviceFlattenedArrayBlock);
 
 
         if (d_dftParams.overlapComputeCommunCheby)
-          d_YArray2.reinit(d_cudaFlattenedArrayBlock2);
+          d_YArray2.reinit(d_deviceFlattenedArrayBlock2);
 
 
         d_isTemporaryParallelVectorsCreated = true;
@@ -339,7 +339,7 @@ namespace dftfe
         const std::pair<double, double> bounds =
           linearAlgebraOperationsDevice::lanczosLowerUpperBoundEigenSpectrum(
             operatorMatrix,
-            cudaFlattenedArrayBlock,
+            deviceFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
             vectorsBlockSize,
@@ -371,7 +371,7 @@ namespace dftfe
         const std::pair<double, double> bounds =
           linearAlgebraOperationsDevice::lanczosLowerUpperBoundEigenSpectrum(
             operatorMatrix,
-            cudaFlattenedArrayBlock,
+            deviceFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
             vectorsBlockSize,
@@ -500,7 +500,7 @@ namespace dftfe
                                               localVectorSize,
                                               eigenVectorsFlattenedDevice,
                                               totalNumberWaveFunctions,
-                                              cudaFlattenedArrayBlock.begin(),
+                                              deviceFlattenedArrayBlock.begin(),
                                               jvec);
 
             if (d_dftParams.overlapComputeCommunCheby &&
@@ -511,7 +511,7 @@ namespace dftfe
                 localVectorSize,
                 eigenVectorsFlattenedDevice,
                 totalNumberWaveFunctions,
-                d_cudaFlattenedArrayBlock2.begin(),
+                d_deviceFlattenedArrayBlock2.begin(),
                 jvec + BVec);
 
             //
@@ -523,11 +523,11 @@ namespace dftfe
               {
                 linearAlgebraOperationsDevice::chebyshevFilter(
                   operatorMatrix,
-                  cudaFlattenedArrayBlock,
+                  deviceFlattenedArrayBlock,
                   d_YArray,
-                  d_cudaFlattenedFloatArrayBlock,
+                  d_deviceFlattenedFloatArrayBlock,
                   projectorKetTimesVector,
-                  d_cudaFlattenedArrayBlock2,
+                  d_deviceFlattenedArrayBlock2,
                   d_YArray2,
                   d_projectorKetTimesVector2,
                   localVectorSize,
@@ -543,9 +543,9 @@ namespace dftfe
               {
                 linearAlgebraOperationsDevice::chebyshevFilter(
                   operatorMatrix,
-                  cudaFlattenedArrayBlock,
+                  deviceFlattenedArrayBlock,
                   d_YArray,
-                  d_cudaFlattenedFloatArrayBlock,
+                  d_deviceFlattenedFloatArrayBlock,
                   projectorKetTimesVector,
                   localVectorSize,
                   BVec,
@@ -560,12 +560,13 @@ namespace dftfe
             // copy current wavefunction vectors block to vector containing
             // all wavefunction vectors
             stridedCopyFromBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
-                                         256>>>(BVec,
-                                                localVectorSize,
-                                                cudaFlattenedArrayBlock.begin(),
-                                                totalNumberWaveFunctions,
-                                                eigenVectorsFlattenedDevice,
-                                                jvec);
+                                         256>>>(
+              BVec,
+              localVectorSize,
+              deviceFlattenedArrayBlock.begin(),
+              totalNumberWaveFunctions,
+              eigenVectorsFlattenedDevice,
+              jvec);
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
@@ -573,7 +574,7 @@ namespace dftfe
                                            256>>>(
                 BVec,
                 localVectorSize,
-                d_cudaFlattenedArrayBlock2.begin(),
+                d_deviceFlattenedArrayBlock2.begin(),
                 totalNumberWaveFunctions,
                 eigenVectorsFlattenedDevice,
                 jvec + BVec);
@@ -670,8 +671,8 @@ namespace dftfe
           elpaScala,
           eigenVectorsFlattenedDevice,
           eigenVectorsRotFracDensityFlattenedDevice,
-          cudaFlattenedArrayBlock,
-          d_cudaFlattenedFloatArrayBlock,
+          deviceFlattenedArrayBlock,
+          d_deviceFlattenedFloatArrayBlock,
           d_YArray,
           projectorKetTimesVector,
           localVectorSize,
@@ -692,8 +693,8 @@ namespace dftfe
           operatorMatrix,
           elpaScala,
           eigenVectorsFlattenedDevice,
-          cudaFlattenedArrayBlock,
-          d_cudaFlattenedFloatArrayBlock,
+          deviceFlattenedArrayBlock,
+          d_deviceFlattenedFloatArrayBlock,
           d_YArray,
           projectorKetTimesVector,
           localVectorSize,
@@ -721,7 +722,7 @@ namespace dftfe
           linearAlgebraOperationsDevice::computeEigenResidualNorm(
             operatorMatrix,
             eigenVectorsRotFracDensityFlattenedDevice,
-            cudaFlattenedArrayBlock,
+            deviceFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
             localVectorSize,
@@ -736,7 +737,7 @@ namespace dftfe
           linearAlgebraOperationsDevice::computeEigenResidualNorm(
             operatorMatrix,
             eigenVectorsFlattenedDevice,
-            cudaFlattenedArrayBlock,
+            deviceFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
             localVectorSize,
@@ -821,7 +822,7 @@ namespace dftfe
     const unsigned int chebyBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
-    distributedDeviceVec<dataTypes::numberDevice> &cudaFlattenedArrayBlock =
+    distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
     distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector =
@@ -830,19 +831,19 @@ namespace dftfe
 
     if (!d_isTemporaryParallelVectorsCreated)
       {
-        d_YArray.reinit(cudaFlattenedArrayBlock);
+        d_YArray.reinit(deviceFlattenedArrayBlock);
 
-        d_cudaFlattenedFloatArrayBlock.reinit(
+        d_deviceFlattenedFloatArrayBlock.reinit(
           operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
           chebyBlockSize);
 
 
         if (d_dftParams.overlapComputeCommunCheby)
-          d_cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
+          d_deviceFlattenedArrayBlock2.reinit(deviceFlattenedArrayBlock);
 
 
         if (d_dftParams.overlapComputeCommunCheby)
-          d_YArray2.reinit(d_cudaFlattenedArrayBlock2);
+          d_YArray2.reinit(d_deviceFlattenedArrayBlock2);
 
 
         if (d_dftParams.overlapComputeCommunCheby)
@@ -854,7 +855,7 @@ namespace dftfe
         const std::pair<double, double> bounds =
           linearAlgebraOperationsDevice::lanczosLowerUpperBoundEigenSpectrum(
             operatorMatrix,
-            cudaFlattenedArrayBlock,
+            deviceFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
             chebyBlockSize,
@@ -966,7 +967,7 @@ namespace dftfe
                              localVectorSize,
                              eigenVectorsFlattenedDevice,
                              totalNumberWaveFunctions,
-                             cudaFlattenedArrayBlock.begin(),
+                             deviceFlattenedArrayBlock.begin(),
                              jvec);
 
                     if (d_dftParams.overlapComputeCommunCheby &&
@@ -977,7 +978,7 @@ namespace dftfe
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                totalNumberWaveFunctions,
-                               d_cudaFlattenedArrayBlock2.begin(),
+                               d_deviceFlattenedArrayBlock2.begin(),
                                jvec + BVec);
 
                     //
@@ -990,11 +991,11 @@ namespace dftfe
                       {
                         linearAlgebraOperationsDevice::chebyshevFilter(
                           operatorMatrix,
-                          cudaFlattenedArrayBlock,
+                          deviceFlattenedArrayBlock,
                           d_YArray,
-                          d_cudaFlattenedFloatArrayBlock,
+                          d_deviceFlattenedFloatArrayBlock,
                           projectorKetTimesVector,
-                          d_cudaFlattenedArrayBlock2,
+                          d_deviceFlattenedArrayBlock2,
                           d_YArray2,
                           d_projectorKetTimesVector2,
                           localVectorSize,
@@ -1010,9 +1011,9 @@ namespace dftfe
                       {
                         linearAlgebraOperationsDevice::chebyshevFilter(
                           operatorMatrix,
-                          cudaFlattenedArrayBlock,
+                          deviceFlattenedArrayBlock,
                           d_YArray,
-                          d_cudaFlattenedFloatArrayBlock,
+                          d_deviceFlattenedFloatArrayBlock,
                           projectorKetTimesVector,
                           localVectorSize,
                           BVec,
@@ -1030,7 +1031,7 @@ namespace dftfe
                       (BVec + 255) / 256 * localVectorSize,
                       256>>>(BVec,
                              localVectorSize,
-                             cudaFlattenedArrayBlock.begin(),
+                             deviceFlattenedArrayBlock.begin(),
                              totalNumberWaveFunctions,
                              eigenVectorsFlattenedDevice,
                              jvec);
@@ -1041,7 +1042,7 @@ namespace dftfe
                         (BVec + 255) / 256 * localVectorSize,
                         256>>>(BVec,
                                localVectorSize,
-                               d_cudaFlattenedArrayBlock2.begin(),
+                               d_deviceFlattenedArrayBlock2.begin(),
                                totalNumberWaveFunctions,
                                eigenVectorsFlattenedDevice,
                                jvec + BVec);
@@ -1135,7 +1136,7 @@ namespace dftfe
     const unsigned int vectorsBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
-    distributedDeviceVec<dataTypes::numberDevice> &cudaFlattenedArrayBlock =
+    distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
     distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector =
@@ -1143,9 +1144,9 @@ namespace dftfe
 
     if (!d_isTemporaryParallelVectorsCreated)
       {
-        d_YArray.reinit(cudaFlattenedArrayBlock);
+        d_YArray.reinit(deviceFlattenedArrayBlock);
 
-        d_cudaFlattenedFloatArrayBlock.reinit(
+        d_deviceFlattenedFloatArrayBlock.reinit(
           operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
           vectorsBlockSize);
       }
@@ -1165,8 +1166,8 @@ namespace dftfe
     linearAlgebraOperationsDevice::densityMatrixEigenBasisFirstOrderResponse(
       operatorMatrix,
       eigenVectorsFlattenedDevice,
-      cudaFlattenedArrayBlock,
-      d_cudaFlattenedFloatArrayBlock,
+      deviceFlattenedArrayBlock,
+      d_deviceFlattenedFloatArrayBlock,
       d_YArray,
       projectorKetTimesVector,
       localVectorSize,

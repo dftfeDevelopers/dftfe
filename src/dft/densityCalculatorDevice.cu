@@ -380,11 +380,11 @@ namespace dftfe
       deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
         partialOccupVecDevice(BVec, zero);
 
-      distributedDeviceVec<NumberType> &cudaFlattenedArrayBlock =
+      distributedDeviceVec<NumberType> &deviceFlattenedArrayBlock =
         operatorMatrix.getParallelChebyBlockVectorDevice();
 
       const unsigned int numGhosts =
-        cudaFlattenedArrayBlock.ghostFlattenedSize();
+        deviceFlattenedArrayBlock.ghostFlattenedSize();
 
       NumberType *cellWaveFunctionMatrix =
         reinterpret_cast<NumberType *>(thrust::raw_pointer_cast(
@@ -497,14 +497,14 @@ namespace dftfe
                                       spinIndex),
                                numLocalDofs,
                                totalNumWaveFunctions,
-                               cudaFlattenedArrayBlock.begin(),
+                               deviceFlattenedArrayBlock.begin(),
                                jvec);
 
 
-                      cudaFlattenedArrayBlock.updateGhostValues();
+                      deviceFlattenedArrayBlock.updateGhostValues();
 
                       (operatorMatrix.getOverloadedConstraintMatrix())
-                        ->distribute(cudaFlattenedArrayBlock, BVec);
+                        ->distribute(deviceFlattenedArrayBlock, BVec);
 
                       for (int iblock = 0; iblock < (numCellBlocks + 1);
                            iblock++)
@@ -523,7 +523,7 @@ namespace dftfe
                                 256>>>(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                                cudaFlattenedArrayBlock.begin(),
+                                deviceFlattenedArrayBlock.begin(),
                                 cellWaveFunctionMatrix,
                                 thrust::raw_pointer_cast(&(
                                   operatorMatrix
@@ -814,14 +814,14 @@ namespace dftfe
                                    spinIndex),
                         numLocalDofs,
                         Nfr,
-                        cudaFlattenedArrayBlock.begin(),
+                        deviceFlattenedArrayBlock.begin(),
                         jvec);
 
 
-                      cudaFlattenedArrayBlock.updateGhostValues();
+                      deviceFlattenedArrayBlock.updateGhostValues();
 
                       (operatorMatrix.getOverloadedConstraintMatrix())
-                        ->distribute(cudaFlattenedArrayBlock, BVec);
+                        ->distribute(deviceFlattenedArrayBlock, BVec);
 
                       for (int iblock = 0; iblock < (numCellBlocks + 1);
                            iblock++)
@@ -840,7 +840,7 @@ namespace dftfe
                                 256>>>(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                                cudaFlattenedArrayBlock.begin(),
+                                deviceFlattenedArrayBlock.begin(),
                                 cellWaveFunctionMatrix,
                                 thrust::raw_pointer_cast(&(
                                   operatorMatrix

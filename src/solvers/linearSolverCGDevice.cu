@@ -431,14 +431,14 @@ namespace dftfe
     const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
-                       (cudaConstants::blockSize * 2);
+    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
+                       (deviceConstants::blockSize * 2);
 
     cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionAndComputeDotProductKernel<double,
-                                                cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(
+                                                deviceConstants::blockSize>
+      <<<blocks, deviceConstants::blockSize>>>(
         d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     local_sum = d_devSum[0];
@@ -454,14 +454,14 @@ namespace dftfe
     const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
-                       (cudaConstants::blockSize * 2);
+    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
+                       (deviceConstants::blockSize * 2);
 
     cudaMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionComputeDotProductAndSaddKernel<double,
-                                                    cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(
+                                                    deviceConstants::blockSize>
+      <<<blocks, deviceConstants::blockSize>>>(
         d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     local_sum = d_devSum[0];
@@ -476,19 +476,19 @@ namespace dftfe
   linearSolverCGDevice::scaleXRandComputeNorm(double *x, const double &alpha)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (cudaConstants::blockSize * 2 - 1)) /
-                       (cudaConstants::blockSize * 2);
+    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
+                       (deviceConstants::blockSize * 2);
 
     cudaMemset(d_devSumPtr, 0, sizeof(double));
 
-    scaleXRandComputeNormKernel<double, cudaConstants::blockSize>
-      <<<blocks, cudaConstants::blockSize>>>(x,
-                                             d_rvec.begin(),
-                                             d_devSumPtr,
-                                             d_qvec.begin(),
-                                             d_dvec.begin(),
-                                             alpha,
-                                             d_xLocalDof);
+    scaleXRandComputeNormKernel<double, deviceConstants::blockSize>
+      <<<blocks, deviceConstants::blockSize>>>(x,
+                                               d_rvec.begin(),
+                                               d_devSumPtr,
+                                               d_qvec.begin(),
+                                               d_dvec.begin(),
+                                               alpha,
+                                               d_xLocalDof);
 
     local_sum = d_devSum[0];
 

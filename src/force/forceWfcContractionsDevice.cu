@@ -1046,8 +1046,9 @@ namespace dftfe
 
       void
       devicePortedForceKernelsAllD(
-        operatorDFTDeviceClass &                       operatorMatrix,
-        distributedDeviceVec<dataTypes::numberDevice> &cudaFlattenedArrayBlock,
+        operatorDFTDeviceClass &operatorMatrix,
+        distributedDeviceVec<dataTypes::numberDevice>
+          &deviceFlattenedArrayBlock,
         distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVectorD,
         const dataTypes::numberDevice *                X,
         const thrust::device_vector<double> &          eigenValuesD,
@@ -1111,11 +1112,11 @@ namespace dftfe
                                  ->get_vector_partitioner()
                                  ->local_size();
         stridedCopyToBlockKernel<<<(numPsi + 255) / 256 * M, 256>>>(
-          numPsi, X, M, N, cudaFlattenedArrayBlock.begin(), startingVecId);
-        cudaFlattenedArrayBlock.updateGhostValues();
+          numPsi, X, M, N, deviceFlattenedArrayBlock.begin(), startingVecId);
+        deviceFlattenedArrayBlock.updateGhostValues();
 
         (operatorMatrix.getOverloadedConstraintMatrix())
-          ->distribute(cudaFlattenedArrayBlock, numPsi);
+          ->distribute(deviceFlattenedArrayBlock, numPsi);
 
 
         // cudaDeviceSynchronize();
@@ -1123,7 +1124,7 @@ namespace dftfe
         // double kernel1_time = MPI_Wtime();
 
         interpolatePsiComputeELocWfcEshelbyTensorD(operatorMatrix,
-                                                   cudaFlattenedArrayBlock,
+                                                   deviceFlattenedArrayBlock,
                                                    numPsi,
                                                    numCells,
                                                    numQuads,
@@ -1168,7 +1169,7 @@ namespace dftfe
             // double kernel2_time = MPI_Wtime();
 
             operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(
-              cudaFlattenedArrayBlock.begin(),
+              deviceFlattenedArrayBlock.begin(),
               projectorKetTimesVectorD,
               numPsi);
 
@@ -1275,7 +1276,7 @@ namespace dftfe
       // MPI_Barrier(mpiCommParent);
       // double device_time = MPI_Wtime();
 
-      distributedDeviceVec<dataTypes::numberDevice> &cudaFlattenedArrayBlock =
+      distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
         operatorMatrix.getParallelChebyBlockVectorDevice();
 
       distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVectorD =
@@ -1443,7 +1444,7 @@ namespace dftfe
 
                   devicePortedForceKernelsAllD(
                     operatorMatrix,
-                    cudaFlattenedArrayBlock,
+                    deviceFlattenedArrayBlock,
                     projectorKetTimesVectorD,
                     X +
                       ((1 + spinPolarizedFlag) * kPoint + spinIndex) * MLoc * N,

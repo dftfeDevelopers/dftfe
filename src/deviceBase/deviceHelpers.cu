@@ -108,7 +108,7 @@ namespace dftfe
                                    NumberTypeReal *                 imagArr)
     {
       copyComplexArrToRealArrsDeviceKernel<NumberTypeComplex, NumberTypeReal>
-        <<<size / cudaConstants::blockSize + 1, cudaConstants::blockSize>>>(
+        <<<size / deviceConstants::blockSize + 1, deviceConstants::blockSize>>>(
           size, complexArr, realArr, imagArr);
     }
 
@@ -121,7 +121,7 @@ namespace dftfe
                                    NumberTypeComplex *              complexArr)
     {
       copyRealArrsToComplexArrDeviceKernel<NumberTypeComplex, NumberTypeReal>
-        <<<size / cudaConstants::blockSize + 1, cudaConstants::blockSize>>>(
+        <<<size / deviceConstants::blockSize + 1, deviceConstants::blockSize>>>(
           size, realArr, imagArr, complexArr);
     }
 
@@ -226,20 +226,20 @@ namespace dftfe
     void
     sadd(NumberType *y, NumberType *x, const NumberType beta, const int size)
     {
-      const int gridSize = (size / cudaConstants::blockSize) +
-                           (size % cudaConstants::blockSize == 0 ? 0 : 1);
+      const int gridSize = (size / deviceConstants::blockSize) +
+                           (size % deviceConstants::blockSize == 0 ? 0 : 1);
       saddKernel<NumberType>
-        <<<gridSize, cudaConstants::blockSize>>>(y, x, beta, size);
+        <<<gridSize, deviceConstants::blockSize>>>(y, x, beta, size);
     }
 
     template <typename NumberType>
     void
     set(NumberType *x, const NumberType &alpha, const int size)
     {
-      const int gridSize = (size / cudaConstants::blockSize) +
-                           (size % cudaConstants::blockSize == 0 ? 0 : 1);
+      const int gridSize = (size / deviceConstants::blockSize) +
+                           (size % deviceConstants::blockSize == 0 ? 0 : 1);
       setKernel<NumberType>
-        <<<gridSize, cudaConstants::blockSize>>>(size, alpha, x);
+        <<<gridSize, deviceConstants::blockSize>>>(size, alpha, x);
     }
 
 
@@ -307,8 +307,8 @@ namespace dftfe
         std::fill(d_data, d_data + d_size, s);
       else
         setKernel<NumberType>
-          <<<d_size / cudaConstants::blockSize + 1, cudaConstants::blockSize>>>(
-            d_size, s, d_data);
+          <<<d_size / deviceConstants::blockSize + 1,
+             deviceConstants::blockSize>>>(d_size, s, d_data);
     }
 
     template <typename NumberType, typename MemorySpace>
