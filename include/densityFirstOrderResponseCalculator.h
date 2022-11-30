@@ -86,13 +86,13 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
   template <typename NumberType, typename NumberTypeLowPrec>
   void
-  computeRhoFirstOrderResponseGPU(
+  computeRhoFirstOrderResponseDevice(
     const NumberType *                             X,
     const NumberType *                             XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
-    operatorDFTDeviceClass &                         operatorMatrix,
+    operatorDFTDeviceClass &                       operatorMatrix,
     const unsigned int                             matrixFreeDofhandlerIndex,
     const dealii::DoFHandler<3> &                  dofHandler,
     const unsigned int                             totalLocallyOwnedCells,

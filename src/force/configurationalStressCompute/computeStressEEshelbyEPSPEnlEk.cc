@@ -24,7 +24,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperatorGPU,
+    &kohnShamDFTEigenOperatorDevice,
 #endif
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
   const unsigned int                                 eigenDofHandlerIndex,
@@ -154,7 +154,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   AssertThrow(
     numMacroCells == numPhysicalCells,
     ExcMessage(
-      "DFT-FE Error: dealii for GPU DFT-FE must be compiled without any vectorization enabled."));
+      "DFT-FE Error: dealii for Device DFT-FE must be compiled without any vectorization enabled."));
 #endif
 
 
@@ -222,13 +222,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
 
 #if defined(DFTFE_WITH_DEVICE)
-      if (d_dftParams.useGPU)
+      if (d_dftParams.useDevice)
         {
           MPI_Barrier(d_mpiCommParent);
-          double gpu_time = MPI_Wtime();
+          double device_time = MPI_Wtime();
 
           forceDevice::wfcContractionsForceKernelsAllH(
-            kohnShamDFTEigenOperatorGPU,
+            kohnShamDFTEigenOperatorDevice,
             dftPtr->d_eigenVectorsFlattenedDevice.begin(),
             d_dftParams.spinPolarized,
             spinIndex,
@@ -259,10 +259,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             true,
             d_dftParams);
           MPI_Barrier(d_mpiCommParent);
-          gpu_time = MPI_Wtime() - gpu_time;
+          device_time = MPI_Wtime() - device_time;
 
           if (this_process == 0 && d_dftParams.verbosity >= 4)
-            std::cout << "Time for wfc contractions in stress: " << gpu_time
+            std::cout << "Time for wfc contractions in stress: " << device_time
                       << std::endl;
         }
       else

@@ -171,7 +171,7 @@ namespace dftfe
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
-    , d_isGPUToMPITaskBindingSetInternally(false)
+    , d_isDeviceToMPITaskBindingSetInternally(false)
   {}
 
   //
@@ -180,18 +180,18 @@ namespace dftfe
   dftfeWrapper::dftfeWrapper(const std::string parameter_file,
                              const MPI_Comm &  mpi_comm_parent,
                              const bool        printParams,
-                             const bool        setGPUToMPITaskBindingInternally,
+                             const bool setDeviceToMPITaskBindingInternally,
                              const std::string mode,
                              const std::string restartFilesPath)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
-    , d_isGPUToMPITaskBindingSetInternally(false)
+    , d_isDeviceToMPITaskBindingSetInternally(false)
   {
     reinit(parameter_file,
            mpi_comm_parent,
            printParams,
-           setGPUToMPITaskBindingInternally,
+           setDeviceToMPITaskBindingInternally,
            mode,
            restartFilesPath);
   }
@@ -205,21 +205,21 @@ namespace dftfe
                              const std::string restartDomainVectorsFile,
                              const MPI_Comm &  mpi_comm_parent,
                              const bool        printParams,
-                             const bool        setGPUToMPITaskBindingInternally,
+                             const bool setDeviceToMPITaskBindingInternally,
                              const std::string mode,
                              const std::string restartFilesPath,
                              const bool        isScfRestart)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
-    , d_isGPUToMPITaskBindingSetInternally(false)
+    , d_isDeviceToMPITaskBindingSetInternally(false)
   {
     reinit(parameter_file,
            restartCoordsFile,
            restartDomainVectorsFile,
            mpi_comm_parent,
            printParams,
-           setGPUToMPITaskBindingInternally,
+           setDeviceToMPITaskBindingInternally,
            mode,
            restartFilesPath,
            isScfRestart);
@@ -232,7 +232,7 @@ namespace dftfe
   //
   dftfeWrapper::dftfeWrapper(
     const MPI_Comm &                       mpi_comm_parent,
-    const bool                             useGPU,
+    const bool                             useDevice,
     const std::vector<std::vector<double>> atomicPositionsCart,
     const std::vector<unsigned int>        atomicNumbers,
     const std::vector<std::vector<double>> cell,
@@ -246,14 +246,14 @@ namespace dftfe
     const double                           meshSize,
     const double                           scfMixingParameter,
     const int                              verbosity,
-    const bool                             setGPUToMPITaskBindingInternally)
+    const bool                             setDeviceToMPITaskBindingInternally)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
-    , d_isGPUToMPITaskBindingSetInternally(false)
+    , d_isDeviceToMPITaskBindingSetInternally(false)
   {
     reinit(mpi_comm_parent,
-           useGPU,
+           useDevice,
            atomicPositionsCart,
            atomicNumbers,
            cell,
@@ -267,7 +267,7 @@ namespace dftfe
            meshSize,
            scfMixingParameter,
            verbosity,
-           setGPUToMPITaskBindingInternally);
+           setDeviceToMPITaskBindingInternally);
   }
 
 
@@ -280,7 +280,7 @@ namespace dftfe
   dftfeWrapper::reinit(const std::string parameter_file,
                        const MPI_Comm &  mpi_comm_parent,
                        const bool        printParams,
-                       const bool        setGPUToMPITaskBindingInternally,
+                       const bool        setDeviceToMPITaskBindingInternally,
                        const std::string mode,
                        const std::string restartFilesPath)
   {
@@ -299,7 +299,7 @@ namespace dftfe
                                            mode,
                                            restartFilesPath);
       }
-    initialize(setGPUToMPITaskBindingInternally);
+    initialize(setDeviceToMPITaskBindingInternally);
   }
 
 
@@ -309,7 +309,7 @@ namespace dftfe
                        const std::string restartDomainVectorsFile,
                        const MPI_Comm &  mpi_comm_parent,
                        const bool        printParams,
-                       const bool        setGPUToMPITaskBindingInternally,
+                       const bool        setDeviceToMPITaskBindingInternally,
                        const std::string mode,
                        const std::string restartFilesPath,
                        const bool        isScfRestart)
@@ -333,14 +333,14 @@ namespace dftfe
         d_dftfeParamsPtr->loadRhoData =
           d_dftfeParamsPtr->loadRhoData && isScfRestart;
       }
-    initialize(setGPUToMPITaskBindingInternally);
+    initialize(setDeviceToMPITaskBindingInternally);
   }
 
 
   void
   dftfeWrapper::reinit(
     const MPI_Comm &                       mpi_comm_parent,
-    const bool                             useGPU,
+    const bool                             useDevice,
     const std::vector<std::vector<double>> atomicPositionsCart,
     const std::vector<unsigned int>        atomicNumbers,
     const std::vector<std::vector<double>> cell,
@@ -354,7 +354,7 @@ namespace dftfe
     const double                           meshSize,
     const double                           scfMixingParameter,
     const int                              verbosity,
-    const bool                             setGPUToMPITaskBindingInternally)
+    const bool                             setDeviceToMPITaskBindingInternally)
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
@@ -673,10 +673,10 @@ namespace dftfe
                                            false,
                                            "GS");
 #ifdef DFTFE_WITH_DEVICE
-        d_dftfeParamsPtr->useGPU = useGPU;
+        d_dftfeParamsPtr->useDevice = useDevice;
 #endif
       }
-    initialize(setGPUToMPITaskBindingInternally);
+    initialize(setDeviceToMPITaskBindingInternally);
   }
 
 
@@ -715,16 +715,17 @@ namespace dftfe
   }
 
   void
-  dftfeWrapper::initialize(const bool setGPUToMPITaskBindingInternally)
+  dftfeWrapper::initialize(const bool setDeviceToMPITaskBindingInternally)
   {
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
 #ifdef DFTFE_WITH_DEVICE
-        if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally &&
-            !d_isGPUToMPITaskBindingSetInternally)
+        if (d_dftfeParamsPtr->useDevice &&
+            setDeviceToMPITaskBindingInternally &&
+            !d_isDeviceToMPITaskBindingSetInternally)
           {
-            dftfe::deviceUtils::setupGPU();
-            d_isGPUToMPITaskBindingSetInternally = true;
+            dftfe::deviceUtils::setupDevice();
+            d_isDeviceToMPITaskBindingSetInternally = true;
           }
 #endif
 

@@ -74,8 +74,8 @@ IF (WITH_GPU)
 ENDIF()
 
 SET(CUDA_SRC
-  ./src/gpuBase/deviceHelpers.cu
-  ./src/gpuBase/gpuDirectCCLWrapper.cu
+  ./src/deviceBase/deviceHelpers.cu
+  ./src/deviceBase/deviceDirectCCLWrapper.cu
   ./src/dft/densityCalculatorDevice.cu
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cu
   ./src/dftOperator/operatorDevice.cu

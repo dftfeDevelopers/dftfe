@@ -813,12 +813,12 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsGPU(
+  vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsDevice(
     const dealii::MatrixFree<3, double> &    matrix_free_data,
     const unsigned int                       mfBaseDofHandlerIndex,
     const unsigned int                       matrixFreeQuadratureIdAX,
     const unsigned int                       offset,
-    operatorDFTDeviceClass &                   operatorMatrix,
+    operatorDFTDeviceClass &                 operatorMatrix,
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
     const std::vector<std::vector<double>> & imagePositions,
     const std::vector<int> &                 imageIds,
@@ -1389,25 +1389,25 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime();
     //
-    // GPU poisson solve
+    // Device poisson solve
     //
     poissonDevice::solveVselfInBins(operatorMatrix,
-                                  matrix_free_data,
-                                  mfBaseDofHandlerIndex,
-                                  hangingPeriodicConstraintMatrix,
-                                  &rhsFlattened[0],
-                                  diagonalA.begin(),
-                                  &inhomoIdsColoredVecFlattened[0],
-                                  localSize,
-                                  ghostSize,
-                                  numberPoissonSolves,
-                                  d_mpiCommParent,
-                                  mpi_communicator,
-                                  &vselfBinsFieldsFlattened[0],
-                                  d_dftParams.verbosity,
-                                  d_dftParams.maxLinearSolverIterations,
-                                  d_dftParams.absLinearSolverTolerance,
-                                  FEOrderElectro != FEOrder ? true : false);
+                                    matrix_free_data,
+                                    mfBaseDofHandlerIndex,
+                                    hangingPeriodicConstraintMatrix,
+                                    &rhsFlattened[0],
+                                    diagonalA.begin(),
+                                    &inhomoIdsColoredVecFlattened[0],
+                                    localSize,
+                                    ghostSize,
+                                    numberPoissonSolves,
+                                    d_mpiCommParent,
+                                    mpi_communicator,
+                                    &vselfBinsFieldsFlattened[0],
+                                    d_dftParams.verbosity,
+                                    d_dftParams.maxLinearSolverIterations,
+                                    d_dftParams.absLinearSolverTolerance,
+                                    FEOrderElectro != FEOrder ? true : false);
 
     MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime() - time;
@@ -1649,29 +1649,29 @@ namespace dftfe
     std::vector<double> smearedChargeScaling;
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParams.useGPU)
-      solveVselfInBinsGPU(matrix_free_data,
-                          mfBaseDofHandlerIndex,
-                          matrixFreeQuadratureIdAX,
-                          offset,
-                          operatorMatrix,
-                          hangingPeriodicConstraintMatrix,
-                          imagePositions,
-                          imageIds,
-                          imageCharges,
-                          localVselfs,
-                          bQuadValuesAllAtoms,
-                          bQuadAtomIdsAllAtoms,
-                          bQuadAtomIdsAllAtomsImages,
-                          bCellNonTrivialAtomIds,
-                          bCellNonTrivialAtomIdsBins,
-                          bCellNonTrivialAtomImageIds,
-                          bCellNonTrivialAtomImageIdsBins,
-                          smearingWidths,
-                          smearedChargeScaling,
-                          smearedChargeQuadratureId,
-                          useSmearedCharges,
-                          true);
+    if (d_dftParams.useDevice)
+      solveVselfInBinsDevice(matrix_free_data,
+                             mfBaseDofHandlerIndex,
+                             matrixFreeQuadratureIdAX,
+                             offset,
+                             operatorMatrix,
+                             hangingPeriodicConstraintMatrix,
+                             imagePositions,
+                             imageIds,
+                             imageCharges,
+                             localVselfs,
+                             bQuadValuesAllAtoms,
+                             bQuadAtomIdsAllAtoms,
+                             bQuadAtomIdsAllAtomsImages,
+                             bCellNonTrivialAtomIds,
+                             bCellNonTrivialAtomIdsBins,
+                             bCellNonTrivialAtomImageIds,
+                             bCellNonTrivialAtomImageIdsBins,
+                             smearingWidths,
+                             smearedChargeScaling,
+                             smearedChargeQuadratureId,
+                             useSmearedCharges,
+                             true);
     else
       solveVselfInBins(matrix_free_data,
                        offset,

@@ -1,4 +1,4 @@
-DFT-FE can be interfaced with [MolSSI-MDI](https://github.com/MolSSI-MDI/MDI_Library). The MolSSI Driver Interface (MDI) project provides a standardized API for fast, on-the-fly communication between computational chemistry codes. DFT-FE can be used as a QM engine through MDI and the interface adheres to the [MDI Standard](https://molssi-mdi.github.io/MDI_Library/html/mdi_standard.html). The plugin mode has been tested on both CPUs and GPUs. 
+DFT-FE can be interfaced with [MolSSI-MDI](https://github.com/MolSSI-MDI/MDI_Library). The MolSSI Driver Interface (MDI) project provides a standardized API for fast, on-the-fly communication between computational chemistry codes. DFT-FE can be used as a QM engine through MDI and the interface adheres to the [MDI Standard](https://molssi-mdi.github.io/MDI_Library/html/mdi_standard.html). The plugin mode has been tested on both CPUs and Devices. 
 
 
 Steps to interface MolSSI-MDI with DFT-FE
@@ -24,7 +24,7 @@ srun -n 256 -c 4 --cpu-bind=cores ./driver_plug_cxx -driver_nranks 0 -plugin_nra
 ```
 Please note that plugin_path above points to the location of libdftfe.so.
 
-* DFT-FE's MDI interface currently only sets up GGA PBE ground-state DFT calculations using ONCV pseudopotentials (http://www.pseudo-dojo.org for example) on either CPU only or hybrid CPU-GPU architecture. Fermi-dirac smearing with 500 K smearing temperature is used by default.
+* DFT-FE's MDI interface currently only sets up GGA PBE ground-state DFT calculations using ONCV pseudopotentials (http://www.pseudo-dojo.org for example) on either CPU only or hybrid CPU-Device architecture. Fermi-dirac smearing with 500 K smearing temperature is used by default.
 
 * **CAUTION**: Due to the nature of the electrostatics formulation implemented in DFT-FE we strongly recommend to tile periodic cell lengths so that they are more than 10 atomic units
 

@@ -105,13 +105,13 @@ namespace dftfe
                                                dealii::MemorySpace::Host>;
 #ifdef DFTFE_WITH_DEVICE
   // template <typename elem_type>
-  // using distributedGPUVec =
+  // using distributedDeviceVec =
   //  dealii::LinearAlgebra::distributed::Vector<elem_type,
   //                                             dealii::MemorySpace::Device>;
 
   template <typename NumberType>
-  using distributedGPUVec =
-    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::GPU>;
+  using distributedDeviceVec =
+    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::Device>;
 
 #endif
 } // namespace dftfe

@@ -164,12 +164,12 @@ namespace dftfe
      * processor
      */
     void
-    solveVselfInBinsGPU(
+    solveVselfInBinsDevice(
       const dealii::MatrixFree<3, double> &    matrix_free_data,
       const unsigned int                       mfBaseDofHandlerIndex,
       const unsigned int                       matrixFreeQuadratureIdAX,
       const unsigned int                       offset,
-      operatorDFTDeviceClass &                   operatorMatrix,
+      operatorDFTDeviceClass &                 operatorMatrix,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
       const std::vector<std::vector<double>> & imagePositions,
       const std::vector<int> &                 imageIds,

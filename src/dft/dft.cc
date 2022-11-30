@@ -179,11 +179,11 @@ namespace dftfe
                                 dftParams)
 #ifdef DFTFE_WITH_DEVICE
     , d_subspaceIterationSolverDevice(mpi_comm_parent,
-                                    mpi_comm_domain,
-                                    0.0,
-                                    0.0,
-                                    0.0,
-                                    dftParams)
+                                      mpi_comm_domain,
+                                      0.0,
+                                      0.0,
+                                      0.0,
+                                      dftParams)
     , d_phiTotalSolverProblemDevice(mpi_comm_domain)
 #endif
     , d_phiTotalSolverProblem(mpi_comm_domain)
@@ -202,9 +202,9 @@ namespace dftfe
     d_isRestartGroundStateCalcFromChk = false;
 
 #if defined(DFTFE_WITH_DEVICE)
-    d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
-    if (d_dftParamsPtr->useGPUDirectAllReduce)
-      d_gpucclMpiCommDomainPtr->init(mpi_comm_domain);
+    d_devicecclMpiCommDomainPtr = new DeviceCCLWrapper;
+    if (d_dftParamsPtr->useDeviceDirectAllReduce)
+      d_devicecclMpiCommDomainPtr->init(mpi_comm_domain);
 #endif
     d_pspCutOff =
       d_dftParamsPtr->reproducible_output ?
@@ -220,7 +220,7 @@ namespace dftfe
     matrix_free_data.clear();
     delete forcePtr;
 #if defined(DFTFE_WITH_DEVICE)
-    delete d_gpucclMpiCommDomainPtr;
+    delete d_devicecclMpiCommDomainPtr;
 #endif
 
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
@@ -509,7 +509,7 @@ namespace dftfe
         // start with 17-20% buffer to leave room for additional modifications
         // due to block size restrictions
 #ifdef DFTFE_WITH_DEVICE
-        if (d_dftParamsPtr->useGPU && d_dftParamsPtr->autoGPUBlockSizes)
+        if (d_dftParamsPtr->useDevice && d_dftParamsPtr->autoDeviceBlockSizes)
           d_numEigenValues =
             (numElectrons / 2.0) + std::max((d_dftParamsPtr->mixingMethod ==
                                                  "LOW_RANK_DIELECM_PRECOND" ?
@@ -538,7 +538,7 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU && d_dftParamsPtr->autoGPUBlockSizes)
+    if (d_dftParamsPtr->useDevice && d_dftParamsPtr->autoDeviceBlockSizes)
       {
         const unsigned int numberBandGroups =
           dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
@@ -552,7 +552,7 @@ namespace dftfe
           (d_numEigenValues % numberBandGroups == 0 ||
            d_numEigenValues / numberBandGroups == 0),
           ExcMessage(
-            "DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for GPU run."));
+            "DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for Device run."));
 
         const unsigned int bandGroupTaskId =
           dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
@@ -682,15 +682,15 @@ namespace dftfe
         if (d_dftParamsPtr->verbosity >= 1)
           {
             pcout
-              << " Setting the number of Kohn-Sham wave functions for GPU run to be: "
+              << " Setting the number of Kohn-Sham wave functions for Device run to be: "
               << d_numEigenValues << std::endl;
-            pcout << " Setting CHEBY WFC BLOCK SIZE for GPU run to be "
+            pcout << " Setting CHEBY WFC BLOCK SIZE for Device run to be "
                   << d_dftParamsPtr->chebyWfcBlockSize << std::endl;
-            pcout << " Setting WFC BLOCK SIZE for GPU run to be "
+            pcout << " Setting WFC BLOCK SIZE for Device run to be "
                   << d_dftParamsPtr->wfcBlockSize << std::endl;
             if (d_dftParamsPtr->algoType == "FAST")
               pcout
-                << " Setting SPECTRUM SPLIT CORE EIGENSTATES for GPU run to be "
+                << " Setting SPECTRUM SPLIT CORE EIGENSTATES for Device run to be "
                 << d_dftParamsPtr->numCoreWfcRR << std::endl;
           }
       }
@@ -1815,13 +1815,13 @@ namespace dftfe
       &kohnShamDFTEigenOperatorDevice = *d_kohnShamDFTOperatorDevicePtr;
 #endif
 
-    if (!d_dftParamsPtr->useGPU)
+    if (!d_dftParamsPtr->useDevice)
       {
         kohnShamDFTEigenOperator.init();
       }
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU)
+    if (d_dftParamsPtr->useDevice)
       {
         kohnShamDFTEigenOperatorDevice.init();
 
@@ -1834,14 +1834,14 @@ namespace dftfe
           (d_numEigenValues % d_dftParamsPtr->chebyWfcBlockSize == 0 ||
            d_numEigenValues / d_dftParamsPtr->chebyWfcBlockSize == 0),
           ExcMessage(
-            "DFT-FE Error: total number wavefunctions must be exactly divisible by cheby wfc block size for GPU run."));
+            "DFT-FE Error: total number wavefunctions must be exactly divisible by cheby wfc block size for Device run."));
 
 
         AssertThrow(
           (d_numEigenValues % d_dftParamsPtr->wfcBlockSize == 0 ||
            d_numEigenValues / d_dftParamsPtr->wfcBlockSize == 0),
           ExcMessage(
-            "DFT-FE Error: total number wavefunctions must be exactly divisible by wfc block size for GPU run."));
+            "DFT-FE Error: total number wavefunctions must be exactly divisible by wfc block size for Device run."));
 
         AssertThrow(
           (d_dftParamsPtr->wfcBlockSize % d_dftParamsPtr->chebyWfcBlockSize ==
@@ -1849,14 +1849,14 @@ namespace dftfe
            d_dftParamsPtr->wfcBlockSize / d_dftParamsPtr->chebyWfcBlockSize >=
              0),
           ExcMessage(
-            "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for GPU run."));
+            "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for Device run."));
 
         if (d_numEigenValuesRR != d_numEigenValues)
           AssertThrow(
             (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
              d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
             ExcMessage(
-              "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for GPU run."));
+              "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for Device run."));
 
         // band group parallelization data structures
         const unsigned int numberBandGroups =
@@ -1866,7 +1866,7 @@ namespace dftfe
           (d_numEigenValues % numberBandGroups == 0 ||
            d_numEigenValues / numberBandGroups == 0),
           ExcMessage(
-            "DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for GPU run."));
+            "DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for Device run."));
 
         const unsigned int bandGroupTaskId =
           dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
@@ -1879,24 +1879,24 @@ namespace dftfe
              d_dftParamsPtr->chebyWfcBlockSize ==
            0),
           ExcMessage(
-            "DFT-FE Error: band parallelization group size must be exactly divisible by CHEBY WFC BLOCK SIZE for GPU run."));
+            "DFT-FE Error: band parallelization group size must be exactly divisible by CHEBY WFC BLOCK SIZE for Device run."));
 
         AssertThrow(
           (bandGroupLowHighPlusOneIndices[1] % d_dftParamsPtr->wfcBlockSize ==
            0),
           ExcMessage(
-            "DFT-FE Error: band parallelization group size must be exactly divisible by WFC BLOCK SIZE for GPU run."));
+            "DFT-FE Error: band parallelization group size must be exactly divisible by WFC BLOCK SIZE for Device run."));
 
         kohnShamDFTEigenOperatorDevice.reinit(
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues), true);
       }
 #endif
 
-    if (!d_dftParamsPtr->useGPU)
+    if (!d_dftParamsPtr->useDevice)
       kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
         d_lpspQuadratureId);
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU)
+    if (d_dftParamsPtr->useDevice)
       kohnShamDFTEigenOperatorDevice.preComputeShapeFunctionGradientIntegrals(
         d_lpspQuadratureId);
 #endif
@@ -1918,11 +1918,11 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::reInitializeKohnShamDFTOperator()
   {
-    if (!d_dftParamsPtr->useGPU)
+    if (!d_dftParamsPtr->useDevice)
       d_kohnShamDFTOperatorPtr->resetExtPotHamFlag();
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU)
+    if (d_dftParamsPtr->useDevice)
       {
         d_kohnShamDFTOperatorDevicePtr->resetExtPotHamFlag();
 
@@ -1942,7 +1942,7 @@ namespace dftfe
     if (d_kohnShamDFTOperatorsInitialized)
       {
 #ifdef DFTFE_WITH_DEVICE
-        if (d_dftParamsPtr->useGPU)
+        if (d_dftParamsPtr->useDevice)
           d_kohnShamDFTOperatorDevicePtr->destroyCublasHandle();
 #endif
 
@@ -1989,8 +1989,8 @@ namespace dftfe
     // set up linear solver Device
 #ifdef DFTFE_WITH_DEVICE
     linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
-                                    mpi_communicator,
-                                    linearSolverCGDevice::CG);
+                                        mpi_communicator,
+                                        linearSolverCGDevice::CG);
 #endif
 
     //
@@ -2005,12 +2005,13 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
       kerkerPreconditionedResidualSolverProblemDevice(d_mpiCommParent,
-                                                    mpi_communicator);
+                                                      mpi_communicator);
 #endif
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-        if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+        if (d_dftParamsPtr->useDevice and
+            d_dftParamsPtr->floatingNuclearCharges)
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
@@ -2041,8 +2042,8 @@ namespace dftfe
     computing_timer.enter_subsection("Nuclear self-potential solve");
     computingTimerStandard.enter_subsection("Nuclear self-potential solve");
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU)
-      d_vselfBinsManager.solveVselfInBinsGPU(
+    if (d_dftParamsPtr->useDevice)
+      d_vselfBinsManager.solveVselfInBinsDevice(
         d_matrixFreeDataPRefined,
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
@@ -2277,7 +2278,7 @@ namespace dftfe
             << std::endl
             << "Poisson solve for total electrostatic potential (rhoIn+b): ";
 
-        if (d_dftParamsPtr->useGPU and
+        if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
@@ -2378,16 +2379,17 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useGPU and
+        if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_DEVICE
-            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                               d_dftParamsPtr->absLinearSolverTolerance,
-                               d_dftParamsPtr->maxLinearSolverIterations,
-                               kohnShamDFTEigenOperatorDevice.getCublasHandle(),
-                               d_dftParamsPtr->verbosity);
+            CGSolverDevice.solve(
+              d_phiTotalSolverProblemDevice,
+              d_dftParamsPtr->absLinearSolverTolerance,
+              d_dftParamsPtr->maxLinearSolverIterations,
+              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              d_dftParamsPtr->verbosity);
 #endif
           }
         else
@@ -2458,7 +2460,7 @@ namespace dftfe
                   {
                     computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
-                    if (d_dftParamsPtr->useGPU)
+                    if (d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
                         rhoInValuesSpinPolarized,
                         d_phiInValues,
@@ -2467,7 +2469,7 @@ namespace dftfe
                         d_rhoCore,
                         d_lpspQuadratureId);
 #endif
-                    if (!d_dftParamsPtr->useGPU)
+                    if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.computeVEffSpinPolarized(
                         rhoInValuesSpinPolarized,
                         d_phiInValues,
@@ -2482,7 +2484,7 @@ namespace dftfe
                   {
                     computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
-                    if (d_dftParamsPtr->useGPU)
+                    if (d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
                         rhoInValuesSpinPolarized,
                         gradRhoInValuesSpinPolarized,
@@ -2493,7 +2495,7 @@ namespace dftfe
                         d_gradRhoCore,
                         d_lpspQuadratureId);
 #endif
-                    if (!d_dftParamsPtr->useGPU)
+                    if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.computeVEffSpinPolarized(
                         rhoInValuesSpinPolarized,
                         gradRhoInValuesSpinPolarized,
@@ -2507,7 +2509,7 @@ namespace dftfe
                   }
 
 #ifdef DFTFE_WITH_DEVICE
-                if (d_dftParamsPtr->useGPU)
+                if (d_dftParamsPtr->useDevice)
                   {
                     computing_timer.enter_subsection(
                       "Hamiltonian Matrix Computation");
@@ -2523,16 +2525,16 @@ namespace dftfe
                      ++kPoint)
                   {
 #ifdef DFTFE_WITH_DEVICE
-                    if (d_dftParamsPtr->useGPU)
-                      kohnShamDFTEigenOperatorDevice.reinitkPointSpinIndex(kPoint,
-                                                                         s);
+                    if (d_dftParamsPtr->useDevice)
+                      kohnShamDFTEigenOperatorDevice.reinitkPointSpinIndex(
+                        kPoint, s);
 #endif
-                    if (!d_dftParamsPtr->useGPU)
+                    if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
 
 
 
-                    if (!d_dftParamsPtr->useGPU)
+                    if (!d_dftParamsPtr->useDevice)
                       {
                         computing_timer.enter_subsection(
                           "Hamiltonian Matrix Computation");
@@ -2552,7 +2554,7 @@ namespace dftfe
                           }
 
 #ifdef DFTFE_WITH_DEVICE
-                        if (d_dftParamsPtr->useGPU)
+                        if (d_dftParamsPtr->useDevice)
                           kohnShamEigenSpaceCompute(
                             s,
                             kPoint,
@@ -2574,7 +2576,7 @@ namespace dftfe
                             scfConverged ? false : true,
                             scfIter == 0);
 #endif
-                        if (!d_dftParamsPtr->useGPU)
+                        if (!d_dftParamsPtr->useDevice)
                           kohnShamEigenSpaceCompute(
                             s,
                             kPoint,
@@ -2674,16 +2676,16 @@ namespace dftfe
                             ;
 
 #ifdef DFTFE_WITH_DEVICE
-                            if (d_dftParamsPtr->useGPU)
+                            if (d_dftParamsPtr->useDevice)
                               kohnShamDFTEigenOperatorDevice
                                 .reinitkPointSpinIndex(kPoint, s);
 #endif
-                            if (!d_dftParamsPtr->useGPU)
+                            if (!d_dftParamsPtr->useDevice)
                               kohnShamDFTEigenOperator.reinitkPointSpinIndex(
                                 kPoint, s);
 
 #ifdef DFTFE_WITH_DEVICE
-                            if (d_dftParamsPtr->useGPU)
+                            if (d_dftParamsPtr->useDevice)
                               kohnShamEigenSpaceCompute(
                                 s,
                                 kPoint,
@@ -2701,7 +2703,7 @@ namespace dftfe
                                 true,
                                 scfIter == 0);
 #endif
-                            if (!d_dftParamsPtr->useGPU)
+                            if (!d_dftParamsPtr->useDevice)
                               kohnShamEigenSpaceCompute(
                                 s,
                                 kPoint,
@@ -2786,14 +2788,15 @@ namespace dftfe
               {
                 computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
-                if (d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues,
-                                                           d_phiInValues,
-                                                           d_pseudoVLoc,
-                                                           d_rhoCore,
-                                                           d_lpspQuadratureId);
+                if (d_dftParamsPtr->useDevice)
+                  kohnShamDFTEigenOperatorDevice.computeVEff(
+                    rhoInValues,
+                    d_phiInValues,
+                    d_pseudoVLoc,
+                    d_rhoCore,
+                    d_lpspQuadratureId);
 #endif
-                if (!d_dftParamsPtr->useGPU)
+                if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                                        d_phiInValues,
                                                        d_pseudoVLoc,
@@ -2806,16 +2809,17 @@ namespace dftfe
               {
                 computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
-                if (d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues,
-                                                           gradRhoInValues,
-                                                           d_phiInValues,
-                                                           d_pseudoVLoc,
-                                                           d_rhoCore,
-                                                           d_gradRhoCore,
-                                                           d_lpspQuadratureId);
+                if (d_dftParamsPtr->useDevice)
+                  kohnShamDFTEigenOperatorDevice.computeVEff(
+                    rhoInValues,
+                    gradRhoInValues,
+                    d_phiInValues,
+                    d_pseudoVLoc,
+                    d_rhoCore,
+                    d_gradRhoCore,
+                    d_lpspQuadratureId);
 #endif
-                if (!d_dftParamsPtr->useGPU)
+                if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                                        gradRhoInValues,
                                                        d_phiInValues,
@@ -2827,7 +2831,7 @@ namespace dftfe
               }
 
 #ifdef DFTFE_WITH_DEVICE
-            if (d_dftParamsPtr->useGPU)
+            if (d_dftParamsPtr->useDevice)
               {
                 computing_timer.enter_subsection(
                   "Hamiltonian Matrix Computation");
@@ -2842,14 +2846,15 @@ namespace dftfe
                  ++kPoint)
               {
 #ifdef DFTFE_WITH_DEVICE
-                if (d_dftParamsPtr->useGPU)
-                  kohnShamDFTEigenOperatorDevice.reinitkPointSpinIndex(kPoint, 0);
+                if (d_dftParamsPtr->useDevice)
+                  kohnShamDFTEigenOperatorDevice.reinitkPointSpinIndex(kPoint,
+                                                                       0);
 #endif
-                if (!d_dftParamsPtr->useGPU)
+                if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
 
 
-                if (!d_dftParamsPtr->useGPU)
+                if (!d_dftParamsPtr->useDevice)
                   {
                     computing_timer.enter_subsection(
                       "Hamiltonian Matrix Computation");
@@ -2870,7 +2875,7 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_DEVICE
-                    if (d_dftParamsPtr->useGPU)
+                    if (d_dftParamsPtr->useDevice)
                       kohnShamEigenSpaceCompute(
                         0,
                         kPoint,
@@ -2892,7 +2897,7 @@ namespace dftfe
                         scfConverged ? false : true,
                         scfIter == 0);
 #endif
-                    if (!d_dftParamsPtr->useGPU)
+                    if (!d_dftParamsPtr->useDevice)
                       kohnShamEigenSpaceCompute(
                         0,
                         kPoint,
@@ -2968,16 +2973,16 @@ namespace dftfe
                                 << 1 + count << std::endl;
 
 #ifdef DFTFE_WITH_DEVICE
-                        if (d_dftParamsPtr->useGPU)
+                        if (d_dftParamsPtr->useDevice)
                           kohnShamDFTEigenOperatorDevice.reinitkPointSpinIndex(
                             kPoint, 0);
 #endif
-                        if (!d_dftParamsPtr->useGPU)
+                        if (!d_dftParamsPtr->useDevice)
                           kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,
                                                                          0);
 
 #ifdef DFTFE_WITH_DEVICE
-                        if (d_dftParamsPtr->useGPU)
+                        if (d_dftParamsPtr->useDevice)
                           kohnShamEigenSpaceCompute(
                             0,
                             kPoint,
@@ -2995,7 +3000,7 @@ namespace dftfe
                             scfIter == 0);
 
 #endif
-                        if (!d_dftParamsPtr->useGPU)
+                        if (!d_dftParamsPtr->useDevice)
                           kohnShamEigenSpaceCompute(
                             0,
                             kPoint,
@@ -3133,7 +3138,7 @@ namespace dftfe
 
             computing_timer.enter_subsection("phiTot solve");
 
-            if (d_dftParamsPtr->useGPU and
+            if (d_dftParamsPtr->useDevice and
                 d_dftParamsPtr->floatingNuclearCharges and
                 not d_dftParamsPtr->pinnedNodeForPBC)
               {
@@ -3354,7 +3359,7 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useGPU and
+        if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
@@ -3380,11 +3385,12 @@ namespace dftfe
               false,
               true);
 
-            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                               d_dftParamsPtr->absLinearSolverTolerance,
-                               d_dftParamsPtr->maxLinearSolverIterations,
-                               kohnShamDFTEigenOperatorDevice.getCublasHandle(),
-                               d_dftParamsPtr->verbosity);
+            CGSolverDevice.solve(
+              d_phiTotalSolverProblemDevice,
+              d_dftParamsPtr->absLinearSolverTolerance,
+              d_dftParamsPtr->maxLinearSolverIterations,
+              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              d_dftParamsPtr->verbosity);
 #endif
           }
         else
@@ -3536,7 +3542,7 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU &&
+    if (d_dftParamsPtr->useDevice &&
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
       for (unsigned int kPoint = 0;
@@ -3547,7 +3553,7 @@ namespace dftfe
           deviceUtils::copyDeviceVecToHostVec(
             d_eigenVectorsFlattenedDevice.begin() +
               kPoint * d_eigenVectorsFlattenedSTL[0].size(),
-            reinterpret_cast<dataTypes::numberGPU *>(
+            reinterpret_cast<dataTypes::numberDevice *>(
               &d_eigenVectorsFlattenedSTL[kPoint][0]),
             d_eigenVectorsFlattenedSTL[kPoint].size());
         }
@@ -3761,7 +3767,7 @@ namespace dftfe
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
 
 #ifdef DFTFE_WITH_DEVICE
-          if (d_dftParamsPtr->useGPU)
+          if (d_dftParamsPtr->useDevice)
             kohnShamDFTEigenOperatorDevice
               .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
                                                         true);
@@ -3813,7 +3819,7 @@ namespace dftfe
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
 
 #ifdef DFTFE_WITH_DEVICE
-          if (d_dftParamsPtr->useGPU)
+          if (d_dftParamsPtr->useDevice)
             kohnShamDFTEigenOperatorDevice
               .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
                                                         true);
@@ -3865,7 +3871,7 @@ namespace dftfe
                  d_dftParamsPtr->verbosity >= 4 ? true : false);
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useGPU)
+    if (d_dftParamsPtr->useDevice)
       kohnShamDFTEigenOperatorDevice.preComputeShapeFunctionGradientIntegrals(
         d_lpspQuadratureId, true);
 #endif

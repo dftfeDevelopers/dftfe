@@ -47,10 +47,10 @@ namespace dftfe
     typedef double               numberValueType;
     typedef float                numberFP32ValueType;
 #  if defined(DFTFE_WITH_DEVICE)
-    typedef cuDoubleComplex         numberGPU;
-    typedef cuFloatComplex          numberFP32GPU;
-    typedef thrust::complex<double> numberThrustGPU;
-    typedef thrust::complex<float>  numberFP32ThrustGPU;
+    typedef cuDoubleComplex         numberDevice;
+    typedef cuFloatComplex          numberFP32Device;
+    typedef thrust::complex<double> numberThrustDevice;
+    typedef thrust::complex<float>  numberFP32ThrustDevice;
 #  endif
 #else
     typedef double number;
@@ -58,10 +58,10 @@ namespace dftfe
     typedef double numberValueType;
     typedef float  numberFP32ValueType;
 #  if defined(DFTFE_WITH_DEVICE)
-    typedef double numberGPU;
-    typedef float  numberFP32GPU;
-    typedef double numberThrustGPU;
-    typedef float  numberFP32ThrustGPU;
+    typedef double numberDevice;
+    typedef float  numberFP32Device;
+    typedef double numberThrustDevice;
+    typedef float  numberFP32ThrustDevice;
 #  endif
 #endif
 

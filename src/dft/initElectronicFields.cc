@@ -83,7 +83,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
                                      constraintsNone);
 
 #ifdef DFTFE_WITH_DEVICE
-  if (d_dftParamsPtr->useGPU)
+  if (d_dftParamsPtr->useDevice)
     d_constraintsNoneDataInfoDevice.initialize(
       matrix_free_data.get_vector_partitioner(), constraintsNone);
 #endif
@@ -137,11 +137,11 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "initRho called");
 
 #ifdef DFTFE_WITH_DEVICE
-  if (d_dftParamsPtr->useGPU)
+  if (d_dftParamsPtr->useDevice)
     {
-      d_eigenVectorsFlattenedDevice.resize(d_eigenVectorsFlattenedSTL[0].size() *
-                                         (1 + d_dftParamsPtr->spinPolarized) *
-                                         d_kPointWeights.size());
+      d_eigenVectorsFlattenedDevice.resize(
+        d_eigenVectorsFlattenedSTL[0].size() *
+        (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
 
       if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
         d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
@@ -161,7 +161,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
            ++kPoint)
         {
           deviceUtils::copyHostVecToDeviceVec(
-            reinterpret_cast<dataTypes::numberGPU *>(
+            reinterpret_cast<dataTypes::numberDevice *>(
               &d_eigenVectorsFlattenedSTL[kPoint][0]),
             d_eigenVectorsFlattenedDevice.begin() +
               kPoint * d_eigenVectorsFlattenedSTL[0].size(),
@@ -170,7 +170,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     }
 #endif
 
-  if (!d_dftParamsPtr->useGPU &&
+  if (!d_dftParamsPtr->useDevice &&
       d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
     {
       d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;

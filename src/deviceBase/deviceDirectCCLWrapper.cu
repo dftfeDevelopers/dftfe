@@ -21,7 +21,7 @@
 
 #  include <iostream>
 
-#  include "gpuDirectCCLWrapper.h"
+#  include "deviceDirectCCLWrapper.h"
 #  include "deviceHelpers.h"
 
 #  if defined(DFTFE_WITH_NCCL)
@@ -59,12 +59,12 @@ namespace dftfe
       while (0)
 #  endif
 
-  GPUCCLWrapper::GPUCCLWrapper()
+  DeviceCCLWrapper::DeviceCCLWrapper()
     : commCreated(false)
   {}
 
   void
-  GPUCCLWrapper::init(const MPI_Comm &mpiComm)
+  DeviceCCLWrapper::init(const MPI_Comm &mpiComm)
   {
     MPICHECK(MPI_Comm_size(mpiComm, &totalRanks));
     MPICHECK(MPI_Comm_rank(mpiComm, &myRank));
@@ -83,7 +83,7 @@ namespace dftfe
 #  endif
   }
 
-  GPUCCLWrapper::~GPUCCLWrapper()
+  DeviceCCLWrapper::~DeviceCCLWrapper()
   {
 #  ifdef DFTFE_WITH_NCCL
     if (commCreated)
@@ -96,10 +96,10 @@ namespace dftfe
   }
 
   int
-  GPUCCLWrapper::gpuDirectAllReduceWrapper(const float * send,
-                                           float *       recv,
-                                           int           size,
-                                           cudaStream_t &stream)
+  DeviceCCLWrapper::deviceDirectAllReduceWrapper(const float * send,
+                                                 float *       recv,
+                                                 int           size,
+                                                 cudaStream_t &stream)
   {
 #  ifdef DFTFE_WITH_NCCL
     NCCLCHECK(ncclAllReduce((const void *)send,
@@ -114,10 +114,10 @@ namespace dftfe
   }
 
   int
-  GPUCCLWrapper::gpuDirectAllReduceWrapper(const double *send,
-                                           double *      recv,
-                                           int           size,
-                                           cudaStream_t &stream)
+  DeviceCCLWrapper::deviceDirectAllReduceWrapper(const double *send,
+                                                 double *      recv,
+                                                 int           size,
+                                                 cudaStream_t &stream)
   {
 #  ifdef DFTFE_WITH_NCCL
     NCCLCHECK(ncclAllReduce((const void *)send,
@@ -133,14 +133,14 @@ namespace dftfe
 
 
   int
-  GPUCCLWrapper::gpuDirectAllReduceWrapper(const cuDoubleComplex *send,
-                                           cuDoubleComplex *      recv,
-                                           int                    size,
-                                           double *               tempReal,
-                                           double *               tempImag,
-                                           cudaStream_t &         stream)
+  DeviceCCLWrapper::deviceDirectAllReduceWrapper(const cuDoubleComplex *send,
+                                                 cuDoubleComplex *      recv,
+                                                 int                    size,
+                                                 double *      tempReal,
+                                                 double *      tempImag,
+                                                 cudaStream_t &stream)
   {
-    deviceUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+    deviceUtils::copyComplexArrToRealArrsDevice(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -160,19 +160,19 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    deviceUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    deviceUtils::copyRealArrsToComplexArrDevice(size, tempReal, tempImag, recv);
     return 0;
   }
 
   int
-  GPUCCLWrapper::gpuDirectAllReduceWrapper(const cuFloatComplex *send,
-                                           cuFloatComplex *      recv,
-                                           int                   size,
-                                           float *               tempReal,
-                                           float *               tempImag,
-                                           cudaStream_t &        stream)
+  DeviceCCLWrapper::deviceDirectAllReduceWrapper(const cuFloatComplex *send,
+                                                 cuFloatComplex *      recv,
+                                                 int                   size,
+                                                 float *               tempReal,
+                                                 float *               tempImag,
+                                                 cudaStream_t &        stream)
   {
-    deviceUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+    deviceUtils::copyComplexArrToRealArrsDevice(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -192,19 +192,20 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    deviceUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    deviceUtils::copyRealArrsToComplexArrDevice(size, tempReal, tempImag, recv);
     return 0;
   }
 
 
   int
-  GPUCCLWrapper::gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1,
-                                                         const float * send2,
-                                                         double *      recv1,
-                                                         float *       recv2,
-                                                         int           size1,
-                                                         int           size2,
-                                                         cudaStream_t &stream)
+  DeviceCCLWrapper::deviceDirectAllReduceMixedPrecGroupWrapper(
+    const double *send1,
+    const float * send2,
+    double *      recv1,
+    float *       recv2,
+    int           size1,
+    int           size2,
+    cudaStream_t &stream)
   {
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
@@ -228,7 +229,7 @@ namespace dftfe
   }
 
   int
-  GPUCCLWrapper::gpuDirectAllReduceMixedPrecGroupWrapper(
+  DeviceCCLWrapper::deviceDirectAllReduceMixedPrecGroupWrapper(
     const cuDoubleComplex *send1,
     const cuFloatComplex * send2,
     cuDoubleComplex *      recv1,
@@ -241,9 +242,15 @@ namespace dftfe
     float *                tempImag2,
     cudaStream_t &         stream)
   {
-    deviceUtils::copyComplexArrToRealArrsGPU(size1, send1, tempReal1, tempImag1);
+    deviceUtils::copyComplexArrToRealArrsDevice(size1,
+                                                send1,
+                                                tempReal1,
+                                                tempImag1);
 
-    deviceUtils::copyComplexArrToRealArrsGPU(size2, send2, tempReal2, tempImag2);
+    deviceUtils::copyComplexArrToRealArrsDevice(size2,
+                                                send2,
+                                                tempReal2,
+                                                tempImag2);
 
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
@@ -278,9 +285,15 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    deviceUtils::copyRealArrsToComplexArrGPU(size1, tempReal1, tempImag1, recv1);
+    deviceUtils::copyRealArrsToComplexArrDevice(size1,
+                                                tempReal1,
+                                                tempImag1,
+                                                recv1);
 
-    deviceUtils::copyRealArrsToComplexArrGPU(size2, tempReal2, tempImag2, recv2);
+    deviceUtils::copyRealArrsToComplexArrDevice(size2,
+                                                tempReal2,
+                                                tempImag2,
+                                                recv2);
 
     return 0;
   }

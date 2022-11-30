@@ -1200,14 +1200,14 @@ namespace dftfe
     bandParalOpt                                   = true;
     autoAdaptBaseMeshSize                          = true;
     readWfcForPdosPspFile                          = false;
-    useGPU                                         = false;
-    useTF32GPU                                     = false;
-    gpuFineGrainedTimings                          = false;
+    useDevice                                      = false;
+    useTF32Device                                  = false;
+    deviceFineGrainedTimings                       = false;
     allowFullCPUMemSubspaceRot                     = true;
     useMixedPrecCheby                              = false;
     overlapComputeCommunCheby                      = false;
     overlapComputeCommunOrthoRR                    = false;
-    autoGPUBlockSizes                              = true;
+    autoDeviceBlockSizes                           = true;
     maxJacobianRatioFactorForMD                    = 1.5;
     extrapolateDensity                             = 0;
     timeStepBOMD                                   = 0.5;
@@ -1225,12 +1225,12 @@ namespace dftfe
     nonLinearCoreCorrection                        = false;
     maxLineSearchIterCGPRP                         = 5;
     atomicMassesFile                               = "";
-    useGPUDirectAllReduce                          = false;
+    useDeviceDirectAllReduce                       = false;
     pspCutoffImageCharges                          = 15.0;
     reuseLanczosUpperBoundFromFirstCall            = false;
     allowMultipleFilteringPassesAfterFirstScf      = true;
-    useELPAGPUKernel                               = false;
-    gpuMemOptMode                                  = false;
+    useELPADeviceKernel                            = false;
+    deviceMemOptMode                               = false;
     // New Paramters for moleculardyynamics class
     startingTempBOMD           = 300;
     thermostatTimeConstantBOMD = 100;
@@ -1290,14 +1290,14 @@ namespace dftfe
 
     prm.enter_subsection("GPU");
     {
-      useGPU                     = prm.get_bool("USE GPU");
-      useTF32GPU                 = prm.get_bool("USE TF32 OP");
-      gpuFineGrainedTimings      = prm.get_bool("FINE GRAINED GPU TIMINGS");
+      useDevice                  = prm.get_bool("USE GPU");
+      useTF32Device              = prm.get_bool("USE TF32 OP");
+      deviceFineGrainedTimings   = prm.get_bool("FINE GRAINED GPU TIMINGS");
       allowFullCPUMemSubspaceRot = prm.get_bool("SUBSPACE ROT FULL CPU MEM");
-      autoGPUBlockSizes          = prm.get_bool("AUTO GPU BLOCK SIZES");
-      useGPUDirectAllReduce      = prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
-      useELPAGPUKernel           = prm.get_bool("USE ELPA GPU KERNEL");
-      gpuMemOptMode              = prm.get_bool("GPU MEM OPT MODE");
+      autoDeviceBlockSizes       = prm.get_bool("AUTO GPU BLOCK SIZES");
+      useDeviceDirectAllReduce   = prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
+      useELPADeviceKernel        = prm.get_bool("USE ELPA GPU KERNEL");
+      deviceMemOptMode           = prm.get_bool("GPU MEM OPT MODE");
     }
     prm.leave_subsection();
 
@@ -1770,7 +1770,7 @@ namespace dftfe
             << std::endl;
         orthogType = "CGS";
       }
-    else if (!isPseudopotential && orthogType == "Auto" && !useGPU)
+    else if (!isPseudopotential && orthogType == "Auto" && !useDevice)
       {
 #ifdef USE_PETSC;
         if (verbosity >= 1 &&
@@ -1790,7 +1790,7 @@ namespace dftfe
         orthogType = "CGS";
 #endif
       }
-    else if (orthogType == "GS" && !useGPU)
+    else if (orthogType == "GS" && !useDevice)
       {
 #ifndef USE_PETSC;
         AssertThrow(
@@ -1799,7 +1799,7 @@ namespace dftfe
             "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be CGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
 #endif
       }
-    else if (!isPseudopotential && orthogType == "Auto" && useGPU)
+    else if (!isPseudopotential && orthogType == "Auto" && useDevice)
       {
         if (verbosity >= 1 &&
             Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
@@ -1808,7 +1808,7 @@ namespace dftfe
             << std::endl;
         orthogType = "CGS";
       }
-    else if (orthogType == "GS" && useGPU)
+    else if (orthogType == "GS" && useDevice)
       {
         AssertThrow(
           false,
@@ -1831,7 +1831,7 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_DEVICE
-    if (!isPseudopotential && useGPU)
+    if (!isPseudopotential && useDevice)
       {
         overlapComputeCommunCheby = false;
       }
@@ -1839,20 +1839,20 @@ namespace dftfe
 
 
 #ifndef DFTFE_WITH_DEVICE
-    useGPU           = false;
-    useELPAGPUKernel = false;
+    useDevice           = false;
+    useELPADeviceKernel = false;
 #endif
 
     if (scalapackBlockSize == 0)
       {
-        if (useELPAGPUKernel)
+        if (useELPADeviceKernel)
           scalapackBlockSize = 16;
         else
           scalapackBlockSize = 32;
       }
 
 #ifndef DFTFE_WITH_NCCL
-    useGPUDirectAllReduce = false;
+    useDeviceDirectAllReduce = false;
 #endif
 
     if (useMixedPrecCheby)

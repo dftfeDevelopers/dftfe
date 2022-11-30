@@ -132,7 +132,7 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
       kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorGPU,
+        &kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                              kohnShamDFTEigenOperator,
@@ -211,7 +211,7 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
       kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorGPU,
+        &kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                              kohnShamDFTEigenOperator,
@@ -314,7 +314,7 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
       kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorGPU,
+        &kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                              kohnShamDFTEigenOperator,
@@ -395,7 +395,7 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
       kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorGPU,
+        &kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                              kohnShamDFTEigenOperator,
@@ -684,7 +684,7 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
       kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorGPU,
+        &kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                              kohnShamDFTEigenOperator,

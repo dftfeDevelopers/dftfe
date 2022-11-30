@@ -28,26 +28,26 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(
-    const dataTypes::numberGPU *src,
-    const unsigned int          numberWaveFunctions,
-    dataTypes::numberGPU *      dst,
-    const bool                  onlyHPrimePartForFirstOrderDensityMatResponse)
+    const dataTypes::numberDevice *src,
+    const unsigned int             numberWaveFunctions,
+    dataTypes::numberDevice *      dst,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyDeviceKernel<<<(numberWaveFunctions + 255) / 256 * totalLocallyOwnedCells *
-                     d_numberNodesPerElement,
-                   256>>>(numberWaveFunctions,
-                          totalLocallyOwnedCells * d_numberNodesPerElement,
-                          src,
-                          reinterpret_cast<dataTypes::numberGPU *>(
-                            thrust::raw_pointer_cast(
-                              &d_cellWaveFunctionMatrix[0])),
-                          thrust::raw_pointer_cast(
-                            &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+  copyDeviceKernel<<<(numberWaveFunctions + 255) / 256 *
+                       totalLocallyOwnedCells * d_numberNodesPerElement,
+                     256>>>(
+    numberWaveFunctions,
+    totalLocallyOwnedCells * d_numberNodesPerElement,
+    src,
+    reinterpret_cast<dataTypes::numberDevice *>(
+      thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
+    thrust::raw_pointer_cast(
+      &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
 
   const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
@@ -66,20 +66,20 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     numberWaveFunctions,
     d_numberNodesPerElement,
     d_numberNodesPerElement,
-    reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
-    reinterpret_cast<const dataTypes::numberGPU *>(
+    reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
+    reinterpret_cast<const dataTypes::numberDevice *>(
       thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
     numberWaveFunctions,
     strideA,
-    reinterpret_cast<const dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+    reinterpret_cast<const dataTypes::numberDevice *>(thrust::raw_pointer_cast(
       &d_cellHamiltonianMatrixFlattenedDevice[d_numLocallyOwnedCells *
                                               d_numberNodesPerElement *
                                               d_numberNodesPerElement *
                                               kpointSpinIndex])),
     d_numberNodesPerElement,
     strideB,
-    reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
-    reinterpret_cast<dataTypes::numberGPU *>(
+    reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
+    reinterpret_cast<dataTypes::numberDevice *>(
       thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
     numberWaveFunctions,
     strideC,
@@ -92,7 +92,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          deviceUtils::copyComplexArrToRealArrsGPU(
+          deviceUtils::copyComplexArrToRealArrsDevice(
             (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
              d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
             dst,
@@ -106,14 +106,14 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                                  256>>>(
             numberWaveFunctions,
             d_numLocallyOwnedCells * d_numberNodesPerElement,
-            reinterpret_cast<const dataTypes::numberGPU *>(
+            reinterpret_cast<const dataTypes::numberDevice *>(
               thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
             thrust::raw_pointer_cast(&d_tempRealVec[0]),
             thrust::raw_pointer_cast(&d_tempImagVec[0]),
             thrust::raw_pointer_cast(
               &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
-          deviceUtils::copyRealArrsToComplexArrGPU(
+          deviceUtils::copyRealArrsToComplexArrDevice(
             (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
              d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
             thrust::raw_pointer_cast(&d_tempRealVec[0]),
@@ -127,7 +127,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                                256>>>(
           numberWaveFunctions,
           d_numLocallyOwnedCells * d_numberNodesPerElement,
-          reinterpret_cast<const dataTypes::numberGPU *>(
+          reinterpret_cast<const dataTypes::numberDevice *>(
             thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
           dst,
           thrust::raw_pointer_cast(

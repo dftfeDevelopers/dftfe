@@ -630,7 +630,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
         d_eigenVectorsFlattenedSTL[0].size(),
         d_numEigenValues,
         eigenValuesDummy,
-        *d_gpucclMpiCommDomainPtr,
+        *d_devicecclMpiCommDomainPtr,
         interBandGroupComm,
         numberRayleighRitzAvoidancePasses,
         useMixedPrec);
@@ -653,7 +653,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
           d_numEigenValues,
           eigenValuesTemp,
           residualNormWaveFunctions,
-          *d_gpucclMpiCommDomainPtr,
+          *d_devicecclMpiCommDomainPtr,
           interBandGroupComm,
           d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) *
                                    kPointIndex +
@@ -833,7 +833,7 @@ dftClass<FEOrder, FEOrderElectro>::
     d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
                                  kPointIndex +
                                spinType],
-    *d_gpucclMpiCommDomainPtr,
+    *d_devicecclMpiCommDomainPtr,
     interBandGroupComm,
     elpaScala);
 }

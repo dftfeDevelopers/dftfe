@@ -323,7 +323,7 @@ namespace dftfe
     const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
     kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorGPU,
+      &kohnShamDFTEigenOperatorDevice,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
     const dispersionCorrection &                       dispersionCorr,
@@ -375,7 +375,7 @@ namespace dftfe
 
     computeConfigurationalForceTotalLinFE(matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
-                                          kohnShamDFTEigenOperatorGPU,
+                                          kohnShamDFTEigenOperatorDevice,
 #endif
                                           kohnShamDFTEigenOperator,
                                           eigenDofHandlerIndex,
@@ -515,7 +515,7 @@ namespace dftfe
     const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
     kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorGPU,
+      &kohnShamDFTEigenOperatorDevice,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
     const unsigned int                                 eigenDofHandlerIndex,
@@ -558,7 +558,7 @@ namespace dftfe
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
-      kohnShamDFTEigenOperatorGPU,
+      kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTEigenOperator,
       eigenDofHandlerIndex,

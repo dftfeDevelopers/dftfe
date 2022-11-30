@@ -37,7 +37,7 @@
 #  include <poissonSolverProblemDevice.h>
 #  include <kerkerSolverProblemDevice.h>
 #  include <linearSolverCGDevice.h>
-#  include "gpuDirectCCLWrapper.h"
+#  include "deviceDirectCCLWrapper.h"
 #endif
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
@@ -682,7 +682,7 @@ namespace dftfe
     computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
 #ifdef DFTFE_WITH_DEVICE
       kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorGPU,
+        &kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
         &                        kohnShamDFTEigenOperatorCPU,
@@ -885,7 +885,7 @@ namespace dftfe
     nodalDensity_mixing_simple_kerker(
 #ifdef DFTFE_WITH_DEVICE
       kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 kerkerPreconditionedResidualSolverProblemDevice,
+        &                   kerkerPreconditionedResidualSolverProblemDevice,
       linearSolverCGDevice &CGSolverDevice,
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
@@ -896,7 +896,7 @@ namespace dftfe
     nodalDensity_mixing_anderson_kerker(
 #ifdef DFTFE_WITH_DEVICE
       kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 kerkerPreconditionedResidualSolverProblemDevice,
+        &                   kerkerPreconditionedResidualSolverProblemDevice,
       linearSolverCGDevice &CGSolverDevice,
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
@@ -1232,7 +1232,7 @@ namespace dftfe
      */
     const MPI_Comm mpi_communicator;
 #if defined(DFTFE_WITH_DEVICE)
-    GPUCCLWrapper *d_gpucclMpiCommDomainPtr;
+    DeviceCCLWrapper *d_devicecclMpiCommDomainPtr;
 #endif
     const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     interpoolcomm;
@@ -1342,11 +1342,11 @@ namespace dftfe
 
     /// cuda eigenvectors
 #ifdef DFTFE_WITH_DEVICE
-    deviceUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+    deviceUtils::Vector<dataTypes::numberDevice, dftfe::MemorySpace::Device>
       d_eigenVectorsFlattenedDevice;
-    deviceUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+    deviceUtils::Vector<dataTypes::numberDevice, dftfe::MemorySpace::Device>
       d_eigenVectorsRotFracFlattenedDevice;
-    deviceUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+    deviceUtils::Vector<dataTypes::numberDevice, dftfe::MemorySpace::Device>
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice;
 #endif
 

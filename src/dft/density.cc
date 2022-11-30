@@ -193,7 +193,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
         }
 
 #ifdef DFTFE_WITH_DEVICE
-      if (d_dftParamsPtr->useGPU)
+      if (d_dftParamsPtr->useDevice)
         Device::computeRhoFromPSI(
           d_eigenVectorsFlattenedDevice.begin(),
           d_eigenVectorsRotFracFlattenedDevice.begin(),
@@ -224,7 +224,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           isConsiderSpectrumSplitting &&
             d_numEigenValues != d_numEigenValuesRR);
 #endif
-      if (!d_dftParamsPtr->useGPU)
+      if (!d_dftParamsPtr->useDevice)
         computeRhoFromPSICPU(
           d_eigenVectorsFlattenedSTL,
           d_eigenVectorsRotFracDensityFlattenedSTL,
@@ -672,7 +672,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       // compute rho from wavefunctions at nodal locations of 2p DoFHandler
       // nodes in each cell
 #ifdef DFTFE_WITH_DEVICE
-  if (d_dftParamsPtr->useGPU)
+  if (d_dftParamsPtr->useDevice)
     Device::computeRhoFromPSI(
       d_eigenVectorsFlattenedDevice.begin(),
       d_eigenVectorsRotFracFlattenedDevice.begin(),
@@ -702,7 +702,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
       true);
 #endif
-  if (!d_dftParamsPtr->useGPU)
+  if (!d_dftParamsPtr->useDevice)
     computeRhoFromPSICPU(
       d_eigenVectorsFlattenedSTL,
       d_eigenVectorsRotFracDensityFlattenedSTL,

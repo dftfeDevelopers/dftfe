@@ -23,7 +23,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   const MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperatorGPU,
+    &kohnShamDFTEigenOperatorDevice,
 #endif
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
   const dispersionCorrection &                       dispersionCorr,
@@ -80,7 +80,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   // nuclear self energy
   computeStressEEshelbyEPSPEnlEk(matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
-                                 kohnShamDFTEigenOperatorGPU,
+                                 kohnShamDFTEigenOperatorDevice,
 #endif
                                  kohnShamDFTEigenOperator,
                                  eigenDofHandlerIndex,
