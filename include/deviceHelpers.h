@@ -55,13 +55,12 @@ namespace dftfe
           }                                                                              \
       }
 
-#    define WARPSIZE 32
-#    define MAXBLOCKSIZE 1024
-
   namespace deviceConstants
   {
-    static const int blockSize = 256;
-  }
+    static const int warpSize     = 32;
+    static const int maxBlockSize = 1024;
+    static const int blockSize    = 256;
+  } // namespace deviceConstants
 
   namespace deviceUtils
   {

@@ -175,22 +175,25 @@ namespace shapeFuncDevice
                 if (currentQuadsBlockSize > 0)
                   {
                     computeShapeGradNINJIntegralContribution<<<
-                      (currentQuadsBlockSize + 255) / 256 * numNodesPerElem *
+                      (currentQuadsBlockSize +
+                       (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * numNodesPerElem *
                         numNodesPerElem * currentElemsBlockSize,
-                      256>>>(currentQuadsBlockSize,
-                             numQuads,
-                             startingQuadId,
-                             numNodesPerElem,
-                             currentElemsBlockSize,
-                             thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
-                             thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
-                             thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
-                             thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
-                             thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
-                             thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
-                             thrust::raw_pointer_cast(&jxwQuadValuesD[0]),
-                             thrust::raw_pointer_cast(
-                               &shapeGradNINJIntegralContributionD[0]));
+                      deviceConstants::blockSize>>>(
+                      currentQuadsBlockSize,
+                      numQuads,
+                      startingQuadId,
+                      numNodesPerElem,
+                      currentElemsBlockSize,
+                      thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
+                      thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
+                      thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
+                      thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
+                      thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
+                      thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
+                      thrust::raw_pointer_cast(&jxwQuadValuesD[0]),
+                      thrust::raw_pointer_cast(
+                        &shapeGradNINJIntegralContributionD[0]));
 
                     const double scalarCoeffAlpha = 1.0;
                     const double scalarCoeffBeta  = 1.0;
