@@ -203,9 +203,9 @@ namespace dftfe
                        const unsigned int size,
                        double *           copyToVec)
     {
-      copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
-                                                    copyFromVec,
-                                                    copyToVec);
+      copyDeviceKernel<<<
+        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
+        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
     }
 
     void
@@ -213,9 +213,9 @@ namespace dftfe
                        const unsigned int size,
                        cuDoubleComplex *  copyToVec)
     {
-      copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
-                                                    copyFromVec,
-                                                    copyToVec);
+      copyDeviceKernel<<<
+        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
+        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
     }
 
 
@@ -224,9 +224,9 @@ namespace dftfe
                        const unsigned int size,
                        float *            copyToVec)
     {
-      copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
-                                                    copyFromVec,
-                                                    copyToVec);
+      copyDeviceKernel<<<
+        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
+        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
     }
 
     void
@@ -234,9 +234,9 @@ namespace dftfe
                        const unsigned int size,
                        cuFloatComplex *   copyToVec)
     {
-      copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
-                                                    copyFromVec,
-                                                    copyToVec);
+      copyDeviceKernel<<<
+        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
+        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
     }
 
     __global__ void
@@ -479,15 +479,17 @@ namespace dftfe
                       densityMatDerFermiEnergyVecDevice.size());
 
                     stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numLocalDofs,
-                      deviceConstants::blockSize>>>(BVec,
-                             X + numLocalDofs * totalNumWaveFunctions *
-                                   ((dftParams.spinPolarized + 1) * kPoint +
-                                    spinIndex),
-                             numLocalDofs,
-                             totalNumWaveFunctions,
-                             deviceFlattenedArrayXBlock.begin(),
-                             jvec);
+                      (BVec + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * numLocalDofs,
+                      deviceConstants::blockSize>>>(
+                      BVec,
+                      X +
+                        numLocalDofs * totalNumWaveFunctions *
+                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                      numLocalDofs,
+                      totalNumWaveFunctions,
+                      deviceFlattenedArrayXBlock.begin(),
+                      jvec);
 
 
                     deviceFlattenedArrayXBlock.updateGhostValues();
@@ -495,9 +497,10 @@ namespace dftfe
                     (operatorMatrix.getOverloadedConstraintMatrix())
                       ->distribute(deviceFlattenedArrayXBlock, BVec);
 
-                    stridedCopyToBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                                 numLocalDofs,
-                                               deviceConstants::blockSize>>>(
+                    stridedCopyToBlockKernel<<<
+                      (BVec + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * numLocalDofs,
+                      deviceConstants::blockSize>>>(
                       BVec,
                       XPrime +
                         numLocalDofs * totalNumWaveFunctions *
@@ -526,8 +529,9 @@ namespace dftfe
 
 
                             copyGlobalToCellDeviceKernel<<<
-                              (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * currentCellsBlockSize *
-                                numNodesPerElement,
+                              (BVec + (deviceConstants::blockSize - 1)) /
+                                deviceConstants::blockSize *
+                                currentCellsBlockSize * numNodesPerElement,
                               deviceConstants::blockSize>>>(
                               BVec,
                               currentCellsBlockSize * numNodesPerElement,
@@ -570,8 +574,9 @@ namespace dftfe
                               currentCellsBlockSize);
 
                             copyGlobalToCellDeviceKernel<<<
-                              (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * currentCellsBlockSize *
-                                numNodesPerElement,
+                              (BVec + (deviceConstants::blockSize - 1)) /
+                                deviceConstants::blockSize *
+                                currentCellsBlockSize * numNodesPerElement,
                               deviceConstants::blockSize>>>(
                               BVec,
                               currentCellsBlockSize * numNodesPerElement,
@@ -605,12 +610,13 @@ namespace dftfe
 
 
                             computeRhoResponseFromInterpolatedValues<<<
-                              (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numQuadPoints *
+                              (BVec + (deviceConstants::blockSize - 1)) /
+                                deviceConstants::blockSize * numQuadPoints *
                                 currentCellsBlockSize,
-                              deviceConstants::blockSize>>>(BVec * numQuadPoints *
-                                       currentCellsBlockSize,
-                                     XQuadsDevice.begin(),
-                                     XPrimeQuadsDevice.begin());
+                              deviceConstants::blockSize>>>(
+                              BVec * numQuadPoints * currentCellsBlockSize,
+                              XQuadsDevice.begin(),
+                              XPrimeQuadsDevice.begin());
 
                             cublasXgemm(
                               operatorMatrix.getCublasHandle(),

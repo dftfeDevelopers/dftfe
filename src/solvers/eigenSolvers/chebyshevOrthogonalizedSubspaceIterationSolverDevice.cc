@@ -446,12 +446,13 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          localVectorSize,
-                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               operatorMatrix.getSqrtMassVec());
+    scaleDeviceKernel<<<
+      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * localVectorSize,
+      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+                                    localVectorSize,
+                                    eigenVectorsFlattenedDevice,
+                                    operatorMatrix.getSqrtMassVec());
 
 
     // two blocks of wavefunctions are filtered simultaneously when overlap
@@ -496,18 +497,22 @@ namespace dftfe
 
             // copy from vector containg all wavefunction vectors to current
             // wavefunction vectors block
-            stridedCopyToBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                       deviceConstants::blockSize>>>(BVec,
-                                              localVectorSize,
-                                              eigenVectorsFlattenedDevice,
-                                              totalNumberWaveFunctions,
-                                              deviceFlattenedArrayBlock.begin(),
-                                              jvec);
+            stridedCopyToBlockKernel<<<
+              (BVec + (deviceConstants::blockSize - 1)) /
+                deviceConstants::blockSize * localVectorSize,
+              deviceConstants::blockSize>>>(BVec,
+                                            localVectorSize,
+                                            eigenVectorsFlattenedDevice,
+                                            totalNumberWaveFunctions,
+                                            deviceFlattenedArrayBlock.begin(),
+                                            jvec);
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-              stridedCopyToBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                         deviceConstants::blockSize>>>(
+              stridedCopyToBlockKernel<<<
+                (BVec + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
                 BVec,
                 localVectorSize,
                 eigenVectorsFlattenedDevice,
@@ -560,19 +565,22 @@ namespace dftfe
 
             // copy current wavefunction vectors block to vector containing
             // all wavefunction vectors
-            stridedCopyFromBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                         deviceConstants::blockSize>>>(
-              BVec,
-              localVectorSize,
-              deviceFlattenedArrayBlock.begin(),
-              totalNumberWaveFunctions,
-              eigenVectorsFlattenedDevice,
-              jvec);
+            stridedCopyFromBlockKernel<<<
+              (BVec + (deviceConstants::blockSize - 1)) /
+                deviceConstants::blockSize * localVectorSize,
+              deviceConstants::blockSize>>>(BVec,
+                                            localVectorSize,
+                                            deviceFlattenedArrayBlock.begin(),
+                                            totalNumberWaveFunctions,
+                                            eigenVectorsFlattenedDevice,
+                                            jvec);
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-              stridedCopyFromBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                           deviceConstants::blockSize>>>(
+              stridedCopyFromBlockKernel<<<
+                (BVec + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
                 BVec,
                 localVectorSize,
                 d_deviceFlattenedArrayBlock2.begin(),
@@ -584,13 +592,15 @@ namespace dftfe
           {
             // set to zero wavefunctions which wont go through chebyshev
             // filtering inside a given band group
-            setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                              localVectorSize,
-                            deviceConstants::blockSize>>>(numSimultaneousBlocksCurrent * BVec,
-                                   localVectorSize,
-                                   totalNumberWaveFunctions,
-                                   eigenVectorsFlattenedDevice,
-                                   jvec);
+            setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
+                             (deviceConstants::blockSize - 1)) /
+                              deviceConstants::blockSize * localVectorSize,
+                            deviceConstants::blockSize>>>(
+              numSimultaneousBlocksCurrent * BVec,
+              localVectorSize,
+              totalNumberWaveFunctions,
+              eigenVectorsFlattenedDevice,
+              jvec);
           }
 
       } // block loop
@@ -762,19 +772,22 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          localVectorSize,
-                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               operatorMatrix.getInvSqrtMassVec());
+    scaleDeviceKernel<<<
+      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * localVectorSize,
+      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+                                    localVectorSize,
+                                    eigenVectorsFlattenedDevice,
+                                    operatorMatrix.getInvSqrtMassVec());
 
     if (eigenValues.size() != totalNumberWaveFunctions)
-      scaleDeviceKernel<<<(eigenValues.size() + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                          deviceConstants::blockSize>>>(eigenValues.size(),
-                                 localVectorSize,
-                                 eigenVectorsRotFracDensityFlattenedDevice,
-                                 operatorMatrix.getInvSqrtMassVec());
+      scaleDeviceKernel<<<
+        (eigenValues.size() + (deviceConstants::blockSize - 1)) /
+          deviceConstants::blockSize * localVectorSize,
+        deviceConstants::blockSize>>>(eigenValues.size(),
+                                      localVectorSize,
+                                      eigenVectorsRotFracDensityFlattenedDevice,
+                                      operatorMatrix.getInvSqrtMassVec());
 
     return d_upperBoundUnWantedSpectrum;
   }
@@ -910,12 +923,13 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis multiply
     // by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          localVectorSize,
-                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               operatorMatrix.getSqrtMassVec());
+    scaleDeviceKernel<<<
+      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * localVectorSize,
+      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+                                    localVectorSize,
+                                    eigenVectorsFlattenedDevice,
+                                    operatorMatrix.getSqrtMassVec());
 
     for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
       {
@@ -963,24 +977,28 @@ namespace dftfe
                     // copy from vector containg all wavefunction vectors to
                     // current wavefunction vectors block
                     stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                      deviceConstants::blockSize>>>(BVec,
-                             localVectorSize,
-                             eigenVectorsFlattenedDevice,
-                             totalNumberWaveFunctions,
-                             deviceFlattenedArrayBlock.begin(),
-                             jvec);
+                      (BVec + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * localVectorSize,
+                      deviceConstants::blockSize>>>(
+                      BVec,
+                      localVectorSize,
+                      eigenVectorsFlattenedDevice,
+                      totalNumberWaveFunctions,
+                      deviceFlattenedArrayBlock.begin(),
+                      jvec);
 
                     if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyToBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(BVec,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               totalNumberWaveFunctions,
-                               d_deviceFlattenedArrayBlock2.begin(),
-                               jvec + BVec);
+                        (BVec + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(
+                        BVec,
+                        localVectorSize,
+                        eigenVectorsFlattenedDevice,
+                        totalNumberWaveFunctions,
+                        d_deviceFlattenedArrayBlock2.begin(),
+                        jvec + BVec);
 
                     //
                     // call Chebyshev filtering function only for the current
@@ -1029,37 +1047,43 @@ namespace dftfe
                     // copy current wavefunction vectors block to vector
                     // containing all wavefunction vectors
                     stridedCopyFromBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                      deviceConstants::blockSize>>>(BVec,
-                             localVectorSize,
-                             deviceFlattenedArrayBlock.begin(),
-                             totalNumberWaveFunctions,
-                             eigenVectorsFlattenedDevice,
-                             jvec);
+                      (BVec + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * localVectorSize,
+                      deviceConstants::blockSize>>>(
+                      BVec,
+                      localVectorSize,
+                      deviceFlattenedArrayBlock.begin(),
+                      totalNumberWaveFunctions,
+                      eigenVectorsFlattenedDevice,
+                      jvec);
 
                     if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyFromBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(BVec,
-                               localVectorSize,
-                               d_deviceFlattenedArrayBlock2.begin(),
-                               totalNumberWaveFunctions,
-                               eigenVectorsFlattenedDevice,
-                               jvec + BVec);
+                        (BVec + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(
+                        BVec,
+                        localVectorSize,
+                        d_deviceFlattenedArrayBlock2.begin(),
+                        totalNumberWaveFunctions,
+                        eigenVectorsFlattenedDevice,
+                        jvec + BVec);
                   }
                 else
                   {
                     // set to zero wavefunctions which wont go through chebyshev
                     // filtering inside a given band group
                     setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
-                                     (deviceConstants::blockSize-1)) /
-                                      deviceConstants::blockSize * localVectorSize,
-                                    deviceConstants::blockSize>>>(numSimultaneousBlocksCurrent * BVec,
-                                           localVectorSize,
-                                           totalNumberWaveFunctions,
-                                           eigenVectorsFlattenedDevice,
-                                           jvec);
+                                     (deviceConstants::blockSize - 1)) /
+                                      deviceConstants::blockSize *
+                                      localVectorSize,
+                                    deviceConstants::blockSize>>>(
+                      numSimultaneousBlocksCurrent * BVec,
+                      localVectorSize,
+                      totalNumberWaveFunctions,
+                      eigenVectorsFlattenedDevice,
+                      jvec);
                   }
 
               } // cheby block loop
@@ -1087,12 +1111,13 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          localVectorSize,
-                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               operatorMatrix.getInvSqrtMassVec());
+    scaleDeviceKernel<<<
+      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * localVectorSize,
+      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+                                    localVectorSize,
+                                    eigenVectorsFlattenedDevice,
+                                    operatorMatrix.getInvSqrtMassVec());
   }
 
 
@@ -1156,12 +1181,13 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          localVectorSize,
-                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               operatorMatrix.getSqrtMassVec());
+    scaleDeviceKernel<<<
+      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * localVectorSize,
+      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+                                    localVectorSize,
+                                    eigenVectorsFlattenedDevice,
+                                    operatorMatrix.getSqrtMassVec());
 
 
     linearAlgebraOperationsDevice::densityMatrixEigenBasisFirstOrderResponse(
@@ -1190,12 +1216,13 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          localVectorSize,
-                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
-                               localVectorSize,
-                               eigenVectorsFlattenedDevice,
-                               operatorMatrix.getInvSqrtMassVec());
+    scaleDeviceKernel<<<
+      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * localVectorSize,
+      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+                                    localVectorSize,
+                                    eigenVectorsFlattenedDevice,
+                                    operatorMatrix.getInvSqrtMassVec());
 
     cudaDeviceSynchronize();
     computingTimerStandard.leave_subsection(

@@ -268,7 +268,9 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = deviceConstants::maxBlockSize / 2; size >= 4 * deviceConstants::warpSize; size /= 2)
+    for (int size = deviceConstants::maxBlockSize / 2;
+         size >= 4 * deviceConstants::warpSize;
+         size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
@@ -332,7 +334,9 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = deviceConstants::maxBlockSize / 2; size >= 4 * deviceConstants::warpSize; size /= 2)
+    for (int size = deviceConstants::maxBlockSize / 2;
+         size >= 4 * deviceConstants::warpSize;
+         size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
@@ -401,7 +405,9 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = deviceConstants::maxBlockSize / 2; size >= 4 * deviceConstants::warpSize; size /= 2)
+    for (int size = deviceConstants::maxBlockSize / 2;
+         size >= 4 * deviceConstants::warpSize;
+         size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];

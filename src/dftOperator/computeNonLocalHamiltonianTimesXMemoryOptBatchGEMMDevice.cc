@@ -94,9 +94,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
   if (d_totalNonlocalElems > 0 && !skip1)
-    copyToDealiiParallelNonLocalVec<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                        d_totalPseudoWfcNonLocal,
-                                      deviceConstants::blockSize>>>(
+    copyToDealiiParallelNonLocalVec<<<
+      (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
+      deviceConstants::blockSize>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
@@ -124,19 +125,21 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       //
       // compute V*C^{\dagger}*X
       //
-      scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                            d_totalPseudoWfcNonLocal,
-                          deviceConstants::blockSize>>>(
+      scaleDeviceKernel<<<
+        (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
+          deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
+        deviceConstants::blockSize>>>(
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         1.0,
         projectorKetTimesVector.begin(),
         thrust::raw_pointer_cast(&d_nonLocalPseudoPotentialConstantsDevice[0]));
 
-      copyFromParallelNonLocalVecToAllCellsVec<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) /
-                                                   deviceConstants::blockSize * d_totalNonlocalElems *
-                                                   d_maxSingleAtomPseudoWfc,
-                                                 deviceConstants::blockSize>>>(
+      copyFromParallelNonLocalVecToAllCellsVec<<<
+        (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
+          deviceConstants::blockSize * d_totalNonlocalElems *
+          d_maxSingleAtomPseudoWfc,
+        deviceConstants::blockSize>>>(
         numberWaveFunctions,
         d_totalNonlocalElems,
         d_maxSingleAtomPseudoWfc,
@@ -185,8 +188,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         {
           const unsigned int accum = d_numberCellsAccumNonLocalAtoms[iAtom];
           addNonLocalContributionDeviceKernel<<<
-            (numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-              d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
+            (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
+              deviceConstants::blockSize * d_numberCellsNonLocalAtoms[iAtom] *
+              d_numberNodesPerElement,
             deviceConstants::blockSize>>>(
             numberWaveFunctions,
             d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
@@ -211,7 +215,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         thrust::raw_pointer_cast(&d_tempImagVec[0]));
 
 
-      daxpyAtomicAddKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
+      daxpyAtomicAddKernel<<<(numberWaveFunctions +
+                              (deviceConstants::blockSize - 1)) /
+                               deviceConstants::blockSize *
                                d_numLocallyOwnedCells * d_numberNodesPerElement,
                              deviceConstants::blockSize>>>(
         numberWaveFunctions,
@@ -231,7 +237,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         dst);
     }
   else
-    daxpyAtomicAddKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
+    daxpyAtomicAddKernel<<<(numberWaveFunctions +
+                            (deviceConstants::blockSize - 1)) /
+                             deviceConstants::blockSize *
                              d_numLocallyOwnedCells * d_numberNodesPerElement,
                            deviceConstants::blockSize>>>(
       numberWaveFunctions,
@@ -263,8 +271,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0)
     {
-      copyDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                           totalLocallyOwnedCells * d_numberNodesPerElement,
+      copyDeviceKernel<<<(numberWaveFunctions +
+                          (deviceConstants::blockSize - 1)) /
+                           deviceConstants::blockSize * totalLocallyOwnedCells *
+                           d_numberNodesPerElement,
                          deviceConstants::blockSize>>>(
         numberWaveFunctions,
         totalLocallyOwnedCells * d_numberNodesPerElement,
@@ -319,9 +329,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
   if (d_totalNonlocalElems > 0)
-    copyToDealiiParallelNonLocalVec<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                        d_totalPseudoWfcNonLocal,
-                                      deviceConstants::blockSize>>>(
+    copyToDealiiParallelNonLocalVec<<<
+      (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
+        deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
+      deviceConstants::blockSize>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
@@ -336,12 +347,13 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   // compute V*C^{\dagger}*X
   //
   if (d_totalNonlocalElems > 0)
-    scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                          d_totalPseudoWfcNonLocal,
-                        deviceConstants::blockSize>>>(numberWaveFunctions,
-                               d_totalPseudoWfcNonLocal,
-                               1.0,
-                               projectorKetTimesVector.begin(),
-                               thrust::raw_pointer_cast(
-                                 &d_nonLocalPseudoPotentialConstantsDevice[0]));
+    scaleDeviceKernel<<<(numberWaveFunctions +
+                         (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
+                        deviceConstants::blockSize>>>(
+      numberWaveFunctions,
+      d_totalPseudoWfcNonLocal,
+      1.0,
+      projectorKetTimesVector.begin(),
+      thrust::raw_pointer_cast(&d_nonLocalPseudoPotentialConstantsDevice[0]));
 }

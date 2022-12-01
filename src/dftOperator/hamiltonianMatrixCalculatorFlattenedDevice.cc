@@ -754,7 +754,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                d_numberNodesPerElement +
-                             (deviceConstants::blockSize-1)) /
+                             (deviceConstants::blockSize - 1)) /
                               deviceConstants::blockSize,
                             deviceConstants::blockSize>>>(
         d_numLocallyOwnedCells,
@@ -776,7 +776,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamPrimeMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                            d_numberNodesPerElement *
                                            d_numberNodesPerElement +
-                                         (deviceConstants::blockSize-1)) /
+                                         (deviceConstants::blockSize - 1)) /
                                           deviceConstants::blockSize,
                                         deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
@@ -803,7 +803,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
                                      d_numberNodesPerElement *
                                      d_numberNodesPerElement +
-                                   (deviceConstants::blockSize-1)) /
+                                   (deviceConstants::blockSize - 1)) /
                                     deviceConstants::blockSize,
                                   deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
@@ -832,7 +832,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                       d_numberNodesPerElement *
                                       d_numberNodesPerElement +
-                                    (deviceConstants::blockSize-1)) /
+                                    (deviceConstants::blockSize - 1)) /
                                      deviceConstants::blockSize,
                                    deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
@@ -866,7 +866,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                densityFamilyType::LDA)
         hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                 d_numberNodesPerElement +
-                              (deviceConstants::blockSize-1)) /
+                              (deviceConstants::blockSize - 1)) /
                                deviceConstants::blockSize,
                              deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
