@@ -21,10 +21,10 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
-#ifdef DFTFE_WITH_GPU
-  kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-    &                 kerkerPreconditionedResidualSolverProblemCUDA,
-  linearSolverCGCUDA &CGSolverCUDA,
+#ifdef DFTFE_WITH_DEVICE
+  kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+    &                   kerkerPreconditionedResidualSolverProblemDevice,
+  linearSolverCGDevice &CGSolverDevice,
 #endif
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
@@ -101,10 +101,10 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 
   // initialize helmholtz solver function object with the quantity required for
   // computing rhs, solution vector and mixing constant
-  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
     {
-#ifdef DFTFE_WITH_GPU
-      kerkerPreconditionedResidualSolverProblemCUDA.reinit(
+#ifdef DFTFE_WITH_DEVICE
+      kerkerPreconditionedResidualSolverProblemDevice.reinit(
         d_preCondResidualVector, gradDensityResidualValuesMap);
 #endif
     }
@@ -113,15 +113,15 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
       d_preCondResidualVector, gradDensityResidualValuesMap);
 
   // solve the Helmholtz system to compute preconditioned residual
-  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
     {
-#ifdef DFTFE_WITH_GPU
-      CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
-                         d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                         d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                         d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
-                         d_dftParamsPtr->verbosity,
-                         false);
+#ifdef DFTFE_WITH_DEVICE
+      CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
+                           d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                           d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+                           d_dftParamsPtr->verbosity,
+                           false);
 #endif
     }
   else
@@ -203,10 +203,10 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
-#ifdef DFTFE_WITH_GPU
-  kerkerSolverProblemCUDA<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-    &                 kerkerPreconditionedResidualSolverProblemCUDA,
-  linearSolverCGCUDA &CGSolverCUDA,
+#ifdef DFTFE_WITH_DEVICE
+  kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+    &                   kerkerPreconditionedResidualSolverProblemDevice,
+  linearSolverCGDevice &CGSolverDevice,
 #endif
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
@@ -389,10 +389,10 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
       << "Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "
       << std::endl;
 
-  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
     {
-#ifdef DFTFE_WITH_GPU
-      kerkerPreconditionedResidualSolverProblemCUDA.reinit(
+#ifdef DFTFE_WITH_DEVICE
+      kerkerPreconditionedResidualSolverProblemDevice.reinit(
         d_preCondResidualVector, gradDensityResidualValuesMap);
 #endif
     }
@@ -401,15 +401,15 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
       d_preCondResidualVector, gradDensityResidualValuesMap);
 
   // solve the Helmholtz system to compute preconditioned residual
-  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
     {
-#ifdef DFTFE_WITH_GPU
-      CGSolverCUDA.solve(kerkerPreconditionedResidualSolverProblemCUDA,
-                         d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                         d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                         d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
-                         d_dftParamsPtr->verbosity,
-                         false);
+#ifdef DFTFE_WITH_DEVICE
+      CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
+                           d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                           d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+                           d_dftParamsPtr->verbosity,
+                           false);
 #endif
     }
   else

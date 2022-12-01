@@ -21,8 +21,8 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator
 #endif
 )

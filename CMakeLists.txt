@@ -69,29 +69,25 @@ SET(TARGET_SRC
   ./src/mdi/libraryMDI.cpp
   )
 
-IF (WITH_GPU)
-    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
-ENDIF()
-
 SET(CUDA_SRC
-  ./src/gpuBase/cudaHelpers.cu
-  ./src/gpuBase/gpuDirectCCLWrapper.cu
-  ./src/dft/densityCalculatorCUDA.cu
-  ./src/dft/densityFirstOrderResponseCalculatorCUDA.cu
-  ./src/dftOperator/operatorCUDA.cu
-  ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
-  ./src/dft/solveVselfInBinsCUDA.cu
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-  ./src/linAlg/linearAlgebraOperationsCUDA.cu
-  ./src/linAlg/pseudoGSCUDA.cu
-  ./src/linAlg/rayleighRitzCUDA.cu
-  ./src/force/forceWfcContractionsCUDA.cu
-  ./utils/constraintMatrixInfoCUDA.cu
-  ./src/solvers/linearSolverCUDA.cu
-  ./src/solvers/linearSolverCGCUDA.cu
-  ./src/solvers/linearSolverProblemCUDA.cu
-  ./src/poisson/poissonSolverProblemCUDA.cu
-  ./src/helmholtz/kerkerSolverProblemCUDA.cu
+  ./src/deviceBase/deviceHelpers.cc
+  ./src/deviceBase/deviceDirectCCLWrapper.cc
+  ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
+  ./src/dftOperator/operatorDevice.cc
+  ./src/dftOperator/kohnShamDFTOperatorDevice.cc
+  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
+  ./src/linAlg/linearAlgebraOperationsDevice.cc
+  ./src/linAlg/pseudoGSDevice.cc
+  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/force/forceWfcContractionsDevice.cc
+  ./utils/constraintMatrixInfoDevice.cc
+  ./src/solvers/linearSolverDevice.cc
+  ./src/solvers/linearSolverCGDevice.cc
+  ./src/solvers/linearSolverProblemDevice.cc
+  ./src/poisson/poissonSolverProblemDevice.cc
+  ./src/helmholtz/kerkerSolverProblemDevice.cc
   )
 
 IF (WITH_GPU)
@@ -100,6 +96,11 @@ IF (WITH_GPU)
 ELSE()
   CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 ENDIF()
+
+IF (WITH_GPU)
+    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
+ENDIF()
+
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -213,7 +214,7 @@ ENDIF()
 #Set GPU compilation flag
 #
 IF (WITH_GPU)
-  ADD_DEFINITIONS(-DDFTFE_WITH_GPU)
+  ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
   MESSAGE(STATUS "DFTFE with GPU")
 
   IF(NOT DEAL_II_WITH_CUDA OR

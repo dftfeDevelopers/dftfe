@@ -20,8 +20,8 @@
 
 #include <force.h>
 #include <forceWfcContractions.h>
-#ifdef DFTFE_WITH_GPU
-#  include <forceWfcContractionsCUDA.h>
+#ifdef DFTFE_WITH_DEVICE
+#  include <forceWfcContractionsDevice.h>
 #endif
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
@@ -321,9 +321,9 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro>::computeAtomsForces(
     const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorGPU,
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorDevice,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
     const dispersionCorrection &                       dispersionCorr,
@@ -374,8 +374,8 @@ namespace dftfe
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
     computeConfigurationalForceTotalLinFE(matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-                                          kohnShamDFTEigenOperatorGPU,
+#ifdef DFTFE_WITH_DEVICE
+                                          kohnShamDFTEigenOperatorDevice,
 #endif
                                           kohnShamDFTEigenOperator,
                                           eigenDofHandlerIndex,
@@ -513,9 +513,9 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceTotalLinFE(
     const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorGPU,
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorDevice,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
     const unsigned int                                 eigenDofHandlerIndex,
@@ -557,8 +557,8 @@ namespace dftfe
     // nuclear self energy
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTEigenOperatorGPU,
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTEigenOperatorDevice,
 #endif
       kohnShamDFTEigenOperator,
       eigenDofHandlerIndex,

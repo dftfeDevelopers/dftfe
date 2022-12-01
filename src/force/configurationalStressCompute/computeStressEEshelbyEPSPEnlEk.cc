@@ -22,9 +22,9 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperatorGPU,
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+    &kohnShamDFTEigenOperatorDevice,
 #endif
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
   const unsigned int                                 eigenDofHandlerIndex,
@@ -150,11 +150,11 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   const unsigned int numMacroCells = matrixFreeData.n_macro_cells();
 
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
   AssertThrow(
     numMacroCells == numPhysicalCells,
     ExcMessage(
-      "DFT-FE Error: dealii for GPU DFT-FE must be compiled without any vectorization enabled."));
+      "DFT-FE Error: dealii for Device DFT-FE must be compiled without any vectorization enabled."));
 #endif
 
 
@@ -221,15 +221,15 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 #endif
 
 
-#if defined(DFTFE_WITH_GPU)
-      if (d_dftParams.useGPU)
+#if defined(DFTFE_WITH_DEVICE)
+      if (d_dftParams.useDevice)
         {
           MPI_Barrier(d_mpiCommParent);
-          double gpu_time = MPI_Wtime();
+          double device_time = MPI_Wtime();
 
-          forceCUDA::wfcContractionsForceKernelsAllH(
-            kohnShamDFTEigenOperatorGPU,
-            dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
+          forceDevice::wfcContractionsForceKernelsAllH(
+            kohnShamDFTEigenOperatorDevice,
+            dftPtr->d_eigenVectorsFlattenedDevice.begin(),
             d_dftParams.spinPolarized,
             spinIndex,
             dftPtr->eigenValues,
@@ -259,10 +259,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             true,
             d_dftParams);
           MPI_Barrier(d_mpiCommParent);
-          gpu_time = MPI_Wtime() - gpu_time;
+          device_time = MPI_Wtime() - device_time;
 
           if (this_process == 0 && d_dftParams.verbosity >= 4)
-            std::cout << "Time for wfc contractions in stress: " << gpu_time
+            std::cout << "Time for wfc contractions in stress: " << device_time
                       << std::endl;
         }
       else

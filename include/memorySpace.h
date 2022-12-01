@@ -28,9 +28,9 @@ namespace dftfe
     {};
 
     /**
-     * Structure describing GPU memory space.
+     * Structure describing Device memory space.
      */
-    struct GPU
+    struct Device
     {};
 
   } // namespace MemorySpace
