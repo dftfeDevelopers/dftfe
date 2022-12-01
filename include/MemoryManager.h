@@ -1,8 +1,8 @@
 #ifndef dftfeMemoryManager_h
 #define dftfeMemoryManager_h
 
-#include "TypeConfig.h"
-#include "MemorySpaceType.h"
+#include <TypeConfig.h>
+#include <MemorySpaceType.h>
 
 namespace dftfe
 {
