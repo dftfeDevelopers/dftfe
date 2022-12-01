@@ -375,20 +375,20 @@ namespace dftfe
     const unsigned int remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       rhoResponseContributionHamDevice(totalLocallyOwnedCells * numQuadPoints,
                                        zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       rhoResponseContributionFermiEnergyDevice(totalLocallyOwnedCells *
                                                  numQuadPoints,
                                                zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::HOST>
       rhoResponseContributionHamHost(totalLocallyOwnedCells * numQuadPoints,
                                      zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::HOST>
       rhoResponseContributionFermiEnergyHost(totalLocallyOwnedCells *
                                                numQuadPoints,
                                              zero);
@@ -403,17 +403,17 @@ namespace dftfe
     std::vector<double> rhoResponseValuesSpinPolarizedFermiEnergyFlattenedHost(
       totalLocallyOwnedCells * numQuadPoints * 2, 0.0);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       XQuadsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       XPrimeQuadsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       onesVecDevice(BVec, one);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::HOST>
       densityMatDerFermiEnergyVec(BVec, zero);
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       densityMatDerFermiEnergyVecDevice(BVec, zero);
 
     distributedDeviceVec<NumberType> &deviceFlattenedArrayXBlock =
@@ -428,7 +428,7 @@ namespace dftfe
     // NumberType *cellWaveFunctionMatrix = reinterpret_cast<NumberType *>(
     //  thrust::raw_pointer_cast(&operatorMatrix.getCellWaveFunctionMatrix()[0]));
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    deviceUtils::Vector<NumberTypeLowPrec, dftfe::utils::MemorySpace::DEVICE>
       cellWaveFunctionMatrix(cellsBlockSize * numNodesPerElement * BVec, zero);
 
     NumberTypeLowPrec *shapeFunctionValuesTransposedDevice;

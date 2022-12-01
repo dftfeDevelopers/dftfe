@@ -20,7 +20,7 @@
 
 #    include <cuda_runtime.h>
 #    include "dftfeDataTypes.h"
-#    include "memorySpace.h"
+#    include "MemorySpaceType.h"
 #    include "headers.h"
 #    include <cooperative_groups.h>
 #    include <cooperative_groups/reduce.h>
@@ -130,7 +130,7 @@ namespace dftfe
     set(NumberType *x, const NumberType &alpha, const int size);
 
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     class Vector
     {
     public:

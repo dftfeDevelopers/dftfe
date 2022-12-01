@@ -14,26 +14,28 @@
 //
 // ---------------------------------------------------------------------
 
-#ifndef dftfeMemorySpace_h
-#define dftfeMemorySpace_h
+
+/*
+ * @author Ian C. Lin., Sambit Das
+ */
+
+#ifndef dftfeMemorySpaceType_h
+#define dftfeMemorySpaceType_h
 
 namespace dftfe
 {
-  namespace MemorySpace
+  namespace utils
   {
-    /**
-     * Structure describing Host memory space.
-     */
-    struct Host
-    {};
-
-    /**
-     * Structure describing Device memory space.
-     */
-    struct Device
-    {};
-
-  } // namespace MemorySpace
+    //
+    // MemorySpace
+    //
+    enum class MemorySpace
+    {
+      HOST,
+      HOST_PINNED,
+      DEVICE
+    };
+  } // namespace utils
 } // namespace dftfe
 
-#endif
+#endif // dftfeMemorySpaceType_h

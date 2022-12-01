@@ -111,7 +111,7 @@ namespace dftfe
 
   template <typename NumberType>
   using distributedDeviceVec =
-    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::Device>;
+    dftfe::DistributedMulticomponentVec<NumberType, dftfe::utils::MemorySpace::DEVICE>;
 
 #endif
 } // namespace dftfe

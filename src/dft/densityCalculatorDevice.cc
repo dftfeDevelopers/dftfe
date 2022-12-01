@@ -279,43 +279,43 @@ namespace dftfe
       const unsigned int remCellBlockSize =
         totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device> rhoDevice(
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE> rhoDevice(
         totalLocallyOwnedCells * numQuadPoints, zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         rhoWfcContributionsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoDeviceX(isEvaluateGradRho ?
                          (totalLocallyOwnedCells * numQuadPoints) :
                          1,
                        zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoDeviceY(isEvaluateGradRho ?
                          (totalLocallyOwnedCells * numQuadPoints) :
                          1,
                        zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoDeviceZ(isEvaluateGradRho ?
                          (totalLocallyOwnedCells * numQuadPoints) :
                          1,
                        zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoWfcContributionsDeviceX(
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoWfcContributionsDeviceY(
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoWfcContributionsDeviceZ(
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostX;
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostY;
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostZ;
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::HOST> rhoHost;
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::HOST> gradRhoHostX;
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::HOST> gradRhoHostY;
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::HOST> gradRhoHostZ;
 
       rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
 
@@ -379,9 +379,9 @@ namespace dftfe
                                    numQuadPoints * sizeof(NumberType)));
         }
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> partialOccupVec(
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::HOST> partialOccupVec(
         BVec, zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      deviceUtils::Vector<NumberType, dftfe::utils::MemorySpace::DEVICE>
         partialOccupVecDevice(BVec, zero);
 
       distributedDeviceVec<NumberType> &deviceFlattenedArrayBlock =

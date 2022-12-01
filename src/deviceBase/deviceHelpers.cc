@@ -243,14 +243,14 @@ namespace dftfe
     }
 
 
-    template <typename NumberType, typename MemorySpace>
-    Vector<NumberType, MemorySpace>::Vector()
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
+    Vector<NumberType, memorySpace>::Vector()
       : d_data(NULL)
       , d_size(0)
     {}
 
-    template <typename NumberType, typename MemorySpace>
-    Vector<NumberType, MemorySpace>::Vector(
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
+    Vector<NumberType, memorySpace>::Vector(
       const dataTypes::local_size_type size,
       const NumberType                 s)
     {
@@ -259,22 +259,22 @@ namespace dftfe
       this->resize(size, s);
     }
 
-    template <typename NumberType, typename MemorySpace>
-    Vector<NumberType, MemorySpace>::~Vector()
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
+    Vector<NumberType, memorySpace>::~Vector()
     {
       this->clear();
     }
 
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     void
-    Vector<NumberType, MemorySpace>::resize(
+    Vector<NumberType, memorySpace>::resize(
       const dataTypes::local_size_type size)
     {
       this->clear();
       if (size > 0)
         {
-          if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+          if (std::is_same<MemorySpace, dftfe::utils::MemorySpace::HOST>::value)
             {
               d_data = (NumberType *)malloc(size * sizeof(NumberType));
               std::memset(d_data, 0, size * sizeof(NumberType));
@@ -289,9 +289,9 @@ namespace dftfe
         }
     }
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     void
-    Vector<NumberType, MemorySpace>::resize(
+    Vector<NumberType, memorySpace>::resize(
       const dataTypes::local_size_type size,
       const NumberType                 s)
     {
@@ -299,11 +299,11 @@ namespace dftfe
       this->set(s);
     }
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     void
-    Vector<NumberType, MemorySpace>::set(const NumberType s)
+    Vector<NumberType, memorySpace>::set(const NumberType s)
     {
-      if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+      if (std::is_same<MemorySpace, dftfe::utils::MemorySpace::HOST>::value)
         std::fill(d_data, d_data + d_size, s);
       else
         setKernel<NumberType>
@@ -311,36 +311,36 @@ namespace dftfe
              deviceConstants::blockSize>>>(d_size, s, d_data);
     }
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     NumberType *
-    Vector<NumberType, MemorySpace>::begin()
+    Vector<NumberType, memorySpace>::begin()
     {
       return d_data;
     }
 
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     const NumberType *
-    Vector<NumberType, MemorySpace>::begin() const
+    Vector<NumberType, memorySpace>::begin() const
     {
       return d_data;
     }
 
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     dataTypes::local_size_type
-    Vector<NumberType, MemorySpace>::size() const
+    Vector<NumberType, memorySpace>::size() const
     {
       return d_size;
     }
 
-    template <typename NumberType, typename MemorySpace>
+    template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
     void
-    Vector<NumberType, MemorySpace>::clear()
+    Vector<NumberType, memorySpace>::clear()
     {
       if (d_data != NULL)
         {
-          if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+          if (std::is_same<MemorySpace, dftfe::utils::MemorySpace::HOST>::value)
             free(d_data);
           else
             DeviceCHECK(cudaFree(d_data));
@@ -348,14 +348,14 @@ namespace dftfe
         }
     }
 
-    template class Vector<double, dftfe::MemorySpace::Host>;
-    template class Vector<cuDoubleComplex, dftfe::MemorySpace::Host>;
-    template class Vector<double, dftfe::MemorySpace::Device>;
-    template class Vector<cuDoubleComplex, dftfe::MemorySpace::Device>;
-    template class Vector<float, dftfe::MemorySpace::Host>;
-    template class Vector<cuFloatComplex, dftfe::MemorySpace::Host>;
-    template class Vector<float, dftfe::MemorySpace::Device>;
-    template class Vector<cuFloatComplex, dftfe::MemorySpace::Device>;
+    template class Vector<double, dftfe::utils::MemorySpace::HOST>;
+    template class Vector<cuDoubleComplex, dftfe::utils::MemorySpace::HOST>;
+    template class Vector<double, dftfe::utils::MemorySpace::DEVICE>;
+    template class Vector<cuDoubleComplex, dftfe::utils::MemorySpace::DEVICE>;
+    template class Vector<float, dftfe::utils::MemorySpace::HOST>;
+    template class Vector<cuFloatComplex, dftfe::utils::MemorySpace::HOST>;
+    template class Vector<float, dftfe::utils::MemorySpace::DEVICE>;
+    template class Vector<cuFloatComplex, dftfe::utils::MemorySpace::DEVICE>;
 
     template void
     copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
