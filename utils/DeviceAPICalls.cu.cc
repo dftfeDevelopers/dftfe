@@ -141,15 +141,29 @@ namespace dftfe
     }
 
     void
-    deviceSynchronize()
+    deviceMemcpyD2H_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height)
     {
-      DEVICE_API_CHECK(cudaDeviceSynchronize());
+      DEVICE_API_CHECK(cudaMemcpy2D(dst,dpitch,src,spitch,width,height,cudaMemcpyDeviceToHost)); 
+    }
+
+
+    void
+    deviceMemcpyD2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height)
+    {
+      DEVICE_API_CHECK(cudaMemcpy2D(dst,dpitch,src,spitch,width,height,cudaMemcpyDeviceToDevice));     
+    }
+
+
+    void
+    deviceMemcpyH2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height)
+    {
+      DEVICE_API_CHECK(cudaMemcpy2D(dst,dpitch,src,spitch,width,height,cudaMemcpyHostToDevice));     
     }
 
     void
-    deviceFuncSetAttribute(const void* func, deviceFuncAttribute attr, int  value)
+    deviceSynchronize()
     {
-      DEVICE_API_CHECK(cudaFuncSetAttribute(func, attr,value));
+      DEVICE_API_CHECK(cudaDeviceSynchronize());
     }
 
   } // namespace utils

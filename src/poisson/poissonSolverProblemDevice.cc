@@ -18,7 +18,7 @@
 //
 
 #include <poissonSolverProblemDevice.h>
-
+#include <DeviceAPICalls.h>
 
 namespace dftfe
 {
@@ -481,7 +481,7 @@ namespace dftfe
     if (d_isMeanValueConstraintComputed)
       if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
           d_meanValueConstraintProcId)
-        cudaMemset(vec.begin() + d_meanValueConstraintNodeIdLocal,
+        dftfe::utils::deviceMemset(vec.begin() + d_meanValueConstraintNodeIdLocal,
                    0,
                    sizeof(double));
   }
@@ -1256,9 +1256,11 @@ namespace dftfe
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
+#ifdef DFTFE_WITH_DEVICE_CUDA
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
                          smem);
+#endif    
   }
 
 
@@ -1280,7 +1282,7 @@ namespace dftfe
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
-    cudaMemset(Ax.begin(), 0, d_xLen * sizeof(double));
+    dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(x);

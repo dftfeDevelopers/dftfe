@@ -65,19 +65,31 @@ namespace dftfe
     deviceMemcpyH2D(void *dst, const void *src, size_type count);
 
     /**
+     * @brief Copy 2D array from device to host
+     * @param count The memory size in bytes of the array
+     */
+    void
+    deviceMemcpyD2H_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);
+
+    /**
+     * @brief Copy 2D array from device to device
+     * @param count The memory size in bytes of the array
+     */
+    void
+    deviceMemcpyD2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);
+
+    /**
+     * @brief Copy 2D array from host to device
+     * @param count The memory size in bytes of the array
+     */
+    void
+    deviceMemcpyH2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);    
+
+    /**
      * @brief HOST-DEVICE synchronization
      */
     void
     deviceSynchronize();
-
-    /**
-     * @brief This function sets the attributes of a function specified via func. 
-     * The parameter func must be a pointer to a function that executes on the device. 
-     */
-    void
-    deviceFuncSetAttribute(const void* func, deviceFuncAttribute attr, int  value);
-
-
   } // namespace utils
 } // namespace dftfe
 

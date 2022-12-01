@@ -19,6 +19,8 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
 #include <dftUtils.h>
 #include <deviceHelpers.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <vectorUtilities.h>
@@ -333,7 +335,7 @@ namespace dftfe
       {
         if (d_dftParams.deviceFineGrainedTimings)
           {
-            cudaDeviceSynchronize();
+            dftfe::utils::deviceSynchronize();
             computingTimerStandard.enter_subsection("Lanczos upper bound");
           }
 
@@ -348,7 +350,7 @@ namespace dftfe
 
         if (d_dftParams.deviceFineGrainedTimings)
           {
-            cudaDeviceSynchronize();
+            dftfe::utils::deviceSynchronize();
             computingTimerStandard.leave_subsection("Lanczos upper bound");
           }
 
@@ -365,7 +367,7 @@ namespace dftfe
       {
         if (d_dftParams.deviceFineGrainedTimings)
           {
-            cudaDeviceSynchronize();
+            dftfe::utils::deviceSynchronize();
             computingTimerStandard.enter_subsection("Lanczos upper bound");
           }
 
@@ -380,7 +382,7 @@ namespace dftfe
 
         if (d_dftParams.deviceFineGrainedTimings)
           {
-            cudaDeviceSynchronize();
+            dftfe::utils::deviceSynchronize();
             computingTimerStandard.leave_subsection("Lanczos upper bound");
           }
 
@@ -389,7 +391,7 @@ namespace dftfe
 
     if (d_dftParams.deviceFineGrainedTimings)
       {
-        cudaDeviceSynchronize();
+        dftfe::utils::deviceSynchronize();
         computingTimerStandard.enter_subsection(
           "Chebyshev filtering on Device");
       }
@@ -607,7 +609,7 @@ namespace dftfe
 
     if (d_dftParams.deviceFineGrainedTimings)
       {
-        cudaDeviceSynchronize();
+        dftfe::utils::deviceSynchronize();
         computingTimerStandard.leave_subsection(
           "Chebyshev filtering on Device");
 
@@ -621,12 +623,11 @@ namespace dftfe
         std::vector<dataTypes::number> eigenVectorsFlattened(
           totalNumberWaveFunctions * localVectorSize, dataTypes::number(0.0));
 
-        cudaMemcpy(reinterpret_cast<dataTypes::numberDevice *>(
+        dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
                      &eigenVectorsFlattened[0]),
                    eigenVectorsFlattenedDevice,
                    totalNumberWaveFunctions * localVectorSize *
-                     sizeof(dataTypes::numberDevice),
-                   cudaMemcpyDeviceToHost);
+                     sizeof(dataTypes::numberDevice));
 
         MPI_Barrier(interBandGroupComm);
 
@@ -640,12 +641,11 @@ namespace dftfe
 
         MPI_Barrier(interBandGroupComm);
 
-        cudaMemcpy(eigenVectorsFlattenedDevice,
-                   reinterpret_cast<dataTypes::numberDevice *>(
+        dftfe::utils::deviceMemcpyH2D(eigenVectorsFlattenedDevice,
+                   dftfe::utils::makeDataTypeDeviceCompatible(
                      &eigenVectorsFlattened[0]),
                    totalNumberWaveFunctions * localVectorSize *
-                     sizeof(dataTypes::numberDevice),
-                   cudaMemcpyHostToDevice);
+                     sizeof(dataTypes::numberDevice));
       }
 
     // if (d_dftParams.measureOnlyChebyTime)
@@ -725,7 +725,7 @@ namespace dftfe
       {
         if (d_dftParams.deviceFineGrainedTimings)
           {
-            cudaDeviceSynchronize();
+            dftfe::utils::deviceSynchronize();
             computingTimerStandard.enter_subsection("Residual norm");
           }
 
@@ -763,7 +763,7 @@ namespace dftfe
 
         if (d_dftParams.deviceFineGrainedTimings)
           {
-            cudaDeviceSynchronize();
+            dftfe::utils::deviceSynchronize();
             computingTimerStandard.leave_subsection("Residual norm");
           }
       }
@@ -1146,7 +1146,7 @@ namespace dftfe
         dealii::TimerOutput::every_call,
       dealii::TimerOutput::wall_times);
 
-    cudaDeviceSynchronize();
+    dftfe::utils::deviceSynchronize();
     computingTimerStandard.enter_subsection(
       "Density matrix first order response on Device");
 
@@ -1224,7 +1224,7 @@ namespace dftfe
                                     eigenVectorsFlattenedDevice,
                                     operatorMatrix.getInvSqrtMassVec());
 
-    cudaDeviceSynchronize();
+    dftfe::utils::deviceSynchronize();
     computingTimerStandard.leave_subsection(
       "Density matrix first order response on Device");
 

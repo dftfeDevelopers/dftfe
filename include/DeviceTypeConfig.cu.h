@@ -24,7 +24,6 @@ namespace dftfe
   {
     typedef cudaStream_t deviceStreamType;
     typedef cudaEvent_t deviceEvent;    
-    typedef cudaFuncAttribute deviceFuncAttribute;
   }
 } // namespace dftfe
 
