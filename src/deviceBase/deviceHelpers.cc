@@ -274,7 +274,7 @@ namespace dftfe
       this->clear();
       if (size > 0)
         {
-          if (std::is_same<MemorySpace, dftfe::utils::MemorySpace::HOST>::value)
+          if (memorySpace==dftfe::utils::MemorySpace::HOST)
             {
               d_data = (NumberType *)malloc(size * sizeof(NumberType));
               std::memset(d_data, 0, size * sizeof(NumberType));
@@ -303,7 +303,7 @@ namespace dftfe
     void
     Vector<NumberType, memorySpace>::set(const NumberType s)
     {
-      if (std::is_same<MemorySpace, dftfe::utils::MemorySpace::HOST>::value)
+      if (memorySpace==dftfe::utils::MemorySpace::HOST)
         std::fill(d_data, d_data + d_size, s);
       else
         setKernel<NumberType>
@@ -340,7 +340,7 @@ namespace dftfe
     {
       if (d_data != NULL)
         {
-          if (std::is_same<MemorySpace, dftfe::utils::MemorySpace::HOST>::value)
+          if (memorySpace==dftfe::utils::MemorySpace::HOST)
             free(d_data);
           else
             DeviceCHECK(cudaFree(d_data));
