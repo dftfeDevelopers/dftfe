@@ -597,9 +597,10 @@ namespace dftfe
                                double *           dotarrayD,
                                double *           dotarrayH)
       {
-        dotProductContributionBlockedKernelMassVector<<<(numberVectors + (deviceConstants::blockSize-1)) /
-                                                          deviceConstants::blockSize * localSize,
-                                                        deviceConstants::blockSize>>>(
+        dotProductContributionBlockedKernelMassVector<<<
+          (numberVectors + (deviceConstants::blockSize - 1)) /
+            deviceConstants::blockSize * localSize,
+          deviceConstants::blockSize>>>(
           numberVectors, localSize, xarray, yarray, sqrtMassVector, temparray);
 
         const double alpha = 1.0, beta = 0.0;
@@ -943,8 +944,14 @@ namespace dftfe
                   inc);
       */
 
-      daxpyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000), deviceConstants::blockSize>>>(
-        totalVectorSize, XArray.begin(), YArray.begin(), alpha2);
+      daxpyDeviceKernel<<<min((totalVectorSize +
+                               (deviceConstants::blockSize - 1)) /
+                                deviceConstants::blockSize,
+                              30000),
+                          deviceConstants::blockSize>>>(totalVectorSize,
+                                                        XArray.begin(),
+                                                        YArray.begin(),
+                                                        alpha2);
 
       /*
       cublasDscal(operatorMatrix.getCublasHandle(),
@@ -954,8 +961,11 @@ namespace dftfe
                   inc);
       */
 
-      dscalDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000), deviceConstants::blockSize>>>(
-        totalVectorSize, YArray.begin(), alpha1);
+      dscalDeviceKernel<<<
+        min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+              deviceConstants::blockSize,
+            30000),
+        deviceConstants::blockSize>>>(totalVectorSize, YArray.begin(), alpha1);
 
       //
       // polynomial loop
@@ -969,26 +979,34 @@ namespace dftfe
 
           if (degree == 2)
             {
-              daxpbyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
+              daxpbyDeviceKernel<<<min((totalVectorSize +
+                                        (deviceConstants::blockSize - 1)) /
+                                         deviceConstants::blockSize,
+                                       30000),
                                    deviceConstants::blockSize>>>(
                 totalVectorSize, YArray.begin(), XArray.begin(), coeff, alpha2);
 
 
               // scale src vector with M^{-1/2}
               //
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         alpha1,
-                                         YArray.begin(),
-                                         operatorMatrix.getInvSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                alpha1,
+                YArray.begin(),
+                operatorMatrix.getInvSqrtMassVec());
 
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0,
-                                         XArray.begin(),
-                                         operatorMatrix.getSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(numberVectors,
+                                              localVectorSize,
+                                              1.0,
+                                              XArray.begin(),
+                                              operatorMatrix.getSqrtMassVec());
 
               //
               // call HX
@@ -1006,21 +1024,29 @@ namespace dftfe
             {
               // unscale src vector with M^{1/2}
               //
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0 / alpha1Old,
-                                         XArray.begin(),
-                                         operatorMatrix.getSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(numberVectors,
+                                              localVectorSize,
+                                              1.0 / alpha1Old,
+                                              XArray.begin(),
+                                              operatorMatrix.getSqrtMassVec());
 
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0,
-                                         YArray.begin(),
-                                         operatorMatrix.getInvSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                YArray.begin(),
+                operatorMatrix.getInvSqrtMassVec());
 
-              daxpbyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
+              daxpbyDeviceKernel<<<min((totalVectorSize +
+                                        (deviceConstants::blockSize - 1)) /
+                                         deviceConstants::blockSize,
+                                       30000),
                                    deviceConstants::blockSize>>>(
                 totalVectorSize, YArray.begin(), XArray.begin(), coeff, alpha2);
               scaleFlag = true;
@@ -1037,17 +1063,21 @@ namespace dftfe
             }
           else
             {
-              combinedDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                     deviceConstants::blockSize>>>(numberVectors,
-                                            localVectorSize,
-                                            YArray.begin(),
-                                            XArray.begin(),
-                                            coeff,
-                                            alpha2,
-                                            alpha1,
-                                            alpha1Old,
-                                            operatorMatrix.getInvSqrtMassVec(),
-                                            operatorMatrix.getSqrtMassVec());
+              combinedDeviceKernel<<<min((totalVectorSize +
+                                          (deviceConstants::blockSize - 1)) /
+                                           deviceConstants::blockSize,
+                                         30000),
+                                     deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                YArray.begin(),
+                XArray.begin(),
+                coeff,
+                alpha2,
+                alpha1,
+                alpha1Old,
+                operatorMatrix.getInvSqrtMassVec(),
+                operatorMatrix.getSqrtMassVec());
               //
               // call HX
               //
@@ -1180,17 +1210,35 @@ namespace dftfe
                   inc);
       */
 
-      daxpyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000), deviceConstants::blockSize>>>(
-        totalVectorSize, XArray1.begin(), YArray1.begin(), alpha2);
+      daxpyDeviceKernel<<<min((totalVectorSize +
+                               (deviceConstants::blockSize - 1)) /
+                                deviceConstants::blockSize,
+                              30000),
+                          deviceConstants::blockSize>>>(totalVectorSize,
+                                                        XArray1.begin(),
+                                                        YArray1.begin(),
+                                                        alpha2);
 
-      dscalDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000), deviceConstants::blockSize>>>(
-        totalVectorSize, YArray1.begin(), alpha1);
+      dscalDeviceKernel<<<
+        min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+              deviceConstants::blockSize,
+            30000),
+        deviceConstants::blockSize>>>(totalVectorSize, YArray1.begin(), alpha1);
 
-      daxpyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000), deviceConstants::blockSize>>>(
-        totalVectorSize, XArray2.begin(), YArray2.begin(), alpha2);
+      daxpyDeviceKernel<<<min((totalVectorSize +
+                               (deviceConstants::blockSize - 1)) /
+                                deviceConstants::blockSize,
+                              30000),
+                          deviceConstants::blockSize>>>(totalVectorSize,
+                                                        XArray2.begin(),
+                                                        YArray2.begin(),
+                                                        alpha2);
 
-      dscalDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000), deviceConstants::blockSize>>>(
-        totalVectorSize, YArray2.begin(), alpha1);
+      dscalDeviceKernel<<<
+        min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+              deviceConstants::blockSize,
+            30000),
+        deviceConstants::blockSize>>>(totalVectorSize, YArray2.begin(), alpha1);
 
       bool overlap = false;
       //
@@ -1207,29 +1255,37 @@ namespace dftfe
 
           if (degree == 2)
             {
-              daxpbyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                   deviceConstants::blockSize>>>(totalVectorSize,
-                                          YArray1.begin(),
-                                          XArray1.begin(),
-                                          coeff,
-                                          alpha2);
+              daxpbyDeviceKernel<<<
+                min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize,
+                    30000),
+                deviceConstants::blockSize>>>(totalVectorSize,
+                                              YArray1.begin(),
+                                              XArray1.begin(),
+                                              coeff,
+                                              alpha2);
 
 
               // scale src vector with M^{-1/2}
               //
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         alpha1,
-                                         YArray1.begin(),
-                                         operatorMatrix.getInvSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                alpha1,
+                YArray1.begin(),
+                operatorMatrix.getInvSqrtMassVec());
 
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0,
-                                         XArray1.begin(),
-                                         operatorMatrix.getSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(numberVectors,
+                                              localVectorSize,
+                                              1.0,
+                                              XArray1.begin(),
+                                              operatorMatrix.getSqrtMassVec());
 
               //
               // call HX
@@ -1243,29 +1299,37 @@ namespace dftfe
                                      mixedPrecOverall &&
                                        dftParams.useMixedPrecCheby);
 
-              daxpbyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                   deviceConstants::blockSize>>>(totalVectorSize,
-                                          YArray2.begin(),
-                                          XArray2.begin(),
-                                          coeff,
-                                          alpha2);
+              daxpbyDeviceKernel<<<
+                min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize,
+                    30000),
+                deviceConstants::blockSize>>>(totalVectorSize,
+                                              YArray2.begin(),
+                                              XArray2.begin(),
+                                              coeff,
+                                              alpha2);
 
 
               // scale src vector with M^{-1/2}
               //
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         alpha1,
-                                         YArray2.begin(),
-                                         operatorMatrix.getInvSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                alpha1,
+                YArray2.begin(),
+                operatorMatrix.getInvSqrtMassVec());
 
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0,
-                                         XArray2.begin(),
-                                         operatorMatrix.getSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(numberVectors,
+                                              localVectorSize,
+                                              1.0,
+                                              XArray2.begin(),
+                                              operatorMatrix.getSqrtMassVec());
 
               //
               // call HX
@@ -1284,26 +1348,34 @@ namespace dftfe
             {
               // unscale src vector with M^{1/2}
               //
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0 / alpha1Old,
-                                         XArray1.begin(),
-                                         operatorMatrix.getSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(numberVectors,
+                                              localVectorSize,
+                                              1.0 / alpha1Old,
+                                              XArray1.begin(),
+                                              operatorMatrix.getSqrtMassVec());
 
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0,
-                                         YArray1.begin(),
-                                         operatorMatrix.getInvSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                YArray1.begin(),
+                operatorMatrix.getInvSqrtMassVec());
 
-              daxpbyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                   deviceConstants::blockSize>>>(totalVectorSize,
-                                          YArray1.begin(),
-                                          XArray1.begin(),
-                                          coeff,
-                                          alpha2);
+              daxpbyDeviceKernel<<<
+                min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize,
+                    30000),
+                deviceConstants::blockSize>>>(totalVectorSize,
+                                              YArray1.begin(),
+                                              XArray1.begin(),
+                                              coeff,
+                                              alpha2);
               scaleFlag = true;
               //
               // call HX
@@ -1319,26 +1391,34 @@ namespace dftfe
 
               // unscale src vector with M^{1/2}
               //
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0 / alpha1Old,
-                                         XArray2.begin(),
-                                         operatorMatrix.getSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(numberVectors,
+                                              localVectorSize,
+                                              1.0 / alpha1Old,
+                                              XArray2.begin(),
+                                              operatorMatrix.getSqrtMassVec());
 
-              scaleDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
-                                  deviceConstants::blockSize>>>(numberVectors,
-                                         localVectorSize,
-                                         1.0,
-                                         YArray2.begin(),
-                                         operatorMatrix.getInvSqrtMassVec());
+              scaleDeviceKernel<<<
+                (numberVectors + (deviceConstants::blockSize - 1)) /
+                  deviceConstants::blockSize * localVectorSize,
+                deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                YArray2.begin(),
+                operatorMatrix.getInvSqrtMassVec());
 
-              daxpbyDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                   deviceConstants::blockSize>>>(totalVectorSize,
-                                          YArray2.begin(),
-                                          XArray2.begin(),
-                                          coeff,
-                                          alpha2);
+              daxpbyDeviceKernel<<<
+                min((totalVectorSize + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize,
+                    30000),
+                deviceConstants::blockSize>>>(totalVectorSize,
+                                              YArray2.begin(),
+                                              XArray2.begin(),
+                                              coeff,
+                                              alpha2);
               //
               // call HX
               //
@@ -1406,17 +1486,21 @@ namespace dftfe
                   projectorKetTimesVector2.compressAddStart();
                 }
 
-              combinedDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                     deviceConstants::blockSize>>>(numberVectors,
-                                            localVectorSize,
-                                            YArray1.begin(),
-                                            XArray1.begin(),
-                                            coeff,
-                                            alpha2,
-                                            alpha1,
-                                            alpha1Old,
-                                            operatorMatrix.getInvSqrtMassVec(),
-                                            operatorMatrix.getSqrtMassVec());
+              combinedDeviceKernel<<<min((totalVectorSize +
+                                          (deviceConstants::blockSize - 1)) /
+                                           deviceConstants::blockSize,
+                                         30000),
+                                     deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                YArray1.begin(),
+                XArray1.begin(),
+                coeff,
+                alpha2,
+                alpha1,
+                alpha1Old,
+                operatorMatrix.getInvSqrtMassVec(),
+                operatorMatrix.getSqrtMassVec());
 
 
               if (overlap)
@@ -1429,12 +1513,13 @@ namespace dftfe
               // unsigned int id2=nvtxRangeStartA("ghost1");
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  convDoubleArrToFloatArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                              localVectorSize,
-                                            deviceConstants::blockSize>>>(numberVectors *
-                                                     localVectorSize,
-                                                   YArray1.begin(),
-                                                   tempFloatArray.begin());
+                  convDoubleArrToFloatArr<<<
+                    (numberVectors + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize * localVectorSize,
+                    deviceConstants::blockSize>>>(numberVectors *
+                                                    localVectorSize,
+                                                  YArray1.begin(),
+                                                  tempFloatArray.begin());
                   tempFloatArray.updateGhostValuesStart();
                 }
               else
@@ -1457,9 +1542,10 @@ namespace dftfe
                 {
                   tempFloatArray.updateGhostValuesFinish();
                   if (n_ghosts != 0)
-                    convFloatArrToDoubleArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                                n_ghosts,
-                                              deviceConstants::blockSize>>>(
+                    convFloatArrToDoubleArr<<<
+                      (numberVectors + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * n_ghosts,
+                      deviceConstants::blockSize>>>(
                       numberVectors * n_ghosts,
                       tempFloatArray.begin() + localVectorSize * numberVectors,
                       YArray1.begin() + localVectorSize * numberVectors);
@@ -1477,12 +1563,12 @@ namespace dftfe
                 {
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
-                      convDoubleArrToFloatArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                                  totalSize,
-                                                deviceConstants::blockSize>>>(numberVectors *
-                                                         totalSize,
-                                                       XArray2.begin(),
-                                                       tempFloatArray.begin());
+                      convDoubleArrToFloatArr<<<
+                        (numberVectors + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * totalSize,
+                        deviceConstants::blockSize>>>(numberVectors * totalSize,
+                                                      XArray2.begin(),
+                                                      tempFloatArray.begin());
                       tempFloatArray.compressAddStart();
                     }
                   else
@@ -1508,7 +1594,8 @@ namespace dftfe
                       tempFloatArray.compressAddFinish();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
-                        (numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        (numberVectors + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * localVectorSize,
                         deviceConstants::blockSize>>>(
                         numberVectors,
                         localVectorSize,
@@ -1529,17 +1616,21 @@ namespace dftfe
 
               projectorKetTimesVector1.compressAddStart();
 
-              combinedDeviceKernel<<<min((totalVectorSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, 30000),
-                                     deviceConstants::blockSize>>>(numberVectors,
-                                            localVectorSize,
-                                            YArray2.begin(),
-                                            XArray2.begin(),
-                                            coeff,
-                                            alpha2,
-                                            alpha1,
-                                            alpha1Old,
-                                            operatorMatrix.getInvSqrtMassVec(),
-                                            operatorMatrix.getSqrtMassVec());
+              combinedDeviceKernel<<<min((totalVectorSize +
+                                          (deviceConstants::blockSize - 1)) /
+                                           deviceConstants::blockSize,
+                                         30000),
+                                     deviceConstants::blockSize>>>(
+                numberVectors,
+                localVectorSize,
+                YArray2.begin(),
+                XArray2.begin(),
+                coeff,
+                alpha2,
+                alpha1,
+                alpha1Old,
+                operatorMatrix.getInvSqrtMassVec(),
+                operatorMatrix.getSqrtMassVec());
 
               projectorKetTimesVector1.compressAddFinish();
 
@@ -1548,12 +1639,13 @@ namespace dftfe
               // unsigned int id3=nvtxRangeStartA("ghost2");
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  convDoubleArrToFloatArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                              localVectorSize,
-                                            deviceConstants::blockSize>>>(numberVectors *
-                                                     localVectorSize,
-                                                   YArray2.begin(),
-                                                   tempFloatArray.begin());
+                  convDoubleArrToFloatArr<<<
+                    (numberVectors + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize * localVectorSize,
+                    deviceConstants::blockSize>>>(numberVectors *
+                                                    localVectorSize,
+                                                  YArray2.begin(),
+                                                  tempFloatArray.begin());
                   tempFloatArray.updateGhostValuesStart();
                 }
               else
@@ -1575,9 +1667,10 @@ namespace dftfe
                 {
                   tempFloatArray.updateGhostValuesFinish();
                   if (n_ghosts != 0)
-                    convFloatArrToDoubleArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                                n_ghosts,
-                                              deviceConstants::blockSize>>>(
+                    convFloatArrToDoubleArr<<<
+                      (numberVectors + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * n_ghosts,
+                      deviceConstants::blockSize>>>(
                       numberVectors * n_ghosts,
                       tempFloatArray.begin() + localVectorSize * numberVectors,
                       YArray2.begin() + localVectorSize * numberVectors);
@@ -1593,11 +1686,12 @@ namespace dftfe
               // unsigned int id4=nvtxRangeStartA("compress1");
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  convDoubleArrToFloatArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                              totalSize,
-                                            deviceConstants::blockSize>>>(numberVectors * totalSize,
-                                                   XArray1.begin(),
-                                                   tempFloatArray.begin());
+                  convDoubleArrToFloatArr<<<
+                    (numberVectors + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize * totalSize,
+                    deviceConstants::blockSize>>>(numberVectors * totalSize,
+                                                  XArray1.begin(),
+                                                  tempFloatArray.begin());
                   tempFloatArray.compressAddStart();
                 }
               else
@@ -1619,9 +1713,10 @@ namespace dftfe
                 {
                   tempFloatArray.compressAddFinish();
 
-                  copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors + (deviceConstants::blockSize-1)) /
-                                                          deviceConstants::blockSize * localVectorSize,
-                                                        deviceConstants::blockSize>>>(
+                  copyFloatArrToDoubleArrLocallyOwned<<<
+                    (numberVectors + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize * localVectorSize,
+                    deviceConstants::blockSize>>>(
                     numberVectors,
                     localVectorSize,
                     tempFloatArray.begin(),
@@ -1657,16 +1752,17 @@ namespace dftfe
                   YArray2.zeroOutGhosts();
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
-                      convDoubleArrToFloatArr<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
-                                                  totalSize,
-                                                deviceConstants::blockSize>>>(numberVectors *
-                                                         totalSize,
-                                                       XArray2.begin(),
-                                                       tempFloatArray.begin());
+                      convDoubleArrToFloatArr<<<
+                        (numberVectors + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * totalSize,
+                        deviceConstants::blockSize>>>(numberVectors * totalSize,
+                                                      XArray2.begin(),
+                                                      tempFloatArray.begin());
                       tempFloatArray.compressAdd();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
-                        (numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        (numberVectors + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize * localVectorSize,
                         deviceConstants::blockSize>>>(
                         numberVectors,
                         localVectorSize,
@@ -2610,7 +2706,9 @@ namespace dftfe
       thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
         MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
 
-      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
+      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
+                                  deviceConstants::blockSize * M,
+                                deviceConstants::blockSize>>>(
         N * M,
         X,
         reinterpret_cast<dataTypes::numberFP32Device *>(
@@ -2722,7 +2820,9 @@ namespace dftfe
                  N * sizeof(dataTypes::numberDevice),
                  cudaMemcpyHostToDevice);
 
-      computeDiagQTimesXKernel<<<(M * N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(
+      computeDiagQTimesXKernel<<<(M * N + (deviceConstants::blockSize - 1)) /
+                                   deviceConstants::blockSize,
+                                 deviceConstants::blockSize>>>(
         reinterpret_cast<const dataTypes::numberDevice *>(
           thrust::raw_pointer_cast(&diagValues[0])),
         X,
@@ -2930,11 +3030,12 @@ namespace dftfe
                             &rotatedVectorsMatBlockSP[0])),
                         BVec);
 
-                      addSubspaceRotatedBlockToXKernel<<<(BVec * BDof + (deviceConstants::blockSize-1)) /
-                                                           deviceConstants::blockSize,
-                                                         deviceConstants::blockSize,
-                                                         0,
-                                                         streamCompute>>>(
+                      addSubspaceRotatedBlockToXKernel<<<
+                        (BVec * BDof + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize,
+                        deviceConstants::blockSize,
+                        0,
+                        streamCompute>>>(
                         BDof,
                         BVec,
                         reinterpret_cast<const dataTypes::numberFP32Device *>(
@@ -3001,7 +3102,9 @@ namespace dftfe
       thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
         MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
 
-      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
+      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
+                                  deviceConstants::blockSize * M,
+                                deviceConstants::blockSize>>>(
         N * M,
         X,
         reinterpret_cast<dataTypes::numberFP32Device *>(
@@ -3122,7 +3225,9 @@ namespace dftfe
                  N * sizeof(dataTypes::numberDevice),
                  cudaMemcpyHostToDevice);
 
-      computeDiagQTimesXKernel<<<(M * N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(
+      computeDiagQTimesXKernel<<<(M * N + (deviceConstants::blockSize - 1)) /
+                                   deviceConstants::blockSize,
+                                 deviceConstants::blockSize>>>(
         reinterpret_cast<const dataTypes::numberDevice *>(
           thrust::raw_pointer_cast(&diagValues[0])),
         X,
@@ -3332,11 +3437,12 @@ namespace dftfe
                         BVec);
 
 
-                      addSubspaceRotatedBlockToXKernel<<<(BVec * BDof + (deviceConstants::blockSize-1)) /
-                                                           deviceConstants::blockSize,
-                                                         deviceConstants::blockSize,
-                                                         0,
-                                                         streamCompute>>>(
+                      addSubspaceRotatedBlockToXKernel<<<
+                        (BVec * BDof + (deviceConstants::blockSize - 1)) /
+                          deviceConstants::blockSize,
+                        deviceConstants::blockSize,
+                        0,
+                        streamCompute>>>(
                         BDof,
                         BVec,
                         reinterpret_cast<const dataTypes::numberFP32Device *>(
@@ -3910,7 +4016,9 @@ namespace dftfe
       thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
         MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
 
-      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
+      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
+                                  deviceConstants::blockSize * M,
+                                deviceConstants::blockSize>>>(
         N * M,
         X,
         reinterpret_cast<dataTypes::numberFP32Device *>(
@@ -4249,7 +4357,9 @@ namespace dftfe
       thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
         MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
 
-      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
+      convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
+                                  deviceConstants::blockSize * M,
+                                deviceConstants::blockSize>>>(
         N * M,
         X,
         reinterpret_cast<dataTypes::numberFP32Device *>(
@@ -4678,8 +4788,10 @@ namespace dftfe
 
               for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                 {
-                  stridedCopyToBlockKernel<<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
-                                             deviceConstants::blockSize>>>(
+                  stridedCopyToBlockKernel<<<
+                    (chebyBlockSize + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize * M,
+                    deviceConstants::blockSize>>>(
                     chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
@@ -4692,8 +4804,10 @@ namespace dftfe
                                     scalar,
                                     HXBlock);
 
-                  stridedCopyFromBlockKernel<<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
-                                               deviceConstants::blockSize>>>(
+                  stridedCopyFromBlockKernel<<<
+                    (chebyBlockSize + (deviceConstants::blockSize - 1)) /
+                      deviceConstants::blockSize * M,
+                    deviceConstants::blockSize>>>(
                     chebyBlockSize,
                     M,
                     HXBlock.begin(),
@@ -4703,7 +4817,10 @@ namespace dftfe
                     k - jvec);
                 }
 
-              computeResidualDeviceKernel<<<(B + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
+              computeResidualDeviceKernel<<<(B +
+                                             (deviceConstants::blockSize - 1)) /
+                                              deviceConstants::blockSize * M,
+                                            deviceConstants::blockSize>>>(
                 B,
                 M,
                 N,

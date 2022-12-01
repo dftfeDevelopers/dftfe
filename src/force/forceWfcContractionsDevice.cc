@@ -424,9 +424,11 @@ namespace dftfe
                          const unsigned int size,
                          double *           copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
-                                                      copyFromVec,
-                                                      copyToVec);
+        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
+                             deviceConstants::blockSize,
+                           deviceConstants::blockSize>>>(size,
+                                                         copyFromVec,
+                                                         copyToVec);
       }
 
       void
@@ -434,9 +436,11 @@ namespace dftfe
                          const unsigned int size,
                          cuDoubleComplex *  copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
-                                                      copyFromVec,
-                                                      copyToVec);
+        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
+                             deviceConstants::blockSize,
+                           deviceConstants::blockSize>>>(size,
+                                                         copyFromVec,
+                                                         copyToVec);
       }
 
       void
@@ -478,7 +482,9 @@ namespace dftfe
         thrust::device_vector<dataTypes::numberThrustDevice>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
-        copyDeviceKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numCells * numNodesPerElement,
+        copyDeviceKernel<<<(BVec + (deviceConstants::blockSize - 1)) /
+                             deviceConstants::blockSize * numCells *
+                             numNodesPerElement,
                            deviceConstants::blockSize>>>(
           BVec,
           numCells * numNodesPerElement,
@@ -714,7 +720,9 @@ namespace dftfe
 
 
                     computeELocWfcEshelbyTensorContributions<<<
-                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * currentBlockSize * numQuads * 9,
+                      (BVec + (deviceConstants::blockSize - 1)) /
+                        deviceConstants::blockSize * currentBlockSize *
+                        numQuads * 9,
                       deviceConstants::blockSize>>>(
                       BVec,
                       currentBlockSize * numQuads * 9,
@@ -923,21 +931,23 @@ namespace dftfe
             if (currentBlockSizeNlp > 0)
               {
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numQuadsNLP * 3 * currentBlockSizeNlp,
-                  deviceConstants::blockSize>>>(numPsi,
-                         numQuadsNLP * 3,
-                         currentBlockSizeNlp,
-                         startingIdNlp,
-                         projectorKetTimesVectorParFlattenedD,
-                         reinterpret_cast<const dataTypes::numberDevice *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsNLPD[0])),
-                         thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-                         thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-                         thrust::raw_pointer_cast(
-                           &projecterKetTimesFlattenedVectorLocalIdsD[0]),
-                         reinterpret_cast<dataTypes::numberDevice *>(
-                           thrust::raw_pointer_cast(
-                             &nlpContractionContributionD[0])));
+                  (numPsi + (deviceConstants::blockSize - 1)) /
+                    deviceConstants::blockSize * numQuadsNLP * 3 *
+                    currentBlockSizeNlp,
+                  deviceConstants::blockSize>>>(
+                  numPsi,
+                  numQuadsNLP * 3,
+                  currentBlockSizeNlp,
+                  startingIdNlp,
+                  projectorKetTimesVectorParFlattenedD,
+                  reinterpret_cast<const dataTypes::numberDevice *>(
+                    thrust::raw_pointer_cast(&gradPsiQuadsNLPD[0])),
+                  thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+                  thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
+                  thrust::raw_pointer_cast(
+                    &projecterKetTimesFlattenedVectorLocalIdsD[0]),
+                  reinterpret_cast<dataTypes::numberDevice *>(
+                    thrust::raw_pointer_cast(&nlpContractionContributionD[0])));
 
                 dftfe::cublasXgemm(
                   operatorMatrix.getCublasHandle(),
@@ -982,21 +992,23 @@ namespace dftfe
                       [i];
 #ifdef USE_COMPLEX
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numQuadsNLP * currentBlockSizeNlp,
-                  deviceConstants::blockSize>>>(numPsi,
-                         numQuadsNLP,
-                         currentBlockSizeNlp,
-                         startingIdNlp,
-                         projectorKetTimesVectorParFlattenedD,
-                         reinterpret_cast<const dataTypes::numberDevice *>(
-                           thrust::raw_pointer_cast(&psiQuadsNLPD[0])),
-                         thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-                         thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-                         thrust::raw_pointer_cast(
-                           &projecterKetTimesFlattenedVectorLocalIdsD[0]),
-                         reinterpret_cast<dataTypes::numberDevice *>(
-                           thrust::raw_pointer_cast(
-                             &nlpContractionContributionD[0])));
+                  (numPsi + (deviceConstants::blockSize - 1)) /
+                    deviceConstants::blockSize * numQuadsNLP *
+                    currentBlockSizeNlp,
+                  deviceConstants::blockSize>>>(
+                  numPsi,
+                  numQuadsNLP,
+                  currentBlockSizeNlp,
+                  startingIdNlp,
+                  projectorKetTimesVectorParFlattenedD,
+                  reinterpret_cast<const dataTypes::numberDevice *>(
+                    thrust::raw_pointer_cast(&psiQuadsNLPD[0])),
+                  thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+                  thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
+                  thrust::raw_pointer_cast(
+                    &projecterKetTimesFlattenedVectorLocalIdsD[0]),
+                  reinterpret_cast<dataTypes::numberDevice *>(
+                    thrust::raw_pointer_cast(&nlpContractionContributionD[0])));
 
                 dftfe::cublasXgemm(
                   operatorMatrix.getCublasHandle(),
@@ -1111,7 +1123,9 @@ namespace dftfe
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
                                  ->local_size();
-        stridedCopyToBlockKernel<<<(numPsi + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
+        stridedCopyToBlockKernel<<<(numPsi + (deviceConstants::blockSize - 1)) /
+                                     deviceConstants::blockSize * M,
+                                   deviceConstants::blockSize>>>(
           numPsi, X, M, N, deviceFlattenedArrayBlock.begin(), startingVecId);
         deviceFlattenedArrayBlock.updateGhostValues();
 
