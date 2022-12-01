@@ -1874,13 +1874,13 @@ namespace dftfe
           DeviceCHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<dataTypes::numberThrustDevice> rotationMatBlock(
-        vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> rotationMatBlockNext(
-        vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
+        vectorsBlockSize * N, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlockNext(
+        vectorsBlockSize * N, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlock(Nfr * dofsBlockSize,
-                               dataTypes::numberThrustDevice(0.0));
+                               dataTypes::number(0.0));
 
       dataTypes::numberValueType *tempReal;
       dataTypes::numberValueType *tempImag;
@@ -2019,7 +2019,7 @@ namespace dftfe
                     {
                       DeviceCHECK(cudaMemcpyAsync(
                         reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                        rotationMatBlockNext.begin()),
                         rotationMatBlockHost + jvec * N,
                         BVec * N * sizeof(dataTypes::numberDevice),
                         cudaMemcpyHostToDevice,
@@ -2031,11 +2031,9 @@ namespace dftfe
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
                               reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockNext[0])),
+                                  rotationMatBlockNext.begin()),
                               reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockNext[0])),
+                                  rotationMatBlockNext.begin()),
                               BVec * N,
                               tempReal,
                               tempImag,
@@ -2043,19 +2041,16 @@ namespace dftfe
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
                               reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockNext[0])),
+                                  rotationMatBlockNext.begin()),
                               reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockNext[0])),
+                                  rotationMatBlockNext.begin()),
                               BVec * N,
                               streamDeviceCCL);
 
                           DeviceCHECK(cudaMemcpyAsync(
                             rotationMatBlockHost + jvec * N,
                             reinterpret_cast<const dataTypes::numberDevice *>(
-                              thrust::raw_pointer_cast(
-                                &rotationMatBlockNext[0])),
+                                rotationMatBlockNext.begin()),
                             BVec * N * sizeof(dataTypes::numberDevice),
                             cudaMemcpyDeviceToHost,
                             streamDeviceCCL));
@@ -2076,7 +2071,7 @@ namespace dftfe
 
                       dftfe::utils::deviceMemcpyH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
-                          thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                          rotationMatBlock.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlockHost + jvec * N),
                         BVec * N * sizeof(dataTypes::numberDevice));
@@ -2088,7 +2083,7 @@ namespace dftfe
                     {
                       DeviceCHECK(cudaMemcpyAsync(
                         reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                          rotationMatBlockNext.begin()),
                         reinterpret_cast<dataTypes::numberDevice *>(
                           rotationMatBlockHost),
                         BVec * N * sizeof(dataTypes::numberDevice),
@@ -2099,9 +2094,9 @@ namespace dftfe
                                        std::complex<double>>::value)
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
                           reinterpret_cast<dataTypes::numberDevice *>(
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                            rotationMatBlockNext.begin()),
                           reinterpret_cast<dataTypes::numberDevice *>(
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                            rotationMatBlockNext.begin()),
                           BVec * N,
                           tempReal,
                           tempImag,
@@ -2109,9 +2104,9 @@ namespace dftfe
                       else
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
                           reinterpret_cast<dataTypes::numberDevice *>(
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                            rotationMatBlockNext.begin()),
                           reinterpret_cast<dataTypes::numberDevice *>(
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                           rotationMatBlockNext.begin()),
                           BVec * N,
                           streamDeviceCCL);
                     }
@@ -2127,7 +2122,7 @@ namespace dftfe
 
                       dftfe::utils::deviceMemcpyH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
-                          thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                          rotationMatBlock.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlockHost),
                         BVec * N * sizeof(dataTypes::numberDevice));
@@ -2166,15 +2161,14 @@ namespace dftfe
                               reinterpret_cast<const dataTypes::numberDevice *>(
                                 &scalarCoeffAlpha),
                               reinterpret_cast<const dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                              rotationMatBlock.begin()),
                               BVec,
                               X + idof * N,
                               N,
                               reinterpret_cast<const dataTypes::numberDevice *>(
                                 &scalarCoeffBeta),
                               reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotatedVectorsMatBlock[0]) +
+                                rotatedVectorsMatBlock.begin() +
                                 jvec),
                               Nfr);
                 }
@@ -2188,7 +2182,7 @@ namespace dftfe
               DeviceCHECK(cudaMemcpyAsync(
                 XFrac + idof * Nfr,
                 reinterpret_cast<const dataTypes::numberDevice *>(
-                  thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0])),
+                  rotatedVectorsMatBlock.begin()),
                 Nfr * BDof * sizeof(dataTypes::numberDevice),
                 cudaMemcpyDeviceToDevice,
                 streamCompute));
