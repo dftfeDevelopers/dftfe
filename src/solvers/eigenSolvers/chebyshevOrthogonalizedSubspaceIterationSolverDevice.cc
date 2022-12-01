@@ -18,6 +18,7 @@
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
 #include <dftUtils.h>
+#include <deviceHelpers.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <vectorUtilities.h>

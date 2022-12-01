@@ -20,6 +20,7 @@
 #ifdef DFTFE_WITH_DEVICE
 #  include <solveVselfInBinsDevice.h>
 #  include <vectorUtilities.h>
+#  include <deviceHelpers.h>
 
 namespace dftfe
 {
