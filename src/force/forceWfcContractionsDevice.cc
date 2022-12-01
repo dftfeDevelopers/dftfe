@@ -424,7 +424,7 @@ namespace dftfe
                          const unsigned int size,
                          double *           copyToVec)
       {
-        copyDeviceKernel<<<(size + 255) / 256, 256>>>(size,
+        copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
                                                       copyFromVec,
                                                       copyToVec);
       }
@@ -434,7 +434,7 @@ namespace dftfe
                          const unsigned int size,
                          cuDoubleComplex *  copyToVec)
       {
-        copyDeviceKernel<<<(size + 255) / 256, 256>>>(size,
+        copyDeviceKernel<<<(size + (deviceConstants::blockSize-1)) / deviceConstants::blockSize, deviceConstants::blockSize>>>(size,
                                                       copyFromVec,
                                                       copyToVec);
       }
@@ -478,8 +478,8 @@ namespace dftfe
         thrust::device_vector<dataTypes::numberThrustDevice>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
-        copyDeviceKernel<<<(BVec + 255) / 256 * numCells * numNodesPerElement,
-                           256>>>(
+        copyDeviceKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numCells * numNodesPerElement,
+                           deviceConstants::blockSize>>>(
           BVec,
           numCells * numNodesPerElement,
           Xb.begin(),
@@ -714,8 +714,8 @@ namespace dftfe
 
 
                     computeELocWfcEshelbyTensorContributions<<<
-                      (BVec + 255) / 256 * currentBlockSize * numQuads * 9,
-                      256>>>(
+                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * currentBlockSize * numQuads * 9,
+                      deviceConstants::blockSize>>>(
                       BVec,
                       currentBlockSize * numQuads * 9,
                       numQuads,
@@ -923,8 +923,8 @@ namespace dftfe
             if (currentBlockSizeNlp > 0)
               {
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + 255) / 256 * numQuadsNLP * 3 * currentBlockSizeNlp,
-                  256>>>(numPsi,
+                  (numPsi + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numQuadsNLP * 3 * currentBlockSizeNlp,
+                  deviceConstants::blockSize>>>(numPsi,
                          numQuadsNLP * 3,
                          currentBlockSizeNlp,
                          startingIdNlp,
@@ -982,8 +982,8 @@ namespace dftfe
                       [i];
 #ifdef USE_COMPLEX
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + 255) / 256 * numQuadsNLP * currentBlockSizeNlp,
-                  256>>>(numPsi,
+                  (numPsi + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numQuadsNLP * currentBlockSizeNlp,
+                  deviceConstants::blockSize>>>(numPsi,
                          numQuadsNLP,
                          currentBlockSizeNlp,
                          startingIdNlp,
@@ -1111,7 +1111,7 @@ namespace dftfe
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
                                  ->local_size();
-        stridedCopyToBlockKernel<<<(numPsi + 255) / 256 * M, 256>>>(
+        stridedCopyToBlockKernel<<<(numPsi + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
           numPsi, X, M, N, deviceFlattenedArrayBlock.begin(), startingVecId);
         deviceFlattenedArrayBlock.updateGhostValues();
 

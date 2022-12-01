@@ -3387,8 +3387,8 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                        256>>>(numberWaveFunctions,
+    scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(numberWaveFunctions,
                                localVectorSize,
                                scalar,
                                src.begin(),
@@ -3397,8 +3397,8 @@ namespace dftfe
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                            256>>>(numberWaveFunctions,
+        scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                            deviceConstants::blockSize>>>(numberWaveFunctions,
                                    localVectorSize,
                                    1.0,
                                    dst.begin(),
@@ -3409,16 +3409,16 @@ namespace dftfe
 
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 * localSize,
-                                  256>>>(numberWaveFunctions * localSize,
+        convDoubleArrToFloatArr<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize,
+                                  deviceConstants::blockSize>>>(numberWaveFunctions * localSize,
                                          src.begin(),
                                          tempFloatArray.begin());
         tempFloatArray.updateGhostValues();
 
         if (n_ghosts != 0)
           convFloatArrToDoubleArr<<<
-            (numberWaveFunctions + 255) / 256 * n_ghosts,
-            256>>>(numberWaveFunctions * n_ghosts,
+            (numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * n_ghosts,
+            deviceConstants::blockSize>>>(numberWaveFunctions * n_ghosts,
                    tempFloatArray.begin() + localSize * numberWaveFunctions,
                    src.begin() + localSize * numberWaveFunctions);
       }
@@ -3459,16 +3459,16 @@ namespace dftfe
     src.zeroOutGhosts();
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 * totalSize,
-                                  256>>>(numberWaveFunctions * totalSize,
+        convDoubleArrToFloatArr<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * totalSize,
+                                  deviceConstants::blockSize>>>(numberWaveFunctions * totalSize,
                                          dst.begin(),
                                          tempFloatArray.begin());
         tempFloatArray.compressAdd();
 
         // copy locally owned processor boundary nodes only to dst vector
         copyFloatArrToDoubleArrLocallyOwned<<<
-          (numberWaveFunctions + 255) / 256 * localSize,
-          256>>>(numberWaveFunctions,
+          (numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize,
+          deviceConstants::blockSize>>>(numberWaveFunctions,
                  localSize,
                  tempFloatArray.begin(),
                  thrust::raw_pointer_cast(
@@ -3485,8 +3485,8 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                        256>>>(numberWaveFunctions,
+    scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(numberWaveFunctions,
                                localVectorSize,
                                1.0,
                                dst.begin(),
@@ -3498,8 +3498,8 @@ namespace dftfe
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                          256>>>(numberWaveFunctions,
+      scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                          deviceConstants::blockSize>>>(numberWaveFunctions,
                                  localVectorSize,
                                  1.0 / scalar,
                                  src.begin(),
@@ -3534,8 +3534,8 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                        256>>>(numberWaveFunctions,
+    scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(numberWaveFunctions,
                                localVectorSize,
                                scalar,
                                src.begin(),
@@ -3544,8 +3544,8 @@ namespace dftfe
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                            256>>>(numberWaveFunctions,
+        scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                            deviceConstants::blockSize>>>(numberWaveFunctions,
                                    localVectorSize,
                                    1.0,
                                    dst.begin(),
@@ -3591,8 +3591,8 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                        256>>>(numberWaveFunctions,
+    scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(numberWaveFunctions,
                                localVectorSize,
                                1.0,
                                dst.begin(),
@@ -3604,8 +3604,8 @@ namespace dftfe
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
-                          256>>>(numberWaveFunctions,
+      scaleDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                          deviceConstants::blockSize>>>(numberWaveFunctions,
                                  localVectorSize,
                                  1.0 / scalar,
                                  src.begin(),
@@ -3652,17 +3652,17 @@ namespace dftfe
       {
         if (chebMixedPrec)
           {
-            convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 *
+            convDoubleArrToFloatArr<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                                         localSize,
-                                      256>>>(numberWaveFunctions * localSize,
+                                      deviceConstants::blockSize>>>(numberWaveFunctions * localSize,
                                              src.begin(),
                                              tempFloatArray.begin());
             tempFloatArray.updateGhostValues();
 
             if (n_ghosts != 0)
               convFloatArrToDoubleArr<<<
-                (numberWaveFunctions + 255) / 256 * n_ghosts,
-                256>>>(numberWaveFunctions * n_ghosts,
+                (numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * n_ghosts,
+                deviceConstants::blockSize>>>(numberWaveFunctions * n_ghosts,
                        tempFloatArray.begin() + localSize * numberWaveFunctions,
                        src.begin() + localSize * numberWaveFunctions);
           }
@@ -3715,16 +3715,16 @@ namespace dftfe
 
     if (chebMixedPrec)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 * totalSize,
-                                  256>>>(numberWaveFunctions * totalSize,
+        convDoubleArrToFloatArr<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * totalSize,
+                                  deviceConstants::blockSize>>>(numberWaveFunctions * totalSize,
                                          dst.begin(),
                                          tempFloatArray.begin());
         tempFloatArray.compressAdd();
 
         // copy locally owned processor boundary nodes only to dst vector
         copyFloatArrToDoubleArrLocallyOwned<<<
-          (numberWaveFunctions + 255) / 256 * localSize,
-          256>>>(numberWaveFunctions,
+          (numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize,
+          deviceConstants::blockSize>>>(numberWaveFunctions,
                  localSize,
                  tempFloatArray.begin(),
                  thrust::raw_pointer_cast(
@@ -3802,8 +3802,8 @@ namespace dftfe
 
             for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
               {
-                stridedCopyToBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
-                                           256>>>(
+                stridedCopyToBlockKernel<<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                                           deviceConstants::blockSize>>>(
                   chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                 // evaluate XBlock^{T} times H^{T} and store in HXBlock
@@ -3821,8 +3821,8 @@ namespace dftfe
                    false,
                    onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                stridedCopyFromBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
-                                             256>>>(
+                stridedCopyFromBlockKernel<<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                                             deviceConstants::blockSize>>>(
                   chebyBlockSize,
                   M,
                   HXBlock.begin(),
@@ -4045,8 +4045,8 @@ namespace dftfe
                 // wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
-                                               256>>>(
+                    stridedCopyToBlockKernel<<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                                               deviceConstants::blockSize>>>(
                       chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
@@ -4064,8 +4064,8 @@ namespace dftfe
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     stridedCopyFromBlockKernel<<<
-                      (chebyBlockSize + 255) / 256 * M,
-                      256>>>(chebyBlockSize,
+                      (chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                      deviceConstants::blockSize>>>(chebyBlockSize,
                              M,
                              HXBlock.begin(),
                              B,
@@ -4122,8 +4122,8 @@ namespace dftfe
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
-                                               256>>>(
+                    stridedCopyToBlockKernel<<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                                               deviceConstants::blockSize>>>(
                       chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
@@ -4141,8 +4141,8 @@ namespace dftfe
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     stridedCopyFromBlockKernel<<<
-                      (chebyBlockSize + 255) / 256 * M,
-                      256>>>(chebyBlockSize,
+                      (chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                      deviceConstants::blockSize>>>(chebyBlockSize,
                              M,
                              HXBlock.begin(),
                              B,
@@ -4369,7 +4369,7 @@ namespace dftfe
 
     thrust::device_vector<dataTypes::numberFP32ThrustDevice> XFP32(
       M * N, dataTypes::numberFP32ThrustDevice(0.0));
-    convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
+    convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
       N * M,
       X,
       reinterpret_cast<dataTypes::numberFP32Device *>(
@@ -4453,7 +4453,7 @@ namespace dftfe
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
                     stridedCopyToBlockKernel<dataTypes::numberDevice>
-                      <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
+                      <<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
                         chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
@@ -4485,7 +4485,7 @@ namespace dftfe
 
                     if (jvec + B > Noc)
                       stridedCopyFromBlockKernel<dataTypes::numberDevice>
-                        <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
+                        <<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
                           chebyBlockSize,
                           M,
                           HXBlock.begin(),
@@ -4495,8 +4495,8 @@ namespace dftfe
                           k - jvec);
                     else
                       stridedCopyFromBlockKernelFP32<<<
-                        (chebyBlockSize + 255) / 256 * M,
-                        256>>>(chebyBlockSize,
+                        (chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                        deviceConstants::blockSize>>>(chebyBlockSize,
                                M,
                                HXBlock.begin(),
                                B,
@@ -4587,7 +4587,7 @@ namespace dftfe
                      k += chebyBlockSize)
                   {
                     stridedCopyToBlockKernel<dataTypes::numberDevice>
-                      <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
+                      <<<(chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M, deviceConstants::blockSize>>>(
                         chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
@@ -4619,8 +4619,8 @@ namespace dftfe
 
                     if (jvecNew + B > Noc)
                       stridedCopyFromBlockKernel<<<
-                        (chebyBlockSize + 255) / 256 * M,
-                        256>>>(chebyBlockSize,
+                        (chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                        deviceConstants::blockSize>>>(chebyBlockSize,
                                M,
                                HXBlock.begin(),
                                B,
@@ -4629,8 +4629,8 @@ namespace dftfe
                                k - jvecNew);
                     else
                       stridedCopyFromBlockKernelFP32<<<
-                        (chebyBlockSize + 255) / 256 * M,
-                        256>>>(chebyBlockSize,
+                        (chebyBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * M,
+                        deviceConstants::blockSize>>>(chebyBlockSize,
                                M,
                                HXBlock.begin(),
                                B,

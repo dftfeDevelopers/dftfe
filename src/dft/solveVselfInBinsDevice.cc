@@ -254,8 +254,8 @@ namespace dftfe
         constraintsMatrixDataInfoDevice.distribute(temp, numberVectors);
 
         if ((localSize + ghostSize) > 0)
-          scaleKernel<<<(numberVectors + 255) / 256 * (localSize + ghostSize),
-                        256>>>(numberVectors * (localSize + ghostSize),
+          scaleKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * (localSize + ghostSize),
+                        deviceConstants::blockSize>>>(numberVectors * (localSize + ghostSize),
                                temp.begin(),
                                thrust::raw_pointer_cast(
                                  &inhomoIdsColoredVecFlattenedD[0]));
@@ -267,9 +267,9 @@ namespace dftfe
                      scalarCoeffBeta  = 0.0;
 
         if (totalLocallyOwnedCells > 0)
-          copyDeviceKernel<<<(numberVectors + 255) / 256 *
+          copyDeviceKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                                totalLocallyOwnedCells * numberNodesPerElement,
-                             256>>>(
+                             deviceConstants::blockSize>>>(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             temp.begin(), // src.begin(),
@@ -307,10 +307,10 @@ namespace dftfe
           totalLocallyOwnedCells);
 
         if (totalLocallyOwnedCells > 0)
-          daxpyAtomicAddKernel<<<(numberVectors + 255) / 256 *
+          daxpyAtomicAddKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                                    totalLocallyOwnedCells *
                                    numberNodesPerElement,
-                                 256>>>(
+                                 deviceConstants::blockSize>>>(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             thrust::raw_pointer_cast(&cellStiffnessMatrixTimesVectorD[0]),
@@ -319,8 +319,8 @@ namespace dftfe
 
         // think dirichlet hanging node linked to two master solved nodes
         if ((localSize + ghostSize) > 0)
-          scaleKernel<<<(numberVectors + 255) / 256 * (localSize + ghostSize),
-                        256>>>(numberVectors * (localSize + ghostSize),
+          scaleKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * (localSize + ghostSize),
+                        deviceConstants::blockSize>>>(numberVectors * (localSize + ghostSize),
                                dst.begin(),
                                thrust::raw_pointer_cast(
                                  &inhomoIdsColoredVecFlattenedD[0]));
@@ -332,7 +332,7 @@ namespace dftfe
         dst.compressAdd();
 
         if (localSize > 0)
-          scaleKernel<<<(numberVectors + 255) / 256 * localSize, 256>>>(
+          scaleKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize, deviceConstants::blockSize>>>(
             numberVectors * localSize,
             dst.begin(),
             thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
@@ -349,7 +349,7 @@ namespace dftfe
                           double *           dst)
       {
         if (localSize > 0)
-          diagScaleKernel<<<(numberVectors + 255) / 256 * localSize, 256>>>(
+          diagScaleKernel<<<(numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize, deviceConstants::blockSize>>>(
             numberVectors, localSize, src, diagonalA, dst);
       }
 
@@ -365,8 +365,8 @@ namespace dftfe
       {
         if (localSize > 0)
           dotProductContributionBlockedKernel<<<
-            (numberVectors + 255) / 256 * localSize,
-            256>>>(numberVectors * localSize, vec1, vec2, vecTemp);
+            (numberVectors + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize,
+            deviceConstants::blockSize>>>(numberVectors * localSize, vec1, vec2, vecTemp);
 
         const double alpha = 1.0, beta = 0.0;
         cublasDgemm(handle,
@@ -841,7 +841,7 @@ namespace dftfe
              inc);
            */
           if (localSize > 0)
-            daxpyBlockedKernel<<<(numberBins + 255) / 256 * localSize, 256>>>(
+            daxpyBlockedKernel<<<(numberBins + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize, deviceConstants::blockSize>>>(
               numberBins,
               localSize,
               d.begin(),
@@ -881,8 +881,8 @@ namespace dftfe
                  inc);
                */
               if (localSize > 0)
-                daxpyBlockedKernel<<<(numberBins + 255) / 256 * localSize,
-                                     256>>>(numberBins,
+                daxpyBlockedKernel<<<(numberBins + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize,
+                                     deviceConstants::blockSize>>>(numberBins,
                                             localSize,
                                             Ax.begin(),
                                             thrust::raw_pointer_cast(
@@ -902,8 +902,8 @@ namespace dftfe
                  inc);
                */
               if (localSize > 0)
-                dmaxpyBlockedKernel<<<(numberBins + 255) / 256 * localSize,
-                                      256>>>(numberBins,
+                dmaxpyBlockedKernel<<<(numberBins + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize,
+                                      deviceConstants::blockSize>>>(numberBins,
                                              localSize,
                                              q.begin(),
                                              thrust::raw_pointer_cast(
@@ -985,7 +985,7 @@ namespace dftfe
              inc);
            */
           if (localSize > 0)
-            scaleBlockedKernel<<<(numberBins + 255) / 256 * localSize, 256>>>(
+            scaleBlockedKernel<<<(numberBins + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize, deviceConstants::blockSize>>>(
               numberBins,
               localSize,
               d.begin(),
@@ -1003,7 +1003,7 @@ namespace dftfe
            */
 
           if (localSize > 0)
-            daxpyBlockedKernel<<<(numberBins + 255) / 256 * localSize, 256>>>(
+            daxpyBlockedKernel<<<(numberBins + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localSize, deviceConstants::blockSize>>>(
               numberBins,
               localSize,
               s.begin(),

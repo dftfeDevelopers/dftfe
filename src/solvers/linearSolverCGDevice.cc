@@ -268,7 +268,7 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = MAXBLOCKSIZE / 2; size >= 4 * WARPSIZE; size /= 2)
+    for (int size = deviceConstants::maxBlockSize / 2; size >= 4 * deviceConstants::warpSize; size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
@@ -276,13 +276,13 @@ namespace dftfe
         cooperative_groups::sync(block);
       }
 
-    cooperative_groups::thread_block_tile<WARPSIZE> tileWarp =
-      cooperative_groups::tiled_partition<WARPSIZE>(block);
+    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
+      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
 
-    if (block.thread_rank() < WARPSIZE)
+    if (block.thread_rank() < deviceConstants::warpSize)
       {
-        if (blockSize >= 2 * WARPSIZE)
-          localSum += smem[tid + WARPSIZE];
+        if (blockSize >= 2 * deviceConstants::warpSize)
+          localSum += smem[tid + deviceConstants::warpSize];
 
         for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
           localSum += tileWarp.shfl_down(localSum, offset);
@@ -332,7 +332,7 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = MAXBLOCKSIZE / 2; size >= 4 * WARPSIZE; size /= 2)
+    for (int size = deviceConstants::maxBlockSize / 2; size >= 4 * deviceConstants::warpSize; size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
@@ -340,13 +340,13 @@ namespace dftfe
         cooperative_groups::sync(block);
       }
 
-    cooperative_groups::thread_block_tile<WARPSIZE> tileWarp =
-      cooperative_groups::tiled_partition<WARPSIZE>(block);
+    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
+      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
 
-    if (block.thread_rank() < WARPSIZE)
+    if (block.thread_rank() < deviceConstants::warpSize)
       {
-        if (blockSize >= 2 * WARPSIZE)
-          localSum += smem[tid + WARPSIZE];
+        if (blockSize >= 2 * deviceConstants::warpSize)
+          localSum += smem[tid + deviceConstants::warpSize];
 
         for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
           localSum += tileWarp.shfl_down(localSum, offset);
@@ -401,7 +401,7 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = MAXBLOCKSIZE / 2; size >= 4 * WARPSIZE; size /= 2)
+    for (int size = deviceConstants::maxBlockSize / 2; size >= 4 * deviceConstants::warpSize; size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
@@ -409,13 +409,13 @@ namespace dftfe
         cooperative_groups::sync(block);
       }
 
-    cooperative_groups::thread_block_tile<WARPSIZE> tileWarp =
-      cooperative_groups::tiled_partition<WARPSIZE>(block);
+    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
+      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
 
-    if (block.thread_rank() < WARPSIZE)
+    if (block.thread_rank() < deviceConstants::warpSize)
       {
-        if (blockSize >= 2 * WARPSIZE)
-          localSum += smem[tid + WARPSIZE];
+        if (blockSize >= 2 * deviceConstants::warpSize)
+          localSum += smem[tid + deviceConstants::warpSize];
 
         for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
           localSum += tileWarp.shfl_down(localSum, offset);

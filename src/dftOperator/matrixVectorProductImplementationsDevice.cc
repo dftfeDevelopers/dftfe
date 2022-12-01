@@ -38,9 +38,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyDeviceKernel<<<(numberWaveFunctions + 255) / 256 *
+  copyDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                        totalLocallyOwnedCells * d_numberNodesPerElement,
-                     256>>>(
+                     deviceConstants::blockSize>>>(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
     src,
@@ -100,10 +100,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             thrust::raw_pointer_cast(&d_tempImagVec[0]));
 
 
-          daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
+          daxpyAtomicAddKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                                    d_numLocallyOwnedCells *
                                    d_numberNodesPerElement,
-                                 256>>>(
+                                 deviceConstants::blockSize>>>(
             numberWaveFunctions,
             d_numLocallyOwnedCells * d_numberNodesPerElement,
             reinterpret_cast<const dataTypes::numberDevice *>(
@@ -121,10 +121,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             dst);
         }
       else
-        daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
+        daxpyAtomicAddKernel<<<(numberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                                  d_numLocallyOwnedCells *
                                  d_numberNodesPerElement,
-                               256>>>(
+                               deviceConstants::blockSize>>>(
           numberWaveFunctions,
           d_numLocallyOwnedCells * d_numberNodesPerElement,
           reinterpret_cast<const dataTypes::numberDevice *>(

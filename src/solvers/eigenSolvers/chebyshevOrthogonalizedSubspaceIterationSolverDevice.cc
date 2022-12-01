@@ -445,9 +445,9 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + 255) / 256 *
+    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                           localVectorSize,
-                        256>>>(totalNumberWaveFunctions,
+                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                operatorMatrix.getSqrtMassVec());
@@ -495,8 +495,8 @@ namespace dftfe
 
             // copy from vector containg all wavefunction vectors to current
             // wavefunction vectors block
-            stridedCopyToBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
-                                       256>>>(BVec,
+            stridedCopyToBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                                       deviceConstants::blockSize>>>(BVec,
                                               localVectorSize,
                                               eigenVectorsFlattenedDevice,
                                               totalNumberWaveFunctions,
@@ -505,8 +505,8 @@ namespace dftfe
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-              stridedCopyToBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
-                                         256>>>(
+              stridedCopyToBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                                         deviceConstants::blockSize>>>(
                 BVec,
                 localVectorSize,
                 eigenVectorsFlattenedDevice,
@@ -559,8 +559,8 @@ namespace dftfe
 
             // copy current wavefunction vectors block to vector containing
             // all wavefunction vectors
-            stridedCopyFromBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
-                                         256>>>(
+            stridedCopyFromBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                                         deviceConstants::blockSize>>>(
               BVec,
               localVectorSize,
               deviceFlattenedArrayBlock.begin(),
@@ -570,8 +570,8 @@ namespace dftfe
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-              stridedCopyFromBlockKernel<<<(BVec + 255) / 256 * localVectorSize,
-                                           256>>>(
+              stridedCopyFromBlockKernel<<<(BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                                           deviceConstants::blockSize>>>(
                 BVec,
                 localVectorSize,
                 d_deviceFlattenedArrayBlock2.begin(),
@@ -583,9 +583,9 @@ namespace dftfe
           {
             // set to zero wavefunctions which wont go through chebyshev
             // filtering inside a given band group
-            setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec + 255) / 256 *
+            setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                               localVectorSize,
-                            256>>>(numSimultaneousBlocksCurrent * BVec,
+                            deviceConstants::blockSize>>>(numSimultaneousBlocksCurrent * BVec,
                                    localVectorSize,
                                    totalNumberWaveFunctions,
                                    eigenVectorsFlattenedDevice,
@@ -761,16 +761,16 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + 255) / 256 *
+    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                           localVectorSize,
-                        256>>>(totalNumberWaveFunctions,
+                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                operatorMatrix.getInvSqrtMassVec());
 
     if (eigenValues.size() != totalNumberWaveFunctions)
-      scaleDeviceKernel<<<(eigenValues.size() + 255) / 256 * localVectorSize,
-                          256>>>(eigenValues.size(),
+      scaleDeviceKernel<<<(eigenValues.size() + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                          deviceConstants::blockSize>>>(eigenValues.size(),
                                  localVectorSize,
                                  eigenVectorsRotFracDensityFlattenedDevice,
                                  operatorMatrix.getInvSqrtMassVec());
@@ -909,9 +909,9 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis multiply
     // by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + 255) / 256 *
+    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                           localVectorSize,
-                        256>>>(totalNumberWaveFunctions,
+                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                operatorMatrix.getSqrtMassVec());
@@ -962,8 +962,8 @@ namespace dftfe
                     // copy from vector containg all wavefunction vectors to
                     // current wavefunction vectors block
                     stridedCopyToBlockKernel<<<
-                      (BVec + 255) / 256 * localVectorSize,
-                      256>>>(BVec,
+                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                      deviceConstants::blockSize>>>(BVec,
                              localVectorSize,
                              eigenVectorsFlattenedDevice,
                              totalNumberWaveFunctions,
@@ -973,8 +973,8 @@ namespace dftfe
                     if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyToBlockKernel<<<
-                        (BVec + 255) / 256 * localVectorSize,
-                        256>>>(BVec,
+                        (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(BVec,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                totalNumberWaveFunctions,
@@ -1028,8 +1028,8 @@ namespace dftfe
                     // copy current wavefunction vectors block to vector
                     // containing all wavefunction vectors
                     stridedCopyFromBlockKernel<<<
-                      (BVec + 255) / 256 * localVectorSize,
-                      256>>>(BVec,
+                      (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                      deviceConstants::blockSize>>>(BVec,
                              localVectorSize,
                              deviceFlattenedArrayBlock.begin(),
                              totalNumberWaveFunctions,
@@ -1039,8 +1039,8 @@ namespace dftfe
                     if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyFromBlockKernel<<<
-                        (BVec + 255) / 256 * localVectorSize,
-                        256>>>(BVec,
+                        (BVec + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * localVectorSize,
+                        deviceConstants::blockSize>>>(BVec,
                                localVectorSize,
                                d_deviceFlattenedArrayBlock2.begin(),
                                totalNumberWaveFunctions,
@@ -1052,9 +1052,9 @@ namespace dftfe
                     // set to zero wavefunctions which wont go through chebyshev
                     // filtering inside a given band group
                     setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
-                                     255) /
-                                      256 * localVectorSize,
-                                    256>>>(numSimultaneousBlocksCurrent * BVec,
+                                     (deviceConstants::blockSize-1)) /
+                                      deviceConstants::blockSize * localVectorSize,
+                                    deviceConstants::blockSize>>>(numSimultaneousBlocksCurrent * BVec,
                                            localVectorSize,
                                            totalNumberWaveFunctions,
                                            eigenVectorsFlattenedDevice,
@@ -1086,9 +1086,9 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + 255) / 256 *
+    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                           localVectorSize,
-                        256>>>(totalNumberWaveFunctions,
+                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                operatorMatrix.getInvSqrtMassVec());
@@ -1155,9 +1155,9 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + 255) / 256 *
+    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                           localVectorSize,
-                        256>>>(totalNumberWaveFunctions,
+                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                operatorMatrix.getSqrtMassVec());
@@ -1189,9 +1189,9 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions + 255) / 256 *
+    scaleDeviceKernel<<<(totalNumberWaveFunctions + (deviceConstants::blockSize-1)) / deviceConstants::blockSize *
                           localVectorSize,
-                        256>>>(totalNumberWaveFunctions,
+                        deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                localVectorSize,
                                eigenVectorsFlattenedDevice,
                                operatorMatrix.getInvSqrtMassVec());

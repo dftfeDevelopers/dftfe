@@ -786,7 +786,7 @@ namespace dftfe
     constexpr int p   = FEOrderElectro + 1;
     constexpr int q   = p;
     constexpr int threads =
-      (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
+      (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : deviceConstants::blockSize);
     const int        blocks         = d_nLocalCells;
     const double     coeffHelmholtz = 4 * M_PI * d_gamma;
     constexpr size_t smem =

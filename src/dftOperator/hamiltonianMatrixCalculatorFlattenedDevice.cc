@@ -754,9 +754,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                d_numberNodesPerElement +
-                             255) /
-                              256,
-                            256>>>(
+                             (deviceConstants::blockSize-1)) /
+                              deviceConstants::blockSize,
+                            deviceConstants::blockSize>>>(
         d_numLocallyOwnedCells,
         d_numberNodesPerElement,
         d_numQuadPointsLpsp,
@@ -776,9 +776,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamPrimeMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                            d_numberNodesPerElement *
                                            d_numberNodesPerElement +
-                                         255) /
-                                          256,
-                                        256>>>(
+                                         (deviceConstants::blockSize-1)) /
+                                          deviceConstants::blockSize,
+                                        deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
@@ -803,9 +803,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
                                      d_numberNodesPerElement *
                                      d_numberNodesPerElement +
-                                   255) /
-                                    256,
-                                  256>>>(
+                                   (deviceConstants::blockSize-1)) /
+                                    deviceConstants::blockSize,
+                                  deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
@@ -832,9 +832,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                       d_numberNodesPerElement *
                                       d_numberNodesPerElement +
-                                    255) /
-                                     256,
-                                   256>>>(
+                                    (deviceConstants::blockSize-1)) /
+                                     deviceConstants::blockSize,
+                                   deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
@@ -866,9 +866,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                densityFamilyType::LDA)
         hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                 d_numberNodesPerElement +
-                              255) /
-                               256,
-                             256>>>(
+                              (deviceConstants::blockSize-1)) /
+                               deviceConstants::blockSize,
+                             deviceConstants::blockSize>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,

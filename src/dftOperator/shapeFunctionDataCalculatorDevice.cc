@@ -175,9 +175,9 @@ namespace shapeFuncDevice
                 if (currentQuadsBlockSize > 0)
                   {
                     computeShapeGradNINJIntegralContribution<<<
-                      (currentQuadsBlockSize + 255) / 256 * numNodesPerElem *
+                      (currentQuadsBlockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numNodesPerElem *
                         numNodesPerElem * currentElemsBlockSize,
-                      256>>>(currentQuadsBlockSize,
+                      deviceConstants::blockSize>>>(currentQuadsBlockSize,
                              numQuads,
                              startingQuadId,
                              numNodesPerElem,

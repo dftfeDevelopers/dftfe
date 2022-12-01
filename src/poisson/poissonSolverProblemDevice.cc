@@ -1273,7 +1273,7 @@ namespace dftfe
     constexpr int p   = FEOrderElectro + 1;
     constexpr int q   = p;
     constexpr int threads =
-      (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
+      (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : deviceConstants::blockSize);
     const int        blocks = d_nLocalCells;
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);

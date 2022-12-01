@@ -582,8 +582,8 @@ namespace dftfe
       // fieldVector.update_ghost_values();
 
       distributeKernel<<<
-        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
-        256>>>(blockSize,
+        min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * d_numConstrainedDofs, 30000),
+        deviceConstants::blockSize>>>(blockSize,
                fieldVector.begin(),
                thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
                d_numConstrainedDofs,
@@ -610,8 +610,8 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
-        256>>>(blockSize,
+        min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * d_numConstrainedDofs, 30000),
+        deviceConstants::blockSize>>>(blockSize,
                fieldVector.begin(),
                thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
                d_numConstrainedDofs,
@@ -646,8 +646,8 @@ namespace dftfe
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
-        256>>>(blockSize,
+        min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * d_numConstrainedDofs, 30000),
+        deviceConstants::blockSize>>>(blockSize,
                tempReal,
                thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
                d_numConstrainedDofs,
@@ -659,8 +659,8 @@ namespace dftfe
                  &d_localIndexMapUnflattenedToFlattenedDevice[0]));
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
-        256>>>(blockSize,
+        min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * d_numConstrainedDofs, 30000),
+        deviceConstants::blockSize>>>(blockSize,
                tempImag,
                thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
                d_numConstrainedDofs,
@@ -702,8 +702,8 @@ namespace dftfe
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
-        256>>>(blockSize,
+        min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * d_numConstrainedDofs, 30000),
+        deviceConstants::blockSize>>>(blockSize,
                tempReal,
                thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
                d_numConstrainedDofs,
@@ -715,8 +715,8 @@ namespace dftfe
                  &d_localIndexMapUnflattenedToFlattenedDevice[0]));
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
-        256>>>(blockSize,
+        min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * d_numConstrainedDofs, 30000),
+        deviceConstants::blockSize>>>(blockSize,
                tempImag,
                thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
                d_numConstrainedDofs,
@@ -746,8 +746,8 @@ namespace dftfe
         return;
 
       const unsigned int numConstrainedDofs = d_rowIdsLocal.size();
-      setzeroKernel<<<min((blockSize + 255) / 256 * numConstrainedDofs, 30000),
-                      256>>>(
+      setzeroKernel<<<min((blockSize + (deviceConstants::blockSize-1)) / deviceConstants::blockSize * numConstrainedDofs, 30000),
+                      deviceConstants::blockSize>>>(
         blockSize,
         fieldVector.begin(),
         thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
