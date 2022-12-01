@@ -19,6 +19,7 @@
 
 #include <linearSolverCGDevice.h>
 #include <deviceHelpers.h>
+#include <DeviceAPICalls.h>
 
 namespace dftfe
 {
@@ -440,7 +441,7 @@ namespace dftfe
     const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
                        (deviceConstants::blockSize * 2);
 
-    cudaMemset(d_devSumPtr, 0, sizeof(double));
+    dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionAndComputeDotProductKernel<double,
                                                 deviceConstants::blockSize>
@@ -463,7 +464,7 @@ namespace dftfe
     const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
                        (deviceConstants::blockSize * 2);
 
-    cudaMemset(d_devSumPtr, 0, sizeof(double));
+    dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionComputeDotProductAndSaddKernel<double,
                                                     deviceConstants::blockSize>
@@ -485,7 +486,7 @@ namespace dftfe
     const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
                        (deviceConstants::blockSize * 2);
 
-    cudaMemset(d_devSumPtr, 0, sizeof(double));
+    dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
     scaleXRandComputeNormKernel<double, deviceConstants::blockSize>
       <<<blocks, deviceConstants::blockSize>>>(x,

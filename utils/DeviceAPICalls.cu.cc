@@ -67,9 +67,9 @@ namespace dftfe
     }
 
     void
-    deviceMemset(void *devPtr, size_type count)
+    deviceMemset(void *devPtr,int value, size_type count)
     {
-      DEVICE_API_CHECK(cudaMemset(devPtr, 0, count));
+      DEVICE_API_CHECK(cudaMemset(devPtr, value, count));
     }
 
     template <typename ValueType>
@@ -139,6 +139,19 @@ namespace dftfe
     {
       DEVICE_API_CHECK(cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice));
     }
+
+    void
+    deviceSynchronize()
+    {
+      DEVICE_API_CHECK(cudaDeviceSynchronize());
+    }
+
+    void
+    deviceFuncSetAttribute(const void* func, deviceFuncAttribute attr, int  value)
+    {
+      DEVICE_API_CHECK(cudaFuncSetAttribute(func, attr,value));
+    }
+
   } // namespace utils
 } // namespace dftfe
 #endif

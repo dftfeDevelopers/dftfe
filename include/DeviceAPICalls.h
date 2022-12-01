@@ -4,7 +4,7 @@
 #    define dftfeDeviceAPICalls_H
 
 #    include <TypeConfig.h>
-
+#  include <DeviceTypeConfig.h>
 namespace dftfe
 {
   namespace utils
@@ -22,7 +22,7 @@ namespace dftfe
     deviceMalloc(void **devPtr, size_type size);
 
     void
-    deviceMemset(void *devPtr, size_type count);
+    deviceMemset(void *devPtr,int value, size_type count);
 
     /**
      * @brief
@@ -63,6 +63,21 @@ namespace dftfe
      */
     void
     deviceMemcpyH2D(void *dst, const void *src, size_type count);
+
+    /**
+     * @brief HOST-DEVICE synchronization
+     */
+    void
+    deviceSynchronize();
+
+    /**
+     * @brief This function sets the attributes of a function specified via func. 
+     * The parameter func must be a pointer to a function that executes on the device. 
+     */
+    void
+    deviceFuncSetAttribute(const void* func, deviceFuncAttribute attr, int  value);
+
+
   } // namespace utils
 } // namespace dftfe
 
