@@ -23,8 +23,6 @@
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 #include <cuComplex.h>
-#include <thrust/device_vector.h>
-#include <thrust/complex.h>
 #include "deviceHelpers.h"
 #include "linearAlgebraOperationsDevice.h"
 
