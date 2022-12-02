@@ -163,6 +163,9 @@ namespace dftfe
       //      const_reference
       //      operator[](size_type i) const;
 
+      void
+      swap(MemoryStorage &rhs);
+
       /**
        * @brief Deallocates and then resizes Vector with new size
        * and initial value arguments

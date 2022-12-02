@@ -187,6 +187,17 @@ namespace dftfe
     //      return d_data[i];
     //    }
 
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MemoryStorage<ValueType, memorySpace>::swap(MemoryStorage<ValueType, memorySpace> &rhs)
+    {
+       ValueType * tempData=d_data;
+       const size_type tempSize=d_size;
+       d_data     = rhs.d_data;
+       d_size     = rhs.d_size;
+       rhs.d_data = tempData;
+       rhs.d_size = tempSize;
+    }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     ValueType *

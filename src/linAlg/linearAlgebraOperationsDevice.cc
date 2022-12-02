@@ -1099,7 +1099,7 @@ namespace dftfe
       // copy back YArray to XArray
       dftfe::utils::deviceMemcpyD2D(XArray.begin(),
                  YArray.begin(),
-                 totalVectorSize * sizeof(dataTypes::numberDevice));
+                 totalVectorSize * sizeof(dataTypes::number));
     }
 
 
@@ -1796,11 +1796,11 @@ namespace dftfe
       // copy back YArray to XArray
       dftfe::utils::deviceMemcpyD2D(XArray1.begin(),
                  YArray1.begin(),
-                 totalVectorSize * sizeof(dataTypes::numberDevice));
+                 totalVectorSize * sizeof(dataTypes::number));
 
       dftfe::utils::deviceMemcpyD2D(XArray2.begin(),
                  YArray2.begin(),
-                 totalVectorSize * sizeof(dataTypes::numberDevice));
+                 totalVectorSize * sizeof(dataTypes::number));
     }
 
 
@@ -1835,24 +1835,17 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dataTypes::number *rotationMatBlockHost;
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHost;
 
       if (dftParams.allowFullCPUMemSubspaceRot)
         {
-          DeviceCHECK(cudaMallocHost((void **)&rotationMatBlockHost,
-                                     N * Nfr * sizeof(dataTypes::number)));
-          std::memset(rotationMatBlockHost,
-                      0,
-                      N * Nfr * sizeof(dataTypes::number));
+          rotationMatBlockHost.resize(N * Nfr,dataTypes::number(0));
+          rotationMatBlockHost.setValue(0);
         }
       else
         {
-          DeviceCHECK(
-            cudaMallocHost((void **)&rotationMatBlockHost,
-                           vectorsBlockSize * N * sizeof(dataTypes::number)));
-          std::memset(rotationMatBlockHost,
-                      0,
-                      vectorsBlockSize * N * sizeof(dataTypes::number));
+          rotationMatBlockHost.resize(vectorsBlockSize * N,dataTypes::number(0));
+          rotationMatBlockHost.setValue(0);          
         }
 
       cudaStream_t streamCompute, streamDeviceCCL;
@@ -1931,8 +1924,8 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalColumnIdMap.find(j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
-                                        rotationMatBlockHost[jvec * N +
-                                                             i * BVec + j] =
+                                        *(rotationMatBlockHost.begin()+jvec * N +
+                                                             i * BVec + j) =
                                           rotationMatPar.local_el(localRowId,
                                                                   it->second);
                                     }
@@ -1953,8 +1946,8 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
-                                        rotationMatBlockHost[jvec * N +
-                                                             i * BVec + j] =
+                                        *(rotationMatBlockHost.begin()+jvec * N +
+                                                             i * BVec + j) =
                                           rotationMatPar.local_el(
                                             it->second, localColumnId);
                                     }
@@ -1964,9 +1957,9 @@ namespace dftfe
                 }
               else
                 {
-                  std::memset(rotationMatBlockHost,
+                  std::memset(rotationMatBlockHost.begin(),
                               0,
-                              BVec * N * sizeof(dataTypes::numberDevice));
+                              BVec * N * sizeof(dataTypes::number));
 
                   // Extract QBVec from parallel ScaLAPACK matrix Q
                   if (rotationMatTranspose)
@@ -1984,7 +1977,7 @@ namespace dftfe
                                     it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                   if (it != globalToLocalColumnIdMap.end())
-                                    rotationMatBlockHost[i * BVec + j] =
+                                    *(rotationMatBlockHost.begin()+i * BVec + j) =
                                       rotationMatPar.local_el(localRowId,
                                                               it->second);
                                 }
@@ -2004,7 +1997,7 @@ namespace dftfe
                                   std::map<unsigned int, unsigned int>::iterator
                                     it = globalToLocalRowIdMap.find(j + jvec);
                                   if (it != globalToLocalRowIdMap.end())
-                                    rotationMatBlockHost[i * BVec + j] =
+                                    *(rotationMatBlockHost.begin()+i * BVec + j) =
                                       rotationMatPar.local_el(it->second,
                                                               localColumnId);
                                 }
@@ -2018,10 +2011,10 @@ namespace dftfe
                   if (dftParams.useDeviceDirectAllReduce)
                     {
                       DeviceCHECK(cudaMemcpyAsync(
-                        reinterpret_cast<dataTypes::numberDevice *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                         rotationMatBlockNext.begin()),
-                        rotationMatBlockHost + jvec * N,
-                        BVec * N * sizeof(dataTypes::numberDevice),
+                        rotationMatBlockHost.begin() + jvec * N,
+                        BVec * N * sizeof(dataTypes::number),
                         cudaMemcpyHostToDevice,
                         streamDeviceCCL));
 
@@ -2030,9 +2023,9 @@ namespace dftfe
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              reinterpret_cast<dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                   rotationMatBlockNext.begin()),
-                              reinterpret_cast<dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                   rotationMatBlockNext.begin()),
                               BVec * N,
                               tempReal,
@@ -2040,18 +2033,18 @@ namespace dftfe
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              reinterpret_cast<dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                   rotationMatBlockNext.begin()),
-                              reinterpret_cast<dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                   rotationMatBlockNext.begin()),
                               BVec * N,
                               streamDeviceCCL);
 
                           DeviceCHECK(cudaMemcpyAsync(
-                            rotationMatBlockHost + jvec * N,
-                            reinterpret_cast<const dataTypes::numberDevice *>(
+                            rotationMatBlockHost.begin() + jvec * N,
+                            dftfe::utils::makeDataTypeDeviceCompatible(
                                 rotationMatBlockNext.begin()),
-                            BVec * N * sizeof(dataTypes::numberDevice),
+                            BVec * N * sizeof(dataTypes::number),
                             cudaMemcpyDeviceToHost,
                             streamDeviceCCL));
                         }
@@ -2060,12 +2053,11 @@ namespace dftfe
                     {
                       if (idof == 0)
                         MPI_Allreduce(MPI_IN_PLACE,
-                                      reinterpret_cast<dataTypes::number *>(
-                                        rotationMatBlockHost + jvec * N),
+                                      dftfe::utils::makeDataTypeDeviceCompatible(
+                                        rotationMatBlockHost.begin() + jvec * N),
                                       BVec * N,
                                       dataTypes::mpi_type_id(
-                                        reinterpret_cast<dataTypes::number *>(
-                                          rotationMatBlockHost)),
+                                          rotationMatBlockHost.begin()),
                                       MPI_SUM,
                                       mpiCommDomain);
 
@@ -2073,8 +2065,8 @@ namespace dftfe
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlock.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotationMatBlockHost + jvec * N),
-                        BVec * N * sizeof(dataTypes::numberDevice));
+                          rotationMatBlockHost.begin() + jvec * N),
+                        BVec * N * sizeof(dataTypes::number));
                     }
                 }
               else
@@ -2082,20 +2074,20 @@ namespace dftfe
                   if (dftParams.useDeviceDirectAllReduce)
                     {
                       DeviceCHECK(cudaMemcpyAsync(
-                        reinterpret_cast<dataTypes::numberDevice *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlockNext.begin()),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          rotationMatBlockHost),
-                        BVec * N * sizeof(dataTypes::numberDevice),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotationMatBlockHost.begin()),
+                        BVec * N * sizeof(dataTypes::number),
                         cudaMemcpyHostToDevice,
                         streamDeviceCCL));
 
                       if (std::is_same<dataTypes::number,
                                        std::complex<double>>::value)
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          reinterpret_cast<dataTypes::numberDevice *>(
+                          dftfe::utils::makeDataTypeDeviceCompatible(
                             rotationMatBlockNext.begin()),
-                          reinterpret_cast<dataTypes::numberDevice *>(
+                          dftfe::utils::makeDataTypeDeviceCompatible(
                             rotationMatBlockNext.begin()),
                           BVec * N,
                           tempReal,
@@ -2103,9 +2095,9 @@ namespace dftfe
                           streamDeviceCCL);
                       else
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          reinterpret_cast<dataTypes::numberDevice *>(
+                          dftfe::utils::makeDataTypeDeviceCompatible(
                             rotationMatBlockNext.begin()),
-                          reinterpret_cast<dataTypes::numberDevice *>(
+                          dftfe::utils::makeDataTypeDeviceCompatible(
                            rotationMatBlockNext.begin()),
                           BVec * N,
                           streamDeviceCCL);
@@ -2113,10 +2105,10 @@ namespace dftfe
                   else
                     {
                       MPI_Allreduce(MPI_IN_PLACE,
-                                    rotationMatBlockHost,
+                                    rotationMatBlockHost.begin(),
                                     BVec * N,
                                     dataTypes::mpi_type_id(
-                                      rotationMatBlockHost),
+                                      rotationMatBlockHost.begin()),
                                     MPI_SUM,
                                     mpiCommDomain);
 
@@ -2124,8 +2116,8 @@ namespace dftfe
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlock.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotationMatBlockHost),
-                        BVec * N * sizeof(dataTypes::numberDevice));
+                          rotationMatBlockHost.begin()),
+                        BVec * N * sizeof(dataTypes::number));
                     }
                 }
 
@@ -2158,16 +2150,16 @@ namespace dftfe
                               BVec,
                               BDof,
                               N,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlock.begin()),
                               BVec,
                               X + idof * N,
                               N,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
-                              reinterpret_cast<dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 rotatedVectorsMatBlock.begin() +
                                 jvec),
                               Nfr);
@@ -2181,16 +2173,15 @@ namespace dftfe
             {
               DeviceCHECK(cudaMemcpyAsync(
                 XFrac + idof * Nfr,
-                reinterpret_cast<const dataTypes::numberDevice *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   rotatedVectorsMatBlock.begin()),
-                Nfr * BDof * sizeof(dataTypes::numberDevice),
+                Nfr * BDof * sizeof(dataTypes::number),
                 cudaMemcpyDeviceToDevice,
                 streamCompute));
             }
 
         } // block loop over dofs
 
-      DeviceCHECK(cudaFreeHost(rotationMatBlockHost));
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
           DeviceCHECK(cudaFree(tempReal));
@@ -2251,25 +2242,19 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dataTypes::number *rotationMatBlockHost;
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHost;
 
       if (dftParams.allowFullCPUMemSubspaceRot)
         {
-          DeviceCHECK(cudaMallocHost((void **)&rotationMatBlockHost,
-                                     N * N * sizeof(dataTypes::number)));
-          std::memset(rotationMatBlockHost,
-                      0,
-                      N * N * sizeof(dataTypes::number));
+          rotationMatBlockHost.resize(N * N,dataTypes::number(0));
+          rotationMatBlockHost.setValue(0);
         }
       else
         {
-          DeviceCHECK(
-            cudaMallocHost((void **)&rotationMatBlockHost,
-                           vectorsBlockSize * N * sizeof(dataTypes::number)));
-          std::memset(rotationMatBlockHost,
-                      0,
-                      vectorsBlockSize * N * sizeof(dataTypes::number));
+          rotationMatBlockHost.resize(vectorsBlockSize * N,dataTypes::number(0));
+          rotationMatBlockHost.setValue(0);          
         }
+
 
       cudaStream_t streamCompute, streamDeviceCCL;
       DeviceCHECK(cudaStreamCreate(&streamCompute));
@@ -2290,13 +2275,13 @@ namespace dftfe
           DeviceCHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<dataTypes::numberThrustDevice> rotationMatBlock(
-        vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> rotationMatBlockTemp(
-        vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
+        vectorsBlockSize * N, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlockTemp(
+        vectorsBlockSize * N, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlock(N * dofsBlockSize,
-                               dataTypes::numberThrustDevice(0.0));
+                               dataTypes::number(0.0));
 
       dataTypes::numberValueType *tempReal;
       dataTypes::numberValueType *tempImag;
@@ -2358,8 +2343,8 @@ namespace dftfe
                                                                           jvec);
                                           if (it !=
                                               globalToLocalColumnIdMap.end())
-                                            rotationMatBlockHost[jvec * N +
-                                                                 i * BVec + j] =
+                                            *(rotationMatBlockHost.begin()+jvec * N +
+                                                                 i * BVec + j) =
                                               rotationMatPar.local_el(
                                                 localRowId, it->second);
                                         }
@@ -2381,8 +2366,8 @@ namespace dftfe
                                             globalToLocalRowIdMap.find(j +
                                                                        jvec);
                                           if (it != globalToLocalRowIdMap.end())
-                                            rotationMatBlockHost[jvec * N +
-                                                                 i * BVec + j] =
+                                            *(rotationMatBlockHost.begin()+jvec * N +
+                                                                 i * BVec + j) =
                                               rotationMatPar.local_el(
                                                 it->second, localColumnId);
                                         }
@@ -2392,7 +2377,7 @@ namespace dftfe
                     }
                   else
                     {
-                      std::memset(rotationMatBlockHost,
+                      std::memset(rotationMatBlockHost.begin(),
                                   0,
                                   BVec * N * sizeof(dataTypes::number));
 
@@ -2412,7 +2397,7 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalColumnIdMap.find(j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
-                                        rotationMatBlockHost[i * BVec + j] =
+                                        *(rotationMatBlockHost.begin()+i * BVec + j) =
                                           rotationMatPar.local_el(localRowId,
                                                                   it->second);
                                     }
@@ -2433,7 +2418,7 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
-                                        rotationMatBlockHost[i * BVec + j] =
+                                        *(rotationMatBlockHost.begin()+i * BVec + j) =
                                           rotationMatPar.local_el(
                                             it->second, localColumnId);
                                     }
@@ -2446,12 +2431,11 @@ namespace dftfe
                       if (dftParams.useDeviceDirectAllReduce)
                         {
                           DeviceCHECK(cudaMemcpyAsync(
-                            reinterpret_cast<dataTypes::numberDevice *>(
-                              thrust::raw_pointer_cast(
-                                &rotationMatBlockTemp[0])),
-                            reinterpret_cast<const dataTypes::numberDevice *>(
-                              rotationMatBlockHost + jvec * N),
-                            BVec * D * sizeof(dataTypes::numberDevice),
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                                rotationMatBlockTemp.begin()),
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                              rotationMatBlockHost.begin() + jvec * N),
+                            BVec * D * sizeof(dataTypes::number),
                             cudaMemcpyHostToDevice,
                             streamDeviceCCL));
 
@@ -2461,12 +2445,10 @@ namespace dftfe
                                                std::complex<double>>::value)
                                 devicecclMpiCommDomain
                                   .deviceDirectAllReduceWrapper(
-                                    reinterpret_cast<dataTypes::numberDevice *>(
-                                      thrust::raw_pointer_cast(
-                                        &rotationMatBlockTemp[0])),
-                                    reinterpret_cast<dataTypes::numberDevice *>(
-                                      thrust::raw_pointer_cast(
-                                        &rotationMatBlockTemp[0])),
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                        rotationMatBlockTemp.begin()),
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                        rotationMatBlockTemp.begin()),
                                     BVec * D,
                                     tempReal,
                                     tempImag,
@@ -2474,22 +2456,18 @@ namespace dftfe
                               else
                                 devicecclMpiCommDomain
                                   .deviceDirectAllReduceWrapper(
-                                    reinterpret_cast<dataTypes::numberDevice *>(
-                                      thrust::raw_pointer_cast(
-                                        &rotationMatBlockTemp[0])),
-                                    reinterpret_cast<dataTypes::numberDevice *>(
-                                      thrust::raw_pointer_cast(
-                                        &rotationMatBlockTemp[0])),
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                        rotationMatBlockTemp.begin()),
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                        rotationMatBlockTemp.begin()),
                                     BVec * D,
                                     streamDeviceCCL);
 
                               DeviceCHECK(cudaMemcpyAsync(
-                                reinterpret_cast<dataTypes::numberDevice *>(
-                                  rotationMatBlockHost + jvec * N),
-                                reinterpret_cast<const dataTypes::numberDevice
-                                                   *>(thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0])),
-                                BVec * D * sizeof(dataTypes::numberDevice),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rotationMatBlockHost.begin() + jvec * N),
+                                dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockTemp.begin()),
+                                BVec * D * sizeof(dataTypes::number),
                                 cudaMemcpyDeviceToHost,
                                 streamDeviceCCL));
                             }
@@ -2498,19 +2476,18 @@ namespace dftfe
                         {
                           if (idof == 0)
                             MPI_Allreduce(MPI_IN_PLACE,
-                                          rotationMatBlockHost + jvec * N,
+                                          rotationMatBlockHost.begin() + jvec * N,
                                           BVec * D,
                                           dataTypes::mpi_type_id(
-                                            rotationMatBlockHost),
+                                            rotationMatBlockHost.begin()),
                                           MPI_SUM,
                                           mpiCommDomain);
 
                           dftfe::utils::deviceMemcpyH2D(
+                            dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlock.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
-                              thrust::raw_pointer_cast(&rotationMatBlock[0])),
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              rotationMatBlockHost + jvec * N),
-                            BVec * D * sizeof(dataTypes::numberDevice));
+                              rotationMatBlockHost.begin() + jvec * N),
+                            BVec * D * sizeof(dataTypes::number));
                         }
                     }
                   else
@@ -2518,55 +2495,50 @@ namespace dftfe
                       if (dftParams.useDeviceDirectAllReduce)
                         {
                           DeviceCHECK(cudaMemcpyAsync(
-                            reinterpret_cast<dataTypes::numberDevice *>(
-                              thrust::raw_pointer_cast(
-                                &rotationMatBlockTemp[0])),
-                            reinterpret_cast<const dataTypes::numberDevice *>(
-                              rotationMatBlockHost),
-                            BVec * D * sizeof(dataTypes::numberDevice),
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                                rotationMatBlockTemp.begin()),
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                              rotationMatBlockHost.begin()),
+                            BVec * D * sizeof(dataTypes::number),
                             cudaMemcpyHostToDevice,
                             streamDeviceCCL));
 
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0])),
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0])),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rotationMatBlockTemp.begin()),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rotationMatBlockTemp.begin()),
                               BVec * D,
                               tempReal,
                               tempImag,
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0])),
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0])),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rotationMatBlockTemp.begin()),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rotationMatBlockTemp.begin()),
                               BVec * D,
                               streamDeviceCCL);
                         }
                       else
                         {
                           MPI_Allreduce(MPI_IN_PLACE,
-                                        rotationMatBlockHost,
+                                        rotationMatBlockHost.begin(),
                                         BVec * D,
                                         dataTypes::mpi_type_id(
-                                          rotationMatBlockHost),
+                                          rotationMatBlockHost.begin()),
                                         MPI_SUM,
                                         mpiCommDomain);
 
                           dftfe::utils::deviceMemcpyH2D(
                             dftfe::utils::makeDataTypeDeviceCompatible(
-                              thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                              rotationMatBlock.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
-                              rotationMatBlockHost),
-                            BVec * D * sizeof(dataTypes::numberDevice));
+                              rotationMatBlockHost.begin()),
+                            BVec * D * sizeof(dataTypes::number));
                         }
                     }
 
@@ -2600,17 +2572,16 @@ namespace dftfe
                         BVec,
                         BDof,
                         D,
-                        reinterpret_cast<const dataTypes::numberDevice *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffAlpha),
-                        reinterpret_cast<const dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlock.begin()),
                         BVec,
                         X + idof * N,
                         N,
-                        reinterpret_cast<const dataTypes::numberDevice *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffBeta),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0]) +
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotatedVectorsMatBlock.begin() +
                           jvec),
                         N);
                     }
@@ -2623,16 +2594,15 @@ namespace dftfe
             {
               DeviceCHECK(cudaMemcpyAsync(
                 X + idof * N,
-                reinterpret_cast<const dataTypes::numberDevice *>(
-                  thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0])),
-                N * BDof * sizeof(dataTypes::numberDevice),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  rotatedVectorsMatBlock.begin()),
+                N * BDof * sizeof(dataTypes::number),
                 cudaMemcpyDeviceToDevice,
                 streamCompute));
             }
 
         } // block loop over dofs
 
-      DeviceCHECK(cudaFreeHost(rotationMatBlockHost));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
@@ -2688,30 +2658,27 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
-        MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> XSP(
+        MPadded * N, dataTypes::numberFP32(0.0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
         X,
-        reinterpret_cast<dataTypes::numberFP32Device *>(
-          thrust::raw_pointer_cast(&XSP[0])));
+        dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
 
 
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dataTypes::numberFP32 *rotationMatBlockHostSP;
-      DeviceCHECK(
-        cudaMallocHost((void **)&rotationMatBlockHostSP,
-                       vectorsBlockSize * N * sizeof(dataTypes::numberFP32)));
-      std::memset(rotationMatBlockHostSP,
+
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHostSP(vectorsBlockSize * N);
+
+      std::memset(rotationMatBlockHostSP.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
-
 
       dataTypes::number *diagValuesHost;
       DeviceCHECK(cudaMallocHost((void **)&diagValuesHost,
@@ -2736,17 +2703,17 @@ namespace dftfe
           DeviceCHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
         rotationMatBlockSP(vectorsBlockSize * N,
-                           dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+                           dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
                                                            rotationMatBlockSPTemp(vectorsBlockSize * N,
-                               dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> diagValues(
-        N, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+                               dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> diagValues(
+        N, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
-                                 dataTypes::numberFP32ThrustDevice(0.0));
+                                 dataTypes::numberFP32(0.0));
 
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
@@ -2799,16 +2766,16 @@ namespace dftfe
                     mpiCommDomain);
 
       dftfe::utils::deviceMemcpyH2D(dftfe::utils::makeDataTypeDeviceCompatible(
-                   thrust::raw_pointer_cast(&diagValues[0])),
+                   diagValues.begin()),
                  dftfe::utils::makeDataTypeDeviceCompatible(
                    diagValuesHost),
-                 N * sizeof(dataTypes::numberDevice));
+                 N * sizeof(dataTypes::number));
 
       computeDiagQTimesXKernel<<<(M * N + (deviceConstants::blockSize - 1)) /
                                    deviceConstants::blockSize,
                                  deviceConstants::blockSize>>>(
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(&diagValues[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          diagValues.begin()),
         X,
         N,
         M);
@@ -2833,7 +2800,7 @@ namespace dftfe
 
           const unsigned int D = jvec + BVec;
 
-          std::memset(rotationMatBlockHostSP,
+          std::memset(rotationMatBlockHostSP.begin(),
                       0,
                       BVec * N * sizeof(dataTypes::numberFP32));
 
@@ -2858,7 +2825,7 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + j] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
                                     rotationMatPar.local_el(localRowId,
                                                             it->second);
                                 }
@@ -2870,7 +2837,7 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + i - jvec] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
                                     dataTypes::numberFP32(0.0);
                                 }
                             }
@@ -2891,7 +2858,7 @@ namespace dftfe
                                 it = globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + j] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
                                     rotationMatPar.local_el(it->second,
                                                             localColumnId);
                                 }
@@ -2904,7 +2871,7 @@ namespace dftfe
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + i - jvec] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
                                     dataTypes::numberFP32(0.0);
                                 }
                             }
@@ -2914,49 +2881,49 @@ namespace dftfe
               if (dftParams.useDeviceDirectAllReduce)
                 {
                   cudaMemcpyAsync(
-                    reinterpret_cast<dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      rotationMatBlockHostSP),
-                    BVec * D * sizeof(dataTypes::numberFP32Device),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      rotationMatBlockSPTemp.begin()),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      rotationMatBlockHostSP.begin()),
+                    BVec * D * sizeof(dataTypes::numberFP32),
                     cudaMemcpyHostToDevice,
                     streamDeviceCCL);
 
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        rotationMatBlockSPTemp.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        rotationMatBlockSPTemp.begin()),
                       BVec * D,
                       tempRealFP32,
                       tempImagFP32,
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        rotationMatBlockSPTemp.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        rotationMatBlockSPTemp.begin()),
                       BVec * D,
                       streamDeviceCCL);
                 }
               else
                 {
                   MPI_Allreduce(MPI_IN_PLACE,
-                                rotationMatBlockHostSP,
+                                rotationMatBlockHostSP.begin(),
                                 BVec * D,
-                                dataTypes::mpi_type_id(rotationMatBlockHostSP),
+                                dataTypes::mpi_type_id(rotationMatBlockHostSP.begin()),
                                 MPI_SUM,
                                 mpiCommDomain);
 
                   dftfe::utils::deviceMemcpyH2D(
                     dftfe::utils::makeDataTypeDeviceCompatible(
-                      thrust::raw_pointer_cast(&rotationMatBlockSP[0])),
+                      rotationMatBlockSP.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
-                      rotationMatBlockHostSP),
-                    BVec * D * sizeof(dataTypes::numberFP32Device));
+                      rotationMatBlockHostSP.begin()),
+                    BVec * D * sizeof(dataTypes::numberFP32));
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -2998,19 +2965,18 @@ namespace dftfe
                         BVec,
                         BDof,
                         D,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffAlphaSP),
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&rotationMatBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotationMatBlockSP.begin()),
                         BVec,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&XSP[0]) + idof * N),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XSP.begin() + idof * N),
                         N,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffBetaSP),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(
-                            &rotatedVectorsMatBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotatedVectorsMatBlockSP.begin()),
                         BVec);
 
                       addSubspaceRotatedBlockToXKernel<<<
@@ -3021,9 +2987,8 @@ namespace dftfe
                         streamCompute>>>(
                         BDof,
                         BVec,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(
-                            &rotatedVectorsMatBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotatedVectorsMatBlockSP.begin()),
                         X,
                         idof,
                         jvec,
@@ -3034,7 +2999,6 @@ namespace dftfe
           blockCount++;
         } // block loop over vectors
 
-      DeviceCHECK(cudaFreeHost(rotationMatBlockHostSP));
       DeviceCHECK(cudaFreeHost(diagValuesHost));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
@@ -3082,16 +3046,16 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
-        MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
+        MPadded * N, dataTypes::numberFP32(0.0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
         X,
-        reinterpret_cast<dataTypes::numberFP32Device *>(
-          thrust::raw_pointer_cast(&XSP[0])));
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          XSP.begin()));
 
 
       // band group parallelization data structures
@@ -3107,14 +3071,11 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dataTypes::numberFP32 *rotationMatBlockHostSP;
-      DeviceCHECK(
-        cudaMallocHost((void **)&rotationMatBlockHostSP,
-                       vectorsBlockSize * N * sizeof(dataTypes::numberFP32)));
-      std::memset(rotationMatBlockHostSP,
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHostSP(vectorsBlockSize * N);
+
+      std::memset(rotationMatBlockHostSP.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
-
 
       dataTypes::number *diagValuesHost;
       DeviceCHECK(cudaMallocHost((void **)&diagValuesHost,
@@ -3139,17 +3100,17 @@ namespace dftfe
           DeviceCHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
         rotationMatBlockSP(vectorsBlockSize * N,
-                           dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+                           dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
                                                            rotationMatBlockSPTemp(vectorsBlockSize * N,
-                               dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> diagValues(
-        N, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+                               dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> diagValues(
+        N, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
-                                 dataTypes::numberFP32ThrustDevice(0.0));
+                                 dataTypes::numberFP32(0.0));
 
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
@@ -3202,16 +3163,16 @@ namespace dftfe
                     mpiCommDomain);
 
       dftfe::utils::deviceMemcpyH2D(dftfe::utils::makeDataTypeDeviceCompatible(
-                   thrust::raw_pointer_cast(&diagValues[0])),
+                   diagValues.begin()),
                  dftfe::utils::makeDataTypeDeviceCompatible(
                    diagValuesHost),
-                 N * sizeof(dataTypes::numberDevice));
+                 N * sizeof(dataTypes::number));
 
       computeDiagQTimesXKernel<<<(M * N + (deviceConstants::blockSize - 1)) /
                                    deviceConstants::blockSize,
                                  deviceConstants::blockSize>>>(
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(&diagValues[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          diagValues.begin()),
         X,
         N,
         M);
@@ -3241,7 +3202,7 @@ namespace dftfe
               (jvec + BVec) >
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              std::memset(rotationMatBlockHostSP,
+              std::memset(rotationMatBlockHostSP.begin(),
                           0,
                           BVec * N * sizeof(dataTypes::numberFP32));
 
@@ -3261,7 +3222,7 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + j] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
                                     rotationMatPar.local_el(localRowId,
                                                             it->second);
                                 }
@@ -3273,7 +3234,7 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + i - jvec] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
                                     dataTypes::numberFP32(0.0);
                                 }
                             }
@@ -3294,7 +3255,7 @@ namespace dftfe
                                 it = globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + j] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
                                     rotationMatPar.local_el(it->second,
                                                             localColumnId);
                                 }
@@ -3307,7 +3268,7 @@ namespace dftfe
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
-                                  rotationMatBlockHostSP[i * BVec + i - jvec] =
+                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
                                     dataTypes::numberFP32(0.0);
                                 }
                             }
@@ -3318,49 +3279,46 @@ namespace dftfe
               if (dftParams.useDeviceDirectAllReduce)
                 {
                   cudaMemcpyAsync(
-                    reinterpret_cast<dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      rotationMatBlockHostSP),
-                    BVec * D * sizeof(dataTypes::numberFP32Device),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      rotationMatBlockSPTemp.begin()),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      rotationMatBlockHostSP.begin()),
+                    BVec * D * sizeof(dataTypes::numberFP32),
                     cudaMemcpyHostToDevice,
                     streamDeviceCCL);
 
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        rotationMatBlockSPTemp.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSPTemp.begin()),
                       BVec * D,
                       tempRealFP32,
                       tempImagFP32,
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
-                      reinterpret_cast<dataTypes::numberFP32Device *>(
-                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSPTemp.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSPTemp.begin()),
                       BVec * D,
                       streamDeviceCCL);
                 }
               else
                 {
                   MPI_Allreduce(MPI_IN_PLACE,
-                                rotationMatBlockHostSP,
+                                rotationMatBlockHostSP.begin(),
                                 BVec * D,
-                                dataTypes::mpi_type_id(rotationMatBlockHostSP),
+                                dataTypes::mpi_type_id(rotationMatBlockHostSP.begin()),
                                 MPI_SUM,
                                 mpiCommDomain);
 
                   dftfe::utils::deviceMemcpyH2D(
                     dftfe::utils::makeDataTypeDeviceCompatible(
-                      thrust::raw_pointer_cast(&rotationMatBlockSP[0])),
+                     rotationMatBlockSP.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
-                      rotationMatBlockHostSP),
-                    BVec * D * sizeof(dataTypes::numberFP32Device));
+                      rotationMatBlockHostSP.begin()),
+                    BVec * D * sizeof(dataTypes::numberFP32));
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -3402,19 +3360,17 @@ namespace dftfe
                         BVec,
                         BDof,
                         D,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffAlphaSP),
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&rotationMatBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSP.begin()),
                         BVec,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&XSP[0]) + idof * N),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XSP.begin() + idof * N),
                         N,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffBetaSP),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(
-                            &rotatedVectorsMatBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotatedVectorsMatBlockSP.begin()),
                         BVec);
 
 
@@ -3426,9 +3382,8 @@ namespace dftfe
                         streamCompute>>>(
                         BDof,
                         BVec,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(
-                            &rotatedVectorsMatBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                            rotatedVectorsMatBlockSP.begin()),
                         X,
                         idof,
                         jvec,
@@ -3439,7 +3394,6 @@ namespace dftfe
           blockCount++;
         } // block loop over vectors
 
-      DeviceCHECK(cudaFreeHost(rotationMatBlockHostSP));
       DeviceCHECK(cudaFreeHost(diagValuesHost));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
@@ -3494,8 +3448,8 @@ namespace dftfe
 
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
-      thrust::device_vector<dataTypes::numberThrustDevice> overlapMatrixBlock(
-        N * vectorsBlockSize, dataTypes::numberThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
+        N * vectorsBlockSize, dataTypes::number(0.0));
 
       dataTypes::number *overlapMatrixBlockHost;
       DeviceCHECK(
@@ -3546,16 +3500,16 @@ namespace dftfe
                 D,
                 B,
                 M,
-                reinterpret_cast<const dataTypes::numberDevice *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffAlpha),
                 X + ivec,
                 N,
                 X + ivec,
                 N,
-                reinterpret_cast<const dataTypes::numberDevice *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffBeta),
-                reinterpret_cast<dataTypes::numberDevice *>(
-                  thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlock.begin()),
                 D);
 
 
@@ -3564,20 +3518,20 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                         overlapMatrixBlock.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
                       D * B,
                       tempReal,
                       tempImag,
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
                       D * B,
                       streamDeviceCCL);
                 }
@@ -3585,8 +3539,8 @@ namespace dftfe
               dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
                            overlapMatrixBlockHost),
                          dftfe::utils::makeDataTypeDeviceCompatible(
-                           thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
-                         D * B * sizeof(dataTypes::numberDevice));
+                           overlapMatrixBlock.begin()),
+                         D * B * sizeof(dataTypes::number));
 
               // Sum local XTrunc^{T}*XcBlock across domain decomposition
               // processors
@@ -3730,11 +3684,11 @@ namespace dftfe
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
       // allocate device vectors to be used later
-      thrust::device_vector<dataTypes::numberThrustDevice> overlapMatrixBlock(
-        N * vectorsBlockSize, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
+        N * vectorsBlockSize, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockNext(N * vectorsBlockSize,
-                               dataTypes::numberThrustDevice(0.0));
+                               dataTypes::number(0.0));
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
@@ -3774,17 +3728,16 @@ namespace dftfe
                               D,
                               B,
                               M,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
                               X + ivec,
                               N,
                               X + ivec,
                               N,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &overlapMatrixBlock[0])),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  overlapMatrixBlock.begin()),
                               D);
 
                   // record completion of compute for first block
@@ -3824,17 +3777,16 @@ namespace dftfe
                               DNew,
                               BNew,
                               M,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
                               X + ivecNew,
                               N,
                               X + ivecNew,
                               N,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &overlapMatrixBlockNext[0])),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  overlapMatrixBlockNext.begin()),
                               DNew);
 
                   // record completion of compute for next block
@@ -3849,30 +3801,30 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
                       D * B,
                       tempReal,
                       tempImag,
                       streamDataMove);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlock.begin()),
                       D * B,
                       streamDataMove);
                 }
 
               DeviceCHECK(cudaMemcpyAsync(
-                reinterpret_cast<dataTypes::numberDevice *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   overlapMatrixBlockHost),
-                reinterpret_cast<const dataTypes::numberDevice *>(
-                  thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
-                D * B * sizeof(dataTypes::numberDevice),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlock.begin()),
+                D * B * sizeof(dataTypes::number),
                 cudaMemcpyDeviceToHost,
                 streamDataMove));
 
@@ -3985,24 +3937,23 @@ namespace dftfe
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
 
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
                                                            overlapMatrixBlockSP(N * vectorsBlockSize,
-                             dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> overlapMatrixBlockDP(
+                             dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlockDP(
         vectorsBlockSize * vectorsBlockSize,
-        dataTypes::numberThrustDevice(0.0));
+        dataTypes::number(0.0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
-        MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
+        MPadded * N, dataTypes::numberFP32(0.0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
         X,
-        reinterpret_cast<dataTypes::numberFP32Device *>(
-          thrust::raw_pointer_cast(&XSP[0])));
+        dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
       dataTypes::number *overlapMatrixBlockHostDP;
       DeviceCHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
                                  vectorsBlockSize * vectorsBlockSize *
@@ -4071,16 +4022,16 @@ namespace dftfe
                 B,
                 B,
                 M,
-                reinterpret_cast<const dataTypes::numberDevice *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffAlpha),
                 X + ivec,
                 N,
                 X + ivec,
                 N,
-                reinterpret_cast<const dataTypes::numberDevice *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffBeta),
-                reinterpret_cast<dataTypes::numberDevice *>(
-                  thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockDP.begin()),
                 B);
 
               const unsigned int DRem = D - B;
@@ -4097,18 +4048,18 @@ namespace dftfe
                     DRem,
                     B,
                     M,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
+                    dftfe::utils::makeDataTypeDeviceCompatible(
                       &scalarCoeffAlphaSP),
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&XSP[0]) + ivec + B),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      XSP.begin() + ivec + B),
                     N,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&XSP[0]) + ivec),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      XSP.begin() + ivec),
                     N,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
+                    dftfe::utils::makeDataTypeDeviceCompatible(
                       &scalarCoeffBetaSP),
-                    reinterpret_cast<dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      overlapMatrixBlockSP.begin()),
                     DRem);
                 }
 
@@ -4118,14 +4069,14 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
                         B * B,
                         DRem * B,
                         tempReal,
@@ -4136,14 +4087,14 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
                         B * B,
                         DRem * B,
                         streamDeviceCCL);
@@ -4152,14 +4103,14 @@ namespace dftfe
               dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
                            overlapMatrixBlockHostDP),
                          dftfe::utils::makeDataTypeDeviceCompatible(
-                           thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                         B * B * sizeof(dataTypes::numberDevice));
+                           overlapMatrixBlockDP.begin()),
+                         B * B * sizeof(dataTypes::number));
 
               dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
                            overlapMatrixBlockHostSP),
                          dftfe::utils::makeDataTypeDeviceCompatible(
-                           thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
-                         DRem * B * sizeof(dataTypes::numberFP32Device));
+                           overlapMatrixBlockSP.begin()),
+                         DRem * B * sizeof(dataTypes::numberFP32));
 
               if (!dftParams.useDeviceDirectAllReduce)
                 {
@@ -4318,30 +4269,30 @@ namespace dftfe
           cudaEventCreate(&copyEvents[i]);
         }
 
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
                                                            overlapMatrixBlockSP(N * vectorsBlockSize,
-                             dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> overlapMatrixBlockDP(
+                             dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlockDP(
         vectorsBlockSize * vectorsBlockSize,
-        dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice>
+        dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
         overlapMatrixBlockSPNext(N * vectorsBlockSize,
-                                 dataTypes::numberFP32ThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice>
+                                 dataTypes::numberFP32(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockDPNext(vectorsBlockSize * vectorsBlockSize,
-                                 dataTypes::numberThrustDevice(0.0));
+                                 dataTypes::number(0.0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<dataTypes::numberFP32ThrustDevice> XSP(
-        MPadded * N, dataTypes::numberFP32ThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
+        MPadded * N, dataTypes::numberFP32(0.0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
         X,
-        reinterpret_cast<dataTypes::numberFP32Device *>(
-          thrust::raw_pointer_cast(&XSP[0])));
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          XSP.begin()));
       dataTypes::number *overlapMatrixBlockHostDP;
       DeviceCHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
                                  vectorsBlockSize * vectorsBlockSize *
@@ -4411,17 +4362,16 @@ namespace dftfe
                               B,
                               B,
                               M,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
                               X + ivec,
                               N,
                               X + ivec,
                               N,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &overlapMatrixBlockDP[0])),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  overlapMatrixBlockDP.begin()),
                               B);
 
                   const unsigned int DRem = D - B;
@@ -4440,18 +4390,18 @@ namespace dftfe
                         DRem,
                         B,
                         M,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffAlphaSP),
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&XSP[0]) + ivec + B),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XSP.begin() + ivec + B),
                         N,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&XSP[0]) + ivec),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XSP.begin() + ivec),
                         N,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffBetaSP),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
                         DRem);
                     }
 
@@ -4495,17 +4445,16 @@ namespace dftfe
                               BNew,
                               BNew,
                               M,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
                               X + ivecNew,
                               N,
                               X + ivecNew,
                               N,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
+                              dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
-                              reinterpret_cast<dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &overlapMatrixBlockDPNext[0])),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                  overlapMatrixBlockDPNext.begin()),
                               BNew);
 
                   const unsigned int DRemNew = DNew - BNew;
@@ -4524,19 +4473,18 @@ namespace dftfe
                         DRemNew,
                         BNew,
                         M,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffAlphaSP),
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&XSP[0]) + ivecNew + BNew),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XSP.begin() + ivecNew + BNew),
                         N,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&XSP[0]) + ivecNew),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XSP.begin() + ivecNew),
                         N,
-                        reinterpret_cast<const dataTypes::numberFP32Device *>(
+                        dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffBetaSP),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(
-                            &overlapMatrixBlockSPNext[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                            overlapMatrixBlockSPNext.begin()),
                         DRemNew);
                     }
 
@@ -4551,14 +4499,14 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
                         B * B,
                         DRem * B,
                         tempReal,
@@ -4569,34 +4517,33 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockDP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          overlapMatrixBlockSP.begin()),
                         B * B,
                         DRem * B,
                         streamDataMove);
                 }
 
-              cudaMemcpyAsync(reinterpret_cast<dataTypes::numberDevice *>(
+              cudaMemcpyAsync(dftfe::utils::makeDataTypeDeviceCompatible(
                                 overlapMatrixBlockHostDP),
-                              reinterpret_cast<const dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(
-                                  &overlapMatrixBlockDP[0])),
-                              B * B * sizeof(dataTypes::numberDevice),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                              overlapMatrixBlockDP.begin()),
+                              B * B * sizeof(dataTypes::number),
                               cudaMemcpyDeviceToHost,
                               streamDataMove);
 
               cudaMemcpyAsync(
-                reinterpret_cast<dataTypes::numberFP32Device *>(
+                dftfe::utils::makeDataTypeDeviceCompatible(
                   overlapMatrixBlockHostSP),
-                reinterpret_cast<const dataTypes::numberFP32Device *>(
-                  thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
-                DRem * B * sizeof(dataTypes::numberFP32Device),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockSP.begin()),
+                DRem * B * sizeof(dataTypes::numberFP32),
                 cudaMemcpyDeviceToHost,
                 streamDataMove);
 
@@ -4732,15 +4679,15 @@ namespace dftfe
 
 
       const unsigned int            vectorsBlockSize = dftParams.wfcBlockSize;
-      thrust::device_vector<double> residualNormSquareDevice(N, 0.0);
-      thrust::device_vector<dataTypes::numberThrustDevice> HXBlockFull(
-        vectorsBlockSize * M, dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<double> residualSqDevice(vectorsBlockSize * M, 0.0);
-      thrust::device_vector<double> onesVecDevice(M, 1.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualNormSquareDevice(N, 0.0);
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> HXBlockFull(
+        vectorsBlockSize * M, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualSqDevice(vectorsBlockSize * M, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> onesVecDevice(M, 1.0);
 
 
-      thrust::device_vector<double> eigenValuesDevice(N, 0.0);
-      dftfe::utils::deviceMemcpyH2D(thrust::raw_pointer_cast(&eigenValuesDevice[0]),
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> eigenValuesDevice(N, 0.0);
+      dftfe::utils::deviceMemcpyH2D(eigenValuesDevice.begin(),
                  &eigenValues[0],
                  N * sizeof(double));
 
@@ -4789,8 +4736,8 @@ namespace dftfe
                     M,
                     HXBlock.begin(),
                     B,
-                    reinterpret_cast<dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&HXBlockFull[0])),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      HXBlockFull.begin()),
                     k - jvec);
                 }
 
@@ -4802,11 +4749,11 @@ namespace dftfe
                 M,
                 N,
                 jvec,
-                thrust::raw_pointer_cast(&eigenValuesDevice[0]),
+                eigenValuesDevice.begin(),
                 X,
-                reinterpret_cast<const dataTypes::numberDevice *>(
-                  thrust::raw_pointer_cast(&HXBlockFull[0])),
-                thrust::raw_pointer_cast(&residualSqDevice[0]));
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                HXBlockFull.begin()),
+                residualSqDevice.begin());
 
               cublasDgemm(handle,
                           CUBLAS_OP_N,
@@ -4815,20 +4762,19 @@ namespace dftfe
                           B,
                           M,
                           &alpha,
-                          thrust::raw_pointer_cast(&onesVecDevice[0]),
+                          onesVecDevice.begin(),
                           1,
-                          thrust::raw_pointer_cast(&residualSqDevice[0]),
+                          residualSqDevice.begin(),
                           B,
                           &beta,
-                          thrust::raw_pointer_cast(
-                            &residualNormSquareDevice[0] + jvec),
+                          residualNormSquareDevice.begin() + jvec,
                           1);
             }
         }
 
 
       dftfe::utils::deviceMemcpyD2H(&residualNorm[0],
-                 thrust::raw_pointer_cast(&residualNormSquareDevice[0]),
+                 residualNormSquareDevice.begin(),
                  N * sizeof(double));
 
       MPI_Allreduce(
