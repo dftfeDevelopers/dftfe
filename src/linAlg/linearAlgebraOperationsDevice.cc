@@ -84,7 +84,7 @@ namespace dftfe
               cuCmul(*(srcArray +
                        (localThreadId + gangBlockId * contiguousBlockSize)),
                      make_cuDoubleComplex(
-                       (*(scalingVector + gangBlockId) * scalar), 0.0));
+                       (*(scalingVector + gangBlockId) * scalar), 0));
           }
       }
 
@@ -606,7 +606,7 @@ namespace dftfe
           deviceConstants::blockSize>>>(
           numberVectors, localSize, xarray, yarray, sqrtMassVector, temparray);
 
-        const double alpha = 1.0, beta = 0.0;
+        const double alpha = 1.0, beta = 0;
         cublasDgemm(handle,
                     CUBLAS_OP_N,
                     CUBLAS_OP_T,
@@ -726,7 +726,7 @@ namespace dftfe
       vVector.reinit(operatorMatrix.getParallelVecSingleComponent());
       fVector.reinit(operatorMatrix.getParallelVecSingleComponent());
 
-      vVector = dataTypes::number(0.0), fVector = dataTypes::number(0.0);
+      vVector = dataTypes::number(0), fVector = dataTypes::number(0);
       std::srand(this_mpi_process);
       const unsigned int local_size = vVector.local_size();
 
@@ -777,7 +777,7 @@ namespace dftfe
       fVector.add(-1.0 * alpha, vVector);
       std::vector<dataTypes::number> Tlanczos(lanczosIterations *
                                                 lanczosIterations,
-                                              0.0);
+                                              0);
 
       Tlanczos[0]    = alpha;
       unsigned index = 0;
@@ -832,7 +832,7 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
       const unsigned int                lrwork = 1 + 5 * n + 2 * n * n;
-      std::vector<double>               rwork(lrwork, 0.0);
+      std::vector<double>               rwork(lrwork, 0);
       std::vector<std::complex<double>> work(lwork);
       zheevd_(&jobz,
               &uplo,
@@ -848,7 +848,7 @@ namespace dftfe
               &liwork,
               &info);
 #else
-      std::vector<double> work(lwork, 0.0);
+      std::vector<double> work(lwork, 0);
       dsyevd_(&jobz,
               &uplo,
               &n,
@@ -880,7 +880,7 @@ namespace dftfe
       double lowerBound = std::floor(eigenValuesT[0]);
       double upperBound = std::ceil(
         eigenValuesT[lanczosIterations - 1] +
-        (dftParams.reproducible_output ? fvectorNorm : fvectorNorm / 10.0));
+        (dftParams.reproducible_output ? fvectorNorm : fvectorNorm / 10));
       return (std::make_pair(lowerBound, upperBound));
     }
 
@@ -1868,12 +1868,12 @@ namespace dftfe
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
-        vectorsBlockSize * N, dataTypes::number(0.0));
+        vectorsBlockSize * N, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlockNext(
-        vectorsBlockSize * N, dataTypes::number(0.0));
+        vectorsBlockSize * N, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlock(Nfr * dofsBlockSize,
-                               dataTypes::number(0.0));
+                               dataTypes::number(0));
 
       dataTypes::numberValueType *tempReal;
       dataTypes::numberValueType *tempImag;
@@ -1902,7 +1902,7 @@ namespace dftfe
               const unsigned int BVec = std::min(vectorsBlockSize, Nfr - jvec);
 
               const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
-              const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
+              const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
               if (dftParams.allowFullCPUMemSubspaceRot)
                 {
@@ -2276,12 +2276,12 @@ namespace dftfe
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
-        vectorsBlockSize * N, dataTypes::number(0.0));
+        vectorsBlockSize * N, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlockTemp(
-        vectorsBlockSize * N, dataTypes::number(0.0));
+        vectorsBlockSize * N, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlock(N * dofsBlockSize,
-                               dataTypes::number(0.0));
+                               dataTypes::number(0));
 
       dataTypes::numberValueType *tempReal;
       dataTypes::numberValueType *tempImag;
@@ -2319,7 +2319,7 @@ namespace dftfe
                   const dataTypes::number scalarCoeffAlpha =
                     dataTypes::number(1.0);
                   const dataTypes::number scalarCoeffBeta =
-                    dataTypes::number(0.0);
+                    dataTypes::number(0);
 
                   if (dftParams.allowFullCPUMemSubspaceRot)
                     {
@@ -2659,7 +2659,7 @@ namespace dftfe
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> XSP(
-        MPadded * N, dataTypes::numberFP32(0.0));
+        MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
@@ -2705,20 +2705,20 @@ namespace dftfe
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
         rotationMatBlockSP(vectorsBlockSize * N,
-                           dataTypes::numberFP32(0.0));
+                           dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
                                                            rotationMatBlockSPTemp(vectorsBlockSize * N,
-                               dataTypes::numberFP32(0.0));
+                               dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> diagValues(
-        N, dataTypes::number(0.0));
+        N, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
-                                 dataTypes::numberFP32(0.0));
+                                 dataTypes::numberFP32(0));
 
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0.0);
+        dataTypes::numberFP32(0);
 
 
       // Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -2838,7 +2838,7 @@ namespace dftfe
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0.0);
+                                    dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -2872,7 +2872,7 @@ namespace dftfe
                                   globalToLocalRowIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0.0);
+                                    dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -3047,7 +3047,7 @@ namespace dftfe
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
-        MPadded * N, dataTypes::numberFP32(0.0));
+        MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
@@ -3102,20 +3102,20 @@ namespace dftfe
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
         rotationMatBlockSP(vectorsBlockSize * N,
-                           dataTypes::numberFP32(0.0));
+                           dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
                                                            rotationMatBlockSPTemp(vectorsBlockSize * N,
-                               dataTypes::numberFP32(0.0));
+                               dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> diagValues(
-        N, dataTypes::number(0.0));
+        N, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
-                                 dataTypes::numberFP32(0.0));
+                                 dataTypes::numberFP32(0));
 
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0.0);
+        dataTypes::numberFP32(0);
 
 
       // Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -3235,7 +3235,7 @@ namespace dftfe
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0.0);
+                                    dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -3269,7 +3269,7 @@ namespace dftfe
                                   globalToLocalRowIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0.0);
+                                    dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -3449,7 +3449,7 @@ namespace dftfe
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
-        N * vectorsBlockSize, dataTypes::number(0.0));
+        N * vectorsBlockSize, dataTypes::number(0));
 
       dataTypes::number *overlapMatrixBlockHost;
       DeviceCHECK(
@@ -3463,7 +3463,7 @@ namespace dftfe
       cudaStreamCreate(&streamDeviceCCL);
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
-      const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
+      const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
       dataTypes::numberValueType *tempReal;
       dataTypes::numberValueType *tempImag;
@@ -3685,13 +3685,13 @@ namespace dftfe
 
       // allocate device vectors to be used later
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
-        N * vectorsBlockSize, dataTypes::number(0.0));
+        N * vectorsBlockSize, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockNext(N * vectorsBlockSize,
-                               dataTypes::number(0.0));
+                               dataTypes::number(0));
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
-      const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
+      const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
       dataTypes::numberValueType *tempReal;
       dataTypes::numberValueType *tempImag;
@@ -3939,14 +3939,14 @@ namespace dftfe
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
                                                            overlapMatrixBlockSP(N * vectorsBlockSize,
-                             dataTypes::numberFP32(0.0));
+                             dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlockDP(
         vectorsBlockSize * vectorsBlockSize,
-        dataTypes::number(0.0));
+        dataTypes::number(0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
-        MPadded * N, dataTypes::numberFP32(0.0));
+        MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
@@ -3975,11 +3975,11 @@ namespace dftfe
       cudaStreamCreate(&streamDeviceCCL);
 
       const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
-      const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0.0);
+      const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0.0);
+        dataTypes::numberFP32(0);
 
       dataTypes::numberValueType *    tempReal;
       dataTypes::numberValueType *    tempImag;
@@ -4271,20 +4271,20 @@ namespace dftfe
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
                                                            overlapMatrixBlockSP(N * vectorsBlockSize,
-                             dataTypes::numberFP32(0.0));
+                             dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlockDP(
         vectorsBlockSize * vectorsBlockSize,
-        dataTypes::number(0.0));
+        dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
         overlapMatrixBlockSPNext(N * vectorsBlockSize,
-                                 dataTypes::numberFP32(0.0));
+                                 dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockDPNext(vectorsBlockSize * vectorsBlockSize,
-                                 dataTypes::number(0.0));
+                                 dataTypes::number(0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
-        MPadded * N, dataTypes::numberFP32(0.0));
+        MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
                                   deviceConstants::blockSize * M,
@@ -4311,11 +4311,11 @@ namespace dftfe
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
       const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
-      const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0.0);
+      const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0.0);
+        dataTypes::numberFP32(0);
 
       dataTypes::numberValueType *    tempReal;
       dataTypes::numberValueType *    tempImag;
@@ -4351,7 +4351,7 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  // thrust::fill(overlapMatrixBlockDP.begin(),overlapMatrixBlockDP.end(),0.0);
+                  // thrust::fill(overlapMatrixBlockDP.begin(),overlapMatrixBlockDP.end(),0);
 
                   cublasXgemm(handle,
                               CUBLAS_OP_N,
@@ -4378,7 +4378,7 @@ namespace dftfe
 
                   if (DRem != 0)
                     {
-                      // thrust::fill(overlapMatrixBlockSP.begin(),overlapMatrixBlockSP.end(),0.0);
+                      // thrust::fill(overlapMatrixBlockSP.begin(),overlapMatrixBlockSP.end(),0);
 
                       cublasXgemm(
                         handle,
@@ -4433,7 +4433,7 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  // thrust::fill(overlapMatrixBlockDPNext.begin(),overlapMatrixBlockDPNext.end(),0.0);
+                  // thrust::fill(overlapMatrixBlockDPNext.begin(),overlapMatrixBlockDPNext.end(),0);
 
                   // evaluate X^{T} times XBlock
                   cublasXgemm(handle,
@@ -4461,7 +4461,7 @@ namespace dftfe
 
                   if (DRemNew != 0)
                     {
-                      // thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0.0);
+                      // thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0);
 
                       cublasXgemm(
                         handle,
@@ -4679,21 +4679,21 @@ namespace dftfe
 
 
       const unsigned int            vectorsBlockSize = dftParams.wfcBlockSize;
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualNormSquareDevice(N, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualNormSquareDevice(N, 0);
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> HXBlockFull(
-        vectorsBlockSize * M, dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualSqDevice(vectorsBlockSize * M, 0.0);
+        vectorsBlockSize * M, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualSqDevice(vectorsBlockSize * M, 0);
       dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> onesVecDevice(M, 1.0);
 
 
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> eigenValuesDevice(N, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> eigenValuesDevice(N, 0);
       dftfe::utils::deviceMemcpyH2D(eigenValuesDevice.begin(),
                  &eigenValues[0],
                  N * sizeof(double));
 
       const bool   scaleFlag = false;
       const double scalar    = 1.0;
-      const double alpha = 1.0, beta = 0.0;
+      const double alpha = 1.0, beta = 0;
 
       for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
