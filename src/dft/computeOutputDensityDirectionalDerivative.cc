@@ -32,22 +32,22 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator =
     *d_kohnShamDFTOperatorPtr;
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+    &kohnShamDFTEigenOperatorDevice = *d_kohnShamDFTOperatorDevicePtr;
 #endif
 
   const Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
 
-#ifdef DFTFE_WITH_GPU
-  if (d_dftParamsPtr->useGPU)
-    cudaUtils::copyCUDAVecToCUDAVec(
-      d_eigenVectorsFlattenedCUDA.begin(),
-      d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
-      d_eigenVectorsFlattenedCUDA.size());
+#ifdef DFTFE_WITH_DEVICE
+  if (d_dftParamsPtr->useDevice)
+    deviceUtils::copyDeviceVecToDeviceVec(
+      d_eigenVectorsFlattenedDevice.begin(),
+      d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
+      d_eigenVectorsFlattenedDevice.size());
 #endif
-  if (!d_dftParamsPtr->useGPU)
+  if (!d_dftParamsPtr->useDevice)
     d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
 
 
@@ -56,11 +56,11 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                               mpi_communicator,
                               dealiiLinearSolver::CG);
 
-#ifdef DFTFE_WITH_GPU
-  // set up linear solver CUDA
-  linearSolverCGCUDA CGSolverCUDA(d_mpiCommParent,
-                                  mpi_communicator,
-                                  linearSolverCGCUDA::CG);
+#ifdef DFTFE_WITH_DEVICE
+  // set up linear solver Device
+  linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
+                                      mpi_communicator,
+                                      linearSolverCGDevice::CG);
 #endif
 
 
@@ -82,11 +82,11 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   electrostaticPotPrime = 0;
 
   // Reuses diagonalA and mean value constraints
-  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
       not d_dftParamsPtr->pinnedNodeForPBC)
     {
-#ifdef DFTFE_WITH_GPU
-      d_phiTotalSolverProblemCUDA.reinit(
+#ifdef DFTFE_WITH_DEVICE
+      d_phiTotalSolverProblemDevice.reinit(
         d_matrixFreeDataPRefined,
         electrostaticPotPrime,
         *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -97,7 +97,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         dummy,
         d_smearedChargeQuadratureIdElectro,
         charge,
-        d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
+        d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
         false,
         false);
 #endif
@@ -119,15 +119,15 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         false);
     }
 
-  if (d_dftParamsPtr->useGPU and d_dftParamsPtr->floatingNuclearCharges and
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
       not d_dftParamsPtr->pinnedNodeForPBC)
     {
-#ifdef DFTFE_WITH_GPU
-      CGSolverCUDA.solve(d_phiTotalSolverProblemCUDA,
-                         d_dftParamsPtr->absPoissonSolverToleranceLRD,
-                         d_dftParamsPtr->maxLinearSolverIterations,
-                         d_kohnShamDFTOperatorCUDAPtr->getCublasHandle(),
-                         d_dftParamsPtr->verbosity);
+#ifdef DFTFE_WITH_DEVICE
+      CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                           d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                           d_dftParamsPtr->maxLinearSolverIterations,
+                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+                           d_dftParamsPtr->verbosity);
 #endif
     }
   else
@@ -186,25 +186,25 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
           densityFamilyType::LDA)
         {
           computing_timer.enter_subsection("VEffPrime Computation");
-#ifdef DFTFE_WITH_GPU
-          if (d_dftParamsPtr->useGPU)
+#ifdef DFTFE_WITH_DEVICE
+          if (d_dftParamsPtr->useDevice)
             {
               if (d_dftParamsPtr->spinPolarized == 1)
-                kohnShamDFTEigenOperatorCUDA.computeVEffPrimeSpinPolarized(
+                kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
                   *rhoInValuesSpinPolarized,
                   rhoPrimeValuesSpinPolarized,
                   electrostaticPotPrimeValues,
                   s,
                   d_rhoCore);
               else
-                kohnShamDFTEigenOperatorCUDA.computeVEffPrime(
+                kohnShamDFTEigenOperatorDevice.computeVEffPrime(
                   *rhoInValues,
                   rhoPrimeValues,
                   electrostaticPotPrimeValues,
                   d_rhoCore);
             }
 #endif
-          if (!d_dftParamsPtr->useGPU)
+          if (!d_dftParamsPtr->useDevice)
             {
               if (d_dftParamsPtr->spinPolarized == 1)
                 kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
@@ -227,11 +227,11 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                densityFamilyType::GGA)
         {
           computing_timer.enter_subsection("VEffPrime Computation");
-#ifdef DFTFE_WITH_GPU
-          if (d_dftParamsPtr->useGPU)
+#ifdef DFTFE_WITH_DEVICE
+          if (d_dftParamsPtr->useDevice)
             {
               if (d_dftParamsPtr->spinPolarized == 1)
-                kohnShamDFTEigenOperatorCUDA.computeVEffPrimeSpinPolarized(
+                kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
                   *rhoInValuesSpinPolarized,
                   rhoPrimeValuesSpinPolarized,
                   *gradRhoInValuesSpinPolarized,
@@ -241,7 +241,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                   d_rhoCore,
                   d_gradRhoCore);
               else
-                kohnShamDFTEigenOperatorCUDA.computeVEffPrime(
+                kohnShamDFTEigenOperatorDevice.computeVEffPrime(
                   *rhoInValues,
                   rhoPrimeValues,
                   *gradRhoInValues,
@@ -251,7 +251,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                   d_gradRhoCore);
             }
 #endif
-          if (!d_dftParamsPtr->useGPU)
+          if (!d_dftParamsPtr->useDevice)
             {
               if (d_dftParamsPtr->spinPolarized == 1)
                 kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
@@ -281,21 +281,21 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         {
           if (kPoint == 0)
             {
-#ifdef DFTFE_WITH_GPU
-              if (d_dftParamsPtr->useGPU)
-                kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint, s);
+#ifdef DFTFE_WITH_DEVICE
+              if (d_dftParamsPtr->useDevice)
+                kohnShamDFTEigenOperatorDevice.reinitkPointSpinIndex(kPoint, s);
 #endif
-              if (!d_dftParamsPtr->useGPU)
+              if (!d_dftParamsPtr->useDevice)
                 kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
 
               computing_timer.enter_subsection(
                 "Hamiltonian matrix prime computation");
-#ifdef DFTFE_WITH_GPU
-              if (d_dftParamsPtr->useGPU)
-                kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatricesAllkpt(
+#ifdef DFTFE_WITH_DEVICE
+              if (d_dftParamsPtr->useDevice)
+                kohnShamDFTEigenOperatorDevice.computeHamiltonianMatricesAllkpt(
                   s, true);
 #endif
-              if (!d_dftParamsPtr->useGPU)
+              if (!d_dftParamsPtr->useDevice)
                 kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,
                                                                   s,
                                                                   true);
@@ -304,16 +304,16 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                 "Hamiltonian matrix prime computation");
             }
 
-#ifdef DFTFE_WITH_GPU
-          if (d_dftParamsPtr->useGPU)
+#ifdef DFTFE_WITH_DEVICE
+          if (d_dftParamsPtr->useDevice)
             kohnShamEigenSpaceFirstOrderDensityMatResponse(
               s,
               kPoint,
-              kohnShamDFTEigenOperatorCUDA,
+              kohnShamDFTEigenOperatorDevice,
               *d_elpaScala,
-              d_subspaceIterationSolverCUDA);
+              d_subspaceIterationSolverDevice);
 #endif
-          if (!d_dftParamsPtr->useGPU)
+          if (!d_dftParamsPtr->useDevice)
             kohnShamEigenSpaceFirstOrderDensityMatResponse(
               s, kPoint, kohnShamDFTEigenOperator, *d_elpaScala);
         }
@@ -322,8 +322,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   computing_timer.enter_subsection("Density first order response computation");
 
   computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTEigenOperatorCUDA,
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTEigenOperatorDevice,
 #endif
     kohnShamDFTEigenOperator,
     fv,
@@ -342,9 +342,9 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::
   computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorGPU,
+#ifdef DFTFE_WITH_DEVICE
+    kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorDevice,
 #endif
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
       &                        kohnShamDFTEigenOperatorCPU,
@@ -444,18 +444,18 @@ dftClass<FEOrder, FEOrderElectro>::
 
     // compute first order density response at nodal locations of 2p DoFHandler
     // nodes in each cell
-#ifdef DFTFE_WITH_GPU
-  if (d_dftParamsPtr->useGPU)
+#ifdef DFTFE_WITH_DEVICE
+  if (d_dftParamsPtr->useDevice)
     {
       if (d_dftParamsPtr->singlePrecLRD)
-        computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
-                                        dataTypes::numberFP32GPU>(
-          d_eigenVectorsFlattenedCUDA.begin(),
-          d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
+        computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
+                                           dataTypes::numberFP32Device>(
+          d_eigenVectorsFlattenedDevice.begin(),
+          d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
           d_densityMatDerFermiEnergy,
           d_numEigenValues,
           d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-          kohnShamDFTEigenOperatorGPU,
+          kohnShamDFTEigenOperatorDevice,
           d_eigenDofHandlerIndex,
           dofHandler,
           matrix_free_data.n_physical_cells(),
@@ -471,14 +471,14 @@ dftClass<FEOrder, FEOrderElectro>::
           interBandGroupComm,
           *d_dftParamsPtr);
       else
-        computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
-                                        dataTypes::numberGPU>(
-          d_eigenVectorsFlattenedCUDA.begin(),
-          d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
+        computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
+                                           dataTypes::numberDevice>(
+          d_eigenVectorsFlattenedDevice.begin(),
+          d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
           d_densityMatDerFermiEnergy,
           d_numEigenValues,
           d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-          kohnShamDFTEigenOperatorGPU,
+          kohnShamDFTEigenOperatorDevice,
           d_eigenDofHandlerIndex,
           dofHandler,
           matrix_free_data.n_physical_cells(),
@@ -495,7 +495,7 @@ dftClass<FEOrder, FEOrderElectro>::
           *d_dftParamsPtr);
     }
 #endif
-  if (!d_dftParamsPtr->useGPU)
+  if (!d_dftParamsPtr->useDevice)
     {
       if (d_dftParamsPtr->singlePrecLRD)
         computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,

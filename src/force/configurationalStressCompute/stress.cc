@@ -21,15 +21,16 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeStress(
   const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-    &kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+    &kohnShamDFTEigenOperatorDevice,
 #endif
-  const dispersionCorrection &     dispersionCorr,
-  const unsigned int               eigenDofHandlerIndex,
-  const unsigned int               smearedChargeQuadratureId,
-  const unsigned int               lpspQuadratureIdElectro,
-  const MatrixFree<3, double> &    matrixFreeDataElectro,
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+  const dispersionCorrection &                       dispersionCorr,
+  const unsigned int                                 eigenDofHandlerIndex,
+  const unsigned int                                 smearedChargeQuadratureId,
+  const unsigned int                                 lpspQuadratureIdElectro,
+  const MatrixFree<3, double> &                      matrixFreeDataElectro,
   const unsigned int               phiTotDofHandlerIndexElectro,
   const distributedCPUVec<double> &phiTotRhoOutElectro,
   const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -78,9 +79,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   // configurational stress contribution from all terms except those from
   // nuclear self energy
   computeStressEEshelbyEPSPEnlEk(matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-                                 kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+                                 kohnShamDFTEigenOperatorDevice,
 #endif
+                                 kohnShamDFTEigenOperator,
                                  eigenDofHandlerIndex,
                                  smearedChargeQuadratureId,
                                  lpspQuadratureIdElectro,
@@ -106,14 +108,17 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   // configurational stress contribution from nuclear self energy. This is
   // handled separately as it involves
   // a surface integral over the vself ball surface
-  computeStressEself(matrixFreeDataElectro.get_dof_handler(
-                       phiTotDofHandlerIndexElectro),
-                     vselfBinsManagerElectro,
-                     matrixFreeDataElectro,
-                     smearedChargeQuadratureId);
+  if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm) == 0)
+    computeStressEself(matrixFreeDataElectro.get_dof_handler(
+                         phiTotDofHandlerIndexElectro),
+                       vselfBinsManagerElectro,
+                       matrixFreeDataElectro,
+                       smearedChargeQuadratureId);
 
   // Sum all processor contributions and distribute to all processors
   d_stress = Utilities::MPI::sum(d_stress, mpi_communicator);
+  d_stress = Utilities::MPI::sum(d_stress, dftPtr->interBandGroupComm);
+  d_stress = Utilities::MPI::sum(d_stress, dftPtr->interpoolcomm);
 
   // Sum k point stress contribution over all processors
   // and k point pools and add to total stress

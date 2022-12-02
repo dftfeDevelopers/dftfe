@@ -18,8 +18,8 @@
 #include <headers.h>
 #include "constraintMatrixInfo.h"
 #include "dftParameters.h"
-#if defined(DFTFE_WITH_GPU)
-#  include <operatorCUDA.h>
+#if defined(DFTFE_WITH_DEVICE)
+#  include <operatorDevice.h>
 #endif
 
 #ifndef vselfBinsManager_H_
@@ -147,7 +147,7 @@ namespace dftfe
       const bool                 useSmearedCharges        = false,
       const bool                 isVselfPerturbationSolve = false);
 
-#  ifdef DFTFE_WITH_GPU
+#  ifdef DFTFE_WITH_DEVICE
     /**
      * @brief Solve nuclear electrostatic self-potential of atoms in each bin one-by-one
      *
@@ -164,12 +164,12 @@ namespace dftfe
      * processor
      */
     void
-    solveVselfInBinsGPU(
+    solveVselfInBinsDevice(
       const dealii::MatrixFree<3, double> &    matrix_free_data,
       const unsigned int                       mfBaseDofHandlerIndex,
       const unsigned int                       matrixFreeQuadratureIdAX,
       const unsigned int                       offset,
-      operatorDFTCUDAClass &                   operatorMatrix,
+      operatorDFTDeviceClass &                 operatorMatrix,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
       const std::vector<std::vector<double>> & imagePositions,
       const std::vector<int> &                 imageIds,
@@ -205,8 +205,8 @@ namespace dftfe
       const unsigned int                   mfBaseDofHandlerIndex,
       const unsigned int                   matrixFreeQuadratureIdAX,
       const unsigned int                   offset,
-#  ifdef DFTFE_WITH_GPU
-      operatorDFTCUDAClass &operatorMatrix,
+#  ifdef DFTFE_WITH_DEVICE
+      operatorDFTDeviceClass &operatorMatrix,
 #  endif
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
       const std::vector<std::vector<double>> & imagePositions,

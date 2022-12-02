@@ -81,7 +81,7 @@
 #  include <deal.II/base/smartpointer.h>
 #  include <deal.II/base/types.h>
 
-#  if defined(DFTFE_WITH_GPU)
+#  if defined(DFTFE_WITH_DEVICE)
 #    include <cuComplex.h>
 #    include <thrust/device_vector.h>
 #    include <thrust/complex.h>
@@ -103,15 +103,15 @@ namespace dftfe
   using distributedCPUVec =
     dealii::LinearAlgebra::distributed::Vector<elem_type,
                                                dealii::MemorySpace::Host>;
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
   // template <typename elem_type>
-  // using distributedGPUVec =
+  // using distributedDeviceVec =
   //  dealii::LinearAlgebra::distributed::Vector<elem_type,
   //                                             dealii::MemorySpace::CUDA>;
 
   template <typename NumberType>
-  using distributedGPUVec =
-    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::GPU>;
+  using distributedDeviceVec =
+    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::Device>;
 
 #endif
 } // namespace dftfe

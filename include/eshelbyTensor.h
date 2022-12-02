@@ -83,29 +83,6 @@ namespace dftfe
     getVselfBallEshelbyTensor(const Tensor<1, 3, double> &gradVself);
 
 
-    /// Local part of the Eshelby tensor for periodic case (only considers terms
-    /// which are summed over k points)
-    Tensor<2, 3, VectorizedArray<double>>
-      getELocWfcEshelbyTensorPeriodicKPoints(
-        dealii::AlignedVector<
-          Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
-        dealii::AlignedVector<
-          Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                                gradPsiBegin,
-        const std::vector<double> &             kPointCoordinates,
-        const std::vector<double> &             kPointWeights,
-        const std::vector<std::vector<double>> &eigenValues_,
-        const double                            fermiEnergy_,
-        const double                            tVal);
-
-    /// Local part of the Eshelby tensor for non-periodic case
-    Tensor<2, 3, VectorizedArray<double>>
-    getELocWfcEshelbyTensorNonPeriodic(
-      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
-      dealii::AlignedVector<
-        Tensor<1, 3, VectorizedArray<double>>>::const_iterator gradPsiBegin,
-      const std::vector<double> &                              eigenValues_,
-      const std::vector<double> &partialOccupancies_);
 
     /// All-electron electrostatic part of the Eshelby tensor
     Tensor<2, 3, VectorizedArray<double>>
@@ -148,105 +125,6 @@ namespace dftfe
                  const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
                  const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt);
 
-
-    /// Nonlocal pseudopotential force contribution (for complex case)
-    Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const dealii::AlignedVector<
-             dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
-             &zetaDeltaV,
-           const dealii::AlignedVector<
-             Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
-             &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-           const std::vector<bool> &        isAtomInCell,
-           const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
-
-
-    /// Nonlocal pseudopotential force contribution (for real case)
-    Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const dealii::AlignedVector<
-             dealii::AlignedVector<VectorizedArray<double>>> &zetaDeltaV,
-           const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
-             &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-           const std::vector<bool> &        isAtomInCell,
-           const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
-
-    /// Nonlocal pseudopotential force contribution (for real case)
-    Tensor<1, 3, VectorizedArray<double>>
-    getFnlAtom(
-      const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaV,
-      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-      const unsigned int startingId);
-
-    /// Nonlocal pseudopotential force contribution (for complex case)
-    Tensor<1, 3, VectorizedArray<double>>
-    getFnlAtom(
-      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
-        &zetaDeltaV,
-      const dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
-      const Tensor<1, 3, VectorizedArray<double>> kcoord,
-      const unsigned int                          startingId);
-
-    /** Force contribution due to the numerical difference between the input and
-     * output electron density (rhoIn and rhoOut) of the final scf iteration.
-     * vEff denotes the Kohn-Sham effective potential.
-     */
-    Tensor<1, 3, VectorizedArray<double>>
-    getNonSelfConsistentForce(
-      const VectorizedArray<double> &              vEffRhoIn,
-      const VectorizedArray<double> &              vEffRhoOut,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoOut,
-      const Tensor<1, 3, VectorizedArray<double>>
-        &derExchCorrEnergyWithGradRhoIn,
-      const Tensor<1, 3, VectorizedArray<double>>
-        &derExchCorrEnergyWithGradRhoOut,
-      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoOut);
-
-    /// EK Eshelby tensor (used only for stress computation)
-    Tensor<2, 3, VectorizedArray<double>> getEKStress(
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                              gradPsiBegin,
-      const std::vector<double> &             kPointCoordinates,
-      const std::vector<double> &             kPointWeights,
-      const std::vector<std::vector<double>> &eigenValues_,
-      const double                            fermiEnergy_,
-      const double                            tVal);
-
-    /// Nonlocal pseudopotential Eshelby tensor (used only for stress
-    /// computation) multiple k point and complex case
-    Tensor<2, 3, VectorizedArray<double>>
-    getEnlStress(
-      const Tensor<1, 3, VectorizedArray<double>> kcoord,
-      const dealii::AlignedVector<dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
-        &zetalmDeltaVlProductDistImageAtoms,
-      const dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
-      const std::vector<bool> &        isAtomInCell,
-      const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
-
-
-    /// Nonlocal pseudopotential Eshelby tensor (used only for stress
-    /// computation) for Gamma point case
-    Tensor<2, 3, VectorizedArray<double>>
-    getEnlStress(
-      const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
-        &zetalmDeltaVlProductDistImageAtoms,
-      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-      const std::vector<bool> &        isAtomInCell,
-      const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
 
     /// Nonlocal core correction pseudopotential force contribution
     Tensor<1, 3, VectorizedArray<double>>

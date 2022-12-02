@@ -119,14 +119,14 @@ namespace dftfe
     bool         constraintsParallelCheck;
     bool         createConstraintsFromSerialDofhandler;
     bool         bandParalOpt;
-    bool         useGPU;
-    bool         useTF32GPU;
-    bool         gpuFineGrainedTimings;
+    bool         useDevice;
+    bool         useTF32Device;
+    bool         deviceFineGrainedTimings;
     bool         allowFullCPUMemSubspaceRot;
     bool         useMixedPrecCheby;
     bool         overlapComputeCommunCheby;
     bool         overlapComputeCommunOrthoRR;
-    bool         autoGPUBlockSizes;
+    bool         autoDeviceBlockSizes;
     bool         readWfcForPdosPspFile;
     double       maxJacobianRatioFactorForMD;
     double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
@@ -149,12 +149,12 @@ namespace dftfe
     bool         nonLinearCoreCorrection;
     unsigned int maxLineSearchIterCGPRP;
     std::string  atomicMassesFile;
-    bool         useGPUDirectAllReduce;
+    bool         useDeviceDirectAllReduce;
     double       pspCutoffImageCharges;
     bool         reuseLanczosUpperBoundFromFirstCall;
     bool         allowMultipleFilteringPassesAfterFirstScf;
-    bool         useELPAGPUKernel;
-    bool         gpuMemOptMode;
+    bool         useELPADeviceKernel;
+    bool         deviceMemOptMode;
 
     unsigned int dc_dispersioncorrectiontype;
     unsigned int dc_d3dampingtype;

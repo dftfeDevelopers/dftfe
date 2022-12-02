@@ -21,8 +21,8 @@
 #include "dftUtils.h"
 #include <deal.II/lac/la_parallel_vector.h>
 
-#if defined(DFTFE_WITH_GPU)
-#  include "cudaHelpers.h"
+#if defined(DFTFE_WITH_DEVICE)
+#  include "deviceHelpers.h"
 #  include <thrust/device_vector.h>
 #  include <thrust/complex.h>
 #  include <cuComplex.h>
@@ -153,7 +153,7 @@ namespace dftfe
     }
 
 
-#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_DEVICE
     template <typename T>
     void
     createDealiiVector(
@@ -334,7 +334,7 @@ namespace dftfe
           }
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             d_dealiiVecData =
               (void *)(new dealii::LinearAlgebra::distributed::
                          Vector<NumberType, dealii::MemorySpace::CUDA>);
@@ -348,15 +348,15 @@ namespace dftfe
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
-        CUDACHECK(
+        DeviceCHECK(
           cudaMalloc((void **)&d_vecData,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
-        CUDACHECK(
+        DeviceCHECK(
           cudaMemset(d_vecData,
                      0,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
@@ -448,7 +448,7 @@ namespace dftfe
           }
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             d_dealiiVecData =
               (void *)(new dealii::LinearAlgebra::distributed::
                          Vector<NumberType, dealii::MemorySpace::CUDA>);
@@ -462,20 +462,20 @@ namespace dftfe
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
         if ((d_locallyOwnedSize + d_ghostSize) > 0)
           {
-            CUDACHECK(cudaMalloc((void **)&d_vecData,
-                                 (d_locallyOwnedSize + d_ghostSize) *
-                                   sizeof(NumberType)));
-            CUDACHECK(cudaMemset(d_vecData,
-                                 0,
-                                 (d_locallyOwnedSize + d_ghostSize) *
-                                   sizeof(NumberType)));
+            DeviceCHECK(cudaMalloc((void **)&d_vecData,
+                                   (d_locallyOwnedSize + d_ghostSize) *
+                                     sizeof(NumberType)));
+            DeviceCHECK(cudaMemset(d_vecData,
+                                   0,
+                                   (d_locallyOwnedSize + d_ghostSize) *
+                                     sizeof(NumberType)));
           }
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
@@ -549,12 +549,12 @@ namespace dftfe
                         0,
                         d_locallyOwnedSize * sizeof(NumberType));
           }
-        else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
+        else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value)
           {
-#if defined(DFTFE_WITH_GPU)
-            CUDACHECK(cudaMemset(this->begin(),
-                                 0,
-                                 d_locallyOwnedSize * sizeof(NumberType)));
+#if defined(DFTFE_WITH_DEVICE)
+            DeviceCHECK(cudaMemset(this->begin(),
+                                   0,
+                                   d_locallyOwnedSize * sizeof(NumberType)));
 #endif
           }
       }
@@ -579,7 +579,7 @@ namespace dftfe
             ->begin();
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             return ((dealii::LinearAlgebra::distributed::
                        Vector<NumberType, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecData)
@@ -607,7 +607,7 @@ namespace dftfe
             ->begin();
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             return ((dealii::LinearAlgebra::distributed::
                        Vector<NumberType, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecData)
@@ -673,22 +673,22 @@ namespace dftfe
             ->update_ghost_values();
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->update_ghost_values();
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             if (d_locallyOwnedDofsSize > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -712,7 +712,7 @@ namespace dftfe
               ->update_ghost_values();
 
             if (d_ghostSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<double, dealii::MemorySpace::CUDA> *)
@@ -729,7 +729,7 @@ namespace dftfe
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             if (d_locallyOwnedDofsSize > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -752,7 +752,7 @@ namespace dftfe
               ->update_ghost_values();
 
             if (d_ghostSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<float, dealii::MemorySpace::CUDA> *)
@@ -790,22 +790,22 @@ namespace dftfe
             ->update_ghost_values_start();
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->update_ghost_values_start();
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             if (d_locallyOwnedDofsSize > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -830,7 +830,7 @@ namespace dftfe
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             if (d_locallyOwnedDofsSize > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 d_locallyOwnedSize,
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -877,15 +877,15 @@ namespace dftfe
             ->update_ghost_values_finish();
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->update_ghost_values_finish();
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
@@ -903,7 +903,7 @@ namespace dftfe
 
 
             if (d_ghostSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<double, dealii::MemorySpace::CUDA> *)
@@ -930,7 +930,7 @@ namespace dftfe
               ->update_ghost_values_finish();
 
             if (d_ghostSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_ghostSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<float, dealii::MemorySpace::CUDA> *)
@@ -968,22 +968,22 @@ namespace dftfe
             ->compress(dealii::VectorOperation::add);
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->compress(dealii::VectorOperation::add);
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             if ((d_locallyOwnedSize + d_ghostSize) > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -1006,7 +1006,7 @@ namespace dftfe
               ->compress(dealii::VectorOperation::add);
 
             if (d_locallyOwnedSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<double, dealii::MemorySpace::CUDA> *)
@@ -1021,7 +1021,7 @@ namespace dftfe
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             if ((d_locallyOwnedSize + d_ghostSize) > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -1044,7 +1044,7 @@ namespace dftfe
               ->compress(dealii::VectorOperation::add);
 
             if (d_locallyOwnedSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<float, dealii::MemorySpace::CUDA> *)
@@ -1079,22 +1079,22 @@ namespace dftfe
             ->compress_start(dealii::VectorOperation::add);
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->compress_start(dealii::VectorOperation::add);
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             if ((d_locallyOwnedSize + d_ghostSize) > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -1119,7 +1119,7 @@ namespace dftfe
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
             if ((d_locallyOwnedSize + d_ghostSize) > 0)
-              cudaUtils::copyComplexArrToRealArrsGPU(
+              deviceUtils::copyComplexArrToRealArrsDevice(
                 (d_locallyOwnedSize + d_ghostSize),
                 d_vecData,
                 ((dealii::LinearAlgebra::distributed::
@@ -1164,15 +1164,15 @@ namespace dftfe
             ->compress_finish(dealii::VectorOperation::add);
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->compress_finish(dealii::VectorOperation::add);
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
@@ -1189,7 +1189,7 @@ namespace dftfe
               ->compress_finish(dealii::VectorOperation::add);
 
             if (d_locallyOwnedSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<double, dealii::MemorySpace::CUDA> *)
@@ -1214,7 +1214,7 @@ namespace dftfe
               ->compress_finish(dealii::VectorOperation::add);
 
             if (d_locallyOwnedSize > 0)
-              cudaUtils::copyRealArrsToComplexArrGPU(
+              deviceUtils::copyRealArrsToComplexArrDevice(
                 d_locallyOwnedSize,
                 ((dealii::LinearAlgebra::distributed::
                     Vector<float, dealii::MemorySpace::CUDA> *)
@@ -1253,7 +1253,7 @@ namespace dftfe
                 ->zero_out_ghosts();
             else
               {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
                 ((dealii::LinearAlgebra::distributed::
                     Vector<NumberType, dealii::MemorySpace::CUDA> *)
                    d_dealiiVecData)
@@ -1261,14 +1261,14 @@ namespace dftfe
 #endif
               }
           }
-#if defined(DFTFE_WITH_GPU)
-        else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+        else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
                  (std::is_same<NumberType, cuDoubleComplex>::value ||
                   std::is_same<NumberType, cuFloatComplex>::value))
           {
-            CUDACHECK(cudaMemset(this->begin() + d_locallyOwnedSize,
-                                 0,
-                                 d_ghostSize * sizeof(NumberType)));
+            DeviceCHECK(cudaMemset(this->begin() + d_locallyOwnedSize,
+                                   0,
+                                   d_ghostSize * sizeof(NumberType)));
 
             if (std::is_same<NumberType, cuDoubleComplex>::value)
               {
@@ -1327,9 +1327,9 @@ namespace dftfe
                           Vector<NumberType, dealii::MemorySpace::Host> *)
                          vec.d_dealiiVecData));
           }
-        else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
+        else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value)
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
               ->swap(*((dealii::LinearAlgebra::distributed::
@@ -1338,8 +1338,8 @@ namespace dftfe
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
@@ -1408,8 +1408,8 @@ namespace dftfe
       {
         temp = d_dealiiVecData;
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
@@ -1429,10 +1429,10 @@ namespace dftfe
       {
         if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
           free(d_vecData);
-        else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
+        else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value)
           {
-#if defined(DFTFE_WITH_GPU)
-            CUDACHECK(cudaFree(d_vecData));
+#if defined(DFTFE_WITH_DEVICE)
+            DeviceCHECK(cudaFree(d_vecData));
 #endif
           }
       }
@@ -1449,15 +1449,15 @@ namespace dftfe
               Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData;
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             delete (
               dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData;
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value) &&
              d_dealiiVecTempDataReal != NULL)
@@ -1511,7 +1511,7 @@ namespace dftfe
             ->get_partitioner();
         else
           {
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_DEVICE)
             return ((dealii::LinearAlgebra::distributed::
                        Vector<NumberType, dealii::MemorySpace::CUDA> *)
                       d_dealiiVecData)
@@ -1519,8 +1519,8 @@ namespace dftfe
 #endif
           }
       }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::Device>::value &&
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
@@ -1549,12 +1549,14 @@ namespace dftfe
   template class DistributedMulticomponentVec<std::complex<float>,
                                               dftfe::MemorySpace::Host>;
 
-#if defined(DFTFE_WITH_GPU)
-  template class DistributedMulticomponentVec<double, dftfe::MemorySpace::GPU>;
-  template class DistributedMulticomponentVec<float, dftfe::MemorySpace::GPU>;
+#if defined(DFTFE_WITH_DEVICE)
+  template class DistributedMulticomponentVec<double,
+                                              dftfe::MemorySpace::Device>;
+  template class DistributedMulticomponentVec<float,
+                                              dftfe::MemorySpace::Device>;
   template class DistributedMulticomponentVec<cuDoubleComplex,
-                                              dftfe::MemorySpace::GPU>;
+                                              dftfe::MemorySpace::Device>;
   template class DistributedMulticomponentVec<cuFloatComplex,
-                                              dftfe::MemorySpace::GPU>;
+                                              dftfe::MemorySpace::Device>;
 #endif
 } // namespace dftfe

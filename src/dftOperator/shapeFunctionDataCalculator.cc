@@ -62,6 +62,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     (numberDofsPerElement * (numberDofsPerElement + 1)) / 2;
   d_shapeFunctionData.resize(numberDofsPerElement * numberQuadraturePoints,
                              0.0);
+  d_shapeFunctionValueDensityTransposed.resize(numberDofsPerElement *
+                                                 numberQuadraturePoints,
+                                               0.0);
   d_shapeFunctionLpspQuadData.resize(numberDofsPerElement *
                                        numberQuadraturePointsLpsp,
                                      0.0);
@@ -392,7 +395,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell iter loop
 
-
+  d_shapeFunctionValueDensityTransposed = d_shapeFunctionData;
 
   //
   // Fill FE datastructures required for density computation from wavefunctions
@@ -505,5 +508,94 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
         const double val = fe_valuesGl.shape_value(iNode, q_point);
         d_densityGlQuadShapeFunctionValues[q_point * numberDofsPerElement +
                                            iNode] = val;
+      }
+
+  //
+  // NLP quadrature data
+  //
+  QIterated<3>       quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
+                             C_numCopies1DQuadNLPSP());
+  FEValues<3>        fe_valuesNLP(dftPtr->matrix_free_data
+                             .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                             .get_fe(),
+                           quadratureNLP,
+                           update_values | update_gradients | update_jacobians |
+                             update_inverse_jacobians);
+  const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
+
+  // resize data members
+  d_shapeFunctionValueNLPTransposed.resize(numberQuadraturePointsNLP *
+                                             numberDofsPerElement,
+                                           0.0);
+  d_inverseJacobiansNLP.resize(numberPhysicalCells * numberQuadraturePointsNLP *
+                                 3 * 3,
+                               0.0);
+  d_shapeFunctionGradientValueNLPTransposed.resize(numberQuadraturePointsNLP *
+                                                     numberDofsPerElement * 3,
+                                                   0.0);
+
+  cellPtr =
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .begin_active();
+  endcPtr =
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .end();
+
+  iElem = 0;
+  for (; cellPtr != endcPtr; ++cellPtr)
+    if (cellPtr->is_locally_owned())
+      {
+        fe_valuesNLP.reinit(cellPtr);
+
+        const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+          fe_valuesNLP.get_inverse_jacobians();
+
+        // dealii returns inverse jacobian tensor in transposed format
+        // J^{-T}
+        for (unsigned int q_point = 0; q_point < numberQuadraturePointsNLP;
+             ++q_point)
+          for (unsigned int i = 0; i < 3; ++i)
+            for (unsigned int j = 0; j < 3; ++j)
+              d_inverseJacobiansNLP[iElem * numberQuadraturePointsNLP * 3 * 3 +
+                                    q_point * 3 * 3 + j * 3 + i] =
+                inverseJacobians[q_point][i][j];
+
+
+        if (iElem == 0)
+          {
+            const std::vector<DerivativeForm<1, 3, 3>> &jacobians =
+              fe_valuesNLP.get_jacobians();
+            for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+              for (unsigned int q_point = 0;
+                   q_point < numberQuadraturePointsNLP;
+                   ++q_point)
+                {
+                  const double val = fe_valuesNLP.shape_value(iNode, q_point);
+                  d_shapeFunctionValueNLPTransposed[q_point *
+                                                      numberDofsPerElement +
+                                                    iNode] = val;
+
+                  const dealii::Tensor<1, 3, double> &shape_grad_real =
+                    fe_valuesNLP.shape_grad(iNode, q_point);
+
+                  // J^{T}*grad(u_h)
+                  const dealii::Tensor<1, 3, double> &shape_grad_reference =
+                    apply_transformation(jacobians[q_point].transpose(),
+                                         shape_grad_real);
+
+                  d_shapeFunctionGradientValueNLPTransposed
+                    [q_point * numberDofsPerElement * 3 + iNode] =
+                      shape_grad_reference[0];
+                  d_shapeFunctionGradientValueNLPTransposed
+                    [q_point * numberDofsPerElement * 3 + numberDofsPerElement +
+                     iNode] = shape_grad_reference[1];
+                  d_shapeFunctionGradientValueNLPTransposed
+                    [q_point * numberDofsPerElement * 3 +
+                     numberDofsPerElement * 2 + iNode] =
+                      shape_grad_reference[2];
+                }
+          }
+
+        iElem++;
       }
 }

@@ -1,0 +1,16 @@
+template class kerkerSolverProblemDevice<1>;
+template class kerkerSolverProblemDevice<2>;
+template class kerkerSolverProblemDevice<3>;
+template class kerkerSolverProblemDevice<4>;
+template class kerkerSolverProblemDevice<5>;
+template class kerkerSolverProblemDevice<6>;
+template class kerkerSolverProblemDevice<7>;
+template class kerkerSolverProblemDevice<8>;
+template class kerkerSolverProblemDevice<9>;
+template class kerkerSolverProblemDevice<10>;
+template class kerkerSolverProblemDevice<11>;
+template class kerkerSolverProblemDevice<12>;
+template class kerkerSolverProblemDevice<13>;
+template class kerkerSolverProblemDevice<14>;
+template class kerkerSolverProblemDevice<15>;
+template class kerkerSolverProblemDevice<16>;

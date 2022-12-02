@@ -1,0 +1,442 @@
+//
+// -------------------------------------------------------------------------------------
+//
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// --------------------------------------------------------------------------------------
+//
+// @author Phani Motamarri, Sambit Das
+//
+#if defined(DFTFE_WITH_DEVICE)
+#  ifndef operatorDFTDeviceClass_h
+#    define operatorDFTDeviceClass_h
+
+#    include <constraintMatrixInfoDevice.h>
+#    include <constraintMatrixInfo.h>
+#    include <cublas_v2.h>
+#    include <headers.h>
+#    include <thrust/device_vector.h>
+#    include <thrust/host_vector.h>
+#    include "process_grid.h"
+#    include "scalapackWrapper.h"
+
+#    include <vector>
+
+#    include "deviceDirectCCLWrapper.h"
+#    include "distributedMulticomponentVec.h"
+
+namespace dftfe
+{
+  /**
+   * @brief Base class for building the DFT operator and the action of operator on a vector
+   *
+   * @author Phani Motamarri, Sambit Das
+   */
+  class operatorDFTDeviceClass
+  {
+    //
+    // methods
+    //
+  public:
+    /**
+     * @brief Destructor.
+     */
+    virtual ~operatorDFTDeviceClass() = 0;
+
+    /**
+     * @brief initialize operatorClass
+     *
+     */
+    virtual void
+    init() = 0;
+
+
+    virtual void
+    createCublasHandle() = 0;
+
+    virtual void
+    destroyCublasHandle() = 0;
+
+    virtual cublasHandle_t &
+    getCublasHandle() = 0;
+
+    virtual const double *
+    getSqrtMassVec() = 0;
+
+    virtual const double *
+    getInvSqrtMassVec() = 0;
+
+    virtual distributedCPUVec<dataTypes::number> &
+    getProjectorKetTimesVectorSingle() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionGradientIntegral() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionGradientIntegralElectro() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionValues() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false) = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionValuesNLPTransposed() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionGradientValuesXTransposed() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionGradientValuesYTransposed() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionGradientValuesZTransposed() = 0;
+
+    virtual thrust::device_vector<double> &
+    getShapeFunctionGradientValuesNLPTransposed() = 0;
+
+    virtual thrust::device_vector<double> &
+    getInverseJacobiansNLP() = 0;
+
+    virtual thrust::device_vector<dealii::types::global_dof_index> &
+    getFlattenedArrayCellLocalProcIndexIdMap() = 0;
+
+    virtual thrust::device_vector<dataTypes::numberThrustDevice> &
+    getCellWaveFunctionMatrix() = 0;
+
+    virtual distributedCPUVec<dataTypes::number> &
+    getParallelVecSingleComponent() = 0;
+
+    virtual distributedDeviceVec<dataTypes::numberDevice> &
+    getParallelChebyBlockVectorDevice() = 0;
+
+    virtual distributedDeviceVec<dataTypes::numberDevice> &
+    getParallelChebyBlockVector2Device() = 0;
+
+    virtual distributedDeviceVec<dataTypes::numberDevice> &
+    getParallelProjectorKetTimesBlockVectorDevice() = 0;
+
+    virtual thrust::device_vector<unsigned int> &
+    getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
+
+    /**
+     * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
+     *
+     * @param wavefunBlockSize number of wavefunction vector (block size of X).
+     * @param flag controls the creation of flattened array format and index maps or only index maps
+     *
+     * @return X format to store a multi-vector array
+     * in a flattened format with all the wavefunction values corresponding to a
+     * given node being stored contiguously
+     *
+     */
+
+    virtual void
+    reinit(const unsigned int wavefunBlockSize, bool flag) = 0;
+
+    /**
+     * @brief sets the data member to appropriate kPoint and spin Index
+     *
+     * @param kPointIndex  k-point Index to set
+     */
+    virtual void
+    reinitkPointSpinIndex(const unsigned int kPointIndex,
+                          const unsigned int spinIndex) = 0;
+
+
+    /**
+     * @brief compute diagonal mass matrix
+     *
+     * @param dofHandler dofHandler associated with the current mesh
+     * @param constraintMatrix constraints to be used
+     * @param sqrtMassVec output the value of square root of diagonal mass matrix
+     * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
+     */
+    virtual void
+    computeMassVector(const dealii::DoFHandler<3> &            dofHandler,
+                      const dealii::AffineConstraints<double> &constraintMatrix,
+                      distributedCPUVec<double> &              sqrtMassVec,
+                      distributedCPUVec<double> &invSqrtMassVec) = 0;
+
+
+    /**
+     * @brief Compute operator times multi-field vectors
+     *
+     * @param X Vector containing multi-wavefunction fields (though X does not
+     * change inside the function it is scaled and rescaled back to
+     * avoid duplication of memory and hence is not const)
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param Y Vector containing multi-component fields after operator times vectors product
+     */
+    virtual void
+    HX(distributedDeviceVec<dataTypes::numberDevice> &X,
+       distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+       const unsigned int                             localVectorSize,
+       const unsigned int                             numberComponents,
+       const bool                                     scaleFlag,
+       const double                                   scalar,
+       distributedDeviceVec<dataTypes::numberDevice> &Y,
+       const bool                                     doUnscalingX = true,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse    = false) = 0;
+
+
+    virtual void
+    HXCheby(
+      distributedDeviceVec<dataTypes::numberDevice> &    X,
+      distributedDeviceVec<dataTypes::numberFP32Device> &XTemp,
+      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      const unsigned int                             localVectorSize,
+      const unsigned int                             numberComponents,
+      distributedDeviceVec<dataTypes::numberDevice> &Y,
+      bool                                           mixPrecFlag = false,
+      bool returnBeforeCompressSkipUpdateSkipNonLocal            = false,
+      bool returnBeforeCompressSkipUpdateSkipLocal               = false) = 0;
+
+    /**
+     * @brief implementation of non-local projector kets times psi product
+     * using non-local discretized projectors at cell-level.
+     * works for both complex and real data type
+     * @param src Vector containing current values of source array with multi-vector array stored
+     * in a flattened format with all the wavefunction value corresponding to a
+     * given node is stored contiguously.
+     * @param numberWaveFunctions Number of wavefunctions at a given node.
+     */
+    virtual void
+    computeNonLocalProjectorKetTimesXTimesV(
+      const dataTypes::numberDevice *                src,
+      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      const unsigned int                             numberWaveFunctions) = 0;
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis
+     *
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void
+    XtHX(const dataTypes::numberDevice *                X,
+         distributedDeviceVec<dataTypes::numberDevice> &Xb,
+         distributedDeviceVec<dataTypes::numberDevice> &HXb,
+         distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+         const unsigned int                             M,
+         const unsigned int                             N,
+         cublasHandle_t &                               handle,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+         DeviceCCLWrapper &devicecclMpiCommDomain,
+         const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine also overlaps communication and computation.
+     *
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void
+    XtHXOverlapComputeCommun(
+      const dataTypes::numberDevice *                  X,
+      distributedDeviceVec<dataTypes::numberDevice> &  Xb,
+      distributedDeviceVec<dataTypes::numberDevice> &  HXb,
+      distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine uses a mixed precision algorithm
+     * (https://doi.org/10.1016/j.cpc.2019.07.016) and further overlaps
+     * communication and computation.
+     *
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void
+    XtHXMixedPrecOverlapComputeCommun(
+      const dataTypes::numberDevice *                    X,
+      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
+      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
+      distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
+
+
+    /**
+     * @brief Get constraint matrix eigen
+     *
+     * @return pointer to constraint matrix eigen
+     */
+    dftUtils::constraintMatrixInfo *
+    getOverloadedConstraintMatrixHost() const;
+
+
+    /**
+     * @brief Get constraint matrix eigen
+     *
+     * @return pointer to constraint matrix eigen
+     */
+    dftUtils::constraintMatrixInfoDevice *
+    getOverloadedConstraintMatrix() const;
+
+
+    /**
+     * @brief Get matrix free data
+     *
+     * @return pointer to matrix free data
+     */
+    const dealii::MatrixFree<3, double> *
+    getMatrixFreeData() const;
+
+
+    /**
+     * @brief Get relevant mpi communicator
+     *
+     * @return mpi communicator
+     */
+    const MPI_Comm &
+    getMPICommunicator() const;
+
+
+  protected:
+    /**
+     * @brief default Constructor.
+     */
+    operatorDFTDeviceClass();
+
+
+    /**
+     * @brief Constructor.
+     */
+    operatorDFTDeviceClass(
+      const MPI_Comm &                      mpi_comm_replica,
+      const dealii::MatrixFree<3, double> & matrix_free_data,
+      dftUtils::constraintMatrixInfo &      constraintMatrixNone,
+      dftUtils::constraintMatrixInfoDevice &constraintMatrixNoneDevice);
+
+  protected:
+    //
+    // Get overloaded constraint matrix object constructed using 1-component FE
+    // object
+    //
+    dftUtils::constraintMatrixInfo *d_constraintMatrixData;
+
+    //
+    // Get overloaded constraint matrix object constructed using 1-component FE
+    // object
+    //
+    dftUtils::constraintMatrixInfoDevice *d_constraintMatrixDataDevice;
+    //
+    // matrix-free data
+    //
+    const dealii::MatrixFree<3, double> *d_matrix_free_data;
+
+    thrust::device_vector<double>
+      d_cellShapeFunctionGradientIntegralFlattenedDevice;
+
+    thrust::device_vector<double>
+      d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
+
+    thrust::device_vector<double> d_shapeFunctionValueDevice;
+
+    thrust::device_vector<double> d_shapeFunctionValueTransposedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionValueNLPTransposedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionGradientValueXTransposedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionGradientValueYTransposedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionGradientValueZTransposedDevice;
+
+    thrust::device_vector<double>
+      d_shapeFunctionGradientValueNLPTransposedDevice;
+
+    thrust::device_vector<double> d_inverseJacobiansNLPDevice;
+
+    /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
+    /// gradients
+    thrust::device_vector<double> d_glShapeFunctionValueTransposedDevice;
+
+
+    thrust::device_vector<dealii::types::global_dof_index>
+      d_flattenedArrayCellLocalProcIndexIdMapDevice;
+
+    thrust::device_vector<dataTypes::numberThrustDevice>
+      d_cellWaveFunctionMatrix;
+
+    distributedDeviceVec<dataTypes::numberDevice>
+      d_parallelChebyBlockVectorDevice;
+
+    distributedDeviceVec<dataTypes::numberDevice>
+      d_parallelChebyBlockVector2Device;
+
+    distributedDeviceVec<dataTypes::numberDevice>
+      d_parallelProjectorKetTimesBlockVectorDevice;
+
+    distributedCPUVec<dataTypes::number> d_parallelVecSingleComponent;
+
+    //
+    // mpi communicator
+    //
+    MPI_Comm d_mpi_communicator;
+  };
+
+} // namespace dftfe
+#  endif
+#endif

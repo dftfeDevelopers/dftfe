@@ -23,8 +23,9 @@
 #include "constants.h"
 #include "headers.h"
 #include "meshMovementGaussian.h"
-#ifdef DFTFE_WITH_GPU
-#  include "kohnShamDFTOperatorCUDA.h"
+#include "kohnShamDFTOperator.h"
+#ifdef DFTFE_WITH_DEVICE
+#  include "kohnShamDFTOperatorDevice.h"
 #endif
 #include <dftd.h>
 
@@ -129,10 +130,12 @@ namespace dftfe
     void
     computeAtomsForces(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorDevice,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
@@ -206,10 +209,12 @@ namespace dftfe
     void
     computeStress(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorDevice,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
@@ -307,10 +312,12 @@ namespace dftfe
     void
     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorDevice,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -386,10 +393,12 @@ namespace dftfe
     void
     computeConfigurationalForceTotalLinFE(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorDevice,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -608,46 +617,53 @@ namespace dftfe
     void
     FnlGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
-        &forceContributionFnlGammaAtoms,
-      FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &             forceEval,
+        &                          forceContributionFnlGammaAtoms,
+      const MatrixFree<3, double> &matrixFreeData,
       FEEvaluation<3,
                    1,
                    C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                   3> &  forceEvalNLP,
-      const unsigned int numberMacroCells,
-      const unsigned int cell,
+                   3> &            forceEvalNLP,
+      const unsigned int           cell,
+      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
 #ifdef USE_COMPLEX
-      const unsigned int kpointIndex,
-      const dealii::AlignedVector<dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
-        &zetaDeltaVQuads,
-      const dealii::AlignedVector<dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-      const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
-      const Tensor<1, 3, VectorizedArray<double>> kcoord,
-#else
-      const dealii::AlignedVector<
-        dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
-        &zetaDeltaVQuads,
-      const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+      const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-      const std::vector<bool> &        isAtomInCell,
-      const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
+      const std::vector<dataTypes::number> &zetaDeltaVQuadsFlattened,
+      const std::vector<dataTypes::number> &
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
+
+    void FnlGammaxElementalContribution(
+      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> &FVectQuads,
+      const MatrixFree<3, double> &                 matrixFreeData,
+      const unsigned int                            numQuadPoints,
+      const unsigned int                            cell,
+      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
+      const std::vector<dataTypes::number> &        zetaDeltaVQuadsFlattened,
+      const std::vector<dataTypes::number> &
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
     void
     distributeForceContributionFnlGammaAtoms(
       const std::map<unsigned int, std::vector<double>>
         &forceContributionFnlGammaAtoms);
+
+    void stressEnlElementalContribution(
+      Tensor<2, 3, double> &                        stressContribution,
+      const MatrixFree<3, double> &                 matrixFreeData,
+      const unsigned int                            numQuadPoints,
+      const std::vector<double> &                   jxwQuadsSubCells,
+      const unsigned int                            cell,
+      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
+      const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
+#ifdef USE_COMPLEX
+      const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+#endif
+      const std::vector<dataTypes::number>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
+      const bool isSpinPolarized);
 
     void
     computeAtomsForcesGaussianGenerator(
@@ -666,10 +682,12 @@ namespace dftfe
     void
     computeStressEEshelbyEPSPEnlEk(
       const MatrixFree<3, double> &matrixFreeData,
-#ifdef DFTFE_WITH_GPU
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_DEVICE
+      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorDevice,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &                              kohnShamDFTEigenOperator,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -838,21 +856,6 @@ namespace dftfe
     void
     computeElementalNonLocalPseudoOVDataForce();
 
-    void
-    computeNonLocalProjectorKetTimesPsiTimesV(
-      const std::vector<distributedCPUVec<double>> &src,
-      std::vector<std::vector<double>> &projectorKetTimesPsiTimesVReal,
-      std::vector<std::vector<std::complex<double>>>
-        &                projectorKetTimesPsiTimesVComplex,
-      const unsigned int kPointIndex);
-
-    void
-    computeNonLocalProjectorKetTimesPsiTimesVFlattened(
-      const distributedCPUVec<dataTypes::number> & src,
-      const unsigned int                           numberWaveFunctions,
-      std::vector<std::vector<dataTypes::number>> &projectorKetTimesPsiTimesV,
-      const unsigned int                           kPointIndex,
-      const std::vector<double> &                  partialOccupancies);
 
     /// Parallel distributed vector field which stores the configurational force
     /// for each fem node corresponding to linear shape function generator (see
