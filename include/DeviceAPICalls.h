@@ -9,19 +9,19 @@ namespace dftfe
 {
   namespace utils
   {
-    void
+    deviceError_t
     deviceGetDeviceCount(int *count);
 
-    void
+    deviceError_t
     deviceGetDevice(int *deviceId);
 
-    void
+    deviceError_t
     deviceSetDevice(int deviceId);
 
-    void
+    deviceError_t
     deviceMalloc(void **devPtr, size_type size);
 
-    void
+    deviceError_t
     deviceMemset(void *devPtr,int value, size_type count);
 
     /**
@@ -34,61 +34,61 @@ namespace dftfe
     void
     deviceSetValue(ValueType *devPtr, ValueType value, size_type size);
 
-    void
+    deviceError_t
     deviceFree(void *devPtr);
 
-    void
+    deviceError_t
     hostPinnedMalloc(void **hostPtr, size_type size);
 
-    void
+    deviceError_t
     hostPinnedFree(void *hostPtr);
 
     /**
      * @brief Copy array from device to host
      * @param count The memory size in bytes of the array
      */
-    void
+    deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, size_type count);
 
     /**
      * @brief Copy array from device to device
      * @param count The memory size in bytes of the array
      */
-    void
+    deviceError_t
     deviceMemcpyD2D(void *dst, const void *src, size_type count);
 
     /**
      * @brief Copy array from host to device
      * @param count The memory size in bytes of the array
      */
-    void
+    deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, size_type count);
 
     /**
      * @brief Copy 2D array from device to host
      * @param count The memory size in bytes of the array
      */
-    void
+    deviceError_t
     deviceMemcpyD2H_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);
 
     /**
      * @brief Copy 2D array from device to device
      * @param count The memory size in bytes of the array
      */
-    void
+    deviceError_t
     deviceMemcpyD2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);
 
     /**
      * @brief Copy 2D array from host to device
      * @param count The memory size in bytes of the array
      */
-    void
+    deviceError_t
     deviceMemcpyH2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);    
 
     /**
      * @brief HOST-DEVICE synchronization
      */
-    void
+    deviceError_t
     deviceSynchronize();
   } // namespace utils
 } // namespace dftfe

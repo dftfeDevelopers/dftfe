@@ -22,8 +22,13 @@ namespace dftfe
 {
   namespace utils
   {
-    typedef cudaStream_t deviceStreamType;
-    typedef cudaEvent_t deviceEvent;    
+    typedef cudaStream_t deviceStreamType_t;
+    typedef cudaEvent_t deviceEvent_t; 
+    typedef cudaError_t deviceError_t;
+   
+
+     //static consts
+     static const deviceError_t deviceSuccess=cudaSuccess;
   }
 } // namespace dftfe
 
