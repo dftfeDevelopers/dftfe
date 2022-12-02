@@ -31,7 +31,7 @@ namespace dftfe
                                        const unsigned int       N,
                                        const MPI_Comm &         mpiCommParent,
                                        const MPI_Comm &         mpiCommDomain,
-                                       DeviceCCLWrapper &devicecclMpiCommDomain,
+                                       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
                                        const MPI_Comm &  interBandGroupComm,
                                        cublasHandle_t &  handle,
                                        const dftParameters &dftParams,

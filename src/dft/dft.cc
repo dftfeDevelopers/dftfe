@@ -202,7 +202,7 @@ namespace dftfe
     d_isRestartGroundStateCalcFromChk = false;
 
 #if defined(DFTFE_WITH_DEVICE)
-    d_devicecclMpiCommDomainPtr = new DeviceCCLWrapper;
+    d_devicecclMpiCommDomainPtr = new utils::DeviceCCLWrapper;
     if (d_dftParamsPtr->useDeviceDirectAllReduce)
       d_devicecclMpiCommDomainPtr->init(mpi_comm_domain);
 #endif

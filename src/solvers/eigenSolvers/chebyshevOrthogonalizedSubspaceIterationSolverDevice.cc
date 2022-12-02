@@ -259,7 +259,7 @@ namespace dftfe
     const unsigned int       totalNumberWaveFunctions,
     std::vector<double> &    eigenValues,
     std::vector<double> &    residualNorms,
-    DeviceCCLWrapper &       devicecclMpiCommDomain,
+    utils::DeviceCCLWrapper &       devicecclMpiCommDomain,
     const MPI_Comm &         interBandGroupComm,
     const bool               isFirstFilteringCall,
     const bool               computeResidual,
@@ -803,7 +803,7 @@ namespace dftfe
     const unsigned int       flattenedSize,
     const unsigned int       totalNumberWaveFunctions,
     std::vector<double> &    eigenValues,
-    DeviceCCLWrapper &       devicecclMpiCommDomain,
+    utils::DeviceCCLWrapper &       devicecclMpiCommDomain,
     const MPI_Comm &         interBandGroupComm,
     const unsigned int       numberPasses,
     const bool               useMixedPrecOverall)
@@ -1134,7 +1134,7 @@ namespace dftfe
       const std::vector<double> &eigenValues,
       const double               fermiEnergy,
       std::vector<double> &      densityMatDerFermiEnergy,
-      DeviceCCLWrapper &         devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &         devicecclMpiCommDomain,
       const MPI_Comm &           interBandGroupComm,
       dftfe::elpaScalaManager &  elpaScala)
   {

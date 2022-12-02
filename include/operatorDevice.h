@@ -244,7 +244,7 @@ namespace dftfe
          cublasHandle_t &                               handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-         DeviceCCLWrapper &devicecclMpiCommDomain,
+         utils::DeviceCCLWrapper &devicecclMpiCommDomain,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
@@ -275,7 +275,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
@@ -313,7 +313,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 

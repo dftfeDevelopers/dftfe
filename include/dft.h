@@ -1233,7 +1233,7 @@ namespace dftfe
      */
     const MPI_Comm mpi_communicator;
 #if defined(DFTFE_WITH_DEVICE)
-    DeviceCCLWrapper *d_devicecclMpiCommDomainPtr;
+    utils::DeviceCCLWrapper *d_devicecclMpiCommDomainPtr;
 #endif
     const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     interpoolcomm;

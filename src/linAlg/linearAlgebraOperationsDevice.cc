@@ -1814,7 +1814,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
       const bool                                       rotationMatTranspose)
@@ -2023,20 +2023,16 @@ namespace dftfe
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockNext.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockNext.begin()),
+                                  rotationMatBlockNext.begin(),
+                                  rotationMatBlockNext.begin(),
                               BVec * N,
                               tempReal,
                               tempImag,
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockNext.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockNext.begin()),
+                                  rotationMatBlockNext.begin(),
+                                  rotationMatBlockNext.begin(),
                               BVec * N,
                               streamDeviceCCL);
 
@@ -2085,20 +2081,16 @@ namespace dftfe
                       if (std::is_same<dataTypes::number,
                                        std::complex<double>>::value)
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            rotationMatBlockNext.begin()),
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            rotationMatBlockNext.begin()),
+                            rotationMatBlockNext.begin(),
+                            rotationMatBlockNext.begin(),
                           BVec * N,
                           tempReal,
                           tempImag,
                           streamDeviceCCL);
                       else
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            rotationMatBlockNext.begin()),
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                           rotationMatBlockNext.begin()),
+                            rotationMatBlockNext.begin(),
+                           rotationMatBlockNext.begin(),
                           BVec * N,
                           streamDeviceCCL);
                     }
@@ -2211,7 +2203,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -2445,10 +2437,8 @@ namespace dftfe
                                                std::complex<double>>::value)
                                 devicecclMpiCommDomain
                                   .deviceDirectAllReduceWrapper(
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                        rotationMatBlockTemp.begin()),
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                        rotationMatBlockTemp.begin()),
+                                        rotationMatBlockTemp.begin(),
+                                        rotationMatBlockTemp.begin(),
                                     BVec * D,
                                     tempReal,
                                     tempImag,
@@ -2456,10 +2446,8 @@ namespace dftfe
                               else
                                 devicecclMpiCommDomain
                                   .deviceDirectAllReduceWrapper(
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                        rotationMatBlockTemp.begin()),
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                        rotationMatBlockTemp.begin()),
+                                        rotationMatBlockTemp.begin(),
+                                        rotationMatBlockTemp.begin(),
                                     BVec * D,
                                     streamDeviceCCL);
 
@@ -2506,20 +2494,16 @@ namespace dftfe
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockTemp.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockTemp.begin()),
+                                  rotationMatBlockTemp.begin(),
+                                  rotationMatBlockTemp.begin(),
                               BVec * D,
                               tempReal,
                               tempImag,
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockTemp.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  rotationMatBlockTemp.begin()),
+                                  rotationMatBlockTemp.begin(),
+                                  rotationMatBlockTemp.begin(),
                               BVec * D,
                               streamDeviceCCL);
                         }
@@ -2631,7 +2615,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -2892,20 +2876,16 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        rotationMatBlockSPTemp.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        rotationMatBlockSPTemp.begin()),
+                        rotationMatBlockSPTemp.begin(),
+                        rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       tempRealFP32,
                       tempImagFP32,
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        rotationMatBlockSPTemp.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        rotationMatBlockSPTemp.begin()),
+                        rotationMatBlockSPTemp.begin(),
+                        rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       streamDeviceCCL);
                 }
@@ -3028,7 +3008,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -3290,17 +3270,16 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        rotationMatBlockSPTemp.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSPTemp.begin()),
+                        rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       tempRealFP32,
                       tempImagFP32,
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSPTemp.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSPTemp.begin()),
+                      rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       streamDeviceCCL);
                 }
@@ -3422,7 +3401,7 @@ namespace dftfe
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -3518,20 +3497,16 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                         overlapMatrixBlock.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
+                         overlapMatrixBlock.begin(),
+                        overlapMatrixBlock.begin(),
                       D * B,
                       tempReal,
                       tempImag,
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
+                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlock.begin(),
                       D * B,
                       streamDeviceCCL);
                 }
@@ -3626,7 +3601,7 @@ namespace dftfe
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -3801,20 +3776,16 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
+                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlock.begin(),
                       D * B,
                       tempReal,
                       tempImag,
                       streamDataMove);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        overlapMatrixBlock.begin()),
+                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlock.begin(),
                       D * B,
                       streamDataMove);
                 }
@@ -3910,7 +3881,7 @@ namespace dftfe
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -4069,14 +4040,10 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         tempReal,
@@ -4087,14 +4054,10 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         streamDeviceCCL);
@@ -4221,7 +4184,7 @@ namespace dftfe
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -4499,14 +4462,10 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         tempReal,
@@ -4517,14 +4476,10 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockDP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         streamDataMove);

@@ -19,11 +19,14 @@
 #  ifndef deviceDirectCCLWrapper_h
 #    define deviceDirectCCLWrapper_h
 
+#include <complex>
 #    include <mpi.h>
-#    include <cuComplex.h>
+#include <DeviceTypeConfig.h>
 
 namespace dftfe
 {
+  namespace utils
+  {
   /**
    *  @brief Wrapper class for Device Direct collective communications library.
    *  Adapted from
@@ -45,31 +48,31 @@ namespace dftfe
     deviceDirectAllReduceWrapper(const float * send,
                                  float *       recv,
                                  int           size,
-                                 cudaStream_t &stream);
+                                 deviceStream_t &stream);
 
 
     int
     deviceDirectAllReduceWrapper(const double *send,
                                  double *      recv,
                                  int           size,
-                                 cudaStream_t &stream);
+                                 deviceStream_t &stream);
 
 
     int
-    deviceDirectAllReduceWrapper(const cuDoubleComplex *send,
-                                 cuDoubleComplex *      recv,
+    deviceDirectAllReduceWrapper(const std::complex<double> *send,
+                                 std::complex<double> *      recv,
                                  int                    size,
                                  double *               tempReal,
                                  double *               tempImag,
-                                 cudaStream_t &         stream);
+                                 deviceStream_t &         stream);
 
     int
-    deviceDirectAllReduceWrapper(const cuFloatComplex *send,
-                                 cuFloatComplex *      recv,
+    deviceDirectAllReduceWrapper(const std::complex<float> *send,
+                                 std::complex<float> *      recv,
                                  int                   size,
                                  float *               tempReal,
                                  float *               tempImag,
-                                 cudaStream_t &        stream);
+                                 deviceStream_t &        stream);
 
 
     int
@@ -79,46 +82,46 @@ namespace dftfe
                                                float *       recv2,
                                                int           size1,
                                                int           size2,
-                                               cudaStream_t &stream);
+                                               deviceStream_t &stream);
 
     int
-    deviceDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
-                                               const cuFloatComplex * send2,
-                                               cuDoubleComplex *      recv1,
-                                               cuFloatComplex *       recv2,
+    deviceDirectAllReduceMixedPrecGroupWrapper(const std::complex<double> *send1,
+                                               const std::complex<float> * send2,
+                                               std::complex<double> *      recv1,
+                                               std::complex<float> *       recv2,
                                                int                    size1,
                                                int                    size2,
                                                double *               tempReal1,
                                                float *                tempReal2,
                                                double *               tempImag1,
                                                float *                tempImag2,
-                                               cudaStream_t &         stream);
+                                               deviceStream_t &         stream);
 
 
 
     inline void
-    deviceDirectAllReduceWrapper(const cuFloatComplex *send,
-                                 cuFloatComplex *      recv,
+    deviceDirectAllReduceWrapper(const std::complex<float> *send,
+                                 std::complex<float> *      recv,
                                  int                   size,
-                                 cudaStream_t &        stream)
+                                 deviceStream_t &        stream)
     {}
 
 
     inline void
-    deviceDirectAllReduceWrapper(const cuDoubleComplex *send,
-                                 cuDoubleComplex *      recv,
+    deviceDirectAllReduceWrapper(const std::complex<double> *send,
+                                 std::complex<double> *      recv,
                                  int                    size,
-                                 cudaStream_t &         stream)
+                                 deviceStream_t &         stream)
     {}
 
     inline void
-    deviceDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
-                                               const cuFloatComplex * send2,
-                                               cuDoubleComplex *      recv1,
-                                               cuFloatComplex *       recv2,
+    deviceDirectAllReduceMixedPrecGroupWrapper(const std::complex<double> *send1,
+                                               const std::complex<float> * send2,
+                                               std::complex<double> *      recv1,
+                                               std::complex<float> *       recv2,
                                                int                    size1,
                                                int                    size2,
-                                               cudaStream_t &         stream)
+                                               deviceStream_t &         stream)
     {}
 
 
@@ -128,7 +131,7 @@ namespace dftfe
                                  int           size,
                                  double *      tempReal,
                                  double *      tempImag,
-                                 cudaStream_t &stream)
+                                 deviceStream_t &stream)
     {}
 
     inline void
@@ -137,7 +140,7 @@ namespace dftfe
                                  int           size,
                                  float *       tempReal,
                                  float *       tempImag,
-                                 cudaStream_t &stream)
+                                 deviceStream_t &stream)
     {}
 
     inline void
@@ -151,7 +154,7 @@ namespace dftfe
                                                float *       tempReal2,
                                                double *      tempImag1,
                                                float *       tempImag2,
-                                               cudaStream_t &stream)
+                                               deviceStream_t &stream)
     {}
 
   private:
@@ -163,6 +166,7 @@ namespace dftfe
     void *ncclCommPtr;
 #    endif
   };
+  }//namespace utils
 } // namespace dftfe
 
 #  endif

@@ -3781,7 +3781,7 @@ namespace dftfe
     cublasHandle_t &                                 handle,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-    DeviceCCLWrapper &                               devicecclMpiCommDomain,
+    utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3950,7 +3950,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -4224,9 +4224,9 @@ namespace dftfe
                                  std::complex<double>>::value)
                   {
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberDevice *>(
+                      reinterpret_cast<dataTypes::number *>(
                         thrust::raw_pointer_cast(&projHamBlock[0])),
-                      reinterpret_cast<dataTypes::numberDevice *>(
+                      reinterpret_cast<dataTypes::number *>(
                         thrust::raw_pointer_cast(&projHamBlock[0])),
                       D * B,
                       tempReal,
@@ -4235,9 +4235,9 @@ namespace dftfe
                   }
                 else
                   devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                    reinterpret_cast<dataTypes::numberDevice *>(
+                    reinterpret_cast<dataTypes::number *>(
                       thrust::raw_pointer_cast(&projHamBlock[0])),
-                    reinterpret_cast<dataTypes::numberDevice *>(
+                    reinterpret_cast<dataTypes::number *>(
                       thrust::raw_pointer_cast(&projHamBlock[0])),
                     D * B,
                     streamDataMove);
@@ -4362,7 +4362,7 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -4754,9 +4754,9 @@ namespace dftfe
                     if (std::is_same<dataTypes::number,
                                      std::complex<double>>::value)
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
+                        reinterpret_cast<dataTypes::number *>(
                           thrust::raw_pointer_cast(&projHamBlock[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
+                        reinterpret_cast<dataTypes::number *>(
                           thrust::raw_pointer_cast(&projHamBlock[0])),
                         D * B,
                         tempReal,
@@ -4764,9 +4764,9 @@ namespace dftfe
                         streamDataMove);
                     else
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
+                        reinterpret_cast<dataTypes::number *>(
                           thrust::raw_pointer_cast(&projHamBlock[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
+                        reinterpret_cast<dataTypes::number *>(
                           thrust::raw_pointer_cast(&projHamBlock[0])),
                         D * B,
                         streamDataMove);
@@ -4776,9 +4776,9 @@ namespace dftfe
                     if (std::is_same<dataTypes::number,
                                      std::complex<double>>::value)
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
+                        reinterpret_cast<dataTypes::numberFP32 *>(
                           thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
+                        reinterpret_cast<dataTypes::numberFP32 *>(
                           thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                         D * B,
                         tempRealFP32,
@@ -4786,9 +4786,9 @@ namespace dftfe
                         streamDataMove);
                     else
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
+                        reinterpret_cast<dataTypes::numberFP32 *>(
                           thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
+                        reinterpret_cast<dataTypes::numberFP32 *>(
                           thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                         D * B,
                         streamDataMove);
