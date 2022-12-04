@@ -810,7 +810,7 @@ namespace dftfe
       std::vector<dataTypes::number> onesVecHNLP(blockSize,
                                                  dataTypes::number(1.0));
 
-      const unsigned int cellsBlockSize = std::min((unsigned int)10, numCells);
+      const unsigned int cellsBlockSize = std::min((unsigned int)1, numCells);
 
       std::vector<dataTypes::number> psiQuadsFlatH(cellsBlockSize * numQuads *
                                                      blockSize,
