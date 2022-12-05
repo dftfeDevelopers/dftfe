@@ -1547,4 +1547,13 @@ namespace dftfe
                                               dftfe::utils::MemorySpace::HOST>;
   template class DistributedMulticomponentVec<std::complex<float>,
                                               dftfe::utils::MemorySpace::HOST>;
+#if defined(DFTFE_WITH_DEVICE)                                              
+  template class DistributedMulticomponentVec<double, dftfe::utils::MemorySpace::DEVICE>;
+  template class DistributedMulticomponentVec<float, dftfe::utils::MemorySpace::DEVICE>;
+  template class DistributedMulticomponentVec<std::complex<double>,
+                                              dftfe::utils::MemorySpace::DEVICE>;
+  template class DistributedMulticomponentVec<std::complex<float>,
+                                              dftfe::utils::MemorySpace::DEVICE>;
+#endif
+                                              
 } // namespace dftfe
