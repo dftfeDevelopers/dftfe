@@ -3550,12 +3550,10 @@ namespace dftfe
            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          deviceUtils::copyDeviceVecToHostVec(
-            d_eigenVectorsFlattenedDevice.begin() +
-              kPoint * d_eigenVectorsFlattenedSTL[0].size(),
-            reinterpret_cast<dataTypes::numberDevice *>(
-              &d_eigenVectorsFlattenedSTL[kPoint][0]),
-            d_eigenVectorsFlattenedSTL[kPoint].size());
+          d_eigenVectorsFlattenedDevice.copyTo<dftfe::utils::MemorySpace::HOST>(&d_eigenVectorsFlattenedSTL[kPoint][0],
+             d_eigenVectorsFlattenedSTL[kPoint].size(),
+            (kPoint * d_eigenVectorsFlattenedSTL[0].size()),
+            0);
         }
 #endif
 

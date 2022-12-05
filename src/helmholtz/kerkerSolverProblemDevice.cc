@@ -700,7 +700,7 @@ namespace dftfe
 
     // Shape Function Values, Gradients and their Transposes
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-    thrust::host_vector<double> shapeFunction(2 * q * (p + q));
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> shapeFunction(2 * q * (p + q));
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
@@ -722,7 +722,7 @@ namespace dftfe
         }
 
     // Jacobian
-    thrust::host_vector<double> jacobianFactor(dim * dim * d_nLocalCells);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> jacobianFactor(dim * dim * d_nLocalCells);
 
     auto cellOffsets = mappingData.data_index_offsets;
 
@@ -744,7 +744,7 @@ namespace dftfe
                           [k][i][0];
 
     // Map making
-    thrust::host_vector<int> map(nDofsPerCell * d_nLocalCells);
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(nDofsPerCell * d_nLocalCells);
 
     for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
       std::memcpy(map.data() + cellIdx * nDofsPerCell,
@@ -759,13 +759,18 @@ namespace dftfe
                   nDofsPerCell * sizeof(unsigned int));
 
     // Construct the device vectors
-    d_shapeFunction  = shapeFunction;
-    d_jacobianFactor = jacobianFactor;
-    d_map            = map;
+    d_shapeFunction.resize(shapeFunction.size());
+    d_shapeFunction.copyFrom(shapeFunction);
 
-    d_shapeFunctionPtr  = thrust::raw_pointer_cast(d_shapeFunction.data());
-    d_jacobianFactorPtr = thrust::raw_pointer_cast(d_jacobianFactor.data());
-    d_mapPtr            = thrust::raw_pointer_cast(d_map.data());
+    d_jacobianFactor.resize(jacobianFactor.size());
+    d_jacobianFactor.copyFrom(jacobianFactor);
+
+    d_map.resize(map.size());
+    d_map.copyFrom(map);
+
+    d_shapeFunctionPtr  = d_shapeFunction.data();
+    d_jacobianFactorPtr = d_jacobianFactor.data();
+    d_mapPtr            = d_map.data();
 
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);

@@ -75,7 +75,7 @@ namespace dftfe
     distributedDeviceVec<double> &d_Jacobi = problem.getPreconditioner();
 
     d_devSum.resize(1);
-    d_devSumPtr = thrust::raw_pointer_cast(d_devSum.data());
+    d_devSumPtr = d_devSum.data();
     d_xLocalDof = x.locallyOwnedDofsSize();
 
     double res = 0.0, initial_res = 0.0;

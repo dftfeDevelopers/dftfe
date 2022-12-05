@@ -22,7 +22,7 @@
 
 #    include <linearSolverDevice.h>
 #    include <linearSolverProblemDevice.h>
-
+# include <MemoryStorage.h>
 namespace dftfe
 {
   /**
@@ -78,7 +78,7 @@ namespace dftfe
 
     int                           d_xLocalDof;
     double *                      d_devSumPtr;
-    thrust::device_vector<double> d_devSum;
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> d_devSum;
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;

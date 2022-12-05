@@ -55,6 +55,12 @@ namespace dftfe
       return a;
     }
 
+    __inline__ __device__ global_size_type
+    conj(global_size_type a)
+    {
+      return a;
+    }
+
     __inline__ __device__ int
     conj(int a)
     {
@@ -90,6 +96,12 @@ namespace dftfe
     //
     __inline__ __device__ size_type
     mult(size_type a, size_type b)
+    {
+      return a * b;
+    }
+
+    __inline__ __device__ global_size_type
+    mult(global_size_type a, global_size_type b)
     {
       return a * b;
     }
@@ -192,6 +204,12 @@ namespace dftfe
       return a + b;
     }
 
+    __inline__ __device__ global_size_type
+    add(global_size_type a, global_size_type b)
+    {
+      return a + b;
+    }
+
     __inline__ __device__ int
     add(int a, int b)
     {
@@ -229,6 +247,12 @@ namespace dftfe
       return a - b;
     }
 
+    __inline__ __device__ global_size_type
+    sub(global_size_type a, global_size_type b)
+    {
+      return a - b;
+    }
+
     __inline__ __device__ int
     sub(int a, int b)
     {
@@ -261,6 +285,12 @@ namespace dftfe
 
     __inline__ __device__ size_type
     div(size_type a, size_type b)
+    {
+      return a / b;
+    }
+
+    __inline__ __device__ global_size_type
+    div(global_size_type a, global_size_type b)
     {
       return a / b;
     }
@@ -378,6 +408,18 @@ namespace dftfe
       return a;
     }
 
+    inline global_size_type *
+    makeDataTypeDeviceCompatible(global_size_type *a)
+    {
+      return a;
+    }
+
+    inline const global_size_type *
+    makeDataTypeDeviceCompatible(const global_size_type *a)
+    {
+      return a;
+    }
+
     inline double *
     makeDataTypeDeviceCompatible(double *a)
     {
@@ -434,6 +476,12 @@ namespace dftfe
 
     inline size_type
     makeDataTypeDeviceCompatible(size_type a)
+    {
+      return a;
+    }
+
+    inline global_size_type
+    makeDataTypeDeviceCompatible(global_size_type a)
     {
       return a;
     }

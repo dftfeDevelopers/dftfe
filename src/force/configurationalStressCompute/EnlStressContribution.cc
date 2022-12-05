@@ -169,7 +169,7 @@ void forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
                       for (unsigned int idim = 0; idim < 3; ++idim)
                         for (unsigned int jdim = 0; jdim < 3; ++jdim)
                           stressContribution[idim][jdim] +=
-                            factor * 2.0 * realPart(E[idim * 3 + jdim]);
+                            factor * 2.0 * dftfe::utils::realPart(E[idim * 3 + jdim]);
                     } // quad-loop
                 }     // kpoint loop
             }         // non-trivial cell check

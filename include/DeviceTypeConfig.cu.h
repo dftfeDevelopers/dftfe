@@ -17,11 +17,13 @@
 #ifndef dftfeDeviceTypeConfig_cuh
 #define dftfeDeviceTypeConfig_cuh
 
+#  include <cuComplex.h>
 
 namespace dftfe
 {
   namespace utils
   {
+    typedef cuDoubleComplex deviceDoubleComplex;
     typedef cudaStream_t deviceStream_t;
     typedef cudaEvent_t deviceEvent_t; 
     typedef cudaError_t deviceError_t;

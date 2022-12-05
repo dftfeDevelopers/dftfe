@@ -26,7 +26,7 @@ namespace dftfe
   {
     void
     pseudoGramSchmidtOrthogonalization(elpaScalaManager &       elpaScala,
-                                       dataTypes::numberDevice *X,
+                                       dataTypes::number *X,
                                        const unsigned int       M,
                                        const unsigned int       N,
                                        const MPI_Comm &         mpiCommParent,

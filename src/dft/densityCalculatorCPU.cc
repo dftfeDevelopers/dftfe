@@ -23,37 +23,10 @@
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 #include <linearAlgebraOperations.h>
+#include <DataTypeOverloads.h>
 
 namespace dftfe
 {
-  namespace
-  {
-    double
-    realPart(const double x)
-    {
-      return x;
-    }
-
-    double
-    realPart(const std::complex<double> x)
-    {
-      return x.real();
-    }
-
-    double
-    complexConj(const double x)
-    {
-      return x;
-    }
-
-    std::complex<double>
-    complexConj(const std::complex<double> x)
-    {
-      return std::conj(x);
-    }
-
-  } // namespace
-
   template <typename T>
   void
   computeRhoFromPSICPU(
@@ -364,7 +337,7 @@ namespace dftfe
                                    iWave < currentBlockSize;
                                    ++iWave)
                                 {
-                                  const T wfcQuadVal = complexConj(
+                                  const T wfcQuadVal = dftfe::utils::complexConj(
                                     wfcQuads[iquad * currentBlockSize + iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
@@ -373,7 +346,7 @@ namespace dftfe
                                   gradRhoXContribution[icell * numQuadPoints +
                                                        iquad] +=
                                     2.0 * partialOccupVecTimesKptWeight[iWave] *
-                                    realPart(temp1);
+                                    dftfe::utils::realPart(temp1);
                                 }
 
                             for (unsigned int iquad = 0; iquad < numQuadPoints;
@@ -382,7 +355,7 @@ namespace dftfe
                                    iWave < currentBlockSize;
                                    ++iWave)
                                 {
-                                  const T wfcQuadVal = complexConj(
+                                  const T wfcQuadVal = dftfe::utils::complexConj(
                                     wfcQuads[iquad * currentBlockSize + iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
@@ -391,7 +364,7 @@ namespace dftfe
                                   gradRhoYContribution[icell * numQuadPoints +
                                                        iquad] +=
                                     2.0 * partialOccupVecTimesKptWeight[iWave] *
-                                    realPart(temp1);
+                                    dftfe::utils::realPart(temp1);
                                 }
 
                             for (unsigned int iquad = 0; iquad < numQuadPoints;
@@ -400,7 +373,7 @@ namespace dftfe
                                    iWave < currentBlockSize;
                                    ++iWave)
                                 {
-                                  const T wfcQuadVal = complexConj(
+                                  const T wfcQuadVal = dftfe::utils::complexConj(
                                     wfcQuads[iquad * currentBlockSize + iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
@@ -409,7 +382,7 @@ namespace dftfe
                                   gradRhoZContribution[icell * numQuadPoints +
                                                        iquad] +=
                                     2.0 * partialOccupVecTimesKptWeight[iWave] *
-                                    realPart(temp1);
+                                    dftfe::utils::realPart(temp1);
                                 }
                           }
 
@@ -573,7 +546,7 @@ namespace dftfe
                                      iWave < currentBlockSize;
                                      ++iWave)
                                   {
-                                    const T wfcQuadVal = complexConj(
+                                    const T wfcQuadVal = dftfe::utils::complexConj(
                                       wfcQuads[iquad * currentBlockSize +
                                                iWave]);
                                     const T temp1 =
@@ -585,7 +558,7 @@ namespace dftfe
                                                          iquad] +=
                                       2.0 *
                                       partialOccupVecTimesKptWeight[iWave] *
-                                      realPart(temp1);
+                                      dftfe::utils::realPart(temp1);
                                   }
 
                               for (unsigned int iquad = 0;
@@ -595,7 +568,7 @@ namespace dftfe
                                      iWave < currentBlockSize;
                                      ++iWave)
                                   {
-                                    const T wfcQuadVal = complexConj(
+                                    const T wfcQuadVal = dftfe::utils::complexConj(
                                       wfcQuads[iquad * currentBlockSize +
                                                iWave]);
                                     const T temp1 =
@@ -607,7 +580,7 @@ namespace dftfe
                                                          iquad] +=
                                       2.0 *
                                       partialOccupVecTimesKptWeight[iWave] *
-                                      realPart(temp1);
+                                      dftfe::utils::realPart(temp1);
                                   }
 
                               for (unsigned int iquad = 0;
@@ -617,7 +590,7 @@ namespace dftfe
                                      iWave < currentBlockSize;
                                      ++iWave)
                                   {
-                                    const T wfcQuadVal = complexConj(
+                                    const T wfcQuadVal = dftfe::utils::complexConj(
                                       wfcQuads[iquad * currentBlockSize +
                                                iWave]);
                                     const T temp1 =
@@ -630,7 +603,7 @@ namespace dftfe
                                                          iquad] +=
                                       2.0 *
                                       partialOccupVecTimesKptWeight[iWave] *
-                                      realPart(temp1);
+                                      dftfe::utils::realPart(temp1);
                                   }
                             }
 

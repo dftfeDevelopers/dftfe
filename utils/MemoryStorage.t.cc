@@ -68,6 +68,15 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::~MemoryStorage()
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
+      d_data=nullptr;
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MemoryStorage<ValueType, memorySpace>::clear()
+    {
+      dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
+      d_data=nullptr;
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -169,23 +178,26 @@ namespace dftfe
       return (*this);
     }
 
-    //    // This part does not work for GPU version, will work on this until
-    //    // having cleaner solution.
-    //    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-    //    typename MemoryStorage<ValueType, memorySpace>::reference
-    //    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
-    //    {
-    //
-    //      return d_data[i];
-    //    }
-    //
-    //    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-    //    typename MemoryStorage<ValueType, memorySpace>::const_reference
-    //    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
-    //    const
-    //    {
-    //      return d_data[i];
-    //    }
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    typename MemoryStorage<ValueType, memorySpace>::reference
+    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
+    {
+      throwException<InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] operator return reference to element not implemented for DEVICE"); 
+      return d_data[i];
+    }
+    
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    typename MemoryStorage<ValueType, memorySpace>::const_reference
+    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
+    const
+    {
+      throwException<InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] operator return const reference to element not implemented for DEVICE");       
+      return d_data[i];
+    }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     void

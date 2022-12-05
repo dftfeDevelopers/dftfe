@@ -94,10 +94,13 @@ namespace dftfe
     }
 
     template void
+    deviceSetValue(int *devPtr, int value, size_type size);
+
+    template void
     deviceSetValue(size_type *devPtr, size_type value, size_type size);
 
     template void
-    deviceSetValue(int *devPtr, int value, size_type size);
+    deviceSetValue(global_size_type *devPtr,global_size_type value, size_type size);
 
     template void
     deviceSetValue(double *devPtr, double value, size_type size);

@@ -21,6 +21,10 @@
 #  include <solveVselfInBinsDevice.h>
 #  include <vectorUtilities.h>
 #  include <deviceHelpers.h>
+#  include <MemoryStorage.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
 
 namespace dftfe
 {
@@ -229,16 +233,15 @@ namespace dftfe
         const unsigned int                    numberVectors,
         const unsigned int                    localSize,
         const unsigned int                    ghostSize,
-        const thrust::device_vector<double> & poissonCellStiffnessMatricesD,
-        const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
-        const thrust::device_vector<dealii::types::global_dof_index>
+        const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & poissonCellStiffnessMatricesD,
+        const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & inhomoIdsColoredVecFlattenedD,
+        const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
           &                            cellLocalProcIndexIdMapD,
         distributedDeviceVec<double> & dst,
-        thrust::device_vector<double> &cellNodalVectorD,
-        thrust::device_vector<double> &cellStiffnessMatrixTimesVectorD)
+        dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> &cellNodalVectorD,
+        dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> &cellStiffnessMatrixTimesVectorD)
       {
         // const unsigned int numberVectors = 1;
-        // thrust::fill(dst.begin(),dst.end(),0.0);
         dst.setZero();
 
         // distributedDeviceVec<double> temp;
@@ -260,7 +263,7 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
             numberVectors * (localSize + ghostSize),
             temp.begin(),
-            thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+            inhomoIdsColoredVecFlattenedD.begin());
 
         //
         // elemental matrix-multiplication
@@ -277,8 +280,8 @@ namespace dftfe
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             temp.begin(), // src.begin(),
-            thrust::raw_pointer_cast(&cellNodalVectorD[0]),
-            thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));
+            cellNodalVectorD.begin(),
+            cellLocalProcIndexIdMapD.begin());
 
 
 
@@ -298,14 +301,14 @@ namespace dftfe
           numberNodesPerElement,
           numberNodesPerElement,
           &scalarCoeffAlpha,
-          thrust::raw_pointer_cast(&cellNodalVectorD[0]),
+          cellNodalVectorD.begin(),
           numberVectors,
           strideA,
-          thrust::raw_pointer_cast(&poissonCellStiffnessMatricesD[0]),
+          poissonCellStiffnessMatricesD.begin(),
           numberNodesPerElement,
           strideB,
           &scalarCoeffBeta,
-          thrust::raw_pointer_cast(&cellStiffnessMatrixTimesVectorD[0]),
+          cellStiffnessMatrixTimesVectorD.begin(),
           numberVectors,
           strideC,
           totalLocallyOwnedCells);
@@ -318,9 +321,9 @@ namespace dftfe
             deviceConstants::blockSize>>>(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
-            thrust::raw_pointer_cast(&cellStiffnessMatrixTimesVectorD[0]),
+            cellStiffnessMatrixTimesVectorD.begin(),
             dst.begin(),
-            thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));
+            cellLocalProcIndexIdMapD.begin());
 
         // think dirichlet hanging node linked to two master solved nodes
         if ((localSize + ghostSize) > 0)
@@ -329,7 +332,7 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
             numberVectors * (localSize + ghostSize),
             dst.begin(),
-            thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+            inhomoIdsColoredVecFlattenedD.begin());
 
 
         constraintsMatrixDataInfoDevice.distribute_slave_to_master(
@@ -343,7 +346,7 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
             numberVectors * localSize,
             dst.begin(),
-            thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+            inhomoIdsColoredVecFlattenedD.begin());
 
         // src.zero_out_ghosts();
         // constraintsMatrixDataInfoDevice.set_zero(src,numberVectors);
@@ -468,41 +471,41 @@ namespace dftfe
 
       constraintsMatrixDataInfoDevice.set_zero(xD, blockSize);
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime();
 
-      thrust::device_vector<double> bD(localSize * numberBins, 0.0);
-      thrust::device_vector<double> diagonalAD(localSize, 0.0);
-      thrust::device_vector<double> inhomoIdsColoredVecFlattenedD(
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> bD(localSize * numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> diagonalAD(localSize, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> inhomoIdsColoredVecFlattenedD(
         (localSize + ghostSize) * numberBins, 0.0);
-      thrust::device_vector<dealii::types::global_dof_index>
+      dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
         cellLocalProcIndexIdMapD(totalLocallyOwnedCells *
                                  numberNodesPerElement);
 
-      cudaMemcpy(thrust::raw_pointer_cast(&bD[0]),
+      cudaMemcpy(bD.begin(),
                  bH,
                  localSize * numberBins * sizeof(double),
                  cudaMemcpyHostToDevice);
 
-      cudaMemcpy(thrust::raw_pointer_cast(&diagonalAD[0]),
+      cudaMemcpy(diagonalAD.begin(),
                  diagonalAH,
                  localSize * sizeof(double),
                  cudaMemcpyHostToDevice);
 
-      cudaMemcpy(thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]),
+      cudaMemcpy(inhomoIdsColoredVecFlattenedD.begin(),
                  inhomoIdsColoredVecFlattenedH,
                  (localSize + ghostSize) * numberBins * sizeof(double),
                  cudaMemcpyHostToDevice);
 
 
-      cudaMemcpy(thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]),
+      cudaMemcpy(cellLocalProcIndexIdMapD.begin(),
                  &cellLocalProcIndexIdMapH[0],
                  totalLocallyOwnedCells * numberNodesPerElement *
                    sizeof(dealii::types::global_dof_index),
                  cudaMemcpyHostToDevice);
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
       if (verbosity >= 2 && this_process == 0)
@@ -512,8 +515,8 @@ namespace dftfe
 
       cgSolver(operatorMatrix.getCublasHandle(),
                constraintsMatrixDataInfoDevice,
-               thrust::raw_pointer_cast(&bD[0]),
-               thrust::raw_pointer_cast(&diagonalAD[0]),
+               bD.begin(),
+               diagonalAD.begin(),
                isElectroFEOrderDifferentFromFEOrder ?
                  operatorMatrix.getShapeFunctionGradientIntegralElectro() :
                  operatorMatrix.getShapeFunctionGradientIntegral(),
@@ -543,9 +546,9 @@ namespace dftfe
       dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
       const double *                        bD,
       const double *                        diagonalAD,
-      const thrust::device_vector<double> & poissonCellStiffnessMatricesD,
-      const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
-      const thrust::device_vector<dealii::types::global_dof_index>
+      const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & poissonCellStiffnessMatricesD,
+      const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & inhomoIdsColoredVecFlattenedD,
+      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
         &                           cellLocalProcIndexIdMapD,
       const unsigned int            localSize,
       const unsigned int            ghostSize,
@@ -562,7 +565,7 @@ namespace dftfe
       int this_process;
       MPI_Comm_rank(mpiCommParent, &this_process);
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       double start_time = MPI_Wtime();
 
@@ -571,20 +574,20 @@ namespace dftfe
       // const double posOne = 1.0;
       const unsigned int inc = 1;
 
-      thrust::device_vector<double> delta_newD(numberBins, 0.0);
-      thrust::device_vector<double> delta_oldD(numberBins, 0.0);
-      thrust::device_vector<double> delta_0D(numberBins, 0.0);
-      thrust::device_vector<double> alphaD(numberBins, 0.0);
-      thrust::device_vector<double> betaD(numberBins, 0.0);
-      thrust::device_vector<double> scalarD(numberBins, 0.0);
-      thrust::device_vector<double> residualNormSqD(numberBins, 0.0);
-      thrust::device_vector<double> negOneD(numberBins, -1.0);
-      thrust::device_vector<double> posOneD(numberBins, 1.0);
-      thrust::device_vector<double> vecTempD(localSize * numberBins, 1.0);
-      thrust::device_vector<double> onesVecD(localSize, 1.0);
-      thrust::device_vector<double> cellNodalVectorD(
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> delta_newD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> delta_oldD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> delta_0D(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> alphaD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> betaD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> scalarD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualNormSqD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> negOneD(numberBins, -1.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> posOneD(numberBins, 1.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> vecTempD(localSize * numberBins, 1.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> onesVecD(localSize, 1.0);
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> cellNodalVectorD(
         totalLocallyOwnedCells * numberNodesPerElement * numberBins);
-      thrust::device_vector<double> cellStiffnessMatrixTimesVectorD(
+      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> cellStiffnessMatrixTimesVectorD(
         totalLocallyOwnedCells * numberNodesPerElement * numberBins);
 
       std::vector<double> delta_newH(numberBins, 0.0);
@@ -595,7 +598,7 @@ namespace dftfe
       std::vector<double> residualNormSqH(numberBins, 0.0);
 
       // compute RHS b
-      // thrust::device_vector<double> b;
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> b;
 
       // double start_timeRhs = MPI_Wtime();
       // problem.computeRhs(b);
@@ -610,12 +613,12 @@ namespace dftfe
 
 
       // get access to initial guess for solving Ax=b
-      // thrust::device_vector<double> & x = problem.getX();
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & x = problem.getX();
       // x.update_ghost_values();
 
 
       // compute Ax
-      // thrust::device_vector<double> Ax;
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> Ax;
       // Ax.resize(localSize,0.0);
       distributedDeviceVec<double> Ax;
       Ax.reinit(x);
@@ -632,7 +635,7 @@ namespace dftfe
       d.reinit(x);
       temp.reinit(x);
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       double device_time = MPI_Wtime() - start_time;
       if (debugLevel >= 2 && this_process == 0)
@@ -640,7 +643,7 @@ namespace dftfe
           << " poissonDevice::solveVselfInBins: time for Device CG solver memory allocation: "
           << device_time << std::endl;
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       start_time = MPI_Wtime();
 
@@ -662,7 +665,7 @@ namespace dftfe
 
 
       // compute residue r = b - Ax
-      // thrust::device_vector<double> r;
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> r;
       // r.resize(localSize,0.0);
 
       // r = b
@@ -680,35 +683,25 @@ namespace dftfe
 
 
       // precondition r
-      // thrust::device_vector<double> d;
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> d;
       // d.resize(localSize,0.0);
 
       // precondition_Jacobi(r,d);
       precondition_Jacobi(
         r.begin(), diagonalAD, numberBins, localSize, d.begin());
 
-      // compute delta_new delta_new = r*d;
-      /*
-         cublasDdot(handle,
-         localSize*numberBins,
-         thrust::raw_pointer_cast(&r[0]),
-         inc,
-         thrust::raw_pointer_cast(&d[0]),
-         inc,
-         &delta_new);
-       */
 
       computeResidualSq(handle,
                         r.begin(),
                         d.begin(),
-                        thrust::raw_pointer_cast(&vecTempD[0]),
-                        thrust::raw_pointer_cast(&onesVecD[0]),
+                        vecTempD.begin(),
+                        onesVecD.begin(),
                         numberBins,
                         localSize,
-                        thrust::raw_pointer_cast(&delta_newD[0]));
+                        delta_newD.begin());
 
       cudaMemcpy(&delta_newH[0],
-                 thrust::raw_pointer_cast(&delta_newD[0]),
+                 delta_newD.begin(),
                  numberBins * sizeof(double),
                  cudaMemcpyDeviceToHost);
 
@@ -720,7 +713,7 @@ namespace dftfe
                     MPI_SUM,
                     mpiCommDomain);
 
-      cudaMemcpy(thrust::raw_pointer_cast(&delta_newD[0]),
+      cudaMemcpy(delta_newD.begin(),
                  &delta_newH[0],
                  numberBins * sizeof(double),
                  cudaMemcpyHostToDevice);
@@ -729,32 +722,23 @@ namespace dftfe
       delta_0D = delta_newD;
 
       // allocate memory for q
-      // thrust::device_vector<double> q,s;
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> q,s;
       // q.resize(localSize,0.0);
       // s.resize(localSize,0.0);
 
       unsigned int iterationNumber = 0;
 
-      /*
-         cublasDdot(d_cublasHandle,
-         localSize,
-         thrust::raw_pointer_cast(&r[0]),
-         inc,
-         thrust::raw_pointer_cast(&r[0]),
-         inc,
-         &residualNorm);
-       */
       computeResidualSq(handle,
                         r.begin(),
                         r.begin(),
-                        thrust::raw_pointer_cast(&vecTempD[0]),
-                        thrust::raw_pointer_cast(&onesVecD[0]),
+                        vecTempD.begin(),
+                        onesVecD.begin(),
                         numberBins,
                         localSize,
-                        thrust::raw_pointer_cast(&residualNormSqD[0]));
+                        residualNormSqD.begin());
 
       cudaMemcpy(&residualNormSqH[0],
-                 thrust::raw_pointer_cast(&residualNormSqD[0]),
+                 residualNormSqD.begin(),
                  numberBins * sizeof(double),
                  cudaMemcpyDeviceToHost);
 
@@ -798,27 +782,17 @@ namespace dftfe
                     cellStiffnessMatrixTimesVectorD);
 
           // compute alpha
-          // double scalar;
-          /*
-             cublasDdot(d_cublasHandle,
-             localSize,
-             thrust::raw_pointer_cast(&d[0]),
-             inc,
-             thrust::raw_pointer_cast(&q[0]),
-             inc,
-             &scalar);
-           */
           computeResidualSq(handle,
                             d.begin(),
                             q.begin(),
-                            thrust::raw_pointer_cast(&vecTempD[0]),
-                            thrust::raw_pointer_cast(&onesVecD[0]),
+                            vecTempD.begin(),
+                            onesVecD.begin(),
                             numberBins,
                             localSize,
-                            thrust::raw_pointer_cast(&scalarD[0]));
+                            scalarD.begin());
 
           cudaMemcpy(&scalarH[0],
-                     thrust::raw_pointer_cast(&scalarD[0]),
+                     scalarD.begin(),
                      numberBins * sizeof(double),
                      cudaMemcpyDeviceToHost);
 
@@ -839,21 +813,12 @@ namespace dftfe
           // for (unsigned int i=0;i <numberBins; i++)
           //   std::cout<< "alpha "<<alphaH[i]<<std::endl;
 
-          cudaMemcpy(thrust::raw_pointer_cast(&alphaD[0]),
+          cudaMemcpy(alphaD.begin(),
                      &alphaH[0],
                      numberBins * sizeof(double),
                      cudaMemcpyHostToDevice);
 
           // update x; x = x + alpha*d
-          /*
-             cublasDaxpy(d_cublasHandle,
-             localSize,
-             &alpha,
-             thrust::raw_pointer_cast(&d[0]),
-             inc,
-             thrust::raw_pointer_cast(&x[0]),
-             inc);
-           */
           if (localSize > 0)
             daxpyBlockedKernel<<<(numberBins +
                                   (deviceConstants::blockSize - 1)) /
@@ -862,7 +827,7 @@ namespace dftfe
               numberBins,
               localSize,
               d.begin(),
-              thrust::raw_pointer_cast(&alphaD[0]),
+              alphaD.begin(),
               x.begin());
 
           if (iter % 50 == 0)
@@ -888,15 +853,7 @@ namespace dftfe
                         Ax,
                         cellNodalVectorD,
                         cellStiffnessMatrixTimesVectorD);
-              /*
-                 cublasDaxpy(d_cublasHandle,
-                 localSize,
-                 &negOne,
-                 thrust::raw_pointer_cast(&Ax[0]),
-                 inc,
-                 thrust::raw_pointer_cast(&r[0]),
-                 inc);
-               */
+ 
               if (localSize > 0)
                 daxpyBlockedKernel<<<(numberBins +
                                       (deviceConstants::blockSize - 1)) /
@@ -905,21 +862,12 @@ namespace dftfe
                   numberBins,
                   localSize,
                   Ax.begin(),
-                  thrust::raw_pointer_cast(&negOneD[0]),
+                  negOneD.begin(),
                   r.begin());
             }
           else
             {
               // negAlphaD = -alpha;
-              /*
-                 cublasDaxpy(d_cublasHandle,
-                 localSize,
-                 &negAlpha,
-                 thrust::raw_pointer_cast(&q[0]),
-                 inc,
-                 thrust::raw_pointer_cast(&r[0]),
-                 inc);
-               */
               if (localSize > 0)
                 dmaxpyBlockedKernel<<<(numberBins +
                                        (deviceConstants::blockSize - 1)) /
@@ -928,7 +876,7 @@ namespace dftfe
                   numberBins,
                   localSize,
                   q.begin(),
-                  thrust::raw_pointer_cast(&alphaD[0]),
+                  alphaD.begin(),
                   r.begin());
             }
 
@@ -939,36 +887,26 @@ namespace dftfe
           delta_oldD = delta_newD;
 
           cudaMemcpy(&delta_oldH[0],
-                     thrust::raw_pointer_cast(&delta_oldD[0]),
+                     delta_oldD.begin(),
                      numberBins * sizeof(double),
                      cudaMemcpyDeviceToHost);
 
 
           // delta_new = r*s;
-          /*
-             cublasDdot(d_cublasHandle,
-             localSize,
-             thrust::raw_pointer_cast(&r[0]),
-             inc,
-             thrust::raw_pointer_cast(&s[0]),
-             inc,
-             &delta_new);
-           */
-
           computeResidualSq(handle,
                             r.begin(),
                             s.begin(),
-                            thrust::raw_pointer_cast(&vecTempD[0]),
-                            thrust::raw_pointer_cast(&onesVecD[0]),
+                            vecTempD.begin(),
+                            onesVecD.begin(),
                             numberBins,
                             localSize,
-                            thrust::raw_pointer_cast(&delta_newD[0]));
+                            delta_newD.begin());
 
           // beta = delta_new/delta_old;
 
 
           cudaMemcpy(&delta_newH[0],
-                     thrust::raw_pointer_cast(&delta_newD[0]),
+                     delta_newD.begin(),
                      numberBins * sizeof(double),
                      cudaMemcpyDeviceToHost);
 
@@ -987,24 +925,17 @@ namespace dftfe
           for (unsigned int i = 0; i < numberBins; i++)
             betaH[i] = delta_newH[i] / delta_oldH[i];
 
-          cudaMemcpy(thrust::raw_pointer_cast(&betaD[0]),
+          cudaMemcpy(betaD.begin(),
                      &betaH[0],
                      numberBins * sizeof(double),
                      cudaMemcpyHostToDevice);
 
-          cudaMemcpy(thrust::raw_pointer_cast(&delta_newD[0]),
+          cudaMemcpy(delta_newD.begin(),
                      &delta_newH[0],
                      numberBins * sizeof(double),
                      cudaMemcpyHostToDevice);
 
           // d *= beta;
-          /*
-             cublasDscal(handle,
-             localSize,
-             &beta,
-             thrust::raw_pointer_cast(&d[0]),
-             inc);
-           */
           if (localSize > 0)
             scaleBlockedKernel<<<(numberBins +
                                   (deviceConstants::blockSize - 1)) /
@@ -1013,19 +944,9 @@ namespace dftfe
               numberBins,
               localSize,
               d.begin(),
-              thrust::raw_pointer_cast(&betaD[0]));
+              betaD.begin());
 
           // d.add(1.0,s);
-          /*
-             cublasDaxpy(handle,
-             localSize*numberBins,
-             &posOne,
-             s.begin(),
-             inc,
-             d.begin(),
-             inc);
-           */
-
           if (localSize > 0)
             daxpyBlockedKernel<<<(numberBins +
                                   (deviceConstants::blockSize - 1)) /
@@ -1034,7 +955,7 @@ namespace dftfe
               numberBins,
               localSize,
               s.begin(),
-              thrust::raw_pointer_cast(&posOneD[0]),
+              posOneD.begin(),
               d.begin());
           unsigned int isBreak = 1;
           // if(delta_new < relTolerance*relTolerance*delta_0)
@@ -1053,27 +974,17 @@ namespace dftfe
 
 
       // compute residual norm at end
-      /*
-         cublasDdot(handle,
-         localSize,
-         thrust::raw_pointer_cast(&r[0]),
-         inc,
-         thrust::raw_pointer_cast(&r[0]),
-         inc,
-         &residualNorm);
-       */
-
       computeResidualSq(handle,
                         r.begin(),
                         r.begin(),
-                        thrust::raw_pointer_cast(&vecTempD[0]),
-                        thrust::raw_pointer_cast(&onesVecD[0]),
+                        vecTempD.begin(),
+                        onesVecD.begin(),
                         numberBins,
                         localSize,
-                        thrust::raw_pointer_cast(&residualNormSqD[0]));
+                        residualNormSqD.begin());
 
       cudaMemcpy(&residualNormSqH[0],
-                 thrust::raw_pointer_cast(&residualNormSqD[0]),
+                 residualNormSqD.begin(),
                  numberBins * sizeof(double),
                  cudaMemcpyDeviceToHost);
 
@@ -1119,7 +1030,7 @@ namespace dftfe
       // problem.setX();
       x.updateGhostValues();
       constraintsMatrixDataInfoDevice.distribute(x, numberBins);
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       device_time = MPI_Wtime() - start_time;
       if (debugLevel >= 2 && this_process == 0)

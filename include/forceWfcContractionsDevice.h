@@ -30,7 +30,7 @@ namespace dftfe
     void
     wfcContractionsForceKernelsAllH(
       operatorDFTDeviceClass &                operatorMatrix,
-      const dataTypes::numberDevice *         X,
+      const dataTypes::number *         X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,

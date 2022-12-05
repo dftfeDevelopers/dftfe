@@ -384,7 +384,7 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -403,7 +403,7 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -422,7 +422,7 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -441,7 +441,7 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -458,7 +458,7 @@ namespace dftfe
      */
     void
     pseudoGramSchmidtOrthogonalization(elpaScalaManager &       elpaScala,
-                                       dataTypes::numberDevice *X,
+                                       dataTypes::number *X,
                                        const unsigned int       M,
                                        const unsigned int       N,
                                        const MPI_Comm &         mpiCommParent,
@@ -471,7 +471,7 @@ namespace dftfe
 
     void
     subspaceRotationScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -487,8 +487,8 @@ namespace dftfe
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const dataTypes::numberDevice *                  X,
-      dataTypes::numberDevice *                        XFrac,
+      const dataTypes::number *                  X,
+      dataTypes::number *                        XFrac,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
@@ -502,7 +502,7 @@ namespace dftfe
 
     void
     subspaceRotationCGSMixedPrecScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -517,7 +517,7 @@ namespace dftfe
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -534,11 +534,11 @@ namespace dftfe
     rayleighRitz(
       operatorDFTDeviceClass &                           operatorMatrix,
       elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             M,
       const unsigned int                             N,
       const MPI_Comm &                               mpiCommParent,
@@ -554,11 +554,11 @@ namespace dftfe
     rayleighRitzGEP(
       operatorDFTDeviceClass &                           operatorMatrix,
       elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             M,
       const unsigned int                             N,
       const MPI_Comm &                               mpiCommParent,
@@ -574,12 +574,12 @@ namespace dftfe
     rayleighRitzGEPSpectrumSplitDirect(
       operatorDFTDeviceClass &                           operatorMatrix,
       elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      dataTypes::numberDevice *                          XFrac,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      dataTypes::number *                          X,
+      dataTypes::number *                          XFrac,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             M,
       const unsigned int                             N,
       const unsigned int                             Noc,
@@ -596,11 +596,11 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTDeviceClass &                           operatorMatrix,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             M,
       const unsigned int                             N,
       const MPI_Comm &                               mpiCommParent,
@@ -624,9 +624,9 @@ namespace dftfe
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
       operatorDFTDeviceClass &                       operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &Xb,
-      distributedDeviceVec<dataTypes::numberDevice> &Yb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      distributedDeviceVec<dataTypes::number> &Xb,
+      distributedDeviceVec<dataTypes::number> &Yb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             blockSize,
       const dftParameters &                          dftParams);
 
@@ -645,11 +645,11 @@ namespace dftfe
     void
     chebyshevFilter(
       operatorDFTDeviceClass &operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice>
-        &X, // thrust::device_vector<dataTypes::number> & X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Y,
-      distributedDeviceVec<dataTypes::numberFP32Device> &Z,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      distributedDeviceVec<dataTypes::number>
+        &X, 
+      distributedDeviceVec<dataTypes::number> &    Y,
+      distributedDeviceVec<dataTypes::numberFP32> &Z,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             localVectorSize,
       const unsigned int                             numberComponents,
       const unsigned int                             m,
@@ -663,13 +663,13 @@ namespace dftfe
     void
     chebyshevFilter(
       operatorDFTDeviceClass &                           operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &    X1,
-      distributedDeviceVec<dataTypes::numberDevice> &    Y1,
-      distributedDeviceVec<dataTypes::numberFP32Device> &Z,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector1,
-      distributedDeviceVec<dataTypes::numberDevice> &X2,
-      distributedDeviceVec<dataTypes::numberDevice> &Y2,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector2,
+      distributedDeviceVec<dataTypes::number> &    X1,
+      distributedDeviceVec<dataTypes::number> &    Y1,
+      distributedDeviceVec<dataTypes::numberFP32> &Z,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector1,
+      distributedDeviceVec<dataTypes::number> &X2,
+      distributedDeviceVec<dataTypes::number> &Y2,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector2,
       const unsigned int                             localVectorSize,
       const unsigned int                             numberComponents,
       const unsigned int                             m,
@@ -682,10 +682,10 @@ namespace dftfe
     void
     computeEigenResidualNorm(
       operatorDFTDeviceClass &                       operatorMatrix,
-      dataTypes::numberDevice *                      X,
-      distributedDeviceVec<dataTypes::numberDevice> &Xb,
-      distributedDeviceVec<dataTypes::numberDevice> &HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      dataTypes::number *                      X,
+      distributedDeviceVec<dataTypes::number> &Xb,
+      distributedDeviceVec<dataTypes::number> &HXb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             M,
       const unsigned int                             N,
       const std::vector<double> &                    eigenValues,

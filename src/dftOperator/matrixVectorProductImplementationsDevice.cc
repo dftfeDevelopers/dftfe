@@ -28,9 +28,9 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(
-    const dataTypes::numberDevice *src,
+    const dataTypes::number *src,
     const unsigned int             numberWaveFunctions,
-    dataTypes::numberDevice *      dst,
+    dataTypes::number *      dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
 {
   const unsigned int kpointSpinIndex =
@@ -44,11 +44,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                      deviceConstants::blockSize>>>(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
-    src,
-    reinterpret_cast<dataTypes::numberDevice *>(
-      thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
-    thrust::raw_pointer_cast(
-      &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+    dftfe::utils::makeDataTypeDeviceCompatible(src),
+    dftfe::utils::makeDataTypeDeviceCompatible(
+      d_cellWaveFunctionMatrix.begin()),
+    d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
 
   const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
@@ -67,21 +66,20 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     numberWaveFunctions,
     d_numberNodesPerElement,
     d_numberNodesPerElement,
-    reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
-    reinterpret_cast<const dataTypes::numberDevice *>(
-      thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
+    dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
+    dftfe::utils::makeDataTypeDeviceCompatible(
+      d_cellWaveFunctionMatrix.begin()),
     numberWaveFunctions,
     strideA,
-    reinterpret_cast<const dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-      &d_cellHamiltonianMatrixFlattenedDevice[d_numLocallyOwnedCells *
+    dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamiltonianMatrixFlattenedDevice.begin()+d_numLocallyOwnedCells *
                                               d_numberNodesPerElement *
                                               d_numberNodesPerElement *
-                                              kpointSpinIndex])),
+                                              kpointSpinIndex),
     d_numberNodesPerElement,
     strideB,
-    reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
-    reinterpret_cast<dataTypes::numberDevice *>(
-      thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
+    dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
+    dftfe::utils::makeDataTypeDeviceCompatible(
+      d_cellHamMatrixTimesWaveMatrix.begin()),
     numberWaveFunctions,
     strideC,
     totalLocallyOwnedCells);
@@ -96,9 +94,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           deviceUtils::copyComplexArrToRealArrsDevice(
             (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
              d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-            dst,
-            thrust::raw_pointer_cast(&d_tempRealVec[0]),
-            thrust::raw_pointer_cast(&d_tempImagVec[0]));
+            dftfe::utils::makeDataTypeDeviceCompatible(dst),
+            d_tempRealVec.begin(),
+            d_tempImagVec.begin());
 
 
           daxpyAtomicAddKernel<<<
@@ -108,19 +106,18 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             deviceConstants::blockSize>>>(
             numberWaveFunctions,
             d_numLocallyOwnedCells * d_numberNodesPerElement,
-            reinterpret_cast<const dataTypes::numberDevice *>(
-              thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
-            thrust::raw_pointer_cast(&d_tempRealVec[0]),
-            thrust::raw_pointer_cast(&d_tempImagVec[0]),
-            thrust::raw_pointer_cast(
-              &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+            dftfe::utils::makeDataTypeDeviceCompatible(
+              d_cellHamMatrixTimesWaveMatrix.begin()),
+            d_tempRealVec.begin(),
+            d_tempImagVec.begin(),
+            d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
           deviceUtils::copyRealArrsToComplexArrDevice(
             (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
              d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-            thrust::raw_pointer_cast(&d_tempRealVec[0]),
-            thrust::raw_pointer_cast(&d_tempImagVec[0]),
-            dst);
+            d_tempRealVec.begin(),
+            d_tempImagVec.begin(),
+            dftfe::utils::makeDataTypeDeviceCompatible(dst));
         }
       else
         daxpyAtomicAddKernel<<<
@@ -130,10 +127,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           deviceConstants::blockSize>>>(
           numberWaveFunctions,
           d_numLocallyOwnedCells * d_numberNodesPerElement,
-          reinterpret_cast<const dataTypes::numberDevice *>(
-            thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
-          dst,
-          thrust::raw_pointer_cast(
-            &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamMatrixTimesWaveMatrix.begin()),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst),
+          d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
     }
 }

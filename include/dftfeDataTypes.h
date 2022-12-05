@@ -23,12 +23,7 @@
 #include <deal.II/base/config.h>
 #include <deal.II/base/types.h>
 
-#if defined(DFTFE_WITH_DEVICE)
-#  include <cuComplex.h>
-#  include <thrust/device_vector.h>
-#  include <thrust/complex.h>
-#endif
-
+#include <DeviceTypeConfig.h>
 // Include generic C++ headers
 #include <fstream>
 #include <iostream>
@@ -47,10 +42,7 @@ namespace dftfe
     typedef double               numberValueType;
     typedef float                numberFP32ValueType;
 #  if defined(DFTFE_WITH_DEVICE)
-    typedef cuDoubleComplex         numberDevice;
-    typedef cuFloatComplex          numberFP32Device;
-    typedef thrust::complex<double> numberThrustDevice;
-    typedef thrust::complex<float>  numberFP32ThrustDevice;
+    typedef dftfe::utils::deviceDoubleComplex         numberDevice;
 #  endif
 #else
     typedef double number;
@@ -59,10 +51,7 @@ namespace dftfe
     typedef float  numberFP32ValueType;
 #  if defined(DFTFE_WITH_DEVICE)
     typedef double numberDevice;
-    typedef float  numberFP32Device;
-    typedef double numberThrustDevice;
-    typedef float  numberFP32ThrustDevice;
-#  endif
+#  endif    
 #endif
 
     inline MPI_Datatype

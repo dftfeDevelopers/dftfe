@@ -702,9 +702,9 @@ namespace dftfe
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
       operatorDFTDeviceClass &                       operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &Xb,
-      distributedDeviceVec<dataTypes::numberDevice> &Yb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      distributedDeviceVec<dataTypes::number> &Xb,
+      distributedDeviceVec<dataTypes::number> &Yb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             blockSize,
       const dftParameters &                          dftParams)
     {
@@ -751,7 +751,7 @@ namespace dftfe
 
       distributedCPUVec<dataTypes::number> &vvec = v[0];
 
-      dftfe::utils::deviceMemcpyH2D_2D(Xb.begin(),
+      dftfe::utils::deviceMemcpyH2D_2D(dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
                                blockSize * sizeof(dataTypes::number),
                                vvec.begin(),
                                1 * sizeof(dataTypes::number),
@@ -765,7 +765,7 @@ namespace dftfe
       distributedCPUVec<dataTypes::number> &fvec = f[0];
       dftfe::utils::deviceMemcpyD2H_2D(fvec.begin(),
                                1 * sizeof(dataTypes::number),
-                               Yb.begin(),
+                               dftfe::utils::makeDataTypeDeviceCompatible(Yb.begin()),
                                blockSize * sizeof(dataTypes::number),
                                1 * sizeof(dataTypes::number),
                                local_size);
@@ -792,7 +792,7 @@ namespace dftfe
           // operatorMatrix.HX(v,f);
 
           distributedCPUVec<dataTypes::number> &vvec = v[0];
-          dftfe::utils::deviceMemcpyH2D_2D(Xb.begin(),
+          dftfe::utils::deviceMemcpyH2D_2D(dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
                                    blockSize * sizeof(dataTypes::number),
                                    vvec.begin(),
                                    1 * sizeof(dataTypes::number),
@@ -806,7 +806,7 @@ namespace dftfe
           distributedCPUVec<dataTypes::number> &fvec = f[0];
           dftfe::utils::deviceMemcpyD2H_2D(fvec.begin(),
                                    1 * sizeof(dataTypes::number),
-                                   Yb.begin(),
+                                   dftfe::utils::makeDataTypeDeviceCompatible(Yb.begin()),
                                    blockSize * sizeof(dataTypes::number),
                                    1 * sizeof(dataTypes::number),
                                    local_size);
@@ -889,10 +889,10 @@ namespace dftfe
     void
     chebyshevFilter(
       operatorDFTDeviceClass &                           operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &    XArray,
-      distributedDeviceVec<dataTypes::numberDevice> &    YArray,
-      distributedDeviceVec<dataTypes::numberFP32Device> &tempFloatArray,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      distributedDeviceVec<dataTypes::number> &    XArray,
+      distributedDeviceVec<dataTypes::number> &    YArray,
+      distributedDeviceVec<dataTypes::numberFP32> &tempFloatArray,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             localVectorSize,
       const unsigned int                             numberVectors,
       const unsigned int                             m,
@@ -936,9 +936,9 @@ namespace dftfe
       cublasDaxpy(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha2,
-                  XArray.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
                   inc,
-                  YArray.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                   inc);
       */
 
@@ -947,15 +947,15 @@ namespace dftfe
                                 deviceConstants::blockSize,
                               30000),
                           deviceConstants::blockSize>>>(totalVectorSize,
-                                                        XArray.begin(),
-                                                        YArray.begin(),
+                                                        dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                                                        dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                                                         alpha2);
 
       /*
       cublasDscal(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha1,
-                  YArray.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                   inc);
       */
 
@@ -963,7 +963,7 @@ namespace dftfe
         min((totalVectorSize + (deviceConstants::blockSize - 1)) /
               deviceConstants::blockSize,
             30000),
-        deviceConstants::blockSize>>>(totalVectorSize, YArray.begin(), alpha1);
+        deviceConstants::blockSize>>>(totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()), alpha1);
 
       //
       // polynomial loop
@@ -982,7 +982,7 @@ namespace dftfe
                                          deviceConstants::blockSize,
                                        30000),
                                    deviceConstants::blockSize>>>(
-                totalVectorSize, YArray.begin(), XArray.begin(), coeff, alpha2);
+                totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()), dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()), coeff, alpha2);
 
 
               // scale src vector with M^{-1/2}
@@ -994,7 +994,7 @@ namespace dftfe
                 numberVectors,
                 localVectorSize,
                 alpha1,
-                YArray.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
               scaleDeviceKernel<<<
@@ -1003,7 +1003,7 @@ namespace dftfe
                 deviceConstants::blockSize>>>(numberVectors,
                                               localVectorSize,
                                               1.0,
-                                              XArray.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
                                               operatorMatrix.getSqrtMassVec());
 
               //
@@ -1028,7 +1028,7 @@ namespace dftfe
                 deviceConstants::blockSize>>>(numberVectors,
                                               localVectorSize,
                                               1.0 / alpha1Old,
-                                              XArray.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
                                               operatorMatrix.getSqrtMassVec());
 
               scaleDeviceKernel<<<
@@ -1038,7 +1038,7 @@ namespace dftfe
                 numberVectors,
                 localVectorSize,
                 1.0,
-                YArray.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
               daxpbyDeviceKernel<<<min((totalVectorSize +
@@ -1046,7 +1046,7 @@ namespace dftfe
                                          deviceConstants::blockSize,
                                        30000),
                                    deviceConstants::blockSize>>>(
-                totalVectorSize, YArray.begin(), XArray.begin(), coeff, alpha2);
+                totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()), dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()), coeff, alpha2);
               scaleFlag = true;
               //
               // call HX
@@ -1068,8 +1068,8 @@ namespace dftfe
                                      deviceConstants::blockSize>>>(
                 numberVectors,
                 localVectorSize,
-                YArray.begin(),
-                XArray.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
                 coeff,
                 alpha2,
                 alpha1,
@@ -1097,8 +1097,8 @@ namespace dftfe
         }
 
       // copy back YArray to XArray
-      dftfe::utils::deviceMemcpyD2D(XArray.begin(),
-                 YArray.begin(),
+      dftfe::utils::deviceMemcpyD2D(dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                 dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                  totalVectorSize * sizeof(dataTypes::number));
     }
 
@@ -1110,13 +1110,13 @@ namespace dftfe
     void
     chebyshevFilter(
       operatorDFTDeviceClass &                           operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &    XArray1,
-      distributedDeviceVec<dataTypes::numberDevice> &    YArray1,
-      distributedDeviceVec<dataTypes::numberFP32Device> &tempFloatArray,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector1,
-      distributedDeviceVec<dataTypes::numberDevice> &XArray2,
-      distributedDeviceVec<dataTypes::numberDevice> &YArray2,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector2,
+      distributedDeviceVec<dataTypes::number> &    XArray1,
+      distributedDeviceVec<dataTypes::number> &    YArray1,
+      distributedDeviceVec<dataTypes::numberFP32> &tempFloatArray,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector1,
+      distributedDeviceVec<dataTypes::number> &XArray2,
+      distributedDeviceVec<dataTypes::number> &YArray2,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector2,
       const unsigned int                             localVectorSize,
       const unsigned int                             numberVectors,
       const unsigned int                             m,
@@ -1180,30 +1180,30 @@ namespace dftfe
       cublasDaxpy(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha2,
-                  XArray1.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                   inc,
-                  YArray1.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                   inc);
 
       cublasDscal(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha1,
-                  YArray1.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                   inc);
 
 
       cublasDaxpy(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha2,
-                  XArray2.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
                   inc,
-                  YArray2.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                   inc);
 
       cublasDscal(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha1,
-                  YArray2.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                   inc);
       */
 
@@ -1212,30 +1212,30 @@ namespace dftfe
                                 deviceConstants::blockSize,
                               30000),
                           deviceConstants::blockSize>>>(totalVectorSize,
-                                                        XArray1.begin(),
-                                                        YArray1.begin(),
+                                                        dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                                                        dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                                                         alpha2);
 
       dscalDeviceKernel<<<
         min((totalVectorSize + (deviceConstants::blockSize - 1)) /
               deviceConstants::blockSize,
             30000),
-        deviceConstants::blockSize>>>(totalVectorSize, YArray1.begin(), alpha1);
+        deviceConstants::blockSize>>>(totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()), alpha1);
 
       daxpyDeviceKernel<<<min((totalVectorSize +
                                (deviceConstants::blockSize - 1)) /
                                 deviceConstants::blockSize,
                               30000),
                           deviceConstants::blockSize>>>(totalVectorSize,
-                                                        XArray2.begin(),
-                                                        YArray2.begin(),
+                                                        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                                                        dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                                                         alpha2);
 
       dscalDeviceKernel<<<
         min((totalVectorSize + (deviceConstants::blockSize - 1)) /
               deviceConstants::blockSize,
             30000),
-        deviceConstants::blockSize>>>(totalVectorSize, YArray2.begin(), alpha1);
+        deviceConstants::blockSize>>>(totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()), alpha1);
 
       bool overlap = false;
       //
@@ -1257,8 +1257,8 @@ namespace dftfe
                       deviceConstants::blockSize,
                     30000),
                 deviceConstants::blockSize>>>(totalVectorSize,
-                                              YArray1.begin(),
-                                              XArray1.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                                               coeff,
                                               alpha2);
 
@@ -1272,7 +1272,7 @@ namespace dftfe
                 numberVectors,
                 localVectorSize,
                 alpha1,
-                YArray1.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
               scaleDeviceKernel<<<
@@ -1281,7 +1281,7 @@ namespace dftfe
                 deviceConstants::blockSize>>>(numberVectors,
                                               localVectorSize,
                                               1.0,
-                                              XArray1.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                                               operatorMatrix.getSqrtMassVec());
 
               //
@@ -1301,8 +1301,8 @@ namespace dftfe
                       deviceConstants::blockSize,
                     30000),
                 deviceConstants::blockSize>>>(totalVectorSize,
-                                              YArray2.begin(),
-                                              XArray2.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
                                               coeff,
                                               alpha2);
 
@@ -1316,7 +1316,7 @@ namespace dftfe
                 numberVectors,
                 localVectorSize,
                 alpha1,
-                YArray2.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
               scaleDeviceKernel<<<
@@ -1325,7 +1325,7 @@ namespace dftfe
                 deviceConstants::blockSize>>>(numberVectors,
                                               localVectorSize,
                                               1.0,
-                                              XArray2.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
                                               operatorMatrix.getSqrtMassVec());
 
               //
@@ -1351,7 +1351,7 @@ namespace dftfe
                 deviceConstants::blockSize>>>(numberVectors,
                                               localVectorSize,
                                               1.0 / alpha1Old,
-                                              XArray1.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                                               operatorMatrix.getSqrtMassVec());
 
               scaleDeviceKernel<<<
@@ -1361,7 +1361,7 @@ namespace dftfe
                 numberVectors,
                 localVectorSize,
                 1.0,
-                YArray1.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
               daxpbyDeviceKernel<<<
@@ -1369,8 +1369,8 @@ namespace dftfe
                       deviceConstants::blockSize,
                     30000),
                 deviceConstants::blockSize>>>(totalVectorSize,
-                                              YArray1.begin(),
-                                              XArray1.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                                               coeff,
                                               alpha2);
               scaleFlag = true;
@@ -1394,7 +1394,7 @@ namespace dftfe
                 deviceConstants::blockSize>>>(numberVectors,
                                               localVectorSize,
                                               1.0 / alpha1Old,
-                                              XArray2.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
                                               operatorMatrix.getSqrtMassVec());
 
               scaleDeviceKernel<<<
@@ -1404,7 +1404,7 @@ namespace dftfe
                 numberVectors,
                 localVectorSize,
                 1.0,
-                YArray2.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
               daxpbyDeviceKernel<<<
@@ -1412,8 +1412,8 @@ namespace dftfe
                       deviceConstants::blockSize,
                     30000),
                 deviceConstants::blockSize>>>(totalVectorSize,
-                                              YArray2.begin(),
-                                              XArray2.begin(),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
                                               coeff,
                                               alpha2);
               //
@@ -1490,8 +1490,8 @@ namespace dftfe
                                      deviceConstants::blockSize>>>(
                 numberVectors,
                 localVectorSize,
-                YArray1.begin(),
-                XArray1.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                 coeff,
                 alpha2,
                 alpha1,
@@ -1515,8 +1515,8 @@ namespace dftfe
                       deviceConstants::blockSize * localVectorSize,
                     deviceConstants::blockSize>>>(numberVectors *
                                                     localVectorSize,
-                                                  YArray1.begin(),
-                                                  tempFloatArray.begin());
+                                                  dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                                                  dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
                   tempFloatArray.updateGhostValuesStart();
                 }
               else
@@ -1544,8 +1544,8 @@ namespace dftfe
                         deviceConstants::blockSize * n_ghosts,
                       deviceConstants::blockSize>>>(
                       numberVectors * n_ghosts,
-                      tempFloatArray.begin() + localVectorSize * numberVectors,
-                      YArray1.begin() + localVectorSize * numberVectors);
+                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()) + localVectorSize * numberVectors,
+                      dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()) + localVectorSize * numberVectors);
                 }
               else
                 YArray1.updateGhostValuesFinish();
@@ -1564,8 +1564,8 @@ namespace dftfe
                         (numberVectors + (deviceConstants::blockSize - 1)) /
                           deviceConstants::blockSize * totalSize,
                         deviceConstants::blockSize>>>(numberVectors * totalSize,
-                                                      XArray2.begin(),
-                                                      tempFloatArray.begin());
+                                                      dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                                                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
                       tempFloatArray.compressAddStart();
                     }
                   else
@@ -1596,12 +1596,10 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
                         numberVectors,
                         localVectorSize,
-                        tempFloatArray.begin(),
-                        thrust::raw_pointer_cast(
-                          &operatorMatrix
-                             .getLocallyOwnedProcBoundaryNodesVectorDevice()
-                               [0]),
-                        XArray2.begin());
+                        dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+                        (operatorMatrix
+                             .getLocallyOwnedProcBoundaryNodesVectorDevice()).begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()));
 
                       XArray2.zeroOutGhosts();
                     }
@@ -1620,8 +1618,8 @@ namespace dftfe
                                      deviceConstants::blockSize>>>(
                 numberVectors,
                 localVectorSize,
-                YArray2.begin(),
-                XArray2.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
                 coeff,
                 alpha2,
                 alpha1,
@@ -1641,8 +1639,8 @@ namespace dftfe
                       deviceConstants::blockSize * localVectorSize,
                     deviceConstants::blockSize>>>(numberVectors *
                                                     localVectorSize,
-                                                  YArray2.begin(),
-                                                  tempFloatArray.begin());
+                                                  dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                                                  dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
                   tempFloatArray.updateGhostValuesStart();
                 }
               else
@@ -1669,8 +1667,8 @@ namespace dftfe
                         deviceConstants::blockSize * n_ghosts,
                       deviceConstants::blockSize>>>(
                       numberVectors * n_ghosts,
-                      tempFloatArray.begin() + localVectorSize * numberVectors,
-                      YArray2.begin() + localVectorSize * numberVectors);
+                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()) + localVectorSize * numberVectors,
+                      dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()) + localVectorSize * numberVectors);
                 }
               else
                 YArray2.updateGhostValuesFinish();
@@ -1687,8 +1685,8 @@ namespace dftfe
                     (numberVectors + (deviceConstants::blockSize - 1)) /
                       deviceConstants::blockSize * totalSize,
                     deviceConstants::blockSize>>>(numberVectors * totalSize,
-                                                  XArray1.begin(),
-                                                  tempFloatArray.begin());
+                                                  dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                                                  dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
                   tempFloatArray.compressAddStart();
                 }
               else
@@ -1716,11 +1714,10 @@ namespace dftfe
                     deviceConstants::blockSize>>>(
                     numberVectors,
                     localVectorSize,
-                    tempFloatArray.begin(),
-                    thrust::raw_pointer_cast(
-                      &operatorMatrix
-                         .getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
-                    XArray1.begin());
+                    dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+                    (operatorMatrix
+                         .getLocallyOwnedProcBoundaryNodesVectorDevice()).begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()));
 
                   XArray1.zeroOutGhosts();
                 }
@@ -1753,8 +1750,8 @@ namespace dftfe
                         (numberVectors + (deviceConstants::blockSize - 1)) /
                           deviceConstants::blockSize * totalSize,
                         deviceConstants::blockSize>>>(numberVectors * totalSize,
-                                                      XArray2.begin(),
-                                                      tempFloatArray.begin());
+                                                      dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                                                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
                       tempFloatArray.compressAdd();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
@@ -1763,12 +1760,10 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
                         numberVectors,
                         localVectorSize,
-                        tempFloatArray.begin(),
-                        thrust::raw_pointer_cast(
-                          &operatorMatrix
-                             .getLocallyOwnedProcBoundaryNodesVectorDevice()
-                               [0]),
-                        XArray2.begin());
+                        dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+                        (operatorMatrix
+                             .getLocallyOwnedProcBoundaryNodesVectorDevice()).begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()));
 
                       XArray2.zeroOutGhosts();
                     }
@@ -1794,20 +1789,20 @@ namespace dftfe
         }
 
       // copy back YArray to XArray
-      dftfe::utils::deviceMemcpyD2D(XArray1.begin(),
-                 YArray1.begin(),
+      dftfe::utils::deviceMemcpyD2D(dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                 dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                  totalVectorSize * sizeof(dataTypes::number));
 
-      dftfe::utils::deviceMemcpyD2D(XArray2.begin(),
-                 YArray2.begin(),
+      dftfe::utils::deviceMemcpyD2D(dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                 dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                  totalVectorSize * sizeof(dataTypes::number));
     }
 
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const dataTypes::numberDevice *                  X,
-      dataTypes::numberDevice *                        XFrac,
+      const dataTypes::number *                  X,
+      dataTypes::number *                        XFrac,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
@@ -1895,7 +1890,6 @@ namespace dftfe
           if (M >= idof)
             BDof = std::min(dofsBlockSize, M - idof);
 
-          // thrust::fill(rotatedVectorsMatBlock.begin(),rotatedVectorsMatBlock.end(),0.);
           for (unsigned int jvec = 0; jvec < Nfr; jvec += vectorsBlockSize)
             {
               // Correct block dimensions if block "goes off edge of" the matrix
@@ -2147,7 +2141,7 @@ namespace dftfe
                               dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlock.begin()),
                               BVec,
-                              X + idof * N,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + idof * N,
                               N,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
@@ -2197,7 +2191,7 @@ namespace dftfe
 
     void
     subspaceRotationScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -2295,7 +2289,6 @@ namespace dftfe
           if (M >= idof)
             BDof = std::min(dofsBlockSize, M - idof);
 
-          // thrust::fill(rotatedVectorsMatBlock.begin(),rotatedVectorsMatBlock.end(),0.);
           for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
             {
               // Correct block dimensions if block "goes off edge of" the matrix
@@ -2560,7 +2553,7 @@ namespace dftfe
                           &scalarCoeffAlpha),
                         dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlock.begin()),
                         BVec,
-                        X + idof * N,
+                        dftfe::utils::makeDataTypeDeviceCompatible(X) + idof * N,
                         N,
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           &scalarCoeffBeta),
@@ -2577,7 +2570,7 @@ namespace dftfe
           if (BDof != 0)
             {
               DeviceCHECK(cudaMemcpyAsync(
-                X + idof * N,
+                dftfe::utils::makeDataTypeDeviceCompatible(X) + idof * N,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   rotatedVectorsMatBlock.begin()),
                 N * BDof * sizeof(dataTypes::number),
@@ -2609,7 +2602,7 @@ namespace dftfe
 
     void
     subspaceRotationCGSMixedPrecScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -2649,7 +2642,7 @@ namespace dftfe
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
-        X,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
 
 
@@ -2760,7 +2753,7 @@ namespace dftfe
                                  deviceConstants::blockSize>>>(
         dftfe::utils::makeDataTypeDeviceCompatible(
           diagValues.begin()),
-        X,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
         N,
         M);
 
@@ -2969,7 +2962,7 @@ namespace dftfe
                         BVec,
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotatedVectorsMatBlockSP.begin()),
-                        X,
+                        dftfe::utils::makeDataTypeDeviceCompatible(X),
                         idof,
                         jvec,
                         N);
@@ -3002,7 +2995,7 @@ namespace dftfe
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3033,7 +3026,7 @@ namespace dftfe
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
-        X,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(
           XSP.begin()));
 
@@ -3153,7 +3146,7 @@ namespace dftfe
                                  deviceConstants::blockSize>>>(
         dftfe::utils::makeDataTypeDeviceCompatible(
           diagValues.begin()),
-        X,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
         N,
         M);
 
@@ -3363,7 +3356,7 @@ namespace dftfe
                         BVec,
                         dftfe::utils::makeDataTypeDeviceCompatible(
                             rotatedVectorsMatBlockSP.begin()),
-                        X,
+                        dftfe::utils::makeDataTypeDeviceCompatible(X),
                         idof,
                         jvec,
                         N);
@@ -3396,7 +3389,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3461,7 +3454,6 @@ namespace dftfe
           // Correct block dimensions if block "goes off edge of" the matrix
           const unsigned int B = std::min(vectorsBlockSize, N - ivec);
 
-          // thrust::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
 
           const unsigned int D = N - ivec;
 
@@ -3481,9 +3473,9 @@ namespace dftfe
                 M,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffAlpha),
-                X + ivec,
+                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                 N,
-                X + ivec,
+                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                 N,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffBeta),
@@ -3596,7 +3588,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3705,9 +3697,9 @@ namespace dftfe
                               M,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
-                              X + ivec,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                               N,
-                              X + ivec,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                               N,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
@@ -3740,7 +3732,6 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  // thrust::fill(overlapMatrixBlockNext.begin(),overlapMatrixBlockNext.end(),0.);
 
                   // evaluate X^{T} times XBlock
                   cublasXgemm(handle,
@@ -3754,9 +3745,9 @@ namespace dftfe
                               M,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
-                              X + ivecNew,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
                               N,
-                              X + ivecNew,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
                               N,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
@@ -3876,7 +3867,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3923,7 +3914,7 @@ namespace dftfe
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
-        X,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
       dataTypes::number *overlapMatrixBlockHostDP;
       DeviceCHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
@@ -3995,9 +3986,9 @@ namespace dftfe
                 M,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffAlpha),
-                X + ivec,
+                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                 N,
-                X + ivec,
+                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                 N,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   &scalarCoeffBeta),
@@ -4179,7 +4170,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -4253,7 +4244,7 @@ namespace dftfe
                                   deviceConstants::blockSize * M,
                                 deviceConstants::blockSize>>>(
         N * M,
-        X,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(
           XSP.begin()));
       dataTypes::number *overlapMatrixBlockHostDP;
@@ -4314,7 +4305,6 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  // thrust::fill(overlapMatrixBlockDP.begin(),overlapMatrixBlockDP.end(),0);
 
                   cublasXgemm(handle,
                               CUBLAS_OP_N,
@@ -4327,9 +4317,9 @@ namespace dftfe
                               M,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
-                              X + ivec,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                               N,
-                              X + ivec,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
                               N,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
@@ -4341,7 +4331,6 @@ namespace dftfe
 
                   if (DRem != 0)
                     {
-                      // thrust::fill(overlapMatrixBlockSP.begin(),overlapMatrixBlockSP.end(),0);
 
                       cublasXgemm(
                         handle,
@@ -4396,7 +4385,6 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  // thrust::fill(overlapMatrixBlockDPNext.begin(),overlapMatrixBlockDPNext.end(),0);
 
                   // evaluate X^{T} times XBlock
                   cublasXgemm(handle,
@@ -4410,9 +4398,9 @@ namespace dftfe
                               M,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffAlpha),
-                              X + ivecNew,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
                               N,
-                              X + ivecNew,
+                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
                               N,
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 &scalarCoeffBeta),
@@ -4424,7 +4412,6 @@ namespace dftfe
 
                   if (DRemNew != 0)
                     {
-                      // thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0);
 
                       cublasXgemm(
                         handle,
@@ -4609,10 +4596,10 @@ namespace dftfe
     void
     computeEigenResidualNorm(
       operatorDFTDeviceClass &                       operatorMatrix,
-      dataTypes::numberDevice *                      X,
-      distributedDeviceVec<dataTypes::numberDevice> &XBlock,
-      distributedDeviceVec<dataTypes::numberDevice> &HXBlock,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+      dataTypes::number *                      X,
+      distributedDeviceVec<dataTypes::number> &XBlock,
+      distributedDeviceVec<dataTypes::number> &HXBlock,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
       const unsigned int                             M,
       const unsigned int                             N,
       const std::vector<double> &                    eigenValues,
@@ -4671,7 +4658,7 @@ namespace dftfe
                     (chebyBlockSize + (deviceConstants::blockSize - 1)) /
                       deviceConstants::blockSize * M,
                     deviceConstants::blockSize>>>(
-                    chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    chebyBlockSize, M, dftfe::utils::makeDataTypeDeviceCompatible(X), N, dftfe::utils::makeDataTypeDeviceCompatible(XBlock.begin()), k);
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
                   HXBlock.setZero();
@@ -4689,7 +4676,7 @@ namespace dftfe
                     deviceConstants::blockSize>>>(
                     chebyBlockSize,
                     M,
-                    HXBlock.begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(HXBlock.begin()),
                     B,
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       HXBlockFull.begin()),
@@ -4705,7 +4692,7 @@ namespace dftfe
                 N,
                 jvec,
                 eigenValuesDevice.begin(),
-                X,
+                dftfe::utils::makeDataTypeDeviceCompatible(X),
                 dftfe::utils::makeDataTypeDeviceCompatible(
                 HXBlockFull.begin()),
                 residualSqDevice.begin());

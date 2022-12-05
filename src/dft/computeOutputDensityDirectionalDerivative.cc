@@ -448,8 +448,8 @@ dftClass<FEOrder, FEOrderElectro>::
   if (d_dftParamsPtr->useDevice)
     {
       if (d_dftParamsPtr->singlePrecLRD)
-        computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
-                                           dataTypes::numberFP32Device>(
+        computeRhoFirstOrderResponseDevice<dataTypes::number,
+                                           dataTypes::numberFP32>(
           d_eigenVectorsFlattenedDevice.begin(),
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
           d_densityMatDerFermiEnergy,
@@ -471,8 +471,8 @@ dftClass<FEOrder, FEOrderElectro>::
           interBandGroupComm,
           *d_dftParamsPtr);
       else
-        computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
-                                           dataTypes::numberDevice>(
+        computeRhoFirstOrderResponseDevice<dataTypes::number,
+                                           dataTypes::number>(
           d_eigenVectorsFlattenedDevice.begin(),
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
           d_densityMatDerFermiEnergy,

@@ -28,10 +28,10 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   computeNonLocalHamiltonianTimesX(
-    const dataTypes::numberDevice *                src,
-    distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+    const dataTypes::number *                src,
+    distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
     const unsigned int                             numberWaveFunctions,
-    dataTypes::numberDevice *                      dst,
+    dataTypes::number *                      dst,
     const bool                                     skip1,
     const bool                                     skip2)
 {
@@ -54,13 +54,13 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
         (const dataTypes::numberDevice **)d_A,
         numberWaveFunctions,
         (const dataTypes::numberDevice **)d_B,
         d_numberNodesPerElement,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
-        d_C,
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
+        (dataTypes::numberDevice **)d_C,
         numberWaveFunctions,
         d_totalNonlocalElems);
 
@@ -71,18 +71,15 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(
-            &d_projectorKetTimesVectorAllCellsDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+        d_projectorKetTimesVectorAllCellsDevice.begin()),
         numberWaveFunctions,
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(
-            &d_projectorKetTimesVectorAllCellsReductionDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+            d_projectorKetTimesVectorAllCellsReductionDevice.begin()),
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
-        reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-          &d_projectorKetTimesVectorParFlattenedDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
+        dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
         numberWaveFunctions);
     }
 
@@ -100,10 +97,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       deviceConstants::blockSize>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
-      reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-        &d_projectorKetTimesVectorParFlattenedDevice[0])),
-      projectorKetTimesVector.begin(),
-      thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
+      dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
+      dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVector.begin()),
+      d_projectorIdsParallelNumberingMapDevice.begin());
 
   // Operations related to skip2 (extraction and C^{T}*X) are over. So return
   // control back to chebyshevFilter
@@ -132,8 +128,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         1.0,
-        projectorKetTimesVector.begin(),
-        thrust::raw_pointer_cast(&d_nonLocalPseudoPotentialConstantsDevice[0]));
+        dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVector.begin()),
+        d_nonLocalPseudoPotentialConstantsDevice.begin());
 
       copyFromParallelNonLocalVecToAllCellsVec<<<
         (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
@@ -143,11 +139,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_totalNonlocalElems,
         d_maxSingleAtomPseudoWfc,
-        projectorKetTimesVector.begin(),
-        reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-          &d_projectorKetTimesVectorAllCellsDevice[0])),
-        thrust::raw_pointer_cast(
-          &d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice[0]));
+        dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVector.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorAllCellsDevice.begin()),
+          d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.begin());
 
       //
       // compute C*V*C^{\dagger}*x
@@ -163,21 +157,17 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_numberNodesPerElement,
         d_maxSingleAtomPseudoWfc,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(
-            &d_projectorKetTimesVectorAllCellsDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+        d_projectorKetTimesVectorAllCellsDevice.begin()),
         numberWaveFunctions,
         strideA,
-        reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-          &d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice
-            [d_kPointIndex * d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
-             d_numberNodesPerElement])),
+        dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.begin()+d_kPointIndex * d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
+             d_numberNodesPerElement),
         d_maxSingleAtomPseudoWfc,
         strideB,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
-        reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-          &d_cellHamMatrixTimesWaveMatrixNonLocalDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
+        dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamMatrixTimesWaveMatrixNonLocalDevice.begin()),
         numberWaveFunctions,
         strideC,
         d_totalNonlocalElems);
@@ -194,13 +184,12 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             deviceConstants::blockSize>>>(
             numberWaveFunctions,
             d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
-            reinterpret_cast<const dataTypes::numberDevice *>(
-              thrust::raw_pointer_cast(
-                &d_cellHamMatrixTimesWaveMatrixNonLocalDevice[0])) +
-              accum * d_numberNodesPerElement * numberWaveFunctions,
-            reinterpret_cast<dataTypes::numberDevice *>(
-              thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
-            thrust::raw_pointer_cast(&d_cellNodeIdMapNonLocalToLocalDevice[0]) +
+            dftfe::utils::makeDataTypeDeviceCompatible(
+                d_cellHamMatrixTimesWaveMatrixNonLocalDevice.begin() +
+              accum * d_numberNodesPerElement * numberWaveFunctions),
+            dftfe::utils::makeDataTypeDeviceCompatible(
+              d_cellHamMatrixTimesWaveMatrix.begin()),
+            d_cellNodeIdMapNonLocalToLocalDevice.begin() +
               accum * d_numberNodesPerElement);
         }
     }
@@ -210,9 +199,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       deviceUtils::copyComplexArrToRealArrsDevice(
         (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
          d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-        dst,
-        thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[0]));
+        dftfe::utils::makeDataTypeDeviceCompatible(dst),
+        d_tempRealVec.begin(),
+        d_tempImagVec.begin());
 
 
       daxpyAtomicAddKernel<<<(numberWaveFunctions +
@@ -222,19 +211,18 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                              deviceConstants::blockSize>>>(
         numberWaveFunctions,
         d_numLocallyOwnedCells * d_numberNodesPerElement,
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
-        thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[0]),
-        thrust::raw_pointer_cast(
-          &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+        dftfe::utils::makeDataTypeDeviceCompatible(
+        d_cellHamMatrixTimesWaveMatrix.begin()),
+        d_tempRealVec.begin(),
+        d_tempImagVec.begin(),
+        d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
          d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-        thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[0]),
-        dst);
+        d_tempRealVec.begin(),
+        d_tempImagVec.begin(),
+        dftfe::utils::makeDataTypeDeviceCompatible(dst));
     }
   else
     daxpyAtomicAddKernel<<<(numberWaveFunctions +
@@ -244,11 +232,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                            deviceConstants::blockSize>>>(
       numberWaveFunctions,
       d_numLocallyOwnedCells * d_numberNodesPerElement,
-      reinterpret_cast<const dataTypes::numberDevice *>(
-        thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
-      dst,
-      thrust::raw_pointer_cast(
-        &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        d_cellHamMatrixTimesWaveMatrix.begin()),
+      dftfe::utils::makeDataTypeDeviceCompatible(dst),
+        d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 }
 
 
@@ -256,8 +243,8 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   computeNonLocalProjectorKetTimesXTimesV(
-    const dataTypes::numberDevice *                src,
-    distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
+    const dataTypes::number *                src,
+    distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
     const unsigned int                             numberWaveFunctions)
 {
   const unsigned int totalLocallyOwnedCells =
@@ -278,11 +265,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                          deviceConstants::blockSize>>>(
         numberWaveFunctions,
         totalLocallyOwnedCells * d_numberNodesPerElement,
-        src,
-        reinterpret_cast<dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
-        thrust::raw_pointer_cast(
-          &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+        dftfe::utils::makeDataTypeDeviceCompatible(src),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          d_cellWaveFunctionMatrix.begin()),
+          d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
 
 
@@ -293,13 +279,13 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
         (const dataTypes::numberDevice **)d_A,
         numberWaveFunctions,
         (const dataTypes::numberDevice **)d_B,
         d_numberNodesPerElement,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
-        d_C,
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
+        (dataTypes::numberDevice **)d_C,
         numberWaveFunctions,
         d_totalNonlocalElems);
 
@@ -310,18 +296,15 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffAlpha),
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(
-            &d_projectorKetTimesVectorAllCellsDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+        d_projectorKetTimesVectorAllCellsDevice.begin()),
         numberWaveFunctions,
-        reinterpret_cast<const dataTypes::numberDevice *>(
-          thrust::raw_pointer_cast(
-            &d_projectorKetTimesVectorAllCellsReductionDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+        d_projectorKetTimesVectorAllCellsReductionDevice.begin()),
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        reinterpret_cast<const dataTypes::numberDevice *>(&scalarCoeffBeta),
-        reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-          &d_projectorKetTimesVectorParFlattenedDevice[0])),
+        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
+        dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
         numberWaveFunctions);
     }
 
@@ -335,10 +318,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       deviceConstants::blockSize>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
-      reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-        &d_projectorKetTimesVectorParFlattenedDevice[0])),
-      projectorKetTimesVector.begin(),
-      thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
+      dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
+      dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVector.begin()),
+      d_projectorIdsParallelNumberingMapDevice.begin());
 
   projectorKetTimesVector.compressAdd();
   projectorKetTimesVector.updateGhostValues();
@@ -354,6 +336,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       1.0,
-      projectorKetTimesVector.begin(),
-      thrust::raw_pointer_cast(&d_nonLocalPseudoPotentialConstantsDevice[0]));
+      dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVector.begin()),
+      d_nonLocalPseudoPotentialConstantsDevice.begin());
 }

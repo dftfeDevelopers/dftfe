@@ -20,11 +20,10 @@
 #include "distributedMulticomponentVec.h"
 #include "dftUtils.h"
 #include <deal.II/lac/la_parallel_vector.h>
-
+#include <MemoryStorage.h>
+#include <DeviceDataTypeOverloads.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include "deviceHelpers.h"
-#  include <thrust/device_vector.h>
-#  include <thrust/complex.h>
 #  include <cuComplex.h>
 #endif
 
@@ -357,7 +356,7 @@ namespace dftfe
           cudaMalloc((void **)&d_vecData,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
         DeviceCHECK(
-          cudaMemset(d_vecData,
+          cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
                      0,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
 
@@ -472,7 +471,7 @@ namespace dftfe
             DeviceCHECK(cudaMalloc((void **)&d_vecData,
                                    (d_locallyOwnedSize + d_ghostSize) *
                                      sizeof(NumberType)));
-            DeviceCHECK(cudaMemset(d_vecData,
+            DeviceCHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
                                    0,
                                    (d_locallyOwnedSize + d_ghostSize) *
                                      sizeof(NumberType)));
@@ -552,7 +551,7 @@ namespace dftfe
         else if (memorySpace==dftfe::utils::MemorySpace::DEVICE)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            DeviceCHECK(cudaMemset(this->begin(),
+            DeviceCHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()),
                                    0,
                                    d_locallyOwnedSize * sizeof(NumberType)));
 #endif
@@ -1266,7 +1265,7 @@ namespace dftfe
                  (std::is_same<NumberType, cuDoubleComplex>::value ||
                   std::is_same<NumberType, cuFloatComplex>::value))
           {
-            DeviceCHECK(cudaMemset(this->begin() + d_locallyOwnedSize,
+            DeviceCHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()) + d_locallyOwnedSize,
                                    0,
                                    d_ghostSize * sizeof(NumberType)));
 
@@ -1432,7 +1431,7 @@ namespace dftfe
         else if (memorySpace==dftfe::utils::MemorySpace::DEVICE)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            DeviceCHECK(cudaFree(d_vecData));
+            DeviceCHECK(cudaFree(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData)));
 #endif
           }
       }
@@ -1548,15 +1547,4 @@ namespace dftfe
                                               dftfe::utils::MemorySpace::HOST>;
   template class DistributedMulticomponentVec<std::complex<float>,
                                               dftfe::utils::MemorySpace::HOST>;
-
-#if defined(DFTFE_WITH_DEVICE)
-  template class DistributedMulticomponentVec<double,
-                                              dftfe::utils::MemorySpace::DEVICE>;
-  template class DistributedMulticomponentVec<float,
-                                              dftfe::utils::MemorySpace::DEVICE>;
-  template class DistributedMulticomponentVec<cuDoubleComplex,
-                                              dftfe::utils::MemorySpace::DEVICE>;
-  template class DistributedMulticomponentVec<cuFloatComplex,
-                                              dftfe::utils::MemorySpace::DEVICE>;
-#endif
 } // namespace dftfe

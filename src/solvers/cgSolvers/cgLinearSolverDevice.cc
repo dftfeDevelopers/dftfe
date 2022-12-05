@@ -51,7 +51,7 @@ namespace dftfe
     unsigned int inc    = 1;
 
     // compute RHS b
-    thrust::device_vector<double> b;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> b;
 
     double start_timeRhs = MPI_Wtime();
     problem.computeRhs(b);
@@ -66,26 +66,26 @@ namespace dftfe
 
 
     // get access to initial guess for solving Ax=b
-    thrust::device_vector<double> &x = problem.getX();
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &x = problem.getX();
     // x.update_ghost_values();
 
 
     // compute Ax
-    thrust::device_vector<double> Ax;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> Ax;
     Ax.resize(localSize, 0.0);
     problem.computeAX(x, Ax);
 
 
     // compute residue r = b - Ax
-    thrust::device_vector<double> r;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> r;
     r.resize(localSize, 0.0);
 
     // r = b
     cublasDcopy(d_cublasHandle,
                 localSize,
-                thrust::raw_pointer_cast(&b[0]), // YArray.begin(),
+                b.begin(), // YArray.begin(),
                 inc,
-                thrust::raw_pointer_cast(&r[0]), // XArray.begin(),
+                r.begin(), // XArray.begin(),
                 inc);
 
 
@@ -93,15 +93,15 @@ namespace dftfe
     cublasDaxpy(d_cublasHandle,
                 localSize,
                 &negOne,
-                thrust::raw_pointer_cast(&Ax[0]),
+                Ax.begin(),
                 inc,
-                thrust::raw_pointer_cast(&r[0]),
+                r.begin(),
                 inc);
 
 
 
     // precondition r
-    thrust::device_vector<double> d;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d;
     d.resize(localSize, 0.0);
     problem.precondition_Jacobi(r, d);
 
@@ -110,9 +110,9 @@ namespace dftfe
     // compute delta_new delta_new = r*d;
     cublasDdot(d_cublasHandle,
                localSize,
-               thrust::raw_pointer_cast(&r[0]),
+               r.begin(),
                inc,
-               thrust::raw_pointer_cast(&d[0]),
+               d.begin(),
                inc,
                &delta_new);
 
@@ -122,7 +122,7 @@ namespace dftfe
     delta_0 = delta_new;
 
     // allocate memory for q
-    thrust::device_vector<double> q, s;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> q, s;
     q.resize(localSize, 0.0);
     s.resize(localSize, 0.0);
 
@@ -131,9 +131,9 @@ namespace dftfe
 
     cublasDdot(d_cublasHandle,
                localSize,
-               thrust::raw_pointer_cast(&r[0]),
+               r.begin(),
                inc,
-               thrust::raw_pointer_cast(&r[0]),
+               r.begin(),
                inc,
                &residualNorm);
 
@@ -154,9 +154,9 @@ namespace dftfe
         double scalar;
         cublasDdot(d_cublasHandle,
                    localSize,
-                   thrust::raw_pointer_cast(&d[0]),
+                   d.begin(),
                    inc,
-                   thrust::raw_pointer_cast(&q[0]),
+                   q.begin(),
                    inc,
                    &scalar);
 
@@ -166,9 +166,9 @@ namespace dftfe
         cublasDaxpy(d_cublasHandle,
                     localSize,
                     &alpha,
-                    thrust::raw_pointer_cast(&d[0]),
+                    d.begin(),
                     inc,
-                    thrust::raw_pointer_cast(&x[0]),
+                    x.begin(),
                     inc);
 
         if (iter % 50 == 0)
@@ -176,9 +176,9 @@ namespace dftfe
             // r = b
             cublasDcopy(d_cublasHandle,
                         localSize,
-                        thrust::raw_pointer_cast(&b[0]), // YArray.begin(),
+                        b.begin(), // YArray.begin(),
                         inc,
-                        thrust::raw_pointer_cast(&r[0]), // XArray.begin(),
+                        r.begin(), // XArray.begin(),
                         inc);
 
             problem.computeAX(x, Ax);
@@ -186,9 +186,9 @@ namespace dftfe
             cublasDaxpy(d_cublasHandle,
                         localSize,
                         &negOne,
-                        thrust::raw_pointer_cast(&Ax[0]),
+                        Ax.begin(),
                         inc,
-                        thrust::raw_pointer_cast(&r[0]),
+                        r.begin(),
                         inc);
           }
         else
@@ -197,9 +197,9 @@ namespace dftfe
             cublasDaxpy(d_cublasHandle,
                         localSize,
                         &negAlpha,
-                        thrust::raw_pointer_cast(&q[0]),
+                        q.begin(),
                         inc,
-                        thrust::raw_pointer_cast(&r[0]),
+                        r.begin(),
                         inc);
           }
 
@@ -209,9 +209,9 @@ namespace dftfe
         // delta_new = r*s;
         cublasDdot(d_cublasHandle,
                    localSize,
-                   thrust::raw_pointer_cast(&r[0]),
+                   r.begin(),
                    inc,
-                   thrust::raw_pointer_cast(&s[0]),
+                   s.begin(),
                    inc,
                    &delta_new);
 
@@ -222,16 +222,16 @@ namespace dftfe
         cublasDscal(d_cublasHandle,
                     localSize,
                     &beta,
-                    thrust::raw_pointer_cast(&d[0]),
+                    d.begin(),
                     inc);
 
         // d.add(1.0,s);
         cublasDaxpy(d_cublasHandle,
                     localSize,
                     &posOne,
-                    thrust::raw_pointer_cast(&s[0]),
+                    s.begin(),
                     inc,
-                    thrust::raw_pointer_cast(&d[0]),
+                    d.begin(),
                     inc);
 
         unsigned int isBreak = 0;
@@ -249,9 +249,9 @@ namespace dftfe
     // compute residual norm at end
     cublasDdot(d_cublasHandle,
                localSize,
-               thrust::raw_pointer_cast(&r[0]),
+               r.begin(),
                inc,
-               thrust::raw_pointer_cast(&r[0]),
+               r.begin(),
                inc,
                &residualNorm);
 

@@ -160,12 +160,11 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          deviceUtils::copyHostVecToDeviceVec(
-            reinterpret_cast<dataTypes::numberDevice *>(
-              &d_eigenVectorsFlattenedSTL[kPoint][0]),
-            d_eigenVectorsFlattenedDevice.begin() +
-              kPoint * d_eigenVectorsFlattenedSTL[0].size(),
-            d_eigenVectorsFlattenedSTL[0].size());
+          d_eigenVectorsFlattenedDevice.copyFrom<dftfe::utils::MemorySpace::HOST>(
+              &d_eigenVectorsFlattenedSTL[kPoint][0],
+              d_eigenVectorsFlattenedSTL[0].size(),
+              0,
+              kPoint * d_eigenVectorsFlattenedSTL[0].size());
         }
     }
 #endif

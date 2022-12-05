@@ -70,7 +70,7 @@ namespace shapeFuncDevice
     FEValues<3> &                  fe_values,
     const dealii::DoFHandler<3> &  dofHandler,
     const unsigned int             numElems,
-    thrust::device_vector<double> &shapeGradNINJIntegralD)
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> &shapeGradNINJIntegralD)
   {
     const unsigned int numQuads        = fe_values.get_quadrature().size();
     const unsigned int numNodesPerElem = fe_values.get_fe().dofs_per_cell;
@@ -87,9 +87,9 @@ namespace shapeFuncDevice
     const int numberQuadsBlocks = numQuads / blockSizeQuads;
     const int remBlockSizeQuads = numQuads - numberQuadsBlocks * blockSizeQuads;
 
-    thrust::device_vector<double> shapeGradNINJIntegralContributionD(
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> shapeGradNINJIntegralContributionD(
       blockSizeElems * numNodesPerElem * numNodesPerElem * blockSizeQuads, 0.0);
-    thrust::device_vector<double> onesVecD(blockSizeQuads, 1.0);
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> onesVecD(blockSizeQuads, 1.0);
 
     std::vector<double> cellJxWValues(blockSizeElems * numQuads);
     std::vector<double> shapeFunctionGradientValuesX(blockSizeElems * numQuads *
@@ -102,10 +102,10 @@ namespace shapeFuncDevice
                                                        numNodesPerElem,
                                                      0.0);
 
-    thrust::device_vector<double> jxwQuadValuesD;
-    thrust::device_vector<double> gradNQuadValuesXD;
-    thrust::device_vector<double> gradNQuadValuesYD;
-    thrust::device_vector<double> gradNQuadValuesZD;
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> jxwQuadValuesD;
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> gradNQuadValuesXD;
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> gradNQuadValuesYD;
+    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> gradNQuadValuesZD;
 
     for (int iblock = 0; iblock < (numberElemBlocks + 1); iblock++)
       {
@@ -161,10 +161,14 @@ namespace shapeFuncDevice
                   iElem++;
                 }
 
-            jxwQuadValuesD    = cellJxWValues;
-            gradNQuadValuesXD = shapeFunctionGradientValuesX;
-            gradNQuadValuesYD = shapeFunctionGradientValuesY;
-            gradNQuadValuesZD = shapeFunctionGradientValuesZ;
+            jxwQuadValuesD.resize(cellJxWValues.size());
+            jxwQuadValuesD.copyFrom(cellJxWValues);
+            gradNQuadValuesXD.resize(shapeFunctionGradientValuesX.size());
+            gradNQuadValuesXD.copyFrom(shapeFunctionGradientValuesX);
+            gradNQuadValuesYD.resize(shapeFunctionGradientValuesY.size());
+            gradNQuadValuesYD.copyFrom(shapeFunctionGradientValuesY);
+            gradNQuadValuesZD.resize(shapeFunctionGradientValuesZ.size());
+            gradNQuadValuesZD.copyFrom(shapeFunctionGradientValuesZ);
 
             for (int jblock = 0; jblock < (numberQuadsBlocks + 1); jblock++)
               {
@@ -185,15 +189,14 @@ namespace shapeFuncDevice
                       startingQuadId,
                       numNodesPerElem,
                       currentElemsBlockSize,
-                      thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
-                      thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
-                      thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
-                      thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
-                      thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
-                      thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
-                      thrust::raw_pointer_cast(&jxwQuadValuesD[0]),
-                      thrust::raw_pointer_cast(
-                        &shapeGradNINJIntegralContributionD[0]));
+                      gradNQuadValuesXD.begin(),
+                      gradNQuadValuesYD.begin(),
+                      gradNQuadValuesZD.begin(),
+                      gradNQuadValuesXD.begin(),
+                      gradNQuadValuesYD.begin(),
+                      gradNQuadValuesZD.begin(),
+                      jxwQuadValuesD.begin(),
+                      shapeGradNINJIntegralContributionD.begin());
 
                     const double scalarCoeffAlpha = 1.0;
                     const double scalarCoeffBeta  = 1.0;
@@ -208,16 +211,14 @@ namespace shapeFuncDevice
                                   numNodesPerElem,
                                 currentQuadsBlockSize,
                                 &scalarCoeffAlpha,
-                                thrust::raw_pointer_cast(&onesVecD[0]),
+                                onesVecD.begin(),
                                 1,
-                                thrust::raw_pointer_cast(
-                                  &shapeGradNINJIntegralContributionD[0]),
+                                shapeGradNINJIntegralContributionD.begin(),
                                 currentQuadsBlockSize,
                                 &scalarCoeffBeta,
-                                thrust::raw_pointer_cast(
-                                  &shapeGradNINJIntegralD[startingElemId *
+                                shapeGradNINJIntegralD.begin()+startingElemId *
                                                           numNodesPerElem *
-                                                          numNodesPerElem]),
+                                                          numNodesPerElem,
                                 1);
                   }
               } // block loop over nodes per elem
@@ -236,7 +237,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int numberPhysicalCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  cudaDeviceSynchronize();
+  dftfe::utils::deviceSynchronize();
   MPI_Barrier(d_mpiCommParent);
   double device_time = MPI_Wtime();
 
@@ -256,7 +257,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     numberPhysicalCells,
     d_cellShapeFunctionGradientIntegralFlattenedDevice);
 
-  cudaDeviceSynchronize();
+  dftfe::utils::deviceSynchronize();
   MPI_Barrier(d_mpiCommParent);
   device_time = MPI_Wtime() - device_time;
 
@@ -267,7 +268,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (FEOrderElectro != FEOrder)
     {
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(d_mpiCommParent);
       device_time = MPI_Wtime();
 
@@ -288,7 +289,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberPhysicalCells,
         d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(d_mpiCommParent);
       device_time = MPI_Wtime() - device_time;
 
@@ -473,22 +474,36 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             iElem++;
           }
 
-      d_shapeFunctionValueDevice           = d_shapeFunctionValue;
-      d_shapeFunctionValueTransposedDevice = d_shapeFunctionValueTransposed;
+      d_shapeFunctionValueDevice.resize(d_shapeFunctionValue.size());
+      d_shapeFunctionValueDevice.copyFrom(d_shapeFunctionValue);
+      d_shapeFunctionValueTransposedDevice.resize(d_shapeFunctionValueTransposed.size());
+      d_shapeFunctionValueTransposedDevice.copyFrom(d_shapeFunctionValueTransposed);
 
-      d_shapeFunctionGradientValueXTransposedDevice =
-        d_shapeFunctionGradientValueXTransposed;
-      d_shapeFunctionGradientValueYTransposedDevice =
-        d_shapeFunctionGradientValueYTransposed;
-      d_shapeFunctionGradientValueZTransposedDevice =
-        d_shapeFunctionGradientValueZTransposed;
+      d_shapeFunctionGradientValueXTransposedDevice.resize(
+        d_shapeFunctionGradientValueXTransposed.size());
+      d_shapeFunctionGradientValueXTransposedDevice.copyFrom(
+        d_shapeFunctionGradientValueXTransposed);
 
-      d_shapeFunctionValueLpspDevice = shapeFunctionValueLpsp;
-      d_shapeFunctionValueTransposedLpspDevice =
-        shapeFunctionValueTransposedLpsp;
+      d_shapeFunctionGradientValueYTransposedDevice.resize(
+        d_shapeFunctionGradientValueYTransposed.size());
+      d_shapeFunctionGradientValueYTransposedDevice.copyFrom(
+        d_shapeFunctionGradientValueYTransposed);
 
-      // d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
-      d_cellJxWValuesDevice = d_cellJxWValues;
+      d_shapeFunctionGradientValueZTransposedDevice.resize(
+        d_shapeFunctionGradientValueZTransposed.size());
+      d_shapeFunctionGradientValueZTransposedDevice.copyFrom(
+        d_shapeFunctionGradientValueZTransposed);
+
+      d_shapeFunctionValueLpspDevice.resize(shapeFunctionValueLpsp.size());
+      d_shapeFunctionValueLpspDevice.copyFrom(shapeFunctionValueLpsp);
+
+      d_shapeFunctionValueTransposedLpspDevice.resize(
+        shapeFunctionValueTransposedLpsp.size());
+      d_shapeFunctionValueTransposedLpspDevice.copyFrom(
+        shapeFunctionValueTransposedLpsp);
+
+      d_cellJxWValuesDevice.resize(d_cellJxWValues.size());
+      d_cellJxWValuesDevice.copyFrom(d_cellJxWValues);
 
       QGaussLobatto<3> quadratureGl(
         C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
@@ -520,7 +535,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                                            iNode] = val;
           }
 
-      d_glShapeFunctionValueTransposedDevice = glShapeFunctionValueTransposed;
+      d_glShapeFunctionValueTransposedDevice.resize(glShapeFunctionValueTransposed.size());
+      d_glShapeFunctionValueTransposedDevice.copyFrom(glShapeFunctionValueTransposed);
 
       // QGauss<3>  quadratureNLP(C_num1DQuadNLPSP<FEOrder>());
       QIterated<3>       quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
@@ -613,10 +629,14 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
             iElem++;
           }
+     
+      d_shapeFunctionValueNLPTransposedDevice.resize(nlpShapeFunctionValueTransposed.size());
+      d_shapeFunctionValueNLPTransposedDevice.copyFrom(nlpShapeFunctionValueTransposed);
 
-      d_shapeFunctionValueNLPTransposedDevice = nlpShapeFunctionValueTransposed;
-      d_shapeFunctionGradientValueNLPTransposedDevice =
-        shapeFunctionGradientValueNLPTransposed;
-      d_inverseJacobiansNLPDevice = inverseJacobiansNLP;
+      d_shapeFunctionGradientValueNLPTransposedDevice.resize(shapeFunctionGradientValueNLPTransposed.size());
+      d_shapeFunctionGradientValueNLPTransposedDevice.copyFrom(shapeFunctionGradientValueNLPTransposed);
+
+      d_inverseJacobiansNLPDevice.resize(inverseJacobiansNLP.size());
+      d_inverseJacobiansNLPDevice.copyFrom(inverseJacobiansNLP);
     }
 }

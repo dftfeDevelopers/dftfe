@@ -253,8 +253,8 @@ namespace dftfe
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::solve(
     operatorDFTDeviceClass & operatorMatrix,
     elpaScalaManager &       elpaScala,
-    dataTypes::numberDevice *eigenVectorsFlattenedDevice,
-    dataTypes::numberDevice *eigenVectorsRotFracDensityFlattenedDevice,
+    dataTypes::number *eigenVectorsFlattenedDevice,
+    dataTypes::number *eigenVectorsRotFracDensityFlattenedDevice,
     const unsigned int       flattenedSize,
     const unsigned int       totalNumberWaveFunctions,
     std::vector<double> &    eigenValues,
@@ -298,10 +298,10 @@ namespace dftfe
     const unsigned int vectorsBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
-    distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
+    distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
-    distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector =
+    distributedDeviceVec<dataTypes::number> &projectorKetTimesVector =
       operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
 
@@ -453,7 +453,7 @@ namespace dftfe
         deviceConstants::blockSize * localVectorSize,
       deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                     localVectorSize,
-                                    eigenVectorsFlattenedDevice,
+                                    dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getSqrtMassVec());
 
 
@@ -504,9 +504,9 @@ namespace dftfe
                 deviceConstants::blockSize * localVectorSize,
               deviceConstants::blockSize>>>(BVec,
                                             localVectorSize,
-                                            eigenVectorsFlattenedDevice,
+                                            dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                             totalNumberWaveFunctions,
-                                            deviceFlattenedArrayBlock.begin(),
+                                            dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
                                             jvec);
 
             if (d_dftParams.overlapComputeCommunCheby &&
@@ -517,9 +517,9 @@ namespace dftfe
                 deviceConstants::blockSize>>>(
                 BVec,
                 localVectorSize,
-                eigenVectorsFlattenedDevice,
+                dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                 totalNumberWaveFunctions,
-                d_deviceFlattenedArrayBlock2.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(d_deviceFlattenedArrayBlock2.begin()),
                 jvec + BVec);
 
             //
@@ -572,9 +572,9 @@ namespace dftfe
                 deviceConstants::blockSize * localVectorSize,
               deviceConstants::blockSize>>>(BVec,
                                             localVectorSize,
-                                            deviceFlattenedArrayBlock.begin(),
+                                            dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
                                             totalNumberWaveFunctions,
-                                            eigenVectorsFlattenedDevice,
+                                            dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                             jvec);
 
             if (d_dftParams.overlapComputeCommunCheby &&
@@ -585,9 +585,9 @@ namespace dftfe
                 deviceConstants::blockSize>>>(
                 BVec,
                 localVectorSize,
-                d_deviceFlattenedArrayBlock2.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(d_deviceFlattenedArrayBlock2.begin()),
                 totalNumberWaveFunctions,
-                eigenVectorsFlattenedDevice,
+                dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                 jvec + BVec);
           }
         else
@@ -601,7 +601,7 @@ namespace dftfe
               numSimultaneousBlocksCurrent * BVec,
               localVectorSize,
               totalNumberWaveFunctions,
-              eigenVectorsFlattenedDevice,
+              dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
               jvec);
           }
 
@@ -627,7 +627,7 @@ namespace dftfe
                      &eigenVectorsFlattened[0]),
                    eigenVectorsFlattenedDevice,
                    totalNumberWaveFunctions * localVectorSize *
-                     sizeof(dataTypes::numberDevice));
+                     sizeof(dataTypes::number));
 
         MPI_Barrier(interBandGroupComm);
 
@@ -645,7 +645,7 @@ namespace dftfe
                    dftfe::utils::makeDataTypeDeviceCompatible(
                      &eigenVectorsFlattened[0]),
                    totalNumberWaveFunctions * localVectorSize *
-                     sizeof(dataTypes::numberDevice));
+                     sizeof(dataTypes::number));
       }
 
     // if (d_dftParams.measureOnlyChebyTime)
@@ -777,7 +777,7 @@ namespace dftfe
         deviceConstants::blockSize * localVectorSize,
       deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                     localVectorSize,
-                                    eigenVectorsFlattenedDevice,
+                                    dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getInvSqrtMassVec());
 
     if (eigenValues.size() != totalNumberWaveFunctions)
@@ -786,7 +786,7 @@ namespace dftfe
           deviceConstants::blockSize * localVectorSize,
         deviceConstants::blockSize>>>(eigenValues.size(),
                                       localVectorSize,
-                                      eigenVectorsRotFracDensityFlattenedDevice,
+                                      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsRotFracDensityFlattenedDevice),
                                       operatorMatrix.getInvSqrtMassVec());
 
     return d_upperBoundUnWantedSpectrum;
@@ -799,7 +799,7 @@ namespace dftfe
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::solveNoRR(
     operatorDFTDeviceClass & operatorMatrix,
     elpaScalaManager &       elpaScala,
-    dataTypes::numberDevice *eigenVectorsFlattenedDevice,
+    dataTypes::number *eigenVectorsFlattenedDevice,
     const unsigned int       flattenedSize,
     const unsigned int       totalNumberWaveFunctions,
     std::vector<double> &    eigenValues,
@@ -836,10 +836,10 @@ namespace dftfe
     const unsigned int chebyBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
-    distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
+    distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
-    distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector =
+    distributedDeviceVec<dataTypes::number> &projectorKetTimesVector =
       operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
 
@@ -928,7 +928,7 @@ namespace dftfe
         deviceConstants::blockSize * localVectorSize,
       deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                     localVectorSize,
-                                    eigenVectorsFlattenedDevice,
+                                    dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getSqrtMassVec());
 
     for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
@@ -982,9 +982,9 @@ namespace dftfe
                       deviceConstants::blockSize>>>(
                       BVec,
                       localVectorSize,
-                      eigenVectorsFlattenedDevice,
+                      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                       totalNumberWaveFunctions,
-                      deviceFlattenedArrayBlock.begin(),
+                      dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
                       jvec);
 
                     if (d_dftParams.overlapComputeCommunCheby &&
@@ -995,9 +995,9 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
                         BVec,
                         localVectorSize,
-                        eigenVectorsFlattenedDevice,
+                        dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                         totalNumberWaveFunctions,
-                        d_deviceFlattenedArrayBlock2.begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(d_deviceFlattenedArrayBlock2.begin()),
                         jvec + BVec);
 
                     //
@@ -1052,9 +1052,9 @@ namespace dftfe
                       deviceConstants::blockSize>>>(
                       BVec,
                       localVectorSize,
-                      deviceFlattenedArrayBlock.begin(),
+                      dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
                       totalNumberWaveFunctions,
-                      eigenVectorsFlattenedDevice,
+                      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                       jvec);
 
                     if (d_dftParams.overlapComputeCommunCheby &&
@@ -1065,9 +1065,9 @@ namespace dftfe
                         deviceConstants::blockSize>>>(
                         BVec,
                         localVectorSize,
-                        d_deviceFlattenedArrayBlock2.begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(d_deviceFlattenedArrayBlock2.begin()),
                         totalNumberWaveFunctions,
-                        eigenVectorsFlattenedDevice,
+                        dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                         jvec + BVec);
                   }
                 else
@@ -1082,7 +1082,7 @@ namespace dftfe
                       numSimultaneousBlocksCurrent * BVec,
                       localVectorSize,
                       totalNumberWaveFunctions,
-                      eigenVectorsFlattenedDevice,
+                      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                       jvec);
                   }
 
@@ -1116,7 +1116,7 @@ namespace dftfe
         deviceConstants::blockSize * localVectorSize,
       deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                     localVectorSize,
-                                    eigenVectorsFlattenedDevice,
+                                    dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getInvSqrtMassVec());
   }
 
@@ -1128,7 +1128,7 @@ namespace dftfe
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTDeviceClass &   operatorMatrix,
-      dataTypes::numberDevice *  eigenVectorsFlattenedDevice,
+      dataTypes::number *  eigenVectorsFlattenedDevice,
       const unsigned int         flattenedSize,
       const unsigned int         totalNumberWaveFunctions,
       const std::vector<double> &eigenValues,
@@ -1162,10 +1162,10 @@ namespace dftfe
     const unsigned int vectorsBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
-    distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
+    distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
-    distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector =
+    distributedDeviceVec<dataTypes::number> &projectorKetTimesVector =
       operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
     if (!d_isTemporaryParallelVectorsCreated)
@@ -1186,7 +1186,7 @@ namespace dftfe
         deviceConstants::blockSize * localVectorSize,
       deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                     localVectorSize,
-                                    eigenVectorsFlattenedDevice,
+                                    dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getSqrtMassVec());
 
 
@@ -1221,7 +1221,7 @@ namespace dftfe
         deviceConstants::blockSize * localVectorSize,
       deviceConstants::blockSize>>>(totalNumberWaveFunctions,
                                     localVectorSize,
-                                    eigenVectorsFlattenedDevice,
+                                    dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getInvSqrtMassVec());
 
     dftfe::utils::deviceSynchronize();

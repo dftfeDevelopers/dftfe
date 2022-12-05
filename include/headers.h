@@ -83,8 +83,6 @@
 
 #  if defined(DFTFE_WITH_DEVICE)
 #    include <cuComplex.h>
-#    include <thrust/device_vector.h>
-#    include <thrust/complex.h>
 #  endif
 
 #  include "dftfeDataTypes.h"
