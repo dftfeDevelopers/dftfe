@@ -19,6 +19,9 @@
 
 #include <constants.h>
 #include <kerkerSolverProblemDevice.h>
+#include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <MemoryTransfer.h>
 
 namespace dftfe
 {
@@ -82,9 +85,7 @@ namespace dftfe
     d_xPtr                      = &x;
     d_quadGradResidualValuesPtr = &quadPointValues;
 
-    deviceUtils::copyHostVecToDeviceVec<double>(d_xPtr->begin(),
-                                                d_xDevice.begin(),
-                                                d_xLocalDof);
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_xDevice.begin(),d_xPtr->begin());
   }
 
 
@@ -124,9 +125,7 @@ namespace dftfe
   void
   kerkerSolverProblemDevice<FEOrderElectro>::copyXfromDeviceToHost()
   {
-    deviceUtils::copyDeviceVecToHostVec<double>(d_xDevice.begin(),
-                                                d_xPtr->begin(),
-                                                d_xLen);
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,d_xPtr->begin(),d_xDevice.begin());
   }
 
 
@@ -260,9 +259,8 @@ namespace dftfe
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
     d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
-    deviceUtils::copyHostVecToDeviceVec<double>(d_diagonalA.begin(),
-                                                d_diagonalAdevice.begin(),
-                                                d_xLocalDof);
+
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_diagonalAdevice.begin(),d_diagonalA.begin());
   }
 
 
@@ -793,7 +791,7 @@ namespace dftfe
     constexpr int threads =
       (FEOrderElectro < 7 ?
          96 :
-         FEOrderElectro == 7 ? 64 : deviceConstants::blockSize);
+         FEOrderElectro == 7 ? 64 : dftfe::utils::DEVICE_BLOCK_SIZE);
     const int        blocks         = d_nLocalCells;
     const double     coeffHelmholtz = 4 * M_PI * d_gamma;
     constexpr size_t smem =

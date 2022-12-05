@@ -24,7 +24,7 @@
 #  include <deviceDirectCCLWrapper.h>
 #  include <deviceHelpers.h>
 # include <DeviceDataTypeOverloads.h>
-
+#include <DeviceKernelLauncherConstants.h>
 #  if defined(DFTFE_WITH_NCCL)
 #    include <nccl.h>
 #  endif

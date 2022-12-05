@@ -349,10 +349,10 @@ namespace dftfe
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
-        DeviceCHECK(
+        DEVICE_API_CHECK(
           cudaMalloc((void **)&d_vecData,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
-        DeviceCHECK(
+        DEVICE_API_CHECK(
           cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
                      0,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
@@ -461,10 +461,10 @@ namespace dftfe
       {
         if ((d_locallyOwnedSize + d_ghostSize) > 0)
           {
-            DeviceCHECK(cudaMalloc((void **)&d_vecData,
+            DEVICE_API_CHECK(cudaMalloc((void **)&d_vecData,
                                    (d_locallyOwnedSize + d_ghostSize) *
                                      sizeof(NumberType)));
-            DeviceCHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
+            DEVICE_API_CHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
                                    0,
                                    (d_locallyOwnedSize + d_ghostSize) *
                                      sizeof(NumberType)));
@@ -544,7 +544,7 @@ namespace dftfe
         else if (memorySpace==dftfe::utils::MemorySpace::DEVICE)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            DeviceCHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()),
+            DEVICE_API_CHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()),
                                    0,
                                    d_locallyOwnedSize * sizeof(NumberType)));
 #endif
@@ -1255,7 +1255,7 @@ namespace dftfe
                  (std::is_same<NumberType, std::complex<double>>::value ||
                   std::is_same<NumberType, std::complex<float>>::value))
           {
-            DeviceCHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()) + d_locallyOwnedSize,
+            DEVICE_API_CHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()) + d_locallyOwnedSize,
                                    0,
                                    d_ghostSize * sizeof(NumberType)));
 
@@ -1425,7 +1425,7 @@ namespace dftfe
         else if (memorySpace==dftfe::utils::MemorySpace::DEVICE)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            DeviceCHECK(cudaFree(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData)));
+            DEVICE_API_CHECK(cudaFree(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData)));
 #endif
           }
       }

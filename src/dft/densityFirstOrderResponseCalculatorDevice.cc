@@ -29,6 +29,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
 
 namespace dftfe
 {
@@ -209,8 +210,8 @@ namespace dftfe
                        double *           copyToVec)
     {
       copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
+        (size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) / dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(size, copyFromVec, copyToVec);
     }
 
     void
@@ -219,8 +220,8 @@ namespace dftfe
                        cuDoubleComplex *  copyToVec)
     {
       copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
+        (size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) / dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(size, copyFromVec, copyToVec);
     }
 
 
@@ -230,8 +231,8 @@ namespace dftfe
                        float *            copyToVec)
     {
       copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
+        (size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) / dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(size, copyFromVec, copyToVec);
     }
 
     void
@@ -240,8 +241,8 @@ namespace dftfe
                        cuFloatComplex *   copyToVec)
     {
       copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
+        (size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) / dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(size, copyFromVec, copyToVec);
     }
 
     __global__ void
@@ -468,9 +469,9 @@ namespace dftfe
                     densityMatDerFermiEnergyVec.template copyTo<dftfe::utils::MemorySpace::DEVICE>(densityMatDerFermiEnergyVecDevice); 
 
                     stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * numLocalDofs,
-                      deviceConstants::blockSize>>>(
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       BVec,
                       dftfe::utils::makeDataTypeDeviceCompatible(X +
                         numLocalDofs * totalNumWaveFunctions *
@@ -487,9 +488,9 @@ namespace dftfe
                       ->distribute(deviceFlattenedArrayXBlock, BVec);
 
                     stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * numLocalDofs,
-                      deviceConstants::blockSize>>>(
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       BVec,
                       dftfe::utils::makeDataTypeDeviceCompatible(XPrime +
                         numLocalDofs * totalNumWaveFunctions *
@@ -518,10 +519,10 @@ namespace dftfe
 
 
                             copyGlobalToCellDeviceKernel<<<
-                              (BVec + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize *
+                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE *
                                 currentCellsBlockSize * numNodesPerElement,
-                              deviceConstants::blockSize>>>(
+                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                               BVec,
                               currentCellsBlockSize * numNodesPerElement,
                               dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayXBlock.begin()),
@@ -556,10 +557,10 @@ namespace dftfe
                               currentCellsBlockSize);
 
                             copyGlobalToCellDeviceKernel<<<
-                              (BVec + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize *
+                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE *
                                 currentCellsBlockSize * numNodesPerElement,
-                              deviceConstants::blockSize>>>(
+                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                               BVec,
                               currentCellsBlockSize * numNodesPerElement,
                               dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayXPrimeBlock.begin()),
@@ -589,10 +590,10 @@ namespace dftfe
 
 
                             computeRhoResponseFromInterpolatedValues<<<
-                              (BVec + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize * numQuadPoints *
+                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE * numQuadPoints *
                                 currentCellsBlockSize,
-                              deviceConstants::blockSize>>>(
+                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                               BVec * numQuadPoints * currentCellsBlockSize,
                               dftfe::utils::makeDataTypeDeviceCompatible(XQuadsDevice.begin()),
                               dftfe::utils::makeDataTypeDeviceCompatible(XPrimeQuadsDevice.begin()));

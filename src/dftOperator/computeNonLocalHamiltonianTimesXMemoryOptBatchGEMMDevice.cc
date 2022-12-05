@@ -92,9 +92,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0 && !skip1)
     copyToDealiiParallelNonLocalVec<<<
-      (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
-      deviceConstants::blockSize>>>(
+      (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
@@ -122,9 +122,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       // compute V*C^{\dagger}*X
       //
       scaleDeviceKernel<<<
-        (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-          deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
-        deviceConstants::blockSize>>>(
+        (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         1.0,
@@ -132,10 +132,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_nonLocalPseudoPotentialConstantsDevice.begin());
 
       copyFromParallelNonLocalVecToAllCellsVec<<<
-        (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-          deviceConstants::blockSize * d_totalNonlocalElems *
+        (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * d_totalNonlocalElems *
           d_maxSingleAtomPseudoWfc,
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         numberWaveFunctions,
         d_totalNonlocalElems,
         d_maxSingleAtomPseudoWfc,
@@ -178,10 +178,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         {
           const unsigned int accum = d_numberCellsAccumNonLocalAtoms[iAtom];
           addNonLocalContributionDeviceKernel<<<
-            (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numberCellsNonLocalAtoms[iAtom] *
+            (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numberCellsNonLocalAtoms[iAtom] *
               d_numberNodesPerElement,
-            deviceConstants::blockSize>>>(
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberWaveFunctions,
             d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
             dftfe::utils::makeDataTypeDeviceCompatible(
@@ -205,10 +205,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
       daxpyAtomicAddKernel<<<(numberWaveFunctions +
-                              (deviceConstants::blockSize - 1)) /
-                               deviceConstants::blockSize *
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE *
                                d_numLocallyOwnedCells * d_numberNodesPerElement,
-                             deviceConstants::blockSize>>>(
+                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         numberWaveFunctions,
         d_numLocallyOwnedCells * d_numberNodesPerElement,
         dftfe::utils::makeDataTypeDeviceCompatible(
@@ -226,10 +226,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     }
   else
     daxpyAtomicAddKernel<<<(numberWaveFunctions +
-                            (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize *
+                            (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE *
                              d_numLocallyOwnedCells * d_numberNodesPerElement,
-                           deviceConstants::blockSize>>>(
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
       numberWaveFunctions,
       d_numLocallyOwnedCells * d_numberNodesPerElement,
       dftfe::utils::makeDataTypeDeviceCompatible(
@@ -259,10 +259,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   if (d_totalNonlocalElems > 0)
     {
       copyDeviceKernel<<<(numberWaveFunctions +
-                          (deviceConstants::blockSize - 1)) /
-                           deviceConstants::blockSize * totalLocallyOwnedCells *
+                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                           dftfe::utils::DEVICE_BLOCK_SIZE * totalLocallyOwnedCells *
                            d_numberNodesPerElement,
-                         deviceConstants::blockSize>>>(
+                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         numberWaveFunctions,
         totalLocallyOwnedCells * d_numberNodesPerElement,
         dftfe::utils::makeDataTypeDeviceCompatible(src),
@@ -313,9 +313,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0)
     copyToDealiiParallelNonLocalVec<<<
-      (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
-      deviceConstants::blockSize>>>(
+      (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
@@ -330,9 +330,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   //
   if (d_totalNonlocalElems > 0)
     scaleDeviceKernel<<<(numberWaveFunctions +
-                         (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * d_totalPseudoWfcNonLocal,
-                        deviceConstants::blockSize>>>(
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       1.0,

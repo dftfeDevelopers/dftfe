@@ -38,10 +38,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyDeviceKernel<<<(numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-                       deviceConstants::blockSize * totalLocallyOwnedCells *
+  copyDeviceKernel<<<(numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                       dftfe::utils::DEVICE_BLOCK_SIZE * totalLocallyOwnedCells *
                        d_numberNodesPerElement,
-                     deviceConstants::blockSize>>>(
+                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
     dftfe::utils::makeDataTypeDeviceCompatible(src),
@@ -100,10 +100,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
           daxpyAtomicAddKernel<<<
-            (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numLocallyOwnedCells *
+            (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numLocallyOwnedCells *
               d_numberNodesPerElement,
-            deviceConstants::blockSize>>>(
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberWaveFunctions,
             d_numLocallyOwnedCells * d_numberNodesPerElement,
             dftfe::utils::makeDataTypeDeviceCompatible(
@@ -121,10 +121,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         }
       else
         daxpyAtomicAddKernel<<<
-          (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-            deviceConstants::blockSize * d_numLocallyOwnedCells *
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * d_numLocallyOwnedCells *
             d_numberNodesPerElement,
-          deviceConstants::blockSize>>>(
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           numberWaveFunctions,
           d_numLocallyOwnedCells * d_numberNodesPerElement,
           dftfe::utils::makeDataTypeDeviceCompatible(

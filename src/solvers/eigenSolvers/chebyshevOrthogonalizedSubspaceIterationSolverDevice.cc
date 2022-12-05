@@ -21,6 +21,7 @@
 #include <deviceHelpers.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <vectorUtilities.h>
@@ -449,9 +450,9 @@ namespace dftfe
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
     scaleDeviceKernel<<<
-      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * localVectorSize,
-      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+      (totalNumberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalNumberWaveFunctions,
                                     localVectorSize,
                                     dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getSqrtMassVec());
@@ -500,9 +501,9 @@ namespace dftfe
             // copy from vector containg all wavefunction vectors to current
             // wavefunction vectors block
             stridedCopyToBlockKernel<<<
-              (BVec + (deviceConstants::blockSize - 1)) /
-                deviceConstants::blockSize * localVectorSize,
-              deviceConstants::blockSize>>>(BVec,
+              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+              dftfe::utils::DEVICE_BLOCK_SIZE>>>(BVec,
                                             localVectorSize,
                                             dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                             totalNumberWaveFunctions,
@@ -512,9 +513,9 @@ namespace dftfe
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
               stridedCopyToBlockKernel<<<
-                (BVec + (deviceConstants::blockSize - 1)) /
-                  deviceConstants::blockSize * localVectorSize,
-                deviceConstants::blockSize>>>(
+                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 BVec,
                 localVectorSize,
                 dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
@@ -568,9 +569,9 @@ namespace dftfe
             // copy current wavefunction vectors block to vector containing
             // all wavefunction vectors
             stridedCopyFromBlockKernel<<<
-              (BVec + (deviceConstants::blockSize - 1)) /
-                deviceConstants::blockSize * localVectorSize,
-              deviceConstants::blockSize>>>(BVec,
+              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+              dftfe::utils::DEVICE_BLOCK_SIZE>>>(BVec,
                                             localVectorSize,
                                             dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
                                             totalNumberWaveFunctions,
@@ -580,9 +581,9 @@ namespace dftfe
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
               stridedCopyFromBlockKernel<<<
-                (BVec + (deviceConstants::blockSize - 1)) /
-                  deviceConstants::blockSize * localVectorSize,
-                deviceConstants::blockSize>>>(
+                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 BVec,
                 localVectorSize,
                 dftfe::utils::makeDataTypeDeviceCompatible(d_deviceFlattenedArrayBlock2.begin()),
@@ -595,9 +596,9 @@ namespace dftfe
             // set to zero wavefunctions which wont go through chebyshev
             // filtering inside a given band group
             setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
-                             (deviceConstants::blockSize - 1)) /
-                              deviceConstants::blockSize * localVectorSize,
-                            deviceConstants::blockSize>>>(
+                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                              dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numSimultaneousBlocksCurrent * BVec,
               localVectorSize,
               totalNumberWaveFunctions,
@@ -773,18 +774,18 @@ namespace dftfe
     // the usual FE basis
     //
     scaleDeviceKernel<<<
-      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * localVectorSize,
-      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+      (totalNumberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalNumberWaveFunctions,
                                     localVectorSize,
                                     dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getInvSqrtMassVec());
 
     if (eigenValues.size() != totalNumberWaveFunctions)
       scaleDeviceKernel<<<
-        (eigenValues.size() + (deviceConstants::blockSize - 1)) /
-          deviceConstants::blockSize * localVectorSize,
-        deviceConstants::blockSize>>>(eigenValues.size(),
+        (eigenValues.size() + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(eigenValues.size(),
                                       localVectorSize,
                                       dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsRotFracDensityFlattenedDevice),
                                       operatorMatrix.getInvSqrtMassVec());
@@ -924,9 +925,9 @@ namespace dftfe
     // previous guess) to convert into Lowden Orthonormalized FE basis multiply
     // by M^{1/2}
     scaleDeviceKernel<<<
-      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * localVectorSize,
-      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+      (totalNumberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalNumberWaveFunctions,
                                     localVectorSize,
                                     dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getSqrtMassVec());
@@ -977,9 +978,9 @@ namespace dftfe
                     // copy from vector containg all wavefunction vectors to
                     // current wavefunction vectors block
                     stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * localVectorSize,
-                      deviceConstants::blockSize>>>(
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       BVec,
                       localVectorSize,
                       dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
@@ -990,9 +991,9 @@ namespace dftfe
                     if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyToBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(
+                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         BVec,
                         localVectorSize,
                         dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
@@ -1047,9 +1048,9 @@ namespace dftfe
                     // copy current wavefunction vectors block to vector
                     // containing all wavefunction vectors
                     stridedCopyFromBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * localVectorSize,
-                      deviceConstants::blockSize>>>(
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       BVec,
                       localVectorSize,
                       dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
@@ -1060,9 +1061,9 @@ namespace dftfe
                     if (d_dftParams.overlapComputeCommunCheby &&
                         numSimultaneousBlocksCurrent == 2)
                       stridedCopyFromBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(
+                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         BVec,
                         localVectorSize,
                         dftfe::utils::makeDataTypeDeviceCompatible(d_deviceFlattenedArrayBlock2.begin()),
@@ -1075,10 +1076,10 @@ namespace dftfe
                     // set to zero wavefunctions which wont go through chebyshev
                     // filtering inside a given band group
                     setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
-                                     (deviceConstants::blockSize - 1)) /
-                                      deviceConstants::blockSize *
+                                     (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                      dftfe::utils::DEVICE_BLOCK_SIZE *
                                       localVectorSize,
-                                    deviceConstants::blockSize>>>(
+                                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       numSimultaneousBlocksCurrent * BVec,
                       localVectorSize,
                       totalNumberWaveFunctions,
@@ -1112,9 +1113,9 @@ namespace dftfe
     // the usual FE basis
     //
     scaleDeviceKernel<<<
-      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * localVectorSize,
-      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+      (totalNumberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalNumberWaveFunctions,
                                     localVectorSize,
                                     dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getInvSqrtMassVec());
@@ -1182,9 +1183,9 @@ namespace dftfe
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
     scaleDeviceKernel<<<
-      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * localVectorSize,
-      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+      (totalNumberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalNumberWaveFunctions,
                                     localVectorSize,
                                     dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getSqrtMassVec());
@@ -1217,9 +1218,9 @@ namespace dftfe
     // the usual FE basis
     //
     scaleDeviceKernel<<<
-      (totalNumberWaveFunctions + (deviceConstants::blockSize - 1)) /
-        deviceConstants::blockSize * localVectorSize,
-      deviceConstants::blockSize>>>(totalNumberWaveFunctions,
+      (totalNumberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalNumberWaveFunctions,
                                     localVectorSize,
                                     dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
                                     operatorMatrix.getInvSqrtMassVec());

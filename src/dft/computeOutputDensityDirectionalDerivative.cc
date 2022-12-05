@@ -42,10 +42,9 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 #ifdef DFTFE_WITH_DEVICE
   if (d_dftParamsPtr->useDevice)
-    deviceUtils::copyDeviceVecToDeviceVec(
-      d_eigenVectorsFlattenedDevice.begin(),
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::DEVICE>::copy(d_eigenVectorsFlattenedDevice.size(),
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
-      d_eigenVectorsFlattenedDevice.size());
+      d_eigenVectorsFlattenedDevice.begin());
 #endif
   if (!d_dftParamsPtr->useDevice)
     d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;

@@ -25,6 +25,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
 
 namespace dftfe
 {
@@ -258,9 +259,9 @@ namespace dftfe
         constraintsMatrixDataInfoDevice.distribute(temp, numberVectors);
 
         if ((localSize + ghostSize) > 0)
-          scaleKernel<<<(numberVectors + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize *(localSize + ghostSize),
-                        deviceConstants::blockSize>>>(
+          scaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors * (localSize + ghostSize),
             temp.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
@@ -273,10 +274,10 @@ namespace dftfe
 
         if (totalLocallyOwnedCells > 0)
           copyDeviceKernel<<<(numberVectors +
-                              (deviceConstants::blockSize - 1)) /
-                               deviceConstants::blockSize *
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE *
                                totalLocallyOwnedCells * numberNodesPerElement,
-                             deviceConstants::blockSize>>>(
+                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             temp.begin(), // src.begin(),
@@ -315,10 +316,10 @@ namespace dftfe
 
         if (totalLocallyOwnedCells > 0)
           daxpyAtomicAddKernel<<<
-            (numberVectors + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * totalLocallyOwnedCells *
+            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * totalLocallyOwnedCells *
               numberNodesPerElement,
-            deviceConstants::blockSize>>>(
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             cellStiffnessMatrixTimesVectorD.begin(),
@@ -327,9 +328,9 @@ namespace dftfe
 
         // think dirichlet hanging node linked to two master solved nodes
         if ((localSize + ghostSize) > 0)
-          scaleKernel<<<(numberVectors + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize *(localSize + ghostSize),
-                        deviceConstants::blockSize>>>(
+          scaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors * (localSize + ghostSize),
             dst.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
@@ -341,9 +342,9 @@ namespace dftfe
         dst.compressAdd();
 
         if (localSize > 0)
-          scaleKernel<<<(numberVectors + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localSize,
-                        deviceConstants::blockSize>>>(
+          scaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors * localSize,
             dst.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
@@ -360,9 +361,9 @@ namespace dftfe
                           double *           dst)
       {
         if (localSize > 0)
-          diagScaleKernel<<<(numberVectors + (deviceConstants::blockSize - 1)) /
-                              deviceConstants::blockSize * localSize,
-                            deviceConstants::blockSize>>>(
+          diagScaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                              dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors, localSize, src, diagonalA, dst);
       }
 
@@ -378,9 +379,9 @@ namespace dftfe
       {
         if (localSize > 0)
           dotProductContributionBlockedKernel<<<
-            (numberVectors + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * localSize,
-            deviceConstants::blockSize>>>(numberVectors * localSize,
+            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors * localSize,
                                           vec1,
                                           vec2,
                                           vecTemp);
@@ -821,9 +822,9 @@ namespace dftfe
           // update x; x = x + alpha*d
           if (localSize > 0)
             daxpyBlockedKernel<<<(numberBins +
-                                  (deviceConstants::blockSize - 1)) /
-                                   deviceConstants::blockSize * localSize,
-                                 deviceConstants::blockSize>>>(
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                   dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins,
               localSize,
               d.begin(),
@@ -856,9 +857,9 @@ namespace dftfe
  
               if (localSize > 0)
                 daxpyBlockedKernel<<<(numberBins +
-                                      (deviceConstants::blockSize - 1)) /
-                                       deviceConstants::blockSize * localSize,
-                                     deviceConstants::blockSize>>>(
+                                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                       dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numberBins,
                   localSize,
                   Ax.begin(),
@@ -870,9 +871,9 @@ namespace dftfe
               // negAlphaD = -alpha;
               if (localSize > 0)
                 dmaxpyBlockedKernel<<<(numberBins +
-                                       (deviceConstants::blockSize - 1)) /
-                                        deviceConstants::blockSize * localSize,
-                                      deviceConstants::blockSize>>>(
+                                       (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                        dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numberBins,
                   localSize,
                   q.begin(),
@@ -938,9 +939,9 @@ namespace dftfe
           // d *= beta;
           if (localSize > 0)
             scaleBlockedKernel<<<(numberBins +
-                                  (deviceConstants::blockSize - 1)) /
-                                   deviceConstants::blockSize * localSize,
-                                 deviceConstants::blockSize>>>(
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                   dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins,
               localSize,
               d.begin(),
@@ -949,9 +950,9 @@ namespace dftfe
           // d.add(1.0,s);
           if (localSize > 0)
             daxpyBlockedKernel<<<(numberBins +
-                                  (deviceConstants::blockSize - 1)) /
-                                   deviceConstants::blockSize * localSize,
-                                 deviceConstants::blockSize>>>(
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                   dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins,
               localSize,
               s.begin(),

@@ -26,6 +26,7 @@
 #include <MemoryStorage.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
 #include "linearAlgebraOperationsDevice.h"
 
 namespace dftfe
@@ -427,9 +428,9 @@ namespace dftfe
                          const unsigned int size,
                          double *           copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
                                                          copyFromVec,
                                                          copyToVec);
       }
@@ -439,9 +440,9 @@ namespace dftfe
                          const unsigned int size,
                          cuDoubleComplex *  copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
                                                          copyFromVec,
                                                          copyToVec);
       }
@@ -485,10 +486,10 @@ namespace dftfe
         dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
-        copyDeviceKernel<<<(BVec + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize * numCells *
+        copyDeviceKernel<<<(BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE * numCells *
                              numNodesPerElement,
-                           deviceConstants::blockSize>>>(
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           BVec,
           numCells * numNodesPerElement,
           dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
@@ -703,10 +704,10 @@ namespace dftfe
 
 
                     computeELocWfcEshelbyTensorContributions<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * currentBlockSize *
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * currentBlockSize *
                         numQuads * 9,
-                      deviceConstants::blockSize>>>(
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       BVec,
                       currentBlockSize * numQuads * 9,
                       numQuads,
@@ -902,10 +903,10 @@ namespace dftfe
             if (currentBlockSizeNlp > 0)
               {
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + (deviceConstants::blockSize - 1)) /
-                    deviceConstants::blockSize * numQuadsNLP * 3 *
+                  (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * 3 *
                     currentBlockSizeNlp,
-                  deviceConstants::blockSize>>>(
+                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numPsi,
                   numQuadsNLP * 3,
                   currentBlockSizeNlp,
@@ -955,10 +956,10 @@ namespace dftfe
                       [i];
 #ifdef USE_COMPLEX
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + (deviceConstants::blockSize - 1)) /
-                    deviceConstants::blockSize * numQuadsNLP *
+                  (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP *
                     currentBlockSizeNlp,
-                  deviceConstants::blockSize>>>(
+                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numPsi,
                   numQuadsNLP,
                   currentBlockSizeNlp,
@@ -1079,9 +1080,9 @@ namespace dftfe
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
                                  ->local_size();
-        stridedCopyToBlockKernel<<<(numPsi + (deviceConstants::blockSize - 1)) /
-                                     deviceConstants::blockSize * M,
-                                   deviceConstants::blockSize>>>(
+        stridedCopyToBlockKernel<<<(numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           numPsi, dftfe::utils::makeDataTypeDeviceCompatible(X), M, N, dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()), startingVecId);
         deviceFlattenedArrayBlock.updateGhostValues();
 
@@ -1328,7 +1329,7 @@ namespace dftfe
           nonTrivialIdToElemIdMapD.resize(totalNonTrivialPseudoWfcs, 0);
 
 
-          DeviceCHECK(cudaMallocHost(
+          DEVICE_API_CHECK(cudaMallocHost(
             (void *
                *)&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
             innerBlockSizeEnlp * numQuadsNLP * 3 *
@@ -1479,7 +1480,7 @@ namespace dftfe
         } // k point loop
 
       if (totalNonTrivialPseudoWfcs > 0)
-        DeviceCHECK(cudaFreeHost(
+        DEVICE_API_CHECK(cudaFreeHost(
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp));
 
       // dftfe::utils::deviceSynchronize();

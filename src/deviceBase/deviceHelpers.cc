@@ -20,6 +20,7 @@
 
 #include <deviceHelpers.h>
 #include <DeviceDataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
 #include <dftUtils.h>
 #include <headers.h>
 #include <cublas_v2.h>
@@ -28,31 +29,17 @@ namespace dftfe
 {
   namespace
   {
-    template <typename NumberType>
-    __global__ void
-    setKernel(const dataTypes::local_size_type size,
-              const NumberType                 s,
-              NumberType *                     arr)
-    {
-      const dataTypes::local_size_type globalId =
-        threadIdx.x + blockIdx.x * blockDim.x;
-
-      for (dataTypes::local_size_type idx = globalId; idx < size;
-           idx += blockDim.x * gridDim.x)
-        arr[idx] = s;
-    }
-
     template <typename NumberTypeComplex, typename NumberTypeReal>
     __global__ void
-    copyComplexArrToRealArrsDeviceKernel(const dataTypes::local_size_type size,
+    copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type size,
                                          const NumberTypeComplex *complexArr,
                                          NumberTypeReal *         realArr,
                                          NumberTypeReal *         imagArr)
     {
-      const dataTypes::local_size_type globalId =
+      const dftfe::size_type globalId =
         threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dataTypes::local_size_type idx = globalId; idx < size;
+      for (dftfe::size_type idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
         {
           realArr[idx] = complexArr[idx].x;
@@ -62,15 +49,15 @@ namespace dftfe
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     __global__ void
-    copyRealArrsToComplexArrDeviceKernel(const dataTypes::local_size_type size,
+    copyRealArrsToComplexArrDeviceKernel(const dftfe::size_type size,
                                          const NumberTypeReal *realArr,
                                          const NumberTypeReal *imagArr,
                                          NumberTypeComplex *   complexArr)
     {
-      const dataTypes::local_size_type globalId =
+      const dftfe::size_type globalId =
         threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dataTypes::local_size_type idx = globalId; idx < size;
+      for (dftfe::size_type idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
         {
           complexArr[idx].x = realArr[idx];
@@ -103,65 +90,28 @@ namespace dftfe
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
-    copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
+    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
                                    const NumberTypeComplex *        complexArr,
                                    NumberTypeReal *                 realArr,
                                    NumberTypeReal *                 imagArr)
     {
       copyComplexArrToRealArrsDeviceKernel
-        <<<size / deviceConstants::blockSize + 1, deviceConstants::blockSize>>>(
+        <<<size / dftfe::utils::DEVICE_BLOCK_SIZE + 1, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           size, dftfe::utils::makeDataTypeDeviceCompatible(complexArr), realArr, imagArr);
     }
 
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
-    copyRealArrsToComplexArrDevice(const dataTypes::local_size_type size,
+    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
                                    const NumberTypeReal *           realArr,
                                    const NumberTypeReal *           imagArr,
                                    NumberTypeComplex *              complexArr)
     {
       copyRealArrsToComplexArrDeviceKernel
-        <<<size / deviceConstants::blockSize + 1, deviceConstants::blockSize>>>(
+        <<<size / dftfe::utils::DEVICE_BLOCK_SIZE + 1, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           size, realArr, imagArr, dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
     }
-
-    template <typename NumberType>
-    void
-    copyDeviceVecToDeviceVec(const NumberType *               cudaVecSrc,
-                             NumberType *                     cudaVecDst,
-                             const dataTypes::local_size_type size)
-    {
-      DeviceCHECK(cudaMemcpy(cudaVecDst,
-                             cudaVecSrc,
-                             size * sizeof(NumberType),
-                             cudaMemcpyDeviceToDevice));
-    }
-
-    template <typename NumberType>
-    void
-    copyHostVecToDeviceVec(const NumberType *               hostVec,
-                           NumberType *                     cudaVector,
-                           const dataTypes::local_size_type size)
-    {
-      DeviceCHECK(cudaMemcpy(cudaVector,
-                             hostVec,
-                             size * sizeof(NumberType),
-                             cudaMemcpyHostToDevice));
-    }
-
-    template <typename NumberType>
-    void
-    copyDeviceVecToHostVec(const NumberType *               cudaVector,
-                           NumberType *                     hostVec,
-                           const dataTypes::local_size_type size)
-    {
-      DeviceCHECK(cudaMemcpy(hostVec,
-                             cudaVector,
-                             size * sizeof(NumberType),
-                             cudaMemcpyDeviceToHost));
-    }
-
 
     void
     add(double *        y,
@@ -227,112 +177,39 @@ namespace dftfe
     void
     sadd(NumberType *y, NumberType *x, const NumberType beta, const int size)
     {
-      const int gridSize = (size / deviceConstants::blockSize) +
-                           (size % deviceConstants::blockSize == 0 ? 0 : 1);
+      const int gridSize = (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
+                           (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
       saddKernel<NumberType>
-        <<<gridSize, deviceConstants::blockSize>>>(y, x, beta, size);
-    }
-
-    template <typename NumberType>
-    void
-    set(NumberType *x, const NumberType &alpha, const int size)
-    {
-      const int gridSize = (size / deviceConstants::blockSize) +
-                           (size % deviceConstants::blockSize == 0 ? 0 : 1);
-      setKernel<NumberType>
-        <<<gridSize, deviceConstants::blockSize>>>(size, alpha, x);
+        <<<gridSize, dftfe::utils::DEVICE_BLOCK_SIZE>>>(y, x, beta, size);
     }
 
 
     template void
-    copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
+    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
                                    const  std::complex<double> *          complexArr,
                                    double *                         realArr,
                                    double *                         imagArr);
 
     template void
-    copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
+    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
                                    const  std::complex<float> *           complexArr,
                                    float *                          realArr,
                                    float *                          imagArr);
 
     template void
-    copyRealArrsToComplexArrDevice(const dataTypes::local_size_type size,
+    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
                                    const double *                   realArr,
                                    const double *                   imagArr,
                                    std::complex<double> *                complexArr);
 
     template void
-    copyRealArrsToComplexArrDevice(const dataTypes::local_size_type size,
+    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
                                    const float *                    realArr,
                                    const float *                    imagArr,
                                    std::complex<float> *                 complexArr);
 
     template void
-    copyDeviceVecToDeviceVec(const double *                   cudaVecSrc,
-                             double *                         cudaVecDst,
-                             const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToDeviceVec(const float *                    cudaVecSrc,
-                             float *                          cudaVecDst,
-                             const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToDeviceVec(const std::complex<double> *          cudaVecSrc,
-                              std::complex<double> *                cudaVecDst,
-                             const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToDeviceVec(const  std::complex<float> *           cudaVecSrc,
-                              std::complex<float> *                 cudaVecDst,
-                             const dataTypes::local_size_type size);
-
-    template void
-    copyHostVecToDeviceVec(const double *                   hostVec,
-                           double *                         cudaVector,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyHostVecToDeviceVec(const float *                    hostVec,
-                           float *                          cudaVector,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyHostVecToDeviceVec(const std::complex<double> *          hostVec,
-                            std::complex<double> *                cudaVector,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyHostVecToDeviceVec(const  std::complex<float> *           hostVec,
-                            std::complex<float> *                 cudaVector,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToHostVec(const double *                   cudaVector,
-                           double *                         hostVec,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToHostVec(const float *                    cudaVector,
-                           float *                          hostVec,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToHostVec(const std::complex<double> *          cudaVector,
-                           std::complex<double> *                hostVec,
-                           const dataTypes::local_size_type size);
-
-    template void
-    copyDeviceVecToHostVec(const std::complex<float> *           cudaVector,
-                           std::complex<float> *                 hostVec,
-                           const dataTypes::local_size_type size);
-
-    template void
     sadd(double *y, double *x, const double beta, const int size);
-
-    template void
-    set(double *x, const double &alpha, const int size);
 
   } // namespace deviceUtils
 } // namespace dftfe

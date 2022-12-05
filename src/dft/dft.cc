@@ -40,6 +40,7 @@
 #include <pseudoUtils.h>
 #include <symmetry.h>
 #include <vectorUtilities.h>
+#include <MemoryTransfer.h>
 
 #include <algorithm>
 #include <cmath>

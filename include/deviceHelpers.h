@@ -19,29 +19,13 @@
 #    define deviceHelpers_h
 
 #    include <cuda_runtime.h>
-#    include "dftfeDataTypes.h"
-#    include "MemorySpaceType.h"
-#    include "headers.h"
-#    include <cooperative_groups.h>
-#    include <cooperative_groups/reduce.h>
+#    include <dftfeDataTypes.h>
+#    include <MemorySpaceType.h>
+#    include <headers.h>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
-#    define DeviceCHECK(cmd)                            \
-      do                                                \
-        {                                               \
-          cudaError_t e = cmd;                          \
-          if (e != cudaSuccess)                         \
-            {                                           \
-              printf("Failed: Cuda error %s:%d '%s'\n", \
-                     __FILE__,                          \
-                     __LINE__,                          \
-                     cudaGetErrorString(e));            \
-              exit(EXIT_FAILURE);                       \
-            }                                           \
-        }                                               \
-      while (0)
-
 #    define cublasCheck(expr)                                                            \
       {                                                                                  \
         cublasStatus_t __cublas_error = expr;                                            \
@@ -55,13 +39,6 @@ namespace dftfe
           }                                                                              \
       }
 
-  namespace deviceConstants
-  {
-    static const int warpSize     = 32;
-    static const int maxBlockSize = 1024;
-    static const int blockSize    = 256;
-  } // namespace deviceConstants
-
   namespace deviceUtils
   {
     void
@@ -69,7 +46,7 @@ namespace dftfe
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
-    copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
+    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
                                    const NumberTypeComplex *        complexArr,
                                    NumberTypeReal *                 realArr,
                                    NumberTypeReal *                 imagArr);
@@ -77,29 +54,10 @@ namespace dftfe
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
-    copyRealArrsToComplexArrDevice(const dataTypes::local_size_type size,
+    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
                                    const NumberTypeReal *           realArr,
                                    const NumberTypeReal *           imagArr,
                                    NumberTypeComplex *              complexArr);
-
-    template <typename NumberType>
-    void
-    copyDeviceVecToDeviceVec(const NumberType *               deviceVecSrc,
-                             NumberType *                     deviceVecDst,
-                             const dataTypes::local_size_type size);
-
-    template <typename NumberType>
-    void
-    copyHostVecToDeviceVec(const NumberType *               hostVec,
-                           NumberType *                     deviceVector,
-                           const dataTypes::local_size_type size);
-
-    template <typename NumberType>
-    void
-    copyDeviceVecToHostVec(const NumberType *               deviceVector,
-                           NumberType *                     hostVec,
-                           const dataTypes::local_size_type size);
-
 
     void
     add(double *        y,
@@ -124,10 +82,6 @@ namespace dftfe
     template <typename NumberType>
     void
     sadd(NumberType *y, NumberType *x, const NumberType beta, const int size);
-
-    template <typename NumberType>
-    void
-    set(NumberType *x, const NumberType &alpha, const int size);
 
   } // namespace deviceUtils
 

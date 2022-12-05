@@ -30,6 +30,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
 
 namespace dftfe
 {
@@ -116,9 +117,9 @@ namespace dftfe
                          const unsigned int size,
                          double *           copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
                                                          copyFromVec,
                                                          copyToVec);
       }
@@ -128,9 +129,9 @@ namespace dftfe
                          const unsigned int size,
                          cuDoubleComplex *  copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
                                                          copyFromVec,
                                                          copyToVec);
       }
@@ -460,9 +461,9 @@ namespace dftfe
                         }
 
                       stridedCopyToBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * numLocalDofs,
-                        deviceConstants::blockSize>>>(
+                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         BVec,
                         dftfe::utils::makeDataTypeDeviceCompatible(X + numLocalDofs * totalNumWaveFunctions *
                               ((dftParams.spinPolarized + 1) * kPoint +
@@ -490,10 +491,10 @@ namespace dftfe
                                 iblock * cellsBlockSize;
 
                               copyGlobalToCellDeviceKernel<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize *
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
                                   currentCellsBlockSize * numNodesPerElement,
-                                deviceConstants::blockSize>>>(
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
                                 dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
@@ -621,10 +622,10 @@ namespace dftfe
 
 
                               computeRhoGradRhoFromInterpolatedValues<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize * numQuadPoints *
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE * numQuadPoints *
                                   currentCellsBlockSize,
-                                deviceConstants::blockSize>>>(
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 currentCellsBlockSize * numQuadPoints * BVec,
                                 dftfe::utils::makeDataTypeDeviceCompatible(rhoWfcContributionsDevice.begin()),
                                 dftfe::utils::makeDataTypeDeviceCompatible(gradRhoWfcContributionsDeviceX.begin()),
@@ -760,9 +761,9 @@ namespace dftfe
                       partialOccupVec.template copyTo<dftfe::utils::MemorySpace::DEVICE>(partialOccupVecDevice); 
 
                       stridedCopyToBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * numLocalDofs,
-                        deviceConstants::blockSize>>>(
+                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         BVec,
                         dftfe::utils::makeDataTypeDeviceCompatible(XFrac + numLocalDofs * Nfr *
                                   ((dftParams.spinPolarized + 1) * kPoint +
@@ -790,10 +791,10 @@ namespace dftfe
                                 iblock * cellsBlockSize;
 
                               copyGlobalToCellDeviceKernel<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize *
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
                                   currentCellsBlockSize * numNodesPerElement,
-                                deviceConstants::blockSize>>>(
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
                                 dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()),
@@ -923,10 +924,10 @@ namespace dftfe
 
 
                               computeRhoGradRhoFromInterpolatedValues<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize * numQuadPoints *
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE * numQuadPoints *
                                   currentCellsBlockSize,
-                                deviceConstants::blockSize>>>(
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 currentCellsBlockSize * numQuadPoints * BVec,
                                 dftfe::utils::makeDataTypeDeviceCompatible(rhoWfcContributionsDevice.begin()),
                                 dftfe::utils::makeDataTypeDeviceCompatible(gradRhoWfcContributionsDeviceX.begin()),

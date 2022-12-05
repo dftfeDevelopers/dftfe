@@ -19,6 +19,8 @@
 
 #include <poissonSolverProblemDevice.h>
 #include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <MemoryTransfer.h>
 
 namespace dftfe
 {
@@ -94,8 +96,8 @@ namespace dftfe
     d_matrixFreeDataPtr = &matrixFreeData;
     d_xPtr              = &x;
     d_xDevice.reinit(d_xPtr->get_partitioner(), 1);
-    deviceUtils::copyHostVecToDeviceVec<double>(
-      d_xPtr->begin(), d_xDevice.begin(), d_xDevice.locallyOwnedDofsSize());
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xDevice.locallyOwnedDofsSize(),d_xDevice.begin(),d_xPtr->begin());
+
 
     d_constraintMatrixPtr       = &constraintMatrix;
     d_matrixFreeVectorComponent = matrixFreeVectorComponent;
@@ -150,9 +152,7 @@ namespace dftfe
   void
   poissonSolverProblemDevice<FEOrder, FEOrderElectro>::copyXfromDeviceToHost()
   {
-    deviceUtils::copyDeviceVecToHostVec<double>(d_xDevice.begin(),
-                                                d_xPtr->begin(),
-                                                d_xLen);
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,d_xPtr->begin(),d_xDevice.begin());
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -442,7 +442,7 @@ namespace dftfe
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
-      deviceUtils::set(vec.begin() + d_meanValueConstraintNodeIdLocal,
+      dftfe::utils::deviceSetValue(vec.begin() + d_meanValueConstraintNodeIdLocal,
                        constrainedNodeValue,
                        1);
   }
@@ -459,10 +459,9 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
 
-      deviceUtils::copyDeviceVecToHostVec<double>(
-        vec.begin() + d_meanValueConstraintNodeIdLocal,
-        &constrainedNodeValue,
-        1);
+
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&constrainedNodeValue,vec.begin() + d_meanValueConstraintNodeIdLocal);
+
 
     // broadcast value at mean value constraint to all other tasks ids
     MPI_Bcast(&constrainedNodeValue,
@@ -668,10 +667,9 @@ namespace dftfe
     d_meanValueConstraintNodeIdLocal =
       d_meanValueConstraintVec.get_partitioner()->global_to_local(
         d_meanValueConstraintNodeId);
-    deviceUtils::copyHostVecToDeviceVec<double>(
-      d_meanValueConstraintVec.begin(),
-      d_meanValueConstraintDeviceVec.begin(),
-      d_xLocalDof);
+
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_meanValueConstraintDeviceVec.begin(),d_meanValueConstraintVec.begin());
+
   }
 
 
@@ -732,9 +730,8 @@ namespace dftfe
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
     d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
-    deviceUtils::copyHostVecToDeviceVec<double>(d_diagonalA.begin(),
-                                                d_diagonalAdevice.begin(),
-                                                d_xLocalDof);
+
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_diagonalAdevice.begin(),d_diagonalA.begin());
   }
 
 
@@ -1282,7 +1279,7 @@ namespace dftfe
     constexpr int threads =
       (FEOrderElectro < 7 ?
          96 :
-         FEOrderElectro == 7 ? 64 : deviceConstants::blockSize);
+         FEOrderElectro == 7 ? 64 : dftfe::utils::DEVICE_BLOCK_SIZE);
     const int        blocks = d_nLocalCells;
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);

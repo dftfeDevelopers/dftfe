@@ -20,6 +20,7 @@
 #include <constraintMatrixInfoDevice.h>
 #include <deviceHelpers.h>
 #include <DeviceDataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
 
 namespace dftfe
 {
@@ -595,11 +596,11 @@ namespace dftfe
         return;
       // fieldVector.update_ghost_values();
 
-      distributeKernel<<<min((blockSize + (deviceConstants::blockSize - 1)) /
-                               deviceConstants::blockSize *
+      distributeKernel<<<min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE *
                                d_numConstrainedDofs,
                              30000),
-                         deviceConstants::blockSize>>>(
+                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),
@@ -627,10 +628,10 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),
@@ -665,10 +666,10 @@ namespace dftfe
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempReal,
         d_rowIdsLocalDevice.begin(),
@@ -680,10 +681,10 @@ namespace dftfe
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempImag,
         d_rowIdsLocalDevice.begin(),
@@ -725,10 +726,10 @@ namespace dftfe
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempReal,
         d_rowIdsLocalDevice.begin(),
@@ -740,10 +741,10 @@ namespace dftfe
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempImag,
         d_rowIdsLocalDevice.begin(),
@@ -773,10 +774,10 @@ namespace dftfe
         return;
 
       const unsigned int numConstrainedDofs = d_rowIdsLocal.size();
-      setzeroKernel<<<min((blockSize + (deviceConstants::blockSize - 1)) /
-                            deviceConstants::blockSize * numConstrainedDofs,
+      setzeroKernel<<<min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE * numConstrainedDofs,
                           30000),
-                      deviceConstants::blockSize>>>(
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),

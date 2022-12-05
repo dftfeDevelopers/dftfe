@@ -20,7 +20,11 @@
 #include <linearSolverCGDevice.h>
 #include <deviceHelpers.h>
 #include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
 #include <MemoryTransfer.h>
+#    include <cooperative_groups.h>
+#    include <cooperative_groups/reduce.h>
+
 
 namespace dftfe
 {
@@ -61,8 +65,8 @@ namespace dftfe
     distributedDeviceVec<double> rhsDevice;
     rhsDevice.reinit(rhsHost.get_partitioner(), 1);
 
-    deviceUtils::copyHostVecToDeviceVec<double>(
-      rhsHost.begin(), rhsDevice.begin(), rhsDevice.locallyOwnedDofsSize());
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(rhsDevice.locallyOwnedDofsSize(),rhsDevice.begin(),rhsHost.begin());
+
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
@@ -270,8 +274,8 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = deviceConstants::maxBlockSize / 2;
-         size >= 4 * deviceConstants::warpSize;
+    for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+         size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
@@ -280,13 +284,13 @@ namespace dftfe
         cooperative_groups::sync(block);
       }
 
-    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
-      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
+    cooperative_groups::thread_block_tile<dftfe::utils::DEVICE_WARP_SIZE> tileWarp =
+      cooperative_groups::tiled_partition<dftfe::utils::DEVICE_WARP_SIZE>(block);
 
-    if (block.thread_rank() < deviceConstants::warpSize)
+    if (block.thread_rank() < dftfe::utils::DEVICE_WARP_SIZE)
       {
-        if (blockSize >= 2 * deviceConstants::warpSize)
-          localSum += smem[tid + deviceConstants::warpSize];
+        if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
+          localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
         for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
           localSum += tileWarp.shfl_down(localSum, offset);
@@ -336,8 +340,8 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = deviceConstants::maxBlockSize / 2;
-         size >= 4 * deviceConstants::warpSize;
+    for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+         size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
@@ -346,13 +350,13 @@ namespace dftfe
         cooperative_groups::sync(block);
       }
 
-    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
-      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
+    cooperative_groups::thread_block_tile<dftfe::utils::DEVICE_WARP_SIZE> tileWarp =
+      cooperative_groups::tiled_partition<dftfe::utils::DEVICE_WARP_SIZE>(block);
 
-    if (block.thread_rank() < deviceConstants::warpSize)
+    if (block.thread_rank() < dftfe::utils::DEVICE_WARP_SIZE)
       {
-        if (blockSize >= 2 * deviceConstants::warpSize)
-          localSum += smem[tid + deviceConstants::warpSize];
+        if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
+          localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
         for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
           localSum += tileWarp.shfl_down(localSum, offset);
@@ -407,8 +411,8 @@ namespace dftfe
     smem[tid] = localSum;
     cooperative_groups::sync(block);
 
-    for (int size = deviceConstants::maxBlockSize / 2;
-         size >= 4 * deviceConstants::warpSize;
+    for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+         size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
@@ -417,13 +421,13 @@ namespace dftfe
         cooperative_groups::sync(block);
       }
 
-    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
-      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
+    cooperative_groups::thread_block_tile<dftfe::utils::DEVICE_WARP_SIZE> tileWarp =
+      cooperative_groups::tiled_partition<dftfe::utils::DEVICE_WARP_SIZE>(block);
 
-    if (block.thread_rank() < deviceConstants::warpSize)
+    if (block.thread_rank() < dftfe::utils::DEVICE_WARP_SIZE)
       {
-        if (blockSize >= 2 * deviceConstants::warpSize)
-          localSum += smem[tid + deviceConstants::warpSize];
+        if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
+          localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
         for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
           localSum += tileWarp.shfl_down(localSum, offset);
@@ -439,14 +443,14 @@ namespace dftfe
     const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
-                       (deviceConstants::blockSize * 2);
+    const int blocks = (d_xLocalDof + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+                       (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
     dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionAndComputeDotProductKernel<double,
-                                                deviceConstants::blockSize>
-      <<<blocks, deviceConstants::blockSize>>>(
+                                                dftfe::utils::DEVICE_BLOCK_SIZE>
+      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&local_sum,d_devSum.begin());
@@ -462,14 +466,14 @@ namespace dftfe
     const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
-                       (deviceConstants::blockSize * 2);
+    const int blocks = (d_xLocalDof + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+                       (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
     dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
     applyPreconditionComputeDotProductAndSaddKernel<double,
-                                                    deviceConstants::blockSize>
-      <<<blocks, deviceConstants::blockSize>>>(
+                                                    dftfe::utils::DEVICE_BLOCK_SIZE>
+      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
     dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&local_sum,d_devSum.begin());
@@ -484,13 +488,13 @@ namespace dftfe
   linearSolverCGDevice::scaleXRandComputeNorm(double *x, const double &alpha)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
-                       (deviceConstants::blockSize * 2);
+    const int blocks = (d_xLocalDof + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+                       (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
     dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
-    scaleXRandComputeNormKernel<double, deviceConstants::blockSize>
-      <<<blocks, deviceConstants::blockSize>>>(x,
+    scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>
+      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(x,
                                                d_rvec.begin(),
                                                d_devSumPtr,
                                                d_qvec.begin(),

@@ -180,10 +180,10 @@ namespace shapeFuncDevice
                   {
                     computeShapeGradNINJIntegralContribution<<<
                       (currentQuadsBlockSize +
-                       (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * numNodesPerElem *
+                       (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * numNodesPerElem *
                         numNodesPerElem * currentElemsBlockSize,
-                      deviceConstants::blockSize>>>(
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       currentQuadsBlockSize,
                       numQuads,
                       startingQuadId,
