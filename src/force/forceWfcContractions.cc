@@ -791,8 +791,7 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int blockSize =
-        std::min(dftParams.chebyWfcBlockSize,
-                 bandGroupLowHighPlusOneIndices[1]);
+        std::min((unsigned int)2, bandGroupLowHighPlusOneIndices[1]);
 
 
       distributedCPUVec<dataTypes::number> flattenedArrayBlock;
