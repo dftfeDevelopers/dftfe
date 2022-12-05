@@ -20,6 +20,7 @@
 #include <linearSolverCGDevice.h>
 #include <deviceHelpers.h>
 #include <DeviceAPICalls.h>
+#include <MemoryTransfer.h>
 
 namespace dftfe
 {
@@ -448,7 +449,7 @@ namespace dftfe
       <<<blocks, deviceConstants::blockSize>>>(
         d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
-    local_sum = d_devSum[0];
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&local_sum,d_devSum.begin());
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
@@ -471,7 +472,7 @@ namespace dftfe
       <<<blocks, deviceConstants::blockSize>>>(
         d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 
-    local_sum = d_devSum[0];
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&local_sum,d_devSum.begin());
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
@@ -497,7 +498,7 @@ namespace dftfe
                                                alpha,
                                                d_xLocalDof);
 
-    local_sum = d_devSum[0];
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&local_sum,d_devSum.begin());
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 

@@ -61,6 +61,7 @@ SET(TARGET_SRC
   ./utils/dftUtils.cc
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
+  ./utils/Exceptions.cc
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
