@@ -199,7 +199,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       deviceUtils::copyComplexArrToRealArrsDevice(
         (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
          d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dst),
+        dst,
         d_tempRealVec.begin(),
         d_tempImagVec.begin());
 
@@ -222,7 +222,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
          d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
         d_tempRealVec.begin(),
         d_tempImagVec.begin(),
-        dftfe::utils::makeDataTypeDeviceCompatible(dst));
+        dst);
     }
   else
     daxpyAtomicAddKernel<<<(numberWaveFunctions +

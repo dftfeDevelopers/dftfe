@@ -659,7 +659,7 @@ namespace dftfe
       deviceUtils::copyComplexArrToRealArrsDevice(
         (fieldVector.locallyOwnedFlattenedSize() +
          fieldVector.ghostFlattenedSize()),
-        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
+        fieldVector.begin(),
         tempReal,
         tempImag);
 
@@ -699,7 +699,7 @@ namespace dftfe
          fieldVector.ghostFlattenedSize()),
         tempReal,
         tempImag,
-        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()));
+        fieldVector.begin());
     }
 
     //
@@ -719,7 +719,7 @@ namespace dftfe
       deviceUtils::copyComplexArrToRealArrsDevice(
         (fieldVector.locallyOwnedFlattenedSize() +
          fieldVector.ghostFlattenedSize()),
-        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
+        fieldVector.begin(),
         tempReal,
         tempImag);
 
@@ -759,7 +759,7 @@ namespace dftfe
          fieldVector.ghostFlattenedSize()),
         tempReal,
         tempImag,
-        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()));
+        fieldVector.begin());
     }
 
 

@@ -19,7 +19,8 @@
 
 
 #include <deviceHelpers.h>
-#include "dftUtils.h"
+#include <DeviceDataTypeOverloads.h>
+#include <dftUtils.h>
 #include <headers.h>
 #include <cublas_v2.h>
 
@@ -107,9 +108,9 @@ namespace dftfe
                                    NumberTypeReal *                 realArr,
                                    NumberTypeReal *                 imagArr)
     {
-      copyComplexArrToRealArrsDeviceKernel<NumberTypeComplex, NumberTypeReal>
+      copyComplexArrToRealArrsDeviceKernel
         <<<size / deviceConstants::blockSize + 1, deviceConstants::blockSize>>>(
-          size, complexArr, realArr, imagArr);
+          size, dftfe::utils::makeDataTypeDeviceCompatible(complexArr), realArr, imagArr);
     }
 
 
@@ -120,9 +121,9 @@ namespace dftfe
                                    const NumberTypeReal *           imagArr,
                                    NumberTypeComplex *              complexArr)
     {
-      copyRealArrsToComplexArrDeviceKernel<NumberTypeComplex, NumberTypeReal>
+      copyRealArrsToComplexArrDeviceKernel
         <<<size / deviceConstants::blockSize + 1, deviceConstants::blockSize>>>(
-          size, realArr, imagArr, complexArr);
+          size, realArr, imagArr, dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
     }
 
     template <typename NumberType>
@@ -245,13 +246,13 @@ namespace dftfe
 
     template void
     copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
-                                   const cuDoubleComplex *          complexArr,
+                                   const  std::complex<double> *          complexArr,
                                    double *                         realArr,
                                    double *                         imagArr);
 
     template void
     copyComplexArrToRealArrsDevice(const dataTypes::local_size_type size,
-                                   const cuFloatComplex *           complexArr,
+                                   const  std::complex<float> *           complexArr,
                                    float *                          realArr,
                                    float *                          imagArr);
 
@@ -259,13 +260,13 @@ namespace dftfe
     copyRealArrsToComplexArrDevice(const dataTypes::local_size_type size,
                                    const double *                   realArr,
                                    const double *                   imagArr,
-                                   cuDoubleComplex *                complexArr);
+                                   std::complex<double> *                complexArr);
 
     template void
     copyRealArrsToComplexArrDevice(const dataTypes::local_size_type size,
                                    const float *                    realArr,
                                    const float *                    imagArr,
-                                   cuFloatComplex *                 complexArr);
+                                   std::complex<float> *                 complexArr);
 
     template void
     copyDeviceVecToDeviceVec(const double *                   cudaVecSrc,
@@ -278,13 +279,13 @@ namespace dftfe
                              const dataTypes::local_size_type size);
 
     template void
-    copyDeviceVecToDeviceVec(const cuDoubleComplex *          cudaVecSrc,
-                             cuDoubleComplex *                cudaVecDst,
+    copyDeviceVecToDeviceVec(const std::complex<double> *          cudaVecSrc,
+                              std::complex<double> *                cudaVecDst,
                              const dataTypes::local_size_type size);
 
     template void
-    copyDeviceVecToDeviceVec(const cuFloatComplex *           cudaVecSrc,
-                             cuFloatComplex *                 cudaVecDst,
+    copyDeviceVecToDeviceVec(const  std::complex<float> *           cudaVecSrc,
+                              std::complex<float> *                 cudaVecDst,
                              const dataTypes::local_size_type size);
 
     template void
@@ -298,13 +299,13 @@ namespace dftfe
                            const dataTypes::local_size_type size);
 
     template void
-    copyHostVecToDeviceVec(const cuDoubleComplex *          hostVec,
-                           cuDoubleComplex *                cudaVector,
+    copyHostVecToDeviceVec(const std::complex<double> *          hostVec,
+                            std::complex<double> *                cudaVector,
                            const dataTypes::local_size_type size);
 
     template void
-    copyHostVecToDeviceVec(const cuFloatComplex *           hostVec,
-                           cuFloatComplex *                 cudaVector,
+    copyHostVecToDeviceVec(const  std::complex<float> *           hostVec,
+                            std::complex<float> *                 cudaVector,
                            const dataTypes::local_size_type size);
 
     template void
@@ -318,13 +319,13 @@ namespace dftfe
                            const dataTypes::local_size_type size);
 
     template void
-    copyDeviceVecToHostVec(const cuDoubleComplex *          cudaVector,
-                           cuDoubleComplex *                hostVec,
+    copyDeviceVecToHostVec(const std::complex<double> *          cudaVector,
+                           std::complex<double> *                hostVec,
                            const dataTypes::local_size_type size);
 
     template void
-    copyDeviceVecToHostVec(const cuFloatComplex *           cudaVector,
-                           cuFloatComplex *                 hostVec,
+    copyDeviceVecToHostVec(const std::complex<float> *           cudaVector,
+                           std::complex<float> *                 hostVec,
                            const dataTypes::local_size_type size);
 
     template void

@@ -143,7 +143,7 @@ namespace dftfe
                                                  double *      tempImag,
                                                  deviceStream_t &stream)
   {
-    deviceUtils::copyComplexArrToRealArrsDevice(size, dftfe::utils::makeDataTypeDeviceCompatible(send), tempReal, tempImag);
+    deviceUtils::copyComplexArrToRealArrsDevice(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -163,7 +163,7 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    deviceUtils::copyRealArrsToComplexArrDevice(size, tempReal, tempImag, dftfe::utils::makeDataTypeDeviceCompatible(recv));
+    deviceUtils::copyRealArrsToComplexArrDevice(size, tempReal, tempImag, recv);
     return 0;
   }
 
@@ -175,7 +175,7 @@ namespace dftfe
                                                  float *               tempImag,
                                                  deviceStream_t &        stream)
   {
-    deviceUtils::copyComplexArrToRealArrsDevice(size, dftfe::utils::makeDataTypeDeviceCompatible(send), tempReal, tempImag);
+    deviceUtils::copyComplexArrToRealArrsDevice(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -195,7 +195,7 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    deviceUtils::copyRealArrsToComplexArrDevice(size, tempReal, tempImag, dftfe::utils::makeDataTypeDeviceCompatible(recv));
+    deviceUtils::copyRealArrsToComplexArrDevice(size, tempReal, tempImag, recv);
     return 0;
   }
 
@@ -246,12 +246,12 @@ namespace dftfe
     deviceStream_t &         stream)
   {
     deviceUtils::copyComplexArrToRealArrsDevice(size1,
-                                                dftfe::utils::makeDataTypeDeviceCompatible(send1),
+                                                send1,
                                                 tempReal1,
                                                 tempImag1);
 
     deviceUtils::copyComplexArrToRealArrsDevice(size2,
-                                                dftfe::utils::makeDataTypeDeviceCompatible(send2),
+                                                send2,
                                                 tempReal2,
                                                 tempImag2);
 
@@ -291,12 +291,12 @@ namespace dftfe
     deviceUtils::copyRealArrsToComplexArrDevice(size1,
                                                 tempReal1,
                                                 tempImag1,
-                                                dftfe::utils::makeDataTypeDeviceCompatible(recv1));
+                                                recv1);
 
     deviceUtils::copyRealArrsToComplexArrDevice(size2,
                                                 tempReal2,
                                                 tempImag2,
-                                                dftfe::utils::makeDataTypeDeviceCompatible(recv2));
+                                                recv2);
 
     return 0;
   }
