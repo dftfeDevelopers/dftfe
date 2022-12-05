@@ -3350,6 +3350,37 @@ namespace dftfe
       pcout << "SCF iterations converged to the specified tolerance after: "
             << scfIter << " iterations." << std::endl;
 
+    const unsigned int numberBandGroups =
+      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+    const unsigned int localVectorSize =
+      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
+
+    if (numberBandGroups > 1 && !d_dftParamsPtr->useDevice)
+      {
+        MPI_Barrier(interBandGroupComm);
+        const unsigned int blockSize =
+          d_dftParamsPtr->mpiAllReduceMessageBlockSizeMB * 1e+6 /
+          sizeof(dataTypes::number);
+        for (unsigned int kPoint = 0;
+             kPoint <
+             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+             ++kPoint)
+          for (unsigned int i = 0; i < d_numEigenValues * localVectorSize;
+               i += blockSize)
+            {
+              const unsigned int currentBlockSize =
+                std::min(blockSize, d_numEigenValues * localVectorSize - i);
+              MPI_Allreduce(MPI_IN_PLACE,
+                            &d_eigenVectorsFlattenedSTL[kPoint][0] + i,
+                            currentBlockSize,
+                            dataTypes::mpi_type_id(
+                              &d_eigenVectorsFlattenedSTL[kPoint][0]),
+                            MPI_SUM,
+                            interBandGroupComm);
+            }
+      }
+
     if ((!d_dftParamsPtr->computeEnergyEverySCF ||
          d_numEigenValuesRR != d_numEigenValues))
       {
@@ -3557,12 +3588,6 @@ namespace dftfe
             0);
         }
 #endif
-
-    const unsigned int numberBandGroups =
-      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-
-    const unsigned int localVectorSize =
-      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
 
 
     if (d_dftParamsPtr->isIonForce)

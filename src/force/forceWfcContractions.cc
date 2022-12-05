@@ -757,8 +757,7 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int blockSize =
-        std::min(dftParams.chebyWfcBlockSize,
-                 bandGroupLowHighPlusOneIndices[1]);
+        std::min((unsigned int)2, bandGroupLowHighPlusOneIndices[1]);
 
 
       distributedCPUVec<dataTypes::number> flattenedArrayBlock;
@@ -776,7 +775,7 @@ namespace dftfe
       std::vector<dataTypes::number> onesVecHNLP(blockSize,
                                                  dataTypes::number(1.0));
 
-      const unsigned int cellsBlockSize = std::min((unsigned int)10, numCells);
+      const unsigned int cellsBlockSize = std::min((unsigned int)1, numCells);
 
       std::vector<dataTypes::number> psiQuadsFlatH(cellsBlockSize * numQuads *
                                                      blockSize,
