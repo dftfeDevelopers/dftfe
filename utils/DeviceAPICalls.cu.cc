@@ -50,6 +50,15 @@ namespace dftfe
       return err;
     }
 
+
+    deviceError_t
+    deviceMemGetInfo(size_t* free, size_t* total)
+    {
+      deviceError_t err=cudaMemGetInfo(free,total);
+      DEVICE_API_CHECK(err);
+      return err;
+    }
+
     deviceError_t
     getDeviceCount(int *count)
     {
@@ -204,6 +213,78 @@ namespace dftfe
       deviceError_t err=cudaDeviceSynchronize();
       DEVICE_API_CHECK(err);
       return err;          
+    }
+
+    deviceError_t
+    deviceMemcpyAsyncD2H(void *dst, const void *src, size_type count,deviceStream_t stream)
+    {
+      deviceError_t err=cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToHost,stream);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
+    deviceError_t
+    deviceMemcpyAsyncD2D(void *dst, const void *src, size_type count,deviceStream_t stream)
+    {
+      deviceError_t err=cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToDevice,stream);
+      DEVICE_API_CHECK(err);
+      return err;       
+    }
+
+    deviceError_t
+    deviceMemcpyAsyncH2D(void *dst, const void *src, size_type count,deviceStream_t stream)
+    {
+      deviceError_t err=cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice,stream);
+      DEVICE_API_CHECK(err);
+      return err;       
+    }
+
+    deviceError_t
+    deviceStreamCreate(deviceStream_t* pStream)
+    {
+      deviceError_t err=cudaStreamCreate(pStream);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
+    deviceError_t
+    deviceStreamDestroy(deviceStream_t stream)
+    {
+      deviceError_t err=cudaStreamDestroy(stream);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
+    deviceError_t
+    deviceEventCreate(deviceEvent_t* pEvent)
+    {
+      deviceError_t err=cudaEventCreate(pEvent);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
+    deviceError_t
+    deviceEventDestroy(deviceEvent_t event)
+    {
+      deviceError_t err=cudaEventDestroy(event);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
+    deviceError_t
+    deviceEventRecord(deviceEvent_t event,deviceStream_t stream)
+    {
+      deviceError_t err=cudaEventRecord(event,stream);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
+    deviceError_t
+    deviceEventSynchronize(deviceEvent_t event)
+    {
+      deviceError_t err=cudaEventSynchronize(event);
+      DEVICE_API_CHECK(err);
+      return err;      
     }
 
   } // namespace utils

@@ -939,13 +939,12 @@ namespace dftfe
                   dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock.begin()),
                   1);
 
-                cudaMemcpy(
+                dftfe::utils::deviceMemcpyD2H(
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp),
                   dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock.begin()),
                   currentBlockSizeNlp * numQuadsNLP * 3 *
-                    sizeof(dataTypes::number),
-                  cudaMemcpyDeviceToHost);
+                    sizeof(dataTypes::number));
 
                 for (unsigned int i = 0;
                      i < currentBlockSizeNlp * numQuadsNLP * 3;
@@ -993,13 +992,12 @@ namespace dftfe
                   dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock.begin()),
                   1);
 
-                cudaMemcpy(
+                dftfe::utils::deviceMemcpyD2H(
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp),
                   dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock.begin()),
                   currentBlockSizeNlp * numQuadsNLP *
-                    sizeof(dataTypes::number),
-                  cudaMemcpyDeviceToHost);
+                    sizeof(dataTypes::number));
 
                 for (unsigned int i = 0; i < currentBlockSizeNlp * numQuadsNLP;
                      i++)
@@ -1259,7 +1257,7 @@ namespace dftfe
 
       // if (this_process == 0 && dftParams.verbosity >= 2)
       //  std::cout
-      //    << "Time for creating cuda parallel vectors for force computation: "
+      //    << "Time for creating device parallel vectors for force computation: "
       //    << device_time << std::endl;
 
       // device_time = MPI_Wtime();
@@ -1312,8 +1310,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
                                           projecterKetTimesFlattenedVectorLocalIdsD;
       dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> nonTrivialIdToElemIdMapD;
-      dataTypes::number *
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp;
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp;
       if (totalNonTrivialPseudoWfcs > 0)
         {
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
@@ -1329,23 +1326,18 @@ namespace dftfe
           nonTrivialIdToElemIdMapD.resize(totalNonTrivialPseudoWfcs, 0);
 
 
-          DEVICE_API_CHECK(cudaMallocHost(
-            (void *
-               *)&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
-            innerBlockSizeEnlp * numQuadsNLP * 3 *
-              sizeof(dataTypes::number)));
+
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp.resize(innerBlockSizeEnlp * numQuadsNLP * 3,0);
 
 
-          cudaMemcpy(nonTrivialIdToElemIdMapD.begin(),
+          dftfe::utils::deviceMemcpyH2D(nonTrivialIdToElemIdMapD.begin(),
                      nonTrivialIdToElemIdMapH,
-                     totalNonTrivialPseudoWfcs * sizeof(unsigned int),
-                     cudaMemcpyHostToDevice);
+                     totalNonTrivialPseudoWfcs * sizeof(unsigned int));
 
 
-          cudaMemcpy(projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+          dftfe::utils::deviceMemcpyH2D(projecterKetTimesFlattenedVectorLocalIdsD.begin(),
                      projecterKetTimesFlattenedVectorLocalIdsH,
-                     totalNonTrivialPseudoWfcs * sizeof(unsigned int),
-                     cudaMemcpyHostToDevice);
+                     totalNonTrivialPseudoWfcs * sizeof(unsigned int));
         }
 
       const unsigned numKPoints = kPointCoordinates.size() / 3;
@@ -1396,15 +1388,13 @@ namespace dftfe
                                            [spinIndex * N + ivec + iWave];
                     }
 
-                  cudaMemcpy(eigenValuesD.begin(),
+                  dftfe::utils::deviceMemcpyH2D(eigenValuesD.begin(),
                              &blockedEigenValues[0],
-                             blockSize * sizeof(double),
-                             cudaMemcpyHostToDevice);
+                             blockSize * sizeof(double));
 
-                  cudaMemcpy(partialOccupanciesD.begin(),
+                  dftfe::utils::deviceMemcpyH2D(partialOccupanciesD.begin(),
                              &blockedPartialOccupancies[0],
-                             blockSize * sizeof(double),
-                             cudaMemcpyHostToDevice);
+                             blockSize * sizeof(double));
 
                   // dftfe::utils::deviceSynchronize();
                   // MPI_Barrier(d_mpiCommParent);
@@ -1454,7 +1444,7 @@ namespace dftfe
                     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH +
                       kPoint * totalNonTrivialPseudoWfcs * numQuadsNLP,
 #endif
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp.begin(),
                     cellsBlockSize,
                     innerBlockSizeEnlp,
                     isPsp,
@@ -1472,16 +1462,11 @@ namespace dftfe
                 } // band parallelization
             }     // ivec loop
 
-          cudaMemcpy(
+          dftfe::utils::deviceMemcpyD2H(
             eshelbyTensorQuadValuesH + kPoint * numCells * numQuads * 9,
             elocWfcEshelbyTensorQuadValuesD.begin(),
-            numCells * numQuads * 9 * sizeof(double),
-            cudaMemcpyDeviceToHost);
+            numCells * numQuads * 9 * sizeof(double));
         } // k point loop
-
-      if (totalNonTrivialPseudoWfcs > 0)
-        DEVICE_API_CHECK(cudaFreeHost(
-          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp));
 
       // dftfe::utils::deviceSynchronize();
       // MPI_Barrier(mpiCommParent);

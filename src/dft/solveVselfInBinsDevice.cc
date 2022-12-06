@@ -248,10 +248,9 @@ namespace dftfe
         // distributedDeviceVec<double> temp;
         // temp.reinit(src);
         // temp=src;
-        cudaMemcpy(temp.begin(),
+        dftfe::utils::deviceMemcpyD2D(temp.begin(),
                    src.begin(),
-                   localSize * numberVectors * sizeof(double),
-                   cudaMemcpyDeviceToDevice);
+                   localSize * numberVectors * sizeof(double));
 
         // src.update_ghost_values();
         // constraintsMatrixDataInfoDevice.distribute(src,numberVectors);
@@ -441,10 +440,9 @@ namespace dftfe
       xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
                 blockSize);
       xD.setZero();
-      cudaMemcpy(xD.begin(),
+      dftfe::utils::deviceMemcpyH2D(xD.begin(),
                  xH,
-                 localSize * numberBins * sizeof(double),
-                 cudaMemcpyHostToDevice);
+                 localSize * numberBins * sizeof(double));
 
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
@@ -484,27 +482,23 @@ namespace dftfe
         cellLocalProcIndexIdMapD(totalLocallyOwnedCells *
                                  numberNodesPerElement);
 
-      cudaMemcpy(bD.begin(),
+      dftfe::utils::deviceMemcpyH2D(bD.begin(),
                  bH,
-                 localSize * numberBins * sizeof(double),
-                 cudaMemcpyHostToDevice);
+                 localSize * numberBins * sizeof(double));
 
-      cudaMemcpy(diagonalAD.begin(),
+      dftfe::utils::deviceMemcpyH2D(diagonalAD.begin(),
                  diagonalAH,
-                 localSize * sizeof(double),
-                 cudaMemcpyHostToDevice);
+                 localSize * sizeof(double));
 
-      cudaMemcpy(inhomoIdsColoredVecFlattenedD.begin(),
+      dftfe::utils::deviceMemcpyH2D(inhomoIdsColoredVecFlattenedD.begin(),
                  inhomoIdsColoredVecFlattenedH,
-                 (localSize + ghostSize) * numberBins * sizeof(double),
-                 cudaMemcpyHostToDevice);
+                 (localSize + ghostSize) * numberBins * sizeof(double));
 
 
-      cudaMemcpy(cellLocalProcIndexIdMapD.begin(),
+      dftfe::utils::deviceMemcpyH2D(cellLocalProcIndexIdMapD.begin(),
                  &cellLocalProcIndexIdMapH[0],
                  totalLocallyOwnedCells * numberNodesPerElement *
-                   sizeof(dealii::types::global_dof_index),
-                 cudaMemcpyHostToDevice);
+                   sizeof(dealii::types::global_dof_index));
 
       dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
@@ -535,10 +529,9 @@ namespace dftfe
                mpiCommDomain,
                xD);
 
-      cudaMemcpy(xH,
+      dftfe::utils::deviceMemcpyD2H(xH,
                  xD.begin(),
-                 localSize * numberBins * sizeof(double),
-                 cudaMemcpyDeviceToHost);
+                 localSize * numberBins * sizeof(double));
     }
 
     void
@@ -701,10 +694,9 @@ namespace dftfe
                         localSize,
                         delta_newD.begin());
 
-      cudaMemcpy(&delta_newH[0],
+      dftfe::utils::deviceMemcpyD2H(&delta_newH[0],
                  delta_newD.begin(),
-                 numberBins * sizeof(double),
-                 cudaMemcpyDeviceToHost);
+                 numberBins * sizeof(double));
 
 
       MPI_Allreduce(MPI_IN_PLACE,
@@ -714,10 +706,9 @@ namespace dftfe
                     MPI_SUM,
                     mpiCommDomain);
 
-      cudaMemcpy(delta_newD.begin(),
+      dftfe::utils::deviceMemcpyH2D(delta_newD.begin(),
                  &delta_newH[0],
-                 numberBins * sizeof(double),
-                 cudaMemcpyHostToDevice);
+                 numberBins * sizeof(double));
 
       // assign delta0 to delta_new
       delta_0D = delta_newD;
@@ -738,10 +729,9 @@ namespace dftfe
                         localSize,
                         residualNormSqD.begin());
 
-      cudaMemcpy(&residualNormSqH[0],
+      dftfe::utils::deviceMemcpyD2H(&residualNormSqH[0],
                  residualNormSqD.begin(),
-                 numberBins * sizeof(double),
-                 cudaMemcpyDeviceToHost);
+                 numberBins * sizeof(double));
 
 
       MPI_Allreduce(MPI_IN_PLACE,
@@ -792,10 +782,9 @@ namespace dftfe
                             localSize,
                             scalarD.begin());
 
-          cudaMemcpy(&scalarH[0],
+          dftfe::utils::deviceMemcpyD2H(&scalarH[0],
                      scalarD.begin(),
-                     numberBins * sizeof(double),
-                     cudaMemcpyDeviceToHost);
+                     numberBins * sizeof(double));
 
 
           MPI_Allreduce(MPI_IN_PLACE,
@@ -814,10 +803,9 @@ namespace dftfe
           // for (unsigned int i=0;i <numberBins; i++)
           //   std::cout<< "alpha "<<alphaH[i]<<std::endl;
 
-          cudaMemcpy(alphaD.begin(),
+          dftfe::utils::deviceMemcpyH2D(alphaD.begin(),
                      &alphaH[0],
-                     numberBins * sizeof(double),
-                     cudaMemcpyHostToDevice);
+                     numberBins * sizeof(double));
 
           // update x; x = x + alpha*d
           if (localSize > 0)
@@ -887,10 +875,9 @@ namespace dftfe
 
           delta_oldD = delta_newD;
 
-          cudaMemcpy(&delta_oldH[0],
+          dftfe::utils::deviceMemcpyD2H(&delta_oldH[0],
                      delta_oldD.begin(),
-                     numberBins * sizeof(double),
-                     cudaMemcpyDeviceToHost);
+                     numberBins * sizeof(double));
 
 
           // delta_new = r*s;
@@ -906,10 +893,9 @@ namespace dftfe
           // beta = delta_new/delta_old;
 
 
-          cudaMemcpy(&delta_newH[0],
+          dftfe::utils::deviceMemcpyD2H(&delta_newH[0],
                      delta_newD.begin(),
-                     numberBins * sizeof(double),
-                     cudaMemcpyDeviceToHost);
+                     numberBins * sizeof(double));
 
 
           MPI_Allreduce(MPI_IN_PLACE,
@@ -926,15 +912,13 @@ namespace dftfe
           for (unsigned int i = 0; i < numberBins; i++)
             betaH[i] = delta_newH[i] / delta_oldH[i];
 
-          cudaMemcpy(betaD.begin(),
+          dftfe::utils::deviceMemcpyH2D(betaD.begin(),
                      &betaH[0],
-                     numberBins * sizeof(double),
-                     cudaMemcpyHostToDevice);
+                     numberBins * sizeof(double));
 
-          cudaMemcpy(delta_newD.begin(),
+          dftfe::utils::deviceMemcpyH2D(delta_newD.begin(),
                      &delta_newH[0],
-                     numberBins * sizeof(double),
-                     cudaMemcpyHostToDevice);
+                     numberBins * sizeof(double));
 
           // d *= beta;
           if (localSize > 0)
@@ -984,10 +968,9 @@ namespace dftfe
                         localSize,
                         residualNormSqD.begin());
 
-      cudaMemcpy(&residualNormSqH[0],
+      dftfe::utils::deviceMemcpyD2H(&residualNormSqH[0],
                  residualNormSqD.begin(),
-                 numberBins * sizeof(double),
-                 cudaMemcpyDeviceToHost);
+                 numberBins * sizeof(double));
 
       MPI_Allreduce(MPI_IN_PLACE,
                     &residualNormSqH[0],

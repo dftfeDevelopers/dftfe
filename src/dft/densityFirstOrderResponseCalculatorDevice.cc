@@ -637,7 +637,7 @@ namespace dftfe
               }             // wave function block loop
 
 
-            // do cuda memcopy to host
+            // do memcopy to host
             rhoResponseContributionHamDevice.template copyTo<dftfe::utils::MemorySpace::HOST>(rhoResponseContributionHamHost.begin(),
                                   totalLocallyOwnedCells *numQuadPoints,0,0);
 

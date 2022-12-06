@@ -1011,7 +1011,7 @@ namespace dftfe
                     }         // spectrum split block
 
 
-              // do cuda memcopy to host
+              // do memcopy to host
               rhoDevice.template copyTo<dftfe::utils::MemorySpace::HOST>(rhoHost.begin(),
                                   totalLocallyOwnedCells *numQuadPoints,0,0);
 

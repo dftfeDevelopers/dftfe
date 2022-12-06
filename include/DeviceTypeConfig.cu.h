@@ -23,10 +23,11 @@ namespace dftfe
 {
   namespace utils
   {
-    typedef cuDoubleComplex deviceDoubleComplex;
+
+    typedef cudaError_t deviceError_t;    
     typedef cudaStream_t deviceStream_t;
     typedef cudaEvent_t deviceEvent_t; 
-    typedef cudaError_t deviceError_t;
+    typedef cuDoubleComplex deviceDoubleComplex;
    
 
      //static consts

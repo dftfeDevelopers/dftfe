@@ -13,6 +13,9 @@ namespace dftfe
     deviceReset();
 
     deviceError_t
+    deviceMemGetInfo(size_t* free, size_t* total);
+
+    deviceError_t
     getDeviceCount(int *count);
 
     deviceError_t
@@ -93,6 +96,47 @@ namespace dftfe
      */
     deviceError_t
     deviceSynchronize();
+
+    /**
+     * @brief Copy array from device to host
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyAsyncD2H(void *dst, const void *src, size_type count,deviceStream_t stream = 0 );
+
+    /**
+     * @brief Copy array from device to device
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyAsyncD2D(void *dst, const void *src, size_type count,deviceStream_t stream = 0 );
+
+    /**
+     * @brief Copy array from host to device
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyAsyncH2D(void *dst, const void *src, size_type count,deviceStream_t stream = 0 );
+
+
+    deviceError_t
+    deviceStreamCreate(deviceStream_t* pStream);
+
+    deviceError_t
+    deviceStreamDestroy(deviceStream_t stream);
+
+    deviceError_t
+    deviceEventCreate(deviceEvent_t* pEvent);
+
+    deviceError_t
+    deviceEventDestroy(deviceEvent_t event);    
+
+    deviceError_t
+    deviceEventRecord(deviceEvent_t event,deviceStream_t stream=0);
+
+    deviceError_t
+    deviceEventSynchronize(deviceEvent_t event);    
+
   } // namespace utils
 } // namespace dftfe
 

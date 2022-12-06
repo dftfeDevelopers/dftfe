@@ -23,7 +23,6 @@
 #include <dftUtils.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <linearAlgebraOperationsInternal.h>
-#include <nvToolsExt.h>
 #include <vectorUtilities.h>
 #include <DeviceKernelLauncherConstants.h>
 
@@ -1508,7 +1507,6 @@ namespace dftfe
                   projectorKetTimesVector2.updateGhostValues();
                 }
 
-              // unsigned int id2=nvtxRangeStartA("ghost1");
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   convDoubleArrToFloatArr<<<
@@ -1553,10 +1551,8 @@ namespace dftfe
 
               if (overlap)
                 YArray2.zeroOutGhosts();
-              // nvtxRangeEnd(id2);
 
               projectorKetTimesVector1.setZero();
-              // unsigned int id1=nvtxRangeStartA("compress2");
               if (overlap)
                 {
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
@@ -1608,7 +1604,6 @@ namespace dftfe
                     XArray2.compressAddFinish();
                   XArray2.swap(YArray2);
                 }
-              // nvtxRangeEnd(id1);
 
               projectorKetTimesVector1.compressAddStart();
 
@@ -1632,7 +1627,6 @@ namespace dftfe
 
               projectorKetTimesVector1.updateGhostValues();
 
-              // unsigned int id3=nvtxRangeStartA("ghost2");
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   convDoubleArrToFloatArr<<<
@@ -1674,12 +1668,10 @@ namespace dftfe
               else
                 YArray2.updateGhostValuesFinish();
               YArray1.zeroOutGhosts();
-              // nvtxRangeEnd(id3);
 
 
               projectorKetTimesVector2.setZero();
 
-              // unsigned int id4=nvtxRangeStartA("compress1");
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   convDoubleArrToFloatArr<<<
@@ -1724,7 +1716,6 @@ namespace dftfe
                 }
               else
                 XArray1.compressAddFinish();
-              // nvtxRangeEnd(id4);
 
               // Handle edge case for the second to last Chebyshev filter
               // iteration as there is no overlap algorithm for the next filter

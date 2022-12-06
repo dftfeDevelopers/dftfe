@@ -81,7 +81,7 @@ namespace dftfe
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
       dftfe::utils::setDevice(device_id);
       // int device = 0;
-      // cudaGetDevice(&device);
+      // dftfe::utils::getDevice(&device);
       // std::cout<< "Device Id currently used is "<<device<< " for taskId:
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
       dftfe::utils::deviceReset();
