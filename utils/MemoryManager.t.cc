@@ -66,7 +66,7 @@ namespace dftfe
       size_type   size,
       ValueType **ptr)
     {
-      hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+      deviceHostMalloc((void **)ptr, size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -75,7 +75,7 @@ namespace dftfe
       ValueType *ptr)
     {
       if (ptr != nullptr)
-        hostPinnedFree(ptr);
+        deviceHostFree(ptr);
     }
 
     template <typename ValueType>

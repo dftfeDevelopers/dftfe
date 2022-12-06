@@ -18,7 +18,6 @@
 #  ifndef deviceHelpers_h
 #    define deviceHelpers_h
 
-#    include <cuda_runtime.h>
 #    include <dftfeDataTypes.h>
 #    include <MemorySpaceType.h>
 #    include <headers.h>

@@ -22,7 +22,6 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <deviceHelpers.h>
-#include <cuComplex.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <MemoryStorage.h>
 #include <DeviceAPICalls.h>

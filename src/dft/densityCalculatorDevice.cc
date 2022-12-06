@@ -22,7 +22,6 @@
 #include <densityCalculatorDevice.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
-#include <cuComplex.h>
 #include <deviceHelpers.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <MemoryStorage.h>

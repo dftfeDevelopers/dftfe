@@ -10,13 +10,16 @@ namespace dftfe
   namespace utils
   {
     deviceError_t
-    deviceGetDeviceCount(int *count);
+    deviceReset();
 
     deviceError_t
-    deviceGetDevice(int *deviceId);
+    getDeviceCount(int *count);
 
     deviceError_t
-    deviceSetDevice(int deviceId);
+    getDevice(int *deviceId);
+
+    deviceError_t
+    setDevice(int deviceId);
 
     deviceError_t
     deviceMalloc(void **devPtr, size_type size);
@@ -38,10 +41,10 @@ namespace dftfe
     deviceFree(void *devPtr);
 
     deviceError_t
-    hostPinnedMalloc(void **hostPtr, size_type size);
+    deviceHostMalloc(void **hostPtr, size_type size);
 
     deviceError_t
-    hostPinnedFree(void *hostPtr);
+    deviceHostFree(void *hostPtr);
 
     /**
      * @brief Copy array from device to host

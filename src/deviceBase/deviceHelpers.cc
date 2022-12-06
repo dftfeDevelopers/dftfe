@@ -21,6 +21,7 @@
 #include <deviceHelpers.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceKernelLauncherConstants.h>
+#include <DeviceAPICalls.h>
 #include <dftUtils.h>
 #include <headers.h>
 #include <cublas_v2.h>
@@ -72,18 +73,18 @@ namespace dftfe
     setupDevice()
     {
       int n_devices = 0;
-      cudaGetDeviceCount(&n_devices);
+      dftfe::utils::getDeviceCount(&n_devices);
       // std::cout<< "Number of Devices "<<n_devices<<std::endl;
       int device_id =
         dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) % n_devices;
       // std::cout<<"Device Id: "<<device_id<<" Task Id
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
-      cudaSetDevice(device_id);
+      dftfe::utils::setDevice(device_id);
       // int device = 0;
       // cudaGetDevice(&device);
       // std::cout<< "Device Id currently used is "<<device<< " for taskId:
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
-      cudaDeviceReset();
+      dftfe::utils::deviceReset();
     }
 
 

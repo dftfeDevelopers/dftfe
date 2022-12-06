@@ -43,7 +43,15 @@ namespace dftfe
     } // namespace
 
     deviceError_t
-    deviceGetDeviceCount(int *count)
+    deviceReset()
+    {
+      deviceError_t err=cudaDeviceReset();
+      DEVICE_API_CHECK(err);
+      return err;
+    }
+
+    deviceError_t
+    getDeviceCount(int *count)
     {
       deviceError_t err=cudaGetDeviceCount(count);
       DEVICE_API_CHECK(err);
@@ -51,7 +59,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceGetDevice(int *deviceId)
+    getDevice(int *deviceId)
     {
       deviceError_t err=cudaGetDevice(deviceId);
       DEVICE_API_CHECK(err);
@@ -59,7 +67,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceSetDevice(int deviceId)
+    setDevice(int deviceId)
     {
       deviceError_t err=cudaSetDevice(deviceId);
       DEVICE_API_CHECK(err);
@@ -127,7 +135,7 @@ namespace dftfe
     }
 
     deviceError_t
-    hostPinnedMalloc(void **hostPtr, size_type size)
+    deviceHostMalloc(void **hostPtr, size_type size)
     {
       deviceError_t err=cudaMallocHost(hostPtr, size);
       DEVICE_API_CHECK(err);
@@ -135,7 +143,7 @@ namespace dftfe
     }
 
     deviceError_t
-    hostPinnedFree(void *hostPtr)
+    deviceHostFree(void *hostPtr)
     {
       deviceError_t err=cudaFreeHost(hostPtr);
       DEVICE_API_CHECK(err);
