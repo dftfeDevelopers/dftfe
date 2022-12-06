@@ -137,6 +137,9 @@ namespace dftfe
     deviceError_t
     deviceEventSynchronize(deviceEvent_t event);    
 
+    deviceError_t
+    deviceStreamWaitEvent(deviceStream_t stream,deviceEvent_t event,unsigned int flags=0);
+
   } // namespace utils
 } // namespace dftfe
 

@@ -1835,9 +1835,9 @@ namespace dftfe
           rotationMatBlockHost.setValue(0);          
         }
 
-      cudaStream_t streamCompute, streamDeviceCCL;
-      DEVICE_API_CHECK(cudaStreamCreate(&streamCompute));
-      DEVICE_API_CHECK(cudaStreamCreate(&streamDeviceCCL));
+      dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
+      dftfe::utils::deviceStreamCreate(&streamCompute);
+      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
       // attach cublas handle to compute stream
       cublasSetStream(handle, streamCompute);
@@ -1846,12 +1846,12 @@ namespace dftfe
       // for all the blocks. These are required for synchronization
       const unsigned int numberBlocks =
         (N / vectorsBlockSize) * (maxNumLocalDofs / dofsBlockSize + 1);
-      cudaEvent_t computeEvents[numberBlocks];
-      cudaEvent_t communEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventCreate(&computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventCreate(&communEvents[i]));
+          dftfe::utils::deviceEventCreate(&computeEvents[i]);
+          dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
@@ -1862,16 +1862,12 @@ namespace dftfe
         rotatedVectorsMatBlock(Nfr * dofsBlockSize,
                                dataTypes::number(0));
 
-      dataTypes::numberValueType *tempReal;
-      dataTypes::numberValueType *tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempReal,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImag,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
+        tempReal.resize(vectorsBlockSize * N,0);
+        tempImag.resize(vectorsBlockSize * N,0);
         }
 
       unsigned int blockCount = 0;
@@ -1996,13 +1992,12 @@ namespace dftfe
                 {
                   if (dftParams.useDeviceDirectAllReduce)
                     {
-                      DEVICE_API_CHECK(cudaMemcpyAsync(
+                      dftfe::utils::deviceMemcpyAsyncH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
                         rotationMatBlockNext.begin()),
                         rotationMatBlockHost.begin() + jvec * N,
                         BVec * N * sizeof(dataTypes::number),
-                        cudaMemcpyHostToDevice,
-                        streamDeviceCCL));
+                        streamDeviceCCL);
 
                       if (idof == 0)
                         {
@@ -2012,8 +2007,8 @@ namespace dftfe
                                   rotationMatBlockNext.begin(),
                                   rotationMatBlockNext.begin(),
                               BVec * N,
-                              tempReal,
-                              tempImag,
+                              tempReal.begin(),
+                              tempImag.begin(),
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -2022,13 +2017,12 @@ namespace dftfe
                               BVec * N,
                               streamDeviceCCL);
 
-                          DEVICE_API_CHECK(cudaMemcpyAsync(
+                          dftfe::utils::deviceMemcpyAsyncD2H(
                             rotationMatBlockHost.begin() + jvec * N,
                             dftfe::utils::makeDataTypeDeviceCompatible(
                                 rotationMatBlockNext.begin()),
                             BVec * N * sizeof(dataTypes::number),
-                            cudaMemcpyDeviceToHost,
-                            streamDeviceCCL));
+                            streamDeviceCCL);
                         }
                     }
                   else
@@ -2055,14 +2049,13 @@ namespace dftfe
                 {
                   if (dftParams.useDeviceDirectAllReduce)
                     {
-                      DEVICE_API_CHECK(cudaMemcpyAsync(
+                      dftfe::utils::deviceMemcpyAsyncH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlockNext.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           rotationMatBlockHost.begin()),
                         BVec * N * sizeof(dataTypes::number),
-                        cudaMemcpyHostToDevice,
-                        streamDeviceCCL));
+                        streamDeviceCCL);
 
                       if (std::is_same<dataTypes::number,
                                        std::complex<double>>::value)
@@ -2070,8 +2063,8 @@ namespace dftfe
                             rotationMatBlockNext.begin(),
                             rotationMatBlockNext.begin(),
                           BVec * N,
-                          tempReal,
-                          tempImag,
+                          tempReal.begin(),
+                          tempImag.begin(),
                           streamDeviceCCL);
                       else
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -2104,19 +2097,17 @@ namespace dftfe
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
                   // rotationMatBlock in communication stream
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(computeEvents[blockCount], streamCompute));
-                  DEVICE_API_CHECK(cudaStreamWaitEvent(streamDeviceCCL,
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
                                                   computeEvents[blockCount],
-                                                  0));
+                                                  0);
 
                   // synchronize host to communication stream before doing swap
                   // this automatically also makes sure the compute stream has
                   // the correct rotationMatBlock for dgemm
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(communEvents[blockCount], streamDeviceCCL));
-                  if (cudaEventSynchronize(communEvents[blockCount]) ==
-                      cudaSuccess)
+                  dftfe::utils::deviceEventRecord(communEvents[blockCount], streamDeviceCCL);
+                  if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                      dftfe::utils::deviceSuccess)
                     rotationMatBlock.swap(rotationMatBlockNext);
                 }
 
@@ -2149,34 +2140,27 @@ namespace dftfe
 
           if (BDof != 0)
             {
-              DEVICE_API_CHECK(cudaMemcpyAsync(
+              dftfe::utils::deviceMemcpyAsyncD2D(
                 XFrac + idof * Nfr,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   rotatedVectorsMatBlock.begin()),
                 Nfr * BDof * sizeof(dataTypes::number),
-                cudaMemcpyDeviceToDevice,
-                streamCompute));
+                streamCompute);
             }
 
         } // block loop over dofs
-
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempReal));
-          DEVICE_API_CHECK(cudaFree(tempImag));
-        }
 
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventDestroy(computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventDestroy(communEvents[i]));
+          dftfe::utils::deviceEventDestroy(computeEvents[i]);
+          dftfe::utils::deviceEventDestroy(communEvents[i]);
         }
 
-      DEVICE_API_CHECK(cudaStreamDestroy(streamCompute));
-      DEVICE_API_CHECK(cudaStreamDestroy(streamDeviceCCL));
+      dftfe::utils::deviceStreamDestroy(streamCompute);
+      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
     }
 
 
@@ -2234,9 +2218,9 @@ namespace dftfe
         }
 
 
-      cudaStream_t streamCompute, streamDeviceCCL;
-      DEVICE_API_CHECK(cudaStreamCreate(&streamCompute));
-      DEVICE_API_CHECK(cudaStreamCreate(&streamDeviceCCL));
+      dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
+      dftfe::utils::deviceStreamCreate(&streamCompute);
+      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
       // attach cublas handle to compute stream
       cublasSetStream(handle, streamCompute);
@@ -2245,12 +2229,12 @@ namespace dftfe
       // for all the blocks. These are required for synchronization
       const unsigned int numberBlocks =
         (N / vectorsBlockSize) * (maxNumLocalDofs / dofsBlockSize + 1);
-      cudaEvent_t computeEvents[numberBlocks];
-      cudaEvent_t communEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventCreate(&computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventCreate(&communEvents[i]));
+          dftfe::utils::deviceEventCreate(&computeEvents[i]);
+          dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
@@ -2261,16 +2245,12 @@ namespace dftfe
         rotatedVectorsMatBlock(N * dofsBlockSize,
                                dataTypes::number(0));
 
-      dataTypes::numberValueType *tempReal;
-      dataTypes::numberValueType *tempImag;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempReal,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImag,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
+        tempReal.resize(vectorsBlockSize * N,0);
+        tempImag.resize(vectorsBlockSize * N,0);
         }
 
       unsigned int blockCount = 0;
@@ -2407,14 +2387,13 @@ namespace dftfe
                     {
                       if (dftParams.useDeviceDirectAllReduce)
                         {
-                          DEVICE_API_CHECK(cudaMemcpyAsync(
+                          dftfe::utils::deviceMemcpyAsyncH2D(
                             dftfe::utils::makeDataTypeDeviceCompatible(
                                 rotationMatBlockTemp.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlockHost.begin() + jvec * N),
                             BVec * D * sizeof(dataTypes::number),
-                            cudaMemcpyHostToDevice,
-                            streamDeviceCCL));
+                            streamDeviceCCL);
 
                           if (idof == 0)
                             {
@@ -2425,8 +2404,8 @@ namespace dftfe
                                         rotationMatBlockTemp.begin(),
                                         rotationMatBlockTemp.begin(),
                                     BVec * D,
-                                    tempReal,
-                                    tempImag,
+                                    tempReal.begin(),
+                                    tempImag.begin(),
                                     streamDeviceCCL);
                               else
                                 devicecclMpiCommDomain
@@ -2436,13 +2415,12 @@ namespace dftfe
                                     BVec * D,
                                     streamDeviceCCL);
 
-                              DEVICE_API_CHECK(cudaMemcpyAsync(
+                              dftfe::utils::deviceMemcpyAsyncD2H(
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   rotationMatBlockHost.begin() + jvec * N),
                                 dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockTemp.begin()),
                                 BVec * D * sizeof(dataTypes::number),
-                                cudaMemcpyDeviceToHost,
-                                streamDeviceCCL));
+                                streamDeviceCCL);
                             }
                         }
                       else
@@ -2467,14 +2445,13 @@ namespace dftfe
                     {
                       if (dftParams.useDeviceDirectAllReduce)
                         {
-                          DEVICE_API_CHECK(cudaMemcpyAsync(
+                          dftfe::utils::deviceMemcpyAsyncH2D(
                             dftfe::utils::makeDataTypeDeviceCompatible(
                                 rotationMatBlockTemp.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlockHost.begin()),
                             BVec * D * sizeof(dataTypes::number),
-                            cudaMemcpyHostToDevice,
-                            streamDeviceCCL));
+                            streamDeviceCCL);
 
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
@@ -2482,8 +2459,8 @@ namespace dftfe
                                   rotationMatBlockTemp.begin(),
                                   rotationMatBlockTemp.begin(),
                               BVec * D,
-                              tempReal,
-                              tempImag,
+                              tempReal.begin(),
+                              tempImag.begin(),
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -2516,19 +2493,19 @@ namespace dftfe
                       // check for completion of compute of previous block in
                       // compute stream before proceeding to rewriting
                       // rotationMatBlock in communication stream
-                      DEVICE_API_CHECK(cudaEventRecord(computeEvents[blockCount],
-                                                  streamCompute));
-                      DEVICE_API_CHECK(cudaStreamWaitEvent(streamDeviceCCL,
+                      dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                  streamCompute);
+                      dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
                                                       computeEvents[blockCount],
-                                                      0));
+                                                      0);
 
                       // synchronize host to communication stream before doing
                       // swap this automatically also makes sure the compute
                       // stream has the correct rotationMatBlock for dgemm
-                      DEVICE_API_CHECK(cudaEventRecord(communEvents[blockCount],
-                                                  streamDeviceCCL));
-                      if (cudaEventSynchronize(communEvents[blockCount]) ==
-                          cudaSuccess)
+                      dftfe::utils::deviceEventRecord(communEvents[blockCount],
+                                                  streamDeviceCCL);
+                      if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                          dftfe::utils::deviceSuccess)
                         rotationMatBlock.swap(rotationMatBlockTemp);
                     }
 
@@ -2561,35 +2538,28 @@ namespace dftfe
 
           if (BDof != 0)
             {
-              DEVICE_API_CHECK(cudaMemcpyAsync(
+              dftfe::utils::deviceMemcpyAsyncD2D(
                 dftfe::utils::makeDataTypeDeviceCompatible(X) + idof * N,
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   rotatedVectorsMatBlock.begin()),
                 N * BDof * sizeof(dataTypes::number),
-                cudaMemcpyDeviceToDevice,
-                streamCompute));
+                streamCompute);
             }
 
         } // block loop over dofs
 
-
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempReal));
-          DEVICE_API_CHECK(cudaFree(tempImag));
-        }
 
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventDestroy(computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventDestroy(communEvents[i]));
+          dftfe::utils::deviceEventDestroy(computeEvents[i]);
+          dftfe::utils::deviceEventDestroy(communEvents[i]);
         }
 
-      DEVICE_API_CHECK(cudaStreamDestroy(streamCompute));
-      DEVICE_API_CHECK(cudaStreamDestroy(streamDeviceCCL));
+      dftfe::utils::deviceStreamDestroy(streamCompute);
+      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
     }
 
     void
@@ -2649,14 +2619,13 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-      dataTypes::number *diagValuesHost;
-      DEVICE_API_CHECK(cudaMallocHost((void **)&diagValuesHost,
-                                 N * sizeof(dataTypes::number)));
-      std::memset(diagValuesHost, 0, N * sizeof(dataTypes::number));
+   dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> diagValuesHost;
+      diagValuesHost.resize(N,0);
+      std::memset(diagValuesHost.begin(), 0, N * sizeof(dataTypes::number));
 
-      cudaStream_t streamCompute, streamDeviceCCL;
-      DEVICE_API_CHECK(cudaStreamCreate(&streamCompute));
-      DEVICE_API_CHECK(cudaStreamCreate(&streamDeviceCCL));
+      dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
+      dftfe::utils::deviceStreamCreate(&streamCompute);
+      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
       // attach cublas handle to compute stream
       cublasSetStream(handle, streamCompute);
@@ -2664,12 +2633,12 @@ namespace dftfe
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
       const unsigned int numberBlocks = (N / vectorsBlockSize);
-      cudaEvent_t        computeEvents[numberBlocks];
-      cudaEvent_t        communEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t        computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t        communEvents[numberBlocks];
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventCreate(&computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventCreate(&communEvents[i]));
+          dftfe::utils::deviceEventCreate(&computeEvents[i]);
+          dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
@@ -2728,16 +2697,16 @@ namespace dftfe
         }
 
       MPI_Allreduce(MPI_IN_PLACE,
-                    diagValuesHost,
+                    diagValuesHost.begin(),
                     N,
-                    dataTypes::mpi_type_id(diagValuesHost),
+                    dataTypes::mpi_type_id(diagValuesHost.begin()),
                     MPI_SUM,
                     mpiCommDomain);
 
       dftfe::utils::deviceMemcpyH2D(dftfe::utils::makeDataTypeDeviceCompatible(
                    diagValues.begin()),
                  dftfe::utils::makeDataTypeDeviceCompatible(
-                   diagValuesHost),
+                   diagValuesHost.begin()),
                  N * sizeof(dataTypes::number));
 
       computeDiagQTimesXKernel<<<(M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -2749,16 +2718,12 @@ namespace dftfe
         N,
         M);
 
-      dataTypes::numberFP32ValueType *tempRealFP32;
-      dataTypes::numberFP32ValueType *tempImagFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32; 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempRealFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImagFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
+        tempRealFP32.resize(vectorsBlockSize * N,0);
+        tempImagFP32.resize(vectorsBlockSize * N,0);  
         }
 
       unsigned int blockCount = 0;
@@ -2849,13 +2814,12 @@ namespace dftfe
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
-                  cudaMemcpyAsync(
+                  dftfe::utils::deviceMemcpyAsyncH2D(
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       rotationMatBlockSPTemp.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       rotationMatBlockHostSP.begin()),
                     BVec * D * sizeof(dataTypes::numberFP32),
-                    cudaMemcpyHostToDevice,
                     streamDeviceCCL);
 
                   if (std::is_same<dataTypes::number,
@@ -2864,8 +2828,8 @@ namespace dftfe
                         rotationMatBlockSPTemp.begin(),
                         rotationMatBlockSPTemp.begin(),
                       BVec * D,
-                      tempRealFP32,
-                      tempImagFP32,
+                      tempRealFP32.begin(),
+                      tempImagFP32.begin(),
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -2896,19 +2860,17 @@ namespace dftfe
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
                   // rotationMatBlock in communication stream
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(computeEvents[blockCount], streamCompute));
-                  DEVICE_API_CHECK(cudaStreamWaitEvent(streamDeviceCCL,
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
                                                   computeEvents[blockCount],
-                                                  0));
+                                                  0);
 
                   // synchronize host to communication stream before doing swap
                   // this automatically also makes sure the compute stream has
                   // the correct rotationMatBlock for dgemm
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(communEvents[blockCount], streamDeviceCCL));
-                  if (cudaEventSynchronize(communEvents[blockCount]) ==
-                      cudaSuccess)
+                  dftfe::utils::deviceEventRecord(communEvents[blockCount], streamDeviceCCL);
+                  if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                      dftfe::utils::deviceSuccess)
                     rotationMatBlockSP.swap(rotationMatBlockSPTemp);
                 }
 
@@ -2964,25 +2926,17 @@ namespace dftfe
           blockCount++;
         } // block loop over vectors
 
-      DEVICE_API_CHECK(cudaFreeHost(diagValuesHost));
-
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempRealFP32));
-          DEVICE_API_CHECK(cudaFree(tempImagFP32));
-        }
-
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventDestroy(computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventDestroy(communEvents[i]));
+          dftfe::utils::deviceEventDestroy(computeEvents[i]);
+          dftfe::utils::deviceEventDestroy(communEvents[i]);
         }
 
-      DEVICE_API_CHECK(cudaStreamDestroy(streamCompute));
-      DEVICE_API_CHECK(cudaStreamDestroy(streamDeviceCCL));
+      dftfe::utils::deviceStreamDestroy(streamCompute);
+      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
     }
 
     void
@@ -3042,14 +2996,13 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-      dataTypes::number *diagValuesHost;
-      DEVICE_API_CHECK(cudaMallocHost((void **)&diagValuesHost,
-                                 N * sizeof(dataTypes::number)));
-      std::memset(diagValuesHost, 0, N * sizeof(dataTypes::number));
+   dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> diagValuesHost;
+      diagValuesHost.resize(N,0);
+      std::memset(diagValuesHost.begin(), 0, N * sizeof(dataTypes::number));
 
-      cudaStream_t streamCompute, streamDeviceCCL;
-      DEVICE_API_CHECK(cudaStreamCreate(&streamCompute));
-      DEVICE_API_CHECK(cudaStreamCreate(&streamDeviceCCL));
+      dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
+      dftfe::utils::deviceStreamCreate(&streamCompute);
+      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
       // attach cublas handle to compute stream
       cublasSetStream(handle, streamCompute);
@@ -3057,12 +3010,12 @@ namespace dftfe
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
       const unsigned int numberBlocks = (N / vectorsBlockSize);
-      cudaEvent_t        computeEvents[numberBlocks];
-      cudaEvent_t        communEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t        computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t        communEvents[numberBlocks];
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventCreate(&computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventCreate(&communEvents[i]));
+          dftfe::utils::deviceEventCreate(&computeEvents[i]);
+          dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
@@ -3121,16 +3074,16 @@ namespace dftfe
         }
 
       MPI_Allreduce(MPI_IN_PLACE,
-                    diagValuesHost,
+                    diagValuesHost.begin(),
                     N,
-                    dataTypes::mpi_type_id(diagValuesHost),
+                    dataTypes::mpi_type_id(diagValuesHost.begin()),
                     MPI_SUM,
                     mpiCommDomain);
 
       dftfe::utils::deviceMemcpyH2D(dftfe::utils::makeDataTypeDeviceCompatible(
                    diagValues.begin()),
                  dftfe::utils::makeDataTypeDeviceCompatible(
-                   diagValuesHost),
+                   diagValuesHost.begin()),
                  N * sizeof(dataTypes::number));
 
       computeDiagQTimesXKernel<<<(M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -3142,16 +3095,12 @@ namespace dftfe
         N,
         M);
 
-      dataTypes::numberFP32ValueType *tempRealFP32;
-      dataTypes::numberFP32ValueType *tempImagFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32;  
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempRealFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImagFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
+        tempRealFP32.resize(vectorsBlockSize * N,0);
+        tempImagFP32.resize(vectorsBlockSize * N,0);
         }
 
       unsigned int blockCount = 0;
@@ -3243,13 +3192,12 @@ namespace dftfe
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
-                  cudaMemcpyAsync(
+                  dftfe::utils::deviceMemcpyAsyncH2D(
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       rotationMatBlockSPTemp.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       rotationMatBlockHostSP.begin()),
                     BVec * D * sizeof(dataTypes::numberFP32),
-                    cudaMemcpyHostToDevice,
                     streamDeviceCCL);
 
                   if (std::is_same<dataTypes::number,
@@ -3258,8 +3206,8 @@ namespace dftfe
                         rotationMatBlockSPTemp.begin(),
                       rotationMatBlockSPTemp.begin(),
                       BVec * D,
-                      tempRealFP32,
-                      tempImagFP32,
+                      tempRealFP32.begin(),
+                      tempImagFP32.begin(),
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -3290,19 +3238,17 @@ namespace dftfe
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
                   // rotationMatBlock in communication stream
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(computeEvents[blockCount], streamCompute));
-                  DEVICE_API_CHECK(cudaStreamWaitEvent(streamDeviceCCL,
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
                                                   computeEvents[blockCount],
-                                                  0));
+                                                  0);
 
                   // synchronize host to communication stream before doing swap
                   // this automatically also makes sure the compute stream has
                   // the correct rotationMatBlock for dgemm
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(communEvents[blockCount], streamDeviceCCL));
-                  if (cudaEventSynchronize(communEvents[blockCount]) ==
-                      cudaSuccess)
+                  dftfe::utils::deviceEventRecord(communEvents[blockCount], streamDeviceCCL);
+                  if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                      dftfe::utils::deviceSuccess)
                     rotationMatBlockSP.swap(rotationMatBlockSPTemp);
                 }
 
@@ -3358,25 +3304,18 @@ namespace dftfe
           blockCount++;
         } // block loop over vectors
 
-      DEVICE_API_CHECK(cudaFreeHost(diagValuesHost));
-
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempRealFP32));
-          DEVICE_API_CHECK(cudaFree(tempImagFP32));
-        }
 
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventDestroy(computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventDestroy(communEvents[i]));
+          dftfe::utils::deviceEventDestroy(computeEvents[i]);
+          dftfe::utils::deviceEventDestroy(communEvents[i]);
         }
 
-      DEVICE_API_CHECK(cudaStreamDestroy(streamCompute));
-      DEVICE_API_CHECK(cudaStreamDestroy(streamDeviceCCL));
+      dftfe::utils::deviceStreamDestroy(streamCompute);
+      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
     }
 
     void
@@ -3415,30 +3354,24 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
         N * vectorsBlockSize, dataTypes::number(0));
 
-      dataTypes::number *overlapMatrixBlockHost;
-      DEVICE_API_CHECK(
-        cudaMallocHost((void **)&overlapMatrixBlockHost,
-                       N * vectorsBlockSize * sizeof(dataTypes::number)));
-      std::memset(overlapMatrixBlockHost,
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHost;
+      overlapMatrixBlockHost.resize(N * vectorsBlockSize,0);
+      std::memset(overlapMatrixBlockHost.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
-      cudaStream_t streamDeviceCCL;
-      cudaStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStream_t streamDeviceCCL;
+      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-      dataTypes::numberValueType *tempReal;
-      dataTypes::numberValueType *tempImag;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempReal,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImag,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
+        tempReal.resize(vectorsBlockSize * N,0);
+        tempImag.resize(vectorsBlockSize * N,0);
         }
 
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -3484,8 +3417,8 @@ namespace dftfe
                          overlapMatrixBlock.begin(),
                         overlapMatrixBlock.begin(),
                       D * B,
-                      tempReal,
-                      tempImag,
+                      tempReal.begin(),
+                      tempImag.begin(),
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -3496,7 +3429,7 @@ namespace dftfe
                 }
 
               dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockHost),
+                           overlapMatrixBlockHost.begin()),
                          dftfe::utils::makeDataTypeDeviceCompatible(
                            overlapMatrixBlock.begin()),
                          D * B * sizeof(dataTypes::number));
@@ -3505,9 +3438,9 @@ namespace dftfe
               // processors
               if (!dftParams.useDeviceDirectAllReduce)
                 MPI_Allreduce(MPI_IN_PLACE,
-                              overlapMatrixBlockHost,
+                              overlapMatrixBlockHost.begin(),
                               D * B,
-                              dataTypes::mpi_type_id(overlapMatrixBlockHost),
+                              dataTypes::mpi_type_id(overlapMatrixBlockHost.begin()),
                               MPI_SUM,
                               mpiCommDomain);
 
@@ -3534,14 +3467,8 @@ namespace dftfe
             } // band parallelization
         }     // end block loop
 
-      DEVICE_API_CHECK(cudaFreeHost(overlapMatrixBlockHost));
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempReal));
-          DEVICE_API_CHECK(cudaFree(tempImag));
-        }
 
-      cudaStreamDestroy(streamDeviceCCL);
+      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
 
       if (numberBandGroups > 1)
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
@@ -3613,9 +3540,9 @@ namespace dftfe
       const unsigned int numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for data movement and computation
-      cudaStream_t streamCompute, streamDataMove;
-      DEVICE_API_CHECK(cudaStreamCreate(&streamCompute));
-      DEVICE_API_CHECK(cudaStreamCreate(&streamDataMove));
+      dftfe::utils::deviceStream_t streamCompute, streamDataMove;
+      dftfe::utils::deviceStreamCreate(&streamCompute);
+      dftfe::utils::deviceStreamCreate(&streamDataMove);
 
       // attach cublas handle to compute stream
       cublasSetStream(handle, streamCompute);
@@ -3624,21 +3551,19 @@ namespace dftfe
       // for all the blocks. These are required for synchronization
       // between compute, copy and communication as discussed above in the
       // pseudo code
-      cudaEvent_t computeEvents[numberBlocks];
-      cudaEvent_t copyEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventCreate(&computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventCreate(&copyEvents[i]));
+          dftfe::utils::deviceEventCreate(&computeEvents[i]);
+          dftfe::utils::deviceEventCreate(&copyEvents[i]);
         }
 
       // create pinned memory used later to copy from Device->CPU
-      dataTypes::number *overlapMatrixBlockHost;
-      DEVICE_API_CHECK(
-        cudaMallocHost((void **)&overlapMatrixBlockHost,
-                       N * vectorsBlockSize * sizeof(dataTypes::number)));
-      std::memset(overlapMatrixBlockHost,
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHost;
+      overlapMatrixBlockHost.resize(N * vectorsBlockSize,0);
+      std::memset(overlapMatrixBlockHost.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
@@ -3652,16 +3577,12 @@ namespace dftfe
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-      dataTypes::numberValueType *tempReal;
-      dataTypes::numberValueType *tempImag;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempReal,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImag,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
+        tempReal.resize(vectorsBlockSize * N,0);
+        tempImag.resize(vectorsBlockSize * N,0);
         }
 
       unsigned int blockCount = 0;
@@ -3700,8 +3621,7 @@ namespace dftfe
                               D);
 
                   // record completion of compute for first block
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(computeEvents[blockCount], streamCompute));
+                    dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
                 }
 
               // Before swap host thread needs to wait till compute on
@@ -3710,8 +3630,8 @@ namespace dftfe
               // both the compute on currentblock and swap is over. Note that at
               // this point there is nothing queued in the streamDataMove as all
               // previous operations in that stream are over.
-              if ((cudaEventSynchronize(computeEvents[blockCount]) ==
-                   cudaSuccess) &&
+              if ((dftfe::utils::deviceEventSynchronize(computeEvents[blockCount]) ==
+                   dftfe::utils::deviceSuccess) &&
                   (ivec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 overlapMatrixBlock.swap(overlapMatrixBlockNext);
 
@@ -3748,8 +3668,8 @@ namespace dftfe
                               DNew);
 
                   // record completion of compute for next block
-                  DEVICE_API_CHECK(cudaEventRecord(computeEvents[blockCount + 1],
-                                              streamCompute));
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
+                                              streamCompute);
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -3762,8 +3682,8 @@ namespace dftfe
                         overlapMatrixBlock.begin(),
                         overlapMatrixBlock.begin(),
                       D * B,
-                      tempReal,
-                      tempImag,
+                      tempReal.begin(),
+                      tempImag.begin(),
                       streamDataMove);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
@@ -3773,32 +3693,30 @@ namespace dftfe
                       streamDataMove);
                 }
 
-              DEVICE_API_CHECK(cudaMemcpyAsync(
+              dftfe::utils::deviceMemcpyAsyncD2H(
                 dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHost),
+                  overlapMatrixBlockHost.begin()),
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   overlapMatrixBlock.begin()),
                 D * B * sizeof(dataTypes::number),
-                cudaMemcpyDeviceToHost,
-                streamDataMove));
+                streamDataMove);
 
               // record completion of Device->CPU copy for current block
-              DEVICE_API_CHECK(
-                cudaEventRecord(copyEvents[blockCount], streamDataMove));
+              dftfe::utils::deviceEventRecord(copyEvents[blockCount], streamDataMove);
 
               // Check that Device->CPU on the current block has been completed.
               // If completed, perform blocking MPI commmunication on the
               // current block and copy to ScaLAPACK matri
-              if (cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
+              if (dftfe::utils::deviceEventSynchronize(copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
                   if (!dftParams.useDeviceDirectAllReduce)
                     MPI_Allreduce(MPI_IN_PLACE,
-                                  overlapMatrixBlockHost,
+                                  overlapMatrixBlockHost.begin(),
                                   D * B,
                                   dataTypes::mpi_type_id(
-                                    overlapMatrixBlockHost),
+                                    overlapMatrixBlockHost.begin()),
                                   MPI_SUM,
                                   mpiCommDomain);
 
@@ -3828,24 +3746,18 @@ namespace dftfe
           blockCount += 1;
         } // end block loop
 
-      DEVICE_API_CHECK(cudaFreeHost(overlapMatrixBlockHost));
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempReal));
-          DEVICE_API_CHECK(cudaFree(tempImag));
-        }
-
+      
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventDestroy(computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventDestroy(copyEvents[i]));
+          dftfe::utils::deviceEventDestroy(computeEvents[i]);
+          dftfe::utils::deviceEventDestroy(copyEvents[i]);
         }
 
-      DEVICE_API_CHECK(cudaStreamDestroy(streamCompute));
-      DEVICE_API_CHECK(cudaStreamDestroy(streamDataMove));
+      dftfe::utils::deviceStreamDestroy(streamCompute);
+      dftfe::utils::deviceStreamDestroy(streamDataMove);
 
       if (numberBandGroups > 1)
         {
@@ -3908,25 +3820,21 @@ namespace dftfe
         N * M,
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
-      dataTypes::number *overlapMatrixBlockHostDP;
-      DEVICE_API_CHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
-                                 vectorsBlockSize * vectorsBlockSize *
-                                   sizeof(dataTypes::number)));
-      std::memset(overlapMatrixBlockHostDP,
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostDP;
+      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize,0);
+      std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
 
-      dataTypes::numberFP32 *overlapMatrixBlockHostSP;
-      DEVICE_API_CHECK(
-        cudaMallocHost((void **)&overlapMatrixBlockHostSP,
-                       N * vectorsBlockSize * sizeof(dataTypes::numberFP32)));
-      std::memset(overlapMatrixBlockHostSP,
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostSP;
+      overlapMatrixBlockHostSP.resize(N * vectorsBlockSize,0);
+      std::memset(overlapMatrixBlockHostSP.begin(),
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
-      cudaStream_t streamDeviceCCL;
-      cudaStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStream_t streamDeviceCCL;
+      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
       const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);
@@ -3935,24 +3843,17 @@ namespace dftfe
       const dataTypes::numberFP32 scalarCoeffBetaSP =
         dataTypes::numberFP32(0);
 
-      dataTypes::numberValueType *    tempReal;
-      dataTypes::numberValueType *    tempImag;
-      dataTypes::numberFP32ValueType *tempRealFP32;
-      dataTypes::numberFP32ValueType *tempImagFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32; 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempReal,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImag,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempRealFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImagFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
+        tempReal.resize(vectorsBlockSize * N,0);
+        tempImag.resize(vectorsBlockSize * N,0);
+        tempRealFP32.resize(vectorsBlockSize * N,0);
+        tempImagFP32.resize(vectorsBlockSize * N,0); 
         }
 
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -4029,10 +3930,10 @@ namespace dftfe
                           overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
-                        tempReal,
-                        tempRealFP32,
-                        tempImag,
-                        tempImagFP32,
+                        tempReal.begin(),
+                        tempRealFP32.begin(),
+                        tempImag.begin(),
+                        tempImagFP32.begin(),
                         streamDeviceCCL);
                   else
                     devicecclMpiCommDomain
@@ -4047,13 +3948,13 @@ namespace dftfe
                 }
 
               dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockHostDP),
+                           overlapMatrixBlockHostDP.begin()),
                          dftfe::utils::makeDataTypeDeviceCompatible(
                            overlapMatrixBlockDP.begin()),
                          B * B * sizeof(dataTypes::number));
 
               dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockHostSP),
+                           overlapMatrixBlockHostSP.begin()),
                          dftfe::utils::makeDataTypeDeviceCompatible(
                            overlapMatrixBlockSP.begin()),
                          DRem * B * sizeof(dataTypes::numberFP32));
@@ -4063,20 +3964,20 @@ namespace dftfe
                   // Sum local XTrunc^{T}*XcBlock for double precision across
                   // domain decomposition processors
                   MPI_Allreduce(MPI_IN_PLACE,
-                                overlapMatrixBlockHostDP,
+                                overlapMatrixBlockHostDP.begin(),
                                 B * B,
                                 dataTypes::mpi_type_id(
-                                  overlapMatrixBlockHostDP),
+                                  overlapMatrixBlockHostDP.begin()),
                                 MPI_SUM,
                                 mpiCommDomain);
 
                   // Sum local XTrunc^{T}*XcBlock for single precision across
                   // domain decomposition processors
                   MPI_Allreduce(MPI_IN_PLACE,
-                                overlapMatrixBlockHostSP,
+                                overlapMatrixBlockHostSP.begin(),
                                 DRem * B,
                                 dataTypes::mpi_type_id(
-                                  overlapMatrixBlockHostSP),
+                                  overlapMatrixBlockHostSP.begin()),
                                 MPI_SUM,
                                 mpiCommDomain);
                 }
@@ -4111,18 +4012,8 @@ namespace dftfe
             } // band parallelization
         }     // end block loop
 
-      DEVICE_API_CHECK(cudaFreeHost(overlapMatrixBlockHostDP));
-      DEVICE_API_CHECK(cudaFreeHost(overlapMatrixBlockHostSP));
 
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempReal));
-          DEVICE_API_CHECK(cudaFree(tempImag));
-          DEVICE_API_CHECK(cudaFree(tempRealFP32));
-          DEVICE_API_CHECK(cudaFree(tempImagFP32));
-        }
-
-      cudaStreamDestroy(streamDeviceCCL);
+      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
 
       if (numberBandGroups > 1)
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
@@ -4195,9 +4086,9 @@ namespace dftfe
       const unsigned int numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for Device->CPU copy and computation
-      cudaStream_t streamCompute, streamDataMove;
-      cudaStreamCreate(&streamCompute);
-      cudaStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStream_t streamCompute, streamDataMove;
+      dftfe::utils::deviceStreamCreate(&streamCompute);
+      dftfe::utils::deviceStreamCreate(&streamDataMove);
 
       // attach cublas handle to compute stream
       cublasSetStream(handle, streamCompute);
@@ -4206,13 +4097,13 @@ namespace dftfe
       // for all the blocks. These are required for synchronization
       // between compute, copy and communication as discussed above in the
       // pseudo code
-      cudaEvent_t computeEvents[numberBlocks];
-      cudaEvent_t copyEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          cudaEventCreate(&computeEvents[i]);
-          cudaEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(&computeEvents[i]);
+          dftfe::utils::deviceEventCreate(&copyEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
@@ -4239,20 +4130,16 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(
           XSP.begin()));
-      dataTypes::number *overlapMatrixBlockHostDP;
-      DEVICE_API_CHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
-                                 vectorsBlockSize * vectorsBlockSize *
-                                   sizeof(dataTypes::number)));
-      std::memset(overlapMatrixBlockHostDP,
+      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostDP;
+      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize,0);
+      std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
 
-      dataTypes::numberFP32 *overlapMatrixBlockHostSP;
-      DEVICE_API_CHECK(
-        cudaMallocHost((void **)&overlapMatrixBlockHostSP,
-                       N * vectorsBlockSize * sizeof(dataTypes::numberFP32)));
-      std::memset(overlapMatrixBlockHostSP,
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostSP;
+      overlapMatrixBlockHostSP.resize(N * vectorsBlockSize,0);
+      std::memset(overlapMatrixBlockHostSP.begin(),
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
@@ -4263,24 +4150,17 @@ namespace dftfe
       const dataTypes::numberFP32 scalarCoeffBetaSP =
         dataTypes::numberFP32(0);
 
-      dataTypes::numberValueType *    tempReal;
-      dataTypes::numberValueType *    tempImag;
-      dataTypes::numberFP32ValueType *tempRealFP32;
-      dataTypes::numberFP32ValueType *tempImagFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32; 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempReal,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImag,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempRealFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
-          DEVICE_API_CHECK(cudaMalloc((void **)&tempImagFP32,
-                                 vectorsBlockSize * N *
-                                   sizeof(dataTypes::numberFP32ValueType)));
+        tempReal.resize(vectorsBlockSize * N,0);
+        tempImag.resize(vectorsBlockSize * N,0);
+        tempRealFP32.resize(vectorsBlockSize * N,0);
+        tempImagFP32.resize(vectorsBlockSize * N,0);   
         }
 
       unsigned int blockCount = 0;
@@ -4350,8 +4230,7 @@ namespace dftfe
                     }
 
                   // record completion of compute for first block
-                  DEVICE_API_CHECK(
-                    cudaEventRecord(computeEvents[blockCount], streamCompute));
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
                 }
 
               // Before swap host thread needs to wait till compute on
@@ -4360,8 +4239,8 @@ namespace dftfe
               // both the compute on currentblock and swap is over. Note that at
               // this point there is nothing queued in the streamDataMove as all
               // previous operations in that stream are over.
-              if ((cudaEventSynchronize(computeEvents[blockCount]) ==
-                   cudaSuccess) &&
+              if ((dftfe::utils::deviceEventSynchronize(computeEvents[blockCount]) ==
+                   dftfe::utils::deviceSuccess) &&
                   (ivec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 {
                   overlapMatrixBlockDP.swap(overlapMatrixBlockDPNext);
@@ -4431,8 +4310,8 @@ namespace dftfe
                     }
 
                   // record completion of compute for next block
-                  DEVICE_API_CHECK(cudaEventRecord(computeEvents[blockCount + 1],
-                                              streamCompute));
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
+                                              streamCompute);
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -4447,10 +4326,10 @@ namespace dftfe
                           overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
-                        tempReal,
-                        tempRealFP32,
-                        tempImag,
-                        tempImagFP32,
+                        tempReal.begin(),
+                        tempRealFP32.begin(),
+                        tempImag.begin(),
+                        tempImagFP32.begin(),
                         streamDataMove);
                   else
                     devicecclMpiCommDomain
@@ -4464,30 +4343,28 @@ namespace dftfe
                         streamDataMove);
                 }
 
-              cudaMemcpyAsync(dftfe::utils::makeDataTypeDeviceCompatible(
-                                overlapMatrixBlockHostDP),
+              dftfe::utils::deviceMemcpyAsyncD2H(dftfe::utils::makeDataTypeDeviceCompatible(
+                                overlapMatrixBlockHostDP.begin()),
                               dftfe::utils::makeDataTypeDeviceCompatible(
                               overlapMatrixBlockDP.begin()),
                               B * B * sizeof(dataTypes::number),
-                              cudaMemcpyDeviceToHost,
                               streamDataMove);
 
-              cudaMemcpyAsync(
+              dftfe::utils::deviceMemcpyAsyncD2H(
                 dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHostSP),
+                  overlapMatrixBlockHostSP.begin()),
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   overlapMatrixBlockSP.begin()),
                 DRem * B * sizeof(dataTypes::numberFP32),
-                cudaMemcpyDeviceToHost,
                 streamDataMove);
 
               // record completion of Device->CPU copy for current block
-              cudaEventRecord(copyEvents[blockCount], streamDataMove);
+              dftfe::utils::deviceEventRecord(copyEvents[blockCount], streamDataMove);
 
               // Check that Device->CPU on the current block has been completed.
               // If completed, perform blocking MPI commmunication on the
               // current block and copy to ScaLAPACK matri
-              if (cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
+              if (dftfe::utils::deviceEventSynchronize(copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
                 {
                   const unsigned int DRem = D - B;
 
@@ -4496,20 +4373,20 @@ namespace dftfe
                       // Sum local XTrunc^{T}*XcBlock for double precision
                       // across domain decomposition processors
                       MPI_Allreduce(MPI_IN_PLACE,
-                                    overlapMatrixBlockHostDP,
+                                    overlapMatrixBlockHostDP.begin(),
                                     B * B,
                                     dataTypes::mpi_type_id(
-                                      overlapMatrixBlockHostDP),
+                                      overlapMatrixBlockHostDP.begin()),
                                     MPI_SUM,
                                     mpiCommDomain);
 
                       // Sum local XTrunc^{T}*XcBlock for single precision
                       // across domain decomposition processors
                       MPI_Allreduce(MPI_IN_PLACE,
-                                    overlapMatrixBlockHostSP,
+                                    overlapMatrixBlockHostSP.begin(),
                                     DRem * B,
                                     dataTypes::mpi_type_id(
-                                      overlapMatrixBlockHostSP),
+                                      overlapMatrixBlockHostSP.begin()),
                                     MPI_SUM,
                                     mpiCommDomain);
                     }
@@ -4551,28 +4428,18 @@ namespace dftfe
 
         } // end block loop
 
-      DEVICE_API_CHECK(cudaFreeHost(overlapMatrixBlockHostDP));
-      DEVICE_API_CHECK(cudaFreeHost(overlapMatrixBlockHostSP));
-
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          DEVICE_API_CHECK(cudaFree(tempReal));
-          DEVICE_API_CHECK(cudaFree(tempImag));
-          DEVICE_API_CHECK(cudaFree(tempRealFP32));
-          DEVICE_API_CHECK(cudaFree(tempImagFP32));
-        }
 
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
-          DEVICE_API_CHECK(cudaEventDestroy(computeEvents[i]));
-          DEVICE_API_CHECK(cudaEventDestroy(copyEvents[i]));
+          dftfe::utils::deviceEventDestroy(computeEvents[i]);
+          dftfe::utils::deviceEventDestroy(copyEvents[i]);
         }
 
-      DEVICE_API_CHECK(cudaStreamDestroy(streamCompute));
-      DEVICE_API_CHECK(cudaStreamDestroy(streamDataMove));
+      dftfe::utils::deviceStreamDestroy(streamCompute);
+      dftfe::utils::deviceStreamDestroy(streamDataMove);
 
       if (numberBandGroups > 1)
         {

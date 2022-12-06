@@ -287,6 +287,14 @@ namespace dftfe
       return err;      
     }
 
+    deviceError_t
+    deviceStreamWaitEvent(deviceStream_t stream,deviceEvent_t event,unsigned int flags)
+    {
+      deviceError_t err=cudaStreamWaitEvent(stream,event,flags);
+      DEVICE_API_CHECK(err);
+      return err;      
+    }
+
   } // namespace utils
 } // namespace dftfe
 #endif
