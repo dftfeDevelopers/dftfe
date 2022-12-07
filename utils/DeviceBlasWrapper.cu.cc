@@ -29,39 +29,39 @@ namespace dftfe
   {
     namespace deviceBlasWrapper
     {
-      deviceStatus_t
+      deviceBlasStatus_t
       create(deviceBlasHandle_t   *pHandle)
       {
-        deviceStatus_t status=cublasCreate(pHandle);
+        deviceBlasStatus_t status=cublasCreate(pHandle);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       destroy(deviceBlasHandle_t   handle)
       {
-        deviceStatus_t status=cublasDestroy(handle);
+        deviceBlasStatus_t status=cublasDestroy(handle);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       setStream(deviceBlasHandle_t handle, deviceStream_t stream)
       {
-        deviceStatus_t status=cublasSetStream(handle,stream);
+        deviceBlasStatus_t status=cublasSetStream(handle,stream);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       }
 
-      deviceStatus_t
-      setMathMode(deviceBlasHandle_t handle, deviceMath_t mathMode)
+      deviceBlasStatus_t
+      setMathMode(deviceBlasHandle_t handle, deviceBlasMath_t mathMode)
       {
-        deviceStatus_t status=cublasSetMathMode(handle,mathMode);
+        deviceBlasStatus_t status=cublasSetMathMode(handle,mathMode);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       copy(deviceBlasHandle_t handle,
            int n,
            const double          *x,
@@ -69,24 +69,24 @@ namespace dftfe
            double                *y,
            int incy) 
       {
-        deviceStatus_t status=cublasDcopy(handle,n,x,incx,y,incy);
+        deviceBlasStatus_t status=cublasDcopy(handle,n,x,incx,y,incy);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       }      
 
-      deviceStatus_t
+      deviceBlasStatus_t
       nrm2(deviceBlasHandle_t handle,
            int n,
            const double          *x,
            int incx,
            double *result)
       {
-        deviceStatus_t status=cublasDnrm2(handle,n,x,incx,result);
+        deviceBlasStatus_t status=cublasDnrm2(handle,n,x,incx,result);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       } 
 
-      deviceStatus_t
+      deviceBlasStatus_t
       dot(deviceBlasHandle_t handle,
           int n,
           const double          *x,
@@ -95,12 +95,12 @@ namespace dftfe
           int incy,
           double          *result)
       {
-        deviceStatus_t status=cublasDdot(handle,n,x,incx,y,incy,result);
+        deviceBlasStatus_t status=cublasDdot(handle,n,x,incx,y,incy,result);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       } 
 
-      deviceStatus_t
+      deviceBlasStatus_t
       axpy(deviceBlasHandle_t handle,
            int n,
            const double          *alpha,
@@ -109,12 +109,12 @@ namespace dftfe
            double                *y,
            int incy)
       {
-        deviceStatus_t status=cublasDaxpy(handle,n,alpha,x,incx,y,incy);
+        deviceBlasStatus_t status=cublasDaxpy(handle,n,alpha,x,incx,y,incy);
         DEVICEBLAS_API_CHECK(status);
         return status;        
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -130,13 +130,13 @@ namespace dftfe
                   double *          C,
                   int               ldc)
       {
-        deviceStatus_t status= cublasDgemm(
+        deviceBlasStatus_t status= cublasDgemm(
           handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -152,13 +152,13 @@ namespace dftfe
                   float *          C,
                   int               ldc)
       {
-        deviceStatus_t status= cublasSgemm(
+        deviceBlasStatus_t status= cublasSgemm(
           handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -174,13 +174,13 @@ namespace dftfe
                   std::complex<double> *          C,
                   int               ldc)
       {
-        deviceStatus_t status= cublasZgemm(
+        deviceBlasStatus_t status= cublasZgemm(
           handle, transa, transb, m, n, k, dftfe::utils::makeDataTypeDeviceCompatible(alpha), dftfe::utils::makeDataTypeDeviceCompatible(A), lda, dftfe::utils::makeDataTypeDeviceCompatible(B), ldb, dftfe::utils::makeDataTypeDeviceCompatible(beta), dftfe::utils::makeDataTypeDeviceCompatible(C), ldc);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -196,13 +196,13 @@ namespace dftfe
                   std::complex<float> *          C,
                   int               ldc)
       {
-        deviceStatus_t status= cublasCgemm(
+        deviceBlasStatus_t status= cublasCgemm(
           handle, transa, transb, m, n, k, dftfe::utils::makeDataTypeDeviceCompatible(alpha), dftfe::utils::makeDataTypeDeviceCompatible(A), lda, dftfe::utils::makeDataTypeDeviceCompatible(B), ldb, dftfe::utils::makeDataTypeDeviceCompatible(beta), dftfe::utils::makeDataTypeDeviceCompatible(C), ldc);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmBatched(deviceBlasHandle_t    handle,
                      deviceBlasOperation_t transa,
                      deviceBlasOperation_t transb,
@@ -219,7 +219,7 @@ namespace dftfe
                      int               ldc,
                      int               batchCount)
       {
-        deviceStatus_t status= cublasDgemmBatched(handle,
+        deviceBlasStatus_t status= cublasDgemmBatched(handle,
                               transa,
                               transb,
                               m,
@@ -238,7 +238,7 @@ namespace dftfe
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmBatched(deviceBlasHandle_t    handle,
                      deviceBlasOperation_t transa,
                      deviceBlasOperation_t transb,
@@ -255,7 +255,7 @@ namespace dftfe
                      int               ldc,
                      int               batchCount)
       {
-        deviceStatus_t status= cublasZgemmBatched(handle,
+        deviceBlasStatus_t status= cublasZgemmBatched(handle,
                               transa,
                               transb,
                               m,
@@ -274,7 +274,7 @@ namespace dftfe
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t         handle,
                             deviceBlasOperation_t      transa,
                             deviceBlasOperation_t      transb,
@@ -294,7 +294,7 @@ namespace dftfe
                             long long int          strideC,
                             int                    batchCount)
       {
-        deviceStatus_t status= cublasDgemmStridedBatched(handle,
+        deviceBlasStatus_t status= cublasDgemmStridedBatched(handle,
                                      transa,
                                      transb,
                                      m,
@@ -316,7 +316,7 @@ namespace dftfe
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t         handle,
                             deviceBlasOperation_t      transa,
                             deviceBlasOperation_t      transb,
@@ -336,7 +336,7 @@ namespace dftfe
                             long long int          strideC,
                             int                    batchCount)
       {
-        deviceStatus_t status= cublasSgemmStridedBatched(handle,
+        deviceBlasStatus_t status= cublasSgemmStridedBatched(handle,
                                      transa,
                                      transb,
                                      m,
@@ -359,7 +359,7 @@ namespace dftfe
       }
 
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
                             deviceBlasOperation_t transa,
                             deviceBlasOperation_t transb,
@@ -379,7 +379,7 @@ namespace dftfe
                             long long int     strideC,
                             int               batchCount)
       {
-        deviceStatus_t status= cublasZgemmStridedBatched(handle,
+        deviceBlasStatus_t status= cublasZgemmStridedBatched(handle,
                                      transa,
                                      transb,
                                      m,
@@ -401,7 +401,7 @@ namespace dftfe
         return status;
       }
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
                             deviceBlasOperation_t transa,
                             deviceBlasOperation_t transb,
@@ -421,7 +421,7 @@ namespace dftfe
                             long long int     strideC,
                             int               batchCount)
       {
-        deviceStatus_t status= cublasCgemmStridedBatched(handle,
+        deviceBlasStatus_t status= cublasCgemmStridedBatched(handle,
                                      transa,
                                      transb,
                                      m,

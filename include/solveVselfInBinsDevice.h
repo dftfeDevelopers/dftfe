@@ -49,7 +49,7 @@ namespace dftfe
 
     void
     cgSolver(
-      deviceBlasHandle_t &                      handle,
+      dftfe::utils::deviceBlasHandle_t &                      handle,
       dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
       const double *                        bD,
       const double *                        diagonalAD,

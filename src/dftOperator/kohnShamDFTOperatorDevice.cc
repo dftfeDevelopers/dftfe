@@ -615,7 +615,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  deviceBlasHandle_t &
+  dftfe::utils::deviceBlasHandle_t &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getDeviceBlasHandle()
   {
     return d_deviceBlasHandle;
@@ -3774,7 +3774,7 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
     const unsigned int                               M,
     const unsigned int                               N,
-    deviceBlasHandle_t &                                 handle,
+    dftfe::utils::deviceBlasHandle_t &                                 handle,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
     utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -3864,10 +3864,10 @@ namespace dftfe
             const unsigned int D          = N - jvec;
             dftfe::utils::deviceBlasWrapper::gemm(
               handle,
-              DEVICEBLAS_OP_N,
+              dftfe::utils::DEVICEBLAS_OP_N,
               std::is_same<dataTypes::number, std::complex<double>>::value ?
-                DEVICEBLAS_OP_C :
-                DEVICEBLAS_OP_T,
+                dftfe::utils::DEVICEBLAS_OP_C :
+                dftfe::utils::DEVICEBLAS_OP_T,
               D,
               B,
               M,
@@ -3937,7 +3937,7 @@ namespace dftfe
       distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -4097,10 +4097,10 @@ namespace dftfe
                 // evalute X^{T} times HXBlock
                 dftfe::utils::deviceBlasWrapper::gemm(
                   handle,
-                  DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   std::is_same<dataTypes::number, std::complex<double>>::value ?
-                    DEVICEBLAS_OP_C :
-                    DEVICEBLAS_OP_T,
+                    dftfe::utils::DEVICEBLAS_OP_C :
+                    dftfe::utils::DEVICEBLAS_OP_T,
                   D,
                   B,
                   M,
@@ -4175,10 +4175,10 @@ namespace dftfe
                 // evalute X^{T} times HXBlock
                 dftfe::utils::deviceBlasWrapper::gemm(
                   handle,
-                  DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   std::is_same<dataTypes::number, std::complex<double>>::value ?
-                    DEVICEBLAS_OP_C :
-                    DEVICEBLAS_OP_T,
+                    dftfe::utils::DEVICEBLAS_OP_C :
+                    dftfe::utils::DEVICEBLAS_OP_T,
                   DNew,
                   B,
                   M,
@@ -4326,7 +4326,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -4514,11 +4514,11 @@ namespace dftfe
                 if (jvec + B > Noc)
                   dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      DEVICEBLAS_OP_C :
-                      DEVICEBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     D,
                     B,
                     M,
@@ -4533,11 +4533,11 @@ namespace dftfe
                 else
                   dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::numberFP32,
                                  std::complex<float>>::value ?
-                      DEVICEBLAS_OP_C :
-                      DEVICEBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     D,
                     B,
                     M,
@@ -4646,11 +4646,11 @@ namespace dftfe
                 if (jvecNew + B > Noc)
                   dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      DEVICEBLAS_OP_C :
-                      DEVICEBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     DNew,
                     B,
                     M,
@@ -4665,11 +4665,11 @@ namespace dftfe
                 else
                   dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::numberFP32,
                                  std::complex<float>>::value ?
-                      DEVICEBLAS_OP_C :
-                      DEVICEBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     DNew,
                     B,
                     M,

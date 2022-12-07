@@ -42,7 +42,7 @@ namespace dftfe
       utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
       std::vector<double> &                          eigenValues,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams,
       const bool                                     useMixedPrecOverall)
     {
@@ -243,7 +243,7 @@ namespace dftfe
       utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
       std::vector<double> &                          eigenValues,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams,
       const bool                                     useMixedPrecOverall)
     {
@@ -672,7 +672,7 @@ namespace dftfe
       utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
       std::vector<double> &                          eigenValues,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams,
       const bool                                     useMixedPrecOverall)
     {
@@ -1198,7 +1198,7 @@ namespace dftfe
       const double                                   fermiEnergy,
       std::vector<double> &                          densityMatDerFermiEnergy,
       dftfe::elpaScalaManager &                      elpaScala,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams)
     {
       dealii::ConditionalOStream pcout(

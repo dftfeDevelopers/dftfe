@@ -57,7 +57,7 @@ namespace dftfe
     void
     destroyDeviceBlasHandle();
 
-    deviceBlasHandle_t &
+    dftfe::utils::deviceBlasHandle_t &
     getDeviceBlasHandle();
 
     const double *
@@ -198,7 +198,7 @@ namespace dftfe
          distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
          const unsigned int                             M,
          const unsigned int                             N,
-         deviceBlasHandle_t &                               handle,
+         dftfe::utils::deviceBlasHandle_t &                               handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -229,7 +229,7 @@ namespace dftfe
       distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -268,7 +268,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -698,7 +698,7 @@ namespace dftfe
       d_DeviceFlattenedArrayMacroCellLocalProcIndexIdMapFlattened;
 
     /// storage for deviceblas handle
-    deviceBlasHandle_t d_deviceBlasHandle;
+    dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
 
     /// flag for precomputing stiffness matrix contribution from
     /// sum{Vext}-sum{Vnuc}

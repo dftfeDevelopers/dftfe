@@ -60,9 +60,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
     d_deviceBlasHandle,
-    DEVICEBLAS_OP_N,
-    std::is_same<dataTypes::number, std::complex<double>>::value ? DEVICEBLAS_OP_T :
-                                                                   DEVICEBLAS_OP_N,
+    dftfe::utils::DEVICEBLAS_OP_N,
+    std::is_same<dataTypes::number, std::complex<double>>::value ? dftfe::utils::DEVICEBLAS_OP_T :
+                                                                   dftfe::utils::DEVICEBLAS_OP_N,
     numberWaveFunctions,
     d_numberNodesPerElement,
     d_numberNodesPerElement,

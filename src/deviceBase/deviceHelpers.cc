@@ -22,6 +22,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
+#include <DeviceBlasWrapper.h>
 #include <dftUtils.h>
 #include <headers.h>
 
@@ -118,7 +119,7 @@ namespace dftfe
         const double *  x,
         const double    alpha,
         const int       size,
-        deviceBlasHandle_t &deviceBlasHandle)
+        dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
     {
       int incx = 1, incy = 1;
       dftfe::utils::deviceBlasWrapper::axpy(deviceBlasHandle, size, &alpha, x, incx, y, incy);
@@ -128,7 +129,7 @@ namespace dftfe
     l2_norm(const double *  x,
             const int       size,
             const MPI_Comm &mpi_communicator,
-            deviceBlasHandle_t &deviceBlasHandle)
+            dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
     {
       int    incx = 1;
       double local_nrm, nrm = 0;
@@ -146,7 +147,7 @@ namespace dftfe
         const double *  y,
         const int       size,
         const MPI_Comm &mpi_communicator,
-        deviceBlasHandle_t &deviceBlasHandle)
+        dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
     {
       int    incx = 1, incy = 1;
       double local_sum, sum = 0;

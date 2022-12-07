@@ -49,8 +49,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       dftfe::utils::deviceBlasWrapper::gemmBatched(
         d_deviceBlasHandle,
-        DEVICEBLAS_OP_N,
-        DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
@@ -66,8 +66,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
       dftfe::utils::deviceBlasWrapper::gemm(
         d_deviceBlasHandle,
-        DEVICEBLAS_OP_N,
-        DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
@@ -150,8 +150,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       strideC = numberWaveFunctions * d_numberNodesPerElement;
       dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
         d_deviceBlasHandle,
-        DEVICEBLAS_OP_N,
-        DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_numberNodesPerElement,
         d_maxSingleAtomPseudoWfc,
@@ -271,8 +271,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
       dftfe::utils::deviceBlasWrapper::gemmBatched(
         d_deviceBlasHandle,
-        DEVICEBLAS_OP_N,
-        DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
@@ -288,8 +288,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
       dftfe::utils::deviceBlasWrapper::gemm(
         d_deviceBlasHandle,
-        DEVICEBLAS_OP_N,
-        DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
+        dftfe::utils::DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,

@@ -76,7 +76,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -95,7 +95,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -114,7 +114,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -133,7 +133,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -154,7 +154,7 @@ namespace dftfe
                                        const MPI_Comm &         mpiCommDomain,
                                        utils::DeviceCCLWrapper &devicecclMpiCommDomain,
                                        const MPI_Comm &  interBandGroupComm,
-                                       deviceBlasHandle_t &  handle,
+                                       dftfe::utils::deviceBlasHandle_t &  handle,
                                        const dftParameters &dftParams,
                                        const bool useMixedPrecOverall = false);
 
@@ -163,7 +163,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -181,7 +181,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -194,7 +194,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -209,7 +209,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -235,7 +235,7 @@ namespace dftfe
       utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
       std::vector<double> &                          eigenValues,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams,
       const bool useMixedPrecOverall = false);
 
@@ -255,7 +255,7 @@ namespace dftfe
       utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
       std::vector<double> &                          eigenValues,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams,
       const bool useMixedPrecOverall = false);
 
@@ -277,7 +277,7 @@ namespace dftfe
       utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
       std::vector<double> &                          eigenValues,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams,
       const bool useMixedPrecOverall = false);
 
@@ -300,7 +300,7 @@ namespace dftfe
       const double                                   fermiEnergy,
       std::vector<double> &                          densityMatDerFermiEnergy,
       dftfe::elpaScalaManager &                      elpaScala,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       const dftParameters &                          dftParams);
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
@@ -380,7 +380,7 @@ namespace dftfe
       const std::vector<double> &                    eigenValues,
       const MPI_Comm &                               mpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       std::vector<double> &                          residualNorm,
       const dftParameters &                          dftParams,
       const bool                                     useBandParal = false);

@@ -538,8 +538,8 @@ namespace dftfe
 
                             dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                               operatorMatrix.getDeviceBlasHandle(),
-                              DEVICEBLAS_OP_N,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
@@ -570,8 +570,8 @@ namespace dftfe
 
                             dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                               operatorMatrix.getDeviceBlasHandle(),
-                              DEVICEBLAS_OP_N,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
@@ -600,8 +600,8 @@ namespace dftfe
 
                             dftfe::utils::deviceBlasWrapper::gemm(
                               operatorMatrix.getDeviceBlasHandle(),
-                              DEVICEBLAS_OP_N,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
@@ -617,8 +617,8 @@ namespace dftfe
 
                             dftfe::utils::deviceBlasWrapper::gemm(
                               operatorMatrix.getDeviceBlasHandle(),
-                              DEVICEBLAS_OP_N,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,

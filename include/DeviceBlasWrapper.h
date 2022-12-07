@@ -28,21 +28,21 @@ namespace dftfe
   {
     namespace deviceBlasWrapper
     {
-      deviceStatus_t
+      deviceBlasStatus_t
       create(deviceBlasHandle_t * pHandle);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       destroy(deviceBlasHandle_t handle);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       setStream(deviceBlasHandle_t handle, deviceStream_t stream);  
 
 #ifdef DFTFE_WITH_DEVICE_CUDA
-      deviceStatus_t
-      setMathMode(deviceBlasHandle_t handle, deviceMath_t mathMode);
+      deviceBlasStatus_t
+      setMathMode(deviceBlasHandle_t handle, deviceBlasMath_t mathMode);
 #endif
 
-      deviceStatus_t
+      deviceBlasStatus_t
       copy(deviceBlasHandle_t handle,
            int n,
            const double          *x,
@@ -50,14 +50,14 @@ namespace dftfe
            double                *y,
            int incy);      
 
-      deviceStatus_t
+      deviceBlasStatus_t
       nrm2(deviceBlasHandle_t handle,
            int n,
            const double          *x,
            int incx,
            double *result);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       dot(deviceBlasHandle_t handle,
           int n,
           const double          *x,
@@ -66,7 +66,7 @@ namespace dftfe
           int incy,
           double          *result);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       axpy(deviceBlasHandle_t handle,
            int n,
            const double          *alpha,
@@ -75,7 +75,7 @@ namespace dftfe
            double                *y,
            int incy);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -91,7 +91,7 @@ namespace dftfe
                   double *          C,
                   int               ldc);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -107,7 +107,7 @@ namespace dftfe
                   float *          C,
                   int               ldc);
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -123,7 +123,7 @@ namespace dftfe
                   std::complex<double> *          C,
                   int               ldc);   
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
                   deviceBlasOperation_t transa,
                   deviceBlasOperation_t transb,
@@ -139,7 +139,7 @@ namespace dftfe
                   std::complex<float> *          C,
                   int               ldc);    
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmBatched(deviceBlasHandle_t    handle,
                      deviceBlasOperation_t transa,
                      deviceBlasOperation_t transb,
@@ -156,7 +156,7 @@ namespace dftfe
                      int               ldc,
                      int               batchCount);   
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmBatched(deviceBlasHandle_t    handle,
                      deviceBlasOperation_t transa,
                      deviceBlasOperation_t transb,
@@ -173,7 +173,7 @@ namespace dftfe
                      int               ldc,
                      int               batchCount); 
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
                             deviceBlasOperation_t transa,
                             deviceBlasOperation_t transb,
@@ -194,7 +194,7 @@ namespace dftfe
                             int               batchCount);  
 
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
                             deviceBlasOperation_t transa,
                             deviceBlasOperation_t transb,
@@ -214,7 +214,7 @@ namespace dftfe
                             long long int     strideC,
                             int               batchCount);   
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
                             deviceBlasOperation_t transa,
                             deviceBlasOperation_t transb,
@@ -234,7 +234,7 @@ namespace dftfe
                             long long int     strideC,
                             int               batchCount);  
 
-      deviceStatus_t
+      deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
                             deviceBlasOperation_t transa,
                             deviceBlasOperation_t transb,

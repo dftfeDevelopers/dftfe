@@ -589,7 +589,7 @@ namespace dftfe
       }
 
       void
-      computeRayleighQuotients(deviceBlasHandle_t &   handle,
+      computeRayleighQuotients(dftfe::utils::deviceBlasHandle_t &   handle,
                                const double *     xarray,
                                const double *     yarray,
                                const double *     sqrtMassVector,
@@ -610,8 +610,8 @@ namespace dftfe
 
         const double alpha = 1.0, beta = 0;
         dftfe::utils::deviceBlasWrapper::gemm(handle,
-                    DEVICEBLAS_OP_N,
-                    DEVICEBLAS_OP_T,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_T,
                     1,
                     2 * numberVectors,
                     localSize,
@@ -1751,7 +1751,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -2067,8 +2067,8 @@ namespace dftfe
               if (BDof != 0)
                 {
                   dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              DEVICEBLAS_OP_N,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               BVec,
                               BDof,
                               N,
@@ -2119,7 +2119,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -2462,8 +2462,8 @@ namespace dftfe
                     {
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        DEVICEBLAS_OP_N,
-                        DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
@@ -2513,7 +2513,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -2833,8 +2833,8 @@ namespace dftfe
                     {
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        DEVICEBLAS_OP_N,
-                        DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
@@ -2885,7 +2885,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -3206,8 +3206,8 @@ namespace dftfe
                     {
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        DEVICEBLAS_OP_N,
-                        DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
@@ -3260,7 +3260,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -3326,10 +3326,10 @@ namespace dftfe
               // Comptute local XTrunc^{T}*XcBlock.
               dftfe::utils::deviceBlasWrapper::gemm(
                 handle,
-                DEVICEBLAS_OP_N,
+                dftfe::utils::DEVICEBLAS_OP_N,
                 std::is_same<dataTypes::number, std::complex<double>>::value ?
-                  DEVICEBLAS_OP_C :
-                  DEVICEBLAS_OP_T,
+                  dftfe::utils::DEVICEBLAS_OP_C :
+                  dftfe::utils::DEVICEBLAS_OP_T,
                 D,
                 B,
                 M,
@@ -3444,7 +3444,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -3534,11 +3534,11 @@ namespace dftfe
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
                   dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                DEVICEBLAS_OP_C :
-                                DEVICEBLAS_OP_T,
+                                dftfe::utils::DEVICEBLAS_OP_C :
+                                dftfe::utils::DEVICEBLAS_OP_T,
                               D,
                               B,
                               M,
@@ -3578,11 +3578,11 @@ namespace dftfe
 
                   // evaluate X^{T} times XBlock
                   dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                DEVICEBLAS_OP_C :
-                                DEVICEBLAS_OP_T,
+                                dftfe::utils::DEVICEBLAS_OP_C :
+                                dftfe::utils::DEVICEBLAS_OP_T,
                               DNew,
                               BNew,
                               M,
@@ -3702,7 +3702,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -3798,10 +3798,10 @@ namespace dftfe
             {
               dftfe::utils::deviceBlasWrapper::gemm(
                 handle,
-                DEVICEBLAS_OP_N,
+                dftfe::utils::DEVICEBLAS_OP_N,
                 std::is_same<dataTypes::number, std::complex<double>>::value ?
-                  DEVICEBLAS_OP_C :
-                  DEVICEBLAS_OP_T,
+                  dftfe::utils::DEVICEBLAS_OP_C :
+                  dftfe::utils::DEVICEBLAS_OP_T,
                 B,
                 B,
                 M,
@@ -3820,11 +3820,11 @@ namespace dftfe
                 {
                   dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      DEVICEBLAS_OP_C :
-                      DEVICEBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     DRem,
                     B,
                     M,
@@ -3976,7 +3976,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -4099,11 +4099,11 @@ namespace dftfe
                 {
 
                   dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                DEVICEBLAS_OP_C :
-                                DEVICEBLAS_OP_T,
+                                dftfe::utils::DEVICEBLAS_OP_C :
+                                dftfe::utils::DEVICEBLAS_OP_T,
                               B,
                               B,
                               M,
@@ -4123,11 +4123,11 @@ namespace dftfe
 
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
-                          DEVICEBLAS_OP_C :
-                          DEVICEBLAS_OP_T,
+                          dftfe::utils::DEVICEBLAS_OP_C :
+                          dftfe::utils::DEVICEBLAS_OP_T,
                         DRem,
                         B,
                         M,
@@ -4171,11 +4171,11 @@ namespace dftfe
 
                   // evaluate X^{T} times XBlock
                   dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                DEVICEBLAS_OP_C :
-                                DEVICEBLAS_OP_T,
+                                dftfe::utils::DEVICEBLAS_OP_C :
+                                dftfe::utils::DEVICEBLAS_OP_T,
                               BNew,
                               BNew,
                               M,
@@ -4195,11 +4195,11 @@ namespace dftfe
 
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        DEVICEBLAS_OP_N,
+                        dftfe::utils::DEVICEBLAS_OP_N,
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
-                          DEVICEBLAS_OP_C :
-                          DEVICEBLAS_OP_T,
+                          dftfe::utils::DEVICEBLAS_OP_C :
+                          dftfe::utils::DEVICEBLAS_OP_T,
                         DRemNew,
                         BNew,
                         M,
@@ -4368,7 +4368,7 @@ namespace dftfe
       const std::vector<double> &                    eigenValues,
       const MPI_Comm &                               mpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
-      deviceBlasHandle_t &                               handle,
+      dftfe::utils::deviceBlasHandle_t &                               handle,
       std::vector<double> &                          residualNorm,
       const dftParameters &                          dftParams,
       const bool                                     useBandParal)
@@ -4461,8 +4461,8 @@ namespace dftfe
                 residualSqDevice.begin());
 
               dftfe::utils::deviceBlasWrapper::gemm(handle,
-                          DEVICEBLAS_OP_N,
-                          DEVICEBLAS_OP_T,
+                          dftfe::utils::DEVICEBLAS_OP_N,
+                          dftfe::utils::DEVICEBLAS_OP_T,
                           1,
                           B,
                           M,

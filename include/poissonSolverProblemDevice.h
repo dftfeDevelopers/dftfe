@@ -72,7 +72,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const unsigned int smearedChargeQuadratureId,
       const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-      deviceBlasHandle_t &                                     deviceBlasHandle,
+      dftfe::utils::deviceBlasHandle_t &                                     deviceBlasHandle,
       const bool         isComputeDiagonalA               = true,
       const bool         isComputeMeanValueConstraints    = false,
       const bool         smearedNuclearCharges            = false,
@@ -241,7 +241,7 @@ namespace dftfe
     int *   d_mapPtr;
 
     // cuBLAS handle for cuBLAS operations
-    deviceBlasHandle_t *d_deviceBlasHandlePtr;
+    dftfe::utils::deviceBlasHandle_t *d_deviceBlasHandlePtr;
 
     // constraints
     dftUtils::constraintMatrixInfoDevice d_constraintsTotalPotentialInfo;

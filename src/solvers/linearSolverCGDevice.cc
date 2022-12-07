@@ -48,7 +48,7 @@ namespace dftfe
   linearSolverCGDevice::solve(linearSolverProblemDevice &problem,
                               const double               absTolerance,
                               const unsigned int         maxNumberIterations,
-                              deviceBlasHandle_t &           deviceBlasHandle,
+                              dftfe::utils::deviceBlasHandle_t &           deviceBlasHandle,
                               const int                  debugLevel,
                               bool                       distributeFlag)
   {

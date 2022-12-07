@@ -33,7 +33,7 @@ namespace dftfe
                                        const MPI_Comm &         mpiCommDomain,
                                        utils::DeviceCCLWrapper &devicecclMpiCommDomain,
                                        const MPI_Comm &  interBandGroupComm,
-                                       deviceBlasHandle_t &  handle,
+                                       dftfe::utils::deviceBlasHandle_t &  handle,
                                        const dftParameters &dftParams,
                                        const bool           useMixedPrecOverall)
     {

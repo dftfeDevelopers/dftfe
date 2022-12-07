@@ -66,7 +66,7 @@ namespace shapeFuncDevice
 
   void
   computeShapeGradNINJIntegral(
-    deviceBlasHandle_t &               handle,
+    dftfe::utils::deviceBlasHandle_t &               handle,
     FEValues<3> &                  fe_values,
     const dealii::DoFHandler<3> &  dofHandler,
     const unsigned int             numElems,
@@ -204,8 +204,8 @@ namespace shapeFuncDevice
 
 
                     dftfe::utils::deviceBlasWrapper::gemm(handle,
-                                DEVICEBLAS_OP_N,
-                                DEVICEBLAS_OP_N,
+                                dftfe::utils::DEVICEBLAS_OP_N,
+                                dftfe::utils::DEVICEBLAS_OP_N,
                                 1,
                                 currentElemsBlockSize * numNodesPerElem *
                                   numNodesPerElem,

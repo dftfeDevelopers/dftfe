@@ -65,7 +65,7 @@ namespace dftfe
     solve(linearSolverProblemDevice &problem,
           const double               absTolerance,
           const unsigned int         maxNumberIterations,
-          deviceBlasHandle_t &           handle,
+          dftfe::utils::deviceBlasHandle_t &           handle,
           const int                  debugLevel     = 0,
           bool                       distributeFlag = true);
 

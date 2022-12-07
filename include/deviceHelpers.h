@@ -50,20 +50,20 @@ namespace dftfe
         const double *  x,
         const double    alpha,
         const int       size,
-        deviceBlasHandle_t &deviceBlasHandle);
+        dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
     double
     l2_norm(const double *  x,
             const int       size,
             const MPI_Comm &mpi_communicator,
-            deviceBlasHandle_t &deviceBlasHandle);
+            dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
     double
     dot(const double *  x,
         const double *  y,
         const int       size,
         const MPI_Comm &mpi_communicator,
-        deviceBlasHandle_t &deviceBlasHandle);
+        dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
     template <typename NumberType>
     void

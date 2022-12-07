@@ -18,7 +18,7 @@
 #define dftfeDeviceTypeConfig_cuh
 
 #  include <cuComplex.h>
-
+#include <cublas_v2.h>
 namespace dftfe
 {
   namespace utils

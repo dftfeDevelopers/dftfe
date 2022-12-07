@@ -77,7 +77,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
     const unsigned int smearedChargeQuadratureId,
     const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-    deviceBlasHandle_t &                                     deviceBlasHandle,
+    dftfe::utils::deviceBlasHandle_t &                                     deviceBlasHandle,
     const bool                                           isComputeDiagonalA,
     const bool         isComputeMeanValueConstraint,
     const bool         smearedNuclearCharges,

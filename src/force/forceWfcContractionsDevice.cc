@@ -575,8 +575,8 @@ namespace dftfe
                   {
                     dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
@@ -606,8 +606,8 @@ namespace dftfe
 
                     dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
@@ -635,8 +635,8 @@ namespace dftfe
 
                     dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
@@ -663,8 +663,8 @@ namespace dftfe
 
                     dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
@@ -720,8 +720,8 @@ namespace dftfe
 
                     dftfe::utils::deviceBlasWrapper::gemm(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       1,
                       currentBlockSize * numQuads * 9,
                       BVec,
@@ -743,8 +743,8 @@ namespace dftfe
 
                     dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuadsNLP,
                       numNodesPerElement,
@@ -766,8 +766,8 @@ namespace dftfe
                     // shapeGradRef^T*invJacobian^T
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       numNodesPerElement,
                       3,
                       3,
@@ -798,8 +798,8 @@ namespace dftfe
 
                     dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
-                      DEVICEBLAS_OP_N,
-                      DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       3 * numQuadsNLP,
                       numNodesPerElement,
@@ -891,8 +891,8 @@ namespace dftfe
 
                 dftfe::dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
-                  DEVICEBLAS_OP_N,
-                  DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   1,
                   currentBlockSizeNlp * numQuadsNLP * 3,
                   numPsi,
@@ -940,8 +940,8 @@ namespace dftfe
 
                 dftfe::dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
-                  DEVICEBLAS_OP_N,
-                  DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   1,
                   currentBlockSizeNlp * numQuadsNLP,
                   numPsi,

@@ -226,7 +226,7 @@ namespace dftfe
 
       void
       computeAX(
-        deviceBlasHandle_t &                      handle,
+        dftfe::utils::deviceBlasHandle_t &                      handle,
         dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
         distributedDeviceVec<double> &        src,
         distributedDeviceVec<double> &        temp,
@@ -296,8 +296,8 @@ namespace dftfe
         //
         dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
           handle,
-          DEVICEBLAS_OP_N,
-          DEVICEBLAS_OP_N,
+          dftfe::utils::DEVICEBLAS_OP_N,
+          dftfe::utils::DEVICEBLAS_OP_N,
           numberVectors,
           numberNodesPerElement,
           numberNodesPerElement,
@@ -368,7 +368,7 @@ namespace dftfe
       }
 
       void
-      computeResidualSq(deviceBlasHandle_t &   handle,
+      computeResidualSq(dftfe::utils::deviceBlasHandle_t &   handle,
                         const double *     vec1,
                         const double *     vec2,
                         double *           vecTemp,
@@ -388,8 +388,8 @@ namespace dftfe
 
         const double alpha = 1.0, beta = 0.0;
         dftfe::utils::deviceBlasWrapper::gemm(handle,
-                    DEVICEBLAS_OP_N,
-                    DEVICEBLAS_OP_T,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_T,
                     1,
                     numberVectors,
                     localSize,
@@ -537,7 +537,7 @@ namespace dftfe
 
     void
     cgSolver(
-      deviceBlasHandle_t &                      handle,
+      dftfe::utils::deviceBlasHandle_t &                      handle,
       dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
       const double *                        bD,
       const double *                        diagonalAD,

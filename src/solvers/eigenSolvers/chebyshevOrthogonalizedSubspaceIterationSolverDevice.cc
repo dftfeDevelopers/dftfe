@@ -275,7 +275,7 @@ namespace dftfe
         dealii::TimerOutput::every_call,
       dealii::TimerOutput::wall_times);
 
-    deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
+    dftfe::utils::deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -809,7 +809,7 @@ namespace dftfe
     const unsigned int       numberPasses,
     const bool               useMixedPrecOverall)
   {
-    deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
+    dftfe::utils::deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -1151,7 +1151,7 @@ namespace dftfe
     computingTimerStandard.enter_subsection(
       "Density matrix first order response on Device");
 
-    deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
+    dftfe::utils::deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up

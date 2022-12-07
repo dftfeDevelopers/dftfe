@@ -23,6 +23,7 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
+#include <DeviceBlasWrapper.h>
 #    include <MemoryStorage.h>
 #    include <headers.h>
 #    include "process_grid.h"
@@ -65,7 +66,7 @@ namespace dftfe
     virtual void
     destroyDeviceBlasHandle() = 0;
 
-    virtual deviceBlasHandle_t &
+    virtual dftfe::utils::deviceBlasHandle_t &
     getDeviceBlasHandle() = 0;
 
     virtual const double *
@@ -239,7 +240,7 @@ namespace dftfe
          distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
          const unsigned int                             M,
          const unsigned int                             N,
-         deviceBlasHandle_t &                               handle,
+         dftfe::utils::deviceBlasHandle_t &                               handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -270,7 +271,7 @@ namespace dftfe
       distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -308,7 +309,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
