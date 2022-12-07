@@ -431,8 +431,8 @@ namespace dftfe
         copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                              dftfe::utils::DEVICE_BLOCK_SIZE,
                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                         copyFromVec,
-                                                         copyToVec);
+                                                              copyFromVec,
+                                                              copyToVec);
       }
 
       void
@@ -443,47 +443,64 @@ namespace dftfe
         copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                              dftfe::utils::DEVICE_BLOCK_SIZE,
                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                         copyFromVec,
-                                                         copyToVec);
+                                                              copyFromVec,
+                                                              copyToVec);
       }
 
       void
       interpolatePsiComputeELocWfcEshelbyTensorD(
-        operatorDFTDeviceClass &                       operatorMatrix,
+        operatorDFTDeviceClass &                 operatorMatrix,
         distributedDeviceVec<dataTypes::number> &Xb,
-        const unsigned int                             BVec,
-        const unsigned int                             numCells,
-        const unsigned int                             numQuads,
-        const unsigned int                             numQuadsNLP,
-        const unsigned int                             numNodesPerElement,
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &          eigenValuesD,
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &          partialOccupanciesD,
+        const unsigned int                       BVec,
+        const unsigned int                       numCells,
+        const unsigned int                       numQuads,
+        const unsigned int                       numQuadsNLP,
+        const unsigned int                       numNodesPerElement,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &eigenValuesD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &partialOccupanciesD,
 #ifdef USE_COMPLEX
         const double kcoordx,
         const double kcoordy,
         const double kcoordz,
 #endif
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &                 onesVecD,
-        const unsigned int                                    cellsBlockSize,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &psiQuadsFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &                onesVecD,
+        const unsigned int cellsBlockSize,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsFlatD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsXFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsYFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsZFlatD,
 #ifdef USE_COMPLEX
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &psiQuadsNLPD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsNLPD,
 #endif
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          &                            gradPsiQuadsNLPFlatD,
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &eshelbyTensorContributionsD,
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &eshelbyTensorQuadValuesD,
-        const bool                     isPsp,
-        const bool                     isFloatingChargeForces,
-        const bool                     addEk)
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &gradPsiQuadsNLPFlatD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &eshelbyTensorContributionsD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &        eshelbyTensorQuadValuesD,
+        const bool isPsp,
+        const bool isFloatingChargeForces,
+        const bool addEk)
       {
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
         copyDeviceKernel<<<(BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -493,17 +510,20 @@ namespace dftfe
           BVec,
           numCells * numNodesPerElement,
           dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
-          dftfe::utils::makeDataTypeDeviceCompatible(cellWaveFunctionMatrix.begin()),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            cellWaveFunctionMatrix.begin()),
           (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin());
 
         const int blockSize    = cellsBlockSize;
         const int numberBlocks = numCells / blockSize;
         const int remBlockSize = numCells - numberBlocks * blockSize;
 
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionValuesReferenceD(numQuads * numNodesPerElement,
                                         dataTypes::number(0.0));
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionValuesNLPReferenceD(numQuadsNLP * numNodesPerElement,
                                            dataTypes::number(0.0));
 
@@ -514,39 +534,48 @@ namespace dftfe
             shapeFunctionValuesReferenceD.begin()));
 
         copyDoubleToNumber(
-            (operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),
+          (operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),
           numQuadsNLP * numNodesPerElement,
           dftfe::utils::makeDataTypeDeviceCompatible(
             shapeFunctionValuesNLPReferenceD.begin()));
 
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesXTransposedDevice(
-            blockSize * numQuads * numNodesPerElement,
-            dataTypes::number(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesXTransposedDevice(blockSize * numQuads *
+                                                         numNodesPerElement,
+                                                       dataTypes::number(0.0));
 
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesYTransposedDevice(
-            blockSize * numQuads * numNodesPerElement,
-            dataTypes::number(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesYTransposedDevice(blockSize * numQuads *
+                                                         numNodesPerElement,
+                                                       dataTypes::number(0.0));
 
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesZTransposedDevice(
-            blockSize * numQuads * numNodesPerElement,
-            dataTypes::number(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesZTransposedDevice(blockSize * numQuads *
+                                                         numNodesPerElement,
+                                                       dataTypes::number(0.0));
 
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> shapeFunctionGradientValuesNLPReferenceD(
-          blockSize * numQuadsNLP * 3 * numNodesPerElement, 0.0);
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> shapeFunctionGradientValuesNLPD(
-          blockSize * numQuadsNLP * 3 * numNodesPerElement, 0.0);
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesNLPDCopy(
-            blockSize * numQuadsNLP * 3 * numNodesPerElement,
-            dataTypes::number(0.0));
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesNLPReferenceD(blockSize * numQuadsNLP * 3 *
+                                                     numNodesPerElement,
+                                                   0.0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesNLPD(blockSize * numQuadsNLP * 3 *
+                                            numNodesPerElement,
+                                          0.0);
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesNLPDCopy(blockSize * numQuadsNLP * 3 *
+                                                numNodesPerElement,
+                                              dataTypes::number(0.0));
 
         for (unsigned int i = 0; i < blockSize; i++)
           shapeFunctionGradientValuesNLPReferenceD.copyFrom(
             operatorMatrix.getShapeFunctionGradientValuesNLPTransposed(),
-            (operatorMatrix.getShapeFunctionGradientValuesNLPTransposed()).size(),
+            (operatorMatrix.getShapeFunctionGradientValuesNLPTransposed())
+              .size(),
             0,
             i * numQuadsNLP * 3 * numNodesPerElement);
 
@@ -580,16 +609,16 @@ namespace dftfe
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                        &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec,
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
                       shapeFunctionValuesReferenceD.begin(),
                       numNodesPerElement,
                       strideB,
-                        &scalarCoeffBeta,
-                        psiQuadsFlatD.begin(),
+                      &scalarCoeffBeta,
+                      psiQuadsFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -597,12 +626,13 @@ namespace dftfe
                     strideB = numNodesPerElement * numQuads;
 
                     copyDoubleToNumber(
-                        (operatorMatrix
-                            .getShapeFunctionGradientValuesXTransposed()).begin()
-                          +startingId * numQuads * numNodesPerElement,
+                      (operatorMatrix
+                         .getShapeFunctionGradientValuesXTransposed())
+                          .begin() +
+                        startingId * numQuads * numNodesPerElement,
                       currentBlockSize * numQuads * numNodesPerElement,
                       dftfe::utils::makeDataTypeDeviceCompatible(
-                          shapeFunctionGradientValuesXTransposedDevice.begin()));
+                        shapeFunctionGradientValuesXTransposedDevice.begin()));
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
@@ -611,27 +641,28 @@ namespace dftfe
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                        &scalarCoeffAlpha,
-                          cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec,
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
                       shapeFunctionGradientValuesXTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                        &scalarCoeffBeta,
-                        gradPsiQuadsXFlatD.begin(),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsXFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
 
                     copyDoubleToNumber(
-                        (operatorMatrix
-                            .getShapeFunctionGradientValuesYTransposed()).begin()+
-                          startingId * numQuads * numNodesPerElement,
+                      (operatorMatrix
+                         .getShapeFunctionGradientValuesYTransposed())
+                          .begin() +
+                        startingId * numQuads * numNodesPerElement,
                       currentBlockSize * numQuads * numNodesPerElement,
                       dftfe::utils::makeDataTypeDeviceCompatible(
-                          shapeFunctionGradientValuesYTransposedDevice.begin()));
+                        shapeFunctionGradientValuesYTransposedDevice.begin()));
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
@@ -640,26 +671,28 @@ namespace dftfe
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                        &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec,
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                          shapeFunctionGradientValuesYTransposedDevice.begin(),
+                      shapeFunctionGradientValuesYTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                        &scalarCoeffBeta,
-                        gradPsiQuadsYFlatD.begin(),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsYFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
 
                     copyDoubleToNumber(
-                        (operatorMatrix
-                            .getShapeFunctionGradientValuesZTransposed()).begin()+startingId * numQuads * numNodesPerElement,
+                      (operatorMatrix
+                         .getShapeFunctionGradientValuesZTransposed())
+                          .begin() +
+                        startingId * numQuads * numNodesPerElement,
                       currentBlockSize * numQuads * numNodesPerElement,
                       dftfe::utils::makeDataTypeDeviceCompatible(
-                      shapeFunctionGradientValuesZTransposedDevice.begin()));
+                        shapeFunctionGradientValuesZTransposedDevice.begin()));
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
@@ -668,16 +701,16 @@ namespace dftfe
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                        &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec,
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                        shapeFunctionGradientValuesZTransposedDevice.begin(),
+                      shapeFunctionGradientValuesZTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                        &scalarCoeffBeta,
-                        gradPsiQuadsZFlatD.begin(),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsZFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -731,7 +764,8 @@ namespace dftfe
                       eshelbyTensorContributionsD.begin(),
                       BVec,
                       &scalarCoeffBetaEshelby,
-                      eshelbyTensorQuadValuesD.begin()+startingId * numQuads * 9,
+                      eshelbyTensorQuadValuesD.begin() +
+                        startingId * numQuads * 9,
                       1);
                   }
 
@@ -748,16 +782,16 @@ namespace dftfe
                       BVec,
                       numQuadsNLP,
                       numNodesPerElement,
-                        &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec,
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                          shapeFunctionValuesNLPReferenceD.begin(),
+                      shapeFunctionValuesNLPReferenceD.begin(),
                       numNodesPerElement,
                       strideBNLP,
-                        &scalarCoeffBeta,
-                      psiQuadsNLPD.begin()+startingId * numQuadsNLP * BVec,
+                      &scalarCoeffBeta,
+                      psiQuadsNLPD.begin() + startingId * numQuadsNLP * BVec,
                       BVec,
                       strideCNLP,
                       currentBlockSize);
@@ -775,9 +809,8 @@ namespace dftfe
                       shapeFunctionGradientValuesNLPReferenceD.begin(),
                       numNodesPerElement,
                       numNodesPerElement * 3,
-                      (operatorMatrix
-                            .getInverseJacobiansNLP()).begin()+startingId *
-                                                       numQuadsNLP * 3 * 3,
+                      (operatorMatrix.getInverseJacobiansNLP()).begin() +
+                        startingId * numQuadsNLP * 3 * 3,
                       3,
                       3 * 3,
                       &scalarCoeffBetaReal,
@@ -790,7 +823,7 @@ namespace dftfe
                       shapeFunctionGradientValuesNLPD.begin(),
                       currentBlockSize * numQuadsNLP * numNodesPerElement * 3,
                       dftfe::utils::makeDataTypeDeviceCompatible(
-                      shapeFunctionGradientValuesNLPDCopy.begin()));
+                        shapeFunctionGradientValuesNLPDCopy.begin()));
 
                     const int strideCNLPGrad = BVec * 3 * numQuadsNLP;
                     const int strideBNLPGrad =
@@ -803,17 +836,17 @@ namespace dftfe
                       BVec,
                       3 * numQuadsNLP,
                       numNodesPerElement,
-                        &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec,
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                       shapeFunctionGradientValuesNLPDCopy.begin(),
+                      shapeFunctionGradientValuesNLPDCopy.begin(),
                       numNodesPerElement,
                       strideBNLPGrad,
-                        &scalarCoeffBeta,
-                      gradPsiQuadsNLPFlatD.begin()+startingId * numQuadsNLP * 3 *
-                                                BVec,
+                      &scalarCoeffBeta,
+                      gradPsiQuadsNLPFlatD.begin() +
+                        startingId * numQuadsNLP * 3 * BVec,
                       BVec,
                       strideCNLPGrad,
                       currentBlockSize);
@@ -826,30 +859,42 @@ namespace dftfe
       nlpPsiContractionD(
         operatorDFTDeviceClass &operatorMatrix,
 #ifdef USE_COMPLEX
-        const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
           &psiQuadsNLPD,
 #endif
-        const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          &                                  gradPsiQuadsNLPD,
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &partialOccupanciesD,
-        const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &onesVecDNLP,
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &gradPsiQuadsNLPD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &partialOccupanciesD,
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &                      onesVecDNLP,
         const dataTypes::number *projectorKetTimesVectorParFlattenedD,
-        const dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> &nonTrivialIdToElemIdMapD,
-        const dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &nonTrivialIdToElemIdMapD,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
           &                projecterKetTimesFlattenedVectorLocalIdsD,
         const unsigned int numCells,
         const unsigned int numQuadsNLP,
         const unsigned int numPsi,
         const unsigned int totalNonTrivialPseudoWfcs,
         const unsigned int innerBlockSizeEnlp,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &nlpContractionContributionD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 #ifdef USE_COMPLEX
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock,
         dataTypes::number
           *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
@@ -881,13 +926,15 @@ namespace dftfe
                   numQuadsNLP * 3,
                   currentBlockSizeNlp,
                   startingIdNlp,
-                  dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVectorParFlattenedD),
                   dftfe::utils::makeDataTypeDeviceCompatible(
-                  gradPsiQuadsNLPD.begin()),
+                    projectorKetTimesVectorParFlattenedD),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    gradPsiQuadsNLPD.begin()),
                   partialOccupanciesD.begin(),
                   nonTrivialIdToElemIdMapD.begin(),
                   projecterKetTimesFlattenedVectorLocalIdsD.begin(),
-                  dftfe::utils::makeDataTypeDeviceCompatible(nlpContractionContributionD.begin()));
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    nlpContractionContributionD.begin()));
 
                 dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
@@ -896,19 +943,22 @@ namespace dftfe
                   1,
                   currentBlockSizeNlp * numQuadsNLP * 3,
                   numPsi,
-                    &scalarCoeffAlphaNlp,
-                    onesVecDNLP.begin(),
+                  &scalarCoeffAlphaNlp,
+                  onesVecDNLP.begin(),
                   1,
-                    nlpContractionContributionD.begin(),
+                  nlpContractionContributionD.begin(),
                   numPsi,
-                    &scalarCoeffBetaNlp,
-                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock.begin(),
+                  &scalarCoeffBetaNlp,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+                    .begin(),
                   1);
 
                 dftfe::utils::deviceMemcpyD2H(
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp),
-                  dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock.begin()),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+                      .begin()),
                   currentBlockSizeNlp * numQuadsNLP * 3 *
                     sizeof(dataTypes::number));
 
@@ -929,14 +979,15 @@ namespace dftfe
                   numQuadsNLP,
                   currentBlockSizeNlp,
                   startingIdNlp,
-                  dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVectorParFlattenedD),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesVectorParFlattenedD),
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     psiQuadsNLPD.begin()),
                   partialOccupanciesD.begin(),
                   nonTrivialIdToElemIdMapD.begin(),
                   projecterKetTimesFlattenedVectorLocalIdsD.begin(),
                   dftfe::utils::makeDataTypeDeviceCompatible(
-                  nlpContractionContributionD.begin()));
+                    nlpContractionContributionD.begin()));
 
                 dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
@@ -945,19 +996,22 @@ namespace dftfe
                   1,
                   currentBlockSizeNlp * numQuadsNLP,
                   numPsi,
-                    &scalarCoeffAlphaNlp,
-                    onesVecDNLP.begin(),
+                  &scalarCoeffAlphaNlp,
+                  onesVecDNLP.begin(),
                   1,
-                    nlpContractionContributionD.begin(),
+                  nlpContractionContributionD.begin(),
                   numPsi,
-                    &scalarCoeffBetaNlp,
-                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock.begin(),
+                  &scalarCoeffBetaNlp,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
+                    .begin(),
                   1);
 
                 dftfe::utils::deviceMemcpyD2H(
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp),
-                  dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock.begin()),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
+                      .begin()),
                   currentBlockSizeNlp * numQuadsNLP *
                     sizeof(dataTypes::number));
 
@@ -975,22 +1029,32 @@ namespace dftfe
 
       void
       devicePortedForceKernelsAllD(
-        operatorDFTDeviceClass &operatorMatrix,
-        distributedDeviceVec<dataTypes::number>
-          &deviceFlattenedArrayBlock,
+        operatorDFTDeviceClass &                 operatorMatrix,
+        distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock,
         distributedDeviceVec<dataTypes::number> &projectorKetTimesVectorD,
         const dataTypes::number *                X,
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &          eigenValuesD,
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &          partialOccupanciesD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &eigenValuesD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &partialOccupanciesD,
 #ifdef USE_COMPLEX
         const double kcoordx,
         const double kcoordy,
         const double kcoordz,
 #endif
-        const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &                       onesVecD,
-        const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &onesVecDNLP,
-        const dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> &nonTrivialIdToElemIdMapD,
-        const dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &onesVecD,
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &onesVecDNLP,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &nonTrivialIdToElemIdMapD,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
           &                projecterKetTimesFlattenedVectorLocalIdsD,
         const unsigned int startingVecId,
         const unsigned int N,
@@ -1000,28 +1064,41 @@ namespace dftfe
         const unsigned int numQuadsNLP,
         const unsigned int numNodesPerElement,
         const unsigned int totalNonTrivialPseudoWfcs,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &psiQuadsFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsFlatD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsXFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsYFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsZFlatD,
 #ifdef USE_COMPLEX
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &psiQuadsNLPD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsNLPD,
 #endif
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-          &                            gradPsiQuadsNLPFlatD,
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &eshelbyTensorContributionsD,
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &eshelbyTensorQuadValuesD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &gradPsiQuadsNLPFlatD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &eshelbyTensorContributionsD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &eshelbyTensorQuadValuesD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &nlpContractionContributionD,
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 #ifdef USE_COMPLEX
-        dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock,
         dataTypes::number
           *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
@@ -1040,10 +1117,17 @@ namespace dftfe
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
                                  ->local_size();
-        stridedCopyToBlockKernel<<<(numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        stridedCopyToBlockKernel<<<(numPsi +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                      dftfe::utils::DEVICE_BLOCK_SIZE * M,
                                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numPsi, dftfe::utils::makeDataTypeDeviceCompatible(X), M, N, dftfe::utils::makeDataTypeDeviceCompatible(deviceFlattenedArrayBlock.begin()), startingVecId);
+          numPsi,
+          dftfe::utils::makeDataTypeDeviceCompatible(X),
+          M,
+          N,
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            deviceFlattenedArrayBlock.begin()),
+          startingVecId);
         deviceFlattenedArrayBlock.updateGhostValues();
 
         (operatorMatrix.getOverloadedConstraintMatrix())
@@ -1159,7 +1243,7 @@ namespace dftfe
     void
     wfcContractionsForceKernelsAllH(
       operatorDFTDeviceClass &                operatorMatrix,
-      const dataTypes::number *         X,
+      const dataTypes::number *               X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
@@ -1219,60 +1303,81 @@ namespace dftfe
 
       // if (this_process == 0 && dftParams.verbosity >= 2)
       //  std::cout
-      //    << "Time for creating device parallel vectors for force computation: "
+      //    << "Time for creating device parallel vectors for force computation:
+      //    "
       //    << device_time << std::endl;
 
       // device_time = MPI_Wtime();
 
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> eigenValuesD(blockSize, 0.0);
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> partialOccupanciesD(blockSize, 0.0);
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> elocWfcEshelbyTensorQuadValuesD(
-        numCells * numQuads * 9, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        eigenValuesD(blockSize, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        partialOccupanciesD(blockSize, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        elocWfcEshelbyTensorQuadValuesD(numCells * numQuads * 9, 0.0);
 
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> onesVecD(blockSize, 1.0);
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> onesVecDNLP(
-        blockSize, dataTypes::number(1.0));
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        onesVecD(blockSize, 1.0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        onesVecDNLP(blockSize, dataTypes::number(1.0));
 
       const unsigned int cellsBlockSize = std::min((unsigned int)10, numCells);
 
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> psiQuadsFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> gradPsiQuadsXFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> gradPsiQuadsYFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> gradPsiQuadsZFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        psiQuadsFlatD(cellsBlockSize * numQuads * blockSize,
+                      dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsXFlatD(cellsBlockSize * numQuads * blockSize,
+                           dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsYFlatD(cellsBlockSize * numQuads * blockSize,
+                           dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsZFlatD(cellsBlockSize * numQuads * blockSize,
+                           dataTypes::number(0.0));
 #ifdef USE_COMPLEX
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> psiQuadsNLPD(
-        numCells * numQuadsNLP * blockSize, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        psiQuadsNLPD(numCells * numQuadsNLP * blockSize,
+                     dataTypes::number(0.0));
 #endif
 
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> gradPsiQuadsNLPFlatD(
-        numCells * numQuadsNLP * 3 * blockSize,
-        dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsNLPFlatD(numCells * numQuadsNLP * 3 * blockSize,
+                             dataTypes::number(0.0));
 
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> eshelbyTensorContributionsD(
-        cellsBlockSize * numQuads * blockSize * 9, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        eshelbyTensorContributionsD(cellsBlockSize * numQuads * blockSize * 9,
+                                    0.0);
 
       const unsigned int innerBlockSizeEnlp =
         std::min((unsigned int)10, totalNonTrivialPseudoWfcs);
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         nlpContractionContributionD(innerBlockSizeEnlp * numQuadsNLP * 3 *
                                       blockSize,
                                     dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock;
-      dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
-                                          projecterKetTimesFlattenedVectorLocalIdsD;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> nonTrivialIdToElemIdMapD;
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        projecterKetTimesFlattenedVectorLocalIdsD;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        nonTrivialIdToElemIdMapD;
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp;
       if (totalNonTrivialPseudoWfcs > 0)
         {
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
@@ -1280,8 +1385,7 @@ namespace dftfe
                     dataTypes::number(0.0));
 #ifdef USE_COMPLEX
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
-            .resize(innerBlockSizeEnlp * numQuadsNLP,
-                    dataTypes::number(0.0));
+            .resize(innerBlockSizeEnlp * numQuadsNLP, dataTypes::number(0.0));
 #endif
           projecterKetTimesFlattenedVectorLocalIdsD.resize(
             totalNonTrivialPseudoWfcs, 0.0);
@@ -1289,17 +1393,20 @@ namespace dftfe
 
 
 
-          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp.resize(innerBlockSizeEnlp * numQuadsNLP * 3,0);
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp
+            .resize(innerBlockSizeEnlp * numQuadsNLP * 3, 0);
 
 
           dftfe::utils::deviceMemcpyH2D(nonTrivialIdToElemIdMapD.begin(),
-                     nonTrivialIdToElemIdMapH,
-                     totalNonTrivialPseudoWfcs * sizeof(unsigned int));
+                                        nonTrivialIdToElemIdMapH,
+                                        totalNonTrivialPseudoWfcs *
+                                          sizeof(unsigned int));
 
 
-          dftfe::utils::deviceMemcpyH2D(projecterKetTimesFlattenedVectorLocalIdsD.begin(),
-                     projecterKetTimesFlattenedVectorLocalIdsH,
-                     totalNonTrivialPseudoWfcs * sizeof(unsigned int));
+          dftfe::utils::deviceMemcpyH2D(
+            projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+            projecterKetTimesFlattenedVectorLocalIdsH,
+            totalNonTrivialPseudoWfcs * sizeof(unsigned int));
         }
 
       const unsigned numKPoints = kPointCoordinates.size() / 3;
@@ -1351,12 +1458,12 @@ namespace dftfe
                     }
 
                   dftfe::utils::deviceMemcpyH2D(eigenValuesD.begin(),
-                             &blockedEigenValues[0],
-                             blockSize * sizeof(double));
+                                                &blockedEigenValues[0],
+                                                blockSize * sizeof(double));
 
                   dftfe::utils::deviceMemcpyH2D(partialOccupanciesD.begin(),
-                             &blockedPartialOccupancies[0],
-                             blockSize * sizeof(double));
+                                                &blockedPartialOccupancies[0],
+                                                blockSize * sizeof(double));
 
                   // dftfe::utils::deviceSynchronize();
                   // MPI_Barrier(d_mpiCommParent);
@@ -1406,7 +1513,8 @@ namespace dftfe
                     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH +
                       kPoint * totalNonTrivialPseudoWfcs * numQuadsNLP,
 #endif
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp.begin(),
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp
+                      .begin(),
                     cellsBlockSize,
                     innerBlockSizeEnlp,
                     isPsp,
@@ -1424,10 +1532,11 @@ namespace dftfe
                 } // band parallelization
             }     // ivec loop
 
-          dftfe::utils::deviceMemcpyD2H(
-            eshelbyTensorQuadValuesH + kPoint * numCells * numQuads * 9,
-            elocWfcEshelbyTensorQuadValuesD.begin(),
-            numCells * numQuads * 9 * sizeof(double));
+          dftfe::utils::deviceMemcpyD2H(eshelbyTensorQuadValuesH +
+                                          kPoint * numCells * numQuads * 9,
+                                        elocWfcEshelbyTensorQuadValuesD.begin(),
+                                        numCells * numQuads * 9 *
+                                          sizeof(double));
         } // k point loop
 
       // dftfe::utils::deviceSynchronize();

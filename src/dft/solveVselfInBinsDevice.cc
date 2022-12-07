@@ -22,11 +22,11 @@
 #  include <vectorUtilities.h>
 #  include <deviceHelpers.h>
 #  include <MemoryStorage.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
-#include <DeviceBlasWrapper.h>
+#  include <DeviceAPICalls.h>
+#  include <DeviceDataTypeOverloads.h>
+#  include <DeviceTypeConfig.h>
+#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
@@ -226,7 +226,7 @@ namespace dftfe
 
       void
       computeAX(
-        dftfe::utils::deviceBlasHandle_t &                      handle,
+        dftfe::utils::deviceBlasHandle_t &    handle,
         dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
         distributedDeviceVec<double> &        src,
         distributedDeviceVec<double> &        temp,
@@ -235,13 +235,20 @@ namespace dftfe
         const unsigned int                    numberVectors,
         const unsigned int                    localSize,
         const unsigned int                    ghostSize,
-        const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & poissonCellStiffnessMatricesD,
-        const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & inhomoIdsColoredVecFlattenedD,
-        const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
-          &                            cellLocalProcIndexIdMapD,
-        distributedDeviceVec<double> & dst,
-        dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> &cellNodalVectorD,
-        dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> &cellStiffnessMatrixTimesVectorD)
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &poissonCellStiffnessMatricesD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &inhomoIdsColoredVecFlattenedD,
+        const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &                           cellLocalProcIndexIdMapD,
+        distributedDeviceVec<double> &dst,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &cellNodalVectorD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &cellStiffnessMatrixTimesVectorD)
       {
         // const unsigned int numberVectors = 1;
         dst.setZero();
@@ -250,8 +257,9 @@ namespace dftfe
         // temp.reinit(src);
         // temp=src;
         dftfe::utils::deviceMemcpyD2D(temp.begin(),
-                   src.begin(),
-                   localSize * numberVectors * sizeof(double));
+                                      src.begin(),
+                                      localSize * numberVectors *
+                                        sizeof(double));
 
         // src.update_ghost_values();
         // constraintsMatrixDataInfoDevice.distribute(src,numberVectors);
@@ -259,9 +267,10 @@ namespace dftfe
         constraintsMatrixDataInfoDevice.distribute(temp, numberVectors);
 
         if ((localSize + ghostSize) > 0)
-          scaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          scaleKernel<<<
+            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors * (localSize + ghostSize),
             temp.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
@@ -328,9 +337,10 @@ namespace dftfe
 
         // think dirichlet hanging node linked to two master solved nodes
         if ((localSize + ghostSize) > 0)
-          scaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          scaleKernel<<<
+            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors * (localSize + ghostSize),
             dst.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
@@ -342,7 +352,8 @@ namespace dftfe
         dst.compressAdd();
 
         if (localSize > 0)
-          scaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          scaleKernel<<<(numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors * localSize,
@@ -361,46 +372,47 @@ namespace dftfe
                           double *           dst)
       {
         if (localSize > 0)
-          diagScaleKernel<<<(numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          diagScaleKernel<<<(numberVectors +
+                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors, localSize, src, diagonalA, dst);
       }
 
       void
-      computeResidualSq(dftfe::utils::deviceBlasHandle_t &   handle,
-                        const double *     vec1,
-                        const double *     vec2,
-                        double *           vecTemp,
-                        const double *     onesVec,
-                        const unsigned int numberVectors,
-                        const unsigned int localSize,
-                        double *           residualNormSq)
+      computeResidualSq(dftfe::utils::deviceBlasHandle_t &handle,
+                        const double *                    vec1,
+                        const double *                    vec2,
+                        double *                          vecTemp,
+                        const double *                    onesVec,
+                        const unsigned int                numberVectors,
+                        const unsigned int                localSize,
+                        double *                          residualNormSq)
       {
         if (localSize > 0)
           dotProductContributionBlockedKernel<<<
             (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
             dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors * localSize,
-                                          vec1,
-                                          vec2,
-                                          vecTemp);
+                                               vec1,
+                                               vec2,
+                                               vecTemp);
 
         const double alpha = 1.0, beta = 0.0;
         dftfe::utils::deviceBlasWrapper::gemm(handle,
-                    dftfe::utils::DEVICEBLAS_OP_N,
-                    dftfe::utils::DEVICEBLAS_OP_T,
-                    1,
-                    numberVectors,
-                    localSize,
-                    &alpha,
-                    onesVec,
-                    1,
-                    vecTemp,
-                    numberVectors,
-                    &beta,
-                    residualNormSq,
-                    1);
+                                              dftfe::utils::DEVICEBLAS_OP_N,
+                                              dftfe::utils::DEVICEBLAS_OP_T,
+                                              1,
+                                              numberVectors,
+                                              localSize,
+                                              &alpha,
+                                              onesVec,
+                                              1,
+                                              vecTemp,
+                                              numberVectors,
+                                              &beta,
+                                              residualNormSq,
+                                              1);
       }
     } // namespace
 
@@ -442,8 +454,8 @@ namespace dftfe
                 blockSize);
       xD.setZero();
       dftfe::utils::deviceMemcpyH2D(xD.begin(),
-                 xH,
-                 localSize * numberBins * sizeof(double));
+                                    xH,
+                                    localSize * numberBins * sizeof(double));
 
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime() - time;
@@ -475,31 +487,37 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       time = MPI_Wtime();
 
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> bD(localSize * numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> diagonalAD(localSize, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> inhomoIdsColoredVecFlattenedD(
-        (localSize + ghostSize) * numberBins, 0.0);
-      dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> bD(
+        localSize * numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        diagonalAD(localSize, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        inhomoIdsColoredVecFlattenedD((localSize + ghostSize) * numberBins,
+                                      0.0);
+      dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                  dftfe::utils::MemorySpace::DEVICE>
         cellLocalProcIndexIdMapD(totalLocallyOwnedCells *
                                  numberNodesPerElement);
 
       dftfe::utils::deviceMemcpyH2D(bD.begin(),
-                 bH,
-                 localSize * numberBins * sizeof(double));
+                                    bH,
+                                    localSize * numberBins * sizeof(double));
 
       dftfe::utils::deviceMemcpyH2D(diagonalAD.begin(),
-                 diagonalAH,
-                 localSize * sizeof(double));
+                                    diagonalAH,
+                                    localSize * sizeof(double));
 
       dftfe::utils::deviceMemcpyH2D(inhomoIdsColoredVecFlattenedD.begin(),
-                 inhomoIdsColoredVecFlattenedH,
-                 (localSize + ghostSize) * numberBins * sizeof(double));
+                                    inhomoIdsColoredVecFlattenedH,
+                                    (localSize + ghostSize) * numberBins *
+                                      sizeof(double));
 
 
       dftfe::utils::deviceMemcpyH2D(cellLocalProcIndexIdMapD.begin(),
-                 &cellLocalProcIndexIdMapH[0],
-                 totalLocallyOwnedCells * numberNodesPerElement *
-                   sizeof(dealii::types::global_dof_index));
+                                    &cellLocalProcIndexIdMapH[0],
+                                    totalLocallyOwnedCells *
+                                      numberNodesPerElement *
+                                      sizeof(dealii::types::global_dof_index));
 
       dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
@@ -531,19 +549,24 @@ namespace dftfe
                xD);
 
       dftfe::utils::deviceMemcpyD2H(xH,
-                 xD.begin(),
-                 localSize * numberBins * sizeof(double));
+                                    xD.begin(),
+                                    localSize * numberBins * sizeof(double));
     }
 
     void
     cgSolver(
-      dftfe::utils::deviceBlasHandle_t &                      handle,
+      dftfe::utils::deviceBlasHandle_t &    handle,
       dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
       const double *                        bD,
       const double *                        diagonalAD,
-      const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & poissonCellStiffnessMatricesD,
-      const dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & inhomoIdsColoredVecFlattenedD,
-      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &poissonCellStiffnessMatricesD,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &inhomoIdsColoredVecFlattenedD,
+      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                        dftfe::utils::MemorySpace::DEVICE>
         &                           cellLocalProcIndexIdMapD,
       const unsigned int            localSize,
       const unsigned int            ghostSize,
@@ -569,21 +592,34 @@ namespace dftfe
       // const double posOne = 1.0;
       const unsigned int inc = 1;
 
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> delta_newD(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> delta_oldD(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> delta_0D(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> alphaD(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> betaD(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> scalarD(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualNormSqD(numberBins, 0.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> negOneD(numberBins, -1.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> posOneD(numberBins, 1.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> vecTempD(localSize * numberBins, 1.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> onesVecD(localSize, 1.0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> cellNodalVectorD(
-        totalLocallyOwnedCells * numberNodesPerElement * numberBins);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> cellStiffnessMatrixTimesVectorD(
-        totalLocallyOwnedCells * numberNodesPerElement * numberBins);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        delta_newD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        delta_oldD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        delta_0D(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        alphaD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        betaD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        scalarD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        residualNormSqD(numberBins, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        negOneD(numberBins, -1.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        posOneD(numberBins, 1.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        vecTempD(localSize * numberBins, 1.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        onesVecD(localSize, 1.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        cellNodalVectorD(totalLocallyOwnedCells * numberNodesPerElement *
+                         numberBins);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        cellStiffnessMatrixTimesVectorD(totalLocallyOwnedCells *
+                                        numberNodesPerElement * numberBins);
 
       std::vector<double> delta_newH(numberBins, 0.0);
       std::vector<double> delta_oldH(numberBins, 0.0);
@@ -593,7 +629,8 @@ namespace dftfe
       std::vector<double> residualNormSqH(numberBins, 0.0);
 
       // compute RHS b
-      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> b;
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>
+      // b;
 
       // double start_timeRhs = MPI_Wtime();
       // problem.computeRhs(b);
@@ -608,13 +645,13 @@ namespace dftfe
 
 
       // get access to initial guess for solving Ax=b
-      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> & x = problem.getX();
-      // x.update_ghost_values();
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> &
+      // x = problem.getX(); x.update_ghost_values();
 
 
       // compute Ax
-      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> Ax;
-      // Ax.resize(localSize,0.0);
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>
+      // Ax; Ax.resize(localSize,0.0);
       distributedDeviceVec<double> Ax;
       Ax.reinit(x);
       // computeAX(x,Ax);
@@ -660,26 +697,27 @@ namespace dftfe
 
 
       // compute residue r = b - Ax
-      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> r;
-      // r.resize(localSize,0.0);
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>
+      // r; r.resize(localSize,0.0);
 
       // r = b
-      dftfe::utils::deviceBlasWrapper::copy(handle, localSize * numberBins, bD, inc, r.begin(), inc);
+      dftfe::utils::deviceBlasWrapper::copy(
+        handle, localSize * numberBins, bD, inc, r.begin(), inc);
 
 
       // r = b - Ax i.e r - Ax
       dftfe::utils::deviceBlasWrapper::axpy(handle,
-                  localSize * numberBins,
-                  &negOne,
-                  Ax.begin(),
-                  inc,
-                  r.begin(),
-                  inc);
+                                            localSize * numberBins,
+                                            &negOne,
+                                            Ax.begin(),
+                                            inc,
+                                            r.begin(),
+                                            inc);
 
 
       // precondition r
-      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> d;
-      // d.resize(localSize,0.0);
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>
+      // d; d.resize(localSize,0.0);
 
       // precondition_Jacobi(r,d);
       precondition_Jacobi(
@@ -696,8 +734,8 @@ namespace dftfe
                         delta_newD.begin());
 
       dftfe::utils::deviceMemcpyD2H(&delta_newH[0],
-                 delta_newD.begin(),
-                 numberBins * sizeof(double));
+                                    delta_newD.begin(),
+                                    numberBins * sizeof(double));
 
 
       MPI_Allreduce(MPI_IN_PLACE,
@@ -708,16 +746,15 @@ namespace dftfe
                     mpiCommDomain);
 
       dftfe::utils::deviceMemcpyH2D(delta_newD.begin(),
-                 &delta_newH[0],
-                 numberBins * sizeof(double));
+                                    &delta_newH[0],
+                                    numberBins * sizeof(double));
 
       // assign delta0 to delta_new
       delta_0D = delta_newD;
 
       // allocate memory for q
-      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> q,s;
-      // q.resize(localSize,0.0);
-      // s.resize(localSize,0.0);
+      // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>
+      // q,s; q.resize(localSize,0.0); s.resize(localSize,0.0);
 
       unsigned int iterationNumber = 0;
 
@@ -731,8 +768,8 @@ namespace dftfe
                         residualNormSqD.begin());
 
       dftfe::utils::deviceMemcpyD2H(&residualNormSqH[0],
-                 residualNormSqD.begin(),
-                 numberBins * sizeof(double));
+                                    residualNormSqD.begin(),
+                                    numberBins * sizeof(double));
 
 
       MPI_Allreduce(MPI_IN_PLACE,
@@ -784,8 +821,8 @@ namespace dftfe
                             scalarD.begin());
 
           dftfe::utils::deviceMemcpyD2H(&scalarH[0],
-                     scalarD.begin(),
-                     numberBins * sizeof(double));
+                                        scalarD.begin(),
+                                        numberBins * sizeof(double));
 
 
           MPI_Allreduce(MPI_IN_PLACE,
@@ -805,8 +842,8 @@ namespace dftfe
           //   std::cout<< "alpha "<<alphaH[i]<<std::endl;
 
           dftfe::utils::deviceMemcpyH2D(alphaD.begin(),
-                     &alphaH[0],
-                     numberBins * sizeof(double));
+                                        &alphaH[0],
+                                        numberBins * sizeof(double));
 
           // update x; x = x + alpha*d
           if (localSize > 0)
@@ -814,11 +851,7 @@ namespace dftfe
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-              numberBins,
-              localSize,
-              d.begin(),
-              alphaD.begin(),
-              x.begin());
+              numberBins, localSize, d.begin(), alphaD.begin(), x.begin());
 
           if (iter % 50 == 0)
             {
@@ -843,31 +876,26 @@ namespace dftfe
                         Ax,
                         cellNodalVectorD,
                         cellStiffnessMatrixTimesVectorD);
- 
+
               if (localSize > 0)
-                daxpyBlockedKernel<<<(numberBins +
-                                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                       dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                  numberBins,
-                  localSize,
-                  Ax.begin(),
-                  negOneD.begin(),
-                  r.begin());
+                daxpyBlockedKernel<<<
+                  (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberBins,
+                                                     localSize,
+                                                     Ax.begin(),
+                                                     negOneD.begin(),
+                                                     r.begin());
             }
           else
             {
               // negAlphaD = -alpha;
               if (localSize > 0)
-                dmaxpyBlockedKernel<<<(numberBins +
-                                       (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                        dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                  numberBins,
-                  localSize,
-                  q.begin(),
-                  alphaD.begin(),
-                  r.begin());
+                dmaxpyBlockedKernel<<<
+                  (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                  numberBins, localSize, q.begin(), alphaD.begin(), r.begin());
             }
 
           // precondition_Jacobi(r,s);
@@ -877,8 +905,8 @@ namespace dftfe
           delta_oldD = delta_newD;
 
           dftfe::utils::deviceMemcpyD2H(&delta_oldH[0],
-                     delta_oldD.begin(),
-                     numberBins * sizeof(double));
+                                        delta_oldD.begin(),
+                                        numberBins * sizeof(double));
 
 
           // delta_new = r*s;
@@ -895,8 +923,8 @@ namespace dftfe
 
 
           dftfe::utils::deviceMemcpyD2H(&delta_newH[0],
-                     delta_newD.begin(),
-                     numberBins * sizeof(double));
+                                        delta_newD.begin(),
+                                        numberBins * sizeof(double));
 
 
           MPI_Allreduce(MPI_IN_PLACE,
@@ -914,12 +942,12 @@ namespace dftfe
             betaH[i] = delta_newH[i] / delta_oldH[i];
 
           dftfe::utils::deviceMemcpyH2D(betaD.begin(),
-                     &betaH[0],
-                     numberBins * sizeof(double));
+                                        &betaH[0],
+                                        numberBins * sizeof(double));
 
           dftfe::utils::deviceMemcpyH2D(delta_newD.begin(),
-                     &delta_newH[0],
-                     numberBins * sizeof(double));
+                                        &delta_newH[0],
+                                        numberBins * sizeof(double));
 
           // d *= beta;
           if (localSize > 0)
@@ -927,10 +955,7 @@ namespace dftfe
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-              numberBins,
-              localSize,
-              d.begin(),
-              betaD.begin());
+              numberBins, localSize, d.begin(), betaD.begin());
 
           // d.add(1.0,s);
           if (localSize > 0)
@@ -938,11 +963,7 @@ namespace dftfe
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-              numberBins,
-              localSize,
-              s.begin(),
-              posOneD.begin(),
-              d.begin());
+              numberBins, localSize, s.begin(), posOneD.begin(), d.begin());
           unsigned int isBreak = 1;
           // if(delta_new < relTolerance*relTolerance*delta_0)
           //  isBreak = 1;
@@ -970,8 +991,8 @@ namespace dftfe
                         residualNormSqD.begin());
 
       dftfe::utils::deviceMemcpyD2H(&residualNormSqH[0],
-                 residualNormSqD.begin(),
-                 numberBins * sizeof(double));
+                                    residualNormSqD.begin(),
+                                    numberBins * sizeof(double));
 
       MPI_Allreduce(MPI_IN_PLACE,
                     &residualNormSqH[0],

@@ -196,8 +196,9 @@ namespace dftfe
     double d_gamma;
 
     // shape function value, gradient, jacobian and map for matrixfree
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_shapeFunction, d_jacobianFactor;
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE>    d_map;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+                                                                        d_shapeFunction, d_jacobianFactor;
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
 
     // Pointers to shape function value, gradient, jacobian and map for
     // matrixfree

@@ -312,40 +312,40 @@ namespace dftfe
     d_ghostSize  = d_numberComponents * partitionerSingleVec->n_ghost_indices();
     d_globalSize = d_numberComponents * partitionerSingleVec->size();
 
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-            d_dealiiVecData =
-              (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<NumberType, dealii::MemorySpace::Host>);
+        d_dealiiVecData =
+          (void *)(new dealii::LinearAlgebra::distributed::
+                     Vector<NumberType, dealii::MemorySpace::Host>);
 
-            distributedMulticomponentvecInternal::createDealiiVector(
-              partitionerSingleVec,
-              d_numberComponents,
-              *((dealii::LinearAlgebra::distributed::
-                   Vector<NumberType, dealii::MemorySpace::Host> *)
-                  d_dealiiVecData));
-
+        distributedMulticomponentvecInternal::createDealiiVector(
+          partitionerSingleVec,
+          d_numberComponents,
+          *((
+            dealii::LinearAlgebra::distributed::
+              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData));
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            d_dealiiVecData =
-              (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<NumberType, dealii::MemorySpace::CUDA>);
+      {
+        d_dealiiVecData =
+          (void *)(new dealii::LinearAlgebra::distributed::
+                     Vector<NumberType, dealii::MemorySpace::CUDA>);
 
-            distributedMulticomponentvecInternal::createDealiiVector(
-              partitionerSingleVec,
-              d_numberComponents,
-              *((dealii::LinearAlgebra::distributed::
-                   Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                  d_dealiiVecData));      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+        distributedMulticomponentvecInternal::createDealiiVector(
+          partitionerSingleVec,
+          d_numberComponents,
+          *((
+            dealii::LinearAlgebra::distributed::
+              Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData));
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -426,48 +426,50 @@ namespace dftfe
     d_locallyOwnedDofsSize = vec.locallyOwnedDofsSize();
     d_globalSize           = vec.globalSize();
 
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-            d_dealiiVecData =
-              (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<NumberType, dealii::MemorySpace::Host>);
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-              ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<NumberType, dealii::MemorySpace::Host> *)
-                           vec.getDealiiVec()));
+        d_dealiiVecData =
+          (void *)(new dealii::LinearAlgebra::distributed::
+                     Vector<NumberType, dealii::MemorySpace::Host>);
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->reinit(*((const dealii::LinearAlgebra::distributed::
+                        Vector<NumberType, dealii::MemorySpace::Host> *)
+                       vec.getDealiiVec()));
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            d_dealiiVecData =
-              (void *)(new dealii::LinearAlgebra::distributed::
-                         Vector<NumberType, dealii::MemorySpace::CUDA>);
+      {
+        d_dealiiVecData =
+          (void *)(new dealii::LinearAlgebra::distributed::
+                     Vector<NumberType, dealii::MemorySpace::CUDA>);
 
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->reinit(*((const dealii::LinearAlgebra::distributed::
-                            Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                           vec.getDealiiVec()));      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->reinit(*((const dealii::LinearAlgebra::distributed::
+                        Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                       vec.getDealiiVec()));
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
         if ((d_locallyOwnedSize + d_ghostSize) > 0)
           {
             DEVICE_API_CHECK(cudaMalloc((void **)&d_vecData,
-                                   (d_locallyOwnedSize + d_ghostSize) *
-                                     sizeof(NumberType)));
-            DEVICE_API_CHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
-                                   0,
-                                   (d_locallyOwnedSize + d_ghostSize) *
-                                     sizeof(NumberType)));
+                                        (d_locallyOwnedSize + d_ghostSize) *
+                                          sizeof(NumberType)));
+            DEVICE_API_CHECK(
+              cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData),
+                         0,
+                         (d_locallyOwnedSize + d_ghostSize) *
+                           sizeof(NumberType)));
           }
         if (std::is_same<NumberType, std::complex<double>>::value)
           {
@@ -529,24 +531,25 @@ namespace dftfe
   }
 
 
-  template <typename NumberType,  dftfe::utils::MemorySpace memorySpace>
+  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   DistributedMulticomponentVec<NumberType, memorySpace>::setZero()
   {
     if (d_locallyOwnedDofsSize > 0)
       {
-        if (memorySpace==dftfe::utils::MemorySpace::HOST)
+        if (memorySpace == dftfe::utils::MemorySpace::HOST)
           {
             std::memset(this->begin(),
                         0,
                         d_locallyOwnedSize * sizeof(NumberType));
           }
-        else if (memorySpace==dftfe::utils::MemorySpace::DEVICE)
+        else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            DEVICE_API_CHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()),
-                                   0,
-                                   d_locallyOwnedSize * sizeof(NumberType)));
+            DEVICE_API_CHECK(cudaMemset(
+              dftfe::utils::makeDataTypeDeviceCompatible(this->begin()),
+              0,
+              d_locallyOwnedSize * sizeof(NumberType)));
 #endif
           }
       }
@@ -559,25 +562,26 @@ namespace dftfe
   NumberType *
   DistributedMulticomponentVec<NumberType, memorySpace>::begin()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          return ((dealii::LinearAlgebra::distributed::
-                     Vector<NumberType, dealii::MemorySpace::Host> *)
-                    d_dealiiVecData)
-            ->begin();
+        return ((dealii::LinearAlgebra::distributed::
+                   Vector<NumberType, dealii::MemorySpace::Host> *)
+                  d_dealiiVecData)
+          ->begin();
       }
-#if defined(DFTFE_WITH_DEVICE)  
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
-              std::is_same<NumberType, float>::value))     
-            return ((dealii::LinearAlgebra::distributed::
-                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                      d_dealiiVecData)
-              ->begin();      
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+              std::is_same<NumberType, float>::value))
+      return ((dealii::LinearAlgebra::distributed::
+                 Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                d_dealiiVecData)
+        ->begin();
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       return d_vecData;
@@ -588,25 +592,26 @@ namespace dftfe
   const NumberType *
   DistributedMulticomponentVec<NumberType, memorySpace>::begin() const
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          return ((dealii::LinearAlgebra::distributed::
-                     Vector<NumberType, dealii::MemorySpace::Host> *)
-                    d_dealiiVecData)
-            ->begin();
+        return ((dealii::LinearAlgebra::distributed::
+                   Vector<NumberType, dealii::MemorySpace::Host> *)
+                  d_dealiiVecData)
+          ->begin();
       }
-#if defined(DFTFE_WITH_DEVICE)  
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+#if defined(DFTFE_WITH_DEVICE)
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
-              std::is_same<NumberType, float>::value))     
-            return ((dealii::LinearAlgebra::distributed::
-                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                      d_dealiiVecData)
-              ->begin();      
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+              std::is_same<NumberType, float>::value))
+      return ((dealii::LinearAlgebra::distributed::
+                 Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                d_dealiiVecData)
+        ->begin();
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       return d_vecData;
@@ -656,25 +661,26 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, memorySpace>::updateGhostValues()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->update_ghost_values();
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->update_ghost_values();
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->update_ghost_values();      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->update_ghost_values();
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -772,25 +778,26 @@ namespace dftfe
   DistributedMulticomponentVec<NumberType,
                                memorySpace>::updateGhostValuesStart()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->update_ghost_values_start();
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->update_ghost_values_start();
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
       {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->update_ghost_values_start();        
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->update_ghost_values_start();
       }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -858,26 +865,26 @@ namespace dftfe
   DistributedMulticomponentVec<NumberType,
                                memorySpace>::updateGhostValuesFinish()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->update_ghost_values_finish();
-
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->update_ghost_values_finish();
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->update_ghost_values_finish();      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->update_ghost_values_finish();
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -949,25 +956,26 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, memorySpace>::compressAdd()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST  && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->compress(dealii::VectorOperation::add);
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->compress(dealii::VectorOperation::add);
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->compress(dealii::VectorOperation::add);      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->compress(dealii::VectorOperation::add);
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -1059,26 +1067,26 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, memorySpace>::compressAddStart()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->compress_start(dealii::VectorOperation::add);
-
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->compress_start(dealii::VectorOperation::add);
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
       {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->compress_start(dealii::VectorOperation::add);        
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->compress_start(dealii::VectorOperation::add);
       }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -1144,25 +1152,26 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, memorySpace>::compressAddFinish()
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->compress_finish(dealii::VectorOperation::add);
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->compress_finish(dealii::VectorOperation::add);
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
       {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->compress_finish(dealii::VectorOperation::add);
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->compress_finish(dealii::VectorOperation::add);
       }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -1231,33 +1240,34 @@ namespace dftfe
   {
     if (d_ghostSize > 0)
       {
-        if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-            std::is_same<NumberType, float>::value ||
-            std::is_same<NumberType, std::complex<double>>::value ||
-            std::is_same<NumberType, std::complex<float>>::value))
+        if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+            (std::is_same<NumberType, double>::value ||
+             std::is_same<NumberType, float>::value ||
+             std::is_same<NumberType, std::complex<double>>::value ||
+             std::is_same<NumberType, std::complex<float>>::value))
           {
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<NumberType, dealii::MemorySpace::Host> *)
-                 d_dealiiVecData)
-                ->zero_out_ghosts();
+            ((dealii::LinearAlgebra::distributed::
+                Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+              ->zero_out_ghosts();
           }
 #if defined(DFTFE_WITH_DEVICE)
-        else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+        else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
                  (std::is_same<NumberType, double>::value ||
                   std::is_same<NumberType, float>::value))
-        {
-                ((dealii::LinearAlgebra::distributed::
-                    Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                   d_dealiiVecData)
-                  ->zero_out_ghosts();          
-        }
-        else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+          {
+            ((dealii::LinearAlgebra::distributed::
+                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+              ->zero_out_ghosts();
+          }
+        else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
                  (std::is_same<NumberType, std::complex<double>>::value ||
                   std::is_same<NumberType, std::complex<float>>::value))
           {
-            DEVICE_API_CHECK(cudaMemset(dftfe::utils::makeDataTypeDeviceCompatible(this->begin()) + d_locallyOwnedSize,
-                                   0,
-                                   d_ghostSize * sizeof(NumberType)));
+            DEVICE_API_CHECK(cudaMemset(
+              dftfe::utils::makeDataTypeDeviceCompatible(this->begin()) +
+                d_locallyOwnedSize,
+              0,
+              d_ghostSize * sizeof(NumberType)));
 
             if (std::is_same<NumberType, std::complex<double>>::value)
               {
@@ -1303,30 +1313,30 @@ namespace dftfe
     this->d_vecData     = vec.d_vecData;
     vec.d_vecData       = tempPtr;
 
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-              ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<NumberType, dealii::MemorySpace::Host> *)
-                         vec.d_dealiiVecData));
-
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
+          ->swap(*((dealii::LinearAlgebra::distributed::
+                      Vector<NumberType, dealii::MemorySpace::Host> *)
+                     vec.d_dealiiVecData));
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if(memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->swap(*((dealii::LinearAlgebra::distributed::
-                          Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                         vec.d_dealiiVecData));      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        ((dealii::LinearAlgebra::distributed::
+            Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
+          ->swap(*((dealii::LinearAlgebra::distributed::
+                      Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                     vec.d_dealiiVecData));
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -1388,21 +1398,22 @@ namespace dftfe
   DistributedMulticomponentVec<NumberType, memorySpace>::getDealiiVec() const
   {
     void *temp;
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
         temp = d_dealiiVecData;
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-        temp = d_dealiiVecData;      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        temp = d_dealiiVecData;
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -1420,37 +1431,41 @@ namespace dftfe
   {
     if (d_vecData != NULL)
       {
-        if (memorySpace==dftfe::utils::MemorySpace::HOST)
+        if (memorySpace == dftfe::utils::MemorySpace::HOST)
           free(d_vecData);
-        else if (memorySpace==dftfe::utils::MemorySpace::DEVICE)
+        else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
           {
 #if defined(DFTFE_WITH_DEVICE)
-            DEVICE_API_CHECK(cudaFree(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData)));
+            DEVICE_API_CHECK(
+              cudaFree(dftfe::utils::makeDataTypeDeviceCompatible(d_vecData)));
 #endif
           }
       }
 
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
          std::is_same<NumberType, float>::value ||
          std::is_same<NumberType, std::complex<double>>::value ||
          std::is_same<NumberType, std::complex<float>>::value) &&
         d_dealiiVecData != NULL)
       {
-          delete (
-            dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData;
+        delete (
+          dealii::LinearAlgebra::distributed::Vector<NumberType,
+                                                     dealii::MemorySpace::Host>
+            *)d_dealiiVecData;
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value) &&
              d_dealiiVecData != NULL)
-    {
-            delete (
-              dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData;      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        delete (
+          dealii::LinearAlgebra::distributed::Vector<NumberType,
+                                                     dealii::MemorySpace::CUDA>
+            *)d_dealiiVecData;
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value) &&
              d_dealiiVecTempDataReal != NULL)
@@ -1492,27 +1507,28 @@ namespace dftfe
   DistributedMulticomponentVec<NumberType, memorySpace>::getDealiiPartitioner()
     const
   {
-    if (memorySpace==dftfe::utils::MemorySpace::HOST && (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value))
+    if (memorySpace == dftfe::utils::MemorySpace::HOST &&
+        (std::is_same<NumberType, double>::value ||
+         std::is_same<NumberType, float>::value ||
+         std::is_same<NumberType, std::complex<double>>::value ||
+         std::is_same<NumberType, std::complex<float>>::value))
       {
-          return ((dealii::LinearAlgebra::distributed::
-                     Vector<NumberType, dealii::MemorySpace::Host> *)
-                    d_dealiiVecData)
-            ->get_partitioner();
+        return ((dealii::LinearAlgebra::distributed::
+                   Vector<NumberType, dealii::MemorySpace::Host> *)
+                  d_dealiiVecData)
+          ->get_partitioner();
       }
 #if defined(DFTFE_WITH_DEVICE)
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, double>::value ||
               std::is_same<NumberType, float>::value))
-    {
-            return ((dealii::LinearAlgebra::distributed::
-                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
-                      d_dealiiVecData)
-              ->get_partitioner();      
-    }
-    else if (memorySpace==dftfe::utils::MemorySpace::DEVICE &&
+      {
+        return ((dealii::LinearAlgebra::distributed::
+                   Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                  d_dealiiVecData)
+          ->get_partitioner();
+      }
+    else if (memorySpace == dftfe::utils::MemorySpace::DEVICE &&
              (std::is_same<NumberType, std::complex<double>>::value ||
               std::is_same<NumberType, std::complex<float>>::value))
       {
@@ -1534,19 +1550,27 @@ namespace dftfe
 #endif
   }
 
-  template class DistributedMulticomponentVec<double, dftfe::utils::MemorySpace::HOST>;
-  template class DistributedMulticomponentVec<float, dftfe::utils::MemorySpace::HOST>;
+  template class DistributedMulticomponentVec<double,
+                                              dftfe::utils::MemorySpace::HOST>;
+  template class DistributedMulticomponentVec<float,
+                                              dftfe::utils::MemorySpace::HOST>;
   template class DistributedMulticomponentVec<std::complex<double>,
                                               dftfe::utils::MemorySpace::HOST>;
   template class DistributedMulticomponentVec<std::complex<float>,
                                               dftfe::utils::MemorySpace::HOST>;
-#if defined(DFTFE_WITH_DEVICE)                                              
-  template class DistributedMulticomponentVec<double, dftfe::utils::MemorySpace::DEVICE>;
-  template class DistributedMulticomponentVec<float, dftfe::utils::MemorySpace::DEVICE>;
-  template class DistributedMulticomponentVec<std::complex<double>,
-                                              dftfe::utils::MemorySpace::DEVICE>;
-  template class DistributedMulticomponentVec<std::complex<float>,
-                                              dftfe::utils::MemorySpace::DEVICE>;
+#if defined(DFTFE_WITH_DEVICE)
+  template class DistributedMulticomponentVec<
+    double,
+    dftfe::utils::MemorySpace::DEVICE>;
+  template class DistributedMulticomponentVec<
+    float,
+    dftfe::utils::MemorySpace::DEVICE>;
+  template class DistributedMulticomponentVec<
+    std::complex<double>,
+    dftfe::utils::MemorySpace::DEVICE>;
+  template class DistributedMulticomponentVec<
+    std::complex<float>,
+    dftfe::utils::MemorySpace::DEVICE>;
 #endif
-                                              
+
 } // namespace dftfe

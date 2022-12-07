@@ -20,9 +20,9 @@
 #  ifndef dftfeDeviceBlasWrapper_H
 #    define dftfeDeviceBlasWrapper_H
 
-#include <complex>
+#    include <complex>
 #    include <TypeConfig.h>
-#  include <DeviceTypeConfig.h>
+#    include <DeviceTypeConfig.h>
 namespace dftfe
 {
   namespace utils
@@ -30,234 +30,234 @@ namespace dftfe
     namespace deviceBlasWrapper
     {
       deviceBlasStatus_t
-      create(deviceBlasHandle_t * pHandle);
+      create(deviceBlasHandle_t *pHandle);
 
       deviceBlasStatus_t
       destroy(deviceBlasHandle_t handle);
 
       deviceBlasStatus_t
-      setStream(deviceBlasHandle_t handle, deviceStream_t stream);  
+      setStream(deviceBlasHandle_t handle, deviceStream_t stream);
 
-#ifdef DFTFE_WITH_DEVICE_CUDA
+#    ifdef DFTFE_WITH_DEVICE_CUDA
       deviceBlasStatus_t
       setMathMode(deviceBlasHandle_t handle, deviceBlasMath_t mathMode);
-#endif
+#    endif
 
       deviceBlasStatus_t
       copy(deviceBlasHandle_t handle,
-           int n,
-           const double          *x,
-           int incx,
-           double                *y,
-           int incy);      
+           int                n,
+           const double *     x,
+           int                incx,
+           double *           y,
+           int                incy);
 
       deviceBlasStatus_t
       nrm2(deviceBlasHandle_t handle,
-           int n,
-           const double          *x,
-           int incx,
-           double *result);
+           int                n,
+           const double *     x,
+           int                incx,
+           double *           result);
 
       deviceBlasStatus_t
       dot(deviceBlasHandle_t handle,
-          int n,
-          const double          *x,
-          int incx,
-          const double          *y,
-          int incy,
-          double          *result);
+          int                n,
+          const double *     x,
+          int                incx,
+          const double *     y,
+          int                incy,
+          double *           result);
 
       deviceBlasStatus_t
       axpy(deviceBlasHandle_t handle,
-           int n,
-           const double          *alpha,
-           const double          *x,
-           int incx,
-           double                *y,
-           int incy);
+           int                n,
+           const double *     alpha,
+           const double *     x,
+           int                incx,
+           double *           y,
+           int                incy);
 
       deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
-                  deviceBlasOperation_t transa,
-                  deviceBlasOperation_t transb,
-                  int               m,
-                  int               n,
-                  int               k,
-                  const double *    alpha,
-                  const double *    A,
-                  int               lda,
-                  const double *    B,
-                  int               ldb,
-                  const double *    beta,
-                  double *          C,
-                  int               ldc);
+           deviceBlasOperation_t transa,
+           deviceBlasOperation_t transb,
+           int                   m,
+           int                   n,
+           int                   k,
+           const double *        alpha,
+           const double *        A,
+           int                   lda,
+           const double *        B,
+           int                   ldb,
+           const double *        beta,
+           double *              C,
+           int                   ldc);
 
       deviceBlasStatus_t
       gemm(deviceBlasHandle_t    handle,
-                  deviceBlasOperation_t transa,
-                  deviceBlasOperation_t transb,
-                  int               m,
-                  int               n,
-                  int               k,
-                  const float *    alpha,
-                  const float *    A,
-                  int               lda,
-                  const float *    B,
-                  int               ldb,
-                  const float *    beta,
-                  float *          C,
-                  int               ldc);
+           deviceBlasOperation_t transa,
+           deviceBlasOperation_t transb,
+           int                   m,
+           int                   n,
+           int                   k,
+           const float *         alpha,
+           const float *         A,
+           int                   lda,
+           const float *         B,
+           int                   ldb,
+           const float *         beta,
+           float *               C,
+           int                   ldc);
 
       deviceBlasStatus_t
-      gemm(deviceBlasHandle_t    handle,
-                  deviceBlasOperation_t transa,
-                  deviceBlasOperation_t transb,
-                  int               m,
-                  int               n,
-                  int               k,
-                  const std::complex<double> *    alpha,
-                  const std::complex<double> *    A,
-                  int               lda,
-                  const std::complex<double> *    B,
-                  int               ldb,
-                  const std::complex<double> *    beta,
-                  std::complex<double> *          C,
-                  int               ldc);   
+      gemm(deviceBlasHandle_t          handle,
+           deviceBlasOperation_t       transa,
+           deviceBlasOperation_t       transb,
+           int                         m,
+           int                         n,
+           int                         k,
+           const std::complex<double> *alpha,
+           const std::complex<double> *A,
+           int                         lda,
+           const std::complex<double> *B,
+           int                         ldb,
+           const std::complex<double> *beta,
+           std::complex<double> *      C,
+           int                         ldc);
 
       deviceBlasStatus_t
-      gemm(deviceBlasHandle_t    handle,
-                  deviceBlasOperation_t transa,
-                  deviceBlasOperation_t transb,
-                  int               m,
-                  int               n,
-                  int               k,
-                  const std::complex<float> *    alpha,
-                  const std::complex<float> *    A,
-                  int               lda,
-                  const std::complex<float> *    B,
-                  int               ldb,
-                  const std::complex<float> *    beta,
-                  std::complex<float> *          C,
-                  int               ldc);    
+      gemm(deviceBlasHandle_t         handle,
+           deviceBlasOperation_t      transa,
+           deviceBlasOperation_t      transb,
+           int                        m,
+           int                        n,
+           int                        k,
+           const std::complex<float> *alpha,
+           const std::complex<float> *A,
+           int                        lda,
+           const std::complex<float> *B,
+           int                        ldb,
+           const std::complex<float> *beta,
+           std::complex<float> *      C,
+           int                        ldc);
 
       deviceBlasStatus_t
       gemmBatched(deviceBlasHandle_t    handle,
-                     deviceBlasOperation_t transa,
-                     deviceBlasOperation_t transb,
-                     int               m,
-                     int               n,
-                     int               k,
-                     const double *    alpha,
-                     const double *    Aarray[],
-                     int               lda,
-                     const double *    Barray[],
-                     int               ldb,
-                     const double *    beta,
-                     double *          Carray[],
-                     int               ldc,
-                     int               batchCount);   
+                  deviceBlasOperation_t transa,
+                  deviceBlasOperation_t transb,
+                  int                   m,
+                  int                   n,
+                  int                   k,
+                  const double *        alpha,
+                  const double *        Aarray[],
+                  int                   lda,
+                  const double *        Barray[],
+                  int                   ldb,
+                  const double *        beta,
+                  double *              Carray[],
+                  int                   ldc,
+                  int                   batchCount);
 
       deviceBlasStatus_t
-      gemmBatched(deviceBlasHandle_t    handle,
-                     deviceBlasOperation_t transa,
-                     deviceBlasOperation_t transb,
-                     int               m,
-                     int               n,
-                     int               k,
-                     const std::complex<double> *    alpha,
-                     const std::complex<double> *    Aarray[],
-                     int               lda,
-                     const std::complex<double> *    Barray[],
-                     int               ldb,
-                     const std::complex<double> *    beta,
-                     std::complex<double> *          Carray[],
-                     int               ldc,
-                     int               batchCount); 
-
-      deviceBlasStatus_t
-      gemmStridedBatched(deviceBlasHandle_t    handle,
-                            deviceBlasOperation_t transa,
-                            deviceBlasOperation_t transb,
-                            int               m,
-                            int               n,
-                            int               k,
-                            const double *    alpha,
-                            const double *    A,
-                            int               lda,
-                            long long int     strideA,
-                            const double *    B,
-                            int               ldb,
-                            long long int     strideB,
-                            const double *    beta,
-                            double *          C,
-                            int               ldc,
-                            long long int     strideC,
-                            int               batchCount);  
-
+      gemmBatched(deviceBlasHandle_t          handle,
+                  deviceBlasOperation_t       transa,
+                  deviceBlasOperation_t       transb,
+                  int                         m,
+                  int                         n,
+                  int                         k,
+                  const std::complex<double> *alpha,
+                  const std::complex<double> *Aarray[],
+                  int                         lda,
+                  const std::complex<double> *Barray[],
+                  int                         ldb,
+                  const std::complex<double> *beta,
+                  std::complex<double> *      Carray[],
+                  int                         ldc,
+                  int                         batchCount);
 
       deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
-                            deviceBlasOperation_t transa,
-                            deviceBlasOperation_t transb,
-                            int               m,
-                            int               n,
-                            int               k,
-                            const float *    alpha,
-                            const float *    A,
-                            int               lda,
-                            long long int     strideA,
-                            const float *    B,
-                            int               ldb,
-                            long long int     strideB,
-                            const float *    beta,
-                            float *          C,
-                            int               ldc,
-                            long long int     strideC,
-                            int               batchCount);   
+                         deviceBlasOperation_t transa,
+                         deviceBlasOperation_t transb,
+                         int                   m,
+                         int                   n,
+                         int                   k,
+                         const double *        alpha,
+                         const double *        A,
+                         int                   lda,
+                         long long int         strideA,
+                         const double *        B,
+                         int                   ldb,
+                         long long int         strideB,
+                         const double *        beta,
+                         double *              C,
+                         int                   ldc,
+                         long long int         strideC,
+                         int                   batchCount);
+
 
       deviceBlasStatus_t
       gemmStridedBatched(deviceBlasHandle_t    handle,
-                            deviceBlasOperation_t transa,
-                            deviceBlasOperation_t transb,
-                            int               m,
-                            int               n,
-                            int               k,
-                            const std::complex<double> *    alpha,
-                            const std::complex<double> *    A,
-                            int               lda,
-                            long long int     strideA,
-                            const std::complex<double> *    B,
-                            int               ldb,
-                            long long int     strideB,
-                            const std::complex<double> *    beta,
-                            std::complex<double> *          C,
-                            int               ldc,
-                            long long int     strideC,
-                            int               batchCount);  
+                         deviceBlasOperation_t transa,
+                         deviceBlasOperation_t transb,
+                         int                   m,
+                         int                   n,
+                         int                   k,
+                         const float *         alpha,
+                         const float *         A,
+                         int                   lda,
+                         long long int         strideA,
+                         const float *         B,
+                         int                   ldb,
+                         long long int         strideB,
+                         const float *         beta,
+                         float *               C,
+                         int                   ldc,
+                         long long int         strideC,
+                         int                   batchCount);
 
       deviceBlasStatus_t
-      gemmStridedBatched(deviceBlasHandle_t    handle,
-                            deviceBlasOperation_t transa,
-                            deviceBlasOperation_t transb,
-                            int               m,
-                            int               n,
-                            int               k,
-                            const std::complex<float> *    alpha,
-                            const std::complex<float> *    A,
-                            int               lda,
-                            long long int     strideA,
-                            const std::complex<float> *    B,
-                            int               ldb,
-                            long long int     strideB,
-                            const std::complex<float> *    beta,
-                            std::complex<float> *          C,
-                            int               ldc,
-                            long long int     strideC,
-                            int               batchCount);       
- 
+      gemmStridedBatched(deviceBlasHandle_t          handle,
+                         deviceBlasOperation_t       transa,
+                         deviceBlasOperation_t       transb,
+                         int                         m,
+                         int                         n,
+                         int                         k,
+                         const std::complex<double> *alpha,
+                         const std::complex<double> *A,
+                         int                         lda,
+                         long long int               strideA,
+                         const std::complex<double> *B,
+                         int                         ldb,
+                         long long int               strideB,
+                         const std::complex<double> *beta,
+                         std::complex<double> *      C,
+                         int                         ldc,
+                         long long int               strideC,
+                         int                         batchCount);
 
-    }//namespace deviceBlasWrapper
-  } // namespace utils
+      deviceBlasStatus_t
+      gemmStridedBatched(deviceBlasHandle_t         handle,
+                         deviceBlasOperation_t      transa,
+                         deviceBlasOperation_t      transb,
+                         int                        m,
+                         int                        n,
+                         int                        k,
+                         const std::complex<float> *alpha,
+                         const std::complex<float> *A,
+                         int                        lda,
+                         long long int              strideA,
+                         const std::complex<float> *B,
+                         int                        ldb,
+                         long long int              strideB,
+                         const std::complex<float> *beta,
+                         std::complex<float> *      C,
+                         int                        ldc,
+                         long long int              strideC,
+                         int                        batchCount);
+
+
+    } // namespace deviceBlasWrapper
+  }   // namespace utils
 } // namespace dftfe
 
 #  endif // dftfeDeviceBlasWrapper_H

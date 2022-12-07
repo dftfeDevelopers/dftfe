@@ -42,9 +42,11 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 #ifdef DFTFE_WITH_DEVICE
   if (d_dftParamsPtr->useDevice)
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::DEVICE>::copy(d_eigenVectorsFlattenedDevice.size(),
-      d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
-      d_eigenVectorsFlattenedDevice.begin());
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                 dftfe::utils::MemorySpace::DEVICE>::
+      copy(d_eigenVectorsFlattenedDevice.size(),
+           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
+           d_eigenVectorsFlattenedDevice.begin());
 #endif
   if (!d_dftParamsPtr->useDevice)
     d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
@@ -122,11 +124,12 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
       not d_dftParamsPtr->pinnedNodeForPBC)
     {
 #ifdef DFTFE_WITH_DEVICE
-      CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                           d_dftParamsPtr->absPoissonSolverToleranceLRD,
-                           d_dftParamsPtr->maxLinearSolverIterations,
-                           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-                           d_dftParamsPtr->verbosity);
+      CGSolverDevice.solve(
+        d_phiTotalSolverProblemDevice,
+        d_dftParamsPtr->absPoissonSolverToleranceLRD,
+        d_dftParamsPtr->maxLinearSolverIterations,
+        d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
+        d_dftParamsPtr->verbosity);
 #endif
     }
   else

@@ -32,13 +32,12 @@ namespace dftfe
   {
     template <typename NumberTypeComplex, typename NumberTypeReal>
     __global__ void
-    copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type size,
+    copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type   size,
                                          const NumberTypeComplex *complexArr,
                                          NumberTypeReal *         realArr,
                                          NumberTypeReal *         imagArr)
     {
-      const dftfe::size_type globalId =
-        threadIdx.x + blockIdx.x * blockDim.x;
+      const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
       for (dftfe::size_type idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
@@ -51,12 +50,11 @@ namespace dftfe
     template <typename NumberTypeComplex, typename NumberTypeReal>
     __global__ void
     copyRealArrsToComplexArrDeviceKernel(const dftfe::size_type size,
-                                         const NumberTypeReal *realArr,
-                                         const NumberTypeReal *imagArr,
-                                         NumberTypeComplex *   complexArr)
+                                         const NumberTypeReal * realArr,
+                                         const NumberTypeReal * imagArr,
+                                         NumberTypeComplex *    complexArr)
     {
-      const dftfe::size_type globalId =
-        threadIdx.x + blockIdx.x * blockDim.x;
+      const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
       for (dftfe::size_type idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
@@ -91,50 +89,60 @@ namespace dftfe
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
-    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
-                                   const NumberTypeComplex *        complexArr,
-                                   NumberTypeReal *                 realArr,
-                                   NumberTypeReal *                 imagArr)
+    copyComplexArrToRealArrsDevice(const dftfe::size_type   size,
+                                   const NumberTypeComplex *complexArr,
+                                   NumberTypeReal *         realArr,
+                                   NumberTypeReal *         imagArr)
     {
-      copyComplexArrToRealArrsDeviceKernel
-        <<<size / dftfe::utils::DEVICE_BLOCK_SIZE + 1, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          size, dftfe::utils::makeDataTypeDeviceCompatible(complexArr), realArr, imagArr);
+      copyComplexArrToRealArrsDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(complexArr),
+        realArr,
+        imagArr);
     }
 
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
     copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                   const NumberTypeReal *           realArr,
-                                   const NumberTypeReal *           imagArr,
-                                   NumberTypeComplex *              complexArr)
+                                   const NumberTypeReal * realArr,
+                                   const NumberTypeReal * imagArr,
+                                   NumberTypeComplex *    complexArr)
     {
-      copyRealArrsToComplexArrDeviceKernel
-        <<<size / dftfe::utils::DEVICE_BLOCK_SIZE + 1, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          size, realArr, imagArr, dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
+      copyRealArrsToComplexArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        size,
+        realArr,
+        imagArr,
+        dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
     }
 
     void
-    add(double *        y,
-        const double *  x,
-        const double    alpha,
-        const int       size,
+    add(double *                          y,
+        const double *                    x,
+        const double                      alpha,
+        const int                         size,
         dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
     {
       int incx = 1, incy = 1;
-      dftfe::utils::deviceBlasWrapper::axpy(deviceBlasHandle, size, &alpha, x, incx, y, incy);
+      dftfe::utils::deviceBlasWrapper::axpy(
+        deviceBlasHandle, size, &alpha, x, incx, y, incy);
     }
 
     double
-    l2_norm(const double *  x,
-            const int       size,
-            const MPI_Comm &mpi_communicator,
+    l2_norm(const double *                    x,
+            const int                         size,
+            const MPI_Comm &                  mpi_communicator,
             dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
     {
       int    incx = 1;
       double local_nrm, nrm = 0;
 
-      dftfe::utils::deviceBlasWrapper::nrm2(deviceBlasHandle, size, x, incx, &local_nrm);
+      dftfe::utils::deviceBlasWrapper::nrm2(
+        deviceBlasHandle, size, x, incx, &local_nrm);
 
       local_nrm *= local_nrm;
       MPI_Allreduce(&local_nrm, &nrm, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -143,16 +151,17 @@ namespace dftfe
     }
 
     double
-    dot(const double *  x,
-        const double *  y,
-        const int       size,
-        const MPI_Comm &mpi_communicator,
+    dot(const double *                    x,
+        const double *                    y,
+        const int                         size,
+        const MPI_Comm &                  mpi_communicator,
         dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
     {
       int    incx = 1, incy = 1;
       double local_sum, sum = 0;
 
-      dftfe::utils::deviceBlasWrapper::dot(deviceBlasHandle, size, x, incx, y, incy, &local_sum);
+      dftfe::utils::deviceBlasWrapper::dot(
+        deviceBlasHandle, size, x, incx, y, incy, &local_sum);
       MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
       return sum;
@@ -178,36 +187,37 @@ namespace dftfe
     void
     sadd(NumberType *y, NumberType *x, const NumberType beta, const int size)
     {
-      const int gridSize = (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
-                           (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
+      const int gridSize =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
+        (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
       saddKernel<NumberType>
         <<<gridSize, dftfe::utils::DEVICE_BLOCK_SIZE>>>(y, x, beta, size);
     }
 
 
     template void
-    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
-                                   const  std::complex<double> *          complexArr,
-                                   double *                         realArr,
-                                   double *                         imagArr);
+    copyComplexArrToRealArrsDevice(const dftfe::size_type      size,
+                                   const std::complex<double> *complexArr,
+                                   double *                    realArr,
+                                   double *                    imagArr);
 
     template void
-    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
-                                   const  std::complex<float> *           complexArr,
-                                   float *                          realArr,
-                                   float *                          imagArr);
-
-    template void
-    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                   const double *                   realArr,
-                                   const double *                   imagArr,
-                                   std::complex<double> *                complexArr);
+    copyComplexArrToRealArrsDevice(const dftfe::size_type     size,
+                                   const std::complex<float> *complexArr,
+                                   float *                    realArr,
+                                   float *                    imagArr);
 
     template void
     copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                   const float *                    realArr,
-                                   const float *                    imagArr,
-                                   std::complex<float> *                 complexArr);
+                                   const double *         realArr,
+                                   const double *         imagArr,
+                                   std::complex<double> * complexArr);
+
+    template void
+    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
+                                   const float *          realArr,
+                                   const float *          imagArr,
+                                   std::complex<float> *  complexArr);
 
     template void
     sadd(double *y, double *x, const double beta, const int size);

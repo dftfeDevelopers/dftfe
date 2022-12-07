@@ -36,10 +36,10 @@ namespace dftfe
       : d_size(size)
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::allocate(size,
-                                                                     &d_data);
+                                                                    &d_data);
       dftfe::utils::MemoryManager<ValueType, memorySpace>::set(size,
-                                                                d_data,
-                                                                initVal);
+                                                               d_data,
+                                                               initVal);
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -54,8 +54,8 @@ namespace dftfe
           dftfe::utils::MemoryManager<ValueType, memorySpace>::allocate(
             size, &d_data);
           dftfe::utils::MemoryManager<ValueType, memorySpace>::set(size,
-                                                                    d_data,
-                                                                    initVal);
+                                                                   d_data,
+                                                                   initVal);
         }
       else
         d_data = nullptr;
@@ -68,7 +68,7 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::~MemoryStorage()
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
-      d_data=nullptr;
+      d_data = nullptr;
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -76,7 +76,7 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::clear()
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
-      d_data=nullptr;
+      d_data = nullptr;
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -85,7 +85,7 @@ namespace dftfe
       : d_size(u.d_size)
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::allocate(d_size,
-                                                                     &d_data);
+                                                                    &d_data);
       utils::MemoryTransfer<memorySpace, memorySpace>::copy(d_size,
                                                             d_data,
                                                             u.d_data);
@@ -96,8 +96,8 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::setValue(const ValueType val)
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::set(d_size,
-                                                                d_data,
-                                                                val);
+                                                               d_data,
+                                                               val);
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -146,8 +146,8 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MemoryStorage<ValueType, memorySpace> &
-    MemoryStorage<ValueType, memorySpace>::operator=(
-      const MemoryStorage<ValueType, memorySpace> &rhs)
+    MemoryStorage<ValueType, memorySpace>::
+    operator=(const MemoryStorage<ValueType, memorySpace> &rhs)
     {
       if (&rhs != this)
         {
@@ -164,8 +164,8 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MemoryStorage<ValueType, memorySpace> &
-    MemoryStorage<ValueType, memorySpace>::operator=(
-      MemoryStorage<ValueType, memorySpace> &&rhs) noexcept
+    MemoryStorage<ValueType, memorySpace>::
+    operator=(MemoryStorage<ValueType, memorySpace> &&rhs) noexcept
     {
       if (&rhs != this)
         {
@@ -180,35 +180,35 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::reference
-    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
+      MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
     {
       throwException<InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
-        "[] operator return reference to element not implemented for DEVICE"); 
+        "[] operator return reference to element not implemented for DEVICE");
       return d_data[i];
     }
-    
+
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::const_reference
-    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
-    const
+      MemoryStorage<ValueType, memorySpace>::operator[](const size_type i) const
     {
       throwException<InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
-        "[] operator return const reference to element not implemented for DEVICE");       
+        "[] operator return const reference to element not implemented for DEVICE");
       return d_data[i];
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     void
-    MemoryStorage<ValueType, memorySpace>::swap(MemoryStorage<ValueType, memorySpace> &rhs)
+    MemoryStorage<ValueType, memorySpace>::swap(
+      MemoryStorage<ValueType, memorySpace> &rhs)
     {
-       ValueType * tempData=d_data;
-       const size_type tempSize=d_size;
-       d_data     = rhs.d_data;
-       d_size     = rhs.d_size;
-       rhs.d_data = tempData;
-       rhs.d_size = tempSize;
+      ValueType *     tempData = d_data;
+      const size_type tempSize = d_size;
+      d_data                   = rhs.d_data;
+      d_size                   = rhs.d_size;
+      rhs.d_data               = tempData;
+      rhs.d_size               = tempSize;
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>

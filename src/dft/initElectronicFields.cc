@@ -160,7 +160,8 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          d_eigenVectorsFlattenedDevice.copyFrom<dftfe::utils::MemorySpace::HOST>(
+          d_eigenVectorsFlattenedDevice
+            .copyFrom<dftfe::utils::MemorySpace::HOST>(
               &d_eigenVectorsFlattenedSTL[kPoint][0],
               d_eigenVectorsFlattenedSTL[0].size(),
               0,

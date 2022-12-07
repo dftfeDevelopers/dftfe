@@ -28,23 +28,23 @@ namespace dftfe
   {
     void
     rayleighRitz(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
       dataTypes::number *                          X,
       distributedDeviceVec<dataTypes::number> &    Xb,
       distributedDeviceVec<dataTypes::numberFP32> &floatXb,
       distributedDeviceVec<dataTypes::number> &    HXb,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      dftfe::utils::deviceBlasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool                                     useMixedPrecOverall)
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -229,23 +229,23 @@ namespace dftfe
 
     void
     rayleighRitzGEP(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
       dataTypes::number *                          X,
       distributedDeviceVec<dataTypes::number> &    Xb,
       distributedDeviceVec<dataTypes::numberFP32> &floatXb,
       distributedDeviceVec<dataTypes::number> &    HXb,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      dftfe::utils::deviceBlasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool                                     useMixedPrecOverall)
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -656,25 +656,25 @@ namespace dftfe
 
     void
     rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
       dataTypes::number *                          X,
       dataTypes::number *                          XFrac,
       distributedDeviceVec<dataTypes::number> &    Xb,
       distributedDeviceVec<dataTypes::numberFP32> &floatXb,
       distributedDeviceVec<dataTypes::number> &    HXb,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const unsigned int                             Noc,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      dftfe::utils::deviceBlasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool                                     useMixedPrecOverall)
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const unsigned int                           Noc,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -1182,24 +1182,24 @@ namespace dftfe
 
     void
     densityMatrixEigenBasisFirstOrderResponse(
-      operatorDFTDeviceClass &                           operatorMatrix,
+      operatorDFTDeviceClass &                     operatorMatrix,
       dataTypes::number *                          X,
       distributedDeviceVec<dataTypes::number> &    Xb,
       distributedDeviceVec<dataTypes::numberFP32> &floatXb,
       distributedDeviceVec<dataTypes::number> &    HXb,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      utils::DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      const std::vector<double> &                    eigenValues,
-      const double                                   fermiEnergy,
-      std::vector<double> &                          densityMatDerFermiEnergy,
-      dftfe::elpaScalaManager &                      elpaScala,
-      dftfe::utils::deviceBlasHandle_t &                               handle,
-      const dftParameters &                          dftParams)
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      const std::vector<double> &                  eigenValues,
+      const double                                 fermiEnergy,
+      std::vector<double> &                        densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &                    elpaScala,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,

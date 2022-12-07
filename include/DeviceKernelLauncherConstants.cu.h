@@ -22,11 +22,11 @@ namespace dftfe
 {
   namespace utils
   {
-    static const int DEVICE_WARP_SIZE     = 32;
+    static const int DEVICE_WARP_SIZE      = 32;
     static const int DEVICE_MAX_BLOCK_SIZE = 1024;
-    static const int DEVICE_BLOCK_SIZE   = 256;
+    static const int DEVICE_BLOCK_SIZE     = 256;
 
-  }
+  } // namespace utils
 } // namespace dftfe
 
 #endif // dftfeDeviceKernelLauncherConstants_cuh

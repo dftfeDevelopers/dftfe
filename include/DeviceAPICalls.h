@@ -4,7 +4,7 @@
 #    define dftfeDeviceAPICalls_H
 
 #    include <TypeConfig.h>
-#  include <DeviceTypeConfig.h>
+#    include <DeviceTypeConfig.h>
 namespace dftfe
 {
   namespace utils
@@ -13,7 +13,7 @@ namespace dftfe
     deviceReset();
 
     deviceError_t
-    deviceMemGetInfo(size_t* free, size_t* total);
+    deviceMemGetInfo(size_t *free, size_t *total);
 
     deviceError_t
     getDeviceCount(int *count);
@@ -28,7 +28,7 @@ namespace dftfe
     deviceMalloc(void **devPtr, size_type size);
 
     deviceError_t
-    deviceMemset(void *devPtr,int value, size_type count);
+    deviceMemset(void *devPtr, int value, size_type count);
 
     /**
      * @brief
@@ -75,21 +75,36 @@ namespace dftfe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyD2H_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);
+    deviceMemcpyD2H_2D(void *      dst,
+                       size_type   dpitch,
+                       const void *src,
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height);
 
     /**
      * @brief Copy 2D array from device to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyD2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);
+    deviceMemcpyD2D_2D(void *      dst,
+                       size_type   dpitch,
+                       const void *src,
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height);
 
     /**
      * @brief Copy 2D array from host to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyH2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height);    
+    deviceMemcpyH2D_2D(void *      dst,
+                       size_type   dpitch,
+                       const void *src,
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height);
 
     /**
      * @brief HOST-DEVICE synchronization
@@ -102,43 +117,54 @@ namespace dftfe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyAsyncD2H(void *dst, const void *src, size_type count,deviceStream_t stream = 0 );
+    deviceMemcpyAsyncD2H(void *         dst,
+                         const void *   src,
+                         size_type      count,
+                         deviceStream_t stream = 0);
 
     /**
      * @brief Copy array from device to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyAsyncD2D(void *dst, const void *src, size_type count,deviceStream_t stream = 0 );
+    deviceMemcpyAsyncD2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
+                         deviceStream_t stream = 0);
 
     /**
      * @brief Copy array from host to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyAsyncH2D(void *dst, const void *src, size_type count,deviceStream_t stream = 0 );
+    deviceMemcpyAsyncH2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
+                         deviceStream_t stream = 0);
 
 
     deviceError_t
-    deviceStreamCreate(deviceStream_t* pStream);
+    deviceStreamCreate(deviceStream_t *pStream);
 
     deviceError_t
     deviceStreamDestroy(deviceStream_t stream);
 
     deviceError_t
-    deviceEventCreate(deviceEvent_t* pEvent);
+    deviceEventCreate(deviceEvent_t *pEvent);
 
     deviceError_t
-    deviceEventDestroy(deviceEvent_t event);    
+    deviceEventDestroy(deviceEvent_t event);
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t event,deviceStream_t stream=0);
+    deviceEventRecord(deviceEvent_t event, deviceStream_t stream = 0);
 
     deviceError_t
-    deviceEventSynchronize(deviceEvent_t event);    
+    deviceEventSynchronize(deviceEvent_t event);
 
     deviceError_t
-    deviceStreamWaitEvent(deviceStream_t stream,deviceEvent_t event,unsigned int flags=0);
+    deviceStreamWaitEvent(deviceStream_t stream,
+                          deviceEvent_t  event,
+                          unsigned int   flags = 0);
 
   } // namespace utils
 } // namespace dftfe

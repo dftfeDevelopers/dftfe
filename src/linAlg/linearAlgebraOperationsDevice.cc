@@ -589,18 +589,18 @@ namespace dftfe
       }
 
       void
-      computeRayleighQuotients(dftfe::utils::deviceBlasHandle_t &   handle,
-                               const double *     xarray,
-                               const double *     yarray,
-                               const double *     sqrtMassVector,
-                               const double *     onesVec,
-                               const unsigned int numberVectors,
-                               const unsigned int localSize,
-                               const MPI_Comm &   mpiCommDomain,
-                               MPI_Request &      request,
-                               double *           temparray,
-                               double *           dotarrayD,
-                               double *           dotarrayH)
+      computeRayleighQuotients(dftfe::utils::deviceBlasHandle_t &handle,
+                               const double *                    xarray,
+                               const double *                    yarray,
+                               const double *                    sqrtMassVector,
+                               const double *                    onesVec,
+                               const unsigned int                numberVectors,
+                               const unsigned int                localSize,
+                               const MPI_Comm &                  mpiCommDomain,
+                               MPI_Request &                     request,
+                               double *                          temparray,
+                               double *                          dotarrayD,
+                               double *                          dotarrayH)
       {
         dotProductContributionBlockedKernelMassVector<<<
           (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -610,24 +610,24 @@ namespace dftfe
 
         const double alpha = 1.0, beta = 0;
         dftfe::utils::deviceBlasWrapper::gemm(handle,
-                    dftfe::utils::DEVICEBLAS_OP_N,
-                    dftfe::utils::DEVICEBLAS_OP_T,
-                    1,
-                    2 * numberVectors,
-                    localSize,
-                    &alpha,
-                    onesVec,
-                    1,
-                    temparray,
-                    2 * numberVectors,
-                    &beta,
-                    dotarrayD,
-                    1);
+                                              dftfe::utils::DEVICEBLAS_OP_N,
+                                              dftfe::utils::DEVICEBLAS_OP_T,
+                                              1,
+                                              2 * numberVectors,
+                                              localSize,
+                                              &alpha,
+                                              onesVec,
+                                              1,
+                                              temparray,
+                                              2 * numberVectors,
+                                              &beta,
+                                              dotarrayD,
+                                              1);
 
 
         dftfe::utils::deviceMemcpyD2H(dotarrayH,
-                   dotarrayD,
-                   2 * numberVectors * sizeof(double));
+                                      dotarrayD,
+                                      2 * numberVectors * sizeof(double));
 
 
 
@@ -703,12 +703,12 @@ namespace dftfe
     //
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
-      operatorDFTDeviceClass &                       operatorMatrix,
+      operatorDFTDeviceClass &                 operatorMatrix,
       distributedDeviceVec<dataTypes::number> &Xb,
       distributedDeviceVec<dataTypes::number> &Yb,
       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             blockSize,
-      const dftParameters &                          dftParams)
+      const unsigned int                       blockSize,
+      const dftParameters &                    dftParams)
     {
       const unsigned int this_mpi_process =
         dealii::Utilities::MPI::this_mpi_process(
@@ -753,24 +753,26 @@ namespace dftfe
 
       distributedCPUVec<dataTypes::number> &vvec = v[0];
 
-      dftfe::utils::deviceMemcpyH2D_2D(dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
-                               blockSize * sizeof(dataTypes::number),
-                               vvec.begin(),
-                               1 * sizeof(dataTypes::number),
-                               1 * sizeof(dataTypes::number),
-                               local_size);
+      dftfe::utils::deviceMemcpyH2D_2D(
+        dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
+        blockSize * sizeof(dataTypes::number),
+        vvec.begin(),
+        1 * sizeof(dataTypes::number),
+        1 * sizeof(dataTypes::number),
+        local_size);
 
       Yb.setZero();
       operatorMatrix.HX(
         Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
       distributedCPUVec<dataTypes::number> &fvec = f[0];
-      dftfe::utils::deviceMemcpyD2H_2D(fvec.begin(),
-                               1 * sizeof(dataTypes::number),
-                               dftfe::utils::makeDataTypeDeviceCompatible(Yb.begin()),
-                               blockSize * sizeof(dataTypes::number),
-                               1 * sizeof(dataTypes::number),
-                               local_size);
+      dftfe::utils::deviceMemcpyD2H_2D(
+        fvec.begin(),
+        1 * sizeof(dataTypes::number),
+        dftfe::utils::makeDataTypeDeviceCompatible(Yb.begin()),
+        blockSize * sizeof(dataTypes::number),
+        1 * sizeof(dataTypes::number),
+        local_size);
 
       operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
       fVector = f[0];
@@ -794,24 +796,26 @@ namespace dftfe
           // operatorMatrix.HX(v,f);
 
           distributedCPUVec<dataTypes::number> &vvec = v[0];
-          dftfe::utils::deviceMemcpyH2D_2D(dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
-                                   blockSize * sizeof(dataTypes::number),
-                                   vvec.begin(),
-                                   1 * sizeof(dataTypes::number),
-                                   1 * sizeof(dataTypes::number),
-                                   local_size);
+          dftfe::utils::deviceMemcpyH2D_2D(
+            dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
+            blockSize * sizeof(dataTypes::number),
+            vvec.begin(),
+            1 * sizeof(dataTypes::number),
+            1 * sizeof(dataTypes::number),
+            local_size);
 
           Yb.setZero();
           operatorMatrix.HX(
             Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
           distributedCPUVec<dataTypes::number> &fvec = f[0];
-          dftfe::utils::deviceMemcpyD2H_2D(fvec.begin(),
-                                   1 * sizeof(dataTypes::number),
-                                   dftfe::utils::makeDataTypeDeviceCompatible(Yb.begin()),
-                                   blockSize * sizeof(dataTypes::number),
-                                   1 * sizeof(dataTypes::number),
-                                   local_size);
+          dftfe::utils::deviceMemcpyD2H_2D(
+            fvec.begin(),
+            1 * sizeof(dataTypes::number),
+            dftfe::utils::makeDataTypeDeviceCompatible(Yb.begin()),
+            blockSize * sizeof(dataTypes::number),
+            1 * sizeof(dataTypes::number),
+            local_size);
 
           operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
           fVector = f[0];
@@ -890,19 +894,19 @@ namespace dftfe
 
     void
     chebyshevFilter(
-      operatorDFTDeviceClass &                           operatorMatrix,
+      operatorDFTDeviceClass &                     operatorMatrix,
       distributedDeviceVec<dataTypes::number> &    XArray,
       distributedDeviceVec<dataTypes::number> &    YArray,
       distributedDeviceVec<dataTypes::numberFP32> &tempFloatArray,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberVectors,
-      const unsigned int                             m,
-      const double                                   a,
-      const double                                   b,
-      const double                                   a0,
-      const bool                                     mixedPrecOverall,
-      const dftParameters &                          dftParams)
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           localVectorSize,
+      const unsigned int                           numberVectors,
+      const unsigned int                           m,
+      const double                                 a,
+      const double                                 b,
+      const double                                 a0,
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams)
     {
       double e, c, sigma, sigma1, sigma2, gamma, device_time;
       e                                  = (b - a) / 2.0;
@@ -938,16 +942,20 @@ namespace dftfe
                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE,
                               30000),
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                                        dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                                                        dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
-                                                        alpha2);
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalVectorSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+        alpha2);
 
-      dscalDeviceKernel<<<
-        min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE,
-            30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()), alpha1);
+      dscalDeviceKernel<<<min((totalVectorSize +
+                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                              30000),
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalVectorSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+        alpha1);
 
       //
       // polynomial loop
@@ -966,7 +974,11 @@ namespace dftfe
                                          dftfe::utils::DEVICE_BLOCK_SIZE,
                                        30000),
                                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()), dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()), coeff, alpha2);
+                totalVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                coeff,
+                alpha2);
 
 
               // scale src vector with M^{-1/2}
@@ -984,11 +996,12 @@ namespace dftfe
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors,
-                                              localVectorSize,
-                                              1.0,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                                              operatorMatrix.getSqrtMassVec());
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                operatorMatrix.getSqrtMassVec());
 
               //
               // call HX
@@ -1009,11 +1022,12 @@ namespace dftfe
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors,
-                                              localVectorSize,
-                                              1.0 / alpha1Old,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                                              operatorMatrix.getSqrtMassVec());
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                numberVectors,
+                localVectorSize,
+                1.0 / alpha1Old,
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                operatorMatrix.getSqrtMassVec());
 
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1030,7 +1044,11 @@ namespace dftfe
                                          dftfe::utils::DEVICE_BLOCK_SIZE,
                                        30000),
                                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()), dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()), coeff, alpha2);
+                totalVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                coeff,
+                alpha2);
               scaleFlag = true;
               //
               // call HX
@@ -1045,11 +1063,11 @@ namespace dftfe
             }
           else
             {
-              combinedDeviceKernel<<<min((totalVectorSize +
-                                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                                         30000),
-                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+              combinedDeviceKernel<<<
+                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                    30000),
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 numberVectors,
                 localVectorSize,
                 dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
@@ -1081,9 +1099,10 @@ namespace dftfe
         }
 
       // copy back YArray to XArray
-      dftfe::utils::deviceMemcpyD2D(dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                 dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
-                 totalVectorSize * sizeof(dataTypes::number));
+      dftfe::utils::deviceMemcpyD2D(
+        dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+        totalVectorSize * sizeof(dataTypes::number));
     }
 
 
@@ -1093,22 +1112,22 @@ namespace dftfe
     //
     void
     chebyshevFilter(
-      operatorDFTDeviceClass &                           operatorMatrix,
+      operatorDFTDeviceClass &                     operatorMatrix,
       distributedDeviceVec<dataTypes::number> &    XArray1,
       distributedDeviceVec<dataTypes::number> &    YArray1,
       distributedDeviceVec<dataTypes::numberFP32> &tempFloatArray,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector1,
-      distributedDeviceVec<dataTypes::number> &XArray2,
-      distributedDeviceVec<dataTypes::number> &YArray2,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector2,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberVectors,
-      const unsigned int                             m,
-      const double                                   a,
-      const double                                   b,
-      const double                                   a0,
-      const bool                                     mixedPrecOverall,
-      const dftParameters &                          dftParams)
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector1,
+      distributedDeviceVec<dataTypes::number> &    XArray2,
+      distributedDeviceVec<dataTypes::number> &    YArray2,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector2,
+      const unsigned int                           localVectorSize,
+      const unsigned int                           numberVectors,
+      const unsigned int                           m,
+      const double                                 a,
+      const double                                 b,
+      const double                                 a0,
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams)
     {
       double e, c, sigma, sigma1, sigma2, gamma, device_time;
       e                                  = (b - a) / 2.0;
@@ -1164,31 +1183,39 @@ namespace dftfe
                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE,
                               30000),
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                                        dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                                                        dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                                                        alpha2);
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalVectorSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+        alpha2);
 
-      dscalDeviceKernel<<<
-        min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE,
-            30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()), alpha1);
+      dscalDeviceKernel<<<min((totalVectorSize +
+                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                              30000),
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalVectorSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+        alpha1);
 
       daxpyDeviceKernel<<<min((totalVectorSize +
                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE,
                               30000),
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                                        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                                        dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                                                        alpha2);
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalVectorSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+        alpha2);
 
-      dscalDeviceKernel<<<
-        min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE,
-            30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize, dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()), alpha1);
+      dscalDeviceKernel<<<min((totalVectorSize +
+                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                              30000),
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalVectorSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+        alpha1);
 
       bool overlap = false;
       //
@@ -1205,15 +1232,16 @@ namespace dftfe
 
           if (degree == 2)
             {
-              daxpbyDeviceKernel<<<
-                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    30000),
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                                              coeff,
-                                              alpha2);
+              daxpbyDeviceKernel<<<min((totalVectorSize +
+                                        (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                                       30000),
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                totalVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                coeff,
+                alpha2);
 
 
               // scale src vector with M^{-1/2}
@@ -1231,11 +1259,12 @@ namespace dftfe
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors,
-                                              localVectorSize,
-                                              1.0,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                                              operatorMatrix.getSqrtMassVec());
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                operatorMatrix.getSqrtMassVec());
 
               //
               // call HX
@@ -1249,15 +1278,16 @@ namespace dftfe
                                      mixedPrecOverall &&
                                        dftParams.useMixedPrecCheby);
 
-              daxpbyDeviceKernel<<<
-                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    30000),
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                              coeff,
-                                              alpha2);
+              daxpbyDeviceKernel<<<min((totalVectorSize +
+                                        (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                                       30000),
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                totalVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                coeff,
+                alpha2);
 
 
               // scale src vector with M^{-1/2}
@@ -1275,11 +1305,12 @@ namespace dftfe
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors,
-                                              localVectorSize,
-                                              1.0,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                              operatorMatrix.getSqrtMassVec());
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                operatorMatrix.getSqrtMassVec());
 
               //
               // call HX
@@ -1301,11 +1332,12 @@ namespace dftfe
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors,
-                                              localVectorSize,
-                                              1.0 / alpha1Old,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                                              operatorMatrix.getSqrtMassVec());
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                numberVectors,
+                localVectorSize,
+                1.0 / alpha1Old,
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                operatorMatrix.getSqrtMassVec());
 
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1317,15 +1349,16 @@ namespace dftfe
                 dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
-              daxpbyDeviceKernel<<<
-                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    30000),
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                                              coeff,
-                                              alpha2);
+              daxpbyDeviceKernel<<<min((totalVectorSize +
+                                        (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                                       30000),
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                totalVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                coeff,
+                alpha2);
               scaleFlag = true;
               //
               // call HX
@@ -1344,11 +1377,12 @@ namespace dftfe
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors,
-                                              localVectorSize,
-                                              1.0 / alpha1Old,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                              operatorMatrix.getSqrtMassVec());
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                numberVectors,
+                localVectorSize,
+                1.0 / alpha1Old,
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                operatorMatrix.getSqrtMassVec());
 
               scaleDeviceKernel<<<
                 (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1360,15 +1394,16 @@ namespace dftfe
                 dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
-              daxpbyDeviceKernel<<<
-                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    30000),
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(totalVectorSize,
-                                              dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                                              dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                              coeff,
-                                              alpha2);
+              daxpbyDeviceKernel<<<min((totalVectorSize +
+                                        (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                                       30000),
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                totalVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                coeff,
+                alpha2);
               //
               // call HX
               //
@@ -1436,11 +1471,11 @@ namespace dftfe
                   projectorKetTimesVector2.compressAddStart();
                 }
 
-              combinedDeviceKernel<<<min((totalVectorSize +
-                                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                                         30000),
-                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+              combinedDeviceKernel<<<
+                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                    30000),
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 numberVectors,
                 localVectorSize,
                 dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
@@ -1465,10 +1500,11 @@ namespace dftfe
                   convDoubleArrToFloatArr<<<
                     (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors *
-                                                    localVectorSize,
-                                                  dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                                                  dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                    numberVectors * localVectorSize,
+                    dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      tempFloatArray.begin()));
                   tempFloatArray.updateGhostValuesStart();
                 }
               else
@@ -1496,8 +1532,12 @@ namespace dftfe
                         dftfe::utils::DEVICE_BLOCK_SIZE * n_ghosts,
                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       numberVectors * n_ghosts,
-                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()) + localVectorSize * numberVectors,
-                      dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()) + localVectorSize * numberVectors);
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        tempFloatArray.begin()) +
+                        localVectorSize * numberVectors,
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        YArray1.begin()) +
+                        localVectorSize * numberVectors);
                 }
               else
                 YArray1.updateGhostValuesFinish();
@@ -1511,11 +1551,15 @@ namespace dftfe
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
                       convDoubleArrToFloatArr<<<
-                        (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        (numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE * totalSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors * totalSize,
-                                                      dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                        numberVectors * totalSize,
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XArray2.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          tempFloatArray.begin()));
                       tempFloatArray.compressAddStart();
                     }
                   else
@@ -1541,15 +1585,19 @@ namespace dftfe
                       tempFloatArray.compressAddFinish();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
-                        (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        (numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         numberVectors,
                         localVectorSize,
-                        dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          tempFloatArray.begin()),
                         (operatorMatrix
-                             .getLocallyOwnedProcBoundaryNodesVectorDevice()).begin(),
-                        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()));
+                           .getLocallyOwnedProcBoundaryNodesVectorDevice())
+                          .begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XArray2.begin()));
 
                       XArray2.zeroOutGhosts();
                     }
@@ -1560,11 +1608,11 @@ namespace dftfe
 
               projectorKetTimesVector1.compressAddStart();
 
-              combinedDeviceKernel<<<min((totalVectorSize +
-                                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                                         30000),
-                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+              combinedDeviceKernel<<<
+                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                    30000),
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 numberVectors,
                 localVectorSize,
                 dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
@@ -1585,10 +1633,11 @@ namespace dftfe
                   convDoubleArrToFloatArr<<<
                     (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors *
-                                                    localVectorSize,
-                                                  dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                                                  dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                    numberVectors * localVectorSize,
+                    dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      tempFloatArray.begin()));
                   tempFloatArray.updateGhostValuesStart();
                 }
               else
@@ -1615,8 +1664,12 @@ namespace dftfe
                         dftfe::utils::DEVICE_BLOCK_SIZE * n_ghosts,
                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       numberVectors * n_ghosts,
-                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()) + localVectorSize * numberVectors,
-                      dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()) + localVectorSize * numberVectors);
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        tempFloatArray.begin()) +
+                        localVectorSize * numberVectors,
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        YArray2.begin()) +
+                        localVectorSize * numberVectors);
                 }
               else
                 YArray2.updateGhostValuesFinish();
@@ -1630,9 +1683,11 @@ namespace dftfe
                   convDoubleArrToFloatArr<<<
                     (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE * totalSize,
-                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors * totalSize,
-                                                  dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                                                  dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                    numberVectors * totalSize,
+                    dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      tempFloatArray.begin()));
                   tempFloatArray.compressAddStart();
                 }
               else
@@ -1660,10 +1715,13 @@ namespace dftfe
                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                     numberVectors,
                     localVectorSize,
-                    dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      tempFloatArray.begin()),
                     (operatorMatrix
-                         .getLocallyOwnedProcBoundaryNodesVectorDevice()).begin(),
-                    dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()));
+                       .getLocallyOwnedProcBoundaryNodesVectorDevice())
+                      .begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      XArray1.begin()));
 
                   XArray1.zeroOutGhosts();
                 }
@@ -1692,23 +1750,31 @@ namespace dftfe
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
                       convDoubleArrToFloatArr<<<
-                        (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        (numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE * totalSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(numberVectors * totalSize,
-                                                      dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                                                      dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                        numberVectors * totalSize,
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XArray2.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          tempFloatArray.begin()));
                       tempFloatArray.compressAdd();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
-                        (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        (numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         numberVectors,
                         localVectorSize,
-                        dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          tempFloatArray.begin()),
                         (operatorMatrix
-                             .getLocallyOwnedProcBoundaryNodesVectorDevice()).begin(),
-                        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()));
+                           .getLocallyOwnedProcBoundaryNodesVectorDevice())
+                          .begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XArray2.begin()));
 
                       XArray2.zeroOutGhosts();
                     }
@@ -1734,27 +1800,29 @@ namespace dftfe
         }
 
       // copy back YArray to XArray
-      dftfe::utils::deviceMemcpyD2D(dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                 dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                 totalVectorSize * sizeof(dataTypes::number));
+      dftfe::utils::deviceMemcpyD2D(
+        dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+        totalVectorSize * sizeof(dataTypes::number));
 
-      dftfe::utils::deviceMemcpyD2D(dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                 dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                 totalVectorSize * sizeof(dataTypes::number));
+      dftfe::utils::deviceMemcpyD2D(
+        dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+        totalVectorSize * sizeof(dataTypes::number));
     }
 
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const dataTypes::number *                  X,
-      dataTypes::number *                        XFrac,
+      const dataTypes::number *                        X,
+      dataTypes::number *                              XFrac,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
       const bool                                       rotationMatTranspose)
@@ -1775,17 +1843,20 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHost;
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        rotationMatBlockHost;
 
       if (dftParams.allowFullCPUMemSubspaceRot)
         {
-          rotationMatBlockHost.resize(N * Nfr,dataTypes::number(0));
+          rotationMatBlockHost.resize(N * Nfr, dataTypes::number(0));
           rotationMatBlockHost.setValue(0);
         }
       else
         {
-          rotationMatBlockHost.resize(vectorsBlockSize * N,dataTypes::number(0));
-          rotationMatBlockHost.setValue(0);          
+          rotationMatBlockHost.resize(vectorsBlockSize * N,
+                                      dataTypes::number(0));
+          rotationMatBlockHost.setValue(0);
         }
 
       dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
@@ -1807,20 +1878,26 @@ namespace dftfe
           dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
-        vectorsBlockSize * N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlockNext(
-        vectorsBlockSize * N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
-        rotatedVectorsMatBlock(Nfr * dofsBlockSize,
-                               dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlock(vectorsBlockSize * N, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlockNext(vectorsBlockSize * N, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotatedVectorsMatBlock(Nfr * dofsBlockSize, dataTypes::number(0));
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempReal.resize(vectorsBlockSize * N,0);
-        tempImag.resize(vectorsBlockSize * N,0);
+          tempReal.resize(vectorsBlockSize * N, 0);
+          tempImag.resize(vectorsBlockSize * N, 0);
         }
 
       unsigned int blockCount = 0;
@@ -1859,8 +1936,8 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalColumnIdMap.find(j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
-                                        *(rotationMatBlockHost.begin()+jvec * N +
-                                                             i * BVec + j) =
+                                        *(rotationMatBlockHost.begin() +
+                                          jvec * N + i * BVec + j) =
                                           rotationMatPar.local_el(localRowId,
                                                                   it->second);
                                     }
@@ -1881,8 +1958,8 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
-                                        *(rotationMatBlockHost.begin()+jvec * N +
-                                                             i * BVec + j) =
+                                        *(rotationMatBlockHost.begin() +
+                                          jvec * N + i * BVec + j) =
                                           rotationMatPar.local_el(
                                             it->second, localColumnId);
                                     }
@@ -1912,9 +1989,9 @@ namespace dftfe
                                     it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                   if (it != globalToLocalColumnIdMap.end())
-                                    *(rotationMatBlockHost.begin()+i * BVec + j) =
-                                      rotationMatPar.local_el(localRowId,
-                                                              it->second);
+                                    *(rotationMatBlockHost.begin() + i * BVec +
+                                      j) = rotationMatPar.local_el(localRowId,
+                                                                   it->second);
                                 }
                             }
                     }
@@ -1932,7 +2009,8 @@ namespace dftfe
                                   std::map<unsigned int, unsigned int>::iterator
                                     it = globalToLocalRowIdMap.find(j + jvec);
                                   if (it != globalToLocalRowIdMap.end())
-                                    *(rotationMatBlockHost.begin()+i * BVec + j) =
+                                    *(rotationMatBlockHost.begin() + i * BVec +
+                                      j) =
                                       rotationMatPar.local_el(it->second,
                                                               localColumnId);
                                 }
@@ -1947,7 +2025,7 @@ namespace dftfe
                     {
                       dftfe::utils::deviceMemcpyAsyncH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
-                        rotationMatBlockNext.begin()),
+                          rotationMatBlockNext.begin()),
                         rotationMatBlockHost.begin() + jvec * N,
                         BVec * N * sizeof(dataTypes::number),
                         streamDeviceCCL);
@@ -1957,23 +2035,23 @@ namespace dftfe
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                                  rotationMatBlockNext.begin(),
-                                  rotationMatBlockNext.begin(),
+                              rotationMatBlockNext.begin(),
+                              rotationMatBlockNext.begin(),
                               BVec * N,
                               tempReal.begin(),
                               tempImag.begin(),
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                                  rotationMatBlockNext.begin(),
-                                  rotationMatBlockNext.begin(),
+                              rotationMatBlockNext.begin(),
+                              rotationMatBlockNext.begin(),
                               BVec * N,
                               streamDeviceCCL);
 
                           dftfe::utils::deviceMemcpyAsyncD2H(
                             rotationMatBlockHost.begin() + jvec * N,
                             dftfe::utils::makeDataTypeDeviceCompatible(
-                                rotationMatBlockNext.begin()),
+                              rotationMatBlockNext.begin()),
                             BVec * N * sizeof(dataTypes::number),
                             streamDeviceCCL);
                         }
@@ -1981,14 +2059,14 @@ namespace dftfe
                   else
                     {
                       if (idof == 0)
-                        MPI_Allreduce(MPI_IN_PLACE,
-                                      dftfe::utils::makeDataTypeDeviceCompatible(
-                                        rotationMatBlockHost.begin() + jvec * N),
-                                      BVec * N,
-                                      dataTypes::mpi_type_id(
-                                          rotationMatBlockHost.begin()),
-                                      MPI_SUM,
-                                      mpiCommDomain);
+                        MPI_Allreduce(
+                          MPI_IN_PLACE,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            rotationMatBlockHost.begin() + jvec * N),
+                          BVec * N,
+                          dataTypes::mpi_type_id(rotationMatBlockHost.begin()),
+                          MPI_SUM,
+                          mpiCommDomain);
 
                       dftfe::utils::deviceMemcpyH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
@@ -2013,16 +2091,16 @@ namespace dftfe
                       if (std::is_same<dataTypes::number,
                                        std::complex<double>>::value)
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                            rotationMatBlockNext.begin(),
-                            rotationMatBlockNext.begin(),
+                          rotationMatBlockNext.begin(),
+                          rotationMatBlockNext.begin(),
                           BVec * N,
                           tempReal.begin(),
                           tempImag.begin(),
                           streamDeviceCCL);
                       else
                         devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                            rotationMatBlockNext.begin(),
-                           rotationMatBlockNext.begin(),
+                          rotationMatBlockNext.begin(),
+                          rotationMatBlockNext.begin(),
                           BVec * N,
                           streamDeviceCCL);
                     }
@@ -2050,37 +2128,40 @@ namespace dftfe
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
                   // rotationMatBlock in communication stream
-                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                  streamCompute);
                   dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
-                                                  computeEvents[blockCount],
-                                                  0);
+                                                      computeEvents[blockCount],
+                                                      0);
 
                   // synchronize host to communication stream before doing swap
                   // this automatically also makes sure the compute stream has
                   // the correct rotationMatBlock for dgemm
-                  dftfe::utils::deviceEventRecord(communEvents[blockCount], streamDeviceCCL);
-                  if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                  dftfe::utils::deviceEventRecord(communEvents[blockCount],
+                                                  streamDeviceCCL);
+                  if (dftfe::utils::deviceEventSynchronize(
+                        communEvents[blockCount]) ==
                       dftfe::utils::deviceSuccess)
                     rotationMatBlock.swap(rotationMatBlockNext);
                 }
 
               if (BDof != 0)
                 {
-                  dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              BVec,
-                              BDof,
-                              N,
-                                &scalarCoeffAlpha,
-                              rotationMatBlock.begin(),
-                              BVec,
-                              X + idof * N,
-                              N,
-                                &scalarCoeffBeta,
-                                rotatedVectorsMatBlock.begin() +
-                                jvec,
-                              Nfr);
+                  dftfe::utils::deviceBlasWrapper::gemm(
+                    handle,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    BVec,
+                    BDof,
+                    N,
+                    &scalarCoeffAlpha,
+                    rotationMatBlock.begin(),
+                    BVec,
+                    X + idof * N,
+                    N,
+                    &scalarCoeffBeta,
+                    rotatedVectorsMatBlock.begin() + jvec,
+                    Nfr);
                 }
 
               blockCount++;
@@ -2116,13 +2197,13 @@ namespace dftfe
 
     void
     subspaceRotationScalapack(
-      dataTypes::number *                        X,
+      dataTypes::number *                              X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -2153,17 +2234,20 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHost;
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        rotationMatBlockHost;
 
       if (dftParams.allowFullCPUMemSubspaceRot)
         {
-          rotationMatBlockHost.resize(N * N,dataTypes::number(0));
+          rotationMatBlockHost.resize(N * N, dataTypes::number(0));
           rotationMatBlockHost.setValue(0);
         }
       else
         {
-          rotationMatBlockHost.resize(vectorsBlockSize * N,dataTypes::number(0));
-          rotationMatBlockHost.setValue(0);          
+          rotationMatBlockHost.resize(vectorsBlockSize * N,
+                                      dataTypes::number(0));
+          rotationMatBlockHost.setValue(0);
         }
 
 
@@ -2186,20 +2270,26 @@ namespace dftfe
           dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlock(
-        vectorsBlockSize * N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> rotationMatBlockTemp(
-        vectorsBlockSize * N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
-        rotatedVectorsMatBlock(N * dofsBlockSize,
-                               dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlock(vectorsBlockSize * N, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlockTemp(vectorsBlockSize * N, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotatedVectorsMatBlock(N * dofsBlockSize, dataTypes::number(0));
 
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempReal.resize(vectorsBlockSize * N,0);
-        tempImag.resize(vectorsBlockSize * N,0);
+          tempReal.resize(vectorsBlockSize * N, 0);
+          tempImag.resize(vectorsBlockSize * N, 0);
         }
 
       unsigned int blockCount = 0;
@@ -2249,8 +2339,8 @@ namespace dftfe
                                                                           jvec);
                                           if (it !=
                                               globalToLocalColumnIdMap.end())
-                                            *(rotationMatBlockHost.begin()+jvec * N +
-                                                                 i * BVec + j) =
+                                            *(rotationMatBlockHost.begin() +
+                                              jvec * N + i * BVec + j) =
                                               rotationMatPar.local_el(
                                                 localRowId, it->second);
                                         }
@@ -2272,8 +2362,8 @@ namespace dftfe
                                             globalToLocalRowIdMap.find(j +
                                                                        jvec);
                                           if (it != globalToLocalRowIdMap.end())
-                                            *(rotationMatBlockHost.begin()+jvec * N +
-                                                                 i * BVec + j) =
+                                            *(rotationMatBlockHost.begin() +
+                                              jvec * N + i * BVec + j) =
                                               rotationMatPar.local_el(
                                                 it->second, localColumnId);
                                         }
@@ -2303,7 +2393,8 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalColumnIdMap.find(j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
-                                        *(rotationMatBlockHost.begin()+i * BVec + j) =
+                                        *(rotationMatBlockHost.begin() +
+                                          i * BVec + j) =
                                           rotationMatPar.local_el(localRowId,
                                                                   it->second);
                                     }
@@ -2324,7 +2415,8 @@ namespace dftfe
                                                unsigned int>::iterator it =
                                         globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
-                                        *(rotationMatBlockHost.begin()+i * BVec + j) =
+                                        *(rotationMatBlockHost.begin() +
+                                          i * BVec + j) =
                                           rotationMatPar.local_el(
                                             it->second, localColumnId);
                                     }
@@ -2338,7 +2430,7 @@ namespace dftfe
                         {
                           dftfe::utils::deviceMemcpyAsyncH2D(
                             dftfe::utils::makeDataTypeDeviceCompatible(
-                                rotationMatBlockTemp.begin()),
+                              rotationMatBlockTemp.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlockHost.begin() + jvec * N),
                             BVec * D * sizeof(dataTypes::number),
@@ -2350,8 +2442,8 @@ namespace dftfe
                                                std::complex<double>>::value)
                                 devicecclMpiCommDomain
                                   .deviceDirectAllReduceWrapper(
-                                        rotationMatBlockTemp.begin(),
-                                        rotationMatBlockTemp.begin(),
+                                    rotationMatBlockTemp.begin(),
+                                    rotationMatBlockTemp.begin(),
                                     BVec * D,
                                     tempReal.begin(),
                                     tempImag.begin(),
@@ -2359,15 +2451,16 @@ namespace dftfe
                               else
                                 devicecclMpiCommDomain
                                   .deviceDirectAllReduceWrapper(
-                                        rotationMatBlockTemp.begin(),
-                                        rotationMatBlockTemp.begin(),
+                                    rotationMatBlockTemp.begin(),
+                                    rotationMatBlockTemp.begin(),
                                     BVec * D,
                                     streamDeviceCCL);
 
                               dftfe::utils::deviceMemcpyAsyncD2H(
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   rotationMatBlockHost.begin() + jvec * N),
-                                dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockTemp.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rotationMatBlockTemp.begin()),
                                 BVec * D * sizeof(dataTypes::number),
                                 streamDeviceCCL);
                             }
@@ -2376,7 +2469,8 @@ namespace dftfe
                         {
                           if (idof == 0)
                             MPI_Allreduce(MPI_IN_PLACE,
-                                          rotationMatBlockHost.begin() + jvec * N,
+                                          rotationMatBlockHost.begin() +
+                                            jvec * N,
                                           BVec * D,
                                           dataTypes::mpi_type_id(
                                             rotationMatBlockHost.begin()),
@@ -2384,7 +2478,8 @@ namespace dftfe
                                           mpiCommDomain);
 
                           dftfe::utils::deviceMemcpyH2D(
-                            dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlock.begin()),
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                              rotationMatBlock.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlockHost.begin() + jvec * N),
                             BVec * D * sizeof(dataTypes::number));
@@ -2396,7 +2491,7 @@ namespace dftfe
                         {
                           dftfe::utils::deviceMemcpyAsyncH2D(
                             dftfe::utils::makeDataTypeDeviceCompatible(
-                                rotationMatBlockTemp.begin()),
+                              rotationMatBlockTemp.begin()),
                             dftfe::utils::makeDataTypeDeviceCompatible(
                               rotationMatBlockHost.begin()),
                             BVec * D * sizeof(dataTypes::number),
@@ -2405,16 +2500,16 @@ namespace dftfe
                           if (std::is_same<dataTypes::number,
                                            std::complex<double>>::value)
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                                  rotationMatBlockTemp.begin(),
-                                  rotationMatBlockTemp.begin(),
+                              rotationMatBlockTemp.begin(),
+                              rotationMatBlockTemp.begin(),
                               BVec * D,
                               tempReal.begin(),
                               tempImag.begin(),
                               streamDeviceCCL);
                           else
                             devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                                  rotationMatBlockTemp.begin(),
-                                  rotationMatBlockTemp.begin(),
+                              rotationMatBlockTemp.begin(),
+                              rotationMatBlockTemp.begin(),
                               BVec * D,
                               streamDeviceCCL);
                         }
@@ -2443,17 +2538,17 @@ namespace dftfe
                       // compute stream before proceeding to rewriting
                       // rotationMatBlock in communication stream
                       dftfe::utils::deviceEventRecord(computeEvents[blockCount],
-                                                  streamCompute);
-                      dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
-                                                      computeEvents[blockCount],
-                                                      0);
+                                                      streamCompute);
+                      dftfe::utils::deviceStreamWaitEvent(
+                        streamDeviceCCL, computeEvents[blockCount], 0);
 
                       // synchronize host to communication stream before doing
                       // swap this automatically also makes sure the compute
                       // stream has the correct rotationMatBlock for dgemm
                       dftfe::utils::deviceEventRecord(communEvents[blockCount],
-                                                  streamDeviceCCL);
-                      if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                                                      streamDeviceCCL);
+                      if (dftfe::utils::deviceEventSynchronize(
+                            communEvents[blockCount]) ==
                           dftfe::utils::deviceSuccess)
                         rotationMatBlock.swap(rotationMatBlockTemp);
                     }
@@ -2467,14 +2562,13 @@ namespace dftfe
                         BVec,
                         BDof,
                         D,
-                          &scalarCoeffAlpha,
+                        &scalarCoeffAlpha,
                         rotationMatBlock.begin(),
                         BVec,
                         X + idof * N,
                         N,
-                          &scalarCoeffBeta,
-                          rotatedVectorsMatBlock.begin() +
-                          jvec,
+                        &scalarCoeffBeta,
+                        rotatedVectorsMatBlock.begin() + jvec,
                         N);
                     }
                 } // band parallelization
@@ -2510,13 +2604,13 @@ namespace dftfe
 
     void
     subspaceRotationCGSMixedPrecScalapack(
-      dataTypes::number *                        X,
+      dataTypes::number *                              X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -2543,8 +2637,9 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> XSP(
-        MPadded * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        XSP(MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE * M,
@@ -2559,14 +2654,18 @@ namespace dftfe
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHostSP(vectorsBlockSize * N);
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        rotationMatBlockHostSP(vectorsBlockSize * N);
 
       std::memset(rotationMatBlockHostSP.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-   dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> diagValuesHost;
-      diagValuesHost.resize(N,0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        diagValuesHost;
+      diagValuesHost.resize(N, 0);
       std::memset(diagValuesHost.begin(), 0, N * sizeof(dataTypes::number));
 
       dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
@@ -2578,31 +2677,32 @@ namespace dftfe
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
-      const unsigned int numberBlocks = (N / vectorsBlockSize);
-      dftfe::utils::deviceEvent_t        computeEvents[numberBlocks];
-      dftfe::utils::deviceEvent_t        communEvents[numberBlocks];
+      const unsigned int          numberBlocks = (N / vectorsBlockSize);
+      dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
-        rotationMatBlockSP(vectorsBlockSize * N,
-                           dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
-                                                           rotationMatBlockSPTemp(vectorsBlockSize * N,
-                               dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> diagValues(
-        N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlockSP(vectorsBlockSize * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlockSPTemp(vectorsBlockSize * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        diagValues(N, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
                                  dataTypes::numberFP32(0));
 
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
-      const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
 
       // Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -2649,27 +2749,30 @@ namespace dftfe
                     MPI_SUM,
                     mpiCommDomain);
 
-      dftfe::utils::deviceMemcpyH2D(dftfe::utils::makeDataTypeDeviceCompatible(
-                   diagValues.begin()),
-                 dftfe::utils::makeDataTypeDeviceCompatible(
-                   diagValuesHost.begin()),
-                 N * sizeof(dataTypes::number));
+      dftfe::utils::deviceMemcpyH2D(
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValuesHost.begin()),
+        N * sizeof(dataTypes::number));
 
-      computeDiagQTimesXKernel<<<(M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+      computeDiagQTimesXKernel<<<(M * N +
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          diagValues.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         N,
         M);
 
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32; 
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempRealFP32;
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImagFP32;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempRealFP32.resize(vectorsBlockSize * N,0);
-        tempImagFP32.resize(vectorsBlockSize * N,0);  
+          tempRealFP32.resize(vectorsBlockSize * N, 0);
+          tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
       unsigned int blockCount = 0;
@@ -2705,9 +2808,9 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
-                                    rotationMatPar.local_el(localRowId,
-                                                            it->second);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    j) = rotationMatPar.local_el(localRowId,
+                                                                 it->second);
                                 }
                             }
 
@@ -2717,8 +2820,8 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    i - jvec) = dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -2738,9 +2841,9 @@ namespace dftfe
                                 it = globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
-                                    rotationMatPar.local_el(it->second,
-                                                            localColumnId);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    j) = rotationMatPar.local_el(it->second,
+                                                                 localColumnId);
                                 }
                             }
 
@@ -2751,8 +2854,8 @@ namespace dftfe
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    i - jvec) = dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -2771,16 +2874,16 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        rotationMatBlockSPTemp.begin(),
-                        rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       tempRealFP32.begin(),
                       tempImagFP32.begin(),
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        rotationMatBlockSPTemp.begin(),
-                        rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       streamDeviceCCL);
                 }
@@ -2789,7 +2892,8 @@ namespace dftfe
                   MPI_Allreduce(MPI_IN_PLACE,
                                 rotationMatBlockHostSP.begin(),
                                 BVec * D,
-                                dataTypes::mpi_type_id(rotationMatBlockHostSP.begin()),
+                                dataTypes::mpi_type_id(
+                                  rotationMatBlockHostSP.begin()),
                                 MPI_SUM,
                                 mpiCommDomain);
 
@@ -2806,16 +2910,19 @@ namespace dftfe
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
                   // rotationMatBlock in communication stream
-                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                  streamCompute);
                   dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
-                                                  computeEvents[blockCount],
-                                                  0);
+                                                      computeEvents[blockCount],
+                                                      0);
 
                   // synchronize host to communication stream before doing swap
                   // this automatically also makes sure the compute stream has
                   // the correct rotationMatBlock for dgemm
-                  dftfe::utils::deviceEventRecord(communEvents[blockCount], streamDeviceCCL);
-                  if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                  dftfe::utils::deviceEventRecord(communEvents[blockCount],
+                                                  streamDeviceCCL);
+                  if (dftfe::utils::deviceEventSynchronize(
+                        communEvents[blockCount]) ==
                       dftfe::utils::deviceSuccess)
                     rotationMatBlockSP.swap(rotationMatBlockSPTemp);
                 }
@@ -2838,13 +2945,13 @@ namespace dftfe
                         BVec,
                         BDof,
                         D,
-                          &scalarCoeffAlphaSP,
-                          rotationMatBlockSP.begin(),
+                        &scalarCoeffAlphaSP,
+                        rotationMatBlockSP.begin(),
                         BVec,
-                          XSP.begin() + idof * N,
+                        XSP.begin() + idof * N,
                         N,
-                          &scalarCoeffBetaSP,
-                          rotatedVectorsMatBlockSP.begin(),
+                        &scalarCoeffBetaSP,
+                        rotatedVectorsMatBlockSP.begin(),
                         BVec);
 
                       addSubspaceRotatedBlockToXKernel<<<
@@ -2882,13 +2989,13 @@ namespace dftfe
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      dataTypes::number *                        X,
+      dataTypes::number *                              X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -2906,16 +3013,16 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
-        MPadded * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        XSP(MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE * M,
                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         N * M,
         dftfe::utils::makeDataTypeDeviceCompatible(X),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          XSP.begin()));
+        dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
 
 
       // band group parallelization data structures
@@ -2931,14 +3038,18 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> rotationMatBlockHostSP(vectorsBlockSize * N);
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        rotationMatBlockHostSP(vectorsBlockSize * N);
 
       std::memset(rotationMatBlockHostSP.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-   dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> diagValuesHost;
-      diagValuesHost.resize(N,0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        diagValuesHost;
+      diagValuesHost.resize(N, 0);
       std::memset(diagValuesHost.begin(), 0, N * sizeof(dataTypes::number));
 
       dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
@@ -2950,31 +3061,32 @@ namespace dftfe
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
-      const unsigned int numberBlocks = (N / vectorsBlockSize);
-      dftfe::utils::deviceEvent_t        computeEvents[numberBlocks];
-      dftfe::utils::deviceEvent_t        communEvents[numberBlocks];
+      const unsigned int          numberBlocks = (N / vectorsBlockSize);
+      dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+      dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&communEvents[i]);
         }
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
-        rotationMatBlockSP(vectorsBlockSize * N,
-                           dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
-                                                           rotationMatBlockSPTemp(vectorsBlockSize * N,
-                               dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> diagValues(
-        N, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlockSP(vectorsBlockSize * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        rotationMatBlockSPTemp(vectorsBlockSize * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        diagValues(N, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
                                  dataTypes::numberFP32(0));
 
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
-      const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
 
       // Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -3021,27 +3133,30 @@ namespace dftfe
                     MPI_SUM,
                     mpiCommDomain);
 
-      dftfe::utils::deviceMemcpyH2D(dftfe::utils::makeDataTypeDeviceCompatible(
-                   diagValues.begin()),
-                 dftfe::utils::makeDataTypeDeviceCompatible(
-                   diagValuesHost.begin()),
-                 N * sizeof(dataTypes::number));
+      dftfe::utils::deviceMemcpyH2D(
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValuesHost.begin()),
+        N * sizeof(dataTypes::number));
 
-      computeDiagQTimesXKernel<<<(M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+      computeDiagQTimesXKernel<<<(M * N +
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          diagValues.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         N,
         M);
 
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32;  
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempRealFP32;
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImagFP32;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempRealFP32.resize(vectorsBlockSize * N,0);
-        tempImagFP32.resize(vectorsBlockSize * N,0);
+          tempRealFP32.resize(vectorsBlockSize * N, 0);
+          tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
       unsigned int blockCount = 0;
@@ -3077,9 +3192,9 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
-                                    rotationMatPar.local_el(localRowId,
-                                                            it->second);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    j) = rotationMatPar.local_el(localRowId,
+                                                                 it->second);
                                 }
                             }
 
@@ -3089,8 +3204,8 @@ namespace dftfe
                                 it = globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    i - jvec) = dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -3110,9 +3225,9 @@ namespace dftfe
                                 it = globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + j) =
-                                    rotationMatPar.local_el(it->second,
-                                                            localColumnId);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    j) = rotationMatPar.local_el(it->second,
+                                                                 localColumnId);
                                 }
                             }
 
@@ -3123,8 +3238,8 @@ namespace dftfe
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
-                                  *(rotationMatBlockHostSP.begin()+i * BVec + i - jvec) =
-                                    dataTypes::numberFP32(0);
+                                  *(rotationMatBlockHostSP.begin() + i * BVec +
+                                    i - jvec) = dataTypes::numberFP32(0);
                                 }
                             }
                         }
@@ -3144,7 +3259,7 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        rotationMatBlockSPTemp.begin(),
+                      rotationMatBlockSPTemp.begin(),
                       rotationMatBlockSPTemp.begin(),
                       BVec * D,
                       tempRealFP32.begin(),
@@ -3162,13 +3277,14 @@ namespace dftfe
                   MPI_Allreduce(MPI_IN_PLACE,
                                 rotationMatBlockHostSP.begin(),
                                 BVec * D,
-                                dataTypes::mpi_type_id(rotationMatBlockHostSP.begin()),
+                                dataTypes::mpi_type_id(
+                                  rotationMatBlockHostSP.begin()),
                                 MPI_SUM,
                                 mpiCommDomain);
 
                   dftfe::utils::deviceMemcpyH2D(
                     dftfe::utils::makeDataTypeDeviceCompatible(
-                     rotationMatBlockSP.begin()),
+                      rotationMatBlockSP.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       rotationMatBlockHostSP.begin()),
                     BVec * D * sizeof(dataTypes::numberFP32));
@@ -3179,16 +3295,19 @@ namespace dftfe
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
                   // rotationMatBlock in communication stream
-                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                  streamCompute);
                   dftfe::utils::deviceStreamWaitEvent(streamDeviceCCL,
-                                                  computeEvents[blockCount],
-                                                  0);
+                                                      computeEvents[blockCount],
+                                                      0);
 
                   // synchronize host to communication stream before doing swap
                   // this automatically also makes sure the compute stream has
                   // the correct rotationMatBlock for dgemm
-                  dftfe::utils::deviceEventRecord(communEvents[blockCount], streamDeviceCCL);
-                  if (dftfe::utils::deviceEventSynchronize(communEvents[blockCount]) ==
+                  dftfe::utils::deviceEventRecord(communEvents[blockCount],
+                                                  streamDeviceCCL);
+                  if (dftfe::utils::deviceEventSynchronize(
+                        communEvents[blockCount]) ==
                       dftfe::utils::deviceSuccess)
                     rotationMatBlockSP.swap(rotationMatBlockSPTemp);
                 }
@@ -3211,13 +3330,13 @@ namespace dftfe
                         BVec,
                         BDof,
                         D,
-                          &scalarCoeffAlphaSP,
+                        &scalarCoeffAlphaSP,
                         rotationMatBlockSP.begin(),
                         BVec,
-                          XSP.begin() + idof * N,
+                        XSP.begin() + idof * N,
                         N,
-                          &scalarCoeffBetaSP,
-                          rotatedVectorsMatBlockSP.begin(),
+                        &scalarCoeffBetaSP,
+                        rotatedVectorsMatBlockSP.begin(),
                         BVec);
 
 
@@ -3230,7 +3349,7 @@ namespace dftfe
                         BDof,
                         BVec,
                         dftfe::utils::makeDataTypeDeviceCompatible(
-                            rotatedVectorsMatBlockSP.begin()),
+                          rotatedVectorsMatBlockSP.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(X),
                         idof,
                         jvec,
@@ -3257,12 +3376,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::number *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -3288,11 +3407,14 @@ namespace dftfe
 
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
-        N * vectorsBlockSize, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
 
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHost;
-      overlapMatrixBlockHost.resize(N * vectorsBlockSize,0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        overlapMatrixBlockHost;
+      overlapMatrixBlockHost.resize(N * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHost.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
@@ -3303,12 +3425,16 @@ namespace dftfe
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempReal.resize(vectorsBlockSize * N,0);
-        tempImag.resize(vectorsBlockSize * N,0);
+          tempReal.resize(vectorsBlockSize * N, 0);
+          tempImag.resize(vectorsBlockSize * N, 0);
         }
 
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -3333,13 +3459,13 @@ namespace dftfe
                 D,
                 B,
                 M,
-                  &scalarCoeffAlpha,
+                &scalarCoeffAlpha,
                 X + ivec,
                 N,
                 X + ivec,
                 N,
-                  &scalarCoeffBeta,
-                  overlapMatrixBlock.begin(),
+                &scalarCoeffBeta,
+                overlapMatrixBlock.begin(),
                 D);
 
 
@@ -3348,25 +3474,26 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                         overlapMatrixBlock.begin(),
-                        overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
                       D * B,
                       tempReal.begin(),
                       tempImag.begin(),
                       streamDeviceCCL);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        overlapMatrixBlock.begin(),
-                        overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
                       D * B,
                       streamDeviceCCL);
                 }
 
-              dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockHost.begin()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlock.begin()),
-                         D * B * sizeof(dataTypes::number));
+              dftfe::utils::deviceMemcpyD2H(
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockHost.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlock.begin()),
+                D * B * sizeof(dataTypes::number));
 
               // Sum local XTrunc^{T}*XcBlock across domain decomposition
               // processors
@@ -3374,7 +3501,8 @@ namespace dftfe
                 MPI_Allreduce(MPI_IN_PLACE,
                               overlapMatrixBlockHost.begin(),
                               D * B,
-                              dataTypes::mpi_type_id(overlapMatrixBlockHost.begin()),
+                              dataTypes::mpi_type_id(
+                                overlapMatrixBlockHost.begin()),
                               MPI_SUM,
                               mpiCommDomain);
 
@@ -3441,12 +3569,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::number *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -3495,28 +3623,35 @@ namespace dftfe
         }
 
       // create pinned memory used later to copy from Device->CPU
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHost;
-      overlapMatrixBlockHost.resize(N * vectorsBlockSize,0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        overlapMatrixBlockHost;
+      overlapMatrixBlockHost.resize(N * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHost.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
       // allocate device vectors to be used later
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlock(
-        N * vectorsBlockSize, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockNext(N * vectorsBlockSize,
-                               dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlockNext(N * vectorsBlockSize, dataTypes::number(0));
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImag;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempReal.resize(vectorsBlockSize * N,0);
-        tempImag.resize(vectorsBlockSize * N,0);
+          tempReal.resize(vectorsBlockSize * N, 0);
+          tempImag.resize(vectorsBlockSize * N, 0);
         }
 
       unsigned int blockCount = 0;
@@ -3533,26 +3668,28 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              std::is_same<dataTypes::number,
-                                           std::complex<double>>::value ?
-                                dftfe::utils::DEVICEBLAS_OP_C :
-                                dftfe::utils::DEVICEBLAS_OP_T,
-                              D,
-                              B,
-                              M,
-                                &scalarCoeffAlpha,
-                              X + ivec,
-                              N,
-                              X + ivec,
-                              N,
-                                &scalarCoeffBeta,
-                                  overlapMatrixBlock.begin(),
-                              D);
+                  dftfe::utils::deviceBlasWrapper::gemm(
+                    handle,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    std::is_same<dataTypes::number,
+                                 std::complex<double>>::value ?
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
+                    D,
+                    B,
+                    M,
+                    &scalarCoeffAlpha,
+                    X + ivec,
+                    N,
+                    X + ivec,
+                    N,
+                    &scalarCoeffBeta,
+                    overlapMatrixBlock.begin(),
+                    D);
 
                   // record completion of compute for first block
-                    dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                  streamCompute);
                 }
 
               // Before swap host thread needs to wait till compute on
@@ -3561,7 +3698,8 @@ namespace dftfe
               // both the compute on currentblock and swap is over. Note that at
               // this point there is nothing queued in the streamDataMove as all
               // previous operations in that stream are over.
-              if ((dftfe::utils::deviceEventSynchronize(computeEvents[blockCount]) ==
+              if ((dftfe::utils::deviceEventSynchronize(
+                     computeEvents[blockCount]) ==
                    dftfe::utils::deviceSuccess) &&
                   (ivec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 overlapMatrixBlock.swap(overlapMatrixBlockNext);
@@ -3575,29 +3713,29 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-
                   // evaluate X^{T} times XBlock
-                  dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              std::is_same<dataTypes::number,
-                                           std::complex<double>>::value ?
-                                dftfe::utils::DEVICEBLAS_OP_C :
-                                dftfe::utils::DEVICEBLAS_OP_T,
-                              DNew,
-                              BNew,
-                              M,
-                                &scalarCoeffAlpha,
-                              X + ivecNew,
-                              N,
-                              X + ivecNew,
-                              N,
-                                &scalarCoeffBeta,
-                                  overlapMatrixBlockNext.begin(),
-                              DNew);
+                  dftfe::utils::deviceBlasWrapper::gemm(
+                    handle,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    std::is_same<dataTypes::number,
+                                 std::complex<double>>::value ?
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
+                    DNew,
+                    BNew,
+                    M,
+                    &scalarCoeffAlpha,
+                    X + ivecNew,
+                    N,
+                    X + ivecNew,
+                    N,
+                    &scalarCoeffBeta,
+                    overlapMatrixBlockNext.begin(),
+                    DNew);
 
                   // record completion of compute for next block
                   dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
-                                              streamCompute);
+                                                  streamCompute);
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -3607,16 +3745,16 @@ namespace dftfe
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        overlapMatrixBlock.begin(),
-                        overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
                       D * B,
                       tempReal.begin(),
                       tempImag.begin(),
                       streamDataMove);
                   else
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        overlapMatrixBlock.begin(),
-                        overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
+                      overlapMatrixBlock.begin(),
                       D * B,
                       streamDataMove);
                 }
@@ -3630,12 +3768,14 @@ namespace dftfe
                 streamDataMove);
 
               // record completion of Device->CPU copy for current block
-              dftfe::utils::deviceEventRecord(copyEvents[blockCount], streamDataMove);
+              dftfe::utils::deviceEventRecord(copyEvents[blockCount],
+                                              streamDataMove);
 
               // Check that Device->CPU on the current block has been completed.
               // If completed, perform blocking MPI commmunication on the
               // current block and copy to ScaLAPACK matri
-              if (dftfe::utils::deviceEventSynchronize(copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
+              if (dftfe::utils::deviceEventSynchronize(
+                    copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
@@ -3674,7 +3814,7 @@ namespace dftfe
           blockCount += 1;
         } // end block loop
 
-      
+
       // return deviceblas handle to default stream
       dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
@@ -3699,12 +3839,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::number *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -3731,16 +3871,18 @@ namespace dftfe
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
-                                                           overlapMatrixBlockSP(N * vectorsBlockSize,
-                             dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlockDP(
-        vectorsBlockSize * vectorsBlockSize,
-        dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize,
+                             dataTypes::number(0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
-        MPadded * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        XSP(MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE * M,
@@ -3748,15 +3890,19 @@ namespace dftfe
         N * M,
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostDP;
-      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize,0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        overlapMatrixBlockHostDP;
+      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostSP;
-      overlapMatrixBlockHostSP.resize(N * vectorsBlockSize,0);
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        overlapMatrixBlockHostSP;
+      overlapMatrixBlockHostSP.resize(N * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostSP.begin(),
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
@@ -3768,20 +3914,27 @@ namespace dftfe
       const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
-      const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImag;
 
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32; 
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempRealFP32;
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImagFP32;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempReal.resize(vectorsBlockSize * N,0);
-        tempImag.resize(vectorsBlockSize * N,0);
-        tempRealFP32.resize(vectorsBlockSize * N,0);
-        tempImagFP32.resize(vectorsBlockSize * N,0); 
+          tempReal.resize(vectorsBlockSize * N, 0);
+          tempImag.resize(vectorsBlockSize * N, 0);
+          tempRealFP32.resize(vectorsBlockSize * N, 0);
+          tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -3805,13 +3958,13 @@ namespace dftfe
                 B,
                 B,
                 M,
-                  &scalarCoeffAlpha,
+                &scalarCoeffAlpha,
                 X + ivec,
                 N,
                 X + ivec,
                 N,
-                  &scalarCoeffBeta,
-                  overlapMatrixBlockDP.begin(),
+                &scalarCoeffBeta,
+                overlapMatrixBlockDP.begin(),
                 B);
 
               const unsigned int DRem = D - B;
@@ -3828,13 +3981,13 @@ namespace dftfe
                     DRem,
                     B,
                     M,
-                      &scalarCoeffAlphaSP,
-                      XSP.begin() + ivec + B,
+                    &scalarCoeffAlphaSP,
+                    XSP.begin() + ivec + B,
                     N,
-                      XSP.begin() + ivec,
+                    XSP.begin() + ivec,
                     N,
-                      &scalarCoeffBetaSP,
-                      overlapMatrixBlockSP.begin(),
+                    &scalarCoeffBetaSP,
+                    overlapMatrixBlockSP.begin(),
                     DRem);
                 }
 
@@ -3844,10 +3997,10 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         tempReal.begin(),
@@ -3858,26 +4011,28 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         streamDeviceCCL);
                 }
 
-              dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockHostDP.begin()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockDP.begin()),
-                         B * B * sizeof(dataTypes::number));
+              dftfe::utils::deviceMemcpyD2H(
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockHostDP.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockDP.begin()),
+                B * B * sizeof(dataTypes::number));
 
-              dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockHostSP.begin()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           overlapMatrixBlockSP.begin()),
-                         DRem * B * sizeof(dataTypes::numberFP32));
+              dftfe::utils::deviceMemcpyD2H(
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockHostSP.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockSP.begin()),
+                DRem * B * sizeof(dataTypes::numberFP32));
 
               if (!dftParams.useDeviceDirectAllReduce)
                 {
@@ -3973,12 +4128,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::number *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -4026,39 +4181,46 @@ namespace dftfe
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
         }
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
-                                                           overlapMatrixBlockSP(N * vectorsBlockSize,
-                             dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> overlapMatrixBlockDP(
-        vectorsBlockSize * vectorsBlockSize,
-        dataTypes::number(0));
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE> 
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize,
+                             dataTypes::number(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockSPNext(N * vectorsBlockSize,
                                  dataTypes::numberFP32(0));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockDPNext(vectorsBlockSize * vectorsBlockSize,
                                  dataTypes::number(0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::DEVICE>  XSP(
-        MPadded * N, dataTypes::numberFP32(0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        XSP(MPadded * N, dataTypes::numberFP32(0));
 
       convDoubleArrToFloatArr<<<(N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE * M,
                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         N * M,
         dftfe::utils::makeDataTypeDeviceCompatible(X),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          XSP.begin()));
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostDP;
-      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize,0);
+        dftfe::utils::makeDataTypeDeviceCompatible(XSP.begin()));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        overlapMatrixBlockHostDP;
+      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32,dftfe::utils::MemorySpace::HOST_PINNED> overlapMatrixBlockHostSP;
-      overlapMatrixBlockHostSP.resize(N * vectorsBlockSize,0);
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
+        overlapMatrixBlockHostSP;
+      overlapMatrixBlockHostSP.resize(N * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostSP.begin(),
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
@@ -4067,20 +4229,27 @@ namespace dftfe
       const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);
       const dataTypes::numberFP32 scalarCoeffAlphaSP =
         dataTypes::numberFP32(1.0);
-      const dataTypes::numberFP32 scalarCoeffBetaSP =
-        dataTypes::numberFP32(0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempReal;
-    dftfe::utils::MemoryStorage<dataTypes::numberValueType,dftfe::utils::MemorySpace::DEVICE> tempImag;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempReal;
+      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImag;
 
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempRealFP32;
-    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,dftfe::utils::MemorySpace::DEVICE> tempImagFP32; 
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempRealFP32;
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        tempImagFP32;
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-        tempReal.resize(vectorsBlockSize * N,0);
-        tempImag.resize(vectorsBlockSize * N,0);
-        tempRealFP32.resize(vectorsBlockSize * N,0);
-        tempImagFP32.resize(vectorsBlockSize * N,0);   
+          tempReal.resize(vectorsBlockSize * N, 0);
+          tempImag.resize(vectorsBlockSize * N, 0);
+          tempRealFP32.resize(vectorsBlockSize * N, 0);
+          tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
       unsigned int blockCount = 0;
@@ -4097,30 +4266,29 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-
-                  dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              std::is_same<dataTypes::number,
-                                           std::complex<double>>::value ?
-                                dftfe::utils::DEVICEBLAS_OP_C :
-                                dftfe::utils::DEVICEBLAS_OP_T,
-                              B,
-                              B,
-                              M,
-                                &scalarCoeffAlpha,
-                              X + ivec,
-                              N,
-                              X + ivec,
-                              N,
-                                &scalarCoeffBeta,
-                                  overlapMatrixBlockDP.begin(),
-                              B);
+                  dftfe::utils::deviceBlasWrapper::gemm(
+                    handle,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    std::is_same<dataTypes::number,
+                                 std::complex<double>>::value ?
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
+                    B,
+                    B,
+                    M,
+                    &scalarCoeffAlpha,
+                    X + ivec,
+                    N,
+                    X + ivec,
+                    N,
+                    &scalarCoeffBeta,
+                    overlapMatrixBlockDP.begin(),
+                    B);
 
                   const unsigned int DRem = D - B;
 
                   if (DRem != 0)
                     {
-
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
                         dftfe::utils::DEVICEBLAS_OP_N,
@@ -4131,18 +4299,19 @@ namespace dftfe
                         DRem,
                         B,
                         M,
-                          &scalarCoeffAlphaSP,
-                          XSP.begin() + ivec + B,
+                        &scalarCoeffAlphaSP,
+                        XSP.begin() + ivec + B,
                         N,
-                          XSP.begin() + ivec,
+                        XSP.begin() + ivec,
                         N,
-                          &scalarCoeffBetaSP,
-                          overlapMatrixBlockSP.begin(),
+                        &scalarCoeffBetaSP,
+                        overlapMatrixBlockSP.begin(),
                         DRem);
                     }
 
                   // record completion of compute for first block
-                  dftfe::utils::deviceEventRecord(computeEvents[blockCount], streamCompute);
+                  dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                  streamCompute);
                 }
 
               // Before swap host thread needs to wait till compute on
@@ -4151,7 +4320,8 @@ namespace dftfe
               // both the compute on currentblock and swap is over. Note that at
               // this point there is nothing queued in the streamDataMove as all
               // previous operations in that stream are over.
-              if ((dftfe::utils::deviceEventSynchronize(computeEvents[blockCount]) ==
+              if ((dftfe::utils::deviceEventSynchronize(
+                     computeEvents[blockCount]) ==
                    dftfe::utils::deviceSuccess) &&
                   (ivec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 {
@@ -4168,31 +4338,30 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-
                   // evaluate X^{T} times XBlock
-                  dftfe::utils::deviceBlasWrapper::gemm(handle,
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              std::is_same<dataTypes::number,
-                                           std::complex<double>>::value ?
-                                dftfe::utils::DEVICEBLAS_OP_C :
-                                dftfe::utils::DEVICEBLAS_OP_T,
-                              BNew,
-                              BNew,
-                              M,
-                                &scalarCoeffAlpha,
-                              X + ivecNew,
-                              N,
-                              X + ivecNew,
-                              N,
-                                &scalarCoeffBeta,
-                                  overlapMatrixBlockDPNext.begin(),
-                              BNew);
+                  dftfe::utils::deviceBlasWrapper::gemm(
+                    handle,
+                    dftfe::utils::DEVICEBLAS_OP_N,
+                    std::is_same<dataTypes::number,
+                                 std::complex<double>>::value ?
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
+                    BNew,
+                    BNew,
+                    M,
+                    &scalarCoeffAlpha,
+                    X + ivecNew,
+                    N,
+                    X + ivecNew,
+                    N,
+                    &scalarCoeffBeta,
+                    overlapMatrixBlockDPNext.begin(),
+                    BNew);
 
                   const unsigned int DRemNew = DNew - BNew;
 
                   if (DRemNew != 0)
                     {
-
                       dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
                         dftfe::utils::DEVICEBLAS_OP_N,
@@ -4203,19 +4372,19 @@ namespace dftfe
                         DRemNew,
                         BNew,
                         M,
-                          &scalarCoeffAlphaSP,
-                          XSP.begin() + ivecNew + BNew,
+                        &scalarCoeffAlphaSP,
+                        XSP.begin() + ivecNew + BNew,
                         N,
-                          XSP.begin() + ivecNew,
+                        XSP.begin() + ivecNew,
                         N,
-                          &scalarCoeffBetaSP,
-                            overlapMatrixBlockSPNext.begin(),
+                        &scalarCoeffBetaSP,
+                        overlapMatrixBlockSPNext.begin(),
                         DRemNew);
                     }
 
                   // record completion of compute for next block
                   dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
-                                              streamCompute);
+                                                  streamCompute);
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -4224,10 +4393,10 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         tempReal.begin(),
@@ -4238,21 +4407,22 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
                         streamDataMove);
                 }
 
-              dftfe::utils::deviceMemcpyAsyncD2H(dftfe::utils::makeDataTypeDeviceCompatible(
-                                overlapMatrixBlockHostDP.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                              overlapMatrixBlockDP.begin()),
-                              B * B * sizeof(dataTypes::number),
-                              streamDataMove);
+              dftfe::utils::deviceMemcpyAsyncD2H(
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockHostDP.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  overlapMatrixBlockDP.begin()),
+                B * B * sizeof(dataTypes::number),
+                streamDataMove);
 
               dftfe::utils::deviceMemcpyAsyncD2H(
                 dftfe::utils::makeDataTypeDeviceCompatible(
@@ -4263,12 +4433,14 @@ namespace dftfe
                 streamDataMove);
 
               // record completion of Device->CPU copy for current block
-              dftfe::utils::deviceEventRecord(copyEvents[blockCount], streamDataMove);
+              dftfe::utils::deviceEventRecord(copyEvents[blockCount],
+                                              streamDataMove);
 
               // Check that Device->CPU on the current block has been completed.
               // If completed, perform blocking MPI commmunication on the
               // current block and copy to ScaLAPACK matri
-              if (dftfe::utils::deviceEventSynchronize(copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
+              if (dftfe::utils::deviceEventSynchronize(
+                    copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
                 {
                   const unsigned int DRem = D - B;
 
@@ -4358,20 +4530,20 @@ namespace dftfe
 
     void
     computeEigenResidualNorm(
-      operatorDFTDeviceClass &                       operatorMatrix,
+      operatorDFTDeviceClass &                 operatorMatrix,
       dataTypes::number *                      X,
       distributedDeviceVec<dataTypes::number> &XBlock,
       distributedDeviceVec<dataTypes::number> &HXBlock,
       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const std::vector<double> &                    eigenValues,
-      const MPI_Comm &                               mpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      dftfe::utils::deviceBlasHandle_t &                               handle,
-      std::vector<double> &                          residualNorm,
-      const dftParameters &                          dftParams,
-      const bool                                     useBandParal)
+      const unsigned int                       M,
+      const unsigned int                       N,
+      const std::vector<double> &              eigenValues,
+      const MPI_Comm &                         mpiCommDomain,
+      const MPI_Comm &                         interBandGroupComm,
+      dftfe::utils::deviceBlasHandle_t &       handle,
+      std::vector<double> &                    residualNorm,
+      const dftParameters &                    dftParams,
+      const bool                               useBandParal)
     {
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -4383,18 +4555,23 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
-      const unsigned int            vectorsBlockSize = dftParams.wfcBlockSize;
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualNormSquareDevice(N, 0);
-      dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> HXBlockFull(
-        vectorsBlockSize * M, dataTypes::number(0));
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> residualSqDevice(vectorsBlockSize * M, 0);
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> onesVecDevice(M, 1.0);
+      const unsigned int vectorsBlockSize = dftParams.wfcBlockSize;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        residualNormSquareDevice(N, 0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0));
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        residualSqDevice(vectorsBlockSize * M, 0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        onesVecDevice(M, 1.0);
 
 
-      dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> eigenValuesDevice(N, 0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        eigenValuesDevice(N, 0);
       dftfe::utils::deviceMemcpyH2D(eigenValuesDevice.begin(),
-                 &eigenValues[0],
-                 N * sizeof(double));
+                                    &eigenValues[0],
+                                    N * sizeof(double));
 
       const bool   scaleFlag = false;
       const double scalar    = 1.0;
@@ -4421,7 +4598,12 @@ namespace dftfe
                     (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE * M,
                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                    chebyBlockSize, M, dftfe::utils::makeDataTypeDeviceCompatible(X), N, dftfe::utils::makeDataTypeDeviceCompatible(XBlock.begin()), k);
+                    chebyBlockSize,
+                    M,
+                    dftfe::utils::makeDataTypeDeviceCompatible(X),
+                    N,
+                    dftfe::utils::makeDataTypeDeviceCompatible(XBlock.begin()),
+                    k);
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
                   HXBlock.setZero();
@@ -4446,41 +4628,41 @@ namespace dftfe
                     k - jvec);
                 }
 
-              computeResidualDeviceKernel<<<(B +
-                                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                              dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+              computeResidualDeviceKernel<<<
+                (B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                  dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 B,
                 M,
                 N,
                 jvec,
                 eigenValuesDevice.begin(),
                 dftfe::utils::makeDataTypeDeviceCompatible(X),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                HXBlockFull.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(HXBlockFull.begin()),
                 residualSqDevice.begin());
 
-              dftfe::utils::deviceBlasWrapper::gemm(handle,
-                          dftfe::utils::DEVICEBLAS_OP_N,
-                          dftfe::utils::DEVICEBLAS_OP_T,
-                          1,
-                          B,
-                          M,
-                          &alpha,
-                          onesVecDevice.begin(),
-                          1,
-                          residualSqDevice.begin(),
-                          B,
-                          &beta,
-                          residualNormSquareDevice.begin() + jvec,
-                          1);
+              dftfe::utils::deviceBlasWrapper::gemm(
+                handle,
+                dftfe::utils::DEVICEBLAS_OP_N,
+                dftfe::utils::DEVICEBLAS_OP_T,
+                1,
+                B,
+                M,
+                &alpha,
+                onesVecDevice.begin(),
+                1,
+                residualSqDevice.begin(),
+                B,
+                &beta,
+                residualNormSquareDevice.begin() + jvec,
+                1);
             }
         }
 
 
       dftfe::utils::deviceMemcpyD2H(&residualNorm[0],
-                 residualNormSquareDevice.begin(),
-                 N * sizeof(double));
+                                    residualNormSquareDevice.begin(),
+                                    N * sizeof(double));
 
       MPI_Allreduce(
         MPI_IN_PLACE, &residualNorm[0], N, MPI_DOUBLE, MPI_SUM, mpiCommDomain);

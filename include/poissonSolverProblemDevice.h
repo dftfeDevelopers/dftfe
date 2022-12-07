@@ -72,7 +72,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const unsigned int smearedChargeQuadratureId,
       const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-      dftfe::utils::deviceBlasHandle_t &                                     deviceBlasHandle,
+      dftfe::utils::deviceBlasHandle_t &                   deviceBlasHandle,
       const bool         isComputeDiagonalA               = true,
       const bool         isComputeMeanValueConstraints    = false,
       const bool         smearedNuclearCharges            = false,
@@ -231,8 +231,9 @@ namespace dftfe
     int d_nLocalCells, d_xLocalDof, d_xLen;
 
     // shape function value, gradient, jacobian and map for matrixfree
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_shapeFunction, d_jacobianFactor;
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE>    d_map;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+                                                                        d_shapeFunction, d_jacobianFactor;
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
 
     // Pointers to shape function value, gradient, jacobian and map for
     // matrixfree

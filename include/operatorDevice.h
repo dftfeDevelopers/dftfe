@@ -23,7 +23,7 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
-#include <DeviceBlasWrapper.h>
+#    include <DeviceBlasWrapper.h>
 #    include <MemoryStorage.h>
 #    include <headers.h>
 #    include "process_grid.h"
@@ -78,40 +78,52 @@ namespace dftfe
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientIntegral() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientIntegralElectro() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValues() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false) = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValuesNLPTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesXTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesYTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesZTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesNLPTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getInverseJacobiansNLP() = 0;
 
-    virtual dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE> &
+    virtual dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getFlattenedArrayCellLocalProcIndexIdMap() = 0;
 
-    virtual dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE> &
+    virtual dftfe::utils::MemoryStorage<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getCellWaveFunctionMatrix() = 0;
 
     virtual distributedCPUVec<dataTypes::number> &
@@ -126,7 +138,8 @@ namespace dftfe
     virtual distributedDeviceVec<dataTypes::number> &
     getParallelProjectorKetTimesBlockVectorDevice() = 0;
 
-    virtual dftfe::utils::MemoryStorage<unsigned int,dftfe::utils::MemorySpace::DEVICE> &
+    virtual dftfe::utils::MemoryStorage<unsigned int,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
 
     /**
@@ -181,26 +194,25 @@ namespace dftfe
     virtual void
     HX(distributedDeviceVec<dataTypes::number> &X,
        distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-       const unsigned int                             localVectorSize,
-       const unsigned int                             numberComponents,
-       const bool                                     scaleFlag,
-       const double                                   scalar,
+       const unsigned int                       localVectorSize,
+       const unsigned int                       numberComponents,
+       const bool                               scaleFlag,
+       const double                             scalar,
        distributedDeviceVec<dataTypes::number> &Y,
-       const bool                                     doUnscalingX = true,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse    = false) = 0;
+       const bool                               doUnscalingX    = true,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     virtual void
-    HXCheby(
-      distributedDeviceVec<dataTypes::number> &    X,
-      distributedDeviceVec<dataTypes::numberFP32> &XTemp,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberComponents,
-      distributedDeviceVec<dataTypes::number> &Y,
-      bool                                           mixPrecFlag = false,
-      bool returnBeforeCompressSkipUpdateSkipNonLocal            = false,
-      bool returnBeforeCompressSkipUpdateSkipLocal               = false) = 0;
+    HXCheby(distributedDeviceVec<dataTypes::number> &    X,
+            distributedDeviceVec<dataTypes::numberFP32> &XTemp,
+            distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+            const unsigned int                       localVectorSize,
+            const unsigned int                       numberComponents,
+            distributedDeviceVec<dataTypes::number> &Y,
+            bool                                     mixPrecFlag = false,
+            bool returnBeforeCompressSkipUpdateSkipNonLocal      = false,
+            bool returnBeforeCompressSkipUpdateSkipLocal         = false) = 0;
 
     /**
      * @brief implementation of non-local projector kets times psi product
@@ -215,7 +227,7 @@ namespace dftfe
     computeNonLocalProjectorKetTimesXTimesV(
       const dataTypes::number *                src,
       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             numberWaveFunctions) = 0;
+      const unsigned int                       numberWaveFunctions) = 0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis
@@ -238,9 +250,9 @@ namespace dftfe
          distributedDeviceVec<dataTypes::number> &Xb,
          distributedDeviceVec<dataTypes::number> &HXb,
          distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-         const unsigned int                             M,
-         const unsigned int                             N,
-         dftfe::utils::deviceBlasHandle_t &                               handle,
+         const unsigned int                       M,
+         const unsigned int                       N,
+         dftfe::utils::deviceBlasHandle_t &       handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -265,16 +277,16 @@ namespace dftfe
      */
     virtual void
     XtHXOverlapComputeCommun(
-      const dataTypes::number *                  X,
-      distributedDeviceVec<dataTypes::number> &  Xb,
-      distributedDeviceVec<dataTypes::number> &  HXb,
-      distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
@@ -301,18 +313,18 @@ namespace dftfe
      */
     virtual void
     XtHXMixedPrecOverlapComputeCommun(
-      const dataTypes::number *                    X,
-      distributedDeviceVec<dataTypes::number> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
-      distributedDeviceVec<dataTypes::number> &    HXb,
-      distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &    floatXb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
@@ -385,45 +397,53 @@ namespace dftfe
     //
     const dealii::MatrixFree<3, double> *d_matrix_free_data;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> 
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_cellShapeFunctionGradientIntegralFlattenedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> 
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_shapeFunctionValueDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_shapeFunctionValueTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueTransposedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_shapeFunctionValueNLPTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueNLPTransposedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_shapeFunctionGradientValueXTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionGradientValueXTransposedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_shapeFunctionGradientValueYTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionGradientValueYTransposedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_shapeFunctionGradientValueZTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionGradientValueZTransposedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE> 
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunctionGradientValueNLPTransposedDevice;
 
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_inverseJacobiansNLPDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_inverseJacobiansNLPDevice;
 
     /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
     /// gradients
-    dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>  d_glShapeFunctionValueTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_glShapeFunctionValueTransposedDevice;
 
 
-    dftfe::utils::MemoryStorage<dealii::types::global_dof_index,dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_flattenedArrayCellLocalProcIndexIdMapDevice;
 
-    dftfe::utils::MemoryStorage<dataTypes::number,dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellWaveFunctionMatrix;
 
-    distributedDeviceVec<dataTypes::number>
-      d_parallelChebyBlockVectorDevice;
+    distributedDeviceVec<dataTypes::number> d_parallelChebyBlockVectorDevice;
 
-    distributedDeviceVec<dataTypes::number>
-      d_parallelChebyBlockVector2Device;
+    distributedDeviceVec<dataTypes::number> d_parallelChebyBlockVector2Device;
 
     distributedDeviceVec<dataTypes::number>
       d_parallelProjectorKetTimesBlockVectorDevice;

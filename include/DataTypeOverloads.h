@@ -22,7 +22,7 @@
 namespace dftfe
 {
   namespace utils
-   {
+  {
     inline double
     realPart(const double x)
     {
@@ -49,27 +49,27 @@ namespace dftfe
 
     inline double
     imagPart(const double x)
-    { 
-        return 0;
+    {
+      return 0;
     }
 
 
     inline float
     imagPart(const float x)
-    { 
-        return 0;
+    {
+      return 0;
     }
 
     inline double
     imagPart(const std::complex<double> x)
-    { 
-        return x.imag();
+    {
+      return x.imag();
     }
 
     inline float
     imagPart(const std::complex<float> x)
-    { 
-        return x.imag();
+    {
+      return x.imag();
     }
 
     inline double
@@ -95,7 +95,7 @@ namespace dftfe
     {
       return std::conj(x);
     }
-  }
+  } // namespace utils
 } // namespace dftfe
 
 #endif

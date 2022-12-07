@@ -21,7 +21,7 @@
 #    include <dftfeDataTypes.h>
 #    include <MemorySpaceType.h>
 #    include <headers.h>
-#include <TypeConfig.h>
+#    include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -32,37 +32,37 @@ namespace dftfe
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
-    copyComplexArrToRealArrsDevice(const dftfe::size_type size,
-                                   const NumberTypeComplex *        complexArr,
-                                   NumberTypeReal *                 realArr,
-                                   NumberTypeReal *                 imagArr);
+    copyComplexArrToRealArrsDevice(const dftfe::size_type   size,
+                                   const NumberTypeComplex *complexArr,
+                                   NumberTypeReal *         realArr,
+                                   NumberTypeReal *         imagArr);
 
 
     template <typename NumberTypeComplex, typename NumberTypeReal>
     void
     copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                   const NumberTypeReal *           realArr,
-                                   const NumberTypeReal *           imagArr,
-                                   NumberTypeComplex *              complexArr);
+                                   const NumberTypeReal * realArr,
+                                   const NumberTypeReal * imagArr,
+                                   NumberTypeComplex *    complexArr);
 
     void
-    add(double *        y,
-        const double *  x,
-        const double    alpha,
-        const int       size,
+    add(double *                          y,
+        const double *                    x,
+        const double                      alpha,
+        const int                         size,
         dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
     double
-    l2_norm(const double *  x,
-            const int       size,
-            const MPI_Comm &mpi_communicator,
+    l2_norm(const double *                    x,
+            const int                         size,
+            const MPI_Comm &                  mpi_communicator,
             dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
     double
-    dot(const double *  x,
-        const double *  y,
-        const int       size,
-        const MPI_Comm &mpi_communicator,
+    dot(const double *                    x,
+        const double *                    y,
+        const int                         size,
+        const MPI_Comm &                  mpi_communicator,
         dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
     template <typename NumberType>
