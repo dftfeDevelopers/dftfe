@@ -47,6 +47,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0 && !skip1)
     {
+      
       dftfe::utils::deviceBlasWrapper::gemmBatched(
         d_deviceBlasHandle,
         dftfe::utils::DEVICEBLAS_OP_N,
@@ -55,9 +56,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
         &scalarCoeffAlpha,
-        d_A,
+        (const dataTypes::number **)d_A,
         numberWaveFunctions,
-        d_B,
+        (const dataTypes::number **)d_B,
         d_numberNodesPerElement,
         &scalarCoeffBeta,
         d_C,
@@ -267,8 +268,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           d_cellWaveFunctionMatrix.begin()),
           d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
-
-
       dftfe::utils::deviceBlasWrapper::gemmBatched(
         d_deviceBlasHandle,
         dftfe::utils::DEVICEBLAS_OP_N,
@@ -277,9 +276,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
         &scalarCoeffAlpha,
-        d_A,
+        (const dataTypes::number **)d_A,
         numberWaveFunctions,
-        d_B,
+        (const dataTypes::number **)d_B,
         d_numberNodesPerElement,
         &scalarCoeffBeta,
         d_C,

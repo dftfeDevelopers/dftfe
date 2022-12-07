@@ -573,7 +573,7 @@ namespace dftfe
 
                 if (!isFloatingChargeForces)
                   {
-                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
@@ -604,7 +604,7 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                           shapeFunctionGradientValuesXTransposedDevice.begin()));
 
-                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
@@ -633,7 +633,7 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                           shapeFunctionGradientValuesYTransposedDevice.begin()));
 
-                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
@@ -661,7 +661,7 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                       shapeFunctionGradientValuesZTransposedDevice.begin()));
 
-                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
@@ -741,7 +741,7 @@ namespace dftfe
                     const int strideCNLP = BVec * numQuadsNLP;
                     const int strideBNLP = 0;
 
-                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
@@ -796,7 +796,7 @@ namespace dftfe
                     const int strideBNLPGrad =
                       numNodesPerElement * 3 * numQuadsNLP;
 
-                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
@@ -889,7 +889,7 @@ namespace dftfe
                   projecterKetTimesFlattenedVectorLocalIdsD.begin(),
                   dftfe::utils::makeDataTypeDeviceCompatible(nlpContractionContributionD.begin()));
 
-                dftfe::dftfe::utils::deviceBlasWrapper::gemm(
+                dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
                   dftfe::utils::DEVICEBLAS_OP_N,
                   dftfe::utils::DEVICEBLAS_OP_N,
@@ -938,7 +938,7 @@ namespace dftfe
                   dftfe::utils::makeDataTypeDeviceCompatible(
                   nlpContractionContributionD.begin()));
 
-                dftfe::dftfe::utils::deviceBlasWrapper::gemm(
+                dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
                   dftfe::utils::DEVICEBLAS_OP_N,
                   dftfe::utils::DEVICEBLAS_OP_N,

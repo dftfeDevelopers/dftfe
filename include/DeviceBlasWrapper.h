@@ -20,6 +20,7 @@
 #  ifndef dftfeDeviceBlasWrapper_H
 #    define dftfeDeviceBlasWrapper_H
 
+#include <complex>
 #    include <TypeConfig.h>
 #  include <DeviceTypeConfig.h>
 namespace dftfe
