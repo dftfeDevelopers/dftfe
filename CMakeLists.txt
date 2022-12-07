@@ -85,6 +85,7 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDevice.cc
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
+  ./utils/DeviceBlasWrapper.cu.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc

@@ -52,13 +52,13 @@ namespace dftfe
     ~kohnShamDFTOperatorDeviceClass();
 
     void
-    createCublasHandle();
+    createDeviceBlasHandle();
 
     void
-    destroyCublasHandle();
+    destroyDeviceBlasHandle();
 
-    cublasHandle_t &
-    getCublasHandle();
+    deviceBlasHandle_t &
+    getDeviceBlasHandle();
 
     const double *
     getSqrtMassVec();
@@ -186,7 +186,7 @@ namespace dftfe
      * projector kets times block wavefunction vectors
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
@@ -198,7 +198,7 @@ namespace dftfe
          distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
          const unsigned int                             M,
          const unsigned int                             N,
-         cublasHandle_t &                               handle,
+         deviceBlasHandle_t &                               handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -216,7 +216,7 @@ namespace dftfe
      * projector kets times block wavefunction vectors
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
@@ -229,7 +229,7 @@ namespace dftfe
       distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -253,7 +253,7 @@ namespace dftfe
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
      * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
@@ -268,7 +268,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -697,8 +697,8 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dealii::types::global_dof_index, dftfe::utils::MemorySpace::DEVICE>
       d_DeviceFlattenedArrayMacroCellLocalProcIndexIdMapFlattened;
 
-    /// storage for magma and cublas handles
-    cublasHandle_t d_cublasHandle;
+    /// storage for deviceblas handle
+    deviceBlasHandle_t d_deviceBlasHandle;
 
     /// flag for precomputing stiffness matrix contribution from
     /// sum{Vext}-sum{Vnuc}

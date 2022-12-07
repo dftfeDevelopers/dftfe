@@ -32,6 +32,17 @@ namespace dftfe
 
      //static consts
      static const deviceError_t deviceSuccess=cudaSuccess;
+
+     //vendor blas related typedef and static consts
+     typedef cublasHandle_t deviceBlasHandle_t;
+     typedef cublasOperation_t deviceBlasOperation_t;
+     typedef cublasStatus_t deviceBlasStatus_t;
+     typedef cublasMath_t deviceBlasMath_t;
+
+     static const cublasOperation_t DEVICEBLAS_OP_N=CUBLAS_OP_N;
+     static const cublasOperation_t DEVICEBLAS_OP_T=CUBLAS_OP_T;
+     static const cublasOperation_t DEVICEBLAS_OP_C=CUBLAS_OP_C;
+     static const cublasMath_t DEVICEBLAS_TF32_TENSOR_OP_MATH=CUBLAS_TF32_TENSOR_OP_MATH;
   }
 } // namespace dftfe
 

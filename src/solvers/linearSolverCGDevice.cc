@@ -48,7 +48,7 @@ namespace dftfe
   linearSolverCGDevice::solve(linearSolverProblemDevice &problem,
                               const double               absTolerance,
                               const unsigned int         maxNumberIterations,
-                              cublasHandle_t &           cublasHandle,
+                              deviceBlasHandle_t &           deviceBlasHandle,
                               const int                  debugLevel,
                               bool                       distributeFlag)
   {
@@ -115,13 +115,13 @@ namespace dftfe
                              rhsDevice.begin(),
                              -1.,
                              d_xLocalDof,
-                             cublasHandle);
+                             deviceBlasHandle);
 
             // res = r.r
             res = deviceUtils::l2_norm(d_rvec.begin(),
                                        d_xLocalDof,
                                        mpi_communicator,
-                                       cublasHandle);
+                                       deviceBlasHandle);
 
             initial_res = res;
 
@@ -169,7 +169,7 @@ namespace dftfe
                                          d_dvec.begin(),
                                          d_xLocalDof,
                                          mpi_communicator,
-                                         cublasHandle);
+                                         deviceBlasHandle);
 
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));

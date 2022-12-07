@@ -26,6 +26,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
@@ -225,7 +226,7 @@ namespace dftfe
 
       void
       computeAX(
-        cublasHandle_t &                      handle,
+        deviceBlasHandle_t &                      handle,
         dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
         distributedDeviceVec<double> &        src,
         distributedDeviceVec<double> &        temp,
@@ -293,10 +294,10 @@ namespace dftfe
         //
         // do matrix-matrix multiplication
         //
-        cublasDgemmStridedBatched(
+        dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
           handle,
-          CUBLAS_OP_N,
-          CUBLAS_OP_N,
+          DEVICEBLAS_OP_N,
+          DEVICEBLAS_OP_N,
           numberVectors,
           numberNodesPerElement,
           numberNodesPerElement,
@@ -367,7 +368,7 @@ namespace dftfe
       }
 
       void
-      computeResidualSq(cublasHandle_t &   handle,
+      computeResidualSq(deviceBlasHandle_t &   handle,
                         const double *     vec1,
                         const double *     vec2,
                         double *           vecTemp,
@@ -386,9 +387,9 @@ namespace dftfe
                                           vecTemp);
 
         const double alpha = 1.0, beta = 0.0;
-        cublasDgemm(handle,
-                    CUBLAS_OP_N,
-                    CUBLAS_OP_T,
+        dftfe::utils::deviceBlasWrapper::gemm(handle,
+                    DEVICEBLAS_OP_N,
+                    DEVICEBLAS_OP_T,
                     1,
                     numberVectors,
                     localSize,
@@ -508,7 +509,7 @@ namespace dftfe
           << " poissonDevice::solveVselfInBins: time for mem allocation: "
           << time << std::endl;
 
-      cgSolver(operatorMatrix.getCublasHandle(),
+      cgSolver(operatorMatrix.getDeviceBlasHandle(),
                constraintsMatrixDataInfoDevice,
                bD.begin(),
                diagonalAD.begin(),
@@ -536,7 +537,7 @@ namespace dftfe
 
     void
     cgSolver(
-      cublasHandle_t &                      handle,
+      deviceBlasHandle_t &                      handle,
       dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
       const double *                        bD,
       const double *                        diagonalAD,
@@ -663,11 +664,11 @@ namespace dftfe
       // r.resize(localSize,0.0);
 
       // r = b
-      cublasDcopy(handle, localSize * numberBins, bD, inc, r.begin(), inc);
+      dftfe::utils::deviceBlasWrapper::copy(handle, localSize * numberBins, bD, inc, r.begin(), inc);
 
 
       // r = b - Ax i.e r - Ax
-      cublasDaxpy(handle,
+      dftfe::utils::deviceBlasWrapper::axpy(handle,
                   localSize * numberBins,
                   &negOne,
                   Ax.begin(),
@@ -822,7 +823,7 @@ namespace dftfe
           if (iter % 50 == 0)
             {
               // r = b
-              cublasDcopy(
+              dftfe::utils::deviceBlasWrapper::copy(
                 handle, localSize * numberBins, bD, inc, r.begin(), inc);
 
               // computeAX(x,Ax);

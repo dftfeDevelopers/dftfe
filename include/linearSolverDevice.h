@@ -50,7 +50,7 @@ namespace dftfe
     solve(linearSolverProblemDevice &problem,
           const double               absTolerance,
           const unsigned int         maxNumberIterations,
-          cublasHandle_t &           handle,
+          deviceBlasHandle_t &           handle,
           const int                  debugLevel     = 0,
           bool                       distributeFlag = true) = 0;
 

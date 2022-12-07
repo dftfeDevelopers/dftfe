@@ -275,7 +275,7 @@ namespace dftfe
         dealii::TimerOutput::every_call,
       dealii::TimerOutput::wall_times);
 
-    cublasHandle_t &cublasHandle = operatorMatrix.getCublasHandle();
+    deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -655,7 +655,7 @@ namespace dftfe
     /*
        int inc=1;
        double result=0.0;
-       cublasDnrm2(cublasHandle,
+       dftfe::utils::deviceBlasWrapper::nrm2(deviceBlasHandle,
        flattenedSize,
        eigenVectorsFlattenedDevice,
        inc,
@@ -695,7 +695,7 @@ namespace dftfe
           devicecclMpiCommDomain,
           interBandGroupComm,
           eigenValues,
-          cublasHandle,
+          deviceBlasHandle,
           d_dftParams,
           useMixedPrecOverall);
       }
@@ -716,7 +716,7 @@ namespace dftfe
           devicecclMpiCommDomain,
           interBandGroupComm,
           eigenValues,
-          cublasHandle,
+          deviceBlasHandle,
           d_dftParams,
           useMixedPrecOverall);
       }
@@ -742,7 +742,7 @@ namespace dftfe
             eigenValues,
             operatorMatrix.getMPICommunicator(),
             interBandGroupComm,
-            cublasHandle,
+            deviceBlasHandle,
             residualNorms,
             d_dftParams);
         else
@@ -757,7 +757,7 @@ namespace dftfe
             eigenValues,
             operatorMatrix.getMPICommunicator(),
             interBandGroupComm,
-            cublasHandle,
+            deviceBlasHandle,
             residualNorms,
             d_dftParams,
             true);
@@ -809,7 +809,7 @@ namespace dftfe
     const unsigned int       numberPasses,
     const bool               useMixedPrecOverall)
   {
-    cublasHandle_t &cublasHandle = operatorMatrix.getCublasHandle();
+    deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -1103,7 +1103,7 @@ namespace dftfe
           operatorMatrix.getMPICommunicator(),
           devicecclMpiCommDomain,
           interBandGroupComm,
-          cublasHandle,
+          deviceBlasHandle,
           d_dftParams,
           useMixedPrecOverall);
       }
@@ -1151,7 +1151,7 @@ namespace dftfe
     computingTimerStandard.enter_subsection(
       "Density matrix first order response on Device");
 
-    cublasHandle_t &cublasHandle = operatorMatrix.getCublasHandle();
+    deviceBlasHandle_t &deviceBlasHandle = operatorMatrix.getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -1208,7 +1208,7 @@ namespace dftfe
       fermiEnergy,
       densityMatDerFermiEnergy,
       elpaScala,
-      cublasHandle,
+      deviceBlasHandle,
       d_dftParams);
 
 

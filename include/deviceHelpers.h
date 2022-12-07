@@ -25,19 +25,6 @@
 
 namespace dftfe
 {
-#    define cublasCheck(expr)                                                            \
-      {                                                                                  \
-        cublasStatus_t __cublas_error = expr;                                            \
-        if ((__cublas_error) != CUBLAS_STATUS_SUCCESS)                                   \
-          {                                                                              \
-            printf(                                                                      \
-              "cuBLAS error on or before line number %d in file: %s. Error code: %d.\n", \
-              __LINE__,                                                                  \
-              __FILE__,                                                                  \
-              __cublas_error);                                                           \
-          }                                                                              \
-      }
-
   namespace deviceUtils
   {
     void
@@ -63,20 +50,20 @@ namespace dftfe
         const double *  x,
         const double    alpha,
         const int       size,
-        cublasHandle_t &cublasHandle);
+        deviceBlasHandle_t &deviceBlasHandle);
 
     double
     l2_norm(const double *  x,
             const int       size,
             const MPI_Comm &mpi_communicator,
-            cublasHandle_t &cublasHandle);
+            deviceBlasHandle_t &deviceBlasHandle);
 
     double
     dot(const double *  x,
         const double *  y,
         const int       size,
         const MPI_Comm &mpi_communicator,
-        cublasHandle_t &cublasHandle);
+        deviceBlasHandle_t &deviceBlasHandle);
 
     template <typename NumberType>
     void

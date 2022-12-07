@@ -58,28 +58,26 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int strideC = d_numberNodesPerElement * numberWaveFunctions;
 
 
-  cublasXgemmStridedBatched(
-    d_cublasHandle,
-    CUBLAS_OP_N,
-    std::is_same<dataTypes::number, std::complex<double>>::value ? CUBLAS_OP_T :
-                                                                   CUBLAS_OP_N,
+  dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+    d_deviceBlasHandle,
+    DEVICEBLAS_OP_N,
+    std::is_same<dataTypes::number, std::complex<double>>::value ? DEVICEBLAS_OP_T :
+                                                                   DEVICEBLAS_OP_N,
     numberWaveFunctions,
     d_numberNodesPerElement,
     d_numberNodesPerElement,
-    dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-    dftfe::utils::makeDataTypeDeviceCompatible(
-      d_cellWaveFunctionMatrix.begin()),
+    &scalarCoeffAlpha,
+      d_cellWaveFunctionMatrix.begin(),
     numberWaveFunctions,
     strideA,
-    dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamiltonianMatrixFlattenedDevice.begin()+d_numLocallyOwnedCells *
+    d_cellHamiltonianMatrixFlattenedDevice.begin()+d_numLocallyOwnedCells *
                                               d_numberNodesPerElement *
                                               d_numberNodesPerElement *
-                                              kpointSpinIndex),
+                                              kpointSpinIndex,
     d_numberNodesPerElement,
     strideB,
-    dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-    dftfe::utils::makeDataTypeDeviceCompatible(
-      d_cellHamMatrixTimesWaveMatrix.begin()),
+    &scalarCoeffBeta,
+      d_cellHamMatrixTimesWaveMatrix.begin(),
     numberWaveFunctions,
     strideC,
     totalLocallyOwnedCells);

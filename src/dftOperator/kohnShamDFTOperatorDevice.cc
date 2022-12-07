@@ -22,6 +22,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 #include <kohnShamDFTOperatorDevice.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -597,25 +598,27 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::createCublasHandle()
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::createDeviceBlasHandle()
   {
-    cublasCreate(&d_cublasHandle);
+    dftfe::utils::deviceBlasWrapper::create(&d_deviceBlasHandle);
+#ifdef DFTFE_WTIH_DEVICE_CUDA    
     if (dftPtr->d_dftParamsPtr->useTF32Device)
-      cublasSetMathMode(d_cublasHandle, CUBLAS_TF32_TENSOR_OP_MATH);
+      dftfe::utils::deviceBlasWrapper::setMathMode(d_deviceBlasHandle, DEVICEBLAS_TF32_TENSOR_OP_MATH);
+#endif      
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::destroyCublasHandle()
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::destroyDeviceBlasHandle()
   {
-    cublasDestroy(d_cublasHandle);
+    dftfe::utils::deviceBlasWrapper::destroy(d_deviceBlasHandle);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  cublasHandle_t &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getCublasHandle()
+  deviceBlasHandle_t &
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getDeviceBlasHandle()
   {
-    return d_cublasHandle;
+    return d_deviceBlasHandle;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -3771,7 +3774,7 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
     const unsigned int                               M,
     const unsigned int                               N,
-    cublasHandle_t &                                 handle,
+    deviceBlasHandle_t &                                 handle,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
     utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -3859,24 +3862,22 @@ namespace dftfe
             const dataTypes::number alpha = dataTypes::number(1.0),
                                     beta  = dataTypes::number(0.0);
             const unsigned int D          = N - jvec;
-            cublasXgemm(
+            dftfe::utils::deviceBlasWrapper::gemm(
               handle,
-              CUBLAS_OP_N,
+              DEVICEBLAS_OP_N,
               std::is_same<dataTypes::number, std::complex<double>>::value ?
-                CUBLAS_OP_C :
-                CUBLAS_OP_T,
+                DEVICEBLAS_OP_C :
+                DEVICEBLAS_OP_T,
               D,
               B,
               M,
-              dftfe::utils::makeDataTypeDeviceCompatible(&alpha),
-              dftfe::utils::makeDataTypeDeviceCompatible(X + jvec),
+              &alpha,
+              X + jvec,
               N,
-              dftfe::utils::makeDataTypeDeviceCompatible(
-              HXBlockFull.begin()),
+              HXBlockFull.begin(),
               B,
-              dftfe::utils::makeDataTypeDeviceCompatible(&beta),
-              dftfe::utils::makeDataTypeDeviceCompatible(
-                projHamBlock.begin()),
+              &beta,
+                projHamBlock.begin(),
               D);
 
             dftfe::utils::deviceMemcpyD2H(projHamBlockHost.begin(),
@@ -3936,7 +3937,7 @@ namespace dftfe
       distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -3998,8 +3999,8 @@ namespace dftfe
     dftfe::utils::deviceStreamCreate(&streamCompute);
     dftfe::utils::deviceStreamCreate(&streamDataMove);
 
-    // attach cublas handle to compute stream
-    cublasSetStream(handle, streamCompute);
+    // attach deviceblas handle to compute stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
     // create array of compute and copy events on Devices
     // for all the blocks. These are required for synchronization
@@ -4094,23 +4095,22 @@ namespace dftfe
                   }
 
                 // evalute X^{T} times HXBlock
-                cublasXgemm(
+                dftfe::utils::deviceBlasWrapper::gemm(
                   handle,
-                  CUBLAS_OP_N,
+                  DEVICEBLAS_OP_N,
                   std::is_same<dataTypes::number, std::complex<double>>::value ?
-                    CUBLAS_OP_C :
-                    CUBLAS_OP_T,
+                    DEVICEBLAS_OP_C :
+                    DEVICEBLAS_OP_T,
                   D,
                   B,
                   M,
-                  dftfe::utils::makeDataTypeDeviceCompatible(&alpha),
-                  dftfe::utils::makeDataTypeDeviceCompatible(X + jvec),
+                  &alpha,
+                  X + jvec,
                   N,
-                  dftfe::utils::makeDataTypeDeviceCompatible(HXBlockFull.begin()),
+                  HXBlockFull.begin(),
                   B,
-                  dftfe::utils::makeDataTypeDeviceCompatible(&beta),
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                  projHamBlock.begin()),
+                  &beta,
+                  projHamBlock.begin(),
                   D);
 
                 // record completion of compute for first block
@@ -4173,24 +4173,22 @@ namespace dftfe
                   }
 
                 // evalute X^{T} times HXBlock
-                cublasXgemm(
+                dftfe::utils::deviceBlasWrapper::gemm(
                   handle,
-                  CUBLAS_OP_N,
+                  DEVICEBLAS_OP_N,
                   std::is_same<dataTypes::number, std::complex<double>>::value ?
-                    CUBLAS_OP_C :
-                    CUBLAS_OP_T,
+                    DEVICEBLAS_OP_C :
+                    DEVICEBLAS_OP_T,
                   DNew,
                   B,
                   M,
-                  dftfe::utils::makeDataTypeDeviceCompatible(&alpha),
-                  dftfe::utils::makeDataTypeDeviceCompatible(X + jvecNew),
+                  &alpha,
+                  X + jvecNew,
                   N,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    HXBlockFull.begin()),
+                    HXBlockFull.begin(),
                   B,
-                  dftfe::utils::makeDataTypeDeviceCompatible(&beta),
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    projHamBlockNext.begin()),
+                  &beta,
+                    projHamBlockNext.begin(),
                   DNew);
 
                 // record completion of compute for next block
@@ -4267,8 +4265,8 @@ namespace dftfe
         blockCount += 1;
       }
 
-    // return cublas handle to default stream
-    cublasSetStream(handle, NULL);
+    // return deviceblas handle to default stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
     for (int i = 0; i < numberBlocks; ++i)
       {
@@ -4328,7 +4326,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -4360,8 +4358,8 @@ namespace dftfe
     dftfe::utils::deviceStreamCreate(&streamCompute);
     dftfe::utils::deviceStreamCreate(&streamDataMove);
 
-    // attach cublas handle to compute stream
-    cublasSetStream(handle, streamCompute);
+    // attach deviceblas handle to compute stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
     // create array of compute and copy events on Devices
     // for all the blocks. These are required for synchronization
@@ -4514,50 +4512,43 @@ namespace dftfe
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                 // HXBlockFullFP32Conj
                 if (jvec + B > Noc)
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      DEVICEBLAS_OP_C :
+                      DEVICEBLAS_OP_T,
                     D,
                     B,
                     M,
-                    dftfe::utils::makeDataTypeDeviceCompatible(&alpha),
-                    dftfe::utils::makeDataTypeDeviceCompatible(X + jvec),
+                    &alpha,
+                    X + jvec,
                     N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      HXBlockFull.begin()),
+                      HXBlockFull.begin(),
                     B,
-                    dftfe::utils::makeDataTypeDeviceCompatible(&beta),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      projHamBlock.begin()),
+                    &beta,
+                      projHamBlock.begin(),
                     D);
                 else
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::numberFP32,
                                  std::complex<float>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      DEVICEBLAS_OP_C :
+                      DEVICEBLAS_OP_T,
                     D,
                     B,
                     M,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      &alphaFP32),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      &alphaFP32,
                       XFP32.begin() +
-                      jvec),
+                      jvec,
                     N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      HXBlockFullFP32.begin()),
+                      HXBlockFullFP32.begin(),
                     B,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      &betaFP32),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      projHamBlockFP32.begin()),
+                      &betaFP32,
+                      projHamBlockFP32.begin(),
                     D);
 
                 // record completion of compute for next block
@@ -4653,50 +4644,43 @@ namespace dftfe
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                 // HXBlockFullFP32Conj
                 if (jvecNew + B > Noc)
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      DEVICEBLAS_OP_C :
+                      DEVICEBLAS_OP_T,
                     DNew,
                     B,
                     M,
-                    dftfe::utils::makeDataTypeDeviceCompatible(&alpha),
-                    dftfe::utils::makeDataTypeDeviceCompatible(X + jvecNew),
+                    &alpha,
+                    X + jvecNew,
                     N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      HXBlockFull.begin()),
+                      HXBlockFull.begin(),
                     B,
-                    dftfe::utils::makeDataTypeDeviceCompatible(&beta),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      projHamBlockNext.begin()),
+                    &beta,
+                      projHamBlockNext.begin(),
                     DNew);
                 else
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::numberFP32,
                                  std::complex<float>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      DEVICEBLAS_OP_C :
+                      DEVICEBLAS_OP_T,
                     DNew,
                     B,
                     M,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      &alphaFP32),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      &alphaFP32,
                       XFP32.begin() +
-                      jvecNew),
+                      jvecNew,
                     N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                     HXBlockFullFP32.begin()),
+                     HXBlockFullFP32.begin(),
                     B,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      &betaFP32),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      projHamBlockFP32Next.begin()),
+                      &betaFP32,
+                      projHamBlockFP32Next.begin(),
                     DNew);
 
                 // record completion of compute for next block
@@ -4835,8 +4819,8 @@ namespace dftfe
         blockCount += 1;
       }
 
-    // return cublas handle to default stream
-    cublasSetStream(handle, NULL);
+    // return deviceblas handle to default stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
     for (int i = 0; i < numberBlocks; ++i)
       {

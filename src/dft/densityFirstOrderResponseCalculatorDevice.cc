@@ -29,6 +29,7 @@
 #include <DeviceTypeConfig.h>
 #include <DataTypeOverloads.h>
 #include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
@@ -535,22 +536,22 @@ namespace dftfe
                             int strideC = BVec * numQuadPoints;
 
 
-                            cublasXgemmStridedBatched(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              DEVICEBLAS_OP_N,
+                              DEVICEBLAS_OP_N,
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(cellWaveFunctionMatrix.begin()),
+                              &scalarCoeffAlpha,
+                              cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
-                              dftfe::utils::makeDataTypeDeviceCompatible(shapeFunctionValuesTransposedDevice.begin()),
+                              shapeFunctionValuesTransposedDevice.begin(),
                               numNodesPerElement,
                               strideB,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(XQuadsDevice.begin()),
+                              &scalarCoeffBeta,
+                              XQuadsDevice.begin(),
                               BVec,
                               strideC,
                               currentCellsBlockSize);
@@ -567,22 +568,22 @@ namespace dftfe
                               (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin()+startingCellId * numNodesPerElement);
 
 
-                            cublasXgemmStridedBatched(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              DEVICEBLAS_OP_N,
+                              DEVICEBLAS_OP_N,
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(cellWaveFunctionMatrix.begin()),
+                              &scalarCoeffAlpha,
+                              cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
-                              dftfe::utils::makeDataTypeDeviceCompatible(shapeFunctionValuesTransposedDevice.begin()),
+                              shapeFunctionValuesTransposedDevice.begin(),
                               numNodesPerElement,
                               strideB,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(XPrimeQuadsDevice.begin()),
+                              &scalarCoeffBeta,
+                              XPrimeQuadsDevice.begin(),
                               BVec,
                               strideC,
                               currentCellsBlockSize);
@@ -597,38 +598,38 @@ namespace dftfe
                               dftfe::utils::makeDataTypeDeviceCompatible(XQuadsDevice.begin()),
                               dftfe::utils::makeDataTypeDeviceCompatible(XPrimeQuadsDevice.begin()));
 
-                            cublasXgemm(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemm(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              DEVICEBLAS_OP_N,
+                              DEVICEBLAS_OP_N,
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlphaRho),
-                              dftfe::utils::makeDataTypeDeviceCompatible(onesVecDevice.begin()),
+                              &scalarCoeffAlphaRho,
+                              onesVecDevice.begin(),
                               1,
-                              dftfe::utils::makeDataTypeDeviceCompatible(XPrimeQuadsDevice.begin()),
+                              XPrimeQuadsDevice.begin(),
                               BVec,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBetaRho),
-                              dftfe::utils::makeDataTypeDeviceCompatible(rhoResponseContributionHamDevice.begin() +
-                                startingCellId * numQuadPoints),
+                              &scalarCoeffBetaRho,
+                              rhoResponseContributionHamDevice.begin() +
+                                startingCellId * numQuadPoints,
                               1);
 
-                            cublasXgemm(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemm(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              DEVICEBLAS_OP_N,
+                              DEVICEBLAS_OP_N,
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlphaRho),
-                              dftfe::utils::makeDataTypeDeviceCompatible(densityMatDerFermiEnergyVecDevice.begin()),
+                              &scalarCoeffAlphaRho,
+                              densityMatDerFermiEnergyVecDevice.begin(),
                               1,
-                              dftfe::utils::makeDataTypeDeviceCompatible(XQuadsDevice.begin()),
+                              XQuadsDevice.begin(),
                               BVec,
-                              dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBetaRho),
-                              dftfe::utils::makeDataTypeDeviceCompatible(rhoResponseContributionFermiEnergyDevice.begin() +
-                                startingCellId * numQuadPoints),
+                              &scalarCoeffBetaRho,
+                              rhoResponseContributionFermiEnergyDevice.begin() +
+                                startingCellId * numQuadPoints,
                               1);
 
                           } // non-trivial cell block check

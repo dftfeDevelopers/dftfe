@@ -66,7 +66,7 @@ namespace shapeFuncDevice
 
   void
   computeShapeGradNINJIntegral(
-    cublasHandle_t &               handle,
+    deviceBlasHandle_t &               handle,
     FEValues<3> &                  fe_values,
     const dealii::DoFHandler<3> &  dofHandler,
     const unsigned int             numElems,
@@ -203,9 +203,9 @@ namespace shapeFuncDevice
 
 
 
-                    cublasDgemm(handle,
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemm(handle,
+                                DEVICEBLAS_OP_N,
+                                DEVICEBLAS_OP_N,
                                 1,
                                 currentElemsBlockSize * numNodesPerElem *
                                   numNodesPerElem,
@@ -251,7 +251,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
   shapeFuncDevice::computeShapeGradNINJIntegral(
-    d_cublasHandle,
+    d_deviceBlasHandle,
     fe_values_plusone,
     dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex),
     numberPhysicalCells,
@@ -282,7 +282,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         update_gradients | update_JxW_values);
 
       shapeFuncDevice::computeShapeGradNINJIntegral(
-        d_cublasHandle,
+        d_deviceBlasHandle,
         fe_values_electro_plusone,
         dftPtr->d_matrixFreeDataPRefined.get_dof_handler(
           dftPtr->d_baseDofHandlerIndexElectro),

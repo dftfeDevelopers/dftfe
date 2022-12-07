@@ -19,12 +19,14 @@
 #include <deviceHelpers.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include <DeviceBlasWrapper.h>
+#include <DeviceKernelLauncherConstants.h>
 #include <MemoryStorage.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <linearAlgebraOperationsInternal.h>
 #include <vectorUtilities.h>
-#include <DeviceKernelLauncherConstants.h>
+
 
 namespace dftfe
 {
@@ -587,7 +589,7 @@ namespace dftfe
       }
 
       void
-      computeRayleighQuotients(cublasHandle_t &   handle,
+      computeRayleighQuotients(deviceBlasHandle_t &   handle,
                                const double *     xarray,
                                const double *     yarray,
                                const double *     sqrtMassVector,
@@ -607,9 +609,9 @@ namespace dftfe
           numberVectors, localSize, xarray, yarray, sqrtMassVector, temparray);
 
         const double alpha = 1.0, beta = 0;
-        cublasDgemm(handle,
-                    CUBLAS_OP_N,
-                    CUBLAS_OP_T,
+        dftfe::utils::deviceBlasWrapper::gemm(handle,
+                    DEVICEBLAS_OP_N,
+                    DEVICEBLAS_OP_T,
                     1,
                     2 * numberVectors,
                     localSize,
@@ -932,16 +934,6 @@ namespace dftfe
       //
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
-      /*
-      cublasDaxpy(operatorMatrix.getCublasHandle(),
-                  totalVectorSize,
-                  &alpha2,
-                  dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                  inc,
-                  dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
-                  inc);
-      */
-
       daxpyDeviceKernel<<<min((totalVectorSize +
                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -950,14 +942,6 @@ namespace dftfe
                                                         dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
                                                         dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
                                                         alpha2);
-
-      /*
-      cublasDscal(operatorMatrix.getCublasHandle(),
-                  totalVectorSize,
-                  &alpha1,
-                  dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
-                  inc);
-      */
 
       dscalDeviceKernel<<<
         min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1176,37 +1160,6 @@ namespace dftfe
       //
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
-      /*
-      cublasDaxpy(operatorMatrix.getCublasHandle(),
-                  totalVectorSize,
-                  &alpha2,
-                  dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                  inc,
-                  dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                  inc);
-
-      cublasDscal(operatorMatrix.getCublasHandle(),
-                  totalVectorSize,
-                  &alpha1,
-                  dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                  inc);
-
-
-      cublasDaxpy(operatorMatrix.getCublasHandle(),
-                  totalVectorSize,
-                  &alpha2,
-                  dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                  inc,
-                  dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                  inc);
-
-      cublasDscal(operatorMatrix.getCublasHandle(),
-                  totalVectorSize,
-                  &alpha1,
-                  dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                  inc);
-      */
-
       daxpyDeviceKernel<<<min((totalVectorSize +
                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -1798,7 +1751,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -1839,8 +1792,8 @@ namespace dftfe
       dftfe::utils::deviceStreamCreate(&streamCompute);
       dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
-      // attach cublas handle to compute stream
-      cublasSetStream(handle, streamCompute);
+      // attach deviceblas handle to compute stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
@@ -2113,24 +2066,20 @@ namespace dftfe
 
               if (BDof != 0)
                 {
-                  cublasXgemm(handle,
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                  dftfe::utils::deviceBlasWrapper::gemm(handle,
+                              DEVICEBLAS_OP_N,
+                              DEVICEBLAS_OP_N,
                               BVec,
                               BDof,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                              rotationMatBlock.begin()),
+                                &scalarCoeffAlpha,
+                              rotationMatBlock.begin(),
                               BVec,
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + idof * N,
+                              X + idof * N,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                &scalarCoeffBeta,
                                 rotatedVectorsMatBlock.begin() +
-                                jvec),
+                                jvec,
                               Nfr);
                 }
 
@@ -2150,8 +2099,8 @@ namespace dftfe
 
         } // block loop over dofs
 
-      // return cublas handle to default stream
-      cublasSetStream(handle, NULL);
+      // return deviceblas handle to default stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
@@ -2170,7 +2119,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -2222,8 +2171,8 @@ namespace dftfe
       dftfe::utils::deviceStreamCreate(&streamCompute);
       dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
-      // attach cublas handle to compute stream
-      cublasSetStream(handle, streamCompute);
+      // attach deviceblas handle to compute stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
@@ -2511,24 +2460,21 @@ namespace dftfe
 
                   if (BDof != 0)
                     {
-                      cublasXgemm(
+                      dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        CUBLAS_OP_N,
-                        CUBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffAlpha),
-                        dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlock.begin()),
+                          &scalarCoeffAlpha,
+                        rotationMatBlock.begin(),
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(X) + idof * N,
+                        X + idof * N,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffBeta),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          &scalarCoeffBeta,
                           rotatedVectorsMatBlock.begin() +
-                          jvec),
+                          jvec,
                         N);
                     }
                 } // band parallelization
@@ -2549,8 +2495,8 @@ namespace dftfe
         } // block loop over dofs
 
 
-      // return cublas handle to default stream
-      cublasSetStream(handle, NULL);
+      // return deviceblas handle to default stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
@@ -2567,7 +2513,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -2627,8 +2573,8 @@ namespace dftfe
       dftfe::utils::deviceStreamCreate(&streamCompute);
       dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
-      // attach cublas handle to compute stream
-      cublasSetStream(handle, streamCompute);
+      // attach deviceblas handle to compute stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
@@ -2885,25 +2831,20 @@ namespace dftfe
 
                   if (BDof != 0)
                     {
-                      cublasXgemm(
+                      dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        CUBLAS_OP_N,
-                        CUBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffAlphaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotationMatBlockSP.begin()),
+                          &scalarCoeffAlphaSP,
+                          rotationMatBlockSP.begin(),
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          XSP.begin() + idof * N),
+                          XSP.begin() + idof * N,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffBetaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotatedVectorsMatBlockSP.begin()),
+                          &scalarCoeffBetaSP,
+                          rotatedVectorsMatBlockSP.begin(),
                         BVec);
 
                       addSubspaceRotatedBlockToXKernel<<<
@@ -2926,8 +2867,8 @@ namespace dftfe
           blockCount++;
         } // block loop over vectors
 
-      // return cublas handle to default stream
-      cublasSetStream(handle, NULL);
+      // return deviceblas handle to default stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
@@ -2944,7 +2885,7 @@ namespace dftfe
       dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -3004,8 +2945,8 @@ namespace dftfe
       dftfe::utils::deviceStreamCreate(&streamCompute);
       dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
 
-      // attach cublas handle to compute stream
-      cublasSetStream(handle, streamCompute);
+      // attach deviceblas handle to compute stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
@@ -3263,24 +3204,20 @@ namespace dftfe
 
                   if (BDof != 0)
                     {
-                      cublasXgemm(
+                      dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        CUBLAS_OP_N,
-                        CUBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffAlphaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(rotationMatBlockSP.begin()),
+                          &scalarCoeffAlphaSP,
+                        rotationMatBlockSP.begin(),
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          XSP.begin() + idof * N),
+                          XSP.begin() + idof * N,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffBetaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotatedVectorsMatBlockSP.begin()),
+                          &scalarCoeffBetaSP,
+                          rotatedVectorsMatBlockSP.begin(),
                         BVec);
 
 
@@ -3305,8 +3242,8 @@ namespace dftfe
         } // block loop over vectors
 
 
-      // return cublas handle to default stream
-      cublasSetStream(handle, NULL);
+      // return deviceblas handle to default stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
@@ -3323,7 +3260,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -3387,25 +3324,22 @@ namespace dftfe
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
               // Comptute local XTrunc^{T}*XcBlock.
-              cublasXgemm(
+              dftfe::utils::deviceBlasWrapper::gemm(
                 handle,
-                CUBLAS_OP_N,
+                DEVICEBLAS_OP_N,
                 std::is_same<dataTypes::number, std::complex<double>>::value ?
-                  CUBLAS_OP_C :
-                  CUBLAS_OP_T,
+                  DEVICEBLAS_OP_C :
+                  DEVICEBLAS_OP_T,
                 D,
                 B,
                 M,
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  &scalarCoeffAlpha),
-                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                  &scalarCoeffAlpha,
+                X + ivec,
                 N,
-                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                X + ivec,
                 N,
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  &scalarCoeffBeta),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlock.begin()),
+                  &scalarCoeffBeta,
+                  overlapMatrixBlock.begin(),
                 D);
 
 
@@ -3510,7 +3444,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -3544,8 +3478,8 @@ namespace dftfe
       dftfe::utils::deviceStreamCreate(&streamCompute);
       dftfe::utils::deviceStreamCreate(&streamDataMove);
 
-      // attach cublas handle to compute stream
-      cublasSetStream(handle, streamCompute);
+      // attach deviceblas handle to compute stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
       // create array of compute and copy events on Devices
       // for all the blocks. These are required for synchronization
@@ -3599,25 +3533,22 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  cublasXgemm(handle,
-                              CUBLAS_OP_N,
+                  dftfe::utils::deviceBlasWrapper::gemm(handle,
+                              DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                CUBLAS_OP_C :
-                                CUBLAS_OP_T,
+                                DEVICEBLAS_OP_C :
+                                DEVICEBLAS_OP_T,
                               D,
                               B,
                               M,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                                &scalarCoeffAlpha,
+                              X + ivec,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                              X + ivec,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  overlapMatrixBlock.begin()),
+                                &scalarCoeffBeta,
+                                  overlapMatrixBlock.begin(),
                               D);
 
                   // record completion of compute for first block
@@ -3646,25 +3577,22 @@ namespace dftfe
                 {
 
                   // evaluate X^{T} times XBlock
-                  cublasXgemm(handle,
-                              CUBLAS_OP_N,
+                  dftfe::utils::deviceBlasWrapper::gemm(handle,
+                              DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                CUBLAS_OP_C :
-                                CUBLAS_OP_T,
+                                DEVICEBLAS_OP_C :
+                                DEVICEBLAS_OP_T,
                               DNew,
                               BNew,
                               M,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
+                                &scalarCoeffAlpha,
+                              X + ivecNew,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
+                              X + ivecNew,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  overlapMatrixBlockNext.begin()),
+                                &scalarCoeffBeta,
+                                  overlapMatrixBlockNext.begin(),
                               DNew);
 
                   // record completion of compute for next block
@@ -3747,8 +3675,8 @@ namespace dftfe
         } // end block loop
 
       
-      // return cublas handle to default stream
-      cublasSetStream(handle, NULL);
+      // return deviceblas handle to default stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
@@ -3774,7 +3702,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -3868,53 +3796,45 @@ namespace dftfe
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              cublasXgemm(
+              dftfe::utils::deviceBlasWrapper::gemm(
                 handle,
-                CUBLAS_OP_N,
+                DEVICEBLAS_OP_N,
                 std::is_same<dataTypes::number, std::complex<double>>::value ?
-                  CUBLAS_OP_C :
-                  CUBLAS_OP_T,
+                  DEVICEBLAS_OP_C :
+                  DEVICEBLAS_OP_T,
                 B,
                 B,
                 M,
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  &scalarCoeffAlpha),
-                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                  &scalarCoeffAlpha,
+                X + ivec,
                 N,
-                dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                X + ivec,
                 N,
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  &scalarCoeffBeta),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockDP.begin()),
+                  &scalarCoeffBeta,
+                  overlapMatrixBlockDP.begin(),
                 B);
 
               const unsigned int DRem = D - B;
 
               if (DRem != 0)
                 {
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      DEVICEBLAS_OP_C :
+                      DEVICEBLAS_OP_T,
                     DRem,
                     B,
                     M,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      &scalarCoeffAlphaSP),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      XSP.begin() + ivec + B),
+                      &scalarCoeffAlphaSP,
+                      XSP.begin() + ivec + B,
                     N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      XSP.begin() + ivec),
+                      XSP.begin() + ivec,
                     N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      &scalarCoeffBetaSP),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlockSP.begin()),
+                      &scalarCoeffBetaSP,
+                      overlapMatrixBlockSP.begin(),
                     DRem);
                 }
 
@@ -4056,7 +3976,7 @@ namespace dftfe
       const dataTypes::number *                  X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const MPI_Comm &                                 mpiCommDomain,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
@@ -4090,8 +4010,8 @@ namespace dftfe
       dftfe::utils::deviceStreamCreate(&streamCompute);
       dftfe::utils::deviceStreamCreate(&streamDataMove);
 
-      // attach cublas handle to compute stream
-      cublasSetStream(handle, streamCompute);
+      // attach deviceblas handle to compute stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
       // create array of compute and copy events on Devices
       // for all the blocks. These are required for synchronization
@@ -4178,25 +4098,22 @@ namespace dftfe
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
 
-                  cublasXgemm(handle,
-                              CUBLAS_OP_N,
+                  dftfe::utils::deviceBlasWrapper::gemm(handle,
+                              DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                CUBLAS_OP_C :
-                                CUBLAS_OP_T,
+                                DEVICEBLAS_OP_C :
+                                DEVICEBLAS_OP_T,
                               B,
                               B,
                               M,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                                &scalarCoeffAlpha,
+                              X + ivec,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivec,
+                              X + ivec,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  overlapMatrixBlockDP.begin()),
+                                &scalarCoeffBeta,
+                                  overlapMatrixBlockDP.begin(),
                               B);
 
                   const unsigned int DRem = D - B;
@@ -4204,28 +4121,23 @@ namespace dftfe
                   if (DRem != 0)
                     {
 
-                      cublasXgemm(
+                      dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        CUBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
-                          CUBLAS_OP_C :
-                          CUBLAS_OP_T,
+                          DEVICEBLAS_OP_C :
+                          DEVICEBLAS_OP_T,
                         DRem,
                         B,
                         M,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffAlphaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          XSP.begin() + ivec + B),
+                          &scalarCoeffAlphaSP,
+                          XSP.begin() + ivec + B,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          XSP.begin() + ivec),
+                          XSP.begin() + ivec,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffBetaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          overlapMatrixBlockSP.begin()),
+                          &scalarCoeffBetaSP,
+                          overlapMatrixBlockSP.begin(),
                         DRem);
                     }
 
@@ -4258,25 +4170,22 @@ namespace dftfe
                 {
 
                   // evaluate X^{T} times XBlock
-                  cublasXgemm(handle,
-                              CUBLAS_OP_N,
+                  dftfe::utils::deviceBlasWrapper::gemm(handle,
+                              DEVICEBLAS_OP_N,
                               std::is_same<dataTypes::number,
                                            std::complex<double>>::value ?
-                                CUBLAS_OP_C :
-                                CUBLAS_OP_T,
+                                DEVICEBLAS_OP_C :
+                                DEVICEBLAS_OP_T,
                               BNew,
                               BNew,
                               M,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffAlpha),
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
+                                &scalarCoeffAlpha,
+                              X + ivecNew,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(X) + ivecNew,
+                              X + ivecNew,
                               N,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                &scalarCoeffBeta),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                  overlapMatrixBlockDPNext.begin()),
+                                &scalarCoeffBeta,
+                                  overlapMatrixBlockDPNext.begin(),
                               BNew);
 
                   const unsigned int DRemNew = DNew - BNew;
@@ -4284,28 +4193,23 @@ namespace dftfe
                   if (DRemNew != 0)
                     {
 
-                      cublasXgemm(
+                      dftfe::utils::deviceBlasWrapper::gemm(
                         handle,
-                        CUBLAS_OP_N,
+                        DEVICEBLAS_OP_N,
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
-                          CUBLAS_OP_C :
-                          CUBLAS_OP_T,
+                          DEVICEBLAS_OP_C :
+                          DEVICEBLAS_OP_T,
                         DRemNew,
                         BNew,
                         M,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffAlphaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          XSP.begin() + ivecNew + BNew),
+                          &scalarCoeffAlphaSP,
+                          XSP.begin() + ivecNew + BNew,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          XSP.begin() + ivecNew),
+                          XSP.begin() + ivecNew,
                         N,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          &scalarCoeffBetaSP),
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                            overlapMatrixBlockSPNext.begin()),
+                          &scalarCoeffBetaSP,
+                            overlapMatrixBlockSPNext.begin(),
                         DRemNew);
                     }
 
@@ -4429,8 +4333,8 @@ namespace dftfe
         } // end block loop
 
 
-      // return cublas handle to default stream
-      cublasSetStream(handle, NULL);
+      // return deviceblas handle to default stream
+      dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
       for (int i = 0; i < numberBlocks; ++i)
         {
@@ -4464,7 +4368,7 @@ namespace dftfe
       const std::vector<double> &                    eigenValues,
       const MPI_Comm &                               mpiCommDomain,
       const MPI_Comm &                               interBandGroupComm,
-      cublasHandle_t &                               handle,
+      deviceBlasHandle_t &                               handle,
       std::vector<double> &                          residualNorm,
       const dftParameters &                          dftParams,
       const bool                                     useBandParal)
@@ -4556,9 +4460,9 @@ namespace dftfe
                 HXBlockFull.begin()),
                 residualSqDevice.begin());
 
-              cublasDgemm(handle,
-                          CUBLAS_OP_N,
-                          CUBLAS_OP_T,
+              dftfe::utils::deviceBlasWrapper::gemm(handle,
+                          DEVICEBLAS_OP_N,
+                          DEVICEBLAS_OP_T,
                           1,
                           B,
                           M,

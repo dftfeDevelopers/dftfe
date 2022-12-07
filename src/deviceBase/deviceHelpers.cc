@@ -24,7 +24,6 @@
 #include <DeviceAPICalls.h>
 #include <dftUtils.h>
 #include <headers.h>
-#include <cublas_v2.h>
 
 namespace dftfe
 {
@@ -119,22 +118,22 @@ namespace dftfe
         const double *  x,
         const double    alpha,
         const int       size,
-        cublasHandle_t &cublasHandle)
+        deviceBlasHandle_t &deviceBlasHandle)
     {
       int incx = 1, incy = 1;
-      cublasCheck(cublasDaxpy(cublasHandle, size, &alpha, x, incx, y, incy));
+      dftfe::utils::deviceBlasWrapper::axpy(deviceBlasHandle, size, &alpha, x, incx, y, incy);
     }
 
     double
     l2_norm(const double *  x,
             const int       size,
             const MPI_Comm &mpi_communicator,
-            cublasHandle_t &cublasHandle)
+            deviceBlasHandle_t &deviceBlasHandle)
     {
       int    incx = 1;
       double local_nrm, nrm = 0;
 
-      cublasCheck(cublasDnrm2(cublasHandle, size, x, incx, &local_nrm));
+      dftfe::utils::deviceBlasWrapper::nrm2(deviceBlasHandle, size, x, incx, &local_nrm);
 
       local_nrm *= local_nrm;
       MPI_Allreduce(&local_nrm, &nrm, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -147,12 +146,12 @@ namespace dftfe
         const double *  y,
         const int       size,
         const MPI_Comm &mpi_communicator,
-        cublasHandle_t &cublasHandle)
+        deviceBlasHandle_t &deviceBlasHandle)
     {
       int    incx = 1, incy = 1;
       double local_sum, sum = 0;
 
-      cublasCheck(cublasDdot(cublasHandle, size, x, incx, y, incy, &local_sum));
+      dftfe::utils::deviceBlasWrapper::dot(deviceBlasHandle, size, x, incx, y, incy, &local_sum);
       MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
       return sum;

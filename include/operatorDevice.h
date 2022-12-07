@@ -24,7 +24,6 @@
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
 #    include <MemoryStorage.h>
-#    include <cublas_v2.h>
 #    include <headers.h>
 #    include "process_grid.h"
 #    include "scalapackWrapper.h"
@@ -61,13 +60,13 @@ namespace dftfe
 
 
     virtual void
-    createCublasHandle() = 0;
+    createDeviceBlasHandle() = 0;
 
     virtual void
-    destroyCublasHandle() = 0;
+    destroyDeviceBlasHandle() = 0;
 
-    virtual cublasHandle_t &
-    getCublasHandle() = 0;
+    virtual deviceBlasHandle_t &
+    getDeviceBlasHandle() = 0;
 
     virtual const double *
     getSqrtMassVec() = 0;
@@ -228,7 +227,7 @@ namespace dftfe
      * projector kets times block wavefunction vectors
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
@@ -240,7 +239,7 @@ namespace dftfe
          distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
          const unsigned int                             M,
          const unsigned int                             N,
-         cublasHandle_t &                               handle,
+         deviceBlasHandle_t &                               handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -258,7 +257,7 @@ namespace dftfe
      * projector kets times block wavefunction vectors
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
@@ -271,7 +270,7 @@ namespace dftfe
       distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
@@ -294,7 +293,7 @@ namespace dftfe
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
      * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
@@ -309,7 +308,7 @@ namespace dftfe
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      cublasHandle_t &                                 handle,
+      deviceBlasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,

@@ -96,7 +96,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         dummy,
         d_smearedChargeQuadratureIdElectro,
         charge,
-        d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+        d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
         false,
         false);
 #endif
@@ -125,7 +125,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
       CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
                            d_dftParamsPtr->absPoissonSolverToleranceLRD,
                            d_dftParamsPtr->maxLinearSolverIterations,
-                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+                           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
                            d_dftParamsPtr->verbosity);
 #endif
     }

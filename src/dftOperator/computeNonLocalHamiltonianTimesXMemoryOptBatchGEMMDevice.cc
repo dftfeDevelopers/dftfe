@@ -47,39 +47,37 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0 && !skip1)
     {
-      cublasXgemmBatched(
-        d_cublasHandle,
-        CUBLAS_OP_N,
-        CUBLAS_OP_N,
+      dftfe::utils::deviceBlasWrapper::gemmBatched(
+        d_deviceBlasHandle,
+        DEVICEBLAS_OP_N,
+        DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-        (const dataTypes::numberDevice **)d_A,
+        &scalarCoeffAlpha,
+        d_A,
         numberWaveFunctions,
-        (const dataTypes::numberDevice **)d_B,
+        d_B,
         d_numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-        (dataTypes::numberDevice **)d_C,
+        &scalarCoeffBeta,
+        d_C,
         numberWaveFunctions,
         d_totalNonlocalElems);
 
-      cublasXgemm(
-        d_cublasHandle,
-        CUBLAS_OP_N,
-        CUBLAS_OP_N,
+      dftfe::utils::deviceBlasWrapper::gemm(
+        d_deviceBlasHandle,
+        DEVICEBLAS_OP_N,
+        DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-        d_projectorKetTimesVectorAllCellsDevice.begin()),
+        &scalarCoeffAlpha,
+        d_projectorKetTimesVectorAllCellsDevice.begin(),
         numberWaveFunctions,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-            d_projectorKetTimesVectorAllCellsReductionDevice.begin()),
+            d_projectorKetTimesVectorAllCellsReductionDevice.begin(),
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-        dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
+        &scalarCoeffBeta,
+        d_projectorKetTimesVectorParFlattenedDevice.begin(),
         numberWaveFunctions);
     }
 
@@ -150,24 +148,23 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       strideA = numberWaveFunctions * d_maxSingleAtomPseudoWfc;
       strideB = d_maxSingleAtomPseudoWfc * d_numberNodesPerElement;
       strideC = numberWaveFunctions * d_numberNodesPerElement;
-      cublasXgemmStridedBatched(
-        d_cublasHandle,
-        CUBLAS_OP_N,
-        CUBLAS_OP_N,
+      dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+        d_deviceBlasHandle,
+        DEVICEBLAS_OP_N,
+        DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_numberNodesPerElement,
         d_maxSingleAtomPseudoWfc,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-        d_projectorKetTimesVectorAllCellsDevice.begin()),
+        &scalarCoeffAlpha,
+        d_projectorKetTimesVectorAllCellsDevice.begin(),
         numberWaveFunctions,
         strideA,
-        dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.begin()+d_kPointIndex * d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
-             d_numberNodesPerElement),
+        d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.begin()+d_kPointIndex * d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
+             d_numberNodesPerElement,
         d_maxSingleAtomPseudoWfc,
         strideB,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-        dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamMatrixTimesWaveMatrixNonLocalDevice.begin()),
+        &scalarCoeffBeta,
+        d_cellHamMatrixTimesWaveMatrixNonLocalDevice.begin(),
         numberWaveFunctions,
         strideC,
         d_totalNonlocalElems);
@@ -272,39 +269,37 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
 
-      cublasXgemmBatched(
-        d_cublasHandle,
-        CUBLAS_OP_N,
-        CUBLAS_OP_N,
+      dftfe::utils::deviceBlasWrapper::gemmBatched(
+        d_deviceBlasHandle,
+        DEVICEBLAS_OP_N,
+        DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-        (const dataTypes::numberDevice **)d_A,
+        &scalarCoeffAlpha,
+        d_A,
         numberWaveFunctions,
-        (const dataTypes::numberDevice **)d_B,
+        d_B,
         d_numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-        (dataTypes::numberDevice **)d_C,
+        &scalarCoeffBeta,
+        d_C,
         numberWaveFunctions,
         d_totalNonlocalElems);
 
-      cublasXgemm(
-        d_cublasHandle,
-        CUBLAS_OP_N,
-        CUBLAS_OP_N,
+      dftfe::utils::deviceBlasWrapper::gemm(
+        d_deviceBlasHandle,
+        DEVICEBLAS_OP_N,
+        DEVICEBLAS_OP_N,
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffAlpha),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-        d_projectorKetTimesVectorAllCellsDevice.begin()),
+        &scalarCoeffAlpha,
+        d_projectorKetTimesVectorAllCellsDevice.begin(),
         numberWaveFunctions,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-        d_projectorKetTimesVectorAllCellsReductionDevice.begin()),
+        d_projectorKetTimesVectorAllCellsReductionDevice.begin(),
         d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-        dftfe::utils::makeDataTypeDeviceCompatible(&scalarCoeffBeta),
-        dftfe::utils::makeDataTypeDeviceCompatible(d_projectorKetTimesVectorParFlattenedDevice.begin()),
+        &scalarCoeffBeta,
+        d_projectorKetTimesVectorParFlattenedDevice.begin(),
         numberWaveFunctions);
     }
 

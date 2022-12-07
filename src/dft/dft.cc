@@ -1828,7 +1828,7 @@ namespace dftfe
 
         if (initializeCublas)
           {
-            kohnShamDFTEigenOperatorDevice.createCublasHandle();
+            kohnShamDFTEigenOperatorDevice.createDeviceBlasHandle();
           }
 
         AssertThrow(
@@ -1944,7 +1944,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
-          d_kohnShamDFTOperatorDevicePtr->destroyCublasHandle();
+          d_kohnShamDFTOperatorDevicePtr->destroyDeviceBlasHandle();
 #endif
 
         delete d_kohnShamDFTOperatorPtr;
@@ -2296,7 +2296,7 @@ namespace dftfe
                 d_bQuadValuesAllAtoms,
                 d_smearedChargeQuadratureIdElectro,
                 *rhoInValues,
-                kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                 false,
                 false,
                 d_dftParamsPtr->smearedNuclearCharges,
@@ -2318,7 +2318,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   *rhoInValues,
-                  kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   true,
                   d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
                     d_dftParamsPtr->periodicZ &&
@@ -2389,7 +2389,7 @@ namespace dftfe
               d_phiTotalSolverProblemDevice,
               d_dftParamsPtr->absLinearSolverTolerance,
               d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               d_dftParamsPtr->verbosity);
 #endif
           }
@@ -3155,7 +3155,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   *rhoOutValues,
-                  kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   false,
                   false,
                   d_dftParamsPtr->smearedNuclearCharges,
@@ -3169,7 +3169,7 @@ namespace dftfe
                   d_phiTotalSolverProblemDevice,
                   d_dftParamsPtr->absLinearSolverTolerance,
                   d_dftParamsPtr->maxLinearSolverIterations,
-                  kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   d_dftParamsPtr->verbosity);
 #endif
               }
@@ -3407,7 +3407,7 @@ namespace dftfe
               d_bQuadValuesAllAtoms,
               d_smearedChargeQuadratureIdElectro,
               *rhoOutValues,
-              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               false,
               false,
               d_dftParamsPtr->smearedNuclearCharges,
@@ -3421,7 +3421,7 @@ namespace dftfe
               d_phiTotalSolverProblemDevice,
               d_dftParamsPtr->absLinearSolverTolerance,
               d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               d_dftParamsPtr->verbosity);
 #endif
           }

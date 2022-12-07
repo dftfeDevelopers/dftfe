@@ -77,7 +77,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
     const unsigned int smearedChargeQuadratureId,
     const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-    cublasHandle_t &                                     cublasHandle,
+    deviceBlasHandle_t &                                     deviceBlasHandle,
     const bool                                           isComputeDiagonalA,
     const bool         isComputeMeanValueConstraint,
     const bool         smearedNuclearCharges,
@@ -113,7 +113,7 @@ namespace dftfe
     d_smearedChargeGradientComponentId = smearedChargeGradientComponentId;
     d_isStoreSmearedChargeRhs          = storeSmearedChargeRhs;
     d_isReuseSmearedChargeRhs          = reuseSmearedChargeRhs;
-    d_cublasHandlePtr                  = &cublasHandle;
+    d_deviceBlasHandlePtr                  = &deviceBlasHandle;
     d_nLocalCells                      = d_matrixFreeDataPtr->n_macro_cells();
     d_xLocalDof                        = d_xDevice.locallyOwnedDofsSize();
     d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
@@ -438,7 +438,7 @@ namespace dftfe
                        vec.begin(),
                        d_xLocalDof,
                        mpi_communicator,
-                       *d_cublasHandlePtr);
+                       *d_deviceBlasHandlePtr);
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
@@ -474,7 +474,7 @@ namespace dftfe
                      d_meanValueConstraintDeviceVec.begin(),
                      constrainedNodeValue,
                      d_xLocalDof,
-                     *d_cublasHandlePtr);
+                     *d_deviceBlasHandlePtr);
 
     // meanValueConstraintSetZero
     if (d_isMeanValueConstraintComputed)

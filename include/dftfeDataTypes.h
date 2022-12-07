@@ -41,17 +41,11 @@ namespace dftfe
     typedef std::complex<float>  numberFP32;
     typedef double               numberValueType;
     typedef float                numberFP32ValueType;
-#  if defined(DFTFE_WITH_DEVICE)
-    typedef dftfe::utils::deviceDoubleComplex         numberDevice;
-#  endif
 #else
     typedef double number;
     typedef float  numberFP32;
     typedef double numberValueType;
     typedef float  numberFP32ValueType;
-#  if defined(DFTFE_WITH_DEVICE)
-    typedef double numberDevice;
-#  endif    
 #endif
 
     inline MPI_Datatype

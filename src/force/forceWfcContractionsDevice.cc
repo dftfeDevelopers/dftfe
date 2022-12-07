@@ -27,7 +27,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceAPICalls.h>
 #include <DeviceKernelLauncherConstants.h>
-#include "linearAlgebraOperationsDevice.h"
+#include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
@@ -573,28 +573,23 @@ namespace dftfe
 
                 if (!isFloatingChargeForces)
                   {
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffAlpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffAlpha,
                       cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec),
+                                                  numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                      shapeFunctionValuesReferenceD.begin()),
+                      shapeFunctionValuesReferenceD.begin(),
                       numNodesPerElement,
                       strideB,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffBeta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        psiQuadsFlatD.begin()),
+                        &scalarCoeffBeta,
+                        psiQuadsFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -609,28 +604,23 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                           shapeFunctionGradientValuesXTransposedDevice.begin()));
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffAlpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffAlpha,
                           cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec),
+                                                  numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                      shapeFunctionGradientValuesXTransposedDevice.begin()),
+                      shapeFunctionGradientValuesXTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffBeta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsXFlatD.begin()),
+                        &scalarCoeffBeta,
+                        gradPsiQuadsXFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -643,28 +633,23 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                           shapeFunctionGradientValuesYTransposedDevice.begin()));
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffAlpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffAlpha,
                       cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec),
+                                                  numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                          shapeFunctionGradientValuesYTransposedDevice.begin()),
+                          shapeFunctionGradientValuesYTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffBeta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsYFlatD.begin()),
+                        &scalarCoeffBeta,
+                        gradPsiQuadsYFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -676,28 +661,23 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                       shapeFunctionGradientValuesZTransposedDevice.begin()));
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffAlpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffAlpha,
                       cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec),
+                                                  numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        shapeFunctionGradientValuesZTransposedDevice.begin()),
+                        shapeFunctionGradientValuesZTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffBeta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsZFlatD.begin()),
+                        &scalarCoeffBeta,
+                        gradPsiQuadsZFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -738,10 +718,10 @@ namespace dftfe
 
 
 
-                    cublasDgemm(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemm(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       1,
                       currentBlockSize * numQuads * 9,
                       BVec,
@@ -761,38 +741,33 @@ namespace dftfe
                     const int strideCNLP = BVec * numQuadsNLP;
                     const int strideBNLP = 0;
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       BVec,
                       numQuadsNLP,
                       numNodesPerElement,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffAlpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffAlpha,
                       cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec),
+                                                  numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                          shapeFunctionValuesNLPReferenceD.begin()),
+                          shapeFunctionValuesNLPReferenceD.begin(),
                       numNodesPerElement,
                       strideBNLP,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffBeta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                      psiQuadsNLPD.begin()+startingId * numQuadsNLP * BVec),
+                        &scalarCoeffBeta,
+                      psiQuadsNLPD.begin()+startingId * numQuadsNLP * BVec,
                       BVec,
                       strideCNLP,
                       currentBlockSize);
 #endif
 
                     // shapeGradRef^T*invJacobian^T
-                    cublasDgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       numNodesPerElement,
                       3,
                       3,
@@ -821,29 +796,24 @@ namespace dftfe
                     const int strideBNLPGrad =
                       numNodesPerElement * 3 * numQuadsNLP;
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      DEVICEBLAS_OP_N,
+                      DEVICEBLAS_OP_N,
                       BVec,
                       3 * numQuadsNLP,
                       numNodesPerElement,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffAlpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffAlpha,
                       cellWaveFunctionMatrix.begin()+startingId *
-                                                  numNodesPerElement * BVec),
+                                                  numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                       shapeFunctionGradientValuesNLPDCopy.begin()),
+                       shapeFunctionGradientValuesNLPDCopy.begin(),
                       numNodesPerElement,
                       strideBNLPGrad,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        &scalarCoeffBeta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        &scalarCoeffBeta,
                       gradPsiQuadsNLPFlatD.begin()+startingId * numQuadsNLP * 3 *
-                                                BVec),
+                                                BVec,
                       BVec,
                       strideCNLPGrad,
                       currentBlockSize);
@@ -919,24 +889,20 @@ namespace dftfe
                   projecterKetTimesFlattenedVectorLocalIdsD.begin(),
                   dftfe::utils::makeDataTypeDeviceCompatible(nlpContractionContributionD.begin()));
 
-                dftfe::cublasXgemm(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
+                dftfe::dftfe::utils::deviceBlasWrapper::gemm(
+                  operatorMatrix.getDeviceBlasHandle(),
+                  DEVICEBLAS_OP_N,
+                  DEVICEBLAS_OP_N,
                   1,
                   currentBlockSizeNlp * numQuadsNLP * 3,
                   numPsi,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    &scalarCoeffAlphaNlp),
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    onesVecDNLP.begin()),
+                    &scalarCoeffAlphaNlp,
+                    onesVecDNLP.begin(),
                   1,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    nlpContractionContributionD.begin()),
+                    nlpContractionContributionD.begin(),
                   numPsi,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    &scalarCoeffBetaNlp),
-                  dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock.begin()),
+                    &scalarCoeffBetaNlp,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock.begin(),
                   1);
 
                 dftfe::utils::deviceMemcpyD2H(
@@ -972,24 +938,20 @@ namespace dftfe
                   dftfe::utils::makeDataTypeDeviceCompatible(
                   nlpContractionContributionD.begin()));
 
-                dftfe::cublasXgemm(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
+                dftfe::dftfe::utils::deviceBlasWrapper::gemm(
+                  operatorMatrix.getDeviceBlasHandle(),
+                  DEVICEBLAS_OP_N,
+                  DEVICEBLAS_OP_N,
                   1,
                   currentBlockSizeNlp * numQuadsNLP,
                   numPsi,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    &scalarCoeffAlphaNlp),
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    onesVecDNLP.begin()),
+                    &scalarCoeffAlphaNlp,
+                    onesVecDNLP.begin(),
                   1,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    nlpContractionContributionD.begin()),
+                    nlpContractionContributionD.begin(),
                   numPsi,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    &scalarCoeffBetaNlp),
-                  dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock.begin()),
+                    &scalarCoeffBetaNlp,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock.begin(),
                   1);
 
                 dftfe::utils::deviceMemcpyD2H(

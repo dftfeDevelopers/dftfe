@@ -119,7 +119,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
       CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
                            d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                            d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+                           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
                            d_dftParamsPtr->verbosity,
                            false);
 #endif
@@ -407,7 +407,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
       CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
                            d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                            d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+                           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
                            d_dftParamsPtr->verbosity,
                            false);
 #endif
