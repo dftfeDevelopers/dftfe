@@ -447,9 +447,9 @@ namespace dftfe
       const size_type                               numVectors,
       const ValueType initVal)
     {
-      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
-      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
-      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_globalSize       = mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = mpiPatternP2P->localGhostSize();
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
       d_numVectors       = numVectors;
       d_storage =
@@ -646,12 +646,12 @@ namespace dftfe
     MultiVector<ValueType,memorySpace> & multiVector)
     {
       const std::pair<global_size_type,global_size_type> & locallyOwnedRange=partitioner->local_range();
-      std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
+      //std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
       std::vector<global_size_type> ghostIndices;
       (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
 
-     for (unsigned int i=0;i<ghostIndices.size();++i)
-       std::cout<<ghostIndices[i]<<std::endl;
+      //for (unsigned int i=0;i<ghostIndices.size();++i)
+      // std::cout<<ghostIndices[i]<<std::endl;
 
       std::sort(ghostIndices.begin(),ghostIndices.end());
       std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2PPtr =
