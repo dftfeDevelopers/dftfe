@@ -60,13 +60,13 @@ namespace dftfe
     double
     solve(operatorDFTDeviceClass & operatorMatrix,
           elpaScalaManager &       elpaScala,
-          dataTypes::numberDevice *eigenVectorsFlattenedDevice,
-          dataTypes::numberDevice *eigenVectorsRotFracDensityFlattenedDevice,
+          dataTypes::number *      eigenVectorsFlattenedDevice,
+          dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
           const unsigned int       flattenedSize,
           const unsigned int       totalNumberWaveFunctions,
           std::vector<double> &    eigenValues,
           std::vector<double> &    residuals,
-          DeviceCCLWrapper &       devicecclMpiCommDomain,
+          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
           const MPI_Comm &         interBandGroupComm,
           const bool               isFirstFilteringCall,
           const bool               computeResidual,
@@ -80,11 +80,11 @@ namespace dftfe
     void
     solveNoRR(operatorDFTDeviceClass & operatorMatrix,
               elpaScalaManager &       elpaScala,
-              dataTypes::numberDevice *eigenVectorsFlattenedDevice,
+              dataTypes::number *      eigenVectorsFlattenedDevice,
               const unsigned int       flattenedSize,
               const unsigned int       totalNumberWaveFunctions,
               std::vector<double> &    eigenValues,
-              DeviceCCLWrapper &       devicecclMpiCommDomain,
+              utils::DeviceCCLWrapper &devicecclMpiCommDomain,
               const MPI_Comm &         interBandGroupComm,
               const unsigned int       numberPasses,
               const bool               useMixedPrecOverall);
@@ -96,13 +96,13 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTDeviceClass &   operatorMatrix,
-      dataTypes::numberDevice *  eigenVectorsFlattenedDevice,
+      dataTypes::number *        eigenVectorsFlattenedDevice,
       const unsigned int         flattenedSize,
       const unsigned int         totalNumberWaveFunctions,
       const std::vector<double> &eigenValues,
       const double               fermiEnergy,
       std::vector<double> &      densityMatDerFermiEnergy,
-      DeviceCCLWrapper &         devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &  devicecclMpiCommDomain,
       const MPI_Comm &           interBandGroupComm,
       dftfe::elpaScalaManager &  elpaScala);
 
@@ -137,16 +137,16 @@ namespace dftfe
     //
     // temporary parallel vectors needed for Chebyshev filtering
     //
-    distributedDeviceVec<dataTypes::numberDevice> d_YArray;
+    distributedDeviceVec<dataTypes::number> d_YArray;
 
-    distributedDeviceVec<dataTypes::numberFP32Device>
+    distributedDeviceVec<dataTypes::numberFP32>
       d_deviceFlattenedFloatArrayBlock;
 
-    distributedDeviceVec<dataTypes::numberDevice> d_deviceFlattenedArrayBlock2;
+    distributedDeviceVec<dataTypes::number> d_deviceFlattenedArrayBlock2;
 
-    distributedDeviceVec<dataTypes::numberDevice> d_YArray2;
+    distributedDeviceVec<dataTypes::number> d_YArray2;
 
-    distributedDeviceVec<dataTypes::numberDevice> d_projectorKetTimesVector2;
+    distributedDeviceVec<dataTypes::number> d_projectorKetTimesVector2;
 
     bool d_isTemporaryParallelVectorsCreated;
 

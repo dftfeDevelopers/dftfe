@@ -18,7 +18,7 @@
 #define DistributedMulticomponentVec_h
 
 #include "dftfeDataTypes.h"
-#include "memorySpace.h"
+#include "MemorySpaceType.h"
 #include <deal.II/base/partitioner.h>
 
 namespace dftfe
@@ -30,7 +30,8 @@ namespace dftfe
    *  @author Sambit Das
    */
   template <typename NumberType,
-            typename MemorySpace = dftfe::MemorySpace::Host>
+            dftfe::utils::MemorySpace memorySpace =
+              dftfe::utils::MemorySpace::HOST>
   class DistributedMulticomponentVec
   {
   public:
@@ -44,7 +45,7 @@ namespace dftfe
            const dataTypes::local_size_type numberComponents);
 
     void
-    reinit(const DistributedMulticomponentVec<NumberType, MemorySpace> &vec);
+    reinit(const DistributedMulticomponentVec<NumberType, memorySpace> &vec);
 
     void
     setZero();
@@ -95,7 +96,7 @@ namespace dftfe
     zeroOutGhosts();
 
     void
-    swap(DistributedMulticomponentVec<NumberType, MemorySpace> &vec);
+    swap(DistributedMulticomponentVec<NumberType, memorySpace> &vec);
 
     void
     clear();

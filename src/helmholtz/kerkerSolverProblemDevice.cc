@@ -19,6 +19,9 @@
 
 #include <constants.h>
 #include <kerkerSolverProblemDevice.h>
+#include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <MemoryTransfer.h>
 
 namespace dftfe
 {
@@ -82,9 +85,11 @@ namespace dftfe
     d_xPtr                      = &x;
     d_quadGradResidualValuesPtr = &quadPointValues;
 
-    deviceUtils::copyHostVecToDeviceVec<double>(d_xPtr->begin(),
-                                                d_xDevice.begin(),
-                                                d_xLocalDof);
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_xDevice.begin(),
+                                             d_xPtr->begin());
   }
 
 
@@ -124,9 +129,11 @@ namespace dftfe
   void
   kerkerSolverProblemDevice<FEOrderElectro>::copyXfromDeviceToHost()
   {
-    deviceUtils::copyDeviceVecToHostVec<double>(d_xDevice.begin(),
-                                                d_xPtr->begin(),
-                                                d_xLen);
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,
+                                               d_xPtr->begin(),
+                                               d_xDevice.begin());
   }
 
 
@@ -260,9 +267,12 @@ namespace dftfe
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
     d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
-    deviceUtils::copyHostVecToDeviceVec<double>(d_diagonalA.begin(),
-                                                d_diagonalAdevice.begin(),
-                                                d_xLocalDof);
+
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_diagonalAdevice.begin(),
+                                             d_diagonalA.begin());
   }
 
 
@@ -700,7 +710,8 @@ namespace dftfe
 
     // Shape Function Values, Gradients and their Transposes
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-    thrust::host_vector<double> shapeFunction(2 * q * (p + q));
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      shapeFunction(2 * q * (p + q));
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
@@ -722,7 +733,8 @@ namespace dftfe
         }
 
     // Jacobian
-    thrust::host_vector<double> jacobianFactor(dim * dim * d_nLocalCells);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      jacobianFactor(dim * dim * d_nLocalCells);
 
     auto cellOffsets = mappingData.data_index_offsets;
 
@@ -744,7 +756,8 @@ namespace dftfe
                           [k][i][0];
 
     // Map making
-    thrust::host_vector<int> map(nDofsPerCell * d_nLocalCells);
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(
+      nDofsPerCell * d_nLocalCells);
 
     for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
       std::memcpy(map.data() + cellIdx * nDofsPerCell,
@@ -759,20 +772,27 @@ namespace dftfe
                   nDofsPerCell * sizeof(unsigned int));
 
     // Construct the device vectors
-    d_shapeFunction  = shapeFunction;
-    d_jacobianFactor = jacobianFactor;
-    d_map            = map;
+    d_shapeFunction.resize(shapeFunction.size());
+    d_shapeFunction.copyFrom(shapeFunction);
 
-    d_shapeFunctionPtr  = thrust::raw_pointer_cast(d_shapeFunction.data());
-    d_jacobianFactorPtr = thrust::raw_pointer_cast(d_jacobianFactor.data());
-    d_mapPtr            = thrust::raw_pointer_cast(d_map.data());
+    d_jacobianFactor.resize(jacobianFactor.size());
+    d_jacobianFactor.copyFrom(jacobianFactor);
+
+    d_map.resize(map.size());
+    d_map.copyFrom(map);
+
+    d_shapeFunctionPtr  = d_shapeFunction.data();
+    d_jacobianFactorPtr = d_jacobianFactor.data();
+    d_mapPtr            = d_map.data();
 
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
+#ifdef DFTFE_WITH_DEVICE_CUDA
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
                          smem);
+#endif
   }
 
 
@@ -788,13 +808,13 @@ namespace dftfe
     constexpr int threads =
       (FEOrderElectro < 7 ?
          96 :
-         FEOrderElectro == 7 ? 64 : deviceConstants::blockSize);
+         FEOrderElectro == 7 ? 64 : dftfe::utils::DEVICE_BLOCK_SIZE);
     const int        blocks         = d_nLocalCells;
     const double     coeffHelmholtz = 4 * M_PI * d_gamma;
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
-    cudaMemset(Ax.begin(), 0, d_xLen * sizeof(double));
+    dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
     x.updateGhostValues();
 

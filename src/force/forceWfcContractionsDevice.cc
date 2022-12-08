@@ -23,7 +23,11 @@
 #include "forceWfcContractionsDevice.h"
 #include "vectorUtilities.h"
 #include "deviceHelpers.h"
-#include "linearAlgebraOperationsDevice.h"
+#include <MemoryStorage.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
@@ -424,11 +428,11 @@ namespace dftfe
                          const unsigned int size,
                          double *           copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
-                                                         copyFromVec,
-                                                         copyToVec);
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
+                                                              copyFromVec,
+                                                              copyToVec);
       }
 
       void
@@ -436,120 +440,144 @@ namespace dftfe
                          const unsigned int size,
                          cuDoubleComplex *  copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
-                                                         copyFromVec,
-                                                         copyToVec);
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
+                                                              copyFromVec,
+                                                              copyToVec);
       }
 
       void
       interpolatePsiComputeELocWfcEshelbyTensorD(
-        operatorDFTDeviceClass &                       operatorMatrix,
-        distributedDeviceVec<dataTypes::numberDevice> &Xb,
-        const unsigned int                             BVec,
-        const unsigned int                             numCells,
-        const unsigned int                             numQuads,
-        const unsigned int                             numQuadsNLP,
-        const unsigned int                             numNodesPerElement,
-        const thrust::device_vector<double> &          eigenValuesD,
-        const thrust::device_vector<double> &          partialOccupanciesD,
+        operatorDFTDeviceClass &                 operatorMatrix,
+        distributedDeviceVec<dataTypes::number> &Xb,
+        const unsigned int                       BVec,
+        const unsigned int                       numCells,
+        const unsigned int                       numQuads,
+        const unsigned int                       numQuadsNLP,
+        const unsigned int                       numNodesPerElement,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &eigenValuesD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &partialOccupanciesD,
 #ifdef USE_COMPLEX
         const double kcoordx,
         const double kcoordy,
         const double kcoordz,
 #endif
-        const thrust::device_vector<double> &                 onesVecD,
-        const unsigned int                                    cellsBlockSize,
-        thrust::device_vector<dataTypes::numberThrustDevice> &psiQuadsFlatD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &                onesVecD,
+        const unsigned int cellsBlockSize,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsFlatD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsXFlatD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsYFlatD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsZFlatD,
 #ifdef USE_COMPLEX
-        thrust::device_vector<dataTypes::numberThrustDevice> &psiQuadsNLPD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsNLPD,
 #endif
-        thrust::device_vector<dataTypes::numberThrustDevice>
-          &                            gradPsiQuadsNLPFlatD,
-        thrust::device_vector<double> &eshelbyTensorContributionsD,
-        thrust::device_vector<double> &eshelbyTensorQuadValuesD,
-        const bool                     isPsp,
-        const bool                     isFloatingChargeForces,
-        const bool                     addEk)
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &gradPsiQuadsNLPFlatD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &eshelbyTensorContributionsD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &        eshelbyTensorQuadValuesD,
+        const bool isPsp,
+        const bool isFloatingChargeForces,
+        const bool addEk)
       {
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
-        copyDeviceKernel<<<(BVec + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize * numCells *
+        copyDeviceKernel<<<(BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE * numCells *
                              numNodesPerElement,
-                           deviceConstants::blockSize>>>(
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           BVec,
           numCells * numNodesPerElement,
-          Xb.begin(),
-          reinterpret_cast<dataTypes::numberDevice *>(
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0])),
-          thrust::raw_pointer_cast(
-            &(operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())[0]));
+          dftfe::utils::makeDataTypeDeviceCompatible(Xb.begin()),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            cellWaveFunctionMatrix.begin()),
+          (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin());
 
         const int blockSize    = cellsBlockSize;
         const int numberBlocks = numCells / blockSize;
         const int remBlockSize = numCells - numberBlocks * blockSize;
 
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionValuesReferenceD(numQuads * numNodesPerElement,
-                                        dataTypes::numberThrustDevice(0.0));
-        thrust::device_vector<dataTypes::numberThrustDevice>
+                                        dataTypes::number(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionValuesNLPReferenceD(numQuadsNLP * numNodesPerElement,
-                                           dataTypes::numberThrustDevice(0.0));
+                                           dataTypes::number(0.0));
 
         copyDoubleToNumber(
-          thrust::raw_pointer_cast(
-            &(operatorMatrix.getShapeFunctionValuesTransposed())[0]),
+          (operatorMatrix.getShapeFunctionValuesTransposed()).begin(),
           numQuads * numNodesPerElement,
-          reinterpret_cast<dataTypes::numberDevice *>(
-            thrust::raw_pointer_cast(&shapeFunctionValuesReferenceD[0])));
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            shapeFunctionValuesReferenceD.begin()));
 
         copyDoubleToNumber(
-          thrust::raw_pointer_cast(
-            &(operatorMatrix.getShapeFunctionValuesNLPTransposed())[0]),
+          (operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),
           numQuadsNLP * numNodesPerElement,
-          reinterpret_cast<dataTypes::numberDevice *>(
-            thrust::raw_pointer_cast(&shapeFunctionValuesNLPReferenceD[0])));
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            shapeFunctionValuesNLPReferenceD.begin()));
 
-        thrust::device_vector<dataTypes::numberThrustDevice>
-          shapeFunctionGradientValuesXTransposedDevice(
-            blockSize * numQuads * numNodesPerElement,
-            dataTypes::numberThrustDevice(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesXTransposedDevice(blockSize * numQuads *
+                                                         numNodesPerElement,
+                                                       dataTypes::number(0.0));
 
-        thrust::device_vector<dataTypes::numberThrustDevice>
-          shapeFunctionGradientValuesYTransposedDevice(
-            blockSize * numQuads * numNodesPerElement,
-            dataTypes::numberThrustDevice(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesYTransposedDevice(blockSize * numQuads *
+                                                         numNodesPerElement,
+                                                       dataTypes::number(0.0));
 
-        thrust::device_vector<dataTypes::numberThrustDevice>
-          shapeFunctionGradientValuesZTransposedDevice(
-            blockSize * numQuads * numNodesPerElement,
-            dataTypes::numberThrustDevice(0.0));
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesZTransposedDevice(blockSize * numQuads *
+                                                         numNodesPerElement,
+                                                       dataTypes::number(0.0));
 
-        thrust::device_vector<double> shapeFunctionGradientValuesNLPReferenceD(
-          blockSize * numQuadsNLP * 3 * numNodesPerElement, 0.0);
-        thrust::device_vector<double> shapeFunctionGradientValuesNLPD(
-          blockSize * numQuadsNLP * 3 * numNodesPerElement, 0.0);
-        thrust::device_vector<dataTypes::numberThrustDevice>
-          shapeFunctionGradientValuesNLPDCopy(
-            blockSize * numQuadsNLP * 3 * numNodesPerElement,
-            dataTypes::numberThrustDevice(0.0));
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesNLPReferenceD(blockSize * numQuadsNLP * 3 *
+                                                     numNodesPerElement,
+                                                   0.0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesNLPD(blockSize * numQuadsNLP * 3 *
+                                            numNodesPerElement,
+                                          0.0);
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          shapeFunctionGradientValuesNLPDCopy(blockSize * numQuadsNLP * 3 *
+                                                numNodesPerElement,
+                                              dataTypes::number(0.0));
 
         for (unsigned int i = 0; i < blockSize; i++)
-          thrust::copy(
-            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed()
-              .begin(),
-            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed().end(),
-            shapeFunctionGradientValuesNLPReferenceD.begin() +
-              i * numQuadsNLP * 3 * numNodesPerElement);
+          shapeFunctionGradientValuesNLPReferenceD.copyFrom(
+            operatorMatrix.getShapeFunctionGradientValuesNLPTransposed(),
+            (operatorMatrix.getShapeFunctionGradientValuesNLPTransposed())
+              .size(),
+            0,
+            i * numQuadsNLP * 3 * numNodesPerElement);
 
 
 
@@ -574,30 +602,23 @@ namespace dftfe
 
                 if (!isFloatingChargeForces)
                   {
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffAlpha),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &cellWaveFunctionMatrix[startingId *
-                                                  numNodesPerElement * BVec])),
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionValuesReferenceD[0])),
+                      shapeFunctionValuesReferenceD.begin(),
                       numNodesPerElement,
                       strideB,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffBeta),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
+                      &scalarCoeffBeta,
+                      psiQuadsFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
@@ -605,144 +626,120 @@ namespace dftfe
                     strideB = numNodesPerElement * numQuads;
 
                     copyDoubleToNumber(
-                      thrust::raw_pointer_cast(
-                        &(operatorMatrix
-                            .getShapeFunctionGradientValuesXTransposed())
-                          [startingId * numQuads * numNodesPerElement]),
+                      (operatorMatrix
+                         .getShapeFunctionGradientValuesXTransposed())
+                          .begin() +
+                        startingId * numQuads * numNodesPerElement,
                       currentBlockSize * numQuads * numNodesPerElement,
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesXTransposedDevice[0])));
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        shapeFunctionGradientValuesXTransposedDevice.begin()));
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffAlpha),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &cellWaveFunctionMatrix[startingId *
-                                                  numNodesPerElement * BVec])),
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesXTransposedDevice[0])),
+                      shapeFunctionGradientValuesXTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffBeta),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsXFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
 
                     copyDoubleToNumber(
-                      thrust::raw_pointer_cast(
-                        &(operatorMatrix
-                            .getShapeFunctionGradientValuesYTransposed())
-                          [startingId * numQuads * numNodesPerElement]),
+                      (operatorMatrix
+                         .getShapeFunctionGradientValuesYTransposed())
+                          .begin() +
+                        startingId * numQuads * numNodesPerElement,
                       currentBlockSize * numQuads * numNodesPerElement,
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesYTransposedDevice[0])));
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        shapeFunctionGradientValuesYTransposedDevice.begin()));
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffAlpha),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &cellWaveFunctionMatrix[startingId *
-                                                  numNodesPerElement * BVec])),
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesYTransposedDevice[0])),
+                      shapeFunctionGradientValuesYTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffBeta),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsYFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
 
                     copyDoubleToNumber(
-                      thrust::raw_pointer_cast(
-                        &(operatorMatrix
-                            .getShapeFunctionGradientValuesZTransposed())
-                          [startingId * numQuads * numNodesPerElement]),
+                      (operatorMatrix
+                         .getShapeFunctionGradientValuesZTransposed())
+                          .begin() +
+                        startingId * numQuads * numNodesPerElement,
                       currentBlockSize * numQuads * numNodesPerElement,
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesZTransposedDevice[0])));
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        shapeFunctionGradientValuesZTransposedDevice.begin()));
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuads,
                       numNodesPerElement,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffAlpha),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &cellWaveFunctionMatrix[startingId *
-                                                  numNodesPerElement * BVec])),
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesZTransposedDevice[0])),
+                      shapeFunctionGradientValuesZTransposedDevice.begin(),
                       numNodesPerElement,
                       strideB,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffBeta),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsZFlatD.begin(),
                       BVec,
                       strideC,
                       currentBlockSize);
 
 
                     computeELocWfcEshelbyTensorContributions<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * currentBlockSize *
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * currentBlockSize *
                         numQuads * 9,
-                      deviceConstants::blockSize>>>(
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                       BVec,
                       currentBlockSize * numQuads * 9,
                       numQuads,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
-                      thrust::raw_pointer_cast(&eigenValuesD[0]),
-                      thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        psiQuadsFlatD.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        gradPsiQuadsXFlatD.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        gradPsiQuadsYFlatD.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        gradPsiQuadsZFlatD.begin()),
+                      eigenValuesD.begin(),
+                      partialOccupanciesD.begin(),
 #ifdef USE_COMPLEX
                       kcoordx,
                       kcoordy,
                       kcoordz,
 #endif
-                      thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0])
+                      eshelbyTensorContributionsD.begin()
 #ifdef USE_COMPLEX
                         ,
                       addEk
@@ -754,21 +751,21 @@ namespace dftfe
 
 
 
-                    cublasDgemm(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemm(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       1,
                       currentBlockSize * numQuads * 9,
                       BVec,
                       &scalarCoeffAlphaEshelby,
-                      thrust::raw_pointer_cast(&onesVecD[0]),
+                      onesVecD.begin(),
                       1,
-                      thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0]),
+                      eshelbyTensorContributionsD.begin(),
                       BVec,
                       &scalarCoeffBetaEshelby,
-                      thrust::raw_pointer_cast(
-                        &eshelbyTensorQuadValuesD[startingId * numQuads * 9]),
+                      eshelbyTensorQuadValuesD.begin() +
+                        startingId * numQuads * 9,
                       1);
                   }
 
@@ -778,100 +775,78 @@ namespace dftfe
                     const int strideCNLP = BVec * numQuadsNLP;
                     const int strideBNLP = 0;
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       numQuadsNLP,
                       numNodesPerElement,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffAlpha),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &cellWaveFunctionMatrix[startingId *
-                                                  numNodesPerElement * BVec])),
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &(shapeFunctionValuesNLPReferenceD[0]))),
+                      shapeFunctionValuesNLPReferenceD.begin(),
                       numNodesPerElement,
                       strideBNLP,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffBeta),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &psiQuadsNLPD[startingId * numQuadsNLP * BVec])),
+                      &scalarCoeffBeta,
+                      psiQuadsNLPD.begin() + startingId * numQuadsNLP * BVec,
                       BVec,
                       strideCNLP,
                       currentBlockSize);
 #endif
 
                     // shapeGradRef^T*invJacobian^T
-                    cublasDgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       numNodesPerElement,
                       3,
                       3,
                       &scalarCoeffAlphaReal,
-                      thrust::raw_pointer_cast(
-                        &shapeFunctionGradientValuesNLPReferenceD[0]),
+                      shapeFunctionGradientValuesNLPReferenceD.begin(),
                       numNodesPerElement,
                       numNodesPerElement * 3,
-                      thrust::raw_pointer_cast(
-                        &(operatorMatrix
-                            .getInverseJacobiansNLP())[startingId *
-                                                       numQuadsNLP * 3 * 3]),
+                      (operatorMatrix.getInverseJacobiansNLP()).begin() +
+                        startingId * numQuadsNLP * 3 * 3,
                       3,
                       3 * 3,
                       &scalarCoeffBetaReal,
-                      thrust::raw_pointer_cast(
-                        &shapeFunctionGradientValuesNLPD[0]),
+                      shapeFunctionGradientValuesNLPD.begin(),
                       numNodesPerElement,
                       numNodesPerElement * 3,
                       currentBlockSize * numQuadsNLP);
 
                     copyDoubleToNumber(
-                      thrust::raw_pointer_cast(
-                        &shapeFunctionGradientValuesNLPD[0]),
+                      shapeFunctionGradientValuesNLPD.begin(),
                       currentBlockSize * numQuadsNLP * numNodesPerElement * 3,
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesNLPDCopy[0])));
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        shapeFunctionGradientValuesNLPDCopy.begin()));
 
                     const int strideCNLPGrad = BVec * 3 * numQuadsNLP;
                     const int strideBNLPGrad =
                       numNodesPerElement * 3 * numQuadsNLP;
 
-                    dftfe::cublasXgemmStridedBatched(
-                      operatorMatrix.getCublasHandle(),
-                      CUBLAS_OP_N,
-                      CUBLAS_OP_N,
+                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                      operatorMatrix.getDeviceBlasHandle(),
+                      dftfe::utils::DEVICEBLAS_OP_N,
+                      dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
                       3 * numQuadsNLP,
                       numNodesPerElement,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffAlpha),
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &cellWaveFunctionMatrix[startingId *
-                                                  numNodesPerElement * BVec])),
+                      &scalarCoeffAlpha,
+                      cellWaveFunctionMatrix.begin() +
+                        startingId * numNodesPerElement * BVec,
                       BVec,
                       strideA,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &shapeFunctionGradientValuesNLPDCopy[0])),
+                      shapeFunctionGradientValuesNLPDCopy.begin(),
                       numNodesPerElement,
                       strideBNLPGrad,
-                      reinterpret_cast<const dataTypes::numberDevice *>(
-                        &scalarCoeffBeta),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(
-                          &gradPsiQuadsNLPFlatD[startingId * numQuadsNLP * 3 *
-                                                BVec])),
+                      &scalarCoeffBeta,
+                      gradPsiQuadsNLPFlatD.begin() +
+                        startingId * numQuadsNLP * 3 * BVec,
                       BVec,
                       strideCNLPGrad,
                       currentBlockSize);
@@ -884,30 +859,42 @@ namespace dftfe
       nlpPsiContractionD(
         operatorDFTDeviceClass &operatorMatrix,
 #ifdef USE_COMPLEX
-        const thrust::device_vector<dataTypes::numberThrustDevice>
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
           &psiQuadsNLPD,
 #endif
-        const thrust::device_vector<dataTypes::numberThrustDevice>
-          &                                  gradPsiQuadsNLPD,
-        const thrust::device_vector<double> &partialOccupanciesD,
-        const thrust::device_vector<dataTypes::numberThrustDevice> &onesVecDNLP,
-        const dataTypes::numberDevice *projectorKetTimesVectorParFlattenedD,
-        const thrust::device_vector<unsigned int> &nonTrivialIdToElemIdMapD,
-        const thrust::device_vector<unsigned int>
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &gradPsiQuadsNLPD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &partialOccupanciesD,
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &                      onesVecDNLP,
+        const dataTypes::number *projectorKetTimesVectorParFlattenedD,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &nonTrivialIdToElemIdMapD,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
           &                projecterKetTimesFlattenedVectorLocalIdsD,
         const unsigned int numCells,
         const unsigned int numQuadsNLP,
         const unsigned int numPsi,
         const unsigned int totalNonTrivialPseudoWfcs,
         const unsigned int innerBlockSizeEnlp,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &nlpContractionContributionD,
-        thrust::device_vector<dataTypes::numberThrustDevice> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 #ifdef USE_COMPLEX
-        thrust::device_vector<dataTypes::numberThrustDevice> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock,
         dataTypes::number
           *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
@@ -931,57 +918,49 @@ namespace dftfe
             if (currentBlockSizeNlp > 0)
               {
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + (deviceConstants::blockSize - 1)) /
-                    deviceConstants::blockSize * numQuadsNLP * 3 *
+                  (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * 3 *
                     currentBlockSizeNlp,
-                  deviceConstants::blockSize>>>(
+                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numPsi,
                   numQuadsNLP * 3,
                   currentBlockSizeNlp,
                   startingIdNlp,
-                  projectorKetTimesVectorParFlattenedD,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&gradPsiQuadsNLPD[0])),
-                  thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-                  thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-                  thrust::raw_pointer_cast(
-                    &projecterKetTimesFlattenedVectorLocalIdsD[0]),
-                  reinterpret_cast<dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&nlpContractionContributionD[0])));
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesVectorParFlattenedD),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    gradPsiQuadsNLPD.begin()),
+                  partialOccupanciesD.begin(),
+                  nonTrivialIdToElemIdMapD.begin(),
+                  projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    nlpContractionContributionD.begin()));
 
-                dftfe::cublasXgemm(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
+                dftfe::utils::deviceBlasWrapper::gemm(
+                  operatorMatrix.getDeviceBlasHandle(),
+                  dftfe::utils::DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   1,
                   currentBlockSizeNlp * numQuadsNLP * 3,
                   numPsi,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    &scalarCoeffAlphaNlp),
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&onesVecDNLP[0])),
+                  &scalarCoeffAlphaNlp,
+                  onesVecDNLP.begin(),
                   1,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&nlpContractionContributionD[0])),
+                  nlpContractionContributionD.begin(),
                   numPsi,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    &scalarCoeffBetaNlp),
-                  reinterpret_cast<
-                    dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-                    &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
-                      [0])),
+                  &scalarCoeffBetaNlp,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+                    .begin(),
                   1);
 
-                cudaMemcpy(
-                  reinterpret_cast<dataTypes::numberDevice *>(
+                dftfe::utils::deviceMemcpyD2H(
+                  dftfe::utils::makeDataTypeDeviceCompatible(
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp),
-                  reinterpret_cast<
-                    const dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-                    &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
-                      [0])),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+                      .begin()),
                   currentBlockSizeNlp * numQuadsNLP * 3 *
-                    sizeof(dataTypes::numberDevice),
-                  cudaMemcpyDeviceToHost);
+                    sizeof(dataTypes::number));
 
                 for (unsigned int i = 0;
                      i < currentBlockSizeNlp * numQuadsNLP * 3;
@@ -992,57 +971,49 @@ namespace dftfe
                       [i];
 #ifdef USE_COMPLEX
                 nlpContractionContributionPsiIndexDeviceKernel<<<
-                  (numPsi + (deviceConstants::blockSize - 1)) /
-                    deviceConstants::blockSize * numQuadsNLP *
+                  (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP *
                     currentBlockSizeNlp,
-                  deviceConstants::blockSize>>>(
+                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numPsi,
                   numQuadsNLP,
                   currentBlockSizeNlp,
                   startingIdNlp,
-                  projectorKetTimesVectorParFlattenedD,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&psiQuadsNLPD[0])),
-                  thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-                  thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-                  thrust::raw_pointer_cast(
-                    &projecterKetTimesFlattenedVectorLocalIdsD[0]),
-                  reinterpret_cast<dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&nlpContractionContributionD[0])));
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesVectorParFlattenedD),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    psiQuadsNLPD.begin()),
+                  partialOccupanciesD.begin(),
+                  nonTrivialIdToElemIdMapD.begin(),
+                  projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    nlpContractionContributionD.begin()));
 
-                dftfe::cublasXgemm(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
+                dftfe::utils::deviceBlasWrapper::gemm(
+                  operatorMatrix.getDeviceBlasHandle(),
+                  dftfe::utils::DEVICEBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   1,
                   currentBlockSizeNlp * numQuadsNLP,
                   numPsi,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    &scalarCoeffAlphaNlp),
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&onesVecDNLP[0])),
+                  &scalarCoeffAlphaNlp,
+                  onesVecDNLP.begin(),
                   1,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&nlpContractionContributionD[0])),
+                  nlpContractionContributionD.begin(),
                   numPsi,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    &scalarCoeffBetaNlp),
-                  reinterpret_cast<
-                    dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-                    &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
-                      [0])),
+                  &scalarCoeffBetaNlp,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
+                    .begin(),
                   1);
 
-                cudaMemcpy(
-                  reinterpret_cast<dataTypes::numberDevice *>(
+                dftfe::utils::deviceMemcpyD2H(
+                  dftfe::utils::makeDataTypeDeviceCompatible(
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp),
-                  reinterpret_cast<
-                    const dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-                    &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
-                      [0])),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
+                      .begin()),
                   currentBlockSizeNlp * numQuadsNLP *
-                    sizeof(dataTypes::numberDevice),
-                  cudaMemcpyDeviceToHost);
+                    sizeof(dataTypes::number));
 
                 for (unsigned int i = 0; i < currentBlockSizeNlp * numQuadsNLP;
                      i++)
@@ -1058,22 +1029,32 @@ namespace dftfe
 
       void
       devicePortedForceKernelsAllD(
-        operatorDFTDeviceClass &operatorMatrix,
-        distributedDeviceVec<dataTypes::numberDevice>
-          &deviceFlattenedArrayBlock,
-        distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVectorD,
-        const dataTypes::numberDevice *                X,
-        const thrust::device_vector<double> &          eigenValuesD,
-        const thrust::device_vector<double> &          partialOccupanciesD,
+        operatorDFTDeviceClass &                 operatorMatrix,
+        distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock,
+        distributedDeviceVec<dataTypes::number> &projectorKetTimesVectorD,
+        const dataTypes::number *                X,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &eigenValuesD,
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &partialOccupanciesD,
 #ifdef USE_COMPLEX
         const double kcoordx,
         const double kcoordy,
         const double kcoordz,
 #endif
-        const thrust::device_vector<double> &                       onesVecD,
-        const thrust::device_vector<dataTypes::numberThrustDevice> &onesVecDNLP,
-        const thrust::device_vector<unsigned int> &nonTrivialIdToElemIdMapD,
-        const thrust::device_vector<unsigned int>
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &onesVecD,
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &onesVecDNLP,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &nonTrivialIdToElemIdMapD,
+        const dftfe::utils::MemoryStorage<unsigned int,
+                                          dftfe::utils::MemorySpace::DEVICE>
           &                projecterKetTimesFlattenedVectorLocalIdsD,
         const unsigned int startingVecId,
         const unsigned int N,
@@ -1083,28 +1064,41 @@ namespace dftfe
         const unsigned int numQuadsNLP,
         const unsigned int numNodesPerElement,
         const unsigned int totalNonTrivialPseudoWfcs,
-        thrust::device_vector<dataTypes::numberThrustDevice> &psiQuadsFlatD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsFlatD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsXFlatD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsYFlatD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &gradPsiQuadsZFlatD,
 #ifdef USE_COMPLEX
-        thrust::device_vector<dataTypes::numberThrustDevice> &psiQuadsNLPD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &psiQuadsNLPD,
 #endif
-        thrust::device_vector<dataTypes::numberThrustDevice>
-          &                            gradPsiQuadsNLPFlatD,
-        thrust::device_vector<double> &eshelbyTensorContributionsD,
-        thrust::device_vector<double> &eshelbyTensorQuadValuesD,
-        thrust::device_vector<dataTypes::numberThrustDevice>
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
+          &gradPsiQuadsNLPFlatD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &eshelbyTensorContributionsD,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &eshelbyTensorQuadValuesD,
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE>
           &nlpContractionContributionD,
-        thrust::device_vector<dataTypes::numberThrustDevice> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 #ifdef USE_COMPLEX
-        thrust::device_vector<dataTypes::numberThrustDevice> &
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::DEVICE> &
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock,
         dataTypes::number
           *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
@@ -1123,17 +1117,24 @@ namespace dftfe
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
                                  ->local_size();
-        stridedCopyToBlockKernel<<<(numPsi + (deviceConstants::blockSize - 1)) /
-                                     deviceConstants::blockSize * M,
-                                   deviceConstants::blockSize>>>(
-          numPsi, X, M, N, deviceFlattenedArrayBlock.begin(), startingVecId);
+        stridedCopyToBlockKernel<<<(numPsi +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          numPsi,
+          dftfe::utils::makeDataTypeDeviceCompatible(X),
+          M,
+          N,
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            deviceFlattenedArrayBlock.begin()),
+          startingVecId);
         deviceFlattenedArrayBlock.updateGhostValues();
 
         (operatorMatrix.getOverloadedConstraintMatrix())
           ->distribute(deviceFlattenedArrayBlock, numPsi);
 
 
-        // cudaDeviceSynchronize();
+        // dftfe::utils::deviceSynchronize();
         // MPI_Barrier(d_mpiCommParent);
         // double kernel1_time = MPI_Wtime();
 
@@ -1167,7 +1168,7 @@ namespace dftfe
                                                    isFloatingChargeForces,
                                                    addEk);
 
-        // cudaDeviceSynchronize();
+        // dftfe::utils::deviceSynchronize();
         // MPI_Barrier(d_mpiCommParent);
         // kernel1_time = MPI_Wtime() - kernel1_time;
 
@@ -1178,7 +1179,7 @@ namespace dftfe
 
         if (isPsp)
           {
-            // cudaDeviceSynchronize();
+            // dftfe::utils::deviceSynchronize();
             // MPI_Barrier(d_mpiCommParent);
             // double kernel2_time = MPI_Wtime();
 
@@ -1187,7 +1188,7 @@ namespace dftfe
               projectorKetTimesVectorD,
               numPsi);
 
-            // cudaDeviceSynchronize();
+            // dftfe::utils::deviceSynchronize();
             // MPI_Barrier(d_mpiCommParent);
             // kernel2_time = MPI_Wtime() - kernel2_time;
 
@@ -1195,7 +1196,7 @@ namespace dftfe
             //  std::cout<<"Time for computeNonLocalProjectorKetTimesXTimesV
             //  inside blocked loop: "<<kernel2_time<<std::endl;
 
-            // cudaDeviceSynchronize();
+            // dftfe::utils::deviceSynchronize();
             // MPI_Barrier(d_mpiCommParent);
             // double kernel3_time = MPI_Wtime();
 
@@ -1227,7 +1228,7 @@ namespace dftfe
                   projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp);
               }
 
-            // cudaDeviceSynchronize();
+            // dftfe::utils::deviceSynchronize();
             // MPI_Barrier(d_mpiCommParent);
             // kernel3_time = MPI_Wtime() - kernel3_time;
 
@@ -1242,7 +1243,7 @@ namespace dftfe
     void
     wfcContractionsForceKernelsAllH(
       operatorDFTDeviceClass &                operatorMatrix,
-      const dataTypes::numberDevice *         X,
+      const dataTypes::number *               X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
@@ -1286,118 +1287,132 @@ namespace dftfe
 
       // int this_process;
       // MPI_Comm_rank(mpiCommParent, &this_process);
-      // cudaDeviceSynchronize();
+      // dftfe::utils::deviceSynchronize();
       // MPI_Barrier(mpiCommParent);
       // double device_time = MPI_Wtime();
 
-      distributedDeviceVec<dataTypes::numberDevice> &deviceFlattenedArrayBlock =
+      distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock =
         operatorMatrix.getParallelChebyBlockVectorDevice();
 
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVectorD =
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVectorD =
         operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
-      // cudaDeviceSynchronize();
+      // dftfe::utils::deviceSynchronize();
       // MPI_Barrier(mpiCommParent);
       // device_time = MPI_Wtime() - device_time;
 
       // if (this_process == 0 && dftParams.verbosity >= 2)
       //  std::cout
-      //    << "Time for creating cuda parallel vectors for force computation: "
+      //    << "Time for creating device parallel vectors for force computation:
+      //    "
       //    << device_time << std::endl;
 
       // device_time = MPI_Wtime();
 
-      thrust::device_vector<double> eigenValuesD(blockSize, 0.0);
-      thrust::device_vector<double> partialOccupanciesD(blockSize, 0.0);
-      thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD(
-        numCells * numQuads * 9, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        eigenValuesD(blockSize, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        partialOccupanciesD(blockSize, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        elocWfcEshelbyTensorQuadValuesD(numCells * numQuads * 9, 0.0);
 
-      thrust::device_vector<double> onesVecD(blockSize, 1.0);
-      thrust::device_vector<dataTypes::numberThrustDevice> onesVecDNLP(
-        blockSize, dataTypes::numberThrustDevice(1.0));
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        onesVecD(blockSize, 1.0);
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        onesVecDNLP(blockSize, dataTypes::number(1.0));
 
       const unsigned int cellsBlockSize = std::min((unsigned int)10, numCells);
 
-      thrust::device_vector<dataTypes::numberThrustDevice> psiQuadsFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> gradPsiQuadsXFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> gradPsiQuadsYFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice> gradPsiQuadsZFlatD(
-        cellsBlockSize * numQuads * blockSize,
-        dataTypes::numberThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        psiQuadsFlatD(cellsBlockSize * numQuads * blockSize,
+                      dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsXFlatD(cellsBlockSize * numQuads * blockSize,
+                           dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsYFlatD(cellsBlockSize * numQuads * blockSize,
+                           dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsZFlatD(cellsBlockSize * numQuads * blockSize,
+                           dataTypes::number(0.0));
 #ifdef USE_COMPLEX
-      thrust::device_vector<dataTypes::numberThrustDevice> psiQuadsNLPD(
-        numCells * numQuadsNLP * blockSize, dataTypes::numberThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        psiQuadsNLPD(numCells * numQuadsNLP * blockSize,
+                     dataTypes::number(0.0));
 #endif
 
-      thrust::device_vector<dataTypes::numberThrustDevice> gradPsiQuadsNLPFlatD(
-        numCells * numQuadsNLP * 3 * blockSize,
-        dataTypes::numberThrustDevice(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        gradPsiQuadsNLPFlatD(numCells * numQuadsNLP * 3 * blockSize,
+                             dataTypes::number(0.0));
 
-      thrust::device_vector<double> eshelbyTensorContributionsD(
-        cellsBlockSize * numQuads * blockSize * 9, 0.0);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        eshelbyTensorContributionsD(cellsBlockSize * numQuads * blockSize * 9,
+                                    0.0);
 
       const unsigned int innerBlockSizeEnlp =
         std::min((unsigned int)10, totalNonTrivialPseudoWfcs);
-      thrust::device_vector<dataTypes::numberThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         nlpContractionContributionD(innerBlockSizeEnlp * numQuadsNLP * 3 *
                                       blockSize,
-                                    dataTypes::numberThrustDevice(0.0));
-      thrust::device_vector<dataTypes::numberThrustDevice>
+                                    dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock;
-      thrust::device_vector<dataTypes::numberThrustDevice>
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock;
-      thrust::device_vector<unsigned int>
-                                          projecterKetTimesFlattenedVectorLocalIdsD;
-      thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD;
-      dataTypes::number *
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        projecterKetTimesFlattenedVectorLocalIdsD;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        nonTrivialIdToElemIdMapD;
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::HOST_PINNED>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp;
       if (totalNonTrivialPseudoWfcs > 0)
         {
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
             .resize(innerBlockSizeEnlp * numQuadsNLP * 3,
-                    dataTypes::numberThrustDevice(0.0));
+                    dataTypes::number(0.0));
 #ifdef USE_COMPLEX
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
-            .resize(innerBlockSizeEnlp * numQuadsNLP,
-                    dataTypes::numberThrustDevice(0.0));
+            .resize(innerBlockSizeEnlp * numQuadsNLP, dataTypes::number(0.0));
 #endif
           projecterKetTimesFlattenedVectorLocalIdsD.resize(
             totalNonTrivialPseudoWfcs, 0.0);
           nonTrivialIdToElemIdMapD.resize(totalNonTrivialPseudoWfcs, 0);
 
 
-          DeviceCHECK(cudaMallocHost(
-            (void *
-               *)&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
-            innerBlockSizeEnlp * numQuadsNLP * 3 *
-              sizeof(dataTypes::numberDevice)));
+
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp
+            .resize(innerBlockSizeEnlp * numQuadsNLP * 3, 0);
 
 
-          cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-                     nonTrivialIdToElemIdMapH,
-                     totalNonTrivialPseudoWfcs * sizeof(unsigned int),
-                     cudaMemcpyHostToDevice);
+          dftfe::utils::deviceMemcpyH2D(nonTrivialIdToElemIdMapD.begin(),
+                                        nonTrivialIdToElemIdMapH,
+                                        totalNonTrivialPseudoWfcs *
+                                          sizeof(unsigned int));
 
 
-          cudaMemcpy(thrust::raw_pointer_cast(
-                       &projecterKetTimesFlattenedVectorLocalIdsD[0]),
-                     projecterKetTimesFlattenedVectorLocalIdsH,
-                     totalNonTrivialPseudoWfcs * sizeof(unsigned int),
-                     cudaMemcpyHostToDevice);
+          dftfe::utils::deviceMemcpyH2D(
+            projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+            projecterKetTimesFlattenedVectorLocalIdsH,
+            totalNonTrivialPseudoWfcs * sizeof(unsigned int));
         }
 
       const unsigned numKPoints = kPointCoordinates.size() / 3;
       for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
         {
-          thrust::fill(elocWfcEshelbyTensorQuadValuesD.begin(),
-                       elocWfcEshelbyTensorQuadValuesD.end(),
-                       0.);
+          elocWfcEshelbyTensorQuadValuesD.setValue(0);
           // spin index update is not required
           operatorMatrix.reinitkPointSpinIndex(kPoint, 0);
 
@@ -1442,17 +1457,15 @@ namespace dftfe
                                            [spinIndex * N + ivec + iWave];
                     }
 
-                  cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
-                             &blockedEigenValues[0],
-                             blockSize * sizeof(double),
-                             cudaMemcpyHostToDevice);
+                  dftfe::utils::deviceMemcpyH2D(eigenValuesD.begin(),
+                                                &blockedEigenValues[0],
+                                                blockSize * sizeof(double));
 
-                  cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-                             &blockedPartialOccupancies[0],
-                             blockSize * sizeof(double),
-                             cudaMemcpyHostToDevice);
+                  dftfe::utils::deviceMemcpyH2D(partialOccupanciesD.begin(),
+                                                &blockedPartialOccupancies[0],
+                                                blockSize * sizeof(double));
 
-                  // cudaDeviceSynchronize();
+                  // dftfe::utils::deviceSynchronize();
                   // MPI_Barrier(d_mpiCommParent);
                   // double kernel_time = MPI_Wtime();
 
@@ -1500,14 +1513,15 @@ namespace dftfe
                     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH +
                       kPoint * totalNonTrivialPseudoWfcs * numQuadsNLP,
 #endif
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp
+                      .begin(),
                     cellsBlockSize,
                     innerBlockSizeEnlp,
                     isPsp,
                     isFloatingChargeForces,
                     addEk);
 
-                  // cudaDeviceSynchronize();
+                  // dftfe::utils::deviceSynchronize();
                   // MPI_Barrier(d_mpiCommParent);
                   // kernel_time = MPI_Wtime() - kernel_time;
 
@@ -1518,18 +1532,14 @@ namespace dftfe
                 } // band parallelization
             }     // ivec loop
 
-          cudaMemcpy(
-            eshelbyTensorQuadValuesH + kPoint * numCells * numQuads * 9,
-            thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD[0]),
-            numCells * numQuads * 9 * sizeof(double),
-            cudaMemcpyDeviceToHost);
+          dftfe::utils::deviceMemcpyD2H(eshelbyTensorQuadValuesH +
+                                          kPoint * numCells * numQuads * 9,
+                                        elocWfcEshelbyTensorQuadValuesD.begin(),
+                                        numCells * numQuads * 9 *
+                                          sizeof(double));
         } // k point loop
 
-      if (totalNonTrivialPseudoWfcs > 0)
-        DeviceCHECK(cudaFreeHost(
-          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp));
-
-      // cudaDeviceSynchronize();
+      // dftfe::utils::deviceSynchronize();
       // MPI_Barrier(mpiCommParent);
       // device_time = MPI_Wtime() - device_time;
 

@@ -61,6 +61,7 @@ SET(TARGET_SRC
   ./utils/dftUtils.cc
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
+  ./utils/Exceptions.cc
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
@@ -69,9 +70,9 @@ SET(TARGET_SRC
   ./src/mdi/libraryMDI.cpp
   )
 
-SET(CUDA_SRC
+SET(DEVICE_SRC
   ./src/deviceBase/deviceHelpers.cc
-  ./src/deviceBase/deviceDirectCCLWrapper.cc
+  ./src/deviceBase/deviceDirectCCLWrapper.cu.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
@@ -83,6 +84,8 @@ SET(CUDA_SRC
   ./src/linAlg/rayleighRitzDevice.cc
   ./src/force/forceWfcContractionsDevice.cc
   ./utils/constraintMatrixInfoDevice.cc
+  ./utils/DeviceAPICalls.cu.cc
+  ./utils/DeviceBlasWrapper.cu.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc
@@ -92,7 +95,7 @@ SET(CUDA_SRC
 
 IF (WITH_GPU)
   CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
-  LIST(APPEND TARGET_SRC ${CUDA_SRC})
+  LIST(APPEND TARGET_SRC ${DEVICE_SRC})
 ELSE()
   CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 ENDIF()
@@ -215,6 +218,7 @@ ENDIF()
 #
 IF (WITH_GPU)
   ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
+  ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_CUDA)
   MESSAGE(STATUS "DFTFE with GPU")
 
   IF(NOT DEAL_II_WITH_CUDA OR

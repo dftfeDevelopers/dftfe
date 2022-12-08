@@ -741,7 +741,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (dftPtr->d_dftParamsPtr->deviceFineGrainedTimings)
     {
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       computingTimerStandard.enter_subsection(
         "Hamiltonian construction on Device");
     }
@@ -754,17 +754,16 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                d_numberNodesPerElement +
-                             (deviceConstants::blockSize - 1)) /
-                              deviceConstants::blockSize,
-                            deviceConstants::blockSize>>>(
+                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_numLocallyOwnedCells,
         d_numberNodesPerElement,
         d_numQuadPointsLpsp,
-        thrust::raw_pointer_cast(&d_shapeFunctionValueLpspDevice[0]),
-        thrust::raw_pointer_cast(&d_shapeFunctionValueTransposedLpspDevice[0]),
-        thrust::raw_pointer_cast(&d_vEffExternalPotCorrJxWDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]));
+        d_shapeFunctionValueLpspDevice.begin(),
+        d_shapeFunctionValueTransposedLpspDevice.begin(),
+        d_vEffExternalPotCorrJxWDevice.begin(),
+        d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin());
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
     }
@@ -773,57 +772,49 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
-        hamPrimeMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
-                                           d_numberNodesPerElement *
-                                           d_numberNodesPerElement +
-                                         (deviceConstants::blockSize - 1)) /
-                                          deviceConstants::blockSize,
-                                        deviceConstants::blockSize>>>(
+        hamPrimeMatrixKernelGGAMemOpt<<<
+          (d_numLocallyOwnedCells * d_numberNodesPerElement *
+             d_numberNodesPerElement +
+           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
-          thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueXTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueYTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueZTransposedDevice[0]),
-          thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-          thrust::raw_pointer_cast(&d_cellJxWValuesDevice[0]),
-          thrust::raw_pointer_cast(&d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
-          reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixFlattenedDevice[spinIndex *
-                                                    d_numLocallyOwnedCells *
-                                                    d_numberNodesPerElement *
-                                                    d_numberNodesPerElement])));
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin() +
+            spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
+              d_numberNodesPerElement));
       else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
                                      d_numberNodesPerElement *
                                      d_numberNodesPerElement +
-                                   (deviceConstants::blockSize - 1)) /
-                                    deviceConstants::blockSize,
-                                  deviceConstants::blockSize>>>(
+                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                    dftfe::utils::DEVICE_BLOCK_SIZE,
+                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
-          thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueXTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueYTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueZTransposedDevice[0]),
-          thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-          thrust::raw_pointer_cast(&d_cellJxWValuesDevice[0]),
-          reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixFlattenedDevice[spinIndex *
-                                                    d_numLocallyOwnedCells *
-                                                    d_numberNodesPerElement *
-                                                    d_numberNodesPerElement])));
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin() +
+            spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
+              d_numberNodesPerElement));
     }
   else
     {
@@ -832,67 +823,57 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                       d_numberNodesPerElement *
                                       d_numberNodesPerElement +
-                                    (deviceConstants::blockSize - 1)) /
-                                     deviceConstants::blockSize,
-                                   deviceConstants::blockSize>>>(
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
           dftPtr->d_kPointWeights.size(),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueXTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueYTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueZTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
-          thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-          thrust::raw_pointer_cast(&d_cellJxWValuesDevice[0]),
-          thrust::raw_pointer_cast(&d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
-          reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixFlattenedDevice[0])),
-          thrust::raw_pointer_cast(&d_kpointCoordsVecDevice[0]),
-          thrust::raw_pointer_cast(&d_kSquareTimesHalfVecDevice[0]),
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
+          d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin()),
+          d_kpointCoordsVecDevice.begin(),
+          d_kSquareTimesHalfVecDevice.begin(),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
       else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
         hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                 d_numberNodesPerElement +
-                              (deviceConstants::blockSize - 1)) /
-                               deviceConstants::blockSize,
-                             deviceConstants::blockSize>>>(
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE,
+                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
           dftPtr->d_kPointWeights.size(),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueXTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueYTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueZTransposedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
-          thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-          thrust::raw_pointer_cast(&d_cellJxWValuesDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
-          reinterpret_cast<dataTypes::numberDevice *>(thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixFlattenedDevice[0])),
-          thrust::raw_pointer_cast(&d_kpointCoordsVecDevice[0]),
-          thrust::raw_pointer_cast(&d_kSquareTimesHalfVecDevice[0]),
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin()),
+          d_kpointCoordsVecDevice.begin(),
+          d_kSquareTimesHalfVecDevice.begin(),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
     }
@@ -900,7 +881,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (dftPtr->d_dftParamsPtr->deviceFineGrainedTimings)
     {
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       computingTimerStandard.leave_subsection(
         "Hamiltonian construction on Device");
     }

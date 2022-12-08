@@ -17,8 +17,10 @@
 // @author  Sambit Das, Phani Motamarri
 //
 
-#include "constraintMatrixInfoDevice.h"
-#include "deviceHelpers.h"
+#include <constraintMatrixInfoDevice.h>
+#include <deviceHelpers.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
 
 namespace dftfe
 {
@@ -528,13 +530,25 @@ namespace dftfe
             }
         }
 
-      d_rowIdsLocalDevice         = d_rowIdsLocal;
-      d_columnIdsLocalDevice      = d_columnIdsLocal;
-      d_columnValuesDevice        = d_columnValues;
-      d_inhomogenitiesDevice      = d_inhomogenities;
-      d_rowSizesDevice            = d_rowSizes;
-      d_rowSizesAccumulatedDevice = d_rowSizesAccumulated;
-      d_numConstrainedDofs        = d_rowIdsLocal.size();
+      d_rowIdsLocalDevice.resize(d_rowIdsLocal.size());
+      d_rowIdsLocalDevice.copyFrom(d_rowIdsLocal);
+
+      d_columnIdsLocalDevice.resize(d_columnIdsLocal.size());
+      d_columnIdsLocalDevice.copyFrom(d_columnIdsLocal);
+
+      d_columnValuesDevice.resize(d_columnValues.size());
+      d_columnValuesDevice.copyFrom(d_columnValues);
+
+      d_inhomogenitiesDevice.resize(d_inhomogenities.size());
+      d_inhomogenitiesDevice.copyFrom(d_inhomogenities);
+
+      d_rowSizesDevice.resize(d_rowSizes.size());
+      d_rowSizesDevice.copyFrom(d_rowSizes);
+
+      d_rowSizesAccumulatedDevice.resize(d_rowSizesAccumulated.size());
+      d_rowSizesAccumulatedDevice.copyFrom(d_rowSizesAccumulated);
+
+      d_numConstrainedDofs = d_rowIdsLocal.size();
     }
 
 
@@ -566,8 +580,11 @@ namespace dftfe
           d_localIndexMapUnflattenedToFlattened[ilocalDof] =
             flattenedPartitioner->global_to_local(globalIndex * blockSize);
         }
-      d_localIndexMapUnflattenedToFlattenedDevice =
-        d_localIndexMapUnflattenedToFlattened;
+
+      d_localIndexMapUnflattenedToFlattenedDevice.resize(
+        d_localIndexMapUnflattenedToFlattened.size());
+      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(
+        d_localIndexMapUnflattenedToFlattened);
     }
 
 
@@ -581,22 +598,22 @@ namespace dftfe
         return;
       // fieldVector.update_ghost_values();
 
-      distributeKernel<<<min((blockSize + (deviceConstants::blockSize - 1)) /
-                               deviceConstants::blockSize *
-                               d_numConstrainedDofs,
-                             30000),
-                         deviceConstants::blockSize>>>(
+      distributeKernel<<<
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
+            30000),
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
-        fieldVector.begin(),
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
+        d_rowIdsLocalDevice.begin(),
         d_numConstrainedDofs,
-        thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
-        thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
-        thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
-        thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
-        thrust::raw_pointer_cast(&d_inhomogenitiesDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_rowSizesDevice.begin(),
+        d_rowSizesAccumulatedDevice.begin(),
+        d_columnIdsLocalDevice.begin(),
+        d_columnValuesDevice.begin(),
+        d_inhomogenitiesDevice.begin(),
+
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
     }
 
 
@@ -613,20 +630,19 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
-        fieldVector.begin(),
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
+        d_rowIdsLocalDevice.begin(),
         d_numConstrainedDofs,
-        thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
-        thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
-        thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
-        thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_rowSizesDevice.begin(),
+        d_rowSizesAccumulatedDevice.begin(),
+        d_columnIdsLocalDevice.begin(),
+        d_columnValuesDevice.begin(),
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
     }
 
     //
@@ -635,10 +651,10 @@ namespace dftfe
     //
     void
     constraintMatrixInfoDevice::distribute_slave_to_master(
-      distributedDeviceVec<cuDoubleComplex> &fieldVector,
-      double *                               tempReal,
-      double *                               tempImag,
-      const unsigned int                     blockSize) const
+      distributedDeviceVec<std::complex<double>> &fieldVector,
+      double *                                    tempReal,
+      double *                                    tempImag,
+      const unsigned int                          blockSize) const
     {
       if (d_numConstrainedDofs == 0)
         return;
@@ -652,36 +668,34 @@ namespace dftfe
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempReal,
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        d_rowIdsLocalDevice.begin(),
         d_numConstrainedDofs,
-        thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
-        thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
-        thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
-        thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_rowSizesDevice.begin(),
+        d_rowSizesAccumulatedDevice.begin(),
+        d_columnIdsLocalDevice.begin(),
+        d_columnValuesDevice.begin(),
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempImag,
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        d_rowIdsLocalDevice.begin(),
         d_numConstrainedDofs,
-        thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
-        thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
-        thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
-        thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_rowSizesDevice.begin(),
+        d_rowSizesAccumulatedDevice.begin(),
+        d_columnIdsLocalDevice.begin(),
+        d_columnValuesDevice.begin(),
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         (fieldVector.locallyOwnedFlattenedSize() +
@@ -697,10 +711,10 @@ namespace dftfe
     //
     void
     constraintMatrixInfoDevice::distribute_slave_to_master(
-      distributedDeviceVec<cuFloatComplex> &fieldVector,
-      float *                               tempReal,
-      float *                               tempImag,
-      const unsigned int                    blockSize) const
+      distributedDeviceVec<std::complex<float>> &fieldVector,
+      float *                                    tempReal,
+      float *                                    tempImag,
+      const unsigned int                         blockSize) const
     {
       if (d_numConstrainedDofs == 0)
         return;
@@ -714,36 +728,34 @@ namespace dftfe
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempReal,
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        d_rowIdsLocalDevice.begin(),
         d_numConstrainedDofs,
-        thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
-        thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
-        thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
-        thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_rowSizesDevice.begin(),
+        d_rowSizesAccumulatedDevice.begin(),
+        d_columnIdsLocalDevice.begin(),
+        d_columnValuesDevice.begin(),
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       distributeSlaveToMasterKernelAtomicAdd<<<
-        min((blockSize + (deviceConstants::blockSize - 1)) /
-              deviceConstants::blockSize * d_numConstrainedDofs,
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        deviceConstants::blockSize>>>(
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         tempImag,
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        d_rowIdsLocalDevice.begin(),
         d_numConstrainedDofs,
-        thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
-        thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
-        thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
-        thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_rowSizesDevice.begin(),
+        d_rowSizesAccumulatedDevice.begin(),
+        d_columnIdsLocalDevice.begin(),
+        d_columnValuesDevice.begin(),
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         (fieldVector.locallyOwnedFlattenedSize() +
@@ -764,16 +776,16 @@ namespace dftfe
         return;
 
       const unsigned int numConstrainedDofs = d_rowIdsLocal.size();
-      setzeroKernel<<<min((blockSize + (deviceConstants::blockSize - 1)) /
-                            deviceConstants::blockSize * numConstrainedDofs,
+      setzeroKernel<<<min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numConstrainedDofs,
                           30000),
-                      deviceConstants::blockSize>>>(
+                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
-        fieldVector.begin(),
-        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
+        d_rowIdsLocalDevice.begin(),
         numConstrainedDofs,
-        thrust::raw_pointer_cast(
-          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
     }
 
     //
@@ -813,8 +825,8 @@ namespace dftfe
 
     template void
     constraintMatrixInfoDevice::distribute(
-      distributedDeviceVec<cuDoubleComplex> &fieldVector,
-      const unsigned int                     blockSize) const;
+      distributedDeviceVec<std::complex<double>> &fieldVector,
+      const unsigned int                          blockSize) const;
 
     template void
     constraintMatrixInfoDevice::distribute(
@@ -823,8 +835,8 @@ namespace dftfe
 
     template void
     constraintMatrixInfoDevice::distribute(
-      distributedDeviceVec<cuFloatComplex> &fieldVector,
-      const unsigned int                    blockSize) const;
+      distributedDeviceVec<std::complex<float>> &fieldVector,
+      const unsigned int                         blockSize) const;
 
     template void
     constraintMatrixInfoDevice::set_zero(
@@ -833,8 +845,8 @@ namespace dftfe
 
     template void
     constraintMatrixInfoDevice::set_zero(
-      distributedDeviceVec<cuDoubleComplex> &fieldVector,
-      const unsigned int                     blockSize) const;
+      distributedDeviceVec<std::complex<double>> &fieldVector,
+      const unsigned int                          blockSize) const;
 
     template void
     constraintMatrixInfoDevice::set_zero(
@@ -843,8 +855,8 @@ namespace dftfe
 
     template void
     constraintMatrixInfoDevice::set_zero(
-      distributedDeviceVec<cuFloatComplex> &fieldVector,
-      const unsigned int                    blockSize) const;
+      distributedDeviceVec<std::complex<float>> &fieldVector,
+      const unsigned int                         blockSize) const;
 
 
   } // namespace dftUtils

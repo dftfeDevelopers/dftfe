@@ -22,12 +22,15 @@
 #include <densityCalculatorDevice.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
-#include <cuComplex.h>
-#include <thrust/device_vector.h>
-#include <thrust/complex.h>
-#include "deviceHelpers.h"
-#include "linearAlgebraOperationsDevice.h"
-
+#include <deviceHelpers.h>
+#include <linearAlgebraOperationsDevice.h>
+#include <MemoryStorage.h>
+#include <DataTypeOverloads.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
@@ -114,11 +117,11 @@ namespace dftfe
                          const unsigned int size,
                          double *           copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
-                                                         copyFromVec,
-                                                         copyToVec);
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
+                                                              copyFromVec,
+                                                              copyToVec);
       }
 
       void
@@ -126,11 +129,11 @@ namespace dftfe
                          const unsigned int size,
                          cuDoubleComplex *  copyToVec)
       {
-        copyDeviceKernel<<<(size + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize,
-                           deviceConstants::blockSize>>>(size,
-                                                         copyFromVec,
-                                                         copyToVec);
+        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
+                                                              copyFromVec,
+                                                              copyToVec);
       }
 
       __global__ void
@@ -241,7 +244,7 @@ namespace dftfe
 
       int this_process;
       MPI_Comm_rank(mpiCommParent, &this_process);
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       double             device_time = MPI_Wtime();
       const unsigned int numKPoints  = kPointWeights.size();
@@ -263,15 +266,11 @@ namespace dftfe
       const double spinPolarizedFactor =
         (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
-      const NumberType zero = deviceUtils::makeNumberFromReal<NumberType>(0.0);
-      const NumberType scalarCoeffAlphaRho =
-        deviceUtils::makeNumberFromReal<NumberType>(1.0);
-      const NumberType scalarCoeffBetaRho =
-        deviceUtils::makeNumberFromReal<NumberType>(1.0);
-      const NumberType scalarCoeffAlphaGradRho =
-        deviceUtils::makeNumberFromReal<NumberType>(1.0);
-      const NumberType scalarCoeffBetaGradRho =
-        deviceUtils::makeNumberFromReal<NumberType>(1.0);
+      const NumberType zero                    = 0;
+      const NumberType scalarCoeffAlphaRho     = 1.0;
+      const NumberType scalarCoeffBetaRho      = 1.0;
+      const NumberType scalarCoeffAlphaGradRho = 1.0;
+      const NumberType scalarCoeffBetaGradRho  = 1.0;
 
       const unsigned int cellsBlockSize = 50;
       const unsigned int numCellBlocks =
@@ -279,43 +278,47 @@ namespace dftfe
       const unsigned int remCellBlockSize =
         totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device> rhoDevice(
-        totalLocallyOwnedCells * numQuadPoints, zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
+        rhoDevice(totalLocallyOwnedCells * numQuadPoints, zero);
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         rhoWfcContributionsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoDeviceX(isEvaluateGradRho ?
                          (totalLocallyOwnedCells * numQuadPoints) :
                          1,
                        zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoDeviceY(isEvaluateGradRho ?
                          (totalLocallyOwnedCells * numQuadPoints) :
                          1,
                        zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoDeviceZ(isEvaluateGradRho ?
                          (totalLocallyOwnedCells * numQuadPoints) :
                          1,
                        zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoWfcContributionsDeviceX(
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoWfcContributionsDeviceY(
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         gradRhoWfcContributionsDeviceZ(
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostX;
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostY;
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostZ;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::HOST>
+        rhoHost;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::HOST>
+        gradRhoHostX;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::HOST>
+        gradRhoHostY;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::HOST>
+        gradRhoHostZ;
 
       rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
 
@@ -328,60 +331,45 @@ namespace dftfe
         }
 
 
-      NumberType *shapeFunctionValuesTransposedDevice;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
+        shapeFunctionValuesTransposedDevice(numNodesPerElement * numQuadPoints,
+                                            zero);
 
-      DeviceCHECK(
-        cudaMalloc((void **)&shapeFunctionValuesTransposedDevice,
-                   numNodesPerElement * numQuadPoints * sizeof(NumberType)));
-      DeviceCHECK(
-        cudaMemset(shapeFunctionValuesTransposedDevice,
-                   0,
-                   numNodesPerElement * numQuadPoints * sizeof(NumberType)));
+      shapeFunctionValuesTransposedDevice.setValue(zero);
 
-      copyDoubleToNumber(thrust::raw_pointer_cast(
-                           &(operatorMatrix.getShapeFunctionValuesTransposed(
-                             use2pPlusOneGLQuad)[0])),
+      copyDoubleToNumber((operatorMatrix.getShapeFunctionValuesTransposed(
+                            use2pPlusOneGLQuad))
+                           .begin(),
                          numNodesPerElement * numQuadPoints,
-                         shapeFunctionValuesTransposedDevice);
+                         dftfe::utils::makeDataTypeDeviceCompatible(
+                           shapeFunctionValuesTransposedDevice.begin()));
 
 
-      NumberType *shapeFunctionGradientValuesXTransposedDevice;
-      NumberType *shapeFunctionGradientValuesYTransposedDevice;
-      NumberType *shapeFunctionGradientValuesZTransposedDevice;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
+        shapeFunctionGradientValuesXTransposedDevice;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
+        shapeFunctionGradientValuesYTransposedDevice;
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
+        shapeFunctionGradientValuesZTransposedDevice;
 
       if (isEvaluateGradRho)
         {
-          DeviceCHECK(
-            cudaMalloc((void **)&shapeFunctionGradientValuesXTransposedDevice,
-                       cellsBlockSize * numNodesPerElement * numQuadPoints *
-                         sizeof(NumberType)));
-          DeviceCHECK(cudaMemset(shapeFunctionGradientValuesXTransposedDevice,
-                                 0,
-                                 cellsBlockSize * numNodesPerElement *
-                                   numQuadPoints * sizeof(NumberType)));
+          shapeFunctionGradientValuesXTransposedDevice.resize(
+            cellsBlockSize * numNodesPerElement * numQuadPoints, 0);
+          shapeFunctionGradientValuesXTransposedDevice.setValue(0);
 
-          DeviceCHECK(
-            cudaMalloc((void **)&shapeFunctionGradientValuesYTransposedDevice,
-                       cellsBlockSize * numNodesPerElement * numQuadPoints *
-                         sizeof(NumberType)));
-          DeviceCHECK(cudaMemset(shapeFunctionGradientValuesYTransposedDevice,
-                                 0,
-                                 cellsBlockSize * numNodesPerElement *
-                                   numQuadPoints * sizeof(NumberType)));
+          shapeFunctionGradientValuesYTransposedDevice.resize(
+            cellsBlockSize * numNodesPerElement * numQuadPoints, 0);
+          shapeFunctionGradientValuesYTransposedDevice.setValue(0);
 
-          DeviceCHECK(
-            cudaMalloc((void **)&shapeFunctionGradientValuesZTransposedDevice,
-                       cellsBlockSize * numNodesPerElement * numQuadPoints *
-                         sizeof(NumberType)));
-          DeviceCHECK(cudaMemset(shapeFunctionGradientValuesZTransposedDevice,
-                                 0,
-                                 cellsBlockSize * numNodesPerElement *
-                                   numQuadPoints * sizeof(NumberType)));
+          shapeFunctionGradientValuesZTransposedDevice.resize(
+            cellsBlockSize * numNodesPerElement * numQuadPoints, 0);
+          shapeFunctionGradientValuesZTransposedDevice.setValue(0);
         }
 
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Host> partialOccupVec(
-        BVec, zero);
-      deviceUtils::Vector<NumberType, dftfe::MemorySpace::Device>
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::HOST>
+        partialOccupVec(BVec, zero);
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         partialOccupVecDevice(BVec, zero);
 
       distributedDeviceVec<NumberType> &deviceFlattenedArrayBlock =
@@ -391,8 +379,7 @@ namespace dftfe
         deviceFlattenedArrayBlock.ghostFlattenedSize();
 
       NumberType *cellWaveFunctionMatrix =
-        reinterpret_cast<NumberType *>(thrust::raw_pointer_cast(
-          &operatorMatrix.getCellWaveFunctionMatrix()[0]));
+        (operatorMatrix.getCellWaveFunctionMatrix()).begin();
 
       typename dealii::DoFHandler<3>::active_cell_iterator cell =
         dofHandler.begin_active();
@@ -416,14 +403,14 @@ namespace dftfe
         {
           for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
             {
-              rhoDevice.set(zero);
-              rhoWfcContributionsDevice.set(zero);
-              gradRhoDeviceX.set(zero);
-              gradRhoDeviceY.set(zero);
-              gradRhoDeviceZ.set(zero);
-              gradRhoWfcContributionsDeviceX.set(zero);
-              gradRhoWfcContributionsDeviceY.set(zero);
-              gradRhoWfcContributionsDeviceZ.set(zero);
+              rhoDevice.setValue(zero);
+              rhoWfcContributionsDevice.setValue(zero);
+              gradRhoDeviceX.setValue(zero);
+              gradRhoDeviceY.setValue(zero);
+              gradRhoDeviceZ.setValue(zero);
+              gradRhoWfcContributionsDeviceX.setValue(zero);
+              gradRhoWfcContributionsDeviceY.setValue(zero);
+              gradRhoWfcContributionsDeviceZ.setValue(zero);
 
               for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
                    jvec += BVec)
@@ -436,9 +423,8 @@ namespace dftfe
                     {
                       if (spectrumSplit)
                         {
-                          partialOccupVecDevice.set(
-                            deviceUtils::makeNumberFromReal<NumberType>(
-                              kPointWeights[kPoint] * spinPolarizedFactor));
+                          partialOccupVecDevice.setValue(kPointWeights[kPoint] *
+                                                         spinPolarizedFactor);
                         }
                       else
                         {
@@ -455,14 +441,11 @@ namespace dftfe
                                                     spinIndex +
                                                   jvec + iEigenVec] >
                                       fermiEnergyConstraintMag)
-                                    *(partialOccupVec.begin() + iEigenVec) =
-                                      deviceUtils::makeNumberFromReal<
-                                        NumberType>(0.0);
+                                    *(partialOccupVec.begin() + iEigenVec) = 0;
                                   else
                                     *(partialOccupVec.begin() + iEigenVec) =
-                                      deviceUtils::makeNumberFromReal<
-                                        NumberType>(kPointWeights[kPoint] *
-                                                    spinPolarizedFactor);
+                                      kPointWeights[kPoint] *
+                                      spinPolarizedFactor;
                                 }
                             }
                           else
@@ -471,39 +454,36 @@ namespace dftfe
                                    ++iEigenVec)
                                 {
                                   *(partialOccupVec.begin() + iEigenVec) =
-                                    deviceUtils::makeNumberFromReal<NumberType>(
-                                      dftUtils::getPartialOccupancy(
-                                        eigenValues[kPoint]
-                                                   [totalNumWaveFunctions *
-                                                      spinIndex +
-                                                    jvec + iEigenVec],
-                                        fermiEnergy,
-                                        C_kb,
-                                        dftParams.TVal) *
-                                      kPointWeights[kPoint] *
-                                      spinPolarizedFactor);
+                                    dftUtils::getPartialOccupancy(
+                                      eigenValues[kPoint]
+                                                 [totalNumWaveFunctions *
+                                                    spinIndex +
+                                                  jvec + iEigenVec],
+                                      fermiEnergy,
+                                      C_kb,
+                                      dftParams.TVal) *
+                                    kPointWeights[kPoint] * spinPolarizedFactor;
                                 }
                             }
 
-                          // partialOccupVecDevice = partialOccupVec;
-
-                          deviceUtils::copyHostVecToDeviceVec(
-                            partialOccupVec.begin(),
-                            partialOccupVecDevice.begin(),
-                            partialOccupVecDevice.size());
+                          partialOccupVec
+                            .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
+                              partialOccupVecDevice);
                         }
 
                       stridedCopyToBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * numLocalDofs,
-                        deviceConstants::blockSize>>>(
+                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         BVec,
-                        X + numLocalDofs * totalNumWaveFunctions *
-                              ((dftParams.spinPolarized + 1) * kPoint +
-                               spinIndex),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          X + numLocalDofs * totalNumWaveFunctions *
+                                ((dftParams.spinPolarized + 1) * kPoint +
+                                 spinIndex)),
                         numLocalDofs,
                         totalNumWaveFunctions,
-                        deviceFlattenedArrayBlock.begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          deviceFlattenedArrayBlock.begin()),
                         jvec);
 
 
@@ -524,48 +504,47 @@ namespace dftfe
                                 iblock * cellsBlockSize;
 
                               copyGlobalToCellDeviceKernel<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize *
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
                                   currentCellsBlockSize * numNodesPerElement,
-                                deviceConstants::blockSize>>>(
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                                deviceFlattenedArrayBlock.begin(),
-                                cellWaveFunctionMatrix,
-                                thrust::raw_pointer_cast(&(
-                                  operatorMatrix
-                                    .getFlattenedArrayCellLocalProcIndexIdMap()
-                                      [startingCellId * numNodesPerElement])));
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  deviceFlattenedArrayBlock.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  cellWaveFunctionMatrix),
+                                (operatorMatrix
+                                   .getFlattenedArrayCellLocalProcIndexIdMap())
+                                    .begin() +
+                                  startingCellId * numNodesPerElement);
 
-                              NumberType scalarCoeffAlpha =
-                                deviceUtils::makeNumberFromReal<NumberType>(
-                                  1.0);
-                              NumberType scalarCoeffBeta =
-                                deviceUtils::makeNumberFromReal<NumberType>(
-                                  0.0);
-                              int strideA = BVec * numNodesPerElement;
-                              int strideB = 0;
-                              int strideC = BVec * numQuadPoints;
+                              NumberType scalarCoeffAlpha = 1.0;
+                              NumberType scalarCoeffBeta  = 0;
+                              int        strideA = BVec * numNodesPerElement;
+                              int        strideB = 0;
+                              int        strideC = BVec * numQuadPoints;
 
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
-                                cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionValuesTransposedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                rhoWfcContributionsDevice.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
+                              dftfe::utils::deviceBlasWrapper::
+                                gemmStridedBatched(
+                                  operatorMatrix.getDeviceBlasHandle(),
+                                  dftfe::utils::DEVICEBLAS_OP_N,
+                                  dftfe::utils::DEVICEBLAS_OP_N,
+                                  BVec,
+                                  numQuadPoints,
+                                  numNodesPerElement,
+                                  &scalarCoeffAlpha,
+                                  cellWaveFunctionMatrix,
+                                  BVec,
+                                  strideA,
+                                  shapeFunctionValuesTransposedDevice.begin(),
+                                  numNodesPerElement,
+                                  strideB,
+                                  &scalarCoeffBeta,
+                                  rhoWfcContributionsDevice.begin(),
+                                  BVec,
+                                  strideC,
+                                  currentCellsBlockSize);
 
 
                               if (isEvaluateGradRho)
@@ -573,135 +552,152 @@ namespace dftfe
                                   strideB = numNodesPerElement * numQuadPoints;
 
                                   copyDoubleToNumber(
-                                    thrust::raw_pointer_cast(&(
-                                      operatorMatrix
-                                        .getShapeFunctionGradientValuesXTransposed()
-                                          [startingCellId * numNodesPerElement *
-                                           numQuadPoints])),
+                                    (operatorMatrix
+                                       .getShapeFunctionGradientValuesXTransposed())
+                                        .begin() +
+                                      startingCellId * numNodesPerElement *
+                                        numQuadPoints,
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesXTransposedDevice);
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                      shapeFunctionGradientValuesXTransposedDevice
+                                        .begin()));
 
                                   copyDoubleToNumber(
-                                    thrust::raw_pointer_cast(&(
-                                      operatorMatrix
-                                        .getShapeFunctionGradientValuesYTransposed()
-                                          [startingCellId * numNodesPerElement *
-                                           numQuadPoints])),
+                                    (operatorMatrix
+                                       .getShapeFunctionGradientValuesYTransposed())
+                                        .begin() +
+                                      startingCellId * numNodesPerElement *
+                                        numQuadPoints,
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesYTransposedDevice);
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                      shapeFunctionGradientValuesYTransposedDevice
+                                        .begin()));
 
                                   copyDoubleToNumber(
-                                    thrust::raw_pointer_cast(&(
-                                      operatorMatrix
-                                        .getShapeFunctionGradientValuesZTransposed()
-                                          [startingCellId * numNodesPerElement *
-                                           numQuadPoints])),
+                                    (operatorMatrix
+                                       .getShapeFunctionGradientValuesZTransposed())
+                                        .begin() +
+                                      startingCellId * numNodesPerElement *
+                                        numQuadPoints,
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesZTransposedDevice);
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                      shapeFunctionGradientValuesZTransposedDevice
+                                        .begin()));
 
-                                  cublasXgemmStridedBatched(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
-                                    BVec,
-                                    numQuadPoints,
-                                    numNodesPerElement,
-                                    &scalarCoeffAlpha,
-                                    cellWaveFunctionMatrix,
-                                    BVec,
-                                    strideA,
-                                    shapeFunctionGradientValuesXTransposedDevice,
-                                    numNodesPerElement,
-                                    strideB,
-                                    &scalarCoeffBeta,
-                                    gradRhoWfcContributionsDeviceX.begin(),
-                                    BVec,
-                                    strideC,
-                                    currentCellsBlockSize);
+                                  dftfe::utils::deviceBlasWrapper::
+                                    gemmStridedBatched(
+                                      operatorMatrix.getDeviceBlasHandle(),
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      BVec,
+                                      numQuadPoints,
+                                      numNodesPerElement,
+                                      &scalarCoeffAlpha,
+                                      cellWaveFunctionMatrix,
+                                      BVec,
+                                      strideA,
+                                      shapeFunctionGradientValuesXTransposedDevice
+                                        .begin(),
+                                      numNodesPerElement,
+                                      strideB,
+                                      &scalarCoeffBeta,
+                                      gradRhoWfcContributionsDeviceX.begin(),
+                                      BVec,
+                                      strideC,
+                                      currentCellsBlockSize);
 
 
-                                  cublasXgemmStridedBatched(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
-                                    BVec,
-                                    numQuadPoints,
-                                    numNodesPerElement,
-                                    &scalarCoeffAlpha,
-                                    cellWaveFunctionMatrix,
-                                    BVec,
-                                    strideA,
-                                    shapeFunctionGradientValuesYTransposedDevice,
-                                    numNodesPerElement,
-                                    strideB,
-                                    &scalarCoeffBeta,
-                                    gradRhoWfcContributionsDeviceY.begin(),
-                                    BVec,
-                                    strideC,
-                                    currentCellsBlockSize);
+                                  dftfe::utils::deviceBlasWrapper::
+                                    gemmStridedBatched(
+                                      operatorMatrix.getDeviceBlasHandle(),
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      BVec,
+                                      numQuadPoints,
+                                      numNodesPerElement,
+                                      &scalarCoeffAlpha,
+                                      cellWaveFunctionMatrix,
+                                      BVec,
+                                      strideA,
+                                      shapeFunctionGradientValuesYTransposedDevice
+                                        .begin(),
+                                      numNodesPerElement,
+                                      strideB,
+                                      &scalarCoeffBeta,
+                                      gradRhoWfcContributionsDeviceY.begin(),
+                                      BVec,
+                                      strideC,
+                                      currentCellsBlockSize);
 
-                                  cublasXgemmStridedBatched(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
-                                    BVec,
-                                    numQuadPoints,
-                                    numNodesPerElement,
-                                    &scalarCoeffAlpha,
-                                    cellWaveFunctionMatrix,
-                                    BVec,
-                                    strideA,
-                                    shapeFunctionGradientValuesZTransposedDevice,
-                                    numNodesPerElement,
-                                    strideB,
-                                    &scalarCoeffBeta,
-                                    gradRhoWfcContributionsDeviceZ.begin(),
-                                    BVec,
-                                    strideC,
-                                    currentCellsBlockSize);
+                                  dftfe::utils::deviceBlasWrapper::
+                                    gemmStridedBatched(
+                                      operatorMatrix.getDeviceBlasHandle(),
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      BVec,
+                                      numQuadPoints,
+                                      numNodesPerElement,
+                                      &scalarCoeffAlpha,
+                                      cellWaveFunctionMatrix,
+                                      BVec,
+                                      strideA,
+                                      shapeFunctionGradientValuesZTransposedDevice
+                                        .begin(),
+                                      numNodesPerElement,
+                                      strideB,
+                                      &scalarCoeffBeta,
+                                      gradRhoWfcContributionsDeviceZ.begin(),
+                                      BVec,
+                                      strideC,
+                                      currentCellsBlockSize);
                                 }
 
 
 
                               computeRhoGradRhoFromInterpolatedValues<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize * numQuadPoints *
-                                  currentCellsBlockSize,
-                                deviceConstants::blockSize>>>(
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
+                                  numQuadPoints * currentCellsBlockSize,
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 currentCellsBlockSize * numQuadPoints * BVec,
-                                rhoWfcContributionsDevice.begin(),
-                                gradRhoWfcContributionsDeviceX.begin(),
-                                gradRhoWfcContributionsDeviceY.begin(),
-                                gradRhoWfcContributionsDeviceZ.begin(),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rhoWfcContributionsDevice.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceX.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceY.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
 
 
-                              cublasXgemm(operatorMatrix.getCublasHandle(),
-                                          CUBLAS_OP_N,
-                                          CUBLAS_OP_N,
-                                          1,
-                                          currentCellsBlockSize * numQuadPoints,
-                                          BVec,
-                                          &scalarCoeffAlphaRho,
-                                          partialOccupVecDevice.begin(),
-                                          1,
-                                          rhoWfcContributionsDevice.begin(),
-                                          BVec,
-                                          &scalarCoeffBetaRho,
-                                          rhoDevice.begin() +
-                                            startingCellId * numQuadPoints,
-                                          1);
+                              dftfe::utils::deviceBlasWrapper::gemm(
+                                operatorMatrix.getDeviceBlasHandle(),
+                                dftfe::utils::DEVICEBLAS_OP_N,
+                                dftfe::utils::DEVICEBLAS_OP_N,
+                                1,
+                                currentCellsBlockSize * numQuadPoints,
+                                BVec,
+                                &scalarCoeffAlphaRho,
+                                partialOccupVecDevice.begin(),
+                                1,
+                                rhoWfcContributionsDevice.begin(),
+                                BVec,
+                                &scalarCoeffBetaRho,
+                                rhoDevice.begin() +
+                                  startingCellId * numQuadPoints,
+                                1);
 
 
                               if (isEvaluateGradRho)
                                 {
-                                  cublasXgemm(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
+                                  dftfe::utils::deviceBlasWrapper::gemm(
+                                    operatorMatrix.getDeviceBlasHandle(),
+                                    dftfe::utils::DEVICEBLAS_OP_N,
+                                    dftfe::utils::DEVICEBLAS_OP_N,
                                     1,
                                     currentCellsBlockSize * numQuadPoints,
                                     BVec,
@@ -716,10 +712,10 @@ namespace dftfe
                                     1);
 
 
-                                  cublasXgemm(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
+                                  dftfe::utils::deviceBlasWrapper::gemm(
+                                    operatorMatrix.getDeviceBlasHandle(),
+                                    dftfe::utils::DEVICEBLAS_OP_N,
+                                    dftfe::utils::DEVICEBLAS_OP_N,
                                     1,
                                     currentCellsBlockSize * numQuadPoints,
                                     BVec,
@@ -733,10 +729,10 @@ namespace dftfe
                                       startingCellId * numQuadPoints,
                                     1);
 
-                                  cublasXgemm(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
+                                  dftfe::utils::deviceBlasWrapper::gemm(
+                                    operatorMatrix.getDeviceBlasHandle(),
+                                    dftfe::utils::DEVICEBLAS_OP_N,
+                                    dftfe::utils::DEVICEBLAS_OP_N,
                                     1,
                                     currentCellsBlockSize * numQuadPoints,
                                     BVec,
@@ -777,13 +773,9 @@ namespace dftfe
                                               jvec + iEigenVec] >
                                   fermiEnergyConstraintMag)
                                 *(partialOccupVec.begin() + iEigenVec) =
-                                  deviceUtils::makeNumberFromReal<NumberType>(
-                                    -kPointWeights[kPoint] *
-                                    spinPolarizedFactor);
+                                  -kPointWeights[kPoint] * spinPolarizedFactor;
                               else
-                                *(partialOccupVec.begin() + iEigenVec) =
-                                  deviceUtils::makeNumberFromReal<NumberType>(
-                                    0.0);
+                                *(partialOccupVec.begin() + iEigenVec) = 0;
                             }
                         }
                       else
@@ -792,38 +784,37 @@ namespace dftfe
                                ++iEigenVec)
                             {
                               *(partialOccupVec.begin() + iEigenVec) =
-                                deviceUtils::makeNumberFromReal<NumberType>(
-                                  (dftUtils::getPartialOccupancy(
-                                     eigenValues[kPoint]
-                                                [totalNumWaveFunctions *
-                                                   spinIndex +
-                                                 (totalNumWaveFunctions - Nfr) +
-                                                 jvec + iEigenVec],
-                                     fermiEnergy,
-                                     C_kb,
-                                     dftParams.TVal) -
-                                   1.0) *
-                                  kPointWeights[kPoint] * spinPolarizedFactor);
+                                (dftUtils::getPartialOccupancy(
+                                   eigenValues[kPoint]
+                                              [totalNumWaveFunctions *
+                                                 spinIndex +
+                                               (totalNumWaveFunctions - Nfr) +
+                                               jvec + iEigenVec],
+                                   fermiEnergy,
+                                   C_kb,
+                                   dftParams.TVal) -
+                                 1.0) *
+                                kPointWeights[kPoint] * spinPolarizedFactor;
                             }
                         }
 
-                      // partialOccupVecDevice = partialOccupVec;
-                      deviceUtils::copyHostVecToDeviceVec(
-                        partialOccupVec.begin(),
-                        partialOccupVecDevice.begin(),
-                        partialOccupVecDevice.size());
+                      partialOccupVec
+                        .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
+                          partialOccupVecDevice);
 
                       stridedCopyToBlockKernel<<<
-                        (BVec + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * numLocalDofs,
-                        deviceConstants::blockSize>>>(
+                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
+                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                         BVec,
-                        XFrac + numLocalDofs * Nfr *
-                                  ((dftParams.spinPolarized + 1) * kPoint +
-                                   spinIndex),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XFrac + numLocalDofs * Nfr *
+                                    ((dftParams.spinPolarized + 1) * kPoint +
+                                     spinIndex)),
                         numLocalDofs,
                         Nfr,
-                        deviceFlattenedArrayBlock.begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          deviceFlattenedArrayBlock.begin()),
                         jvec);
 
 
@@ -844,49 +835,48 @@ namespace dftfe
                                 iblock * cellsBlockSize;
 
                               copyGlobalToCellDeviceKernel<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize *
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
                                   currentCellsBlockSize * numNodesPerElement,
-                                deviceConstants::blockSize>>>(
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                                deviceFlattenedArrayBlock.begin(),
-                                cellWaveFunctionMatrix,
-                                thrust::raw_pointer_cast(&(
-                                  operatorMatrix
-                                    .getFlattenedArrayCellLocalProcIndexIdMap()
-                                      [startingCellId * numNodesPerElement])));
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  deviceFlattenedArrayBlock.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  cellWaveFunctionMatrix),
+                                (operatorMatrix
+                                   .getFlattenedArrayCellLocalProcIndexIdMap())
+                                    .begin() +
+                                  startingCellId * numNodesPerElement);
 
-                              NumberType scalarCoeffAlpha =
-                                deviceUtils::makeNumberFromReal<NumberType>(
-                                  1.0);
-                              NumberType scalarCoeffBeta =
-                                deviceUtils::makeNumberFromReal<NumberType>(
-                                  0.0);
-                              int strideA = BVec * numNodesPerElement;
-                              int strideB = 0;
-                              int strideC = BVec * numQuadPoints;
+                              NumberType scalarCoeffAlpha = 1.0;
+                              NumberType scalarCoeffBeta  = 0;
+                              int        strideA = BVec * numNodesPerElement;
+                              int        strideB = 0;
+                              int        strideC = BVec * numQuadPoints;
 
 
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
-                                cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionValuesTransposedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                rhoWfcContributionsDevice.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
+                              dftfe::utils::deviceBlasWrapper::
+                                gemmStridedBatched(
+                                  operatorMatrix.getDeviceBlasHandle(),
+                                  dftfe::utils::DEVICEBLAS_OP_N,
+                                  dftfe::utils::DEVICEBLAS_OP_N,
+                                  BVec,
+                                  numQuadPoints,
+                                  numNodesPerElement,
+                                  &scalarCoeffAlpha,
+                                  cellWaveFunctionMatrix,
+                                  BVec,
+                                  strideA,
+                                  shapeFunctionValuesTransposedDevice.begin(),
+                                  numNodesPerElement,
+                                  strideB,
+                                  &scalarCoeffBeta,
+                                  rhoWfcContributionsDevice.begin(),
+                                  BVec,
+                                  strideC,
+                                  currentCellsBlockSize);
 
 
 
@@ -895,135 +885,152 @@ namespace dftfe
                                   strideB = numNodesPerElement * numQuadPoints;
 
                                   copyDoubleToNumber(
-                                    thrust::raw_pointer_cast(&(
-                                      operatorMatrix
-                                        .getShapeFunctionGradientValuesXTransposed()
-                                          [startingCellId * numNodesPerElement *
-                                           numQuadPoints])),
+                                    (operatorMatrix
+                                       .getShapeFunctionGradientValuesXTransposed())
+                                        .begin() +
+                                      startingCellId * numNodesPerElement *
+                                        numQuadPoints,
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesXTransposedDevice);
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                      shapeFunctionGradientValuesXTransposedDevice
+                                        .begin()));
 
                                   copyDoubleToNumber(
-                                    thrust::raw_pointer_cast(&(
-                                      operatorMatrix
-                                        .getShapeFunctionGradientValuesYTransposed()
-                                          [startingCellId * numNodesPerElement *
-                                           numQuadPoints])),
+                                    (operatorMatrix
+                                       .getShapeFunctionGradientValuesYTransposed())
+                                        .begin() +
+                                      startingCellId * numNodesPerElement *
+                                        numQuadPoints,
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesYTransposedDevice);
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                      shapeFunctionGradientValuesYTransposedDevice
+                                        .begin()));
 
                                   copyDoubleToNumber(
-                                    thrust::raw_pointer_cast(&(
-                                      operatorMatrix
-                                        .getShapeFunctionGradientValuesZTransposed()
-                                          [startingCellId * numNodesPerElement *
-                                           numQuadPoints])),
+                                    (operatorMatrix
+                                       .getShapeFunctionGradientValuesZTransposed())
+                                        .begin() +
+                                      startingCellId * numNodesPerElement *
+                                        numQuadPoints,
                                     currentCellsBlockSize * numNodesPerElement *
                                       numQuadPoints,
-                                    shapeFunctionGradientValuesZTransposedDevice);
+                                    dftfe::utils::makeDataTypeDeviceCompatible(
+                                      shapeFunctionGradientValuesZTransposedDevice
+                                        .begin()));
 
-                                  cublasXgemmStridedBatched(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
-                                    BVec,
-                                    numQuadPoints,
-                                    numNodesPerElement,
-                                    &scalarCoeffAlpha,
-                                    cellWaveFunctionMatrix,
-                                    BVec,
-                                    strideA,
-                                    shapeFunctionGradientValuesXTransposedDevice,
-                                    numNodesPerElement,
-                                    strideB,
-                                    &scalarCoeffBeta,
-                                    gradRhoWfcContributionsDeviceX.begin(),
-                                    BVec,
-                                    strideC,
-                                    currentCellsBlockSize);
+                                  dftfe::utils::deviceBlasWrapper::
+                                    gemmStridedBatched(
+                                      operatorMatrix.getDeviceBlasHandle(),
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      BVec,
+                                      numQuadPoints,
+                                      numNodesPerElement,
+                                      &scalarCoeffAlpha,
+                                      cellWaveFunctionMatrix,
+                                      BVec,
+                                      strideA,
+                                      shapeFunctionGradientValuesXTransposedDevice
+                                        .begin(),
+                                      numNodesPerElement,
+                                      strideB,
+                                      &scalarCoeffBeta,
+                                      gradRhoWfcContributionsDeviceX.begin(),
+                                      BVec,
+                                      strideC,
+                                      currentCellsBlockSize);
 
 
-                                  cublasXgemmStridedBatched(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
-                                    BVec,
-                                    numQuadPoints,
-                                    numNodesPerElement,
-                                    &scalarCoeffAlpha,
-                                    cellWaveFunctionMatrix,
-                                    BVec,
-                                    strideA,
-                                    shapeFunctionGradientValuesYTransposedDevice,
-                                    numNodesPerElement,
-                                    strideB,
-                                    &scalarCoeffBeta,
-                                    gradRhoWfcContributionsDeviceY.begin(),
-                                    BVec,
-                                    strideC,
-                                    currentCellsBlockSize);
+                                  dftfe::utils::deviceBlasWrapper::
+                                    gemmStridedBatched(
+                                      operatorMatrix.getDeviceBlasHandle(),
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      BVec,
+                                      numQuadPoints,
+                                      numNodesPerElement,
+                                      &scalarCoeffAlpha,
+                                      cellWaveFunctionMatrix,
+                                      BVec,
+                                      strideA,
+                                      shapeFunctionGradientValuesYTransposedDevice
+                                        .begin(),
+                                      numNodesPerElement,
+                                      strideB,
+                                      &scalarCoeffBeta,
+                                      gradRhoWfcContributionsDeviceY.begin(),
+                                      BVec,
+                                      strideC,
+                                      currentCellsBlockSize);
 
-                                  cublasXgemmStridedBatched(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
-                                    BVec,
-                                    numQuadPoints,
-                                    numNodesPerElement,
-                                    &scalarCoeffAlpha,
-                                    cellWaveFunctionMatrix,
-                                    BVec,
-                                    strideA,
-                                    shapeFunctionGradientValuesZTransposedDevice,
-                                    numNodesPerElement,
-                                    strideB,
-                                    &scalarCoeffBeta,
-                                    gradRhoWfcContributionsDeviceZ.begin(),
-                                    BVec,
-                                    strideC,
-                                    currentCellsBlockSize);
+                                  dftfe::utils::deviceBlasWrapper::
+                                    gemmStridedBatched(
+                                      operatorMatrix.getDeviceBlasHandle(),
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      dftfe::utils::DEVICEBLAS_OP_N,
+                                      BVec,
+                                      numQuadPoints,
+                                      numNodesPerElement,
+                                      &scalarCoeffAlpha,
+                                      cellWaveFunctionMatrix,
+                                      BVec,
+                                      strideA,
+                                      shapeFunctionGradientValuesZTransposedDevice
+                                        .begin(),
+                                      numNodesPerElement,
+                                      strideB,
+                                      &scalarCoeffBeta,
+                                      gradRhoWfcContributionsDeviceZ.begin(),
+                                      BVec,
+                                      strideC,
+                                      currentCellsBlockSize);
                                 }
 
 
 
                               computeRhoGradRhoFromInterpolatedValues<<<
-                                (BVec + (deviceConstants::blockSize - 1)) /
-                                  deviceConstants::blockSize * numQuadPoints *
-                                  currentCellsBlockSize,
-                                deviceConstants::blockSize>>>(
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
+                                  numQuadPoints * currentCellsBlockSize,
+                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                                 currentCellsBlockSize * numQuadPoints * BVec,
-                                rhoWfcContributionsDevice.begin(),
-                                gradRhoWfcContributionsDeviceX.begin(),
-                                gradRhoWfcContributionsDeviceY.begin(),
-                                gradRhoWfcContributionsDeviceZ.begin(),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rhoWfcContributionsDevice.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceX.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceY.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
 
 
-                              cublasXgemm(operatorMatrix.getCublasHandle(),
-                                          CUBLAS_OP_N,
-                                          CUBLAS_OP_N,
-                                          1,
-                                          currentCellsBlockSize * numQuadPoints,
-                                          BVec,
-                                          &scalarCoeffAlphaRho,
-                                          partialOccupVecDevice.begin(),
-                                          1,
-                                          rhoWfcContributionsDevice.begin(),
-                                          BVec,
-                                          &scalarCoeffBetaRho,
-                                          rhoDevice.begin() +
-                                            startingCellId * numQuadPoints,
-                                          1);
+                              dftfe::utils::deviceBlasWrapper::gemm(
+                                operatorMatrix.getDeviceBlasHandle(),
+                                dftfe::utils::DEVICEBLAS_OP_N,
+                                dftfe::utils::DEVICEBLAS_OP_N,
+                                1,
+                                currentCellsBlockSize * numQuadPoints,
+                                BVec,
+                                &scalarCoeffAlphaRho,
+                                partialOccupVecDevice.begin(),
+                                1,
+                                rhoWfcContributionsDevice.begin(),
+                                BVec,
+                                &scalarCoeffBetaRho,
+                                rhoDevice.begin() +
+                                  startingCellId * numQuadPoints,
+                                1);
 
 
                               if (isEvaluateGradRho)
                                 {
-                                  cublasXgemm(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
+                                  dftfe::utils::deviceBlasWrapper::gemm(
+                                    operatorMatrix.getDeviceBlasHandle(),
+                                    dftfe::utils::DEVICEBLAS_OP_N,
+                                    dftfe::utils::DEVICEBLAS_OP_N,
                                     1,
                                     currentCellsBlockSize * numQuadPoints,
                                     BVec,
@@ -1038,10 +1045,10 @@ namespace dftfe
                                     1);
 
 
-                                  cublasXgemm(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
+                                  dftfe::utils::deviceBlasWrapper::gemm(
+                                    operatorMatrix.getDeviceBlasHandle(),
+                                    dftfe::utils::DEVICEBLAS_OP_N,
+                                    dftfe::utils::DEVICEBLAS_OP_N,
                                     1,
                                     currentCellsBlockSize * numQuadPoints,
                                     BVec,
@@ -1055,10 +1062,10 @@ namespace dftfe
                                       startingCellId * numQuadPoints,
                                     1);
 
-                                  cublasXgemm(
-                                    operatorMatrix.getCublasHandle(),
-                                    CUBLAS_OP_N,
-                                    CUBLAS_OP_N,
+                                  dftfe::utils::deviceBlasWrapper::gemm(
+                                    operatorMatrix.getDeviceBlasHandle(),
+                                    dftfe::utils::DEVICEBLAS_OP_N,
+                                    dftfe::utils::DEVICEBLAS_OP_N,
                                     1,
                                     currentCellsBlockSize * numQuadPoints,
                                     BVec,
@@ -1077,35 +1084,39 @@ namespace dftfe
                     }         // spectrum split block
 
 
-              // do cuda memcopy to host
-              deviceUtils::copyDeviceVecToHostVec(rhoDevice.begin(),
-                                                  rhoHost.begin(),
-                                                  totalLocallyOwnedCells *
-                                                    numQuadPoints);
+              // do memcopy to host
+              rhoDevice.template copyTo<dftfe::utils::MemorySpace::HOST>(
+                rhoHost.begin(), totalLocallyOwnedCells * numQuadPoints, 0, 0);
 
               if (isEvaluateGradRho)
                 {
-                  deviceUtils::copyDeviceVecToHostVec(gradRhoDeviceX.begin(),
-                                                      gradRhoHostX.begin(),
-                                                      totalLocallyOwnedCells *
-                                                        numQuadPoints);
+                  gradRhoDeviceX
+                    .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                      gradRhoHostX.begin(),
+                      totalLocallyOwnedCells * numQuadPoints,
+                      0,
+                      0);
 
-                  deviceUtils::copyDeviceVecToHostVec(gradRhoDeviceY.begin(),
-                                                      gradRhoHostY.begin(),
-                                                      totalLocallyOwnedCells *
-                                                        numQuadPoints);
+                  gradRhoDeviceY
+                    .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                      gradRhoHostY.begin(),
+                      totalLocallyOwnedCells * numQuadPoints,
+                      0,
+                      0);
 
-                  deviceUtils::copyDeviceVecToHostVec(gradRhoDeviceZ.begin(),
-                                                      gradRhoHostZ.begin(),
-                                                      totalLocallyOwnedCells *
-                                                        numQuadPoints);
+                  gradRhoDeviceZ
+                    .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                      gradRhoHostZ.begin(),
+                      totalLocallyOwnedCells * numQuadPoints,
+                      0,
+                      0);
                 }
 
               for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
                 for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
                   {
                     rhoValuesFlattened[icell * numQuadPoints + iquad] +=
-                      deviceUtils::makeRealFromNumber(
+                      dftfe::utils::realPart(
                         *(rhoHost.begin() + icell * numQuadPoints + iquad));
                   }
 
@@ -1115,19 +1126,19 @@ namespace dftfe
                     {
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 0] +=
-                        deviceUtils::makeRealFromNumber(
-                          *(gradRhoHostX.begin() + icell * numQuadPoints +
-                            iquad));
+                        dftfe::utils::realPart(*(gradRhoHostX.begin() +
+                                                 icell * numQuadPoints +
+                                                 iquad));
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 1] +=
-                        deviceUtils::makeRealFromNumber(
-                          *(gradRhoHostY.begin() + icell * numQuadPoints +
-                            iquad));
+                        dftfe::utils::realPart(*(gradRhoHostY.begin() +
+                                                 icell * numQuadPoints +
+                                                 iquad));
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 2] +=
-                        deviceUtils::makeRealFromNumber(
-                          *(gradRhoHostZ.begin() + icell * numQuadPoints +
-                            iquad));
+                        dftfe::utils::realPart(*(gradRhoHostZ.begin() +
+                                                 icell * numQuadPoints +
+                                                 iquad));
                     }
               if (dftParams.spinPolarized == 1)
                 {
@@ -1136,7 +1147,7 @@ namespace dftfe
                       {
                         rhoValuesSpinPolarizedFlattened
                           [icell * numQuadPoints * 2 + iquad * 2 + spinIndex] +=
-                          deviceUtils::makeRealFromNumber(
+                          dftfe::utils::realPart(
                             *(rhoHost.begin() + icell * numQuadPoints + iquad));
                       }
 
@@ -1148,21 +1159,21 @@ namespace dftfe
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3] +=
-                            deviceUtils::makeRealFromNumber(
-                              *(gradRhoHostX.begin() + icell * numQuadPoints +
-                                iquad));
+                            dftfe::utils::realPart(*(gradRhoHostX.begin() +
+                                                     icell * numQuadPoints +
+                                                     iquad));
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3 + 1] +=
-                            deviceUtils::makeRealFromNumber(
-                              *(gradRhoHostY.begin() + icell * numQuadPoints +
-                                iquad));
+                            dftfe::utils::realPart(*(gradRhoHostY.begin() +
+                                                     icell * numQuadPoints +
+                                                     iquad));
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3 + 2] +=
-                            deviceUtils::makeRealFromNumber(
-                              *(gradRhoHostZ.begin() + icell * numQuadPoints +
-                                iquad));
+                            dftfe::utils::realPart(*(gradRhoHostZ.begin() +
+                                                     icell * numQuadPoints +
+                                                     iquad));
                         }
                 }
             } // kpoint loop
@@ -1304,18 +1315,7 @@ namespace dftfe
             iElem++;
           }
 
-
-
-      DeviceCHECK(cudaFree(shapeFunctionValuesTransposedDevice));
-
-      if (isEvaluateGradRho)
-        {
-          DeviceCHECK(cudaFree(shapeFunctionGradientValuesXTransposedDevice));
-          DeviceCHECK(cudaFree(shapeFunctionGradientValuesYTransposedDevice));
-          DeviceCHECK(cudaFree(shapeFunctionGradientValuesZTransposedDevice));
-        }
-
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
       device_time = MPI_Wtime() - device_time;
 
@@ -1326,8 +1326,8 @@ namespace dftfe
 
     template void
     computeRhoFromPSI(
-      const dataTypes::numberDevice *                X,
-      const dataTypes::numberDevice *                XFrac,
+      const dataTypes::number *                      X,
+      const dataTypes::number *                      XFrac,
       const unsigned int                             totalNumWaveFunctions,
       const unsigned int                             Nfr,
       const unsigned int                             numLocalDofs,

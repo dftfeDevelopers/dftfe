@@ -72,7 +72,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const unsigned int smearedChargeQuadratureId,
       const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-      cublasHandle_t &                                     cublasHandle,
+      dftfe::utils::deviceBlasHandle_t &                   deviceBlasHandle,
       const bool         isComputeDiagonalA               = true,
       const bool         isComputeMeanValueConstraints    = false,
       const bool         smearedNuclearCharges            = false,
@@ -231,8 +231,9 @@ namespace dftfe
     int d_nLocalCells, d_xLocalDof, d_xLen;
 
     // shape function value, gradient, jacobian and map for matrixfree
-    thrust::device_vector<double> d_shapeFunction, d_jacobianFactor;
-    thrust::device_vector<int>    d_map;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+                                                                        d_shapeFunction, d_jacobianFactor;
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
 
     // Pointers to shape function value, gradient, jacobian and map for
     // matrixfree
@@ -241,7 +242,7 @@ namespace dftfe
     int *   d_mapPtr;
 
     // cuBLAS handle for cuBLAS operations
-    cublasHandle_t *d_cublasHandlePtr;
+    dftfe::utils::deviceBlasHandle_t *d_deviceBlasHandlePtr;
 
     // constraints
     dftUtils::constraintMatrixInfoDevice d_constraintsTotalPotentialInfo;

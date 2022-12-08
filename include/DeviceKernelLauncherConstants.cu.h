@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -13,27 +13,20 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
+//
+#ifndef dftfeDeviceKernelLauncherConstants_cuh
+#define dftfeDeviceKernelLauncherConstants_cuh
 
-#ifndef dftfeMemorySpace_h
-#define dftfeMemorySpace_h
 
 namespace dftfe
 {
-  namespace MemorySpace
+  namespace utils
   {
-    /**
-     * Structure describing Host memory space.
-     */
-    struct Host
-    {};
+    static const int DEVICE_WARP_SIZE      = 32;
+    static const int DEVICE_MAX_BLOCK_SIZE = 1024;
+    static const int DEVICE_BLOCK_SIZE     = 256;
 
-    /**
-     * Structure describing Device memory space.
-     */
-    struct Device
-    {};
-
-  } // namespace MemorySpace
+  } // namespace utils
 } // namespace dftfe
 
-#endif
+#endif // dftfeDeviceKernelLauncherConstants_cuh

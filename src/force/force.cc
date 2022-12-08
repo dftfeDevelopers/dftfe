@@ -33,7 +33,7 @@
 #include <fileReaders.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
-
+#include <DataTypeOverloads.h>
 
 // This class computes and stores the configurational forces corresponding to
 // geometry optimization. It uses the formulation in the paper by Motamarri
@@ -43,35 +43,6 @@
 
 namespace dftfe
 {
-  namespace
-  {
-    double
-    realPart(const double x)
-    {
-      return x;
-    }
-
-    double
-    realPart(const std::complex<double> x)
-    {
-      return x.real();
-    }
-
-    double
-    complexConj(const double x)
-    {
-      return x;
-    }
-
-    std::complex<double>
-    complexConj(const std::complex<double> x)
-    {
-      return std::conj(x);
-    }
-
-  } // namespace
-
-
 #include "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"

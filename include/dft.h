@@ -21,6 +21,8 @@
 #include <constraintMatrixInfo.h>
 #include <elpaScalaManager.h>
 #include <headers.h>
+#include <MemorySpaceType.h>
+#include <MemoryStorage.h>
 
 #include <complex>
 #include <deque>
@@ -37,7 +39,7 @@
 #  include <poissonSolverProblemDevice.h>
 #  include <kerkerSolverProblemDevice.h>
 #  include <linearSolverCGDevice.h>
-#  include "deviceDirectCCLWrapper.h"
+#  include <deviceDirectCCLWrapper.h>
 #endif
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
@@ -1232,7 +1234,7 @@ namespace dftfe
      */
     const MPI_Comm mpi_communicator;
 #if defined(DFTFE_WITH_DEVICE)
-    DeviceCCLWrapper *d_devicecclMpiCommDomainPtr;
+    utils::DeviceCCLWrapper *d_devicecclMpiCommDomainPtr;
 #endif
     const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     interpoolcomm;
@@ -1342,11 +1344,14 @@ namespace dftfe
 
     /// cuda eigenvectors
 #ifdef DFTFE_WITH_DEVICE
-    deviceUtils::Vector<dataTypes::numberDevice, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsFlattenedDevice;
-    deviceUtils::Vector<dataTypes::numberDevice, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsRotFracFlattenedDevice;
-    deviceUtils::Vector<dataTypes::numberDevice, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice;
 #endif
 

@@ -22,7 +22,7 @@
 
 #    include <linearSolverDevice.h>
 #    include <linearSolverProblemDevice.h>
-
+#    include <MemoryStorage.h>
 namespace dftfe
 {
   /**
@@ -62,12 +62,12 @@ namespace dftfe
      *                   2 - all debug output.
      */
     void
-    solve(linearSolverProblemDevice &problem,
-          const double               absTolerance,
-          const unsigned int         maxNumberIterations,
-          cublasHandle_t &           handle,
-          const int                  debugLevel     = 0,
-          bool                       distributeFlag = true);
+    solve(linearSolverProblemDevice &       problem,
+          const double                      absTolerance,
+          const unsigned int                maxNumberIterations,
+          dftfe::utils::deviceBlasHandle_t &handle,
+          const int                         debugLevel     = 0,
+          bool                              distributeFlag = true);
 
   private:
     /// enum denoting the choice of the linear solver
@@ -76,9 +76,10 @@ namespace dftfe
     /// define some temporary vectors
     distributedDeviceVec<double> d_qvec, d_rvec, d_dvec;
 
-    int                           d_xLocalDof;
-    double *                      d_devSumPtr;
-    thrust::device_vector<double> d_devSum;
+    int     d_xLocalDof;
+    double *d_devSumPtr;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_devSum;
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
