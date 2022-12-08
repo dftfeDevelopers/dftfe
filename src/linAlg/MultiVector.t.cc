@@ -645,11 +645,17 @@ namespace dftfe
     const size_type numVectors,
     MultiVector<ValueType,memorySpace> & multiVector)
     {
-      const std::pair<global_size_type,global_size_type> locallyOwnedRange=partitioner->local_range();
+      const std::pair<global_size_type,global_size_type> & locallyOwnedRange=partitioner->local_range();
+      std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
       std::vector<global_size_type> ghostIndices;
       (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
-      std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::DEVICE>> mpiPatternP2PPtr =
-      std::make_shared<dftfe::utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::DEVICE>>(locallyOwnedRange,ghostIndices,partitioner->get_mpi_communicator());    
+
+     for (unsigned int i=0;i<ghostIndices.size();++i)
+       std::cout<<ghostIndices[i]<<std::endl;
+
+      std::sort(ghostIndices.begin(),ghostIndices.end());
+      std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2PPtr =
+      std::make_shared<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>(locallyOwnedRange,ghostIndices,partitioner->get_mpi_communicator());    
 
       multiVector.reinit(
       mpiPatternP2PPtr,
