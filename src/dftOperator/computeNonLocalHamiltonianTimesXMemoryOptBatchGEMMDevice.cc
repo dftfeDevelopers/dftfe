@@ -108,7 +108,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (!skip1)
     {
-      projectorKetTimesVector.compressAdd();
+      projectorKetTimesVector.accumulateAddLocallyOwned();
       projectorKetTimesVector.updateGhostValues();
     }
 
@@ -305,7 +305,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions);
     }
 
-  projectorKetTimesVector.setZero();
+  projectorKetTimesVector.setValue(0);
 
 
   if (d_totalNonlocalElems > 0)
@@ -321,7 +321,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         projectorKetTimesVector.begin()),
       d_projectorIdsParallelNumberingMapDevice.begin());
 
-  projectorKetTimesVector.compressAdd();
+  projectorKetTimesVector.accumulateAddLocallyOwned();
   projectorKetTimesVector.updateGhostValues();
 
   //

@@ -251,7 +251,7 @@ namespace dftfe
           &cellStiffnessMatrixTimesVectorD)
       {
         // const unsigned int numberVectors = 1;
-        dst.setZero();
+        dst.setValue(0);
 
         // distributedDeviceVec<double> temp;
         // temp.reinit(src);
@@ -349,7 +349,7 @@ namespace dftfe
         constraintsMatrixDataInfoDevice.distribute_slave_to_master(
           dst, numberVectors);
 
-        dst.compressAdd();
+        dst.accumulateAddLocallyOwned();
 
         if (localSize > 0)
           scaleKernel<<<(numberVectors +
@@ -452,7 +452,7 @@ namespace dftfe
 
       //xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
       //          blockSize);
-      xD.setZero();
+      xD.setValue(0);
       dftfe::utils::deviceMemcpyH2D(xD.begin(),
                                     xH,
                                     localSize * numberBins * sizeof(double));
@@ -486,7 +486,7 @@ namespace dftfe
 
       constraintsMatrixDataInfoDevice.precomputeMaps(
         matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
-        flattededArray.get_partitioner(),
+        flattenedArray.get_partitioner(),
         blockSize);
 
       constraintsMatrixDataInfoDevice.set_zero(xD, blockSize);

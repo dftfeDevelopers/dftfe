@@ -660,8 +660,7 @@ namespace dftfe
         return;
 
       deviceUtils::copyComplexArrToRealArrsDevice(
-        (fieldVector.locallyOwnedFlattenedSize() +
-         fieldVector.ghostFlattenedSize()),
+        (fieldVector.localSize()*fieldVector.numVectors()),
         fieldVector.begin(),
         tempReal,
         tempImag);
@@ -698,8 +697,7 @@ namespace dftfe
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       deviceUtils::copyRealArrsToComplexArrDevice(
-        (fieldVector.locallyOwnedFlattenedSize() +
-         fieldVector.ghostFlattenedSize()),
+        (fieldVector.localSize()*fieldVector.numVectors()),
         tempReal,
         tempImag,
         fieldVector.begin());
@@ -720,8 +718,7 @@ namespace dftfe
         return;
 
       deviceUtils::copyComplexArrToRealArrsDevice(
-        (fieldVector.locallyOwnedFlattenedSize() +
-         fieldVector.ghostFlattenedSize()),
+        (fieldVector.localSize()*fieldVector.numVectors()),
         fieldVector.begin(),
         tempReal,
         tempImag);
@@ -758,8 +755,7 @@ namespace dftfe
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
       deviceUtils::copyRealArrsToComplexArrDevice(
-        (fieldVector.locallyOwnedFlattenedSize() +
-         fieldVector.ghostFlattenedSize()),
+        (fieldVector.localSize()*fieldVector.numVectors()),
         tempReal,
         tempImag,
         fieldVector.begin());

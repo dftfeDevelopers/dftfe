@@ -64,11 +64,11 @@ namespace dftfe
     problem.computeRhs(rhsHost);
 
     distributedDeviceVec<double> rhsDevice;
-    rhsDevice.reinit(rhsHost.get_partitioner(), 1);
+    //rhsDevice.reinit(rhsHost.get_partitioner(), 1);
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
-      dftfe::utils::MemorySpace::HOST>::copy(rhsDevice.locallyOwnedDofsSize(),
+      dftfe::utils::MemorySpace::HOST>::copy(rhsDevice.locallyOwnedSize()*rhsDevice.numVectors(),
                                              rhsDevice.begin(),
                                              rhsHost.begin());
 
@@ -86,7 +86,7 @@ namespace dftfe
 
     d_devSum.resize(1);
     d_devSumPtr = d_devSum.data();
-    d_xLocalDof = x.locallyOwnedDofsSize();
+    d_xLocalDof = x.locallyOwnedSize()*x.numVectors();
 
     double res = 0.0, initial_res = 0.0;
     bool   conv = false;

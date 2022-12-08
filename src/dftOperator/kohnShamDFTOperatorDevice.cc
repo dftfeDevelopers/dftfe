@@ -887,12 +887,10 @@ namespace dftfe
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       {
         d_tempRealVec.resize(
-          (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
-           d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+          (d_parallelChebyBlockVectorDevice.localSize()*d_parallelChebyBlockVectorDevice.numVectors()),
           0.0);
         d_tempImagVec.resize(
-          (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
-           d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+          (d_parallelChebyBlockVectorDevice.localSize()*d_parallelChebyBlockVectorDevice.numVectors()),
           0.0);
       }
 
@@ -3628,7 +3626,7 @@ namespace dftfe
 
 
     src.zeroOutGhosts();
-    dst.compressAdd();
+    dst.accumulateAddLocallyOwned();
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
@@ -3773,7 +3771,7 @@ namespace dftfe
           numberWaveFunctions * totalSize,
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
-        tempFloatArray.compressAdd();
+        tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
         copyFloatArrToDoubleArrLocallyOwned<<<
@@ -3790,7 +3788,7 @@ namespace dftfe
       }
     else
       {
-        dst.compressAdd();
+        dst.accumulateAddLocallyOwned();
       }
   }
 
@@ -3872,7 +3870,7 @@ namespace dftfe
                   k);
 
                 // evaluate XBlock^{T} times H^{T} and store in HXBlock
-                HXBlock.setZero();
+                HXBlock.setValue(0);
                 const bool   scaleFlag = false;
                 const double scalar    = 1.0;
                 HX(XBlock,
@@ -4123,7 +4121,7 @@ namespace dftfe
                       k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     HX(XBlock,
@@ -4209,7 +4207,7 @@ namespace dftfe
                       k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     HX(XBlock,
@@ -4548,7 +4546,7 @@ namespace dftfe
                       k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     if (jvec + B > Noc)
@@ -4690,7 +4688,7 @@ namespace dftfe
                       k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     if (jvecNew + B > Noc)

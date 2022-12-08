@@ -761,7 +761,7 @@ namespace dftfe
         1 * sizeof(dataTypes::number),
         local_size);
 
-      Yb.setZero();
+      Yb.setValue(0);
       operatorMatrix.HX(
         Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
@@ -804,7 +804,7 @@ namespace dftfe
             1 * sizeof(dataTypes::number),
             local_size);
 
-          Yb.setZero();
+          Yb.setValue(0);
           operatorMatrix.HX(
             Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
@@ -917,7 +917,7 @@ namespace dftfe
       const unsigned int totalVectorSize = localVectorSize * numberVectors;
       int                inc             = 1;
 
-      YArray.setZero();
+      YArray.setValue(0);
       //
       // call HX
       //
@@ -1138,17 +1138,17 @@ namespace dftfe
       const unsigned int totalVectorSize = localVectorSize * numberVectors;
       int                inc             = 1;
 
-      YArray1.setZero();
-      YArray2.setZero();
+      YArray1.setValue(0);
+      YArray2.setValue(0);
 
       const unsigned int n_ghosts =
-        YArray1.ghostFlattenedSize() / numberVectors;
+        YArray1.ghostSize();
       const unsigned int totalSize = localVectorSize + n_ghosts;
 
       const unsigned int localSizeNLP =
-        projectorKetTimesVector1.locallyOwnedFlattenedSize() / numberVectors;
+        projectorKetTimesVector1.locallyOwnedSize();
       const unsigned int n_ghosts_nlp =
-        projectorKetTimesVector1.ghostFlattenedSize() / numberVectors;
+        projectorKetTimesVector1.ghostSize();
       const unsigned int totalSizeNLP = localSizeNLP + n_ghosts_nlp;
 
       //
@@ -1545,7 +1545,7 @@ namespace dftfe
               if (overlap)
                 YArray2.zeroOutGhosts();
 
-              projectorKetTimesVector1.setZero();
+              projectorKetTimesVector1.setValue(0);
               if (overlap)
                 {
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
@@ -1676,7 +1676,7 @@ namespace dftfe
               YArray1.zeroOutGhosts();
 
 
-              projectorKetTimesVector2.setZero();
+              projectorKetTimesVector2.setValue(0);
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
@@ -4606,7 +4606,7 @@ namespace dftfe
                     k);
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                  HXBlock.setZero();
+                  HXBlock.setValue(0);
                   operatorMatrix.HX(XBlock,
                                     projectorKetTimesVector,
                                     M,

@@ -60,11 +60,11 @@ namespace dftfe
 
     matrixFreeDataPRefined.initialize_dof_vector(x,
                                                  d_matrixFreeVectorComponent);
-    d_xDevice.reinit(x.get_partitioner(), 1);
+    //d_xDevice.reinit(x.get_partitioner(), 1);
 
     d_xPtr      = &x;
-    d_xLocalDof = d_xDevice.locallyOwnedDofsSize();
-    d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
+    d_xLocalDof = d_xDevice.locallyOwnedSize()*d_xDevice.numVectors();
+    d_xLen = d_xDevice.localSize()*d_xDevice.numVectors();
 
     computeDiagonalA();
 
@@ -266,7 +266,7 @@ namespace dftfe
           d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
-    d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
+    //d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
@@ -832,7 +832,7 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 
-    Ax.compressAdd();
+    Ax.accumulateAddLocallyOwned();
   }
 
 #include "kerkerSolverProblemDevice.inst.cc"
