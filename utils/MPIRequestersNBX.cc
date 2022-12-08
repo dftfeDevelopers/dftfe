@@ -150,7 +150,7 @@ namespace dftfe
             int dummyVal = 0;
             d_recvBuffers.push_back(dummyVal);
             MPI_Request request;
-            d_recvRequests.push_back(request);
+            d_recvRequests.emplace_back(request);
 
             err    = MPI_Irecv(&d_recvBuffers[N],
                                               1,
@@ -224,6 +224,7 @@ namespace dftfe
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
           }
+        d_sendRequests.resize(0);  
 
         if (d_recvRequests.size() > 0)
           {
@@ -235,6 +236,7 @@ namespace dftfe
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
           }
+        d_recvRequests.resize(0);  
 
         int         err    = MPI_Wait(&d_barrierRequest, MPI_STATUS_IGNORE);
         std::string errMsg = "Error occured while using MPI_Wait. "

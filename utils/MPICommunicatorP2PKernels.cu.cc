@@ -192,9 +192,9 @@ namespace dftfe
     {
       deviceUtils::copyComplexArrToRealArrsDevice(
         (locallyOwnedSize+ghostSize)*blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempRealDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempImagDataArray.data()));
+        dataArray.data(),
+        tempRealDataArray.data(),
+        tempImagDataArray.data());
 
 
       accumAddFromRecvBufferDeviceKernel<<<
@@ -210,9 +210,9 @@ namespace dftfe
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         locallyOwnedSize*blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(tempRealDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempImagDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+        tempRealDataArray.data(),
+        tempImagDataArray.data(),
+        dataArray.data());
     }
 
     template <>
@@ -231,9 +231,9 @@ namespace dftfe
     {
       deviceUtils::copyComplexArrToRealArrsDevice(
         (locallyOwnedSize+ghostSize)*blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempRealDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempImagDataArray.data()));
+        dataArray.data(),
+        tempRealDataArray.data(),
+        tempImagDataArray.data());
 
 
       accumAddFromRecvBufferDeviceKernel<<<
@@ -249,9 +249,9 @@ namespace dftfe
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         locallyOwnedSize*blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(tempRealDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempImagDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+        tempRealDataArray.data(),
+        tempImagDataArray.data(),
+        dataArray.data());
     }
 
     template <>

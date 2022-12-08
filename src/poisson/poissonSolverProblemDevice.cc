@@ -1327,7 +1327,7 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
 
-    Ax.accumulateAddLocallyOwnedEnd();
+    Ax.accumulateAddLocallyOwned();
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistributeSlaveToMaster(Ax);
