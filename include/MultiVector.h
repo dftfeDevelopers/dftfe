@@ -362,7 +362,7 @@ namespace dftfe
        *
        */
       void
-      reinit(MultiVector &u);     
+      reinit(const MultiVector &u);     
 
 
       /**

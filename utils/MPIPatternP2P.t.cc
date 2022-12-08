@@ -310,12 +310,12 @@ namespace dftfe
                           d_allOwnedRanges,
                           d_mpiComm);
 
-        std::vector<size_type> overlappingRangeIds =
-          getOverlappingRangeIds(d_allOwnedRanges);
-        throwException<LogicError>(
-          overlappingRangeIds.size() == 0,
-          "Detected overlapping ranges among the locallyOwnedRanges passed "
-          "to MPIPatternP2P");
+        //std::vector<size_type> overlappingRangeIds =
+        //  getOverlappingRangeIds(d_allOwnedRanges);
+        //throwException<LogicError>(
+        //  overlappingRangeIds.size() == 0,
+        //  "Detected overlapping ranges among the locallyOwnedRanges passed "
+        //  "to MPIPatternP2P");
 
         for (unsigned int i = 0; i < d_nprocs; ++i)
           d_nGlobalIndices +=

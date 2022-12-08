@@ -455,6 +455,7 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * d_numVectors, initVal);
+      d_mpiPatternP2P    = mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
                                                                 numVectors);
@@ -466,7 +467,7 @@ namespace dftfe
     //
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     void
-    MultiVector<ValueType, memorySpace>::reinit(MultiVector &u)
+    MultiVector<ValueType, memorySpace>::reinit(const MultiVector &u)
     {
        this->reinit(u.d_mpiPatternP2P,u.d_numVectors);
     }
@@ -646,7 +647,7 @@ namespace dftfe
     MultiVector<ValueType,memorySpace> & multiVector)
     {
       const std::pair<global_size_type,global_size_type> & locallyOwnedRange=partitioner->local_range();
-      //std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
+      std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
       std::vector<global_size_type> ghostIndices;
       (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
 
