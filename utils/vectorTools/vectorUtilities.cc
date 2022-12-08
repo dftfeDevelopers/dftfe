@@ -1181,13 +1181,26 @@ namespace dftfe
     createDealiiVector(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
       const unsigned int,
-      distributedCPUVec<dataTypes::number> &);
+      distributedCPUVec<double> &);
 
     template void
     createDealiiVector(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
       const unsigned int,
-      distributedCPUVec<dataTypes::numberFP32> &);
+      distributedCPUVec<float> &);
+
+
+    template void
+    createDealiiVector(
+      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
+      const unsigned int,
+      distributedCPUVec<std::complex<double>> &);
+
+    template void
+    createDealiiVector(
+      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
+      const unsigned int,
+      distributedCPUVec<std::complex<float>> &);
   } // namespace vectorTools
 
 } // namespace dftfe

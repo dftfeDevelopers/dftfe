@@ -25,6 +25,7 @@
 #include <MemorySpaceType.h>
 #include <MemoryStorage.h>
 #include <TypeConfig.h>
+#include <DataTypeOverloads.h>
 
 namespace dftfe
 {
@@ -66,6 +67,10 @@ namespace dftfe
         const MemoryStorage<ValueType, memorySpace> &recvBuffer,
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
+        const size_type                        locallyOwnedSize,
+               const size_type                        ghostSize,         
+        MemoryStorage<double, memorySpace> &tempRealDataArray,
+        MemoryStorage<double, memorySpace> &tempImagDataArray,
         MemoryStorage<ValueType, memorySpace> &dataArray);
     };
 
@@ -92,6 +97,10 @@ namespace dftfe
         const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>
           &             ownedLocalIndicesForTargetProcs,
         const size_type blockSize,
+        const size_type                        locallyOwnedSize,
+               const size_type                        ghostSize, 
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempImagDataArray,        
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
           &dataArray);
     };

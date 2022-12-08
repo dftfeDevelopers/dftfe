@@ -26,6 +26,7 @@
 #include <MPIPatternP2P.h>
 #include <TypeConfig.h>
 #include <MemoryStorage.h>
+#include <DataTypeOverloads.h>
 
 
 namespace dftfe
@@ -79,7 +80,15 @@ namespace dftfe
 
         size_type d_blockSize;
 
+        size_type d_locallyOwnedSize;
+
+        size_type d_ghostSize;
+
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
+
+        MemoryStorage<double, memorySpace> d_tempRealArrayForAtomics;
+
+        MemoryStorage<double, memorySpace> d_tempImagArrayForAtomics;
 
 #ifdef DFTFE_WITH_DEVICE
         MemoryStorage<ValueType, MemorySpace::HOST_PINNED>

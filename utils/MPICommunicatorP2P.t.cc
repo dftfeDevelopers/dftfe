@@ -37,6 +37,8 @@ namespace dftfe
         const size_type                                   blockSize)
         : d_mpiPatternP2P(mpiPatternP2P)
         , d_blockSize(blockSize)
+        , d_locallyOwnedSize(mpiPatternP2P->localOwnedSize())
+        , d_ghostSize(mpiPatternP2P->localGhostSize())
       {
         d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
         d_sendRecvBuffer.resize(
@@ -60,6 +62,11 @@ namespace dftfe
               d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
                 blockSize,
               0.0);
+
+            if (std::is_same<ValueType, std::complex<double>>::value || std::is_same<ValueType, std::complex<float>>::value)
+            {
+              d_tempRealArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
+              d_tempImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);              }
           }
 #endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
       }
@@ -146,6 +153,10 @@ namespace dftfe
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
+#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            //FIXME: Is this required?
+            dftfe::utils::deviceSynchronize();
+#endif            
             const int err = MPI_Isend(
               sendArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -280,6 +291,10 @@ namespace dftfe
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
+#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            //FIXME: Is this required?
+            dftfe::utils::deviceSynchronize();
+#endif            
             const int err = MPI_Isend(
               sendArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
@@ -344,6 +359,10 @@ namespace dftfe
             d_sendRecvBuffer,
             d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
             d_blockSize,
+            d_locallyOwnedSize,
+            d_ghostSize,
+            d_tempRealArrayForAtomics,
+            d_tempImagArrayForAtomics,
             dataArray);
       }
 

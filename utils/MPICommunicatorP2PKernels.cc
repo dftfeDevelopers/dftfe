@@ -54,6 +54,10 @@ namespace dftfe
         const MemoryStorage<ValueType, memorySpace> &recvBuffer,
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
+        const size_type                        locallyOwnedSize,
+        const size_type                        ghostSize,        
+        MemoryStorage<double, memorySpace> &tempRealDataArray,
+        MemoryStorage<double, memorySpace> &tempImagDataArray,        
         MemoryStorage<ValueType, memorySpace> &dataArray)
     {
       for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)

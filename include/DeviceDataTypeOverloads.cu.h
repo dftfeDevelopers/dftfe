@@ -25,10 +25,68 @@ namespace dftfe
 {
   namespace utils
   {
+    // real part obverloads
+
+    __inline__ __device__ double
+    realPartDevice(double a)
+    {
+      return a;
+    }
+
+    __inline__ __device__ float
+    realPartDevice(float a)
+    {
+      return a;
+    }
+
+    __inline__ __device__ double
+    realPartDevice(cuDoubleComplex a)
+    {
+      return a.x;
+    }
+
+    __inline__ __device__ float
+    realPartDevice(cuFloatComplex a)
+    {
+      return a.x;
+    }
+
+    // imag part obverloads
+
+    __inline__ __device__ double
+    imagPartDevice(double a)
+    {
+      return 0;
+    }
+
+    __inline__ __device__ float
+    imagPartDevice(float a)
+    {
+      return 0;
+    }
+
+    __inline__ __device__ double
+    imagPartDevice(cuDoubleComplex a)
+    {
+      return a.y;
+    }
+
+    __inline__ __device__ float
+    imagPartDevice(cuFloatComplex a)
+    {
+      return a.y;
+    }
+
     // abs obverloads
 
     __inline__ __device__ double
     abs(double a)
+    {
+      return fabs(a);
+    }
+
+    __inline__ __device__ float
+    abs(float a)
     {
       return fabs(a);
     }
@@ -39,7 +97,7 @@ namespace dftfe
       return cuCabs(a);
     }
 
-    __inline__ __device__ double
+    __inline__ __device__ float
     abs(cuFloatComplex a)
     {
       return cuCabsf(a);
