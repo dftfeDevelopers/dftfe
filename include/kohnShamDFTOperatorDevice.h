@@ -100,10 +100,12 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
     getInverseJacobiansNLP();
 
-    dftfe::utils::MemoryStorage<dealii::types::global_dof_index, dftfe::utils::MemorySpace::DEVICE> &
+    dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                dftfe::utils::MemorySpace::DEVICE> &
     getFlattenedArrayCellLocalProcIndexIdMap();
 
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE> &
     getCellWaveFunctionMatrix();
 
     distributedCPUVec<dataTypes::number> &
@@ -118,8 +120,9 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> &
     getParallelProjectorKetTimesBlockVectorDevice();
 
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> &
-    getLocallyOwnedProcBoundaryNodesVectorDevice();
+    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+      &
+      getLocallyOwnedProcBoundaryNodesVectorDevice();
 
 
     /**
@@ -140,38 +143,37 @@ namespace dftfe
     void
     HX(distributedDeviceVec<dataTypes::number> &src,
        distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-       const unsigned int                             localVectorSize,
-       const unsigned int                             numberComponents,
-       const bool                                     scaleFlag,
-       const double                                   scalar,
+       const unsigned int                       localVectorSize,
+       const unsigned int                       numberComponents,
+       const bool                               scaleFlag,
+       const double                             scalar,
        distributedDeviceVec<dataTypes::number> &dst,
-       const bool                                     doUnscalingX = true,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse    = false);
+       const bool                               doUnscalingX    = true,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     void
     HX(distributedDeviceVec<dataTypes::number> &    src,
        distributedDeviceVec<dataTypes::numberFP32> &srcFloat,
-       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-       const unsigned int                             localVectorSize,
-       const unsigned int                             numberComponents,
-       const bool                                     scaleFlag,
-       const double                                   scalar,
-       distributedDeviceVec<dataTypes::number> &dst,
-       const bool                                     doUnscalingX     = true,
-       const bool                                     singlePrecCommun = false,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse        = false);
+       distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+       const unsigned int                           localVectorSize,
+       const unsigned int                           numberComponents,
+       const bool                                   scaleFlag,
+       const double                                 scalar,
+       distributedDeviceVec<dataTypes::number> &    dst,
+       const bool                                   doUnscalingX     = true,
+       const bool                                   singlePrecCommun = false,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse      = false);
 
     void
-    HXCheby(
-      distributedDeviceVec<dataTypes::number> &    X,
-      distributedDeviceVec<dataTypes::numberFP32> &XFloat,
-      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberComponents,
-      distributedDeviceVec<dataTypes::number> &Y,
-      bool                                           mixedPrecflag = false,
-      bool                                           computePart1  = false,
-      bool                                           computePart2  = false);
+    HXCheby(distributedDeviceVec<dataTypes::number> &    X,
+            distributedDeviceVec<dataTypes::numberFP32> &XFloat,
+            distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+            const unsigned int                       localVectorSize,
+            const unsigned int                       numberComponents,
+            distributedDeviceVec<dataTypes::number> &Y,
+            bool                                     mixedPrecflag = false,
+            bool                                     computePart1  = false,
+            bool                                     computePart2  = false);
 
 
 #ifdef DEAL_II_WITH_SCALAPACK
@@ -196,9 +198,9 @@ namespace dftfe
          distributedDeviceVec<dataTypes::number> &Xb,
          distributedDeviceVec<dataTypes::number> &HXb,
          distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-         const unsigned int                             M,
-         const unsigned int                             N,
-         dftfe::utils::deviceBlasHandle_t &                               handle,
+         const unsigned int                       M,
+         const unsigned int                       N,
+         dftfe::utils::deviceBlasHandle_t &       handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -223,16 +225,16 @@ namespace dftfe
      */
     void
     XtHXOverlapComputeCommun(
-      const dataTypes::number *                  X,
-      distributedDeviceVec<dataTypes::number> &  Xb,
-      distributedDeviceVec<dataTypes::number> &  HXb,
-      distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
@@ -260,18 +262,18 @@ namespace dftfe
      */
     void
     XtHXMixedPrecOverlapComputeCommun(
-      const dataTypes::number *                    X,
-      distributedDeviceVec<dataTypes::number> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
-      distributedDeviceVec<dataTypes::number> &    HXb,
-      distributedDeviceVec<dataTypes::number> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &    floatXb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      dftfe::utils::deviceBlasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 #endif
 
@@ -488,7 +490,7 @@ namespace dftfe
     computeNonLocalProjectorKetTimesXTimesV(
       const dataTypes::number *                src,
       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             numberWaveFunctions);
+      const unsigned int                       numberWaveFunctions);
 
   private:
     /**
@@ -513,38 +515,50 @@ namespace dftfe
     std::vector<dataTypes::number> d_cellHamiltonianMatrixFlattened;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixFlattenedDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellHamMatrixTimesWaveMatrix;
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_kpointCoordsVecDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_kpointCoordsVecDevice;
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_kSquareTimesHalfVecDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_kSquareTimesHalfVecDevice;
 
     /// for non local
 
     std::vector<dataTypes::number>
       d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice;
     std::vector<dataTypes::number>
       d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_projectorKetTimesVectorParFlattenedDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_projectorKetTimesVectorAllCellsDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
-                                  d_projectorKetTimesVectorDevice;
-    std::vector<double>           d_nonLocalPseudoPotentialConstants;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_nonLocalPseudoPotentialConstantsDevice;
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+                        d_projectorKetTimesVectorDevice;
+    std::vector<double> d_nonLocalPseudoPotentialConstants;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_nonLocalPseudoPotentialConstantsDevice;
 
     std::vector<dataTypes::number> d_projectorKetTimesVectorAllCellsReduction;
-    dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
                               d_projectorKetTimesVectorAllCellsReductionDevice;
     std::vector<unsigned int> d_pseudoWfcAccumNonlocalAtoms;
     unsigned int              d_totalNonlocalAtomsCurrentProc;
@@ -557,23 +571,25 @@ namespace dftfe
     std::vector<unsigned int> d_numberCellsAccumNonLocalAtoms;
     std::vector<dealii::types::global_dof_index>
       d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal;
-    dftfe::utils::MemoryStorage<dealii::types::global_dof_index, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                dftfe::utils::MemorySpace::DEVICE>
                               d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice;
     std::vector<unsigned int> d_projectorIdsParallelNumberingMap;
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
                      d_projectorIdsParallelNumberingMapDevice;
     std::vector<int> d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
     dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE>
-                                        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
-    std::vector<unsigned int>           d_cellNodeIdMapNonLocalToLocal;
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_cellNodeIdMapNonLocalToLocalDevice;
-    std::vector<unsigned int>           d_normalCellIdToMacroCellIdMap;
-    std::vector<unsigned int>           d_macroCellIdToNormalCellIdMap;
+                              d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
+    std::vector<unsigned int> d_cellNodeIdMapNonLocalToLocal;
+    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+                              d_cellNodeIdMapNonLocalToLocalDevice;
+    std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
+    std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
 
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
       d_locallyOwnedProcBoundaryNodesVectorDevice;
 
-    bool                      d_isMallocCalled = false;
+    bool                d_isMallocCalled = false;
     dataTypes::number **d_A, **d_B, **d_C;
     dataTypes::number **h_d_A, **h_d_B, **h_d_C;
 
@@ -589,7 +605,7 @@ namespace dftfe
     void
     computeLocalHamiltonianTimesX(
       const dataTypes::number *src,
-      const unsigned int             numberWaveFunctions,
+      const unsigned int       numberWaveFunctions,
       dataTypes::number *      dst,
       bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
@@ -607,10 +623,10 @@ namespace dftfe
     computeNonLocalHamiltonianTimesX(
       const dataTypes::number *                src,
       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
-      const unsigned int                             numberWaveFunctions,
+      const unsigned int                       numberWaveFunctions,
       dataTypes::number *                      dst,
-      const bool                                     skip1 = false,
-      const bool                                     skip2 = false);
+      const bool                               skip1 = false,
+      const bool                               skip2 = false);
 
 
 
@@ -620,22 +636,25 @@ namespace dftfe
 
     /// data structures to store diagonal of inverse square root mass matrix and
     /// square root of mass matrix
-    distributedCPUVec<double>     d_invSqrtMassVector, d_sqrtMassVector;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_invSqrtMassVectorDevice,
-      d_sqrtMassVectorDevice;
+    distributedCPUVec<double> d_invSqrtMassVector, d_sqrtMassVector;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_invSqrtMassVectorDevice, d_sqrtMassVectorDevice;
 
-    std::vector<double>           d_vEff;
-    std::vector<double>           d_vEffExternalPotCorrJxW;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_vEffExternalPotCorrJxWDevice;
-    std::vector<double>           d_vEffJxW;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_vEffJxWDevice;
+    std::vector<double> d_vEff;
+    std::vector<double> d_vEffExternalPotCorrJxW;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+                        d_vEffExternalPotCorrJxWDevice;
+    std::vector<double> d_vEffJxW;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_vEffJxWDevice;
 
     const unsigned int d_numQuadPoints;
     unsigned int       d_numQuadPointsLpsp;
     const unsigned int d_numLocallyOwnedCells;
 
-    std::vector<double>           d_derExcWithSigmaTimesGradRhoJxW;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_derExcWithSigmaTimesGradRhoJxWDevice;
+    std::vector<double> d_derExcWithSigmaTimesGradRhoJxW;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_derExcWithSigmaTimesGradRhoJxWDevice;
 
 
     /**
@@ -647,8 +666,10 @@ namespace dftfe
     std::vector<double> d_shapeFunctionValue;
     std::vector<double> d_shapeFunctionValueTransposed;
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_shapeFunctionValueLpspDevice;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_shapeFunctionValueTransposedLpspDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueLpspDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueTransposedLpspDevice;
 
     /// storage for shapefunction gradients
     std::vector<double> d_shapeFunctionGradientValueX;
@@ -661,8 +682,9 @@ namespace dftfe
     std::vector<double> d_shapeFunctionGradientValueZTransposed;
 
 
-    std::vector<double>           d_cellJxWValues;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_cellJxWValuesDevice;
+    std::vector<double> d_cellJxWValues;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_cellJxWValuesDevice;
 
     // storage for  matrix-free cell data
     const unsigned int        d_numberNodesPerElement;
@@ -694,7 +716,8 @@ namespace dftfe
     // storage for precomputing index maps
     std::vector<dealii::types::global_dof_index>
       d_flattenedArrayMacroCellLocalProcIndexIdMapFlattened;
-    dftfe::utils::MemoryStorage<dealii::types::global_dof_index, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_DeviceFlattenedArrayMacroCellLocalProcIndexIdMapFlattened;
 
     /// storage for deviceblas handle
@@ -709,8 +732,10 @@ namespace dftfe
 
     /// Temporary storage for real and imaginary portions of the complex
     /// wavefunction vectors
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_tempRealVec;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> d_tempImagVec;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_tempRealVec;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_tempImagVec;
   };
 } // namespace dftfe
 #endif

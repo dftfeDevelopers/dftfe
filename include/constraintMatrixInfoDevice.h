@@ -19,7 +19,7 @@
 #  ifndef constraintMatrixInfoDevice_H_
 #    define constraintMatrixInfoDevice_H_
 
-#include <MemoryStorage.h>
+#    include <MemoryStorage.h>
 #    include <vector>
 
 #    include <headers.h>
@@ -105,7 +105,7 @@ namespace dftfe
       inline void
       distribute_slave_to_master(
         distributedDeviceVec<std::complex<double>> &fieldVector,
-        const unsigned int                     blockSize) const
+        const unsigned int                          blockSize) const
       {}
 
       /**
@@ -121,9 +121,9 @@ namespace dftfe
       void
       distribute_slave_to_master(
         distributedDeviceVec<std::complex<double>> &fieldVector,
-        double *                               tempReal,
-        double *                               tempImag,
-        const unsigned int                     blockSize) const;
+        double *                                    tempReal,
+        double *                                    tempImag,
+        const unsigned int                          blockSize) const;
 
       inline void
       distribute_slave_to_master(distributedDeviceVec<double> &fieldVector,
@@ -146,9 +146,9 @@ namespace dftfe
       void
       distribute_slave_to_master(
         distributedDeviceVec<std::complex<float>> &fieldVector,
-        float *                               tempReal,
-        float *                               tempImag,
-        const unsigned int                    blockSize) const;
+        float *                                    tempReal,
+        float *                                    tempImag,
+        const unsigned int                         blockSize) const;
 
 
       /**
@@ -179,13 +179,24 @@ namespace dftfe
       std::vector<dealii::types::global_dof_index>
         d_localIndexMapUnflattenedToFlattened;
 
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_rowIdsLocalDevice;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_columnIdsLocalDevice;
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>       d_columnValuesDevice;
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>       d_inhomogenitiesDevice;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_rowSizesDevice;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_rowSizesAccumulatedDevice;
-      dftfe::utils::MemoryStorage<dealii::types::global_dof_index, dftfe::utils::MemorySpace::DEVICE>
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowIdsLocalDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_columnIdsLocalDevice;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_columnValuesDevice;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_inhomogenitiesDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowSizesDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowSizesAccumulatedDevice;
+      dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                  dftfe::utils::MemorySpace::DEVICE>
         d_localIndexMapUnflattenedToFlattenedDevice;
 
       std::vector<unsigned int> d_rowIdsLocalBins;
@@ -195,10 +206,17 @@ namespace dftfe
       std::vector<unsigned int> d_binColumnSizes;
       std::vector<unsigned int> d_binColumnSizesAccumulated;
 
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_rowIdsLocalBinsDevice;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_columnIdsLocalBinsDevice;
-      dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> d_columnIdToRowIdMapBinsDevice;
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>       d_columnValuesBinsDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowIdsLocalBinsDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_columnIdsLocalBinsDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_columnIdToRowIdMapBinsDevice;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_columnValuesBinsDevice;
 
       unsigned int d_numConstrainedDofs;
     };

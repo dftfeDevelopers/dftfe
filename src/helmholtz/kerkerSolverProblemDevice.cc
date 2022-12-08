@@ -85,7 +85,11 @@ namespace dftfe
     d_xPtr                      = &x;
     d_quadGradResidualValuesPtr = &quadPointValues;
 
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_xDevice.begin(),d_xPtr->begin());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_xDevice.begin(),
+                                             d_xPtr->begin());
   }
 
 
@@ -125,7 +129,11 @@ namespace dftfe
   void
   kerkerSolverProblemDevice<FEOrderElectro>::copyXfromDeviceToHost()
   {
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,d_xPtr->begin(),d_xDevice.begin());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,
+                                               d_xPtr->begin(),
+                                               d_xDevice.begin());
   }
 
 
@@ -260,7 +268,11 @@ namespace dftfe
     d_diagonalA.compress(dealii::VectorOperation::insert);
     d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
 
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_diagonalAdevice.begin(),d_diagonalA.begin());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_diagonalAdevice.begin(),
+                                             d_diagonalA.begin());
   }
 
 
@@ -698,7 +710,8 @@ namespace dftfe
 
     // Shape Function Values, Gradients and their Transposes
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> shapeFunction(2 * q * (p + q));
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      shapeFunction(2 * q * (p + q));
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
@@ -720,7 +733,8 @@ namespace dftfe
         }
 
     // Jacobian
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> jacobianFactor(dim * dim * d_nLocalCells);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      jacobianFactor(dim * dim * d_nLocalCells);
 
     auto cellOffsets = mappingData.data_index_offsets;
 
@@ -742,7 +756,8 @@ namespace dftfe
                           [k][i][0];
 
     // Map making
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(nDofsPerCell * d_nLocalCells);
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(
+      nDofsPerCell * d_nLocalCells);
 
     for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
       std::memcpy(map.data() + cellIdx * nDofsPerCell,
@@ -777,7 +792,7 @@ namespace dftfe
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
                          smem);
-#endif    
+#endif
   }
 
 

@@ -49,13 +49,18 @@ namespace dftfe
 
     void
     cgSolver(
-      dftfe::utils::deviceBlasHandle_t &                      handle,
+      dftfe::utils::deviceBlasHandle_t &    handle,
       dftUtils::constraintMatrixInfoDevice &constraintsMatrixDataInfoDevice,
       const double *                        bD,
       const double *                        diagonalAD,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> & poissonCellStiffnessMatricesD,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> & inhomoIdsColoredVecFlattenedD,
-      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index, dftfe::utils::MemorySpace::DEVICE>
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &poissonCellStiffnessMatricesD,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &inhomoIdsColoredVecFlattenedD,
+      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                        dftfe::utils::MemorySpace::DEVICE>
         &                           cellLocalProcIndexIdMapD,
       const unsigned int            localSize,
       const unsigned int            ghostSize,

@@ -60,13 +60,13 @@ namespace dftfe
     double
     solve(operatorDFTDeviceClass & operatorMatrix,
           elpaScalaManager &       elpaScala,
-          dataTypes::number *eigenVectorsFlattenedDevice,
-          dataTypes::number *eigenVectorsRotFracDensityFlattenedDevice,
+          dataTypes::number *      eigenVectorsFlattenedDevice,
+          dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
           const unsigned int       flattenedSize,
           const unsigned int       totalNumberWaveFunctions,
           std::vector<double> &    eigenValues,
           std::vector<double> &    residuals,
-          utils::DeviceCCLWrapper &       devicecclMpiCommDomain,
+          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
           const MPI_Comm &         interBandGroupComm,
           const bool               isFirstFilteringCall,
           const bool               computeResidual,
@@ -80,11 +80,11 @@ namespace dftfe
     void
     solveNoRR(operatorDFTDeviceClass & operatorMatrix,
               elpaScalaManager &       elpaScala,
-              dataTypes::number *eigenVectorsFlattenedDevice,
+              dataTypes::number *      eigenVectorsFlattenedDevice,
               const unsigned int       flattenedSize,
               const unsigned int       totalNumberWaveFunctions,
               std::vector<double> &    eigenValues,
-              utils::DeviceCCLWrapper &       devicecclMpiCommDomain,
+              utils::DeviceCCLWrapper &devicecclMpiCommDomain,
               const MPI_Comm &         interBandGroupComm,
               const unsigned int       numberPasses,
               const bool               useMixedPrecOverall);
@@ -96,13 +96,13 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTDeviceClass &   operatorMatrix,
-      dataTypes::number *  eigenVectorsFlattenedDevice,
+      dataTypes::number *        eigenVectorsFlattenedDevice,
       const unsigned int         flattenedSize,
       const unsigned int         totalNumberWaveFunctions,
       const std::vector<double> &eigenValues,
       const double               fermiEnergy,
       std::vector<double> &      densityMatDerFermiEnergy,
-      utils::DeviceCCLWrapper &         devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &  devicecclMpiCommDomain,
       const MPI_Comm &           interBandGroupComm,
       dftfe::elpaScalaManager &  elpaScala);
 

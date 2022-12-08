@@ -280,16 +280,21 @@ namespace dftfe
                             const double identityFactor =
                               partOcc *
                                 dftfe::utils::realPart((
-                                  dftfe::utils::complexConj(gradPsiQuad[0]) * gradPsiQuad[0] +
-                                  dftfe::utils::complexConj(gradPsiQuad[1]) * gradPsiQuad[1] +
-                                  dftfe::utils::complexConj(gradPsiQuad[2]) * gradPsiQuad[2] +
+                                  dftfe::utils::complexConj(gradPsiQuad[0]) *
+                                    gradPsiQuad[0] +
+                                  dftfe::utils::complexConj(gradPsiQuad[1]) *
+                                    gradPsiQuad[1] +
+                                  dftfe::utils::complexConj(gradPsiQuad[2]) *
+                                    gradPsiQuad[2] +
                                   dataTypes::number(absksq - 2.0 * eigenValue) *
-                                    dftfe::utils::complexConj(psiQuad) * psiQuad)) +
+                                    dftfe::utils::complexConj(psiQuad) *
+                                    psiQuad)) +
                               2.0 * partOcc *
-                                dftfe::utils::imagPart(dftfe::utils::complexConj(psiQuad) *
-                                         (kcoord[0] * gradPsiQuad[0] +
-                                          kcoord[1] * gradPsiQuad[1] +
-                                          kcoord[2] * gradPsiQuad[2]));
+                                dftfe::utils::imagPart(
+                                  dftfe::utils::complexConj(psiQuad) *
+                                  (kcoord[0] * gradPsiQuad[0] +
+                                   kcoord[1] * gradPsiQuad[1] +
+                                   kcoord[2] * gradPsiQuad[2]));
                             for (unsigned int idim = 0; idim < 3; idim++)
                               for (unsigned int jdim = 0; jdim < 3; jdim++)
                                 {
@@ -297,12 +302,13 @@ namespace dftfe
                                     [j * numQuads * 9 * BVec +
                                      iquad * 9 * BVec + idim * 3 * BVec +
                                      jdim * BVec + iwfc] =
-                                      -partOcc *
-                                        dftfe::utils::realPart(
-                                          dftfe::utils::complexConj(gradPsiQuad[idim]) *
-                                            gradPsiQuad[jdim] +
-                                          gradPsiQuad[idim] *
-                                            dftfe::utils::complexConj(gradPsiQuad[jdim])) -
+                                      -partOcc * dftfe::utils::realPart(
+                                                   dftfe::utils::complexConj(
+                                                     gradPsiQuad[idim]) *
+                                                     gradPsiQuad[jdim] +
+                                                   gradPsiQuad[idim] *
+                                                     dftfe::utils::complexConj(
+                                                       gradPsiQuad[jdim])) -
                                       2.0 * partOcc *
                                         dftfe::utils::imagPart(
                                           dftfe::utils::complexConj(psiQuad) *
@@ -325,13 +331,15 @@ namespace dftfe
                                          iquad * 9 * BVec + idim * 3 * BVec +
                                          jdim * BVec + iwfc] +=
                                         -2.0 * partOcc *
-                                          dftfe::utils::imagPart(dftfe::utils::complexConj(psiQuad) *
-                                                   (kcoord[idim] *
-                                                    gradPsiQuad[jdim])) -
+                                          dftfe::utils::imagPart(
+                                            dftfe::utils::complexConj(psiQuad) *
+                                            (kcoord[idim] *
+                                             gradPsiQuad[jdim])) -
                                         2.0 * partOcc *
-                                          dftfe::utils::realPart(kcoord[idim] * kcoord[jdim] *
-                                                   dftfe::utils::complexConj(psiQuad) *
-                                                   psiQuad);
+                                          dftfe::utils::realPart(
+                                            kcoord[idim] * kcoord[jdim] *
+                                            dftfe::utils::complexConj(psiQuad) *
+                                            psiQuad);
                                     }
                               }
 #endif

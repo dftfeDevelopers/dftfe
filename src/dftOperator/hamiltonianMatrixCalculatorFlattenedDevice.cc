@@ -772,12 +772,12 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
-        hamPrimeMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
-                                           d_numberNodesPerElement *
-                                           d_numberNodesPerElement +
-                                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        hamPrimeMatrixKernelGGAMemOpt<<<
+          (d_numLocallyOwnedCells * d_numberNodesPerElement *
+             d_numberNodesPerElement +
+           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           d_numLocallyOwnedCells,
           d_numberNodesPerElement,
           d_numQuadPoints,
@@ -790,10 +790,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           d_cellJxWValuesDevice.begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
-            d_cellHamiltonianMatrixFlattenedDevice.begin()+spinIndex *
-                                                    d_numLocallyOwnedCells *
-                                                    d_numberNodesPerElement *
-                                                    d_numberNodesPerElement));
+            d_cellHamiltonianMatrixFlattenedDevice.begin() +
+            spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
+              d_numberNodesPerElement));
       else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
@@ -807,16 +806,15 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           d_numQuadPoints,
           d_shapeFunctionValueDevice.begin(),
           d_shapeFunctionValueTransposedDevice.begin(),
-            d_shapeFunctionGradientValueXTransposedDevice.begin(),
-            d_shapeFunctionGradientValueYTransposedDevice.begin(),
-            d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
-            d_cellHamiltonianMatrixFlattenedDevice.begin()+spinIndex *
-                                                    d_numLocallyOwnedCells *
-                                                    d_numberNodesPerElement *
-                                                    d_numberNodesPerElement));
+            d_cellHamiltonianMatrixFlattenedDevice.begin() +
+            spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
+              d_numberNodesPerElement));
     }
   else
     {
@@ -836,15 +834,16 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           dftPtr->d_kPointWeights.size(),
           d_shapeFunctionValueDevice.begin(),
           d_shapeFunctionValueTransposedDevice.begin(),
-            d_shapeFunctionGradientValueXTransposedDevice.begin(),
-            d_shapeFunctionGradientValueYTransposedDevice.begin(),
-            d_shapeFunctionGradientValueZTransposedDevice.begin(),
-            d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
           d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
-          dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamiltonianMatrixFlattenedDevice.begin()),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin()),
           d_kpointCoordsVecDevice.begin(),
           d_kSquareTimesHalfVecDevice.begin(),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
@@ -870,8 +869,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
-            d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
-          dftfe::utils::makeDataTypeDeviceCompatible(d_cellHamiltonianMatrixFlattenedDevice.begin()),
+          d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin()),
           d_kpointCoordsVecDevice.begin(),
           d_kSquareTimesHalfVecDevice.begin(),
           dftPtr->d_dftParamsPtr->isPseudopotential ||

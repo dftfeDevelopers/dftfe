@@ -100,7 +100,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
   template <typename NumberType>
   using distributedDeviceVec =
-    dftfe::DistributedMulticomponentVec<NumberType, dftfe::utils::MemorySpace::DEVICE>;
+    dftfe::DistributedMulticomponentVec<NumberType,
+                                        dftfe::utils::MemorySpace::DEVICE>;
 
 #endif
 } // namespace dftfe

@@ -18,7 +18,7 @@
 #define dftfeDeviceExceptions_cuh
 
 
-#define DEVICE_API_CHECK(cmd)                         \
+#define DEVICE_API_CHECK(cmd)                       \
   do                                                \
     {                                               \
       cudaError_t e = cmd;                          \
@@ -33,18 +33,18 @@
     }                                               \
   while (0)
 
-#    define DEVICEBLAS_API_CHECK(expr)                                                            \
-      {                                                                                  \
-        cublasStatus_t __cublas_error = expr;                                            \
-        if ((__cublas_error) != CUBLAS_STATUS_SUCCESS)                                   \
-          {                                                                              \
-            printf(                                                                      \
-              "cuBLAS error on or before line number %d in file: %s. Error code: %d.\n", \
-              __LINE__,                                                                  \
-              __FILE__,                                                                  \
-              __cublas_error);                                                           \
-          }                                                                              \
-      }
+#define DEVICEBLAS_API_CHECK(expr)                                                   \
+  {                                                                                  \
+    cublasStatus_t __cublas_error = expr;                                            \
+    if ((__cublas_error) != CUBLAS_STATUS_SUCCESS)                                   \
+      {                                                                              \
+        printf(                                                                      \
+          "cuBLAS error on or before line number %d in file: %s. Error code: %d.\n", \
+          __LINE__,                                                                  \
+          __FILE__,                                                                  \
+          __cublas_error);                                                           \
+      }                                                                              \
+  }
 
 
 #endif // dftfeDeviceExceptions_cuh

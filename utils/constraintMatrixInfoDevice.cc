@@ -548,7 +548,7 @@ namespace dftfe
       d_rowSizesAccumulatedDevice.resize(d_rowSizesAccumulated.size());
       d_rowSizesAccumulatedDevice.copyFrom(d_rowSizesAccumulated);
 
-      d_numConstrainedDofs        = d_rowIdsLocal.size();
+      d_numConstrainedDofs = d_rowIdsLocal.size();
     }
 
 
@@ -581,8 +581,10 @@ namespace dftfe
             flattenedPartitioner->global_to_local(globalIndex * blockSize);
         }
 
-      d_localIndexMapUnflattenedToFlattenedDevice.resize(d_localIndexMapUnflattenedToFlattened.size());        
-      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(d_localIndexMapUnflattenedToFlattened);
+      d_localIndexMapUnflattenedToFlattenedDevice.resize(
+        d_localIndexMapUnflattenedToFlattened.size());
+      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(
+        d_localIndexMapUnflattenedToFlattened);
     }
 
 
@@ -596,11 +598,11 @@ namespace dftfe
         return;
       // fieldVector.update_ghost_values();
 
-      distributeKernel<<<min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                               dftfe::utils::DEVICE_BLOCK_SIZE *
-                               d_numConstrainedDofs,
-                             30000),
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+      distributeKernel<<<
+        min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
+            30000),
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),
@@ -610,7 +612,7 @@ namespace dftfe
         d_columnIdsLocalDevice.begin(),
         d_columnValuesDevice.begin(),
         d_inhomogenitiesDevice.begin(),
-        
+
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
     }
 
@@ -650,9 +652,9 @@ namespace dftfe
     void
     constraintMatrixInfoDevice::distribute_slave_to_master(
       distributedDeviceVec<std::complex<double>> &fieldVector,
-      double *                               tempReal,
-      double *                               tempImag,
-      const unsigned int                     blockSize) const
+      double *                                    tempReal,
+      double *                                    tempImag,
+      const unsigned int                          blockSize) const
     {
       if (d_numConstrainedDofs == 0)
         return;
@@ -710,9 +712,9 @@ namespace dftfe
     void
     constraintMatrixInfoDevice::distribute_slave_to_master(
       distributedDeviceVec<std::complex<float>> &fieldVector,
-      float *                               tempReal,
-      float *                               tempImag,
-      const unsigned int                    blockSize) const
+      float *                                    tempReal,
+      float *                                    tempImag,
+      const unsigned int                         blockSize) const
     {
       if (d_numConstrainedDofs == 0)
         return;
@@ -775,14 +777,15 @@ namespace dftfe
 
       const unsigned int numConstrainedDofs = d_rowIdsLocal.size();
       setzeroKernel<<<min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * numConstrainedDofs,
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numConstrainedDofs,
                           30000),
                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),
         numConstrainedDofs,
-          d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_localIndexMapUnflattenedToFlattenedDevice.begin());
     }
 
     //
@@ -823,7 +826,7 @@ namespace dftfe
     template void
     constraintMatrixInfoDevice::distribute(
       distributedDeviceVec<std::complex<double>> &fieldVector,
-      const unsigned int                     blockSize) const;
+      const unsigned int                          blockSize) const;
 
     template void
     constraintMatrixInfoDevice::distribute(
@@ -833,7 +836,7 @@ namespace dftfe
     template void
     constraintMatrixInfoDevice::distribute(
       distributedDeviceVec<std::complex<float>> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const unsigned int                         blockSize) const;
 
     template void
     constraintMatrixInfoDevice::set_zero(
@@ -843,7 +846,7 @@ namespace dftfe
     template void
     constraintMatrixInfoDevice::set_zero(
       distributedDeviceVec<std::complex<double>> &fieldVector,
-      const unsigned int                     blockSize) const;
+      const unsigned int                          blockSize) const;
 
     template void
     constraintMatrixInfoDevice::set_zero(
@@ -853,7 +856,7 @@ namespace dftfe
     template void
     constraintMatrixInfoDevice::set_zero(
       distributedDeviceVec<std::complex<float>> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const unsigned int                         blockSize) const;
 
 
   } // namespace dftUtils

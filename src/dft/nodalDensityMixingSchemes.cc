@@ -116,12 +116,13 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
     {
 #ifdef DFTFE_WITH_DEVICE
-      CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
-                           d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                           d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-                           d_dftParamsPtr->verbosity,
-                           false);
+      CGSolverDevice.solve(
+        kerkerPreconditionedResidualSolverProblemDevice,
+        d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+        d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+        d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
+        d_dftParamsPtr->verbosity,
+        false);
 #endif
     }
   else
@@ -404,12 +405,13 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
   if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
     {
 #ifdef DFTFE_WITH_DEVICE
-      CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
-                           d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-                           d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-                           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-                           d_dftParamsPtr->verbosity,
-                           false);
+      CGSolverDevice.solve(
+        kerkerPreconditionedResidualSolverProblemDevice,
+        d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+        d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+        d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
+        d_dftParamsPtr->verbosity,
+        false);
 #endif
     }
   else

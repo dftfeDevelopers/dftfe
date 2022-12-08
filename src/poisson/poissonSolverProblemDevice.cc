@@ -77,7 +77,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
     const unsigned int smearedChargeQuadratureId,
     const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-    dftfe::utils::deviceBlasHandle_t &                                     deviceBlasHandle,
+    dftfe::utils::deviceBlasHandle_t &                   deviceBlasHandle,
     const bool                                           isComputeDiagonalA,
     const bool         isComputeMeanValueConstraint,
     const bool         smearedNuclearCharges,
@@ -96,7 +96,11 @@ namespace dftfe
     d_matrixFreeDataPtr = &matrixFreeData;
     d_xPtr              = &x;
     d_xDevice.reinit(d_xPtr->get_partitioner(), 1);
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xDevice.locallyOwnedDofsSize(),d_xDevice.begin(),d_xPtr->begin());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xDevice.locallyOwnedDofsSize(),
+                                             d_xDevice.begin(),
+                                             d_xPtr->begin());
 
 
     d_constraintMatrixPtr       = &constraintMatrix;
@@ -113,7 +117,7 @@ namespace dftfe
     d_smearedChargeGradientComponentId = smearedChargeGradientComponentId;
     d_isStoreSmearedChargeRhs          = storeSmearedChargeRhs;
     d_isReuseSmearedChargeRhs          = reuseSmearedChargeRhs;
-    d_deviceBlasHandlePtr                  = &deviceBlasHandle;
+    d_deviceBlasHandlePtr              = &deviceBlasHandle;
     d_nLocalCells                      = d_matrixFreeDataPtr->n_macro_cells();
     d_xLocalDof                        = d_xDevice.locallyOwnedDofsSize();
     d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
@@ -152,7 +156,11 @@ namespace dftfe
   void
   poissonSolverProblemDevice<FEOrder, FEOrderElectro>::copyXfromDeviceToHost()
   {
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,d_xPtr->begin(),d_xDevice.begin());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,
+                                               d_xPtr->begin(),
+                                               d_xDevice.begin());
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -442,9 +450,10 @@ namespace dftfe
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
-      dftfe::utils::deviceSetValue(vec.begin() + d_meanValueConstraintNodeIdLocal,
-                       constrainedNodeValue,
-                       1);
+      dftfe::utils::deviceSetValue(vec.begin() +
+                                     d_meanValueConstraintNodeIdLocal,
+                                   constrainedNodeValue,
+                                   1);
   }
 
   // Distribute value at mean value constrained dof (u_o) to all other dofs
@@ -460,7 +469,11 @@ namespace dftfe
         d_meanValueConstraintProcId)
 
 
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,dftfe::utils::MemorySpace::DEVICE>::copy(1,&constrainedNodeValue,vec.begin() + d_meanValueConstraintNodeIdLocal);
+      dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::HOST,
+                                   dftfe::utils::MemorySpace::DEVICE>::
+        copy(1,
+             &constrainedNodeValue,
+             vec.begin() + d_meanValueConstraintNodeIdLocal);
 
 
     // broadcast value at mean value constraint to all other tasks ids
@@ -480,9 +493,8 @@ namespace dftfe
     if (d_isMeanValueConstraintComputed)
       if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
           d_meanValueConstraintProcId)
-        dftfe::utils::deviceMemset(vec.begin() + d_meanValueConstraintNodeIdLocal,
-                   0,
-                   sizeof(double));
+        dftfe::utils::deviceMemset(
+          vec.begin() + d_meanValueConstraintNodeIdLocal, 0, sizeof(double));
   }
 
   // Distribute value at mean value constrained dof (u_o) to all other dofs
@@ -668,8 +680,11 @@ namespace dftfe
       d_meanValueConstraintVec.get_partitioner()->global_to_local(
         d_meanValueConstraintNodeId);
 
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_meanValueConstraintDeviceVec.begin(),d_meanValueConstraintVec.begin());
-
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                 dftfe::utils::MemorySpace::HOST>::
+      copy(d_xLocalDof,
+           d_meanValueConstraintDeviceVec.begin(),
+           d_meanValueConstraintVec.begin());
   }
 
 
@@ -731,7 +746,11 @@ namespace dftfe
     d_diagonalA.compress(dealii::VectorOperation::insert);
     d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
 
-    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,d_diagonalAdevice.begin(),d_diagonalA.begin());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_diagonalAdevice.begin(),
+                                             d_diagonalA.begin());
   }
 
 
@@ -1182,7 +1201,8 @@ namespace dftfe
 
     // Shape Function Values, Gradients and their Transposes
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> shapeFunction(2 * q * (p + q));
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      shapeFunction(2 * q * (p + q));
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
@@ -1204,7 +1224,8 @@ namespace dftfe
         }
 
     // Jacobian
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> jacobianFactor(dim * dim * d_nLocalCells);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      jacobianFactor(dim * dim * d_nLocalCells);
 
     auto cellOffsets = mappingData.data_index_offsets;
 
@@ -1227,7 +1248,8 @@ namespace dftfe
                           [k][i][0];
 
     // Map making
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(nDofsPerCell * d_nLocalCells);
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(
+      nDofsPerCell * d_nLocalCells);
 
     for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
       std::memcpy(map.data() + cellIdx * nDofsPerCell,
@@ -1262,7 +1284,7 @@ namespace dftfe
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
                          smem);
-#endif    
+#endif
   }
 
 

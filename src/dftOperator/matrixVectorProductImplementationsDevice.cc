@@ -29,18 +29,19 @@ void
 kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(
     const dataTypes::number *src,
-    const unsigned int             numberWaveFunctions,
+    const unsigned int       numberWaveFunctions,
     dataTypes::number *      dst,
-    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
+    const bool               onlyHPrimePartForFirstOrderDensityMatResponse)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyDeviceKernel<<<(numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                       dftfe::utils::DEVICE_BLOCK_SIZE * totalLocallyOwnedCells *
-                       d_numberNodesPerElement,
+  copyDeviceKernel<<<(numberWaveFunctions +
+                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                       dftfe::utils::DEVICE_BLOCK_SIZE *
+                       totalLocallyOwnedCells * d_numberNodesPerElement,
                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
@@ -61,23 +62,23 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
     d_deviceBlasHandle,
     dftfe::utils::DEVICEBLAS_OP_N,
-    std::is_same<dataTypes::number, std::complex<double>>::value ? dftfe::utils::DEVICEBLAS_OP_T :
-                                                                   dftfe::utils::DEVICEBLAS_OP_N,
+    std::is_same<dataTypes::number, std::complex<double>>::value ?
+      dftfe::utils::DEVICEBLAS_OP_T :
+      dftfe::utils::DEVICEBLAS_OP_N,
     numberWaveFunctions,
     d_numberNodesPerElement,
     d_numberNodesPerElement,
     &scalarCoeffAlpha,
-      d_cellWaveFunctionMatrix.begin(),
+    d_cellWaveFunctionMatrix.begin(),
     numberWaveFunctions,
     strideA,
-    d_cellHamiltonianMatrixFlattenedDevice.begin()+d_numLocallyOwnedCells *
-                                              d_numberNodesPerElement *
-                                              d_numberNodesPerElement *
-                                              kpointSpinIndex,
+    d_cellHamiltonianMatrixFlattenedDevice.begin() +
+      d_numLocallyOwnedCells * d_numberNodesPerElement *
+        d_numberNodesPerElement * kpointSpinIndex,
     d_numberNodesPerElement,
     strideB,
     &scalarCoeffBeta,
-      d_cellHamMatrixTimesWaveMatrix.begin(),
+    d_cellHamMatrixTimesWaveMatrix.begin(),
     numberWaveFunctions,
     strideC,
     totalLocallyOwnedCells);

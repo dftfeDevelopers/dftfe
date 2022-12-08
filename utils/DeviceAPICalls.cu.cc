@@ -45,16 +45,16 @@ namespace dftfe
     deviceError_t
     deviceReset()
     {
-      deviceError_t err=cudaDeviceReset();
+      deviceError_t err = cudaDeviceReset();
       DEVICE_API_CHECK(err);
       return err;
     }
 
 
     deviceError_t
-    deviceMemGetInfo(size_t* free, size_t* total)
+    deviceMemGetInfo(size_t *free, size_t *total)
     {
-      deviceError_t err=cudaMemGetInfo(free,total);
+      deviceError_t err = cudaMemGetInfo(free, total);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -62,7 +62,7 @@ namespace dftfe
     deviceError_t
     getDeviceCount(int *count)
     {
-      deviceError_t err=cudaGetDeviceCount(count);
+      deviceError_t err = cudaGetDeviceCount(count);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -70,33 +70,33 @@ namespace dftfe
     deviceError_t
     getDevice(int *deviceId)
     {
-      deviceError_t err=cudaGetDevice(deviceId);
+      deviceError_t err = cudaGetDevice(deviceId);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
     setDevice(int deviceId)
     {
-      deviceError_t err=cudaSetDevice(deviceId);
+      deviceError_t err = cudaSetDevice(deviceId);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
     deviceMalloc(void **devPtr, size_type size)
     {
-      deviceError_t err=cudaMalloc(devPtr, size);
+      deviceError_t err = cudaMalloc(devPtr, size);
       DEVICE_API_CHECK(err);
-      return err;        
+      return err;
     }
 
     deviceError_t
-    deviceMemset(void *devPtr,int value, size_type count)
+    deviceMemset(void *devPtr, int value, size_type count)
     {
-      deviceError_t err=cudaMemset(devPtr, value, count);
+      deviceError_t err = cudaMemset(devPtr, value, count);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     template <typename ValueType>
@@ -117,7 +117,9 @@ namespace dftfe
     deviceSetValue(size_type *devPtr, size_type value, size_type size);
 
     template void
-    deviceSetValue(global_size_type *devPtr,global_size_type value, size_type size);
+    deviceSetValue(global_size_type *devPtr,
+                   global_size_type  value,
+                   size_type         size);
 
     template void
     deviceSetValue(double *devPtr, double value, size_type size);
@@ -138,161 +140,193 @@ namespace dftfe
     deviceError_t
     deviceFree(void *devPtr)
     {
-      deviceError_t err=cudaFree(devPtr);
+      deviceError_t err = cudaFree(devPtr);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
     deviceHostMalloc(void **hostPtr, size_type size)
     {
-      deviceError_t err=cudaMallocHost(hostPtr, size);
+      deviceError_t err = cudaMallocHost(hostPtr, size);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
     deviceHostFree(void *hostPtr)
     {
-      deviceError_t err=cudaFreeHost(hostPtr);
+      deviceError_t err = cudaFreeHost(hostPtr);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, size_type count)
     {
-      deviceError_t err=cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost);
+      deviceError_t err = cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
     deviceMemcpyD2D(void *dst, const void *src, size_type count)
     {
-      deviceError_t err=cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice);
+      deviceError_t err = cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, size_type count)
     {
-      deviceError_t err=cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice);
+      deviceError_t err = cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
-    deviceMemcpyD2H_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height)
+    deviceMemcpyD2H_2D(void *      dst,
+                       size_type   dpitch,
+                       const void *src,
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height)
     {
-      deviceError_t err=cudaMemcpy2D(dst,dpitch,src,spitch,width,height,cudaMemcpyDeviceToHost);
+      deviceError_t err = cudaMemcpy2D(
+        dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToHost);
       DEVICE_API_CHECK(err);
-      return err; 
+      return err;
     }
 
 
     deviceError_t
-    deviceMemcpyD2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height)
+    deviceMemcpyD2D_2D(void *      dst,
+                       size_type   dpitch,
+                       const void *src,
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height)
     {
-      deviceError_t err=cudaMemcpy2D(dst,dpitch,src,spitch,width,height,cudaMemcpyDeviceToDevice);
+      deviceError_t err = cudaMemcpy2D(
+        dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToDevice);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
-    deviceMemcpyH2D_2D(void* dst, size_type dpitch, const void* src, size_type spitch, size_type width, size_type height)
+    deviceMemcpyH2D_2D(void *      dst,
+                       size_type   dpitch,
+                       const void *src,
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height)
     {
-      deviceError_t err=cudaMemcpy2D(dst,dpitch,src,spitch,width,height,cudaMemcpyHostToDevice);
+      deviceError_t err = cudaMemcpy2D(
+        dst, dpitch, src, spitch, width, height, cudaMemcpyHostToDevice);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
     deviceSynchronize()
     {
-      deviceError_t err=cudaDeviceSynchronize();
+      deviceError_t err = cudaDeviceSynchronize();
       DEVICE_API_CHECK(err);
-      return err;          
+      return err;
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2H(void *dst, const void *src, size_type count,deviceStream_t stream)
+    deviceMemcpyAsyncD2H(void *         dst,
+                         const void *   src,
+                         size_type      count,
+                         deviceStream_t stream)
     {
-      deviceError_t err=cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToHost,stream);
+      deviceError_t err =
+        cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToHost, stream);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2D(void *dst, const void *src, size_type count,deviceStream_t stream)
+    deviceMemcpyAsyncD2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
+                         deviceStream_t stream)
     {
-      deviceError_t err=cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToDevice,stream);
+      deviceError_t err =
+        cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToDevice, stream);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
-    deviceMemcpyAsyncH2D(void *dst, const void *src, size_type count,deviceStream_t stream)
+    deviceMemcpyAsyncH2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
+                         deviceStream_t stream)
     {
-      deviceError_t err=cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice,stream);
+      deviceError_t err =
+        cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice, stream);
       DEVICE_API_CHECK(err);
-      return err;       
+      return err;
     }
 
     deviceError_t
-    deviceStreamCreate(deviceStream_t* pStream)
+    deviceStreamCreate(deviceStream_t *pStream)
     {
-      deviceError_t err=cudaStreamCreate(pStream);
+      deviceError_t err = cudaStreamCreate(pStream);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
     deviceStreamDestroy(deviceStream_t stream)
     {
-      deviceError_t err=cudaStreamDestroy(stream);
+      deviceError_t err = cudaStreamDestroy(stream);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
-    deviceEventCreate(deviceEvent_t* pEvent)
+    deviceEventCreate(deviceEvent_t *pEvent)
     {
-      deviceError_t err=cudaEventCreate(pEvent);
+      deviceError_t err = cudaEventCreate(pEvent);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
     deviceEventDestroy(deviceEvent_t event)
     {
-      deviceError_t err=cudaEventDestroy(event);
+      deviceError_t err = cudaEventDestroy(event);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t event,deviceStream_t stream)
+    deviceEventRecord(deviceEvent_t event, deviceStream_t stream)
     {
-      deviceError_t err=cudaEventRecord(event,stream);
+      deviceError_t err = cudaEventRecord(event, stream);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
     deviceEventSynchronize(deviceEvent_t event)
     {
-      deviceError_t err=cudaEventSynchronize(event);
+      deviceError_t err = cudaEventSynchronize(event);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
     deviceError_t
-    deviceStreamWaitEvent(deviceStream_t stream,deviceEvent_t event,unsigned int flags)
+    deviceStreamWaitEvent(deviceStream_t stream,
+                          deviceEvent_t  event,
+                          unsigned int   flags)
     {
-      deviceError_t err=cudaStreamWaitEvent(stream,event,flags);
+      deviceError_t err = cudaStreamWaitEvent(stream, event, flags);
       DEVICE_API_CHECK(err);
-      return err;      
+      return err;
     }
 
   } // namespace utils

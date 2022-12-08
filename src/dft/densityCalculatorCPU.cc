@@ -337,8 +337,10 @@ namespace dftfe
                                    iWave < currentBlockSize;
                                    ++iWave)
                                 {
-                                  const T wfcQuadVal = dftfe::utils::complexConj(
-                                    wfcQuads[iquad * currentBlockSize + iWave]);
+                                  const T wfcQuadVal =
+                                    dftfe::utils::complexConj(
+                                      wfcQuads[iquad * currentBlockSize +
+                                               iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
                                     gradWfcQuads[iquad * 3 * currentBlockSize +
@@ -355,8 +357,10 @@ namespace dftfe
                                    iWave < currentBlockSize;
                                    ++iWave)
                                 {
-                                  const T wfcQuadVal = dftfe::utils::complexConj(
-                                    wfcQuads[iquad * currentBlockSize + iWave]);
+                                  const T wfcQuadVal =
+                                    dftfe::utils::complexConj(
+                                      wfcQuads[iquad * currentBlockSize +
+                                               iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
                                     gradWfcQuads[iquad * 3 * currentBlockSize +
@@ -373,8 +377,10 @@ namespace dftfe
                                    iWave < currentBlockSize;
                                    ++iWave)
                                 {
-                                  const T wfcQuadVal = dftfe::utils::complexConj(
-                                    wfcQuads[iquad * currentBlockSize + iWave]);
+                                  const T wfcQuadVal =
+                                    dftfe::utils::complexConj(
+                                      wfcQuads[iquad * currentBlockSize +
+                                               iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
                                     gradWfcQuads[iquad * 3 * currentBlockSize +
@@ -546,9 +552,10 @@ namespace dftfe
                                      iWave < currentBlockSize;
                                      ++iWave)
                                   {
-                                    const T wfcQuadVal = dftfe::utils::complexConj(
-                                      wfcQuads[iquad * currentBlockSize +
-                                               iWave]);
+                                    const T wfcQuadVal =
+                                      dftfe::utils::complexConj(
+                                        wfcQuads[iquad * currentBlockSize +
+                                                 iWave]);
                                     const T temp1 =
                                       wfcQuadVal *
                                       gradWfcQuads[iquad * 3 *
@@ -568,9 +575,10 @@ namespace dftfe
                                      iWave < currentBlockSize;
                                      ++iWave)
                                   {
-                                    const T wfcQuadVal = dftfe::utils::complexConj(
-                                      wfcQuads[iquad * currentBlockSize +
-                                               iWave]);
+                                    const T wfcQuadVal =
+                                      dftfe::utils::complexConj(
+                                        wfcQuads[iquad * currentBlockSize +
+                                                 iWave]);
                                     const T temp1 =
                                       wfcQuadVal *
                                       gradWfcQuads[iquad * 3 *
@@ -590,9 +598,10 @@ namespace dftfe
                                      iWave < currentBlockSize;
                                      ++iWave)
                                   {
-                                    const T wfcQuadVal = dftfe::utils::complexConj(
-                                      wfcQuads[iquad * currentBlockSize +
-                                               iWave]);
+                                    const T wfcQuadVal =
+                                      dftfe::utils::complexConj(
+                                        wfcQuads[iquad * currentBlockSize +
+                                                 iWave]);
                                     const T temp1 =
                                       wfcQuadVal *
                                       gradWfcQuads[iquad * 3 *

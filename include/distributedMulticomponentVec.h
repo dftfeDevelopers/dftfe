@@ -30,7 +30,8 @@ namespace dftfe
    *  @author Sambit Das
    */
   template <typename NumberType,
-            dftfe::utils::MemorySpace memorySpace= dftfe::utils::MemorySpace::HOST>
+            dftfe::utils::MemorySpace memorySpace =
+              dftfe::utils::MemorySpace::HOST>
   class DistributedMulticomponentVec
   {
   public:

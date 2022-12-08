@@ -27,4 +27,3 @@
 
 #  endif // dftfeDeviceKernelLauncherConstants_h
 #endif   // DFTFE_WITH_DEVICE
-
