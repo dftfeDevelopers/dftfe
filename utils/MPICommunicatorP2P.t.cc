@@ -94,7 +94,6 @@ namespace dftfe
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             const int err = MPI_Irecv(
               recvArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
@@ -107,21 +106,6 @@ namespace dftfe
                 communicationChannel,
               d_mpiCommunicator,
               &d_requestsUpdateGhostValues[i]);
-#  else
-            const int err = MPI_Irecv(
-              recvArrayStartPtr,
-              (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
-               d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
-                d_blockSize * sizeof(ValueType),
-              MPI_BYTE,
-              d_mpiPatternP2P->getGhostProcIds().data()[i],
-              static_cast<size_type>(
-                MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
-                communicationChannel,
-              d_mpiCommunicator,
-              &d_requestsUpdateGhostValues[i]);
-#  endif
-
 
             std::string errMsg = "Error occured while using MPI_Irecv. "
                              "Error code: " +
@@ -162,7 +146,6 @@ namespace dftfe
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             const int err = MPI_Isend(
               sendArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -176,22 +159,6 @@ namespace dftfe
               d_mpiCommunicator,
               &d_requestsUpdateGhostValues
                 [d_mpiPatternP2P->getGhostProcIds().size() + i]);
-#  else
-            const int err = MPI_Isend<memorySpace>(
-              sendArrayStartPtr,
-              d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
-                d_blockSize * sizeof(ValueType),
-              MPI_BYTE,
-              d_mpiPatternP2P->getTargetProcIds().data()[i],
-              static_cast<size_type>(
-                MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
-                communicationChannel,
-
-              d_mpiCommunicator,
-              &d_requestsUpdateGhostValues
-                [d_mpiPatternP2P->getGhostProcIds().size() + i]);
-#  endif
-
 
             std::string errMsg = "Error occured while using MPI_Isend. "
                              "Error code: " +
@@ -266,7 +233,6 @@ namespace dftfe
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             const int err = MPI_Irecv(
               recvArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -277,18 +243,6 @@ namespace dftfe
                 communicationChannel,
               d_mpiCommunicator,
               &d_requestsAccumulateAddLocallyOwned[i]);
-#  else
-            const int err = MPI_Irecv(
-              recvArrayStartPtr,
-              d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
-                d_blockSize * sizeof(ValueType),
-              MPI_BYTE,
-              d_mpiPatternP2P->getTargetProcIds().data()[i],
-              static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
-                communicationChannel,
-              d_mpiCommunicator,
-              &d_requestsAccumulateAddLocallyOwned[i]);
-#  endif
 
             std::string errMsg = "Error occured while using MPI_Irecv. "
                              "Error code: " +
@@ -326,7 +280,6 @@ namespace dftfe
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             const int err = MPI_Isend(
               sendArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
@@ -339,20 +292,6 @@ namespace dftfe
               d_mpiCommunicator,
               &d_requestsAccumulateAddLocallyOwned
                 [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
-#  else
-            const int err = MPI_Isend<memorySpace>(
-              sendArrayStartPtr,
-              (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
-               d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
-                d_blockSize * sizeof(ValueType),
-              MPI_BYTE,
-              d_mpiPatternP2P->getGhostProcIds().data()[i],
-              static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
-                communicationChannel,
-              d_mpiCommunicator,
-              &d_requestsAccumulateAddLocallyOwned
-                [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
-#  endif
 
 
             std::string errMsg = "Error occured while using MPI_Isend. "
@@ -389,11 +328,11 @@ namespace dftfe
 #  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             if (memorySpace == MemorySpace::DEVICE)
               {
-                MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
+                MemoryTransfer<memorySpace,MemorySpace::HOST_PINNED>
                   memoryTransfer;
                 memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
-                                    d_sendRecvBufferHostPinned.data(),
-                                    d_sendRecvBuffer.data());
+                                    d_sendRecvBuffer.data(),
+                                    d_sendRecvBufferHostPinned.data());
               }
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)

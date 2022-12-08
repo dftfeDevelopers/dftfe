@@ -80,12 +80,8 @@ namespace dftfe
             const size_type blockId      = i / blockSize;
             const size_type intraBlockId = i - blockId * blockSize;
 
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId] =
-              dftfe::utils::add(
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId],
-                recvBuffer[i]);
+            atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                      intraBlockId],recvBuffer[i]);
           }
       }
     } // namespace
@@ -101,9 +97,9 @@ namespace dftfe
         MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &sendBuffer)
     {
       gatherSendBufferDeviceKernel<<<
-        ownedLocalIndicesForTargetProcs.size() / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        (ownedLocalIndicesForTargetProcs.size()*blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        ownedLocalIndicesForTargetProcs.size(),
+        ownedLocalIndicesForTargetProcs.size()*blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
@@ -123,9 +119,9 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
       accumAddFromRecvBufferDeviceKernel<<<
-        ownedLocalIndicesForTargetProcs.size() / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        (ownedLocalIndicesForTargetProcs.size()*blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        ownedLocalIndicesForTargetProcs.size(),
+        ownedLocalIndicesForTargetProcs.size()*blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
@@ -140,12 +136,12 @@ namespace dftfe
     template class MPICommunicatorP2PKernels<
       float,
       dftfe::utils::MemorySpace::DEVICE>;
-    template class MPICommunicatorP2PKernels<
-      std::complex<double>,
-      dftfe::utils::MemorySpace::DEVICE>;
-    template class MPICommunicatorP2PKernels<
-      std::complex<float>,
-      dftfe::utils::MemorySpace::DEVICE>;
+    //template class MPICommunicatorP2PKernels<
+    //  std::complex<double>,
+    //  dftfe::utils::MemorySpace::DEVICE>;
+    //template class MPICommunicatorP2PKernels<
+    //  std::complex<float>,
+    //  dftfe::utils::MemorySpace::DEVICE>;
 
   } // namespace utils
 } // namespace dftfe

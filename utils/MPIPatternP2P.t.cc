@@ -179,9 +179,13 @@ namespace dftfe
               right.Id           = ranges[2 * i + 1];
               right.rangeId      = i;
               right.isRangeStart = false;
-
-              rangeMetaDataVec.push_back(left);
-              rangeMetaDataVec.push_back(right);
+             
+              //This check is required to ignore ranges with 0 elements
+              if (left.Id!=right.Id)
+              {
+                rangeMetaDataVec.push_back(left);
+                rangeMetaDataVec.push_back(right);
+              }
             }
           std::sort(rangeMetaDataVec.begin(),
                     rangeMetaDataVec.end(),
@@ -310,12 +314,12 @@ namespace dftfe
                           d_allOwnedRanges,
                           d_mpiComm);
 
-        //std::vector<size_type> overlappingRangeIds =
-        //  getOverlappingRangeIds(d_allOwnedRanges);
-        //throwException<LogicError>(
-        //  overlappingRangeIds.size() == 0,
-        //  "Detected overlapping ranges among the locallyOwnedRanges passed "
-        //  "to MPIPatternP2P");
+        std::vector<size_type> overlappingRangeIds =
+          getOverlappingRangeIds(d_allOwnedRanges);
+        throwException<LogicError>(
+          overlappingRangeIds.size() == 0,
+          "Detected overlapping ranges among the locallyOwnedRanges passed "
+          "to MPIPatternP2P");
 
         for (unsigned int i = 0; i < d_nprocs; ++i)
           d_nGlobalIndices +=

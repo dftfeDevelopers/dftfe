@@ -526,7 +526,7 @@ namespace dftfe
     void
     MultiVector<ValueType, memorySpace>::zeroOutGhosts()
     {
-      dftfe::utils::MemoryManager<ValueType,memorySpace>::set(d_ghostSize, this->data()+d_locallyOwnedSize, 0);
+      dftfe::utils::MemoryManager<ValueType,memorySpace>::set(d_ghostSize*d_numVectors, this->data()+d_locallyOwnedSize*d_numVectors, 0);
     }
 
 
@@ -647,14 +647,14 @@ namespace dftfe
     MultiVector<ValueType,memorySpace> & multiVector)
     {
       const std::pair<global_size_type,global_size_type> & locallyOwnedRange=partitioner->local_range();
-      std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
+      //std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
       std::vector<global_size_type> ghostIndices;
       (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
 
       //for (unsigned int i=0;i<ghostIndices.size();++i)
       // std::cout<<ghostIndices[i]<<std::endl;
 
-      std::sort(ghostIndices.begin(),ghostIndices.end());
+      //std::sort(ghostIndices.begin(),ghostIndices.end());
       std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2PPtr =
       std::make_shared<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>(locallyOwnedRange,ghostIndices,partitioner->get_mpi_communicator());    
 
