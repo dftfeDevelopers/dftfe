@@ -83,5 +83,5 @@ namespace dftfe
   } // end of namespace utils
 
 } // end of namespace dftfe
-#include <../utils/OptimizedIndexSet.t.cc>
+#include "../utils/OptimizedIndexSet.t.cc"
 #endif // dftfeOptimizedSet_h

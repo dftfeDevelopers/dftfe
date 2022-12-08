@@ -233,7 +233,7 @@ namespace dftfe
        * of indices (continuous) that are owned by the current processor.
        * @param[in] ghostIndices vector containing an ordered set of ghost
        * indices (ordered in increasing order and non-repeating)
-       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * @param[in] mpiComm MPI_Comm object associated with the group
        * of processors across which the MultiVector is to be distributed
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
@@ -245,7 +245,7 @@ namespace dftfe
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<global_size_type> &               ghostIndices,
-        const utils::mpi::MPIComm &                         mpiComm,
+        const MPI_Comm &                         mpiComm,
         const size_type                                     numVectors,
         ValueType initVal = 0);
 
@@ -257,7 +257,7 @@ namespace dftfe
        *
        * @param[in] locallyOwnedRange a pair \f$(a,b)\f$ which defines a range
        * of indices (continuous) that are owned by the current processor.
-       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * @param[in] mpiComm MPI_Comm object associated with the group
        * of processors across which the MultiVector is to be distributed
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
@@ -268,7 +268,7 @@ namespace dftfe
        */
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const utils::mpi::MPIComm &                         mpiComm,
+        const MPI_Comm &                         mpiComm,
         const size_type                                     numVectors,
         const ValueType initVal = 0);
 
@@ -284,14 +284,14 @@ namespace dftfe
        * distributed MultiVector construction.
        * @param[in] globalSize Total number of global indices that is
        * distributed over the processors.
-       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * @param[in] mpiComm MPI_Comm object associated with the group
        * of processors across which the MultiVector is to be distributed
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        */
       MultiVector(const global_size_type                        globalSize,
-                  const utils::mpi::MPIComm &                   mpiComm,
+                  const MPI_Comm &                   mpiComm,
                   const size_type                               numVectors,
                   const ValueType initVal = 0);
 
@@ -333,6 +333,36 @@ namespace dftfe
        */
       MultiVector &
       operator=(MultiVector &&u);
+
+      /**
+       * @brief pointer swap
+       *
+       */
+      void
+      swap(MultiVector &u);  
+
+      /**
+       * @brief reinit for a \b distributed MultiVector based on an input MPIPatternP2P.
+       *
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
+       * based on which the distributed MultiVector will be reinitialized.
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] initVal value with which the MultiVector shoud be
+       * reinitialized
+       */
+      void
+      reinit(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                                mpiPatternP2P,
+                  const size_type                               numVectors,
+                  const ValueType initVal = 0);
+
+      /**
+       * @brief reinit based on an input distributed MultiVector.
+       *
+       */
+      void
+      reinit(MultiVector &u);     
+
 
       /**
        * @brief Return iterator pointing to the beginning of MultiVector data.
@@ -393,6 +423,9 @@ namespace dftfe
       setValue(const ValueType val);
 
       void
+      zeroOutGhosts();
+
+      void
       updateGhostValues(const size_type communicationChannel = 0);
 
       void
@@ -442,5 +475,5 @@ namespace dftfe
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftfe
-#include <../src/linAlg/MultiVector.t.cc>
+#include "../src/linAlg/MultiVector.t.cc"
 #endif // dftfeMultiVector_h

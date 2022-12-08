@@ -85,7 +85,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   // called separately inside chebyshevFilter. So skip this if either skip1 or
   // skip2 are set to true
   if (!skip1 && !skip2)
-    projectorKetTimesVector.setZero();
+    projectorKetTimesVector.setValue(0);
 
 
   if (d_totalNonlocalElems > 0 && !skip1)
@@ -200,8 +200,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   if (std::is_same<dataTypes::number, std::complex<double>>::value)
     {
       deviceUtils::copyComplexArrToRealArrsDevice(
-        (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
-         d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+        (d_parallelChebyBlockVectorDevice.localSize()*d_parallelChebyBlockVectorDevice.numVectors()),
         dst,
         d_tempRealVec.begin(),
         d_tempImagVec.begin());
@@ -221,8 +220,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
       deviceUtils::copyRealArrsToComplexArrDevice(
-        (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
-         d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+        (d_parallelChebyBlockVectorDevice.localSize()*d_parallelChebyBlockVectorDevice.numVectors()),
         d_tempRealVec.begin(),
         d_tempImagVec.begin(),
         dst);

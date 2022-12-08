@@ -450,8 +450,8 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       double time = MPI_Wtime();
 
-      xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
-                blockSize);
+      //xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
+      //          blockSize);
       xD.setZero();
       dftfe::utils::deviceMemcpyH2D(xD.begin(),
                                     xH,
@@ -463,8 +463,16 @@ namespace dftfe
         std::cout << " poissonDevice::solveVselfInBins: time for creating xD: "
                   << time << std::endl;
 
+      distributedCPUVec<double> flattenedArray;
+      vectorTools::createDealiiVector<double>(
+        matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
+        blockSize,
+        flattenedArray);
+
+
       std::vector<dealii::types::global_dof_index> cellLocalProcIndexIdMapH;
-      vectorTools::computeCellLocalIndexSetMap(xD.getDealiiPartitioner(),
+
+      vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
                                                matrixFreeData,
                                                mfDofHandlerIndex,
                                                blockSize,
@@ -478,7 +486,7 @@ namespace dftfe
 
       constraintsMatrixDataInfoDevice.precomputeMaps(
         matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
-        xD.getDealiiPartitioner(),
+        flattededArray.get_partitioner(),
         blockSize);
 
       constraintsMatrixDataInfoDevice.set_zero(xD, blockSize);

@@ -215,7 +215,7 @@ namespace dftfe
           {
             const int err = MPI_Waitall(d_requestsUpdateGhostValues.size(),
                                        d_requestsUpdateGhostValues.data(),
-                                       MPIStatusesIgnore);
+                                       MPI_STATUSES_IGNORE);
             std::string errMsg = "Error occured while using MPI_Waitall. "
                              "Error code: " +
                              std::to_string(err);
@@ -271,7 +271,7 @@ namespace dftfe
               recvArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
                 d_blockSize * sizeof(ValueType),
-              MPIByte,
+              MPI_BYTE,
               d_mpiPatternP2P->getTargetProcIds().data()[i],
               static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
                 communicationChannel,
@@ -379,7 +379,7 @@ namespace dftfe
             const int err =
               MPI_Waitall(d_requestsAccumulateAddLocallyOwned.size(),
                          d_requestsAccumulateAddLocallyOwned.data(),
-                         MPIStatusesIgnore);
+                         MPI_STATUSES_IGNORE);
 
             std::string errMsg = "Error occured while using MPI_Waitall. "
                              "Error code: " +

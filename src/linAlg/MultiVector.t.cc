@@ -38,7 +38,6 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           size * numVectors, initVal);
-      d_linAlgOpContext = linAlgOpContext;
       d_globalSize       = size;
       d_locallyOwnedSize = size;
       d_ghostSize        = 0;
@@ -66,7 +65,6 @@ namespace dftfe
       const size_type                               numVectors)
     {
       d_storage         = std::move(storage);
-      d_linAlgOpContext = linAlgOpContext;
       d_globalSize       = d_storage.size();
       d_locallyOwnedSize = d_storage.size();
       d_ghostSize        = 0;
@@ -100,7 +98,6 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * d_numVectors, initVal);
-      d_linAlgOpContext    = linAlgOpContext;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
                                                                 numVectors);
@@ -124,7 +121,6 @@ namespace dftfe
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_storage         = std::move(storage);
-      d_linAlgOpContext = std::move(linAlgOpContext);
       d_globalSize         = d_mpiPatternP2P->nGlobalIndices();
       d_locallyOwnedSize   = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize          = d_mpiPatternP2P->localGhostSize();
@@ -145,7 +141,7 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<global_size_type> &               ghostIndices,
-      const utils::mpi::MPIComm &                         mpiComm,
+      const MPI_Comm &                         mpiComm,
       const size_type                                     numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
@@ -153,11 +149,7 @@ namespace dftfe
       // TODO Move the warning message to a Logger class
       //
       int mpiRank;
-      int err = utils::mpi::MPICommRank(mpiComm, &mpiRank);
-      std::pair<bool, std::string> errIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(errIsSuccessAndMsg.first,
-                            errIsSuccessAndMsg.second);
+      int err = MPI_Comm_rank(mpiComm, &mpiRank);
       std::string msg;
       if (mpiRank == 0)
         {
@@ -185,7 +177,6 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * numVectors, initVal);
-      d_linAlgOpContext = linAlgOpContext;
     }
 
     /**
@@ -197,7 +188,7 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-      const utils::mpi::MPIComm &                         mpiComm,
+      const MPI_Comm &                         mpiComm,
       const size_type                                     numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
@@ -205,11 +196,7 @@ namespace dftfe
       // TODO Move the warning message to a Logger class
       //
       int mpiRank;
-      int err = utils::mpi::MPICommRank(mpiComm, &mpiRank);
-      std::pair<bool, std::string> errIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(errIsSuccessAndMsg.first,
-                            errIsSuccessAndMsg.second);
+      int err = MPI_Comm_rank(mpiComm, &mpiRank);
       std::string msg;
       if (mpiRank == 0)
         {
@@ -238,7 +225,6 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * numVectors, initVal);
-      d_linAlgOpContext = linAlgOpContext;
     }
 
 
@@ -255,7 +241,7 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       const global_size_type                        globalSize,
-      const utils::mpi::MPIComm &                   mpiComm,
+      const MPI_Comm &                   mpiComm,
       const size_type                               numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
@@ -268,11 +254,7 @@ namespace dftfe
       // TODO Move the warning message to a Logger class
       //
       int mpiRank;
-      int err = utils::mpi::MPICommRank(mpiComm, &mpiRank);
-      std::pair<bool, std::string> errIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(errIsSuccessAndMsg.first,
-                            errIsSuccessAndMsg.second);
+      int err = MPI_Comm_rank(mpiComm, &mpiRank);
       std::string msg;
       if (mpiRank == 0)
         {
@@ -284,10 +266,7 @@ namespace dftfe
         }
 
       int mpiProcess;
-      int errProc        = utils::mpi::MPICommSize(mpiComm, &mpiProcess);
-      errIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(errProc);
-      utils::throwException(errIsSuccessAndMsg.first,
-                            errIsSuccessAndMsg.second);
+      int errProc        = MPI_Comm_size(mpiComm, &mpiProcess);
 
       dftfe::global_size_type locallyOwnedSize = globalSize / mpiProcess;
       if (mpiRank < globalSize % mpiProcess)
@@ -321,7 +300,6 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * numVectors, initVal);
-      d_linAlgOpContext = linAlgOpContext;
     }
 
 
@@ -338,7 +316,6 @@ namespace dftfe
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
         u.d_mpiPatternP2P, u.d_numVectors);
-      d_linAlgOpContext  = u.d_linAlgOpContext;
       *d_storage         = *(u.d_storage);
       d_localSize        = u.d_localSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
@@ -362,7 +339,6 @@ namespace dftfe
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
         u.d_mpiPatternP2P, u.d_numVectors);
-      d_linAlgOpContext  = u.d_linAlgOpContext;
       d_localSize        = u.d_localSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
       d_ghostSize        = u.d_ghostSize;
@@ -378,7 +354,6 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::MultiVector(MultiVector &&u) noexcept
     {
       d_storage            = std::move(u.d_storage);
-      d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
       d_localSize          = std::move(u.d_localSize);
       d_locallyOwnedSize   = std::move(u.d_locallyOwnedSize);
       d_ghostSize          = std::move(u.d_ghostSize);
@@ -402,7 +377,6 @@ namespace dftfe
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
         u.d_mpiPatternP2P, u.d_numVectors);
-      d_linAlgOpContext  = u.d_linAlgOpContext;
       d_localSize        = u.d_localSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
       d_ghostSize        = u.d_ghostSize;
@@ -420,7 +394,6 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::operator=(MultiVector &&u)
     {
       d_storage            = std::move(u.d_storage);
-      d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
       d_localSize          = std::move(u.d_localSize);
       d_locallyOwnedSize   = std::move(u.d_locallyOwnedSize);
       d_ghostSize          = std::move(u.d_ghostSize);
@@ -430,6 +403,74 @@ namespace dftfe
       d_mpiPatternP2P      = std::move(u.d_mpiPatternP2P);
       return *this;
     }
+
+
+    //
+    // swap
+    //
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::swap(MultiVector &u)
+    {
+      d_storage.swap(u.d_storage);
+      d_mpiCommunicatorP2P.swap(u.d_mpiCommunicatorP2P);
+      d_mpiPatternP2P.swap(u.d_mpiPatternP2P);
+
+      const size_type tempLocalSizeLeft=d_localSize;
+      const size_type tempLocallyOwnedSizeLeft=d_locallyOwnedSize;
+      const size_type tempGhostSizeLeft=d_ghostSize;      
+      const global_size_type tempGlobalSizeLeft=d_globalSize;
+      const size_type tempNumVectorsLeft=d_numVectors;
+
+      d_localSize          = u.d_localSize;
+      d_locallyOwnedSize   = u.d_locallyOwnedSize;
+      d_ghostSize          = u.d_ghostSize;
+      d_globalSize         = u.d_globalSize;
+      d_numVectors         = u.d_numVectors;  
+
+      u.d_localSize=tempLocalSizeLeft;
+      u.d_locallyOwnedSize=tempLocallyOwnedSizeLeft;
+      u.d_ghostSize=tempGhostSizeLeft;
+      u.d_globalSize=tempGlobalSizeLeft;
+      u.d_numVectors=tempNumVectorsLeft;         
+    }
+
+    //
+    // reinit for \distributed MultiVector using an existing
+    // MPIPatternP2P object
+    //
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::reinit(
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                    mpiPatternP2P,
+      const size_type                               numVectors,
+      const ValueType initVal)
+    {
+      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_numVectors       = numVectors;
+      d_storage =
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
+          d_localSize * d_numVectors, initVal);
+      d_mpiCommunicatorP2P = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
+                                                                numVectors);
+    }
+
+    //
+    // reinit for \distributed MultiVector using an existing
+    // MultiVector object
+    //
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::reinit(MultiVector &u)
+    {
+       this->reinit(u.d_mpiPatternP2P,u.d_numVectors);
+    }
+
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MultiVector<ValueType, memorySpace>::iterator
@@ -479,6 +520,14 @@ namespace dftfe
     {
       d_storage->setValue(val);
     }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::zeroOutGhosts()
+    {
+      dftfe::utils::MemoryManager<ValueType,memorySpace>::set(d_ghostSize, this->data()+d_locallyOwnedSize, 0);
+    }
+
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     void

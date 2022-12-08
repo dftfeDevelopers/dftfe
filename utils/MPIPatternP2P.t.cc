@@ -45,7 +45,7 @@ namespace dftfe
                           const MPI_Comm &                mpiComm)
         {
           int         nprocs = 1;
-          int         err    = MPI_Comm_Size(mpiComm, &nprocs);
+          int         err    = MPI_Comm_size(mpiComm, &nprocs);
           std::string errMsg = "Error occured while using MPI_Comm_size. "
                                "Error code: " +
                                std::to_string(err);
@@ -77,7 +77,7 @@ namespace dftfe
           const MPI_Comm &mpiComm)
         {
           int         nprocs = 1;
-          int         err    = MPI_Comm_Size(mpiComm, &nprocs);
+          int         err    = MPI_Comm_size(mpiComm, &nprocs);
           std::string errMsg = "Error occured while using MPI_Comm_size. "
                                "Error code: " +
                                std::to_string(err);
@@ -255,13 +255,13 @@ namespace dftfe
       {
         d_myRank           = 0;
         d_nprocs           = 1;
-        int         err    = MPI_Comm_Size(d_mpiComm, &d_nprocs);
+        int         err    = MPI_Comm_size(d_mpiComm, &d_nprocs);
         std::string errMsg = "Error occured while using MPI_Comm_size. "
                              "Error code: " +
                              std::to_string(err);
         throwException(err == MPI_SUCCESS, errMsg);
 
-        err    = MPI_Comm_Rank(d_mpiComm, &d_myRank);
+        err    = MPI_Comm_rank(d_mpiComm, &d_myRank);
         errMsg = "Error occured while using MPI_Comm_rank. "
                  "Error code: " +
                  std::to_string(err);
@@ -435,7 +435,7 @@ namespace dftfe
           }
 
         err =
-          MPIWaitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
+          MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
         errMsg = "Error occured while using MPI_Waitall. "
                  "Error code: " +
                  std::to_string(err);
@@ -522,7 +522,7 @@ namespace dftfe
                  std::to_string(err);
         throwException(err == MPI_SUCCESS, errMsg);
 
-        err    = MPIWaitall(d_numTargetProcs,
+        err    = MPI_Waitall(d_numTargetProcs,
                          recvRequests.data(),
                          recvStatuses.data());
         errMsg = "Error occured while using MPI_Waitall. "

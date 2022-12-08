@@ -26,6 +26,7 @@
 #include <MemoryStorage.h>
 #include <OptimizedIndexSet.h>
 #include <vector>
+#include <mpi.h>
 namespace dftfe
 {
   namespace utils
@@ -380,5 +381,5 @@ namespace dftfe
   }   // end of namespace utils
 } // end of namespace dftfe
 
-#include <../utils/MPIPatternP2P.t.cc>
+#include "../utils/MPIPatternP2P.t.cc"
 #endif // dftfeMPIPatternP2P_h

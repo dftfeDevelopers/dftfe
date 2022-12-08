@@ -875,10 +875,10 @@ namespace dftfe
 
     const unsigned int BVec =
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, numberWaveFunctions);
-    d_parallelChebyBlockVectorDevice.reinit(
-      dftPtr->matrix_free_data.get_vector_partitioner(
-        dftPtr->d_densityDofHandlerIndex),
-      BVec);
+    //d_parallelChebyBlockVectorDevice.reinit(
+    //  dftPtr->matrix_free_data.get_vector_partitioner(
+    //    dftPtr->d_densityDofHandlerIndex),
+    //  BVec);
 
     if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_parallelChebyBlockVector2Device.reinit(
@@ -991,8 +991,8 @@ namespace dftfe
 
     if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
-        d_parallelProjectorKetTimesBlockVectorDevice.reinit(
-          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
+        //d_parallelProjectorKetTimesBlockVectorDevice.reinit(
+        //  dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
 
 
         d_totalPseudoWfcNonLocal = 0;
@@ -3499,7 +3499,7 @@ namespace dftfe
           numberWaveFunctions * totalSize,
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
-        tempFloatArray.compressAdd();
+        tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
         copyFloatArrToDoubleArrLocallyOwned<<<
@@ -3516,7 +3516,7 @@ namespace dftfe
       }
     else
       {
-        dst.compressAdd();
+        dst.accumulateAddLocallyOwned();
       }
 
     //
