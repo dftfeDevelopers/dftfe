@@ -62,6 +62,8 @@ SET(TARGET_SRC
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
   ./utils/Exceptions.cc
+  ./utils/MPIRequestersNBX.cc
+  ./utils/MPICommunicatorP2PKernels.cc
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
@@ -86,6 +88,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
   ./utils/DeviceBlasWrapper.cu.cc
+  ./utils/MPICommunicatorP2PKernels.cu.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc
