@@ -95,7 +95,8 @@ namespace dftfe
 
     d_matrixFreeDataPtr = &matrixFreeData;
     d_xPtr              = &x;
-    //d_xDevice.reinit(d_xPtr->get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(d_xPtr->get_partitioner(),1,d_xDevice);
+
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
       dftfe::utils::MemorySpace::HOST>::copy(d_xDevice.locallyOwnedSize()*d_xDevice.numVectors(),
@@ -546,8 +547,9 @@ namespace dftfe
     d_meanValueConstraintVec = 0;
 
     // allocate parallel distibuted device vector to store mean value constraint
-    //d_meanValueConstraintDeviceVec.reinit(
-    //  d_meanValueConstraintVec.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(d_meanValueConstraintVec.get_partitioner(),
+      1,
+      d_meanValueConstraintDeviceVec); 
 
     const dealii::DoFHandler<3> &dofHandler =
       d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
@@ -744,7 +746,10 @@ namespace dftfe
           d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
-    //d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(d_diagonalA.get_partitioner(),
+      1,
+      d_diagonalAdevice);
+
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,

@@ -311,9 +311,10 @@ namespace dftfe
       {
         d_YArray.reinit(deviceFlattenedArrayBlock);
 
-        //d_deviceFlattenedFloatArrayBlock.reinit(
-        //  operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-        //  vectorsBlockSize);
+        d_deviceFlattenedFloatArrayBlock.reinit(
+          deviceFlattenedArrayBlock.getMPIPatternP2P(),
+          vectorsBlockSize);
+
 
         if (d_dftParams.isPseudopotential)
           {

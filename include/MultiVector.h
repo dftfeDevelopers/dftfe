@@ -29,6 +29,7 @@
 #include <MPIPatternP2P.h>
 #include <MPICommunicatorP2P.h>
 #include <memory>
+#  include <deal.II/lac/la_parallel_vector.h>
 namespace dftfe
 {
   namespace linearAlgebra
@@ -473,6 +474,16 @@ namespace dftfe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
     };
+
+    //
+    //helper functions
+    //
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    createMultiVectorFromDealiiPartitioner(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>& partitioner,
+    const size_type numVectors,
+    MultiVector<ValueType,memorySpace> & multiVector);
+    
   } // end of namespace linearAlgebra
 } // end of namespace dftfe
 #include "../src/linAlg/MultiVector.t.cc"

@@ -639,5 +639,22 @@ namespace dftfe
       return d_numVectors;
     }
 
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    createMultiVectorFromDealiiPartitioner(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>& partitioner,
+    const size_type numVectors,
+    MultiVector<ValueType,memorySpace> & multiVector)
+    {
+      const std::pair<global_size_type,global_size_type> locallyOwnedRange=partitioner->local_range();
+      std::vector<global_size_type> ghostIndices;
+      (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
+      std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::DEVICE>> mpiPatternP2PPtr =
+      std::make_shared<dftfe::utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::DEVICE>>(locallyOwnedRange,ghostIndices,partitioner->get_mpi_communicator());    
+
+      multiVector.reinit(
+      mpiPatternP2PPtr,
+      numVectors);      
+    }
+
   } // end of namespace linearAlgebra
 } // namespace dftfe

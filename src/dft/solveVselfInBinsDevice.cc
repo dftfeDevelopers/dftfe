@@ -450,8 +450,10 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       double time = MPI_Wtime();
 
-      //xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
-      //          blockSize);
+      dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
+      blockSize,
+      xD);      
+      
       xD.setValue(0);
       dftfe::utils::deviceMemcpyH2D(xD.begin(),
                                     xH,

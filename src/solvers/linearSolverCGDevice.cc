@@ -64,7 +64,8 @@ namespace dftfe
     problem.computeRhs(rhsHost);
 
     distributedDeviceVec<double> rhsDevice;
-    //rhsDevice.reinit(rhsHost.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(rhsHost.get_partitioner(),1,rhsDevice);
+
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,

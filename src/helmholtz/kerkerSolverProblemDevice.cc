@@ -60,7 +60,8 @@ namespace dftfe
 
     matrixFreeDataPRefined.initialize_dof_vector(x,
                                                  d_matrixFreeVectorComponent);
-    //d_xDevice.reinit(x.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(x.get_partitioner(),1,d_xDevice);
+
 
     d_xPtr      = &x;
     d_xLocalDof = d_xDevice.locallyOwnedSize()*d_xDevice.numVectors();
@@ -266,7 +267,10 @@ namespace dftfe
           d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
-    //d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(d_diagonalA.get_partitioner(),
+    1,
+    d_diagonalAdevice);
+
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
