@@ -652,7 +652,8 @@ namespace dftfe
       (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
 
       //for (unsigned int i=0;i<ghostIndices.size();++i)
-      // std::cout<<ghostIndices[i]<<std::endl;
+      //if (ghostIndices.size()>0)
+      //std::cout<<ghostIndices.back()<<std::endl;
 
       //std::sort(ghostIndices.begin(),ghostIndices.end());
       std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2PPtr =
