@@ -137,28 +137,18 @@ namespace dftfe
             throwException(hasRankAlreadySent == false, errMsg);
             d_requestingProcesses.insert(sourceRank);
 
-            //
-            // get the current size of receive buffers
-            //
-            size_type N = d_recvBuffers.size();
+            d_recvBuffers.emplace_back(std::make_unique<int>());
 
-            //
-            // increase the size of receive buffers and
-            // receive requests by 1 to allocate memory
-            // for this found incoming message
-            //
-            int dummyVal = 0;
-            d_recvBuffers.push_back(dummyVal);
-            MPI_Request request;
-            d_recvRequests.emplace_back(request);
+            //avoids copy of MPI_Request which can lead to MPI errors
+            d_recvRequests.emplace_back(std::make_unique<MPI_Request>());
 
-            err    = MPI_Irecv(&d_recvBuffers[N],
+            err    = MPI_Irecv(d_recvBuffers.back().get(),
                                               1,
                                               MPI_INT,
                                               sourceRank,
                                               tag,
                                               d_comm,
-                                              &d_recvRequests[N]);
+                                              d_recvRequests.back().get());
             errMsg = "Error occured while using MPI_Irecv. "
                      "Error code: " +
                      std::to_string(err);
@@ -224,19 +214,19 @@ namespace dftfe
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
           }
-        d_sendRequests.resize(0);  
 
         if (d_recvRequests.size() > 0)
           {
-            const int   err    = MPI_Waitall(d_recvRequests.size(),
-                                       d_recvRequests.data(),
-                                       MPI_STATUSES_IGNORE);
+            for (size_type i=0; i<d_recvRequests.size();i++)
+            {
+            const int   err    = MPI_Wait(d_recvRequests.back().get(),
+                                       MPI_STATUS_IGNORE);
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  " Error code: " +
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
+            }
           }
-        d_recvRequests.resize(0);  
 
         int         err    = MPI_Wait(&d_barrierRequest, MPI_STATUS_IGNORE);
         std::string errMsg = "Error occured while using MPI_Wait. "

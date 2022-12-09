@@ -381,6 +381,7 @@ namespace dftfe
 
 
         d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
+        if (d_numGhostIndices>0)
         memoryTransfer.copy(d_numGhostIndices,
                             d_flattenedLocalGhostIndices.begin(),
                             &flattenedLocalGhostIndicesTmp[0]);
@@ -438,20 +439,26 @@ namespace dftfe
             throwException(err == MPI_SUCCESS, errMsg);
           }
 
-        err =
-          MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
-        errMsg = "Error occured while using MPI_Waitall. "
-                 "Error code: " +
-                 std::to_string(err);
-        throwException(err == MPI_SUCCESS, errMsg);
+        if (sendRequests.size()>0)
+        {
+          err =
+            MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
+          errMsg = "Error occured while using MPI_Waitall. "
+                   "Error code: " +
+                   std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+        }
 
-        err    = MPI_Waitall(d_numTargetProcs,
-                         recvRequests.data(),
-                         recvStatuses.data());
-        errMsg = "Error occured while using MPI_Waitall. "
-                 "Error code: " +
-                 std::to_string(err);
-        throwException(err == MPI_SUCCESS, errMsg);
+        if (recvRequests.size()>0)
+        {
+          err    = MPI_Waitall(d_numTargetProcs,
+                           recvRequests.data(),
+                           recvStatuses.data());
+          errMsg = "Error occured while using MPI_Waitall. "
+                   "Error code: " +
+                   std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+        }
 
         size_type totalOwnedIndicesForTargetProcs =
           std::accumulate(d_numOwnedIndicesForTargetProcs.begin(),
@@ -519,23 +526,30 @@ namespace dftfe
             startIndex += numOwnedIndicesForTarget;
           }
 
-        err =
-          MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
-        errMsg = "Error occured while using MPI_Waitall. "
-                 "Error code: " +
-                 std::to_string(err);
-        throwException(err == MPI_SUCCESS, errMsg);
+        if (sendRequests.size()>0)
+        {
+          err =
+            MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
+          errMsg = "Error occured while using MPI_Waitall. "
+                   "Error code: " +
+                   std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+        }
 
-        err    = MPI_Waitall(d_numTargetProcs,
-                         recvRequests.data(),
-                         recvStatuses.data());
-        errMsg = "Error occured while using MPI_Waitall. "
-                 "Error code: " +
-                 std::to_string(err);
-        throwException(err == MPI_SUCCESS, errMsg);
+        if (recvRequests.size()>0)
+        {
+          err    = MPI_Waitall(d_numTargetProcs,
+                           recvRequests.data(),
+                           recvStatuses.data());
+          errMsg = "Error occured while using MPI_Waitall. "
+                   "Error code: " +
+                   std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+        }
 
 
         d_flattenedLocalTargetIndices.resize(totalOwnedIndicesForTargetProcs);
+        if (totalOwnedIndicesForTargetProcs>0)
         memoryTransfer.copy(totalOwnedIndicesForTargetProcs,
                             d_flattenedLocalTargetIndices.begin(),
                             &flattenedLocalTargetIndicesTmp[0]);

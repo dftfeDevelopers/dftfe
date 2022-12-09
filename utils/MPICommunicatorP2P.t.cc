@@ -68,7 +68,8 @@ namespace dftfe
             if (std::is_same<ValueType, std::complex<double>>::value || std::is_same<ValueType, std::complex<float>>::value)
             {
               d_tempRealArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
-              d_tempImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);              }
+              d_tempImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
+            }
           }
 #endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
       }
@@ -132,6 +133,7 @@ namespace dftfe
           }
 
         // gather locally owned entries into a contiguous send buffer
+        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
         MPICommunicatorP2PKernels<ValueType, memorySpace>::
           gatherLocallyOwnedEntriesSendBufferToTargetProcs(
             dataArray,
@@ -147,6 +149,8 @@ namespace dftfe
           {
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
+
+            if (d_sendRecvBufferHostPinned.size()>0)
             memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
                                 d_sendRecvBufferHostPinned.begin(),
                                 d_sendRecvBuffer.begin());
@@ -210,6 +214,7 @@ namespace dftfe
               {
                 MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
+                if ( d_ghostDataCopyHostPinned.size()>0)
                 memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
                                     dataArray.begin() +
                                       d_mpiPatternP2P->localOwnedSize() *
@@ -287,6 +292,7 @@ namespace dftfe
           {
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
+            if (d_ghostDataCopyHostPinned.size()>0)
             memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
                                 d_ghostDataCopyHostPinned.begin(),
                                 dataArray.begin() +
@@ -355,6 +361,7 @@ namespace dftfe
               {
                 MemoryTransfer<memorySpace,MemorySpace::HOST_PINNED>
                   memoryTransfer;
+                if (d_sendRecvBufferHostPinned.size()>0)
                 memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
                                     d_sendRecvBuffer.data(),
                                     d_sendRecvBufferHostPinned.data());
@@ -365,6 +372,7 @@ namespace dftfe
          d_requestsAccumulateAddLocallyOwned.resize(0); 
 
         // accumulate add into locally owned entries from recv buffer
+        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
         MPICommunicatorP2PKernels<ValueType, memorySpace>::
           accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
             d_sendRecvBuffer,

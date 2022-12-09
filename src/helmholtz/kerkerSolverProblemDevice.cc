@@ -819,7 +819,7 @@ namespace dftfe
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
-
+    //std::cout<<"HELLO 1"<<std::endl;
     x.updateGhostValues();
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
@@ -835,7 +835,7 @@ namespace dftfe
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
-
+    //std::cout<<"HELLO 2"<<std::endl;
     Ax.accumulateAddLocallyOwned();
   }
 

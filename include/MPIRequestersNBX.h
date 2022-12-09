@@ -16,7 +16,7 @@
 //
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Sambit Das
  */
 
 #ifndef dftfeMPIRequestersNBX_h
@@ -27,6 +27,7 @@
 #include <MPIRequestersBase.h>
 #include <vector>
 #include <set>
+#include <memory>
 namespace dftfe
 {
   namespace utils
@@ -187,15 +188,19 @@ namespace dftfe
         std::vector<MPI_Request> d_sendRequests;
 
         /**
-         * Buffers for receiving requests.
-         *
+         * Buffers for receiving requests. 
+         * We use a vector of pointers because that
+         * guarantees that the buffers themselves
+         * are never moved around in memory, even if the vector is
+         * resized and consequently its elements (the pointers) are moved
+         * around.
          */
-        std::vector<int> d_recvBuffers;
+        std::vector<std::unique_ptr<int>> d_recvBuffers;
 
         /**
          * Requests for receiving requests.
          */
-        std::vector<MPI_Request> d_recvRequests;
+        std::vector<std::unique_ptr<MPI_Request>> d_recvRequests;
 
         //
         // request for barrier
