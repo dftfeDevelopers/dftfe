@@ -71,6 +71,7 @@ namespace dftfe
         void
         getGhostProcIdToLocalGhostIndicesMap(
           const std::vector<global_size_type> &ghostIndices,
+          const global_size_type nGlobalIndices,
           const std::vector<global_size_type> &allOwnedRanges,
           std::map<size_type, std::vector<size_type>>
             &            ghostProcIdToLocalGhostIndices,
@@ -103,6 +104,11 @@ namespace dftfe
           for (unsigned int i = 0; i < nprocs; ++i)
             {
               locallyOwnedRangesEnd[i]        = allOwnedRanges[2 * i + 1];
+
+              //this is required for handing trivial ranges [Nt, Nt) 
+              //where Nt can be arbitrary integer >=0 
+              if (allOwnedRanges[2 * i + 1]==allOwnedRanges[2 * i])
+                locallyOwnedRangesEnd[i]=(nGlobalIndices+1+i);
               locallyOwnedRangesEndProcIds[i] = i;
             }
 
@@ -325,9 +331,17 @@ namespace dftfe
           d_nGlobalIndices +=
             d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
 
+        if (ghostIndices.size()>0)
+        {
+          throwException<LogicError>(
+            ghostIndices.back() < d_nGlobalIndices,
+            "Detected global ghost index to be larger than (nGlobalIndices-1)");
+        }
+
         std::map<size_type, std::vector<size_type>>
           ghostProcIdToLocalGhostIndices;
         getGhostProcIdToLocalGhostIndicesMap(ghostIndices,
+                                             d_nGlobalIndices,
                                              d_allOwnedRanges,
                                              ghostProcIdToLocalGhostIndices,
                                              d_mpiComm);
@@ -479,7 +493,7 @@ namespace dftfe
             // index)
             std::vector<size_type> localIndicesForGhostProc(
               numGhostIndicesInProc);
-            for (unsigned iIndex = 0; iIndex < numGhostIndicesInProc; ++iIndex)
+            for (unsigned int iIndex = 0; iIndex < numGhostIndicesInProc; ++iIndex)
               {
                 const size_type ghostLocalIndex =
                   flattenedLocalGhostIndicesTmp[startIndex + iIndex];
@@ -547,6 +561,12 @@ namespace dftfe
           throwException(err == MPI_SUCCESS, errMsg);
         }
 
+        for (size_type i=0; i<totalOwnedIndicesForTargetProcs;++i)
+        {
+           throwException<LogicError>(
+          flattenedLocalTargetIndicesTmp[i] < d_numLocallyOwnedIndices,
+          "Detected local owned target index to be larger than nLocallyOwnedIndices");
+        }
 
         d_flattenedLocalTargetIndices.resize(totalOwnedIndicesForTargetProcs);
         if (totalOwnedIndicesForTargetProcs>0)

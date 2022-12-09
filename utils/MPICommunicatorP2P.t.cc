@@ -368,8 +368,6 @@ namespace dftfe
               }
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-          }
-         d_requestsAccumulateAddLocallyOwned.resize(0); 
 
         // accumulate add into locally owned entries from recv buffer
         if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
@@ -383,6 +381,24 @@ namespace dftfe
             d_tempRealArrayForAtomics,
             d_tempImagArrayForAtomics,
             dataArray);
+
+          }
+         d_requestsAccumulateAddLocallyOwned.resize(0); 
+
+        // accumulate add into locally owned entries from recv buffer
+        /*
+        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
+        MPICommunicatorP2PKernels<ValueType, memorySpace>::
+          accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+            d_sendRecvBuffer,
+            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
+            d_blockSize,
+            d_locallyOwnedSize,
+            d_ghostSize,
+            d_tempRealArrayForAtomics,
+            d_tempImagArrayForAtomics,
+            dataArray);
+          */
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
