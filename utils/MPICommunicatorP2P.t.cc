@@ -45,14 +45,14 @@ namespace dftfe
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
             blockSize,
           0.0);
-        /*
+        
         d_requestsUpdateGhostValues.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
         d_requestsAccumulateAddLocallyOwned.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
-        */
+        
 
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
@@ -91,9 +91,9 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray,
         const size_type                        communicationChannel)
       {
-        d_requestsUpdateGhostValues.resize(
-          d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size());
+        //d_requestsUpdateGhostValues.resize(
+        //  d_mpiPatternP2P->getGhostProcIds().size() +
+        //  d_mpiPatternP2P->getTargetProcIds().size());
 
         // initiate non-blocking receives from ghost processors
         ValueType *recvArrayStartPtr =
@@ -224,7 +224,7 @@ namespace dftfe
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
           }
-        d_requestsUpdateGhostValues.resize(0);
+        //d_requestsUpdateGhostValues.resize(0);
       }
 
 
@@ -245,9 +245,10 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const size_type                        communicationChannel)
       {
-        d_requestsAccumulateAddLocallyOwned.resize(
-          d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size());        
+        //d_requestsAccumulateAddLocallyOwned.resize(
+        //  d_mpiPatternP2P->getGhostProcIds().size() +
+        //  d_mpiPatternP2P->getTargetProcIds().size()); 
+
         // initiate non-blocking receives from target processors
         ValueType *recvArrayStartPtr = d_sendRecvBuffer.begin();
 #  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -383,22 +384,7 @@ namespace dftfe
             dataArray);
 
           }
-         d_requestsAccumulateAddLocallyOwned.resize(0); 
-
-        // accumulate add into locally owned entries from recv buffer
-        /*
-        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
-        MPICommunicatorP2PKernels<ValueType, memorySpace>::
-          accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
-            d_sendRecvBuffer,
-            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-            d_blockSize,
-            d_locallyOwnedSize,
-            d_ghostSize,
-            d_tempRealArrayForAtomics,
-            d_tempImagArrayForAtomics,
-            dataArray);
-          */
+         //d_requestsAccumulateAddLocallyOwned.resize(0); 
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>

@@ -63,9 +63,9 @@ namespace dftfe
     distributedCPUVec<double> rhsHost;
     problem.computeRhs(rhsHost);
 
+    distributedDeviceVec<double> &x        = problem.getX();
     distributedDeviceVec<double> rhsDevice;
-    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(rhsHost.get_partitioner(),1,rhsDevice);
-
+    rhsDevice.reinit(x);
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
@@ -82,7 +82,6 @@ namespace dftfe
             << time - start_time << std::endl;
 
 
-    distributedDeviceVec<double> &x        = problem.getX();
     distributedDeviceVec<double> &d_Jacobi = problem.getPreconditioner();
 
     d_devSum.resize(1);
