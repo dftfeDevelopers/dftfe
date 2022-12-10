@@ -17,8 +17,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
-
 if(ENABLE_MPI)
   find_package(MPI REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -29,8 +27,6 @@ endif()
 PROJECT(${TARGET} LANGUAGES CXX)
 IF (WITH_GPU)
     enable_language(CUDA)
-    set(CMAKE_CUDA_ARCHITECTURES 75)
-    set(CUDA_PROPAGATE_HOST_FLAGS ON)
 ENDIF()
 
 # Declare all source files the target consists of:
@@ -132,44 +128,6 @@ ENDIF()
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 
 
-FIND_PACKAGE(deal.II 9.1.0 REQUIRED
-  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
-  )
-IF(NOT ${deal.II_FOUND})
-  MESSAGE(FATAL_ERROR "\n"
-    "*** Could not locate deal.II. ***\n\n"
-    "You may want to either pass a flag -DDEAL_II_DIR=/path/to/deal.II to cmake\n"
-    "or set an environment variable \"DEAL_II_DIR\" that contains this path."
-    )
-ENDIF()
-
-#
-# Are all dependencies fullfilled?
-# DEAL_II_WITH_64BIT_INDICES is a requirement because of
-# the choice of the parallel storage data-structure for
-# wavefunctions in DFT-FE. The maximum global index of this
-# parallel storage data-structure is equal to
-# total number of dofs times total number of wavefunctions,
-# which can cross the 32 bit integer limits even for a moderate
-# problem size.
-IF(NOT DEAL_II_WITH_LAPACK OR
-   NOT DEAL_II_WITH_P4EST OR
-   NOT DEAL_II_WITH_64BIT_INDICES OR
-   NOT DEAL_II_WITH_MPI OR
-   NOT DEAL_II_WITH_SCALAPACK)
-  MESSAGE(FATAL_ERROR "
-Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
-    DEAL_II_WITH_LAPACK = ON
-    DEAL_II_WITH_P4EST = ON
-    DEAL_II_WITH_64BIT_INDICES = ON
-    DEAL_II_WITH_MPI = ON
-    DEAL_II_WITH_SCALAPACK = ON
-which is required."
-    )
-ENDIF()
-
-
-#DEAL_II_INITIALIZE_CACHED_VARIABLES()
 
 #
 # RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
@@ -220,13 +178,6 @@ ELSE()
    MESSAGE(STATUS "Using real")
 ENDIF()
 
-#
-#Set use petsc and slepc flag
-#
-IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
-   ADD_DEFINITIONS(-DUSE_PETSC)
-   MESSAGE(STATUS "Using petsc and slepc")
-ENDIF()
 
 
 
@@ -258,6 +209,46 @@ ENDIF()
 TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC ${DFTFE_MPI_LIBRARIES})
 
 
+FIND_PACKAGE(deal.II 9.1.0 REQUIRED
+  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
+  )
+IF(NOT ${deal.II_FOUND})
+  MESSAGE(FATAL_ERROR "\n"
+    "*** Could not locate deal.II. ***\n\n"
+    "You may want to either pass a flag -DDEAL_II_DIR=/path/to/deal.II to cmake\n"
+    "or set an environment variable \"DEAL_II_DIR\" that contains this path."
+    )
+ENDIF()
+
+#
+# Are all dependencies fullfilled?
+# DEAL_II_WITH_64BIT_INDICES is a requirement because of
+# the choice of the parallel storage data-structure for
+# wavefunctions in DFT-FE. The maximum global index of this
+# parallel storage data-structure is equal to
+# total number of dofs times total number of wavefunctions,
+# which can cross the 32 bit integer limits even for a moderate
+# problem size.
+IF(NOT DEAL_II_WITH_LAPACK OR
+   NOT DEAL_II_WITH_P4EST OR
+   NOT DEAL_II_WITH_64BIT_INDICES OR
+   NOT DEAL_II_WITH_MPI OR
+   NOT DEAL_II_WITH_SCALAPACK)
+  MESSAGE(FATAL_ERROR "
+Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
+    DEAL_II_WITH_LAPACK = ON
+    DEAL_II_WITH_P4EST = ON
+    DEAL_II_WITH_64BIT_INDICES = ON
+    DEAL_II_WITH_MPI = ON
+    DEAL_II_WITH_SCALAPACK = ON
+which is required."
+    )
+ENDIF()
+
+
+#DEAL_II_INITIALIZE_CACHED_VARIABLES()
+
+
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${DEAL_II_INCLUDE_DIRS})
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
@@ -265,6 +256,13 @@ ELSE()
    TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
 ENDIF()
 
+#
+#Set use petsc and slepc flag
+#
+IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
+   ADD_DEFINITIONS(-DUSE_PETSC)
+   MESSAGE(STATUS "Using petsc and slepc")
+ENDIF()
 
 #
 # Alglib. Set with -DALGLIB_DIR=/path/to/prefix

@@ -43,9 +43,14 @@ withNCCL=OFF
 withMDI=OFF
 
 #Compiler options and flags
-cxx_compiler=mpicxx
-cxx_flagsRelease="-O2 -fPIC -fopenmp"
-cuda_flags="" #only applicable for withGPU=ON
+cxx_compiler=mpic++  #sets DCMAKE_CXX_COMPILER
+cxx_flags="-fPIC" #sets DCMAKE_CXX_FLAGS
+cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
+device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 
+                           #(only applicable for withGPU=ON)
+device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
+                           #(only applicable for withGPU=ON)
+
 
 #ON is recommended for MD simulations with hard pseudopotentials
 withHigherQuadPSP=OFF
@@ -76,8 +81,8 @@ function cmake_real() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$cuda_flags"\
-	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+  -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+  -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }
@@ -92,8 +97,8 @@ function cmake_cplx() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-	-DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$cuda_flags"\
-	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+  -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+  -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }
