@@ -56,8 +56,10 @@ namespace dftfe
         const size_type                        blockSize,
         const size_type                        locallyOwnedSize,
         const size_type                        ghostSize,        
-        MemoryStorage<double, memorySpace> &tempRealDataArray,
-        MemoryStorage<double, memorySpace> &tempImagDataArray,        
+        MemoryStorage<double, memorySpace> &tempDoubleRealDataArray,
+        MemoryStorage<double, memorySpace> &tempDoubleImagDataArray, 
+        MemoryStorage<float, memorySpace> &tempFloatRealDataArray,
+        MemoryStorage<float, memorySpace> &tempFloatImagDataArray,
         MemoryStorage<ValueType, memorySpace> &dataArray)
     {
       for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)

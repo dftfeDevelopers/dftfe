@@ -69,8 +69,10 @@ namespace dftfe
         const size_type                        blockSize,
         const size_type                        locallyOwnedSize,
                const size_type                        ghostSize,         
-        MemoryStorage<double, memorySpace> &tempRealDataArray,
-        MemoryStorage<double, memorySpace> &tempImagDataArray,
+        MemoryStorage<double, memorySpace> &tempDoubleRealDataArray,
+        MemoryStorage<double, memorySpace> &tempDoubleImagDataArray,
+        MemoryStorage<float, memorySpace> &tempFloatRealDataArray,
+        MemoryStorage<float, memorySpace> &tempFloatImagDataArray,
         MemoryStorage<ValueType, memorySpace> &dataArray);
     };
 
@@ -99,8 +101,9 @@ namespace dftfe
         const size_type blockSize,
         const size_type                        locallyOwnedSize,
                const size_type                        ghostSize, 
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempRealDataArray,
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempImagDataArray,        
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleImagDataArray,     MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatRealDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatImagDataArray,
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
           &dataArray);
     };

@@ -65,11 +65,17 @@ namespace dftfe
                 blockSize,
               0.0);
 
-            if (std::is_same<ValueType, std::complex<double>>::value || std::is_same<ValueType, std::complex<float>>::value)
+            if (std::is_same<ValueType, std::complex<double>>::value)
             {
-              d_tempRealArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
-              d_tempImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
+              d_tempDoubleRealArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
+              d_tempDoubleImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
             }
+            else if(std::is_same<ValueType, std::complex<float>>::value)
+            {
+              d_tempFloatRealArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
+              d_tempFloatImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
+            }
+
           }
 #endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
       }
@@ -379,8 +385,10 @@ namespace dftfe
             d_blockSize,
             d_locallyOwnedSize,
             d_ghostSize,
-            d_tempRealArrayForAtomics,
-            d_tempImagArrayForAtomics,
+            d_tempDoubleRealArrayForAtomics,
+            d_tempDoubleImagArrayForAtomics,
+            d_tempFloatRealArrayForAtomics,
+            d_tempFloatImagArrayForAtomics,            
             dataArray);
 
           }

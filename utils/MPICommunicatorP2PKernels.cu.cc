@@ -116,8 +116,8 @@ namespace dftfe
         const size_type  blockSize,
         const cuFloatComplex *recvBuffer,
         const size_type *ownedLocalIndicesForTargetProcs,
-        double *      dataRealArray,
-        double *      dataImagArray)
+        float *      dataRealArray,
+        float *      dataImagArray)
       {
         const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
         for (size_type i = globalThreadId; i < totalFlattenedSize;
@@ -186,15 +186,17 @@ namespace dftfe
         const size_type blockSize,
         const size_type locallyOwnedSize,
         const size_type ghostSize,        
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempRealDataArray,
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempImagDataArray,         
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleImagDataArray,  
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatRealDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatImagDataArray,   
         MemoryStorage<std::complex<double>, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
       deviceUtils::copyComplexArrToRealArrsDevice(
         (locallyOwnedSize+ghostSize)*blockSize,
         dataArray.data(),
-        tempRealDataArray.data(),
-        tempImagDataArray.data());
+        tempDoubleRealDataArray.data(),
+        tempDoubleImagDataArray.data());
 
 
       accumAddFromRecvBufferDeviceKernel<<<
@@ -205,13 +207,13 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempRealDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempImagDataArray.data()));
+        dftfe::utils::makeDataTypeDeviceCompatible(tempDoubleRealDataArray.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(tempDoubleImagDataArray.data()));
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         locallyOwnedSize*blockSize,
-        tempRealDataArray.data(),
-        tempImagDataArray.data(),
+        tempDoubleRealDataArray.data(),
+        tempDoubleImagDataArray.data(),
         dataArray.data());
     }
 
@@ -225,15 +227,17 @@ namespace dftfe
         const size_type blockSize,
         const size_type locallyOwnedSize,
         const size_type ghostSize,        
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempRealDataArray,
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempImagDataArray,         
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleImagDataArray,  
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatRealDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatImagDataArray, 
         MemoryStorage<std::complex<float>, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
       deviceUtils::copyComplexArrToRealArrsDevice(
         (locallyOwnedSize+ghostSize)*blockSize,
         dataArray.data(),
-        tempRealDataArray.data(),
-        tempImagDataArray.data());
+        tempFloatRealDataArray.data(),
+        tempFloatImagDataArray.data());
 
 
       accumAddFromRecvBufferDeviceKernel<<<
@@ -244,13 +248,13 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempRealDataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tempImagDataArray.data()));
+        dftfe::utils::makeDataTypeDeviceCompatible(tempFloatRealDataArray.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(tempFloatImagDataArray.data()));
 
       deviceUtils::copyRealArrsToComplexArrDevice(
         locallyOwnedSize*blockSize,
-        tempRealDataArray.data(),
-        tempImagDataArray.data(),
+        tempFloatRealDataArray.data(),
+        tempFloatImagDataArray.data(),
         dataArray.data());
     }
 
@@ -264,8 +268,10 @@ namespace dftfe
         const size_type blockSize,
         const size_type locallyOwnedSize,
         const size_type ghostSize,        
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempRealDataArray,
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempImagDataArray,         
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleImagDataArray,  
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatRealDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatImagDataArray, 
         MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
       accumAddFromRecvBufferDeviceKernel<<<
@@ -289,8 +295,10 @@ namespace dftfe
         const size_type blockSize,
         const size_type locallyOwnedSize,
         const size_type ghostSize,        
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempRealDataArray,
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempImagDataArray,         
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleImagDataArray,  
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatRealDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatImagDataArray,        
         MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
       accumAddFromRecvBufferDeviceKernel<<<
