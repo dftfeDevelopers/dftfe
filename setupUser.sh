@@ -73,6 +73,7 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 function cmake_real() {
   mkdir -p real && cd real
   cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+    -DCMAKE_CXX_FLAGS="$cxx_flags"\
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
@@ -88,6 +89,7 @@ function cmake_real() {
 function cmake_cplx() {
   mkdir -p complex && cd complex
   cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+    -DCMAKE_CXX_FLAGS="$cxx_flags"\
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
