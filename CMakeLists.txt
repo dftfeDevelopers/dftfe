@@ -49,7 +49,6 @@ SET(TARGET_SRC
   ./src/linAlg/elpaScalaManager.cc
   ./src/linAlg/scalapackWrapper.cc
   ./src/linAlg/process_grid.cc
-  ./src/linAlg/distributedMulticomponentVec.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc

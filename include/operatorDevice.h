@@ -32,7 +32,6 @@
 #    include <vector>
 
 #    include "deviceDirectCCLWrapper.h"
-#    include "distributedMulticomponentVec.h"
 
 namespace dftfe
 {
