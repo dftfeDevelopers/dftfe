@@ -45,14 +45,14 @@ namespace dftfe
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
             blockSize,
           0.0);
-        /*
+
         d_requestsUpdateGhostValues.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
         d_requestsAccumulateAddLocallyOwned.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
-        */
+
 
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
@@ -65,11 +65,20 @@ namespace dftfe
                 blockSize,
               0.0);
 
-            if (std::is_same<ValueType, std::complex<double>>::value || std::is_same<ValueType, std::complex<float>>::value)
-            {
-              d_tempRealArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
-              d_tempImagArrayForAtomics.resize((d_locallyOwnedSize+d_ghostSize)*d_blockSize,0);
-            }
+            if (std::is_same<ValueType, std::complex<double>>::value)
+              {
+                d_tempDoubleRealArrayForAtomics.resize(
+                  (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
+                d_tempDoubleImagArrayForAtomics.resize(
+                  (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
+              }
+            else if (std::is_same<ValueType, std::complex<float>>::value)
+              {
+                d_tempFloatRealArrayForAtomics.resize(
+                  (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
+                d_tempFloatImagArrayForAtomics.resize(
+                  (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
+              }
           }
 #endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
       }
@@ -91,19 +100,19 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray,
         const size_type                        communicationChannel)
       {
-        d_requestsUpdateGhostValues.resize(
-          d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size());
+        // d_requestsUpdateGhostValues.resize(
+        //  d_mpiPatternP2P->getGhostProcIds().size() +
+        //  d_mpiPatternP2P->getTargetProcIds().size());
 
         // initiate non-blocking receives from ghost processors
         ValueType *recvArrayStartPtr =
           dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
-#  endif // defined(DFTFE_WITH_DEVICE) &&
-         // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#endif // defined(DFTFE_WITH_DEVICE) &&
+       // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
@@ -122,8 +131,8 @@ namespace dftfe
               &d_requestsUpdateGhostValues[i]);
 
             std::string errMsg = "Error occured while using MPI_Irecv. "
-                             "Error code: " +
-                             std::to_string(err);
+                                 "Error code: " +
+                                 std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
 
             recvArrayStartPtr +=
@@ -133,40 +142,40 @@ namespace dftfe
           }
 
         // gather locally owned entries into a contiguous send buffer
-        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
-        MPICommunicatorP2PKernels<ValueType, memorySpace>::
-          gatherLocallyOwnedEntriesSendBufferToTargetProcs(
-            dataArray,
-            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-            d_blockSize,
-            d_sendRecvBuffer);
+        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size()) > 0)
+          MPICommunicatorP2PKernels<ValueType, memorySpace>::
+            gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+              dataArray,
+              d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
+              d_blockSize,
+              d_sendRecvBuffer);
 
         // initiate non-blocking sends to target processors
         ValueType *sendArrayStartPtr = d_sendRecvBuffer.begin();
 
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           {
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
 
-            if (d_sendRecvBufferHostPinned.size()>0)
-            memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
-                                d_sendRecvBufferHostPinned.begin(),
-                                d_sendRecvBuffer.begin());
+            if (d_sendRecvBufferHostPinned.size() > 0)
+              memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
+                                  d_sendRecvBufferHostPinned.begin(),
+                                  d_sendRecvBuffer.begin());
 
             sendArrayStartPtr = d_sendRecvBufferHostPinned.begin();
           }
-#  endif // defined(DFTFE_WITH_DEVICE) &&
-         // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#endif // defined(DFTFE_WITH_DEVICE) &&
+       // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+
+#if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+        dftfe::utils::deviceSynchronize();
+#endif
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-            //FIXME: Is this required?
-            dftfe::utils::deviceSynchronize();
-#endif            
             const int err = MPI_Isend(
               sendArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -182,8 +191,8 @@ namespace dftfe
                 [d_mpiPatternP2P->getGhostProcIds().size() + i]);
 
             std::string errMsg = "Error occured while using MPI_Isend. "
-                             "Error code: " +
-                             std::to_string(err);
+                                 "Error code: " +
+                                 std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
 
             sendArrayStartPtr +=
@@ -201,30 +210,34 @@ namespace dftfe
         // wait for all send and recv requests to be completed
         if (d_requestsUpdateGhostValues.size() > 0)
           {
-            const int err = MPI_Waitall(d_requestsUpdateGhostValues.size(),
-                                       d_requestsUpdateGhostValues.data(),
-                                       MPI_STATUSES_IGNORE);
+            const int   err    = MPI_Waitall(d_requestsUpdateGhostValues.size(),
+                                        d_requestsUpdateGhostValues.data(),
+                                        MPI_STATUSES_IGNORE);
             std::string errMsg = "Error occured while using MPI_Waitall. "
-                             "Error code: " +
-                             std::to_string(err);
+                                 "Error code: " +
+                                 std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
 
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             if (memorySpace == MemorySpace::DEVICE)
               {
                 MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
-                if ( d_ghostDataCopyHostPinned.size()>0)
-                memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
-                                    dataArray.begin() +
-                                      d_mpiPatternP2P->localOwnedSize() *
-                                        d_blockSize,
-                                    d_ghostDataCopyHostPinned.data());
+                if (d_ghostDataCopyHostPinned.size() > 0)
+                  memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                                      dataArray.begin() +
+                                        d_mpiPatternP2P->localOwnedSize() *
+                                          d_blockSize,
+                                      d_ghostDataCopyHostPinned.data());
               }
-#  endif // defined(DFTFE_WITH_DEVICE) &&
-         // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#endif // defined(DFTFE_WITH_DEVICE) &&
+       // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+
+#if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            dftfe::utils::deviceSynchronize();
+#endif
           }
-        d_requestsUpdateGhostValues.resize(0);
+        // d_requestsUpdateGhostValues.resize(0);
       }
 
 
@@ -245,16 +258,17 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const size_type                        communicationChannel)
       {
-        d_requestsAccumulateAddLocallyOwned.resize(
-          d_mpiPatternP2P->getGhostProcIds().size() +
-          d_mpiPatternP2P->getTargetProcIds().size());        
+        // d_requestsAccumulateAddLocallyOwned.resize(
+        //  d_mpiPatternP2P->getGhostProcIds().size() +
+        //  d_mpiPatternP2P->getTargetProcIds().size());
+
         // initiate non-blocking receives from target processors
         ValueType *recvArrayStartPtr = d_sendRecvBuffer.begin();
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
-#  endif // defined(DFTFE_WITH_DEVICE) &&
-         // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#endif // defined(DFTFE_WITH_DEVICE) &&
+       // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
@@ -271,8 +285,8 @@ namespace dftfe
               &d_requestsAccumulateAddLocallyOwned[i]);
 
             std::string errMsg = "Error occured while using MPI_Irecv. "
-                             "Error code: " +
-                             std::to_string(err);
+                                 "Error code: " +
+                                 std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
 
 
@@ -287,30 +301,30 @@ namespace dftfe
         ValueType *sendArrayStartPtr =
           dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           {
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
-            if (d_ghostDataCopyHostPinned.size()>0)
-            memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
-                                d_ghostDataCopyHostPinned.begin(),
-                                dataArray.begin() +
-                                  d_mpiPatternP2P->localOwnedSize() *
-                                    d_blockSize);
+            if (d_ghostDataCopyHostPinned.size() > 0)
+              memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                                  d_ghostDataCopyHostPinned.begin(),
+                                  dataArray.begin() +
+                                    d_mpiPatternP2P->localOwnedSize() *
+                                      d_blockSize);
 
             sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
           }
-#  endif // defined(DFTFE_WITH_DEVICE) &&
-         // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#endif // defined(DFTFE_WITH_DEVICE) &&
+       // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+
+#if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+        dftfe::utils::deviceSynchronize();
+#endif
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-            //FIXME: Is this required?
-            dftfe::utils::deviceSynchronize();
-#endif            
             const int err = MPI_Isend(
               sendArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
@@ -326,8 +340,8 @@ namespace dftfe
 
 
             std::string errMsg = "Error occured while using MPI_Isend. "
-                             "Error code: " +
-                             std::to_string(err);
+                                 "Error code: " +
+                                 std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
 
             sendArrayStartPtr +=
@@ -348,41 +362,47 @@ namespace dftfe
           {
             const int err =
               MPI_Waitall(d_requestsAccumulateAddLocallyOwned.size(),
-                         d_requestsAccumulateAddLocallyOwned.data(),
-                         MPI_STATUSES_IGNORE);
+                          d_requestsAccumulateAddLocallyOwned.data(),
+                          MPI_STATUSES_IGNORE);
 
             std::string errMsg = "Error occured while using MPI_Waitall. "
-                             "Error code: " +
-                             std::to_string(err);
+                                 "Error code: " +
+                                 std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
 
-#  if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
             if (memorySpace == MemorySpace::DEVICE)
               {
-                MemoryTransfer<memorySpace,MemorySpace::HOST_PINNED>
+                MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
-                if (d_sendRecvBufferHostPinned.size()>0)
-                memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
-                                    d_sendRecvBuffer.data(),
-                                    d_sendRecvBufferHostPinned.data());
+                if (d_sendRecvBufferHostPinned.size() > 0)
+                  memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
+                                      d_sendRecvBuffer.data(),
+                                      d_sendRecvBufferHostPinned.data());
               }
-#  endif // defined(DFTFE_WITH_DEVICE) &&
-         // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-          }
-         d_requestsAccumulateAddLocallyOwned.resize(0); 
+#endif // defined(DFTFE_WITH_DEVICE) &&
+       // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
-        // accumulate add into locally owned entries from recv buffer
-        if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
-        MPICommunicatorP2PKernels<ValueType, memorySpace>::
-          accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
-            d_sendRecvBuffer,
-            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-            d_blockSize,
-            d_locallyOwnedSize,
-            d_ghostSize,
-            d_tempRealArrayForAtomics,
-            d_tempImagArrayForAtomics,
-            dataArray);
+#if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            dftfe::utils::deviceSynchronize();
+#endif
+            // accumulate add into locally owned entries from recv buffer
+            if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size()) >
+                0)
+              MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+                  d_sendRecvBuffer,
+                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
+                  d_blockSize,
+                  d_locallyOwnedSize,
+                  d_ghostSize,
+                  d_tempDoubleRealArrayForAtomics,
+                  d_tempDoubleImagArrayForAtomics,
+                  d_tempFloatRealArrayForAtomics,
+                  d_tempFloatImagArrayForAtomics,
+                  dataArray);
+          }
+        // d_requestsAccumulateAddLocallyOwned.resize(0);
       }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>

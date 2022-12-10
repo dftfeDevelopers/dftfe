@@ -26,7 +26,7 @@
 #include <vector>
 #include <cstdint>
 
-#  include <mpi.h>
+#include <mpi.h>
 
 namespace dftfe
 {

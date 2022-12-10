@@ -97,7 +97,7 @@ namespace dftfe
         MPIPatternP2P(const std::pair<global_size_type, global_size_type>
                         &locallyOwnedRange,
                       const std::vector<dftfe::global_size_type> &ghostIndices,
-                      const MPI_Comm &                              mpiComm);
+                      const MPI_Comm &                            mpiComm);
         /**
          * @brief Constructor. This constructor is to create an MPI Pattern for
          * a serial case. This is provided so that one can seamlessly use

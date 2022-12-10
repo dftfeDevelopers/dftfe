@@ -29,7 +29,7 @@
 #include <MPIPatternP2P.h>
 #include <MPICommunicatorP2P.h>
 #include <memory>
-#  include <deal.II/lac/la_parallel_vector.h>
+#include <deal.II/lac/la_parallel_vector.h>
 namespace dftfe
 {
   namespace linearAlgebra
@@ -155,9 +155,9 @@ namespace dftfe
        * @param[in] initVal initial value of elements of the MultiVector
        *
        */
-      MultiVector(const size_type                               size,
-                  const size_type                               numVectors,
-                  const ValueType initVal =0);
+      MultiVector(const size_type size,
+                  const size_type numVectors,
+                  const ValueType initVal = 0);
 
       /**
        * @brief Constructor for a \serial MultiVector with a predefined
@@ -180,8 +180,8 @@ namespace dftfe
        */
       MultiVector(
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                                      storage,
-        size_type                                     numVectors);
+                  storage,
+        size_type numVectors);
 
       /**
        * @brief Constructor for a \b distributed MultiVector based on an input MPIPatternP2P.
@@ -193,8 +193,8 @@ namespace dftfe
        * initialized
        */
       MultiVector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                                mpiPatternP2P,
-                  const size_type                               numVectors,
+                                  mpiPatternP2P,
+                  const size_type numVectors,
                   const ValueType initVal = 0);
 
       /**
@@ -221,8 +221,8 @@ namespace dftfe
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                      mpiPatternP2P,
-        const size_type                               numVectors);
+                        mpiPatternP2P,
+        const size_type numVectors);
 
       /**
        * @brief Constructor for a \distributed MultiVector based on locally
@@ -246,9 +246,9 @@ namespace dftfe
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<global_size_type> &               ghostIndices,
-        const MPI_Comm &                         mpiComm,
+        const MPI_Comm &                                    mpiComm,
         const size_type                                     numVectors,
-        ValueType initVal = 0);
+        ValueType                                           initVal = 0);
 
       /**
        * @brief Constructor for a special case of \b distributed MultiVector where none
@@ -269,9 +269,9 @@ namespace dftfe
        */
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const MPI_Comm &                         mpiComm,
+        const MPI_Comm &                                    mpiComm,
         const size_type                                     numVectors,
-        const ValueType initVal = 0);
+        const ValueType                                     initVal = 0);
 
 
       /**
@@ -291,10 +291,10 @@ namespace dftfe
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        */
-      MultiVector(const global_size_type                        globalSize,
-                  const MPI_Comm &                   mpiComm,
-                  const size_type                               numVectors,
-                  const ValueType initVal = 0);
+      MultiVector(const global_size_type globalSize,
+                  const MPI_Comm &       mpiComm,
+                  const size_type        numVectors,
+                  const ValueType        initVal = 0);
 
 
       /**
@@ -308,8 +308,7 @@ namespace dftfe
        * @param[in] u MultiVector object to copy from
        * @param[in] initVal Initial value of the MultiVector
        */
-      MultiVector(const MultiVector &u,
-                  const ValueType    initVal = 0);
+      MultiVector(const MultiVector &u, const ValueType initVal = 0);
 
       /**
        * @brief Move constructor
@@ -340,7 +339,7 @@ namespace dftfe
        *
        */
       void
-      swap(MultiVector &u);  
+      swap(MultiVector &u);
 
       /**
        * @brief reinit for a \b distributed MultiVector based on an input MPIPatternP2P.
@@ -353,16 +352,16 @@ namespace dftfe
        */
       void
       reinit(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                                mpiPatternP2P,
-                  const size_type                               numVectors,
-                  const ValueType initVal = 0);
+                             mpiPatternP2P,
+             const size_type numVectors,
+             const ValueType initVal = 0);
 
       /**
        * @brief reinit based on an input distributed MultiVector.
        *
        */
       void
-      reinit(const MultiVector &u);     
+      reinit(const MultiVector &u);
 
 
       /**
@@ -463,12 +462,12 @@ namespace dftfe
       numVectors() const;
 
     private:
-      std::unique_ptr<Storage>                      d_storage;
-      size_type                                     d_localSize;
-      global_size_type                              d_globalSize;
-      size_type                                     d_locallyOwnedSize;
-      size_type                                     d_ghostSize;
-      size_type                                     d_numVectors;
+      std::unique_ptr<Storage> d_storage;
+      size_type                d_localSize;
+      global_size_type         d_globalSize;
+      size_type                d_locallyOwnedSize;
+      size_type                d_ghostSize;
+      size_type                d_numVectors;
       std::unique_ptr<utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
@@ -476,14 +475,16 @@ namespace dftfe
     };
 
     //
-    //helper functions
+    // helper functions
     //
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    createMultiVectorFromDealiiPartitioner(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>& partitioner,
-    const size_type numVectors,
-    MultiVector<ValueType,memorySpace> & multiVector);
-    
+    createMultiVectorFromDealiiPartitioner(
+      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+        &                                  partitioner,
+      const size_type                      numVectors,
+      MultiVector<ValueType, memorySpace> &multiVector);
+
   } // end of namespace linearAlgebra
 } // end of namespace dftfe
 #include "../src/linAlg/MultiVector.t.cc"

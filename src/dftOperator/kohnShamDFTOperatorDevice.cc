@@ -876,9 +876,11 @@ namespace dftfe
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, numberWaveFunctions);
 
 
-    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
-    BVec,
-    d_parallelChebyBlockVectorDevice);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      dftPtr->matrix_free_data.get_vector_partitioner(
+        dftPtr->d_densityDofHandlerIndex),
+      BVec,
+      d_parallelChebyBlockVectorDevice);
 
     if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_parallelChebyBlockVector2Device.reinit(
@@ -886,12 +888,12 @@ namespace dftfe
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       {
-        d_tempRealVec.resize(
-          (d_parallelChebyBlockVectorDevice.localSize()*d_parallelChebyBlockVectorDevice.numVectors()),
-          0.0);
-        d_tempImagVec.resize(
-          (d_parallelChebyBlockVectorDevice.localSize()*d_parallelChebyBlockVectorDevice.numVectors()),
-          0.0);
+        d_tempRealVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
+                              d_parallelChebyBlockVectorDevice.numVectors()),
+                             0.0);
+        d_tempImagVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
+                              d_parallelChebyBlockVectorDevice.numVectors()),
+                             0.0);
       }
 
     const unsigned int n_ghosts =
@@ -989,9 +991,10 @@ namespace dftfe
 
     if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
-        dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-        BVec,
-        d_parallelProjectorKetTimesBlockVectorDevice);
+        dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+          BVec,
+          d_parallelProjectorKetTimesBlockVectorDevice);
 
         d_totalPseudoWfcNonLocal = 0;
         d_totalNonlocalElems     = 0;

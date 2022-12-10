@@ -450,10 +450,11 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       double time = MPI_Wtime();
 
-      dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
-      blockSize,
-      xD);      
-      
+      dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+        matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
+        blockSize,
+        xD);
+
       xD.setValue(0);
       dftfe::utils::deviceMemcpyH2D(xD.begin(),
                                     xH,
@@ -472,23 +473,25 @@ namespace dftfe
         flattenedArray);
       ////////
       /*
-      std::cout<<"flattened array: "<<flattenedArray.get_partitioner()->n_ghost_indices()<<std::endl;
+      std::cout<<"flattened array:
+      "<<flattenedArray.get_partitioner()->n_ghost_indices()<<std::endl;
 
       std::cout<<"Multivector: "<<xD.ghostSize()*xD.numVectors()<<std::endl;
 
-      dftfe::utils::MemoryManager<double,dftfe::utils::MemorySpace::DEVICE>::set(xD.localSize()*xD.numVectors(), xD.begin(), 1.0);
-      xD.accumulateAddLocallyOwned();
-      std::vector<double> xHVec(xD.localSize()*xD.numVectors());
+      dftfe::utils::MemoryManager<double,dftfe::utils::MemorySpace::DEVICE>::set(xD.localSize()*xD.numVectors(),
+      xD.begin(), 1.0); xD.accumulateAddLocallyOwned(); std::vector<double>
+      xHVec(xD.localSize()*xD.numVectors());
       dftfe::utils::deviceMemcpyD2H(&xHVec[0],
                                     xD.begin(),
-                                    xD.localSize()*xD.numVectors() * sizeof(double));
+                                    xD.localSize()*xD.numVectors() *
+      sizeof(double));
 
       for (unsigned int i=0;i<xD.localSize()*xD.numVectors();i++)
         *(flattenedArray.begin()+i)=1.0;
 
       flattenedArray.compress(dealii::VectorOperation::add);
 
-     
+
       //for (unsigned int i=0;i<xD.locallyOwnedSize()*xD.numVectors();i++)
       //  std::cout<<*(flattenedArray.begin()+i)<<" "<<xHVec[i]<<std::endl;
 
@@ -496,16 +499,18 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST> xHPar;
       dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
       blockSize,
-      xHPar);  
+      xHPar);
 
-      dftfe::utils::MemoryManager<double,dftfe::utils::MemorySpace::HOST>::set(xHPar.localSize()*xHPar.numVectors(), xHPar.begin(), 1.0);
-      xHPar.accumulateAddLocallyOwned();
+      dftfe::utils::MemoryManager<double,dftfe::utils::MemorySpace::HOST>::set(xHPar.localSize()*xHPar.numVectors(),
+      xHPar.begin(), 1.0); xHPar.accumulateAddLocallyOwned();
 
       //for (unsigned int i=0;i<xD.locallyOwnedSize()*xD.numVectors();i++)
-      //  std::cout<<"this process: "<<this_process <<" "<<*(flattenedArray.begin()+i)<<" "<<*(xHPar.begin()+i)<<std::endl;
+      //  std::cout<<"this process: "<<this_process <<"
+      "<<*(flattenedArray.begin()+i)<<" "<<*(xHPar.begin()+i)<<std::endl;
 
       for (unsigned int i=0;i<xD.locallyOwnedSize()*xD.numVectors();i++)
-        std::cout<<"this process: "<<this_process <<" "<<xHVec[i]<<" "<<*(xHPar.begin()+i)<<std::endl;
+        std::cout<<"this process: "<<this_process <<" "<<xHVec[i]<<"
+      "<<*(xHPar.begin()+i)<<std::endl;
 
       exit(0);
       */

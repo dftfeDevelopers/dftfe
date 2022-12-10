@@ -86,9 +86,14 @@ namespace dftfe
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
-        MemoryStorage<double, memorySpace> d_tempRealArrayForAtomics;
+        MemoryStorage<double, memorySpace> d_tempDoubleRealArrayForAtomics;
 
-        MemoryStorage<double, memorySpace> d_tempImagArrayForAtomics;
+        MemoryStorage<double, memorySpace> d_tempDoubleImagArrayForAtomics;
+
+        MemoryStorage<float, memorySpace> d_tempFloatRealArrayForAtomics;
+
+        MemoryStorage<float, memorySpace> d_tempFloatImagArrayForAtomics;
+
 
 #ifdef DFTFE_WITH_DEVICE
         MemoryStorage<ValueType, MemorySpace::HOST_PINNED>

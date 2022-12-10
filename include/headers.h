@@ -82,8 +82,7 @@
 #  include <deal.II/base/types.h>
 
 #  include <dftfeDataTypes.h>
-#  include <distributedMulticomponentVec.h>
-# include <MultiVector.h>
+#  include <MultiVector.h>
 
 // Include generic C++ headers
 #  include <fstream>
@@ -99,15 +98,10 @@ namespace dftfe
     dealii::LinearAlgebra::distributed::Vector<elem_type,
                                                dealii::MemorySpace::Host>;
 #ifdef DFTFE_WITH_DEVICE
-  //template <typename NumberType>
-  //using distributedDeviceVec =
-  //  dftfe::DistributedMulticomponentVec<NumberType,
-  //                                      dftfe::utils::MemorySpace::DEVICE>;
-                                        
   template <typename NumberType>
   using distributedDeviceVec =
     dftfe::linearAlgebra::MultiVector<NumberType,
-                                        dftfe::utils::MemorySpace::DEVICE>;
+                                      dftfe::utils::MemorySpace::DEVICE>;
 
 #endif
 } // namespace dftfe

@@ -1141,14 +1141,12 @@ namespace dftfe
       YArray1.setValue(0);
       YArray2.setValue(0);
 
-      const unsigned int n_ghosts =
-        YArray1.ghostSize();
+      const unsigned int n_ghosts  = YArray1.ghostSize();
       const unsigned int totalSize = localVectorSize + n_ghosts;
 
       const unsigned int localSizeNLP =
         projectorKetTimesVector1.locallyOwnedSize();
-      const unsigned int n_ghosts_nlp =
-        projectorKetTimesVector1.ghostSize();
+      const unsigned int n_ghosts_nlp = projectorKetTimesVector1.ghostSize();
       const unsigned int totalSizeNLP = localSizeNLP + n_ghosts_nlp;
 
       //
