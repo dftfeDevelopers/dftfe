@@ -166,13 +166,13 @@ namespace dftfe
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
+#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            dftfe::utils::deviceSynchronize();
+#endif
+
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-            //FIXME: Is this required?
-            dftfe::utils::deviceSynchronize();
-#endif            
             const int err = MPI_Isend(
               sendArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -229,6 +229,10 @@ namespace dftfe
               }
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+         
+#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            dftfe::utils::deviceSynchronize();
+#endif
           }
         //d_requestsUpdateGhostValues.resize(0);
       }
@@ -311,13 +315,13 @@ namespace dftfe
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
+#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            dftfe::utils::deviceSynchronize();
+#endif
+
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
-#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
-            //FIXME: Is this required?
-            dftfe::utils::deviceSynchronize();
-#endif            
             const int err = MPI_Isend(
               sendArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
@@ -376,6 +380,9 @@ namespace dftfe
 #  endif // defined(DFTFE_WITH_DEVICE) &&
          // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
+#  if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+            dftfe::utils::deviceSynchronize();
+#endif
         // accumulate add into locally owned entries from recv buffer
         if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size())>0)
         MPICommunicatorP2PKernels<ValueType, memorySpace>::
