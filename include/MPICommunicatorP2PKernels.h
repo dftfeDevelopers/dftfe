@@ -68,11 +68,11 @@ namespace dftfe
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
         const size_type                        locallyOwnedSize,
-               const size_type                        ghostSize,         
-        MemoryStorage<double, memorySpace> &tempDoubleRealDataArray,
-        MemoryStorage<double, memorySpace> &tempDoubleImagDataArray,
-        MemoryStorage<float, memorySpace> &tempFloatRealDataArray,
-        MemoryStorage<float, memorySpace> &tempFloatImagDataArray,
+        const size_type                        ghostSize,
+        MemoryStorage<double, memorySpace> &   tempDoubleRealDataArray,
+        MemoryStorage<double, memorySpace> &   tempDoubleImagDataArray,
+        MemoryStorage<float, memorySpace> &    tempFloatRealDataArray,
+        MemoryStorage<float, memorySpace> &    tempFloatImagDataArray,
         MemoryStorage<ValueType, memorySpace> &dataArray);
     };
 
@@ -99,13 +99,17 @@ namespace dftfe
         const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>
           &             ownedLocalIndicesForTargetProcs,
         const size_type blockSize,
-        const size_type                        locallyOwnedSize,
-               const size_type                        ghostSize, 
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleRealDataArray,
-        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &tempDoubleImagDataArray,     MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatRealDataArray,
-        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &tempFloatImagDataArray,
-        MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-          &dataArray);
+        const size_type locallyOwnedSize,
+        const size_type ghostSize,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &tempDoubleRealDataArray,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+          &tempDoubleImagDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE>
+          &tempFloatRealDataArray,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE>
+          &tempFloatImagDataArray,
+        MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray);
     };
 #endif
   } // namespace utils

@@ -31,7 +31,7 @@ namespace dftfe
     {
       MPIRequestersNBX::MPIRequestersNBX(
         const std::vector<size_type> &targetIDs,
-        const MPI_Comm &               comm)
+        const MPI_Comm &              comm)
         : d_targetIDs(targetIDs)
         , d_comm(comm)
         , d_recvBuffers(0)
@@ -108,8 +108,8 @@ namespace dftfe
         // If yes, extract the source rank and then receive the
         // message i
         MPI_Status status;
-        int       foundIncomingMsg;
-        int       err =
+        int        foundIncomingMsg;
+        int        err =
           MPI_Iprobe(MPI_ANY_SOURCE, tag, d_comm, &foundIncomingMsg, &status);
         std::string errMsg = "Error occured while using MPI_Iprobe. "
                              "Error code: " +
@@ -139,16 +139,16 @@ namespace dftfe
 
             d_recvBuffers.emplace_back(std::make_unique<int>());
 
-            //avoids copy of MPI_Request which can lead to MPI errors
+            // avoids copy of MPI_Request which can lead to MPI errors
             d_recvRequests.emplace_back(std::make_unique<MPI_Request>());
 
             err    = MPI_Irecv(d_recvBuffers.back().get(),
-                                              1,
-                                              MPI_INT,
-                                              sourceRank,
-                                              tag,
-                                              d_comm,
-                                              d_recvRequests.back().get());
+                            1,
+                            MPI_INT,
+                            sourceRank,
+                            tag,
+                            d_comm,
+                            d_recvRequests.back().get());
             errMsg = "Error occured while using MPI_Irecv. "
                      "Error code: " +
                      std::to_string(err);
@@ -163,9 +163,9 @@ namespace dftfe
           {
             int         allLocalSendCompletedFlag;
             const auto  err    = MPI_Testall(d_sendRequests.size(),
-                                        d_sendRequests.data(),
-                                        &allLocalSendCompletedFlag,
-                                        MPI_STATUSES_IGNORE);
+                                         d_sendRequests.data(),
+                                         &allLocalSendCompletedFlag,
+                                         MPI_STATUSES_IGNORE);
             std::string errMsg = "Error occured while using MPI_Testall. "
                                  " Error code: " +
                                  std::to_string(err);
@@ -192,8 +192,8 @@ namespace dftfe
       {
         int         allProcessorsInvokedIBarrier;
         const auto  err    = MPI_Test(&d_barrierRequest,
-                                 &allProcessorsInvokedIBarrier,
-                                 MPI_STATUSES_IGNORE);
+                                  &allProcessorsInvokedIBarrier,
+                                  MPI_STATUSES_IGNORE);
         std::string errMsg = "Error occured while using MPI_Test. "
                              " Error code: " +
                              std::to_string(err);
@@ -207,8 +207,8 @@ namespace dftfe
         if (d_sendRequests.size() > 0)
           {
             const int   err    = MPI_Waitall(d_sendRequests.size(),
-                                       d_sendRequests.data(),
-                                       MPI_STATUSES_IGNORE);
+                                        d_sendRequests.data(),
+                                        MPI_STATUSES_IGNORE);
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  " Error code: " +
                                  std::to_string(err);
@@ -217,15 +217,15 @@ namespace dftfe
 
         if (d_recvRequests.size() > 0)
           {
-            for (size_type i=0; i<d_recvRequests.size();i++)
-            {
-            const int   err    = MPI_Wait(d_recvRequests.back().get(),
-                                       MPI_STATUS_IGNORE);
-            std::string errMsg = "Error occured while using MPI_Waitall. "
-                                 " Error code: " +
-                                 std::to_string(err);
-            throwException(err == MPI_SUCCESS, errMsg);
-            }
+            for (size_type i = 0; i < d_recvRequests.size(); i++)
+              {
+                const int err =
+                  MPI_Wait(d_recvRequests.back().get(), MPI_STATUS_IGNORE);
+                std::string errMsg = "Error occured while using MPI_Waitall. "
+                                     " Error code: " +
+                                     std::to_string(err);
+                throwException(err == MPI_SUCCESS, errMsg);
+              }
           }
 
         int         err    = MPI_Wait(&d_barrierRequest, MPI_STATUS_IGNORE);
@@ -234,7 +234,7 @@ namespace dftfe
                              std::to_string(err);
         throwException(err == MPI_SUCCESS, errMsg);
 
-#  ifndef NDEBUG
+#ifndef NDEBUG
         // note: MPI_Ibarrier seems to make problem during testing, this
         // additional Barrier seems to help
         err    = MPI_Barrier(d_comm);
@@ -242,7 +242,7 @@ namespace dftfe
                  " Error code: " +
                  std::to_string(err);
         throwException(err == MPI_SUCCESS, errMsg);
-#  endif
+#endif
       }
     } // namespace mpi
   }   // namespace utils

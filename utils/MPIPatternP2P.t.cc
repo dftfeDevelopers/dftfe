@@ -42,7 +42,7 @@ namespace dftfe
         getAllOwnedRanges(const global_size_type         ownedRangeStart,
                           const global_size_type         ownedRangeEnd,
                           std::vector<global_size_type> &allOwnedRanges,
-                          const MPI_Comm &                mpiComm)
+                          const MPI_Comm &               mpiComm)
         {
           int         nprocs = 1;
           int         err    = MPI_Comm_size(mpiComm, &nprocs);
@@ -59,22 +59,22 @@ namespace dftfe
           std::vector<global_size_type> ownedRanges = {ownedRangeStart,
                                                        ownedRangeEnd};
           MPI_Allgatherv(&ownedRanges[0],
-                                           2,
-                                           MPI_UNSIGNED_LONG,
-                                           &allOwnedRanges[0],
-                                           &recvCounts[0],
-                                           &displs[0],
-                                           MPI_UNSIGNED_LONG,
-                                           mpiComm);
+                         2,
+                         MPI_UNSIGNED_LONG,
+                         &allOwnedRanges[0],
+                         &recvCounts[0],
+                         &displs[0],
+                         MPI_UNSIGNED_LONG,
+                         mpiComm);
         }
 
         void
         getGhostProcIdToLocalGhostIndicesMap(
           const std::vector<global_size_type> &ghostIndices,
-          const global_size_type nGlobalIndices,
+          const global_size_type               nGlobalIndices,
           const std::vector<global_size_type> &allOwnedRanges,
           std::map<size_type, std::vector<size_type>>
-            &            ghostProcIdToLocalGhostIndices,
+            &             ghostProcIdToLocalGhostIndices,
           const MPI_Comm &mpiComm)
         {
           int         nprocs = 1;
@@ -103,12 +103,12 @@ namespace dftfe
           std::vector<size_type> locallyOwnedRangesEndProcIds(nprocs);
           for (unsigned int i = 0; i < nprocs; ++i)
             {
-              locallyOwnedRangesEnd[i]        = allOwnedRanges[2 * i + 1];
+              locallyOwnedRangesEnd[i] = allOwnedRanges[2 * i + 1];
 
-              //this is required for handing trivial ranges [Nt, Nt) 
-              //where Nt can be arbitrary integer >=0 
-              if (allOwnedRanges[2 * i + 1]==allOwnedRanges[2 * i])
-                locallyOwnedRangesEnd[i]=(nGlobalIndices+1+i);
+              // this is required for handing trivial ranges [Nt, Nt)
+              // where Nt can be arbitrary integer >=0
+              if (allOwnedRanges[2 * i + 1] == allOwnedRanges[2 * i])
+                locallyOwnedRangesEnd[i] = (nGlobalIndices + 1 + i);
               locallyOwnedRangesEndProcIds[i] = i;
             }
 
@@ -185,13 +185,13 @@ namespace dftfe
               right.Id           = ranges[2 * i + 1];
               right.rangeId      = i;
               right.isRangeStart = false;
-             
-              //This check is required to ignore ranges with 0 elements
-              if (left.Id!=right.Id)
-              {
-                rangeMetaDataVec.push_back(left);
-                rangeMetaDataVec.push_back(right);
-              }
+
+              // This check is required to ignore ranges with 0 elements
+              if (left.Id != right.Id)
+                {
+                  rangeMetaDataVec.push_back(left);
+                  rangeMetaDataVec.push_back(right);
+                }
             }
           std::sort(rangeMetaDataVec.begin(),
                     rangeMetaDataVec.end(),
@@ -244,8 +244,8 @@ namespace dftfe
       template <dftfe::utils::MemorySpace memorySpace>
       MPIPatternP2P<memorySpace>::MPIPatternP2P(
         const std::pair<global_size_type, global_size_type> &locallyOwnedRange,
-        const std::vector<dftfe::global_size_type> &        ghostIndices,
-        const MPI_Comm &                                      mpiComm)
+        const std::vector<dftfe::global_size_type> &         ghostIndices,
+        const MPI_Comm &                                     mpiComm)
         : d_locallyOwnedRange(locallyOwnedRange)
         , d_mpiComm(mpiComm)
         , d_allOwnedRanges(0)
@@ -326,20 +326,20 @@ namespace dftfe
           overlappingRangeIds.size() == 0,
           "Detected overlapping ranges among the locallyOwnedRanges passed "
           "to MPIPatternP2P");
-       
-        d_nGlobalIndices=0;
-        for (unsigned int i = 0; i < d_nprocs; ++i)
-        {
-          d_nGlobalIndices +=
-            d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
-        }
 
-        if (ghostIndices.size()>0)
-        {
-          throwException<LogicError>(
-            ghostIndices.back() < d_nGlobalIndices,
-            "Detected global ghost index to be larger than (nGlobalIndices-1)");
-        }
+        d_nGlobalIndices = 0;
+        for (unsigned int i = 0; i < d_nprocs; ++i)
+          {
+            d_nGlobalIndices +=
+              d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
+          }
+
+        if (ghostIndices.size() > 0)
+          {
+            throwException<LogicError>(
+              ghostIndices.back() < d_nGlobalIndices,
+              "Detected global ghost index to be larger than (nGlobalIndices-1)");
+          }
 
         std::map<size_type, std::vector<size_type>>
           ghostProcIdToLocalGhostIndices;
@@ -398,10 +398,10 @@ namespace dftfe
 
 
         d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
-        if (d_numGhostIndices>0)
-        memoryTransfer.copy(d_numGhostIndices,
-                            d_flattenedLocalGhostIndices.begin(),
-                            &flattenedLocalGhostIndicesTmp[0]);
+        if (d_numGhostIndices > 0)
+          memoryTransfer.copy(d_numGhostIndices,
+                              d_flattenedLocalGhostIndices.begin(),
+                              &flattenedLocalGhostIndicesTmp[0]);
         ///////////////////////////////////////////////////
         //////////// Ghost Data Evaluation End / //////////
         ///////////////////////////////////////////////////
@@ -425,14 +425,14 @@ namespace dftfe
             const size_type numGhostIndicesInProc =
               d_numGhostIndicesInGhostProcs[iGhost];
             const int ghostProcId = d_ghostProcIds[iGhost];
-                err = MPI_Isend(&numGhostIndicesInProc,
-                                                  1,
-                                                  MPI_UNSIGNED,
-                                                  ghostProcId,
-                                                  tag,
-                                                  d_mpiComm,
-                                                  &sendRequests[iGhost]);
-            std::string errMsg = "Error occured while using MPI_Isend. "
+            err                   = MPI_Isend(&numGhostIndicesInProc,
+                            1,
+                            MPI_UNSIGNED,
+                            ghostProcId,
+                            tag,
+                            d_mpiComm,
+                            &sendRequests[iGhost]);
+            std::string errMsg    = "Error occured while using MPI_Isend. "
                                  "Error code: " +
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
@@ -441,40 +441,40 @@ namespace dftfe
         for (unsigned int iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
           {
             const int targetProcId = d_targetProcIds[iTarget];
-                err          = MPI_Irecv(
-              &d_numOwnedIndicesForTargetProcs[iTarget],
-              1,
-              MPI_UNSIGNED,
-              targetProcId,
-              tag,
-              d_mpiComm,
-              &recvRequests[iTarget]);
+            err = MPI_Irecv(&d_numOwnedIndicesForTargetProcs[iTarget],
+                            1,
+                            MPI_UNSIGNED,
+                            targetProcId,
+                            tag,
+                            d_mpiComm,
+                            &recvRequests[iTarget]);
             std::string errMsg = "Error occured while using MPI_Irecv. "
                                  "Error code: " +
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
           }
 
-        if (sendRequests.size()>0)
-        {
-          err =
-            MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
-          errMsg = "Error occured while using MPI_Waitall. "
-                   "Error code: " +
-                   std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
-        }
+        if (sendRequests.size() > 0)
+          {
+            err    = MPI_Waitall(d_numGhostProcs,
+                              sendRequests.data(),
+                              sendStatuses.data());
+            errMsg = "Error occured while using MPI_Waitall. "
+                     "Error code: " +
+                     std::to_string(err);
+            throwException(err == MPI_SUCCESS, errMsg);
+          }
 
-        if (recvRequests.size()>0)
-        {
-          err    = MPI_Waitall(d_numTargetProcs,
-                           recvRequests.data(),
-                           recvStatuses.data());
-          errMsg = "Error occured while using MPI_Waitall. "
-                   "Error code: " +
-                   std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
-        }
+        if (recvRequests.size() > 0)
+          {
+            err    = MPI_Waitall(d_numTargetProcs,
+                              recvRequests.data(),
+                              recvStatuses.data());
+            errMsg = "Error occured while using MPI_Waitall. "
+                     "Error code: " +
+                     std::to_string(err);
+            throwException(err == MPI_SUCCESS, errMsg);
+          }
 
 
         size_type totalOwnedIndicesForTargetProcs =
@@ -484,10 +484,9 @@ namespace dftfe
 
 
         std::vector<size_type> flattenedLocalTargetIndicesTmp(
-          totalOwnedIndicesForTargetProcs,0);
+          totalOwnedIndicesForTargetProcs, 0);
 
-        std::vector<size_type> localIndicesForGhostProc(
-             d_numGhostIndices,0);
+        std::vector<size_type> localIndicesForGhostProc(d_numGhostIndices, 0);
 
         size_type startIndex = 0;
         for (unsigned int iGhost = 0; iGhost < d_numGhostProcs; ++iGhost)
@@ -499,35 +498,37 @@ namespace dftfe
             // We need to send what is the local index in the ghost processor
             // (i.e., the processor that owns the current processor's ghost
             // index)
-            for (unsigned int iIndex = 0; iIndex < numGhostIndicesInProc; ++iIndex)
+            for (unsigned int iIndex = 0; iIndex < numGhostIndicesInProc;
+                 ++iIndex)
               {
                 const size_type ghostLocalIndex =
                   flattenedLocalGhostIndicesTmp[startIndex + iIndex];
 
-           throwException<LogicError>(
-           ghostLocalIndex  < ghostIndices.size(),
-          "BUG1");
+                throwException<LogicError>(ghostLocalIndex <
+                                             ghostIndices.size(),
+                                           "BUG1");
 
                 const global_size_type ghostGlobalIndex =
                   ghostIndices[ghostLocalIndex];
                 const global_size_type ghostProcOwnedIndicesStart =
                   d_allOwnedRanges[2 * ghostProcId];
-                localIndicesForGhostProc[startIndex+iIndex] =
+                localIndicesForGhostProc[startIndex + iIndex] =
                   (size_type)(ghostGlobalIndex - ghostProcOwnedIndicesStart);
 
-           throwException<LogicError>(
-           localIndicesForGhostProc[startIndex+iIndex]  < (d_allOwnedRanges[2 * ghostProcId+1]-d_allOwnedRanges[2 * ghostProcId]),
-          "BUG2");
-
+                throwException<LogicError>(
+                  localIndicesForGhostProc[startIndex + iIndex] <
+                    (d_allOwnedRanges[2 * ghostProcId + 1] -
+                     d_allOwnedRanges[2 * ghostProcId]),
+                  "BUG2");
               }
 
-             err = MPI_Isend(&localIndicesForGhostProc[startIndex],
-                                                  numGhostIndicesInProc,
-                                                  MPI_UNSIGNED,
-                                                  ghostProcId,
-                                                  tag,
-                                                  d_mpiComm,
-                                                  &sendRequests[iGhost]);
+            err = MPI_Isend(&localIndicesForGhostProc[startIndex],
+                            numGhostIndicesInProc,
+                            MPI_UNSIGNED,
+                            ghostProcId,
+                            tag,
+                            d_mpiComm,
+                            &sendRequests[iGhost]);
             std::string errMsg = "Error occured while using MPI_Isend. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -541,14 +542,13 @@ namespace dftfe
             const int targetProcId = d_targetProcIds[iTarget];
             const int numOwnedIndicesForTarget =
               d_numOwnedIndicesForTargetProcs[iTarget];
-            err = MPI_Irecv(
-              &flattenedLocalTargetIndicesTmp[startIndex],
-              numOwnedIndicesForTarget,
-              MPI_UNSIGNED,
-              targetProcId,
-              tag,
-              d_mpiComm,
-              &recvRequests[iTarget]);
+            err = MPI_Irecv(&flattenedLocalTargetIndicesTmp[startIndex],
+                            numOwnedIndicesForTarget,
+                            MPI_UNSIGNED,
+                            targetProcId,
+                            tag,
+                            d_mpiComm,
+                            &recvRequests[iTarget]);
             std::string errMsg = "Error occured while using MPI_Irecv. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -556,39 +556,40 @@ namespace dftfe
             startIndex += numOwnedIndicesForTarget;
           }
 
-        if (sendRequests.size()>0)
-        {
-          err =
-            MPI_Waitall(d_numGhostProcs, sendRequests.data(), sendStatuses.data());
-          errMsg = "Error occured while using MPI_Waitall. "
-                   "Error code: " +
-                   std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
-        }
+        if (sendRequests.size() > 0)
+          {
+            err    = MPI_Waitall(d_numGhostProcs,
+                              sendRequests.data(),
+                              sendStatuses.data());
+            errMsg = "Error occured while using MPI_Waitall. "
+                     "Error code: " +
+                     std::to_string(err);
+            throwException(err == MPI_SUCCESS, errMsg);
+          }
 
-        if (recvRequests.size()>0)
-        {
-          err    = MPI_Waitall(d_numTargetProcs,
-                           recvRequests.data(),
-                           recvStatuses.data());
-          errMsg = "Error occured while using MPI_Waitall. "
-                   "Error code: " +
-                   std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
-        }
+        if (recvRequests.size() > 0)
+          {
+            err    = MPI_Waitall(d_numTargetProcs,
+                              recvRequests.data(),
+                              recvStatuses.data());
+            errMsg = "Error occured while using MPI_Waitall. "
+                     "Error code: " +
+                     std::to_string(err);
+            throwException(err == MPI_SUCCESS, errMsg);
+          }
 
-        for (size_type i=0; i<totalOwnedIndicesForTargetProcs;++i)
-        {
-           throwException<LogicError>(
-          flattenedLocalTargetIndicesTmp[i] < d_numLocallyOwnedIndices,
-          "Detected local owned target index to be larger than (nLocallyOwnedIndices-1)");
-        }
+        for (size_type i = 0; i < totalOwnedIndicesForTargetProcs; ++i)
+          {
+            throwException<LogicError>(
+              flattenedLocalTargetIndicesTmp[i] < d_numLocallyOwnedIndices,
+              "Detected local owned target index to be larger than (nLocallyOwnedIndices-1)");
+          }
 
         d_flattenedLocalTargetIndices.resize(totalOwnedIndicesForTargetProcs);
-        if (totalOwnedIndicesForTargetProcs>0)
-        memoryTransfer.copy(totalOwnedIndicesForTargetProcs,
-                            d_flattenedLocalTargetIndices.begin(),
-                            &flattenedLocalTargetIndicesTmp[0]);
+        if (totalOwnedIndicesForTargetProcs > 0)
+          memoryTransfer.copy(totalOwnedIndicesForTargetProcs,
+                              d_flattenedLocalTargetIndices.begin(),
+                              &flattenedLocalTargetIndicesTmp[0]);
 
         ///////////////////////////////////////////////////
         //////////// Target Data Evaluation End ////////

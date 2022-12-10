@@ -22,7 +22,7 @@
 #ifndef dftfeMPIRequestersNBX_h
 #define dftfeMPIRequestersNBX_h
 
-#  include <mpi.h>
+#include <mpi.h>
 #include <TypeConfig.h>
 #include <MPIRequestersBase.h>
 #include <vector>
@@ -162,7 +162,7 @@ namespace dftfe
 
       public:
         MPIRequestersNBX(const std::vector<size_type> &targetIDs,
-                         const MPI_Comm &               comm);
+                         const MPI_Comm &              comm);
         //
         // default Constructor for serial (without MPI) compilation
         //
@@ -188,7 +188,7 @@ namespace dftfe
         std::vector<MPI_Request> d_sendRequests;
 
         /**
-         * Buffers for receiving requests. 
+         * Buffers for receiving requests.
          * We use a vector of pointers because that
          * guarantees that the buffers themselves
          * are never moved around in memory, even if the vector is

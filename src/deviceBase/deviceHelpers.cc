@@ -219,15 +219,15 @@ namespace dftfe
                                    const float *          imagArr,
                                    std::complex<float> *  complexArr);
     template void
-    copyComplexArrToRealArrsDevice(const dftfe::size_type      size,
+    copyComplexArrToRealArrsDevice(const dftfe::size_type     size,
                                    const std::complex<float> *complexArr,
-                                   double *                    realArr,
-                                   double *                    imagArr);
+                                   double *                   realArr,
+                                   double *                   imagArr);
 
     template void
     copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                   const double *          realArr,
-                                   const double *          imagArr,
+                                   const double *         realArr,
+                                   const double *         imagArr,
                                    std::complex<float> *  complexArr);
 
     template void

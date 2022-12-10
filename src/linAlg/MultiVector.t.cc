@@ -31,8 +31,8 @@ namespace dftfe
      **/
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
-      const size_type                               size,
-      const size_type                               numVectors,
+      const size_type size,
+      const size_type numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
@@ -61,10 +61,10 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                                    storage,
-      const size_type                               numVectors)
+                      storage,
+      const size_type numVectors)
     {
-      d_storage         = std::move(storage);
+      d_storage          = std::move(storage);
       d_globalSize       = d_storage.size();
       d_locallyOwnedSize = d_storage.size();
       d_ghostSize        = 0;
@@ -85,8 +85,8 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                    mpiPatternP2P,
-      const size_type                               numVectors,
+                      mpiPatternP2P,
+      const size_type numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
@@ -116,11 +116,11 @@ namespace dftfe
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
         &storage,
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                    mpiPatternP2P,
-      const size_type                               numVectors)
+                      mpiPatternP2P,
+      const size_type numVectors)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
-      d_storage         = std::move(storage);
+      d_storage            = std::move(storage);
       d_globalSize         = d_mpiPatternP2P->nGlobalIndices();
       d_locallyOwnedSize   = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize          = d_mpiPatternP2P->localGhostSize();
@@ -141,15 +141,15 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<global_size_type> &               ghostIndices,
-      const MPI_Comm &                         mpiComm,
+      const MPI_Comm &                                    mpiComm,
       const size_type                                     numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
       //
-      int mpiRank;
-      int err = MPI_Comm_rank(mpiComm, &mpiRank);
+      int         mpiRank;
+      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
       std::string msg;
       if (mpiRank == 0)
         {
@@ -188,15 +188,15 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-      const MPI_Comm &                         mpiComm,
+      const MPI_Comm &                                    mpiComm,
       const size_type                                     numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
       //
-      int mpiRank;
-      int err = MPI_Comm_rank(mpiComm, &mpiRank);
+      int         mpiRank;
+      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
       std::string msg;
       if (mpiRank == 0)
         {
@@ -240,10 +240,10 @@ namespace dftfe
      */
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
-      const global_size_type                        globalSize,
-      const MPI_Comm &                   mpiComm,
-      const size_type                               numVectors,
-      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
+      const global_size_type globalSize,
+      const MPI_Comm &       mpiComm,
+      const size_type        numVectors,
+      const ValueType        initVal /* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftfe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -253,8 +253,8 @@ namespace dftfe
       //
       // TODO Move the warning message to a Logger class
       //
-      int mpiRank;
-      int err = MPI_Comm_rank(mpiComm, &mpiRank);
+      int         mpiRank;
+      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
       std::string msg;
       if (mpiRank == 0)
         {
@@ -266,7 +266,7 @@ namespace dftfe
         }
 
       int mpiProcess;
-      int errProc        = MPI_Comm_size(mpiComm, &mpiProcess);
+      int errProc = MPI_Comm_size(mpiComm, &mpiProcess);
 
       dftfe::global_size_type locallyOwnedSize = globalSize / mpiProcess;
       if (mpiRank < globalSize % mpiProcess)
@@ -416,23 +416,23 @@ namespace dftfe
       d_mpiCommunicatorP2P.swap(u.d_mpiCommunicatorP2P);
       d_mpiPatternP2P.swap(u.d_mpiPatternP2P);
 
-      const size_type tempLocalSizeLeft=d_localSize;
-      const size_type tempLocallyOwnedSizeLeft=d_locallyOwnedSize;
-      const size_type tempGhostSizeLeft=d_ghostSize;      
-      const global_size_type tempGlobalSizeLeft=d_globalSize;
-      const size_type tempNumVectorsLeft=d_numVectors;
+      const size_type        tempLocalSizeLeft        = d_localSize;
+      const size_type        tempLocallyOwnedSizeLeft = d_locallyOwnedSize;
+      const size_type        tempGhostSizeLeft        = d_ghostSize;
+      const global_size_type tempGlobalSizeLeft       = d_globalSize;
+      const size_type        tempNumVectorsLeft       = d_numVectors;
 
-      d_localSize          = u.d_localSize;
-      d_locallyOwnedSize   = u.d_locallyOwnedSize;
-      d_ghostSize          = u.d_ghostSize;
-      d_globalSize         = u.d_globalSize;
-      d_numVectors         = u.d_numVectors;  
+      d_localSize        = u.d_localSize;
+      d_locallyOwnedSize = u.d_locallyOwnedSize;
+      d_ghostSize        = u.d_ghostSize;
+      d_globalSize       = u.d_globalSize;
+      d_numVectors       = u.d_numVectors;
 
-      u.d_localSize=tempLocalSizeLeft;
-      u.d_locallyOwnedSize=tempLocallyOwnedSizeLeft;
-      u.d_ghostSize=tempGhostSizeLeft;
-      u.d_globalSize=tempGlobalSizeLeft;
-      u.d_numVectors=tempNumVectorsLeft;         
+      u.d_localSize        = tempLocalSizeLeft;
+      u.d_locallyOwnedSize = tempLocallyOwnedSizeLeft;
+      u.d_ghostSize        = tempGhostSizeLeft;
+      u.d_globalSize       = tempGlobalSizeLeft;
+      u.d_numVectors       = tempNumVectorsLeft;
     }
 
     //
@@ -443,8 +443,8 @@ namespace dftfe
     void
     MultiVector<ValueType, memorySpace>::reinit(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                    mpiPatternP2P,
-      const size_type                               numVectors,
+                      mpiPatternP2P,
+      const size_type numVectors,
       const ValueType initVal)
     {
       d_globalSize       = mpiPatternP2P->nGlobalIndices();
@@ -455,7 +455,7 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * d_numVectors, initVal);
-      d_mpiPatternP2P    = mpiPatternP2P;
+      d_mpiPatternP2P      = mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
                                                                 numVectors);
@@ -469,7 +469,7 @@ namespace dftfe
     void
     MultiVector<ValueType, memorySpace>::reinit(const MultiVector &u)
     {
-       this->reinit(u.d_mpiPatternP2P,u.d_numVectors);
+      this->reinit(u.d_mpiPatternP2P, u.d_numVectors);
     }
 
 
@@ -526,7 +526,10 @@ namespace dftfe
     void
     MultiVector<ValueType, memorySpace>::zeroOutGhosts()
     {
-      dftfe::utils::MemoryManager<ValueType,memorySpace>::set(d_ghostSize*d_numVectors, this->data()+d_locallyOwnedSize*d_numVectors, 0);
+      dftfe::utils::MemoryManager<ValueType, memorySpace>::set(
+        d_ghostSize * d_numVectors,
+        this->data() + d_locallyOwnedSize * d_numVectors,
+        0);
     }
 
 
@@ -642,26 +645,32 @@ namespace dftfe
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    createMultiVectorFromDealiiPartitioner(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>& partitioner,
-    const size_type numVectors,
-    MultiVector<ValueType,memorySpace> & multiVector)
+    createMultiVectorFromDealiiPartitioner(
+      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+        &                                  partitioner,
+      const size_type                      numVectors,
+      MultiVector<ValueType, memorySpace> &multiVector)
     {
-      const std::pair<global_size_type,global_size_type> & locallyOwnedRange=partitioner->local_range();
-      //std::cout<<locallyOwnedRange.first<<" "<<locallyOwnedRange.second<<std::endl;
+      const std::pair<global_size_type, global_size_type> &locallyOwnedRange =
+        partitioner->local_range();
+      // std::cout<<locallyOwnedRange.first<<"
+      // "<<locallyOwnedRange.second<<std::endl;
       std::vector<global_size_type> ghostIndices;
       (partitioner->ghost_indices()).fill_index_vector(ghostIndices);
 
-      //for (unsigned int i=0;i<ghostIndices.size();++i)
-      //if (ghostIndices.size()>0)
-      //std::cout<<ghostIndices.back()<<std::endl;
+      // for (unsigned int i=0;i<ghostIndices.size();++i)
+      // if (ghostIndices.size()>0)
+      // std::cout<<ghostIndices.back()<<std::endl;
 
-      //std::sort(ghostIndices.begin(),ghostIndices.end());
-      std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2PPtr =
-      std::make_shared<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>(locallyOwnedRange,ghostIndices,partitioner->get_mpi_communicator());    
+      // std::sort(ghostIndices.begin(),ghostIndices.end());
+      std::shared_ptr<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>
+        mpiPatternP2PPtr =
+          std::make_shared<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>(
+            locallyOwnedRange,
+            ghostIndices,
+            partitioner->get_mpi_communicator());
 
-      multiVector.reinit(
-      mpiPatternP2PPtr,
-      numVectors);      
+      multiVector.reinit(mpiPatternP2PPtr, numVectors);
     }
 
   } // end of namespace linearAlgebra

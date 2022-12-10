@@ -82,7 +82,7 @@
 #  include <deal.II/base/types.h>
 
 #  include <dftfeDataTypes.h>
-# include <MultiVector.h>
+#  include <MultiVector.h>
 
 // Include generic C++ headers
 #  include <fstream>
@@ -101,7 +101,7 @@ namespace dftfe
   template <typename NumberType>
   using distributedDeviceVec =
     dftfe::linearAlgebra::MultiVector<NumberType,
-                                        dftfe::utils::MemorySpace::DEVICE>;
+                                      dftfe::utils::MemorySpace::DEVICE>;
 
 #endif
 } // namespace dftfe
