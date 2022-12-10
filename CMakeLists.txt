@@ -192,22 +192,17 @@ IF (WITH_GPU)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)
     MESSAGE(STATUS "DFTFE with GPU Aware MPI")
   ENDIF()
+  find_package(CUDAToolkit REQUIRED)
+  target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
+  target_link_libraries(${TARGETLIB} PUBLIC CUDA::cudart)
+  target_link_libraries(${TARGETLIB} PUBLIC CUDA::cublas)
 ENDIF()
-
-#
-# REQUIRED DEPENDENCIES:
-#
-
-#IF (WITH_GPU)
-#  find_package(CUDAToolkit REQUIRED)
-#  target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
-#  target_link_libraries(${TARGETLIB} CUDA::cudart)
-#  target_link_libraries(${TARGETLIB} CUDA::cublas)
-#  target_link_libraries(${TARGETLIB} CUDA::cusparse)
-#ENDIF()
 
 TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC ${DFTFE_MPI_LIBRARIES})
 
+#
+#Dependencies
+#
 
 FIND_PACKAGE(deal.II 9.1.0 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
@@ -221,7 +216,7 @@ IF(NOT ${deal.II_FOUND})
 ENDIF()
 
 #
-# Are all dependencies fullfilled?
+# Are all deal.II dependencies fullfilled?
 # DEAL_II_WITH_64BIT_INDICES is a requirement because of
 # the choice of the parallel storage data-structure for
 # wavefunctions in DFT-FE. The maximum global index of this
@@ -357,7 +352,7 @@ find_package(DFTD3)
 IF (DFTD3_FOUND)
   MESSAGE(STATUS "Will Link With DFTD3 ${S-DFTD3}")
   ADD_DEFINITIONS(-DDFTFE_WITH_DFTD3)
-  target_link_libraries(${TARGETLIB} DFTD3)
+  target_link_libraries(${TARGETLIB} PUBLIC DFTD3)
 ENDIF()
 
 
@@ -368,7 +363,7 @@ find_package(DFTD4)
 IF (DFTD4_FOUND)
   MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
   ADD_DEFINITIONS(-DDFTFE_WITH_DFTD4)
-  target_link_libraries(${TARGETLIB} DFTD4)
+  target_link_libraries(${TARGETLIB} PUBLIC DFTD4)
 ENDIF()
 
 
