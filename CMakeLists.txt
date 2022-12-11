@@ -7,15 +7,23 @@ SET(TARGET "dftfe_exe")
 SET(TARGETLIB "dftfe")
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
+IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  add_compile_options("-O2")
+ENDIF()
+
+PROJECT(${TARGET} LANGUAGES CXX)
+IF (WITH_GPU)
+    enable_language(CUDA)
+ENDIF()
+
+
 ADD_EXECUTABLE(${TARGET}   src/main.cc)
 set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
-
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 
 if(ENABLE_MPI)
   find_package(MPI REQUIRED)
@@ -23,11 +31,6 @@ if(ENABLE_MPI)
   set(DFTFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 endif()
 
-
-PROJECT(${TARGET} LANGUAGES CXX)
-IF (WITH_GPU)
-    enable_language(CUDA)
-ENDIF()
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
@@ -127,7 +130,12 @@ ENDIF()
 
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 
-
+#IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+#
+#target_compile_options(${TARGETLIB}
+#    PUBLIC
+#        -O2)
+#ENDIF()
 
 #
 # RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
