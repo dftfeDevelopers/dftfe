@@ -17,7 +17,7 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiDir="/ccs/proj/mat239/software/dealiiDevCustomized/installDealiiGcc9.1.0CUDA11.0.3Test"
+dealiiDir="/ccs/proj/mat239/software/dealiiDevCustomized/installDealiiGcc9.1.0NOCUDA"
 alglibDir="/ccs/proj/mat239/software/alglib/cpp/src"
 libxcDir="/ccs/proj/mat239/software/libxc/installGcc9.1.0"
 spglibDir="/ccs/proj/mat239/software/spglib/installGcc9.1.0"
@@ -26,7 +26,7 @@ xmlLibDir="/usr/lib64"
 ELPA_PATH="/ccs/proj/mat239/software/elpa/installGcc9.1.0New"
 
 #Paths for optional external libraries
-NCCL_PATH="/ccs/proj/mat239/software/nccl/build"
+NCCL_PATH="/ccs/proj/mat239/software/ncclnew/build"
 mdiPath=""
 
 #Toggle GPU compilation
@@ -69,9 +69,9 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
-  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
+   cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
   -DCMAKE_CXX_FLAGS="$cxx_flags" \
-	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
+  -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease"\
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
@@ -87,7 +87,7 @@ function cmake_cplx() {
   mkdir -p complex && cd complex
   cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
   -DCMAKE_CXX_FLAGS="$cxx_flags" \
-	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
+  -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
@@ -113,11 +113,11 @@ fi
 cd $out
 
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j8
+cmake_real "$SRC" && make VERBOSE=1 -j8
 cd ..
 
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j8
+cmake_cplx "$SRC" && make VERBOSE=1 -j8
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
