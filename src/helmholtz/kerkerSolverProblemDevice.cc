@@ -60,11 +60,13 @@ namespace dftfe
 
     matrixFreeDataPRefined.initialize_dof_vector(x,
                                                  d_matrixFreeVectorComponent);
-    d_xDevice.reinit(x.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      x.get_partitioner(), 1, d_xDevice);
+
 
     d_xPtr      = &x;
-    d_xLocalDof = d_xDevice.locallyOwnedDofsSize();
-    d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
+    d_xLocalDof = d_xDevice.locallyOwnedSize() * d_xDevice.numVectors();
+    d_xLen      = d_xDevice.localSize() * d_xDevice.numVectors();
 
     computeDiagonalA();
 
@@ -266,7 +268,9 @@ namespace dftfe
           d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
-    d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      d_diagonalA.get_partitioner(), 1, d_diagonalAdevice);
+
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
@@ -815,7 +819,7 @@ namespace dftfe
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
-
+    // std::cout<<"HELLO 1"<<std::endl;
     x.updateGhostValues();
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
@@ -831,8 +835,8 @@ namespace dftfe
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
-
-    Ax.compressAdd();
+    // std::cout<<"HELLO 2"<<std::endl;
+    Ax.accumulateAddLocallyOwned();
   }
 
 #include "kerkerSolverProblemDevice.inst.cc"

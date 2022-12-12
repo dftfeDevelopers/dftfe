@@ -312,8 +312,8 @@ namespace dftfe
         d_YArray.reinit(deviceFlattenedArrayBlock);
 
         d_deviceFlattenedFloatArrayBlock.reinit(
-          operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-          vectorsBlockSize);
+          deviceFlattenedArrayBlock.getMPIPatternP2P(), vectorsBlockSize);
+
 
         if (d_dftParams.isPseudopotential)
           {
@@ -866,8 +866,7 @@ namespace dftfe
         d_YArray.reinit(deviceFlattenedArrayBlock);
 
         d_deviceFlattenedFloatArrayBlock.reinit(
-          operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-          chebyBlockSize);
+          deviceFlattenedArrayBlock.getMPIPatternP2P(), chebyBlockSize);
 
 
         if (d_dftParams.overlapComputeCommunCheby)
@@ -1203,8 +1202,7 @@ namespace dftfe
         d_YArray.reinit(deviceFlattenedArrayBlock);
 
         d_deviceFlattenedFloatArrayBlock.reinit(
-          operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-          vectorsBlockSize);
+          deviceFlattenedArrayBlock.getMPIPatternP2P(), vectorsBlockSize);
       }
 
     //

@@ -375,9 +375,6 @@ namespace dftfe
       distributedDeviceVec<NumberType> &deviceFlattenedArrayBlock =
         operatorMatrix.getParallelChebyBlockVectorDevice();
 
-      const unsigned int numGhosts =
-        deviceFlattenedArrayBlock.ghostFlattenedSize();
-
       NumberType *cellWaveFunctionMatrix =
         (operatorMatrix.getCellWaveFunctionMatrix()).begin();
 

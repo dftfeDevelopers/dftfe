@@ -34,6 +34,7 @@ mdiPath="/home/dsambit/exaaltInterfaceRelated/MDI_Library/install"
 
 #Toggle GPU compilation
 withGPU=OFF
+withGPUAwareMPI=ON
 
 #Option to link to NCCL library (Only for GPU compilation)
 withNCCL=OFF
@@ -73,7 +74,7 @@ function cmake_real() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
+	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
@@ -89,7 +90,7 @@ function cmake_cplx() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath\
   -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
-	-DWITH_COMPLEX=ON \
+	-DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1

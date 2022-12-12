@@ -49,7 +49,6 @@ SET(TARGET_SRC
   ./src/linAlg/elpaScalaManager.cc
   ./src/linAlg/scalapackWrapper.cc
   ./src/linAlg/process_grid.cc
-  ./src/linAlg/distributedMulticomponentVec.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc
@@ -62,6 +61,8 @@ SET(TARGET_SRC
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
   ./utils/Exceptions.cc
+  ./utils/MPIRequestersNBX.cc
+  ./utils/MPICommunicatorP2PKernels.cc
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
@@ -86,6 +87,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
   ./utils/DeviceBlasWrapper.cu.cc
+  ./utils/MPICommunicatorP2PKernels.cu.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc
@@ -220,6 +222,10 @@ IF (WITH_GPU)
   ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
   ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_CUDA)
   MESSAGE(STATUS "DFTFE with GPU")
+  IF (WITH_GPU_AWARE_MPI)
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)
+    MESSAGE(STATUS "DFTFE with GPU Aware MPI")
+  ENDIF()
 
   IF(NOT DEAL_II_WITH_CUDA OR
      NOT DEAL_II_MPI_WITH_CUDA_SUPPORT)

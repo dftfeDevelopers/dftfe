@@ -218,6 +218,17 @@ namespace dftfe
                                    const float *          realArr,
                                    const float *          imagArr,
                                    std::complex<float> *  complexArr);
+    template void
+    copyComplexArrToRealArrsDevice(const dftfe::size_type     size,
+                                   const std::complex<float> *complexArr,
+                                   double *                   realArr,
+                                   double *                   imagArr);
+
+    template void
+    copyRealArrsToComplexArrDevice(const dftfe::size_type size,
+                                   const double *         realArr,
+                                   const double *         imagArr,
+                                   std::complex<float> *  complexArr);
 
     template void
     sadd(double *y, double *x, const double beta, const int size);

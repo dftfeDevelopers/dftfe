@@ -63,12 +63,14 @@ namespace dftfe
     distributedCPUVec<double> rhsHost;
     problem.computeRhs(rhsHost);
 
-    distributedDeviceVec<double> rhsDevice;
-    rhsDevice.reinit(rhsHost.get_partitioner(), 1);
+    distributedDeviceVec<double> &x = problem.getX();
+    distributedDeviceVec<double>  rhsDevice;
+    rhsDevice.reinit(x);
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::DEVICE,
-      dftfe::utils::MemorySpace::HOST>::copy(rhsDevice.locallyOwnedDofsSize(),
+      dftfe::utils::MemorySpace::HOST>::copy(rhsDevice.locallyOwnedSize() *
+                                               rhsDevice.numVectors(),
                                              rhsDevice.begin(),
                                              rhsHost.begin());
 
@@ -81,12 +83,11 @@ namespace dftfe
             << time - start_time << std::endl;
 
 
-    distributedDeviceVec<double> &x        = problem.getX();
     distributedDeviceVec<double> &d_Jacobi = problem.getPreconditioner();
 
     d_devSum.resize(1);
     d_devSumPtr = d_devSum.data();
-    d_xLocalDof = x.locallyOwnedDofsSize();
+    d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
 
     double res = 0.0, initial_res = 0.0;
     bool   conv = false;

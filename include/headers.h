@@ -81,8 +81,8 @@
 #  include <deal.II/base/smartpointer.h>
 #  include <deal.II/base/types.h>
 
-#  include "dftfeDataTypes.h"
-#  include "distributedMulticomponentVec.h"
+#  include <dftfeDataTypes.h>
+#  include <MultiVector.h>
 
 // Include generic C++ headers
 #  include <fstream>
@@ -100,8 +100,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
   template <typename NumberType>
   using distributedDeviceVec =
-    dftfe::DistributedMulticomponentVec<NumberType,
-                                        dftfe::utils::MemorySpace::DEVICE>;
+    dftfe::linearAlgebra::MultiVector<NumberType,
+                                      dftfe::utils::MemorySpace::DEVICE>;
 
 #endif
 } // namespace dftfe

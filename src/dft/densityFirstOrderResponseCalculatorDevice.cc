@@ -441,9 +441,6 @@ namespace dftfe
     distributedDeviceVec<NumberType> &deviceFlattenedArrayXPrimeBlock =
       operatorMatrix.getParallelChebyBlockVector2Device();
 
-    const unsigned int numGhosts =
-      deviceFlattenedArrayXBlock.ghostFlattenedSize();
-
 
     dftfe::utils::MemoryStorage<NumberTypeLowPrec,
                                 dftfe::utils::MemorySpace::DEVICE>

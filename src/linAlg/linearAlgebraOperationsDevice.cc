@@ -761,7 +761,7 @@ namespace dftfe
         1 * sizeof(dataTypes::number),
         local_size);
 
-      Yb.setZero();
+      Yb.setValue(0);
       operatorMatrix.HX(
         Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
@@ -804,7 +804,7 @@ namespace dftfe
             1 * sizeof(dataTypes::number),
             local_size);
 
-          Yb.setZero();
+          Yb.setValue(0);
           operatorMatrix.HX(
             Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
@@ -917,7 +917,7 @@ namespace dftfe
       const unsigned int totalVectorSize = localVectorSize * numberVectors;
       int                inc             = 1;
 
-      YArray.setZero();
+      YArray.setValue(0);
       //
       // call HX
       //
@@ -1138,17 +1138,15 @@ namespace dftfe
       const unsigned int totalVectorSize = localVectorSize * numberVectors;
       int                inc             = 1;
 
-      YArray1.setZero();
-      YArray2.setZero();
+      YArray1.setValue(0);
+      YArray2.setValue(0);
 
-      const unsigned int n_ghosts =
-        YArray1.ghostFlattenedSize() / numberVectors;
+      const unsigned int n_ghosts  = YArray1.ghostSize();
       const unsigned int totalSize = localVectorSize + n_ghosts;
 
       const unsigned int localSizeNLP =
-        projectorKetTimesVector1.locallyOwnedFlattenedSize() / numberVectors;
-      const unsigned int n_ghosts_nlp =
-        projectorKetTimesVector1.ghostFlattenedSize() / numberVectors;
+        projectorKetTimesVector1.locallyOwnedSize();
+      const unsigned int n_ghosts_nlp = projectorKetTimesVector1.ghostSize();
       const unsigned int totalSizeNLP = localSizeNLP + n_ghosts_nlp;
 
       //
@@ -1468,7 +1466,7 @@ namespace dftfe
               // iteration did not use the overlap algorithm
               if (overlap)
                 {
-                  projectorKetTimesVector2.compressAddStart();
+                  projectorKetTimesVector2.accumulateAddLocallyOwnedBegin();
                 }
 
               combinedDeviceKernel<<<
@@ -1490,7 +1488,7 @@ namespace dftfe
 
               if (overlap)
                 {
-                  projectorKetTimesVector2.compressAddFinish();
+                  projectorKetTimesVector2.accumulateAddLocallyOwnedEnd();
 
                   projectorKetTimesVector2.updateGhostValues();
                 }
@@ -1505,10 +1503,10 @@ namespace dftfe
                     dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       tempFloatArray.begin()));
-                  tempFloatArray.updateGhostValuesStart();
+                  tempFloatArray.updateGhostValuesBegin();
                 }
               else
-                YArray1.updateGhostValuesStart();
+                YArray1.updateGhostValuesBegin();
 
               // call compute part 2 of block 2
               if (overlap)
@@ -1525,7 +1523,7 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  tempFloatArray.updateGhostValuesFinish();
+                  tempFloatArray.updateGhostValuesEnd();
                   if (n_ghosts != 0)
                     convFloatArrToDoubleArr<<<
                       (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1540,12 +1538,12 @@ namespace dftfe
                         localVectorSize * numberVectors);
                 }
               else
-                YArray1.updateGhostValuesFinish();
+                YArray1.updateGhostValuesEnd();
 
               if (overlap)
                 YArray2.zeroOutGhosts();
 
-              projectorKetTimesVector1.setZero();
+              projectorKetTimesVector1.setValue(0);
               if (overlap)
                 {
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
@@ -1560,10 +1558,10 @@ namespace dftfe
                           XArray2.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           tempFloatArray.begin()));
-                      tempFloatArray.compressAddStart();
+                      tempFloatArray.accumulateAddLocallyOwnedBegin();
                     }
                   else
-                    XArray2.compressAddStart();
+                    XArray2.accumulateAddLocallyOwnedBegin();
                 }
 
               // call compute part 1 of block 1
@@ -1582,7 +1580,7 @@ namespace dftfe
                 {
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
-                      tempFloatArray.compressAddFinish();
+                      tempFloatArray.accumulateAddLocallyOwnedEnd();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
                         (numberVectors +
@@ -1602,11 +1600,11 @@ namespace dftfe
                       XArray2.zeroOutGhosts();
                     }
                   else
-                    XArray2.compressAddFinish();
+                    XArray2.accumulateAddLocallyOwnedEnd();
                   XArray2.swap(YArray2);
                 }
 
-              projectorKetTimesVector1.compressAddStart();
+              projectorKetTimesVector1.accumulateAddLocallyOwnedBegin();
 
               combinedDeviceKernel<<<
                 min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1624,7 +1622,7 @@ namespace dftfe
                 operatorMatrix.getInvSqrtMassVec(),
                 operatorMatrix.getSqrtMassVec());
 
-              projectorKetTimesVector1.compressAddFinish();
+              projectorKetTimesVector1.accumulateAddLocallyOwnedEnd();
 
               projectorKetTimesVector1.updateGhostValues();
 
@@ -1638,10 +1636,10 @@ namespace dftfe
                     dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       tempFloatArray.begin()));
-                  tempFloatArray.updateGhostValuesStart();
+                  tempFloatArray.updateGhostValuesBegin();
                 }
               else
-                YArray2.updateGhostValuesStart();
+                YArray2.updateGhostValuesBegin();
 
               // call compute part 2 of block 1
               operatorMatrix.HXCheby(YArray1,
@@ -1657,7 +1655,7 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  tempFloatArray.updateGhostValuesFinish();
+                  tempFloatArray.updateGhostValuesEnd();
                   if (n_ghosts != 0)
                     convFloatArrToDoubleArr<<<
                       (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1672,11 +1670,11 @@ namespace dftfe
                         localVectorSize * numberVectors);
                 }
               else
-                YArray2.updateGhostValuesFinish();
+                YArray2.updateGhostValuesEnd();
               YArray1.zeroOutGhosts();
 
 
-              projectorKetTimesVector2.setZero();
+              projectorKetTimesVector2.setValue(0);
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
@@ -1688,10 +1686,10 @@ namespace dftfe
                     dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       tempFloatArray.begin()));
-                  tempFloatArray.compressAddStart();
+                  tempFloatArray.accumulateAddLocallyOwnedBegin();
                 }
               else
-                XArray1.compressAddStart();
+                XArray1.accumulateAddLocallyOwnedBegin();
 
               // call compute part 1 of block 2
               operatorMatrix.HXCheby(YArray2,
@@ -1707,7 +1705,7 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  tempFloatArray.compressAddFinish();
+                  tempFloatArray.accumulateAddLocallyOwnedEnd();
 
                   copyFloatArrToDoubleArrLocallyOwned<<<
                     (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1726,14 +1724,14 @@ namespace dftfe
                   XArray1.zeroOutGhosts();
                 }
               else
-                XArray1.compressAddFinish();
+                XArray1.accumulateAddLocallyOwnedEnd();
 
               // Handle edge case for the second to last Chebyshev filter
               // iteration as there is no overlap algorithm for the next filter
               // iteration.
               if (degree == (m - 1))
                 {
-                  projectorKetTimesVector2.compressAdd();
+                  projectorKetTimesVector2.accumulateAddLocallyOwned();
                   projectorKetTimesVector2.updateGhostValues();
 
                   operatorMatrix.HXCheby(YArray2,
@@ -1759,7 +1757,7 @@ namespace dftfe
                           XArray2.begin()),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           tempFloatArray.begin()));
-                      tempFloatArray.compressAdd();
+                      tempFloatArray.accumulateAddLocallyOwned();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
                         (numberVectors +
@@ -1779,7 +1777,7 @@ namespace dftfe
                       XArray2.zeroOutGhosts();
                     }
                   else
-                    XArray2.compressAdd();
+                    XArray2.accumulateAddLocallyOwned();
                   overlap = false;
                 }
               else
@@ -4606,7 +4604,7 @@ namespace dftfe
                     k);
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                  HXBlock.setZero();
+                  HXBlock.setValue(0);
                   operatorMatrix.HX(XBlock,
                                     projectorKetTimesVector,
                                     M,
