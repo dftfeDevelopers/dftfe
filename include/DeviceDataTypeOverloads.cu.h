@@ -27,6 +27,33 @@ namespace dftfe
   {
 
     //
+    // copyValue for homogeneous types
+    //
+    __inline__ __device__ void
+                          copyValue(double *  a, const double b)
+    {
+      *a=b;
+    }
+
+    __inline__ __device__ cuFloatComplex
+                          copyValue(float * a, const float  b)
+    {
+      *a=b;
+    }
+   
+    __inline__ __device__ void
+                          copyValue(cuDoubleComplex * a, const cuDoubleComplex b)
+    {
+      *a=b;
+    }
+
+    __inline__ __device__ cuFloatComplex
+                          copyValue(cuFloatComplex * a, const cuFloatComplex  b)
+    {
+      *a=b;
+    }
+
+    //
     // copyValue for heteregenous types
     //
     __inline__ __device__ void
@@ -48,7 +75,7 @@ namespace dftfe
     }
 
     __inline__ __device__ cuFloatComplex
-                          copyValue(cuFloatComplex a, const cuDoubleComplex  b)
+                          copyValue(cuFloatComplex * a, const cuDoubleComplex  b)
     {
       *a=make_cuFloatComplex(b.x,b.y);
     }
@@ -60,7 +87,7 @@ namespace dftfe
     }
 
     __inline__ __device__ cuFloatComplex
-                          copyValue(cuFloatComplex a, const float  b)
+                          copyValue(cuFloatComplex * a, const float  b)
     {
       *a=make_cuFloatComplex(b,0);
     }
@@ -72,7 +99,7 @@ namespace dftfe
     }
 
     __inline__ __device__ cuFloatComplex
-                          copyValue(cuFloatComplex a, const double b)
+                          copyValue(cuFloatComplex * a, const double b)
     {
       *a=make_cuFloatComplex(b,0);
     }
