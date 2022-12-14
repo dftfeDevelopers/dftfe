@@ -17,7 +17,7 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
@@ -268,29 +268,6 @@ namespace dftfe
         }
     }
 
-    template <typename numberType>
-    __global__ void
-    copyDeviceKernel(const unsigned int contiguousBlockSize,
-                     const unsigned int numContiguousBlocks,
-                     const numberType * copyFromVec,
-                     numberType *       copyToVec,
-                     const dealii::types::global_dof_index
-                       *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
 
     __global__ void
     daxpyAtomicAddKernel(

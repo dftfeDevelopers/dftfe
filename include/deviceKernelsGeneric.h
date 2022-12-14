@@ -15,8 +15,8 @@
 // ---------------------------------------------------------------------
 
 #if defined(DFTFE_WITH_DEVICE)
-#  ifndef deviceHelpers_h
-#    define deviceHelpers_h
+#  ifndef deviceKernelsGeneric.h
+#    define deviceKernelsGeneric.h
 
 #    include <dftfeDataTypes.h>
 #    include <MemorySpaceType.h>
@@ -25,7 +25,7 @@
 
 namespace dftfe
 {
-  namespace deviceUtils
+  namespace deviceKernelsGeneric
   {
     void
     setupDevice();
@@ -44,6 +44,67 @@ namespace dftfe
                                    const NumberTypeReal * realArr,
                                    const NumberTypeReal * imagArr,
                                    NumberTypeComplex *    complexArr);
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                            const ValueType1 *     valueType1Arr,
+                            ValueType2 *           valueType2Arr);
+
+
+    template <typename ValueType>
+    void
+    stridedCopyToBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const ValueType * copyFromVec,
+                       ValueType *       copyToVecBlock,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
+
+
+
+    template <typename ValueType>
+    void
+    stridedCopyFromBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const ValueType * copyFromVecBlock,
+                       ValueType *       copyToVec,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);   
+
+    template <typename ValueType>
+    void
+    stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const ValueType * copyFromVec,
+                       ValueType *       copyToVec);
+
+
+
+    template <typename ValueType>
+    void
+    stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const ValueType * copyFromVec,
+                       ValueType *       copyToVec);    
+
+
+    template <typename NumberType>
+    void axpby(const dftfe::size_type     n,
+               const NumberType *x,
+               NumberType *      y,
+               const NumberType  a,
+               const NumberType  b);
+
+
+    template <typename NumberType>
+    void ascal(const dftfe::size_type     n,
+               NumberType *      x,
+               const NumberType  a);
 
     void
     add(double *                          y,
@@ -69,7 +130,7 @@ namespace dftfe
     void
     sadd(NumberType *y, NumberType *x, const NumberType beta, const int size);
 
-  } // namespace deviceUtils
+  } // namespace deviceKernelsGeneric
 
 } // namespace dftfe
 

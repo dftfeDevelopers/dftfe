@@ -38,11 +38,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyDeviceKernel<<<(numberWaveFunctions +
-                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                       dftfe::utils::DEVICE_BLOCK_SIZE *
-                       totalLocallyOwnedCells * d_numberNodesPerElement,
-                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
     dftfe::utils::makeDataTypeDeviceCompatible(src),
@@ -90,7 +86,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          deviceUtils::copyComplexArrToRealArrsDevice(
+          deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
             (d_parallelChebyBlockVectorDevice.localSize() *
              d_parallelChebyBlockVectorDevice.numVectors()),
             dst,
@@ -111,7 +107,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             d_tempImagVec.begin(),
             d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
-          deviceUtils::copyRealArrsToComplexArrDevice(
+          deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
             (d_parallelChebyBlockVectorDevice.localSize() *
              d_parallelChebyBlockVectorDevice.numVectors()),
             d_tempRealVec.begin(),

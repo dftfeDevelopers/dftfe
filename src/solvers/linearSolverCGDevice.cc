@@ -18,7 +18,7 @@
 //
 
 #include <linearSolverCGDevice.h>
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceKernelLauncherConstants.h>
 #include <MemoryTransfer.h>
@@ -117,14 +117,14 @@ namespace dftfe
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            deviceUtils::add(d_rvec.begin(),
+            deviceKernelsGeneric::add(d_rvec.begin(),
                              rhsDevice.begin(),
                              -1.,
                              d_xLocalDof,
                              deviceBlasHandle);
 
             // res = r.r
-            res = deviceUtils::l2_norm(d_rvec.begin(),
+            res = deviceKernelsGeneric::l2_norm(d_rvec.begin(),
                                        d_xLocalDof,
                                        mpi_communicator,
                                        deviceBlasHandle);
@@ -154,7 +154,7 @@ namespace dftfe
                     beta = delta / beta;
 
                     // q = beta * q - d
-                    deviceUtils::sadd<double>(d_qvec.begin(),
+                    deviceKernelsGeneric::sadd<double>(d_qvec.begin(),
                                               d_dvec.begin(),
                                               beta,
                                               d_xLocalDof);
@@ -171,7 +171,7 @@ namespace dftfe
                 problem.computeAX(d_dvec, d_qvec);
 
                 // alpha = q.d
-                alpha = deviceUtils::dot(d_qvec.begin(),
+                alpha = deviceKernelsGeneric::dot(d_qvec.begin(),
                                          d_dvec.begin(),
                                          d_xLocalDof,
                                          mpi_communicator,

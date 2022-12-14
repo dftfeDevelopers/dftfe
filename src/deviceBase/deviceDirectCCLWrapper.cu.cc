@@ -22,7 +22,7 @@
 #    include <iostream>
 
 #    include <deviceDirectCCLWrapper.h>
-#    include <deviceHelpers.h>
+#    include <deviceKernelsGeneric.h>
 #    include <DeviceDataTypeOverloads.h>
 #    include <DeviceKernelLauncherConstants.h>
 #    if defined(DFTFE_WITH_NCCL)
@@ -144,7 +144,7 @@ namespace dftfe
       double *                    tempImag,
       deviceStream_t &            stream)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(size,
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
                                                   send,
                                                   tempReal,
                                                   tempImag);
@@ -167,7 +167,7 @@ namespace dftfe
       ncclGroupEnd();
 #    endif
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size,
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
                                                   tempReal,
                                                   tempImag,
                                                   recv);
@@ -183,7 +183,7 @@ namespace dftfe
       float *                    tempImag,
       deviceStream_t &           stream)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(size,
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
                                                   send,
                                                   tempReal,
                                                   tempImag);
@@ -206,7 +206,7 @@ namespace dftfe
       ncclGroupEnd();
 #    endif
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size,
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
                                                   tempReal,
                                                   tempImag,
                                                   recv);
@@ -259,12 +259,12 @@ namespace dftfe
       float *                     tempImag2,
       deviceStream_t &            stream)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(size1,
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size1,
                                                   send1,
                                                   tempReal1,
                                                   tempImag1);
 
-      deviceUtils::copyComplexArrToRealArrsDevice(size2,
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size2,
                                                   send2,
                                                   tempReal2,
                                                   tempImag2);
@@ -302,12 +302,12 @@ namespace dftfe
       ncclGroupEnd();
 #    endif
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size1,
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size1,
                                                   tempReal1,
                                                   tempImag1,
                                                   recv1);
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size2,
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size2,
                                                   tempReal2,
                                                   tempImag2,
                                                   recv2);

@@ -22,7 +22,7 @@
 #include <densityCalculatorDevice.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
@@ -38,104 +38,6 @@ namespace dftfe
   {
     namespace
     {
-      template <typename NumberType>
-      __global__ void
-      stridedCopyToBlockKernel(const unsigned int BVec,
-                               const NumberType * xVec,
-                               const unsigned int M,
-                               const unsigned int N,
-                               NumberType *       yVec,
-                               const unsigned int startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries = M * BVec;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex      = index / BVec;
-            unsigned int intraBlockIndex = index - blockIndex * BVec;
-            yVec[index] =
-              xVec[blockIndex * N + startingXVecId + intraBlockIndex];
-          }
-      }
-
-      template <typename NumberType>
-      __global__ void
-      copyGlobalToCellDeviceKernel(const unsigned int contiguousBlockSize,
-                                   const unsigned int numContiguousBlocks,
-                                   const NumberType * copyFromVec,
-                                   NumberType *       copyToVec,
-                                   const dealii::types::global_dof_index
-                                     *copyFromVecStartingContiguousBlockIds)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex = index / contiguousBlockSize;
-            unsigned int intraBlockIndex =
-              index - blockIndex * contiguousBlockSize;
-            copyToVec[index] =
-              copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex];
-          }
-      }
-
-
-      __global__ void
-      copyDeviceKernel(const unsigned int size,
-                       const double *     copyFromVec,
-                       double *           copyToVec)
-      {
-        for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-             index < size;
-             index += blockDim.x * gridDim.x)
-          copyToVec[index] = copyFromVec[index];
-      }
-
-      __global__ void
-      copyDeviceKernel(const unsigned int size,
-                       const double *     copyFromVec,
-                       cuDoubleComplex *  copyToVec)
-      {
-        for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-             index < size;
-             index += blockDim.x * gridDim.x)
-          {
-            copyToVec[index] = make_cuDoubleComplex(copyFromVec[index], 0.0);
-          }
-      }
-
-      void
-      copyDoubleToNumber(const double *     copyFromVec,
-                         const unsigned int size,
-                         double *           copyToVec)
-      {
-        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                             dftfe::utils::DEVICE_BLOCK_SIZE,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                              copyFromVec,
-                                                              copyToVec);
-      }
-
-      void
-      copyDoubleToNumber(const double *     copyFromVec,
-                         const unsigned int size,
-                         cuDoubleComplex *  copyToVec)
-      {
-        copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                             dftfe::utils::DEVICE_BLOCK_SIZE,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                              copyFromVec,
-                                                              copyToVec);
-      }
-
       __global__ void
       computeRhoGradRhoFromInterpolatedValues(
         const unsigned int numberEntries,
@@ -337,13 +239,12 @@ namespace dftfe
 
       shapeFunctionValuesTransposedDevice.setValue(zero);
 
-      copyDoubleToNumber((operatorMatrix.getShapeFunctionValuesTransposed(
+
+      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numNodesPerElement * numQuadPoints,
+                     (operatorMatrix.getShapeFunctionValuesTransposed(
                             use2pPlusOneGLQuad))
                            .begin(),
-                         numNodesPerElement * numQuadPoints,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           shapeFunctionValuesTransposedDevice.begin()));
-
+                     shapeFunctionValuesTransposedDevice.begin()); 
 
       dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         shapeFunctionGradientValuesXTransposedDevice;
@@ -468,20 +369,15 @@ namespace dftfe
                               partialOccupVecDevice);
                         }
 
-                      stridedCopyToBlockKernel<<<
-                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
                           X + numLocalDofs * totalNumWaveFunctions *
                                 ((dftParams.spinPolarized + 1) * kPoint +
-                                 spinIndex)),
-                        numLocalDofs,
-                        totalNumWaveFunctions,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          deviceFlattenedArrayBlock.begin()),
-                        jvec);
+                                 spinIndex),
+                          deviceFlattenedArrayBlock.begin());
 
 
                       deviceFlattenedArrayBlock.updateGhostValues();
@@ -500,17 +396,11 @@ namespace dftfe
                               const unsigned int startingCellId =
                                 iblock * cellsBlockSize;
 
-                              copyGlobalToCellDeviceKernel<<<
-                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                  dftfe::utils::DEVICE_BLOCK_SIZE *
-                                  currentCellsBlockSize * numNodesPerElement,
-                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                                dftfe::utils::makeDataTypeDeviceCompatible(
-                                  deviceFlattenedArrayBlock.begin()),
-                                dftfe::utils::makeDataTypeDeviceCompatible(
-                                  cellWaveFunctionMatrix),
+                                  deviceFlattenedArrayBlock.begin(),
+                                  cellWaveFunctionMatrix,
                                 (operatorMatrix
                                    .getFlattenedArrayCellLocalProcIndexIdMap())
                                     .begin() +
@@ -548,41 +438,33 @@ namespace dftfe
                                 {
                                   strideB = numNodesPerElement * numQuadPoints;
 
-                                  copyDoubleToNumber(
-                                    (operatorMatrix
+
+                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
+                           (operatorMatrix
                                        .getShapeFunctionGradientValuesXTransposed())
                                         .begin() +
                                       startingCellId * numNodesPerElement *
                                         numQuadPoints,
-                                    currentCellsBlockSize * numNodesPerElement *
-                                      numQuadPoints,
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                      shapeFunctionGradientValuesXTransposedDevice
-                                        .begin()));
+                                  shapeFunctionGradientValuesXTransposedDevice
+                                        .begin()); 
 
-                                  copyDoubleToNumber(
-                                    (operatorMatrix
+                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
+                           (operatorMatrix
                                        .getShapeFunctionGradientValuesYTransposed())
                                         .begin() +
                                       startingCellId * numNodesPerElement *
                                         numQuadPoints,
-                                    currentCellsBlockSize * numNodesPerElement *
-                                      numQuadPoints,
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                      shapeFunctionGradientValuesYTransposedDevice
-                                        .begin()));
+                                  shapeFunctionGradientValuesYTransposedDevice
+                                        .begin()); 
 
-                                  copyDoubleToNumber(
-                                    (operatorMatrix
+                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
+                           (operatorMatrix
                                        .getShapeFunctionGradientValuesZTransposed())
                                         .begin() +
                                       startingCellId * numNodesPerElement *
                                         numQuadPoints,
-                                    currentCellsBlockSize * numNodesPerElement *
-                                      numQuadPoints,
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                      shapeFunctionGradientValuesZTransposedDevice
-                                        .begin()));
+                                  shapeFunctionGradientValuesZTransposedDevice
+                                        .begin()); 
 
                                   dftfe::utils::deviceBlasWrapper::
                                     gemmStridedBatched(
@@ -799,21 +681,16 @@ namespace dftfe
                         .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
                           partialOccupVecDevice);
 
-                      stridedCopyToBlockKernel<<<
-                        (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
+                        Nfr,
+                        numLocalDofs,
+                        jvec,
                           XFrac + numLocalDofs * Nfr *
                                     ((dftParams.spinPolarized + 1) * kPoint +
-                                     spinIndex)),
-                        numLocalDofs,
-                        Nfr,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          deviceFlattenedArrayBlock.begin()),
-                        jvec);
-
+                                     spinIndex),
+                          deviceFlattenedArrayBlock.begin());
 
                       deviceFlattenedArrayBlock.updateGhostValues();
 
@@ -831,17 +708,11 @@ namespace dftfe
                               const unsigned int startingCellId =
                                 iblock * cellsBlockSize;
 
-                              copyGlobalToCellDeviceKernel<<<
-                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                  dftfe::utils::DEVICE_BLOCK_SIZE *
-                                  currentCellsBlockSize * numNodesPerElement,
-                                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
                                 BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                                dftfe::utils::makeDataTypeDeviceCompatible(
-                                  deviceFlattenedArrayBlock.begin()),
-                                dftfe::utils::makeDataTypeDeviceCompatible(
-                                  cellWaveFunctionMatrix),
+                                  deviceFlattenedArrayBlock.begin(),
+                                  cellWaveFunctionMatrix,
                                 (operatorMatrix
                                    .getFlattenedArrayCellLocalProcIndexIdMap())
                                     .begin() +
@@ -881,41 +752,32 @@ namespace dftfe
                                 {
                                   strideB = numNodesPerElement * numQuadPoints;
 
-                                  copyDoubleToNumber(
-                                    (operatorMatrix
+                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
+                           (operatorMatrix
                                        .getShapeFunctionGradientValuesXTransposed())
                                         .begin() +
                                       startingCellId * numNodesPerElement *
                                         numQuadPoints,
-                                    currentCellsBlockSize * numNodesPerElement *
-                                      numQuadPoints,
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                      shapeFunctionGradientValuesXTransposedDevice
-                                        .begin()));
+                                  shapeFunctionGradientValuesXTransposedDevice
+                                        .begin()); 
 
-                                  copyDoubleToNumber(
-                                    (operatorMatrix
+                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
+                           (operatorMatrix
                                        .getShapeFunctionGradientValuesYTransposed())
                                         .begin() +
                                       startingCellId * numNodesPerElement *
                                         numQuadPoints,
-                                    currentCellsBlockSize * numNodesPerElement *
-                                      numQuadPoints,
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                      shapeFunctionGradientValuesYTransposedDevice
-                                        .begin()));
+                                  shapeFunctionGradientValuesYTransposedDevice
+                                        .begin()); 
 
-                                  copyDoubleToNumber(
-                                    (operatorMatrix
+                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
+                           (operatorMatrix
                                        .getShapeFunctionGradientValuesZTransposed())
                                         .begin() +
                                       startingCellId * numNodesPerElement *
                                         numQuadPoints,
-                                    currentCellsBlockSize * numNodesPerElement *
-                                      numQuadPoints,
-                                    dftfe::utils::makeDataTypeDeviceCompatible(
-                                      shapeFunctionGradientValuesZTransposedDevice
-                                        .begin()));
+                                  shapeFunctionGradientValuesZTransposedDevice
+                                        .begin()); 
 
                                   dftfe::utils::deviceBlasWrapper::
                                     gemmStridedBatched(

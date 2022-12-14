@@ -23,7 +23,7 @@
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
 #    include <constants.h>
-#    include <deviceHelpers.h>
+#    include <deviceKernelsGeneric.h>
 #    include <dftUtils.h>
 #    include <headers.h>
 

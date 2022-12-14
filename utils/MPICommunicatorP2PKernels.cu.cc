@@ -209,7 +209,7 @@ namespace dftfe
         MemoryStorage<std::complex<double>, dftfe::utils::MemorySpace::DEVICE>
           &dataArray)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
         (locallyOwnedSize + ghostSize) * blockSize,
         dataArray.data(),
         tempDoubleRealDataArray.data(),
@@ -231,7 +231,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           tempDoubleImagDataArray.data()));
 
-      deviceUtils::copyRealArrsToComplexArrDevice(
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
         locallyOwnedSize * blockSize,
         tempDoubleRealDataArray.data(),
         tempDoubleImagDataArray.data(),
@@ -260,7 +260,7 @@ namespace dftfe
         MemoryStorage<std::complex<float>, dftfe::utils::MemorySpace::DEVICE>
           &dataArray)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
         (locallyOwnedSize + ghostSize) * blockSize,
         dataArray.data(),
         tempFloatRealDataArray.data(),
@@ -282,7 +282,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           tempFloatImagDataArray.data()));
 
-      deviceUtils::copyRealArrsToComplexArrDevice(locallyOwnedSize * blockSize,
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(locallyOwnedSize * blockSize,
                                                   tempFloatRealDataArray.data(),
                                                   tempFloatImagDataArray.data(),
                                                   dataArray.data());

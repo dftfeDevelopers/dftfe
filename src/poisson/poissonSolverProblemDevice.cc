@@ -445,7 +445,7 @@ namespace dftfe
     // -\sum_{i \neq o} a_i * u_i computation which involves summation across
     // MPI tasks
     const double constrainedNodeValue =
-      deviceUtils::dot(d_meanValueConstraintDeviceVec.begin(),
+      deviceKernelsGeneric::dot(d_meanValueConstraintDeviceVec.begin(),
                        vec.begin(),
                        d_xLocalDof,
                        mpi_communicator,
@@ -486,7 +486,7 @@ namespace dftfe
               d_meanValueConstraintProcId,
               mpi_communicator);
 
-    deviceUtils::add(vec.begin(),
+    deviceKernelsGeneric::add(vec.begin(),
                      d_meanValueConstraintDeviceVec.begin(),
                      constrainedNodeValue,
                      d_xLocalDof,

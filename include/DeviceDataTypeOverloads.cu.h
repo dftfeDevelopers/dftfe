@@ -25,6 +25,58 @@ namespace dftfe
 {
   namespace utils
   {
+
+    //
+    // copyValue for heteregenous types
+    //
+    __inline__ __device__ void
+                          copyValue(float*  a, const double b)
+    {
+      *a=b;
+    }
+
+    __inline__ __device__ cuFloatComplex
+                          copyValue(float * a, const double  b)
+    {
+      *a=b;
+    }
+   
+    __inline__ __device__ void
+                          copyValue(cuDoubleComplex * a, const cuFloatComplex b)
+    {
+      *a=make_cuDoubleComplex(b.x,b.y);
+    }
+
+    __inline__ __device__ cuFloatComplex
+                          copyValue(cuFloatComplex a, const cuDoubleComplex  b)
+    {
+      *a=make_cuFloatComplex(b.x,b.y);
+    }
+
+    __inline__ __device__ void
+                          copyValue(cuDoubleComplex * a, const double b)
+    {
+      *a=make_cuDoubleComplex(b,0);
+    }
+
+    __inline__ __device__ cuFloatComplex
+                          copyValue(cuFloatComplex a, const float  b)
+    {
+      *a=make_cuFloatComplex(b,0);
+    }
+
+    __inline__ __device__ void
+                          copyValue(cuDoubleComplex * a, const float b)
+    {
+      *a=make_cuDoubleComplex(b,0);
+    }
+
+    __inline__ __device__ cuFloatComplex
+                          copyValue(cuFloatComplex a, const double b)
+    {
+      *a=make_cuFloatComplex(b,0);
+    }
+
     // real part obverloads
 
     __inline__ __device__ double
@@ -567,31 +619,6 @@ namespace dftfe
     {
       return make_cuFloatComplex(a.real(), a.imag());
     }
-
-    __inline__ __device__ void
-    setRealValue(cuFloatComplex *a, double value)
-    {
-      *a = make_cuFloatComplex(value, 0.0);
-    }
-
-    __inline__ __device__ void
-    setRealValue(cuDoubleComplex *a, double value)
-    {
-      *a = make_cuDoubleComplex(value, 0.0);
-    }
-
-    __inline__ __device__ void
-    setRealValue(float *a, double value)
-    {
-      *a = value;
-    }
-
-    __inline__ __device__ void
-    setRealValue(double *a, double value)
-    {
-      *a = value;
-    }
-
 
 
   } // namespace utils

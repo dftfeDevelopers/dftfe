@@ -21,7 +21,7 @@
 #include <densityFirstOrderResponseCalculator.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <MemoryStorage.h>
 #include <DeviceAPICalls.h>
@@ -35,224 +35,6 @@ namespace dftfe
 {
   namespace
   {
-    template <typename NumberType>
-    __global__ void
-    stridedCopyToBlockKernel(const unsigned int BVec,
-                             const NumberType * xVec,
-                             const unsigned int M,
-                             const unsigned int N,
-                             NumberType *       yVec,
-                             const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries  = M * BVec;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / BVec;
-          unsigned int intraBlockIndex = index - blockIndex * BVec;
-          yVec[index] = xVec[blockIndex * N + startingXVecId + intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int contiguousBlockSize,
-                                 const unsigned int numContiguousBlocks,
-                                 const double *     copyFromVec,
-                                 double *           copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int contiguousBlockSize,
-                                 const unsigned int numContiguousBlocks,
-                                 const double *     copyFromVec,
-                                 float *            copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int     contiguousBlockSize,
-                                 const unsigned int     numContiguousBlocks,
-                                 const cuDoubleComplex *copyFromVec,
-                                 cuDoubleComplex *      copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int     contiguousBlockSize,
-                                 const unsigned int     numContiguousBlocks,
-                                 const cuDoubleComplex *copyFromVec,
-                                 cuFloatComplex *       copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] = make_cuFloatComplex(
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex]
-              .x,
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex]
-              .y);
-        }
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     double *           copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        copyToVec[index] = copyFromVec[index];
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     cuDoubleComplex *  copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        {
-          copyToVec[index] = make_cuDoubleComplex(copyFromVec[index], 0.0);
-        }
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     float *            copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        copyToVec[index] = copyFromVec[index];
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     cuFloatComplex *   copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        {
-          copyToVec[index] = make_cuFloatComplex(copyFromVec[index], 0.0);
-        }
-    }
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       double *           copyToVec)
-    {
-      copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                            copyFromVec,
-                                                            copyToVec);
-    }
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       cuDoubleComplex *  copyToVec)
-    {
-      copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                            copyFromVec,
-                                                            copyToVec);
-    }
-
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       float *            copyToVec)
-    {
-      copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                            copyFromVec,
-                                                            copyToVec);
-    }
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       cuFloatComplex *   copyToVec)
-    {
-      copyDeviceKernel<<<(size + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(size,
-                                                            copyFromVec,
-                                                            copyToVec);
-    }
-
     __global__ void
     computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
                                              double *           XQuads,
@@ -453,11 +235,8 @@ namespace dftfe
 
     shapeFunctionValuesTransposedDevice.setValue(zero);
 
-    copyDoubleToNumber(
-      (operatorMatrix.getShapeFunctionValuesTransposed(true)).begin(),
-      numNodesPerElement * numQuadPoints,
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        shapeFunctionValuesTransposedDevice.begin()));
+
+    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numNodesPerElement * numQuadPoints,(operatorMatrix.getShapeFunctionValuesTransposed(true)).begin(),shapeFunctionValuesTransposedDevice.begin());
 
     for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
@@ -488,42 +267,30 @@ namespace dftfe
                       .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
                         densityMatDerFermiEnergyVecDevice);
 
-                    stridedCopyToBlockKernel<<<
-                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      BVec,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        X +
-                        numLocalDofs * totalNumWaveFunctions *
-                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex)),
-                      numLocalDofs,
-                      totalNumWaveFunctions,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        deviceFlattenedArrayXBlock.begin()),
-                      jvec);
-
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
+                        BVec,
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
+                        X +numLocalDofs * totalNumWaveFunctions *
+                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                        deviceFlattenedArrayBlock.begin());
 
                     deviceFlattenedArrayXBlock.updateGhostValues();
 
                     (operatorMatrix.getOverloadedConstraintMatrix())
                       ->distribute(deviceFlattenedArrayXBlock, BVec);
 
-                    stridedCopyToBlockKernel<<<
-                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * numLocalDofs,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      BVec,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
+
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
+                        BVec,
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
                         XPrime +
                         numLocalDofs * totalNumWaveFunctions *
-                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex)),
-                      numLocalDofs,
-                      totalNumWaveFunctions,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        deviceFlattenedArrayXPrimeBlock.begin()),
-                      jvec);
-
+                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                        deviceFlattenedArrayXPrimeBlock.begin());
 
                     deviceFlattenedArrayXPrimeBlock.updateGhostValues();
 
@@ -542,21 +309,15 @@ namespace dftfe
                               iblock * cellsBlockSize;
 
 
-                            copyGlobalToCellDeviceKernel<<<
-                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                dftfe::utils::DEVICE_BLOCK_SIZE *
-                                currentCellsBlockSize * numNodesPerElement,
-                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                              BVec,
-                              currentCellsBlockSize * numNodesPerElement,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                deviceFlattenedArrayXBlock.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                cellWaveFunctionMatrix.begin()),
-                              (operatorMatrix
-                                 .getFlattenedArrayCellLocalProcIndexIdMap())
-                                  .begin() +
-                                startingCellId * numNodesPerElement);
+
+                            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+                  BVec,
+                  currentCellsBlockSize * numNodesPerElement,
+                  deviceFlattenedArrayXBlock.begin(),
+                    cellWaveFunctionMatrix.begin(),
+                     (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement);
 
                             NumberTypeLowPrec scalarCoeffAlpha = 1.0;
                             NumberTypeLowPrec scalarCoeffBeta  = 0.0;
@@ -585,22 +346,16 @@ namespace dftfe
                               strideC,
                               currentCellsBlockSize);
 
-                            copyGlobalToCellDeviceKernel<<<
-                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                dftfe::utils::DEVICE_BLOCK_SIZE *
-                                currentCellsBlockSize * numNodesPerElement,
-                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                              BVec,
-                              currentCellsBlockSize * numNodesPerElement,
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                deviceFlattenedArrayXPrimeBlock.begin()),
-                              dftfe::utils::makeDataTypeDeviceCompatible(
-                                cellWaveFunctionMatrix.begin()),
-                              (operatorMatrix
+
+                         dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+                  BVec,
+                  currentCellsBlockSize * numNodesPerElement,
+                  deviceFlattenedArrayXPrimeBlock.begin(),
+                    cellWaveFunctionMatrix.begin(),
+                                                (operatorMatrix
                                  .getFlattenedArrayCellLocalProcIndexIdMap())
                                   .begin() +
                                 startingCellId * numNodesPerElement);
-
 
                             dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                               operatorMatrix.getDeviceBlasHandle(),
