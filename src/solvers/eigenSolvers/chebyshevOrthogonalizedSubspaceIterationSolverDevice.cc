@@ -456,22 +456,22 @@ namespace dftfe
             // copy from vector containg all wavefunction vectors to current
             // wavefunction vectors block
             dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
                                 BVec,
+                                totalNumberWaveFunctions,
                                 localVectorSize,
                                 jvec,
-                                deviceFlattenedArrayBlock.begin(),
-                                eigenVectorsFlattenedDevice);              
+                                eigenVectorsFlattenedDevice,
+                                deviceFlattenedArrayBlock.begin());              
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
             dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
                                 BVec,
+                                totalNumberWaveFunctions,
                                 localVectorSize,
                                 jvec+BVec,
-                                d_deviceFlattenedArrayBlock2.begin(),
-                                eigenVectorsFlattenedDevice);
+                                eigenVectorsFlattenedDevice,
+                                d_deviceFlattenedArrayBlock2.begin());
 
             //
             // call Chebyshev filtering function only for the current block
@@ -929,22 +929,22 @@ namespace dftfe
                     // copy from vector containg all wavefunction vectors to
                     // current wavefunction vectors block
             dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
                                 BVec,
+                                totalNumberWaveFunctions,
                                 localVectorSize,
                                 jvec,
-                                deviceFlattenedArrayBlock.begin(),
-                                eigenVectorsFlattenedDevice);              
+                                eigenVectorsFlattenedDevice,
+                                deviceFlattenedArrayBlock.begin());              
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
             dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
                                 BVec,
+                                totalNumberWaveFunctions,
                                 localVectorSize,
                                 jvec+BVec,
-                                d_deviceFlattenedArrayBlock2.begin(),
-                                eigenVectorsFlattenedDevice);
+                                eigenVectorsFlattenedDevice,
+                                d_deviceFlattenedArrayBlock2.begin());
 
                     //
                     // call Chebyshev filtering function only for the current
