@@ -533,7 +533,7 @@ namespace dftfe
                                 BVec,
                                 localVectorSize,
                                 jvec+BVec,
-                                deviceFlattenedArrayBlock2.begin(),
+                                d_deviceFlattenedArrayBlock2.begin(),
                                 eigenVectorsFlattenedDevice);
 
           }
@@ -943,7 +943,7 @@ namespace dftfe
                                 BVec,
                                 localVectorSize,
                                 jvec+BVec,
-                                deviceFlattenedArrayBlock2.begin(),
+                                d_deviceFlattenedArrayBlock2.begin(),
                                 eigenVectorsFlattenedDevice);
 
                     //
@@ -1007,7 +1007,7 @@ namespace dftfe
                                 BVec,
                                 localVectorSize,
                                 jvec+BVec,
-                                deviceFlattenedArrayBlock2.begin(),
+                                d_deviceFlattenedArrayBlock2.begin(),
                                 eigenVectorsFlattenedDevice);
                   }
                 else

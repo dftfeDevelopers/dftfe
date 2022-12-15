@@ -724,7 +724,7 @@ namespace dftfe
             setDeviceToMPITaskBindingInternally &&
             !d_isDeviceToMPITaskBindingSetInternally)
           {
-            dftfe::deviceKernelsGeneric::setupDevice();
+            dftfe::utils::deviceKernelsGeneric::setupDevice();
             d_isDeviceToMPITaskBindingSetInternally = true;
           }
 #endif

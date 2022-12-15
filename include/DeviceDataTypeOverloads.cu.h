@@ -35,7 +35,7 @@ namespace dftfe
       *a=b;
     }
 
-    __inline__ __device__ cuFloatComplex
+    __inline__ __device__ void
                           copyValue(float * a, const float  b)
     {
       *a=b;
@@ -47,7 +47,7 @@ namespace dftfe
       *a=b;
     }
 
-    __inline__ __device__ cuFloatComplex
+    __inline__ __device__ void
                           copyValue(cuFloatComplex * a, const cuFloatComplex  b)
     {
       *a=b;
@@ -62,8 +62,8 @@ namespace dftfe
       *a=b;
     }
 
-    __inline__ __device__ cuFloatComplex
-                          copyValue(float * a, const double  b)
+    __inline__ __device__ void
+                          copyValue(double * a, const float  b)
     {
       *a=b;
     }
@@ -74,7 +74,7 @@ namespace dftfe
       *a=make_cuDoubleComplex(b.x,b.y);
     }
 
-    __inline__ __device__ cuFloatComplex
+    __inline__ __device__ void
                           copyValue(cuFloatComplex * a, const cuDoubleComplex  b)
     {
       *a=make_cuFloatComplex(b.x,b.y);
@@ -86,7 +86,7 @@ namespace dftfe
       *a=make_cuDoubleComplex(b,0);
     }
 
-    __inline__ __device__ cuFloatComplex
+    __inline__ __device__ void
                           copyValue(cuFloatComplex * a, const float  b)
     {
       *a=make_cuFloatComplex(b,0);
@@ -98,7 +98,7 @@ namespace dftfe
       *a=make_cuDoubleComplex(b,0);
     }
 
-    __inline__ __device__ cuFloatComplex
+    __inline__ __device__ void
                           copyValue(cuFloatComplex * a, const double b)
     {
       *a=make_cuFloatComplex(b,0);

@@ -98,8 +98,8 @@ SET(TARGET_SRC
   )
 
 SET(DEVICE_SRC
-  ./src/utils/deviceKernels.cu.cc
-  ./src/utils/deviceDirectCCLWrapper.cu.cc
+  ./utils/deviceKernelsGeneric.cu.cc
+  ./utils/deviceDirectCCLWrapper.cu.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc

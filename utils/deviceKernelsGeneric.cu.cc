@@ -30,12 +30,12 @@ namespace dftfe
 {
   namespace
   {
-    template <typename NumberTypeComplex, typename NumberTypeReal>
+    template <typename ValueTypeComplex, typename ValueTypeReal>
     __global__ void
     copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type   size,
-                                         const NumberTypeComplex *complexArr,
-                                         NumberTypeReal *         realArr,
-                                         NumberTypeReal *         imagArr)
+                                         const ValueTypeComplex *complexArr,
+                                         ValueTypeReal *         realArr,
+                                         ValueTypeReal *         imagArr)
     {
       const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -47,12 +47,12 @@ namespace dftfe
         }
     }
 
-    template <typename NumberTypeComplex, typename NumberTypeReal>
+    template <typename ValueTypeComplex, typename ValueTypeReal>
     __global__ void
     copyRealArrsToComplexArrDeviceKernel(const dftfe::size_type size,
-                                         const NumberTypeReal * realArr,
-                                         const NumberTypeReal * imagArr,
-                                         NumberTypeComplex *    complexArr)
+                                         const ValueTypeReal * realArr,
+                                         const ValueTypeReal * imagArr,
+                                         ValueTypeComplex *    complexArr)
     {
       const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -64,7 +64,7 @@ namespace dftfe
         }
     }
 
-    
+    template <typename ValueType1, typename ValueType2> 
     __global__ void
     copyValueType1ArrToValueType2ArrDeviceKernel(const dftfe::size_type size,
                             const ValueType1 *     valueType1Arr,
@@ -79,12 +79,12 @@ namespace dftfe
     }
 
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     __global__ void
     stridedCopyToBlockDeviceKernel(const dftfe::size_type contiguousBlockSize,
                      const dftfe::size_type numContiguousBlocks,
-                     const ValueType  * copyFromVec,
-                     ValueType  *       copyToVec,
+                     const ValueType1  * copyFromVec,
+                     ValueType2  *       copyToVec,
                      const dftfe::global_size_type
                        *copyFromVecStartingContiguousBlockIds)
     {
@@ -99,18 +99,18 @@ namespace dftfe
           unsigned int blockIndex = index / contiguousBlockSize;
           unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
+          dftfe::utils::copyValue(copyToVec+index,
             copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
+                        intraBlockIndex]);
         }
     }
 
-    template <typename ValueType>
+     template <typename ValueType1, typename ValueType2>
     __global__ void
     stridedCopyFromBlockDeviceKernel(const dftfe::size_type contiguousBlockSize,
                      const dftfe::size_type numContiguousBlocks,
-                     const ValueType  * copyFromVec,
-                     ValueType  *       copyToVec,
+                     const ValueType1  * copyFromVec,
+                     ValueType2  *       copyToVec,
                      const dftfe::global_size_type
                        *copyFromVecStartingContiguousBlockIds)
     {
@@ -125,20 +125,20 @@ namespace dftfe
           unsigned int blockIndex = index / contiguousBlockSize;
           unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
-          copyToVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex]=copyFromVec[index];
+          dftfe::utils::copyValue(copyToVec+copyFromVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex,copyFromVec[index]);
         }
     }
 
 
-    template <typename numberType>
+    template <typename ValueType1, typename ValueType2>
     __global__ void
     stridedCopyToBlockConstantStrideDeviceKernel(const dftfe::size_type blockSizeTo,
                        const dftfe::size_type blockSizeFrom,
                        const dftfe::size_type numBlocks,
                        const dftfe::size_type startingId,
-                       const ValueType * copyFromVec,
-                       ValueType *       copyToVec)
+                       const ValueType1 * copyFromVec,
+                       ValueType2 *       copyToVec)
     {
       {
         const unsigned int globalThreadId =
@@ -149,21 +149,20 @@ namespace dftfe
              index += blockDim.x * gridDim.x)
           {
             unsigned int blockIndex      = index / blockSizeTo;
-            unsigned int intraBlockIndex = index - blockIndex * BVec;
-            copyToVec[index] =
-              copyFromVec[blockIndex * blockSizeFrom + startingId + intraBlockIndex];
+            unsigned int intraBlockIndex = index - blockIndex * blockSizeTo;
+            dftfe::utils::copyValue(copyToVec+index,copyFromVec[blockIndex * blockSizeFrom + startingId + intraBlockIndex]);
           }
       }
     }
 
-    template <typename numberType>
+    template <typename ValueType1, typename ValueType2>
     __global__ void
     stridedCopyFromBlockConstantStrideDeviceKernel(const dftfe::size_type blockSizeTo,
                        const dftfe::size_type blockSizeFrom,
                        const dftfe::size_type numBlocks,
                        const dftfe::size_type startingId,
-                       const ValueType * copyFromVec,
-                       ValueType *       copyToVec)
+                       const ValueType1 * copyFromVec,
+                       ValueType2 *       copyToVec)
     {
       {
         const unsigned int globalThreadId =
@@ -174,40 +173,42 @@ namespace dftfe
              index += blockDim.x * gridDim.x)
           {
             unsigned int blockIndex      = index / blockSizeFrom;
-            unsigned int intraBlockIndex = index - blockIndex * BVec;
-            copyToVec[blockIndex * blockSizeTo + startingId + intraBlockIndex]=copyFromVec[index];
+            unsigned int intraBlockIndex = index - blockIndex * blockSizeFrom;
+            dftfe::utils::copyValue(copyToVec+blockIndex * blockSizeTo + startingId + intraBlockIndex,copyFromVec[index]);
           }
       }
     }
 
     // x=a*x, with inc=1
-    template <typename NumberType>
+    template <typename ValueType1, typename ValueType2>
     __global__ void
     ascalDeviceKernel(const dftfe::size_type              n,
-                       NumberType *      x,
-                       const NumberType           a)
+                       ValueType1 *      x,
+                       const ValueType2           a)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
            i += blockDim.x * gridDim.x)
-          x[i] = dftfe::utils::mult(a , x[i]);
+          dftfe::utils::copyValue(x+i,dftfe::utils::mult(a , x[i]));
     }
 
     // y=a*x+b*y, with inc=1
-    template <typename NumberType>
+    template <typename ValueType1, typename ValueType2>
     __global__ void
     axpbyDeviceKernel(const dftfe::size_type              n,
-                       const NumberType *x,
-                       NumberType *      y,
-                       const NumberType           a,
-                       const NumberType           b)
+                       const ValueType1 *x,
+                       ValueType1 *      y,
+                       const ValueType2           a,
+                       const ValueType2           b)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
            i += blockDim.x * gridDim.x)
-          y[i] = dftfe::utils::add(dftfe::utils::mult(a , x[i]) +  dftfe::utils::mult(b, y[i]));
+          dftfe::utils::copyValue(y+i,dftfe::utils::add(dftfe::utils::mult(a , x[i]), dftfe::utils::mult(b, y[i])));
     }
 
   } // namespace
 
+ namespace utils
+ {
   namespace deviceKernelsGeneric
   {
     void
@@ -230,12 +231,12 @@ namespace dftfe
 
 
 
-    template <typename NumberTypeComplex, typename NumberTypeReal>
+    template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     copyComplexArrToRealArrsDevice(const dftfe::size_type   size,
-                                   const NumberTypeComplex *complexArr,
-                                   NumberTypeReal *         realArr,
-                                   NumberTypeReal *         imagArr)
+                                   const ValueTypeComplex *complexArr,
+                                   ValueTypeReal *         realArr,
+                                   ValueTypeReal *         imagArr)
     {
       copyComplexArrToRealArrsDeviceKernel<<<
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -248,12 +249,12 @@ namespace dftfe
 
 
 
-    template <typename NumberTypeComplex, typename NumberTypeReal>
+    template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                   const NumberTypeReal * realArr,
-                                   const NumberTypeReal * imagArr,
-                                   NumberTypeComplex *    complexArr)
+                                   const ValueTypeReal * realArr,
+                                   const ValueTypeReal * imagArr,
+                                   ValueTypeComplex *    complexArr)
     {
       copyRealArrsToComplexArrDeviceKernel<<<
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -278,12 +279,12 @@ namespace dftfe
                     dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
 
-    template <typename ValueType>
+    template <typename ValueType1,typename ValueType2>
     void
     stridedCopyToBlock(const dftfe::size_type contiguousBlockSize,
                        const dftfe::size_type numContiguousBlocks,
-                       const ValueType * copyFromVec,
-                       ValueType *       copyToVecBlock,
+                       const ValueType1 * copyFromVec,
+                       ValueType2 *       copyToVecBlock,
                        const dftfe::global_size_type
                          *copyFromVecStartingContiguousBlockIds)
     {
@@ -298,12 +299,12 @@ namespace dftfe
     }
 
 
-    template <typename ValueType>
+   template <typename ValueType1,typename ValueType2>
     void
     stridedCopyFromBlock(const dftfe::size_type contiguousBlockSize,
                        const dftfe::size_type numContiguousBlocks,
-                       const ValueType * copyFromVecBlock,
-                       ValueType *       copyToVec,
+                       const ValueType1 * copyFromVecBlock,
+                       ValueType2 *       copyToVec,
                        const dftfe::global_size_type
                          *copyFromVecStartingContiguousBlockIds)
     {
@@ -318,14 +319,14 @@ namespace dftfe
     }
 
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
     stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
                        const dftfe::size_type blockSizeFrom,
                        const dftfe::size_type numBlocks,
                        const dftfe::size_type startingId,
-                       const ValueType * copyFromVec,
-                       ValueType *       copyToVec)
+                       const ValueType1 * copyFromVec,
+                       ValueType2 *       copyToVec)
     {
       stridedCopyToBlockConstantStrideDeviceKernel<<<
         (blockSizeTo*numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -333,19 +334,19 @@ namespace dftfe
                        blockSizeFrom,
                        numBlocks,
                        startingId,
-                       copyFromVec,
-                       copyToVec); 
+                       dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+                       dftfe::utils::makeDataTypeDeviceCompatible(copyToVec)); 
     }
 
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
     stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
                        const dftfe::size_type blockSizeFrom,
                        const dftfe::size_type numBlocks,
                        const dftfe::size_type startingId,
-                       const ValueType * copyFromVec,
-                       ValueType *       copyToVec)
+                       const ValueType1 * copyFromVec,
+                       ValueType2 *       copyToVec)
     {
       stridedCopyFromBlockConstantStrideDeviceKernel<<<
         (blockSizeFrom*numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -353,44 +354,44 @@ namespace dftfe
                        blockSizeFrom,
                        numBlocks,
                        startingId,
-                       copyFromVec,
-                       copyToVec); 
+                       dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+                       dftfe::utils::makeDataTypeDeviceCompatible(copyToVec)); 
     }
 
-    template <typename NumberType>
+    template <typename ValueType1, typename ValueType2>
     void
     axpby(const dftfe::size_type    n,
-               const NumberType *x,
-               NumberType *      y,
-               const NumberType  a,
-               const NumberType  b)
+               const ValueType1 *x,
+               ValueType1 *      y,
+               const ValueType2  a,
+               const ValueType2  b)
     {
       axpbyDeviceKernel<<<std::min((n +
                                 (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                  dftfe::utils::DEVICE_BLOCK_SIZE,
-                               30000),
+                               (dftfe::size_type)30000),
                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         n,
         dftfe::utils::makeDataTypeDeviceCompatible(x),
         dftfe::utils::makeDataTypeDeviceCompatible(y),
-        a,
-        b);
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(b));
     }
 
-    template <typename NumberType>
+    template <typename ValueType1, typename ValueType2>
     void
     ascal(const dftfe::size_type    n,
-               NumberType *      x,
-               const NumberType  a)
+               ValueType1 *      x,
+               const ValueType2  a)
     {
       ascalDeviceKernel<<<std::min((n +
                                 (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                  dftfe::utils::DEVICE_BLOCK_SIZE,
-                               30000),
+                               (dftfe::size_type)30000),
                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         n,
         dftfe::utils::makeDataTypeDeviceCompatible(x),
-        a);
+        dftfe::utils::makeDataTypeDeviceCompatible(a));
     }
 
     void
@@ -440,11 +441,11 @@ namespace dftfe
       return sum;
     }
 
-    template <typename NumberType>
+    template <typename ValueType>
     __global__ void
-    saddKernel(NumberType *     y,
-               NumberType *     x,
-               const NumberType beta,
+    saddKernel(ValueType *     y,
+               ValueType *     x,
+               const ValueType beta,
                const int        size)
     {
       const int globalId = threadIdx.x + blockIdx.x * blockDim.x;
@@ -456,14 +457,14 @@ namespace dftfe
         }
     }
 
-    template <typename NumberType>
+    template <typename ValueType>
     void
-    sadd(NumberType *y, NumberType *x, const NumberType beta, const int size)
+    sadd(ValueType *y, ValueType *x, const ValueType beta, const int size)
     {
       const int gridSize =
         (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
         (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
-      saddKernel<NumberType>
+      saddKernel<ValueType>
         <<<gridSize, dftfe::utils::DEVICE_BLOCK_SIZE>>>(y, x, beta, size);
     }
 
@@ -535,6 +536,22 @@ namespace dftfe
                const std::complex<float>  a,
                const std::complex<float>  b);
 
+
+    template void
+    axpby(const dftfe::size_type     n,
+               const std::complex<double> *x,
+               std::complex<double> *      y,
+               const double  a,
+               const double  b);
+
+    template void
+    axpby(const dftfe::size_type     n,
+               const std::complex<float> *x,
+               std::complex<float> *      y,
+               const double  a,
+               const double  b);
+
+
     //for ascal
     template void
     ascal(const dftfe::size_type     n,
@@ -554,7 +571,37 @@ namespace dftfe
     template void
     ascal(const dftfe::size_type     n,
                std::complex<float> *      x,
-               const std::complex<float>  a);    
+               const std::complex<float>  a);  
+
+    template void
+    ascal(const dftfe::size_type     n,
+               std::complex<double> *      x,
+               double  a);
+
+    template void
+    ascal(const dftfe::size_type     n,
+               std::complex<float> *      x,
+               double  a);      
+
+    template void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const double *     valueType1Arr,
+                                   double *     valueType2Arr);
+
+    template void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const float *     valueType1Arr,
+                                   float *     valueType2Arr);
+
+    template void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const std::complex<double> *     valueType1Arr,
+                                   std::complex<double> *     valueType2Arr);
+
+    template void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const std::complex<float> *     valueType1Arr,
+                                   std::complex<float> *     valueType2Arr);
 
     template void
     copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
@@ -578,6 +625,11 @@ namespace dftfe
 
     template void
     copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const double *     valueType1Arr,
+                                   std::complex<float> *     valueType2Arr);
+
+    template void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
                                    const float *     valueType1Arr,
                                    std::complex<float> *     valueType2Arr);
 
@@ -585,6 +637,11 @@ namespace dftfe
     copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
                                    const double *     valueType1Arr,
                                    std::complex<double> *     valueType2Arr);
+
+    template void
+    copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const float *     valueType1Arr,
+                                   std::complex<double> *     valueType2Arr);    
 
 
     //strided copy to block
@@ -623,7 +680,41 @@ namespace dftfe
                        std::complex<float> *       copyToVecBlock,
                        const dftfe::global_size_type
                          *copyFromVecStartingContiguousBlockIds);
+    
+    template
+    void
+    stridedCopyToBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const double * copyFromVec,
+                       float *       copyToVecBlock,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
 
+    void
+    stridedCopyToBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const float * copyFromVec,
+                       double *       copyToVecBlock,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);   
+
+    template
+    void
+    stridedCopyToBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const std::complex<double> * copyFromVec,
+                       std::complex<float> *       copyToVecBlock,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
+  
+    template
+    void
+    stridedCopyToBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const std::complex<float> * copyFromVec,
+                       std::complex<double> *       copyToVecBlock,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);     
 
     //strided copy from block
     template
@@ -662,6 +753,41 @@ namespace dftfe
                        const dftfe::global_size_type
                          *copyFromVecStartingContiguousBlockIds);
 
+    template
+    void
+    stridedCopyFromBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const double * copyFromVecBlock,
+                       float *       copyToVec,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
+
+    template
+    void
+    stridedCopyFromBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const float * copyFromVecBlock,
+                       double *       copyToVec,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
+
+    template
+    void
+    stridedCopyFromBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const std::complex<double> * copyFromVecBlock,
+                       std::complex<float> *       copyToVec,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
+
+    template
+    void
+    stridedCopyFromBlock(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const std::complex<float> * copyFromVecBlock,
+                       std::complex<double> *       copyToVec,
+                       const dftfe::global_size_type
+                         *copyFromVecStartingContiguousBlockIds);
 
     //strided copy to block constant stride
     template
@@ -700,6 +826,43 @@ namespace dftfe
                        const std::complex<float> * copyFromVec,
                        std::complex<float> *       copyToVec);
 
+
+    template
+    void
+    stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const double * copyFromVec,
+                       float *       copyToVec);
+
+    template
+    void
+    stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const float * copyFromVec,
+                       double *       copyToVec);
+
+    template
+    void
+    stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const std::complex<double> * copyFromVec,
+                       std::complex<float> *       copyToVec);
+
+    template
+    void
+    stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const std::complex<float> * copyFromVec,
+                       std::complex<double> *       copyToVec);
+
     //strided copy from block constant stride
     template
     void
@@ -735,7 +898,44 @@ namespace dftfe
                        const dftfe::size_type numBlocks,
                        const dftfe::size_type startingId,
                        const std::complex<float> * copyFromVec,
-                       std::complex<float> *       copyToVec);    
+                       std::complex<float> *       copyToVec); 
+
+    template
+    void
+    stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const double * copyFromVec,
+                       float *       copyToVec);
+
+    template
+    void
+    stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const float * copyFromVec,
+                       double *       copyToVec);
+
+    template
+    void
+    stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const std::complex<double> * copyFromVec,
+                       std::complex<float> *       copyToVec);
+
+    template
+    void
+    stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                       const dftfe::size_type blockSizeFrom,
+                       const dftfe::size_type numBlocks,
+                       const dftfe::size_type startingId,
+                       const std::complex<float> * copyFromVec,
+                       std::complex<double> *       copyToVec);      
 
   } // namespace deviceKernelsGeneric
+}//namespace utils
 } // namespace dftfe

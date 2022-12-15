@@ -18,7 +18,7 @@
 //
 
 #include <constraintMatrixInfoDevice.h>
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceKernelLauncherConstants.h>
 
@@ -659,7 +659,7 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      deviceKernelsGeneric::copyComplexArrToRealArrsDevice((fieldVector.localSize() *
+      dftfe::utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice((fieldVector.localSize() *
                                                    fieldVector.numVectors()),
                                                   fieldVector.begin(),
                                                   tempReal,
@@ -696,7 +696,7 @@ namespace dftfe
         d_columnValuesDevice.begin(),
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
-      deviceKernelsGeneric::copyRealArrsToComplexArrDevice((fieldVector.localSize() *
+      dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice((fieldVector.localSize() *
                                                    fieldVector.numVectors()),
                                                   tempReal,
                                                   tempImag,
@@ -717,7 +717,7 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      deviceKernelsGeneric::copyComplexArrToRealArrsDevice((fieldVector.localSize() *
+      dftfe::utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice((fieldVector.localSize() *
                                                    fieldVector.numVectors()),
                                                   fieldVector.begin(),
                                                   tempReal,
@@ -754,7 +754,7 @@ namespace dftfe
         d_columnValuesDevice.begin(),
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
-      deviceKernelsGeneric::copyRealArrsToComplexArrDevice((fieldVector.localSize() *
+      dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice((fieldVector.localSize() *
                                                    fieldVector.numVectors()),
                                                   tempReal,
                                                   tempImag,

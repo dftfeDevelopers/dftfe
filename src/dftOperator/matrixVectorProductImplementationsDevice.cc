@@ -41,9 +41,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
-    dftfe::utils::makeDataTypeDeviceCompatible(src),
-    dftfe::utils::makeDataTypeDeviceCompatible(
-      d_cellWaveFunctionMatrix.begin()),
+    src,
+      d_cellWaveFunctionMatrix.begin(),
     d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
 
@@ -86,7 +85,7 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
-          deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
+          utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
             (d_parallelChebyBlockVectorDevice.localSize() *
              d_parallelChebyBlockVectorDevice.numVectors()),
             dst,
@@ -107,7 +106,7 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
             d_tempImagVec.begin(),
             d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
-          deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
+          utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
             (d_parallelChebyBlockVectorDevice.localSize() *
              d_parallelChebyBlockVectorDevice.numVectors()),
             d_tempRealVec.begin(),

@@ -584,7 +584,7 @@ namespace dftfe
         XArray.begin(),
         YArray.begin(),
         alpha2,
-        1);
+        (double)1);
 
       dftfe::utils::deviceKernelsGeneric::ascal(
         totalVectorSize,
@@ -809,10 +809,10 @@ namespace dftfe
         XArray1.begin(),
         YArray1.begin(),
         alpha2,
-        1);
+        (double)1);
 
 
-      dftfe::utils::deviceKernelsGeneric::axpby(
+      dftfe::utils::deviceKernelsGeneric::ascal(
         totalVectorSize,
         YArray1.begin(),
         alpha1);
@@ -822,9 +822,9 @@ namespace dftfe
         XArray2.begin(),
         YArray2.begin(),
         alpha2,
-        1);
+        (double)1);
 
-      dftfe::utils::deviceKernelsGeneric::axpby(
+      dftfe::utils::deviceKernelsGeneric::ascal(
         totalVectorSize,
         YArray2.begin(),
         alpha1);
@@ -4127,13 +4127,13 @@ namespace dftfe
 
               for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                 {
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                     chebyBlockSize,
-                    M,
-                    X,
                     N,
-                    XBlock.begin(),
-                    k);
+                    M,
+                    k,
+                    X,
+                    XBlock.begin());
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
                   HXBlock.setValue(0);
@@ -4144,13 +4144,13 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
                                     scaleFlag,
                                     scalar,
                                     HXBlock);
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlock(
+dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
+                    B,
                     chebyBlockSize,
                     M,
+                    k-jvec,
                     HXBlock.begin(),
-                    B,
-                    HXBlockFull.begin(),
-                    k - jvec);
+                    HXBlockFull.begin());
                 }
 
               computeResidualDeviceKernel<<<

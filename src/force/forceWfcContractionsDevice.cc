@@ -996,7 +996,7 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
           numPsi,
           N,
           M,
-          startingVecId
+          startingVecId,
           X,
             deviceFlattenedArrayBlock.begin());
         deviceFlattenedArrayBlock.updateGhostValues();

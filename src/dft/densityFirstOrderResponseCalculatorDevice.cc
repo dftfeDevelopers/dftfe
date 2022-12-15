@@ -274,7 +274,7 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                         jvec,
                         X +numLocalDofs * totalNumWaveFunctions *
                           ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
-                        deviceFlattenedArrayBlock.begin());
+                        deviceFlattenedArrayXBlock.begin());
 
                     deviceFlattenedArrayXBlock.updateGhostValues();
 

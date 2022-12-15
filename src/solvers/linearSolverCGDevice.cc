@@ -117,14 +117,14 @@ namespace dftfe
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            deviceKernelsGeneric::add(d_rvec.begin(),
+            dftfe::utils::deviceKernelsGeneric::add(d_rvec.begin(),
                              rhsDevice.begin(),
                              -1.,
                              d_xLocalDof,
                              deviceBlasHandle);
 
             // res = r.r
-            res = deviceKernelsGeneric::l2_norm(d_rvec.begin(),
+            res = dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
                                        d_xLocalDof,
                                        mpi_communicator,
                                        deviceBlasHandle);
@@ -154,7 +154,7 @@ namespace dftfe
                     beta = delta / beta;
 
                     // q = beta * q - d
-                    deviceKernelsGeneric::sadd<double>(d_qvec.begin(),
+                    dftfe::utils::deviceKernelsGeneric::sadd<double>(d_qvec.begin(),
                                               d_dvec.begin(),
                                               beta,
                                               d_xLocalDof);
@@ -171,7 +171,7 @@ namespace dftfe
                 problem.computeAX(d_dvec, d_qvec);
 
                 // alpha = q.d
-                alpha = deviceKernelsGeneric::dot(d_qvec.begin(),
+                alpha = dftfe::utils::deviceKernelsGeneric::dot(d_qvec.begin(),
                                          d_dvec.begin(),
                                          d_xLocalDof,
                                          mpi_communicator,

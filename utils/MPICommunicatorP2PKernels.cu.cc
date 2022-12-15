@@ -34,7 +34,7 @@
 #  include <Exceptions.h>
 #  include <complex>
 #  include <algorithm>
-#  include <deviceHelpers.h>
+#  include <deviceKernelsGeneric.h>
 
 
 namespace dftfe
