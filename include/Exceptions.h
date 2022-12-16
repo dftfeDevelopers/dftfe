@@ -104,6 +104,8 @@ template parameter instead. Available typedefs LogicError - std::logic_error
 
 #ifdef DFTFE_WITH_DEVICE_CUDA
 #  include <DeviceExceptions.cu.h>
+#elif DFTFE_WITH_DEVICE_HIP
+#  include <DeviceExceptions.hip.h>
 #endif
 
 namespace dftfe

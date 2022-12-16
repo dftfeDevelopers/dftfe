@@ -23,6 +23,8 @@
 
 #    ifdef DFTFE_WITH_DEVICE_CUDA
 #      include "DeviceDataTypeOverloads.cu.h"
+#    elif DFTFE_WITH_DEVICE_HIP
+#      include "DeviceDataTypeOverloads.hip.h"     
 #    endif
 
 #  endif // dftfeDeviceDataTypeOverloads_h

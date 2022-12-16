@@ -13,19 +13,20 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
+//
+#ifndef dftfeDeviceKernelLauncherConstants_hiph
+#define dftfeDeviceKernelLauncherConstants_hiph
 
-/*
- * @author Ian C. Lin., Sambit Das
- */
-#ifdef DFTFE_WITH_DEVICE
-#  ifndef dftfeDeviceTypeConfig_h
-#    define dftfeDeviceTypeConfig_h
 
-#    ifdef DFTFE_WITH_DEVICE_CUDA
-#      include "DeviceTypeConfig.cu.h"
-#    elif DFTFE_WITH_DEVICE_HIP
-#      include "DeviceTypeConfig.hip.h"
-#    endif
+namespace dftfe
+{
+  namespace utils
+  {
+    static const int DEVICE_WARP_SIZE      = 32;
+    static const int DEVICE_MAX_BLOCK_SIZE = 1024;
+    static const int DEVICE_BLOCK_SIZE     = 256;
 
-#  endif // dftfeDeviceTypeConfig_h
-#endif   // DFTFE_WITH_DEVICE
+  } // namespace utils
+} // namespace dftfe
+
+#endif // dftfeDeviceKernelLauncherConstants_hiph

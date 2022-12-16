@@ -23,6 +23,8 @@
 
 #    ifdef DFTFE_WITH_DEVICE_CUDA
 #      include "DeviceKernelLauncherConstants.cu.h"
+#    elseif DFTFE_WITH_DEVICE_HIP
+#      include "DeviceKernelLauncherConstants.hip.h"
 #    endif
 
 #  endif // dftfeDeviceKernelLauncherConstants_h
