@@ -1,11 +1,37 @@
 ##
 #  CMakeList file for DFT-FE
 ##
-
+CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 # Set the name of the project and target:
 SET(TARGET "dftfe_exe")
 SET(TARGETLIB "dftfe")
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
+
+#FIXME: find a better way to replace O3 with O2 in CMAKE_CXX_FLAGS_RELEASE
+IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  add_compile_options("-O2")
+ENDIF()
+
+PROJECT(${TARGET} LANGUAGES CXX)
+IF (WITH_GPU)
+    enable_language(CUDA)
+ENDIF()
+
+
+ADD_EXECUTABLE(${TARGET}   src/main.cc)
+set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(ENABLE_MPI)
+  find_package(MPI REQUIRED)
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+  set(DFTFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+endif()
+
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
@@ -96,61 +122,21 @@ SET(DEVICE_SRC
   )
 
 IF (WITH_GPU)
-  CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
   LIST(APPEND TARGET_SRC ${DEVICE_SRC})
-ELSE()
-  CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 ENDIF()
 
 IF (WITH_GPU)
     set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
 ENDIF()
 
+ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 
-LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-
-FIND_PACKAGE(deal.II 9.1.0 REQUIRED
-  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
-  )
-IF(NOT ${deal.II_FOUND})
-  MESSAGE(FATAL_ERROR "\n"
-    "*** Could not locate deal.II. ***\n\n"
-    "You may want to either pass a flag -DDEAL_II_DIR=/path/to/deal.II to cmake\n"
-    "or set an environment variable \"DEAL_II_DIR\" that contains this path."
-    )
-ENDIF()
-
+#IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 #
-# Are all dependencies fullfilled?
-# DEAL_II_WITH_64BIT_INDICES is a requirement because of
-# the choice of the parallel storage data-structure for
-# wavefunctions in DFT-FE. The maximum global index of this
-# parallel storage data-structure is equal to
-# total number of dofs times total number of wavefunctions,
-# which can cross the 32 bit integer limits even for a moderate
-# problem size.
-IF(NOT DEAL_II_WITH_LAPACK OR
-   NOT DEAL_II_WITH_P4EST OR
-   NOT DEAL_II_WITH_64BIT_INDICES OR
-   NOT DEAL_II_WITH_MPI OR
-   NOT DEAL_II_WITH_SCALAPACK)
-  MESSAGE(FATAL_ERROR "
-Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
-    DEAL_II_WITH_LAPACK = ON
-    DEAL_II_WITH_P4EST = ON
-    DEAL_II_WITH_64BIT_INDICES = ON
-    DEAL_II_WITH_MPI = ON
-    DEAL_II_WITH_SCALAPACK = ON
-which is required."
-    )
-ENDIF()
-
-
-DEAL_II_INITIALIZE_CACHED_VARIABLES()
-PROJECT(${TARGET} LANGUAGES CXX)
-IF (DEAL_II_WITH_CUDA)
-    enable_language(CUDA)
-ENDIF()
+#target_compile_options(${TARGETLIB}
+#    PUBLIC
+#        -O2)
+#ENDIF()
 
 #
 # RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
@@ -182,10 +168,6 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 # make sure RPATHs are used on macOS
 SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
-# FIXME: fix warnings, remove flags
-SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template -Wno-ignored-qualifiers")
-SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
-
 IF (MINIMAL_COMPILE)
   ADD_DEFINITIONS(-DDFTFE_MINIMAL_COMPILE)
 ENDIF()
@@ -205,13 +187,6 @@ ELSE()
    MESSAGE(STATUS "Using real")
 ENDIF()
 
-#
-#Set use petsc and slepc flag
-#
-IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
-   ADD_DEFINITIONS(-DUSE_PETSC)
-   MESSAGE(STATUS "Using petsc and slepc")
-ENDIF()
 
 
 
@@ -226,45 +201,71 @@ IF (WITH_GPU)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)
     MESSAGE(STATUS "DFTFE with GPU Aware MPI")
   ENDIF()
-
-  IF(NOT DEAL_II_WITH_CUDA OR
-     NOT DEAL_II_MPI_WITH_CUDA_SUPPORT)
-     MESSAGE(FATAL_ERROR "
-     Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
-     DEAL_II_WITH_CUDA=ON
-     DEAL_II_MPI_WITH_CUDA_SUPPORT=ON
-      which is required for WITH_GPU=ON"
-     )
-  ENDIF()
-
-  find_package(CUDA REQUIRED)
-  set(CUDA_PROPAGATE_HOST_FLAGS ON)
-  #CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
-  #LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
-  LIST(APPEND CUDA_NVCC_FLAGS "${DEAL_II_CUDA_FLAGS}")
-ENDIF()
-
-ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
-
-ADD_EXECUTABLE(${TARGET}   src/main.cc)
-set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
-
-DEAL_II_SETUP_TARGET(${TARGETLIB})
-DEAL_II_SETUP_TARGET(${TARGET})
-
-TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
-TARGET_LINK_LIBRARIES(${TARGET} ${TARGETLIB})
-
-#
-# REQUIRED DEPENDENCIES:
-#
-
-IF (WITH_GPU)
   find_package(CUDAToolkit REQUIRED)
   target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
-  target_link_libraries(${TARGETLIB} CUDA::cudart)
-  target_link_libraries(${TARGETLIB} CUDA::cublas)
-  target_link_libraries(${TARGETLIB} CUDA::cusparse)
+  target_link_libraries(${TARGETLIB} PUBLIC CUDA::cudart)
+  target_link_libraries(${TARGETLIB} PUBLIC CUDA::cublas)
+ENDIF()
+
+TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC ${DFTFE_MPI_LIBRARIES})
+
+#
+#Dependencies
+#
+
+FIND_PACKAGE(deal.II 9.1.0 REQUIRED
+  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
+  )
+IF(NOT ${deal.II_FOUND})
+  MESSAGE(FATAL_ERROR "\n"
+    "*** Could not locate deal.II. ***\n\n"
+    "You may want to either pass a flag -DDEAL_II_DIR=/path/to/deal.II to cmake\n"
+    "or set an environment variable \"DEAL_II_DIR\" that contains this path."
+    )
+ENDIF()
+
+#
+# Are all deal.II dependencies fullfilled?
+# DEAL_II_WITH_64BIT_INDICES is a requirement because of
+# the choice of the parallel storage data-structure for
+# wavefunctions in DFT-FE. The maximum global index of this
+# parallel storage data-structure is equal to
+# total number of dofs times total number of wavefunctions,
+# which can cross the 32 bit integer limits even for a moderate
+# problem size.
+IF(NOT DEAL_II_WITH_LAPACK OR
+   NOT DEAL_II_WITH_P4EST OR
+   NOT DEAL_II_WITH_64BIT_INDICES OR
+   NOT DEAL_II_WITH_MPI OR
+   NOT DEAL_II_WITH_SCALAPACK)
+  MESSAGE(FATAL_ERROR "
+Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
+    DEAL_II_WITH_LAPACK = ON
+    DEAL_II_WITH_P4EST = ON
+    DEAL_II_WITH_64BIT_INDICES = ON
+    DEAL_II_WITH_MPI = ON
+    DEAL_II_WITH_SCALAPACK = ON
+which is required."
+    )
+ENDIF()
+
+
+#DEAL_II_INITIALIZE_CACHED_VARIABLES()
+
+
+TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${DEAL_II_INCLUDE_DIRS})
+IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
+ELSE()
+   TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
+ENDIF()
+
+#
+#Set use petsc and slepc flag
+#
+IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
+   ADD_DEFINITIONS(-DUSE_PETSC)
+   MESSAGE(STATUS "Using petsc and slepc")
 ENDIF()
 
 #
@@ -280,8 +281,7 @@ IF (DEFINED ALGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- Alglib was not found in ${ALGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Alglib from ${ALGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB}
-	  "${ALGLIB_LIBRARY}"
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC "${ALGLIB_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}")
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}/include")
@@ -303,7 +303,7 @@ IF (DEFINED LIBXC_DIR)
   ENDIF()
   MESSAGE("-- Use LibXC from ${LIBXC_DIR}")
   TARGET_LINK_LIBRARIES(${TARGETLIB}
-      "${LIBXC_LIBRARY}"
+      PUBLIC "${LIBXC_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${LIBXC_DIR}/include")
 ELSE()
@@ -323,7 +323,7 @@ IF (DEFINED XML_INCLUDE_DIR)
       MESSAGE(FATAL_ERROR "-- XML was not found in ${XML_LIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Xml from ${XML_LIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB}
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC
       "${XML_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${XML_INCLUDE_DIR}")
@@ -346,7 +346,7 @@ IF (DEFINED SPGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- SPGLib was not found in ${SPGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use SPGLib from ${SPGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB}
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC
       "${SPGLIB_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${SPGLIB_DIR}/include")
@@ -361,7 +361,7 @@ find_package(DFTD3)
 IF (DFTD3_FOUND)
   MESSAGE(STATUS "Will Link With DFTD3 ${S-DFTD3}")
   ADD_DEFINITIONS(-DDFTFE_WITH_DFTD3)
-  target_link_libraries(${TARGETLIB} DFTD3)
+  target_link_libraries(${TARGETLIB} PUBLIC DFTD3)
 ENDIF()
 
 
@@ -372,7 +372,7 @@ find_package(DFTD4)
 IF (DFTD4_FOUND)
   MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
   ADD_DEFINITIONS(-DDFTFE_WITH_DFTD4)
-  target_link_libraries(${TARGETLIB} DFTD4)
+  target_link_libraries(${TARGETLIB} PUBLIC DFTD4)
 ENDIF()
 
 
@@ -386,7 +386,7 @@ IF (WITH_MDI)
       NO_DEFAULT_PATH
     )
   MESSAGE("-- Use MDI library from ${MDI_PATH}/lib64/mdi")
-  TARGET_LINK_LIBRARIES(${TARGETLIB}
+  TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC
         "${MDI_LIBRARY}"
     )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${MDI_PATH}/include/mdi")
@@ -403,7 +403,7 @@ ENDIF()
 #
 find_package(ELPA 2020 REQUIRED)
 MESSAGE(STATUS "Will Link With ELPA")
-target_link_libraries(${TARGETLIB} ELPA::ELPA)
+target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 
 #
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH
@@ -414,9 +414,13 @@ IF (WITH_NCCL)
      MESSAGE(STATUS "Will Link With NCCL")
      ADD_DEFINITIONS(-DDFTFE_WITH_NCCL)
      find_package(MPI REQUIRED)
-     target_link_libraries(${TARGETLIB} NCCL MPI::MPI_CXX)
+     target_link_libraries(${TARGETLIB} PUBLIC NCCL MPI::MPI_CXX)
   ENDIF()
 ENDIF()
+
+TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})
+
 
 #
 # Custom "debug" and "release" make targets:
