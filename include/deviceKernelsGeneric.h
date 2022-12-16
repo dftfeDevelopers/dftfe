@@ -106,21 +106,21 @@ namespace dftfe
       template <typename ValueType>
       void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const ValueType *                         addFromVec,
-        ValueType *                               addToVec,
-        const dftfe::global_size_type *addToVecStartingContiguousBlockIds); 
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        ValueType *                    addToVec,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 
       template <typename ValueType>
       void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const ValueType *                addFromVec,
-        double *                               addToVecReal,
-        double *                               addToVecImag,
-        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);       
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        double *                       addToVecReal,
+        double *                       addToVecImag,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 
 
       template <typename ValueType1, typename ValueType2>
@@ -129,12 +129,11 @@ namespace dftfe
 
       template <typename ValueType1, typename ValueType2>
       void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const ValueType1              a,
-        const ValueType1 *             s,
-        ValueType2 *      x);
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1       a,
+                        const ValueType1 *     s,
+                        ValueType2 *           x);
 
       void
       add(double *                          y,

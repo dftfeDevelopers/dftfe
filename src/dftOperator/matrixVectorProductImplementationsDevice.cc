@@ -92,10 +92,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             d_tempRealVec.begin(),
             d_tempImagVec.begin());
 
-           dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
+          dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
             numberWaveFunctions,
             d_numLocallyOwnedCells * d_numberNodesPerElement,
-              d_cellHamMatrixTimesWaveMatrix.begin(),
+            d_cellHamMatrixTimesWaveMatrix.begin(),
             d_tempRealVec.begin(),
             d_tempImagVec.begin(),
             d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
@@ -109,11 +109,11 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             dst);
         }
       else
-           dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
+        dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
           numberWaveFunctions,
           d_numLocallyOwnedCells * d_numberNodesPerElement,
-            d_cellHamMatrixTimesWaveMatrix.begin(),
+          d_cellHamMatrixTimesWaveMatrix.begin(),
           dst,
-          d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());        
+          d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
     }
 }

@@ -29,25 +29,25 @@ namespace dftfe
     // copyValue for homogeneous types
     //
     __forceinline__ __device__ void
-    copyValue(double *a, const double b)
+                    copyValue(double *a, const double b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-    copyValue(float *a, const float b)
+                    copyValue(float *a, const float b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-    copyValue(cuDoubleComplex *a, const cuDoubleComplex b)
+                    copyValue(cuDoubleComplex *a, const cuDoubleComplex b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-    copyValue(cuFloatComplex *a, const cuFloatComplex b)
+                    copyValue(cuFloatComplex *a, const cuFloatComplex b)
     {
       *a = b;
     }
@@ -56,49 +56,49 @@ namespace dftfe
     // copyValue for heteregenous types
     //
     __forceinline__ __device__ void
-    copyValue(float *a, const double b)
+                    copyValue(float *a, const double b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-    copyValue(double *a, const float b)
+                    copyValue(double *a, const float b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-    copyValue(cuDoubleComplex *a, const cuFloatComplex b)
+                    copyValue(cuDoubleComplex *a, const cuFloatComplex b)
     {
       *a = make_cuDoubleComplex(b.x, b.y);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuFloatComplex *a, const cuDoubleComplex b)
+                    copyValue(cuFloatComplex *a, const cuDoubleComplex b)
     {
       *a = make_cuFloatComplex(b.x, b.y);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuDoubleComplex *a, const double b)
+                    copyValue(cuDoubleComplex *a, const double b)
     {
       *a = make_cuDoubleComplex(b, 0);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuFloatComplex *a, const float b)
+                    copyValue(cuFloatComplex *a, const float b)
     {
       *a = make_cuFloatComplex(b, 0);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuDoubleComplex *a, const float b)
+                    copyValue(cuDoubleComplex *a, const float b)
     {
       *a = make_cuDoubleComplex(b, 0);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuFloatComplex *a, const double b)
+                    copyValue(cuFloatComplex *a, const double b)
     {
       *a = make_cuFloatComplex(b, 0);
     }
@@ -106,25 +106,25 @@ namespace dftfe
     // real part obverloads
 
     __forceinline__ __device__ double
-    realPartDevice(double a)
+                    realPartDevice(double a)
     {
       return a;
     }
 
     __forceinline__ __device__ float
-    realPartDevice(float a)
+                    realPartDevice(float a)
     {
       return a;
     }
 
     __forceinline__ __device__ double
-    realPartDevice(cuDoubleComplex a)
+                    realPartDevice(cuDoubleComplex a)
     {
       return a.x;
     }
 
     __forceinline__ __device__ float
-    realPartDevice(cuFloatComplex a)
+                    realPartDevice(cuFloatComplex a)
     {
       return a.x;
     }
@@ -132,25 +132,25 @@ namespace dftfe
     // imag part obverloads
 
     __forceinline__ __device__ double
-    imagPartDevice(double a)
+                    imagPartDevice(double a)
     {
       return 0;
     }
 
     __forceinline__ __device__ float
-    imagPartDevice(float a)
+                    imagPartDevice(float a)
     {
       return 0;
     }
 
     __forceinline__ __device__ double
-    imagPartDevice(cuDoubleComplex a)
+                    imagPartDevice(cuDoubleComplex a)
     {
       return a.y;
     }
 
     __forceinline__ __device__ float
-    imagPartDevice(cuFloatComplex a)
+                    imagPartDevice(cuFloatComplex a)
     {
       return a.y;
     }
@@ -158,25 +158,25 @@ namespace dftfe
     // abs obverloads
 
     __forceinline__ __device__ double
-    abs(double a)
+                    abs(double a)
     {
       return fabs(a);
     }
 
     __forceinline__ __device__ float
-    abs(float a)
+                    abs(float a)
     {
       return fabs(a);
     }
 
     __forceinline__ __device__ double
-    abs(cuDoubleComplex a)
+                    abs(cuDoubleComplex a)
     {
       return cuCabs(a);
     }
 
     __forceinline__ __device__ float
-    abs(cuFloatComplex a)
+                    abs(cuFloatComplex a)
     {
       return cuCabsf(a);
     }
@@ -186,42 +186,42 @@ namespace dftfe
     //
 
     __forceinline__ __device__ size_type
-                          conj(size_type a)
+                               conj(size_type a)
     {
       return a;
     }
 
     __forceinline__ __device__ global_size_type
-                          conj(global_size_type a)
+                               conj(global_size_type a)
     {
       return a;
     }
 
     __forceinline__ __device__ int
-    conj(int a)
+                    conj(int a)
     {
       return a;
     }
 
     __forceinline__ __device__ float
-    conj(float a)
+                    conj(float a)
     {
       return a;
     }
     __forceinline__ __device__ double
-    conj(double a)
+                    conj(double a)
     {
       return a;
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          conj(cuDoubleComplex a)
+                               conj(cuDoubleComplex a)
     {
       return cuConj(a);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          conj(cuFloatComplex a)
+                               conj(cuFloatComplex a)
     {
       return cuConjf(a);
     }
@@ -231,31 +231,31 @@ namespace dftfe
     // mult for real homogeneous types e.g. (double, double)
     //
     __forceinline__ __device__ size_type
-                          mult(size_type a, size_type b)
+                               mult(size_type a, size_type b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ global_size_type
-                          mult(global_size_type a, global_size_type b)
+                               mult(global_size_type a, global_size_type b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ int
-    mult(int a, int b)
+                    mult(int a, int b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ double
-    mult(double a, double b)
+                    mult(double a, double b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ float
-    mult(float a, float b)
+                    mult(float a, float b)
     {
       return a * b;
     }
@@ -265,13 +265,13 @@ namespace dftfe
     // (e.g., cuDoubleComplex and cuDoubleComplex)
     //
     __forceinline__ __device__ cuDoubleComplex
-                          mult(cuDoubleComplex a, cuDoubleComplex b)
+                               mult(cuDoubleComplex a, cuDoubleComplex b)
     {
       return cuCmul(a, b);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          mult(cuFloatComplex a, cuFloatComplex b)
+                               mult(cuFloatComplex a, cuFloatComplex b)
     {
       return cuCmulf(a, b);
     }
@@ -282,13 +282,13 @@ namespace dftfe
     // cuFloatComplex)
     //
     __forceinline__ __device__ cuDoubleComplex
-                          mult(cuFloatComplex a, cuDoubleComplex b)
+                               mult(cuFloatComplex a, cuDoubleComplex b)
     {
       return cuCmul(make_cuDoubleComplex(a.x, a.y), b);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          mult(cuDoubleComplex a, cuFloatComplex b)
+                               mult(cuDoubleComplex a, cuFloatComplex b)
     {
       return cuCmul(a, make_cuDoubleComplex(b.x, b.y));
     }
@@ -298,165 +298,165 @@ namespace dftfe
     // mult for real-complex heterogeneous types e.g. (double, cuFloatComplex)
     //
     __forceinline__ __device__ cuDoubleComplex
-                          mult(double a, cuDoubleComplex b)
+                               mult(double a, cuDoubleComplex b)
     {
       return make_cuDoubleComplex(a * b.x, a * b.y);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          mult(cuDoubleComplex a, double b)
+                               mult(cuDoubleComplex a, double b)
     {
       return make_cuDoubleComplex(b * a.x, b * a.y);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          mult(float a, cuFloatComplex b)
+                               mult(float a, cuFloatComplex b)
     {
       return make_cuFloatComplex(a * b.x, a * b.y);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          mult(cuFloatComplex a, float b)
+                               mult(cuFloatComplex a, float b)
     {
       return make_cuFloatComplex(b * a.x, b * a.y);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          mult(double a, cuFloatComplex b)
+                               mult(double a, cuFloatComplex b)
     {
       return make_cuDoubleComplex(a * b.x, a * b.y);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          mult(cuFloatComplex a, double b)
+                               mult(cuFloatComplex a, double b)
     {
       return make_cuDoubleComplex(b * a.x, b * a.y);
     }
 
 
     __forceinline__ __device__ size_type
-                          add(size_type a, size_type b)
+                               add(size_type a, size_type b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ global_size_type
-                          add(global_size_type a, global_size_type b)
+                               add(global_size_type a, global_size_type b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ int
-    add(int a, int b)
+                    add(int a, int b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ double
-    add(double a, double b)
+                    add(double a, double b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ float
-    add(float a, float b)
+                    add(float a, float b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          add(cuDoubleComplex a, cuDoubleComplex b)
+                               add(cuDoubleComplex a, cuDoubleComplex b)
     {
       return cuCadd(a, b);
     }
 
 
     __forceinline__ __device__ cuFloatComplex
-                          add(cuFloatComplex a, cuFloatComplex b)
+                               add(cuFloatComplex a, cuFloatComplex b)
     {
       return cuCaddf(a, b);
     }
 
     __forceinline__ __device__ size_type
-                          sub(size_type a, size_type b)
+                               sub(size_type a, size_type b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ global_size_type
-                          sub(global_size_type a, global_size_type b)
+                               sub(global_size_type a, global_size_type b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ int
-    sub(int a, int b)
+                    sub(int a, int b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ double
-    sub(double a, double b)
+                    sub(double a, double b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ float
-    sub(float a, float b)
+                    sub(float a, float b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          sub(cuDoubleComplex a, cuDoubleComplex b)
+                               sub(cuDoubleComplex a, cuDoubleComplex b)
     {
       return cuCsub(a, b);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          sub(cuFloatComplex a, cuFloatComplex b)
+                               sub(cuFloatComplex a, cuFloatComplex b)
     {
       return cuCsubf(a, b);
     }
 
     __forceinline__ __device__ size_type
-                          div(size_type a, size_type b)
+                               div(size_type a, size_type b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ global_size_type
-                          div(global_size_type a, global_size_type b)
+                               div(global_size_type a, global_size_type b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ int
-    div(int a, int b)
+                    div(int a, int b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ double
-    div(double a, double b)
+                    div(double a, double b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ float
-    div(float a, float b)
+                    div(float a, float b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          div(cuDoubleComplex a, cuDoubleComplex b)
+                               div(cuDoubleComplex a, cuDoubleComplex b)
     {
       return cuCdiv(a, b);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          div(cuFloatComplex a, cuFloatComplex b)
+                               div(cuFloatComplex a, cuFloatComplex b)
     {
       return cuCdivf(a, b);
     }
@@ -466,13 +466,13 @@ namespace dftfe
     // cuFloatComplex)
     //
     __forceinline__ __device__ cuDoubleComplex
-                          div(cuFloatComplex a, cuDoubleComplex b)
+                               div(cuFloatComplex a, cuDoubleComplex b)
     {
       return cuCdiv(make_cuDoubleComplex(a.x, a.y), b);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          div(cuDoubleComplex a, cuFloatComplex b)
+                               div(cuDoubleComplex a, cuFloatComplex b)
     {
       return cuCdiv(a, make_cuDoubleComplex(b.x, b.y));
     }
@@ -482,37 +482,37 @@ namespace dftfe
     // div for real-complex heterogeneous types e.g. (double, cuFloatComplex)
     //
     __forceinline__ __device__ cuDoubleComplex
-                          div(double a, cuDoubleComplex b)
+                               div(double a, cuDoubleComplex b)
     {
       return make_cuDoubleComplex(a / b.x, a / b.y);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          div(cuDoubleComplex a, double b)
+                               div(cuDoubleComplex a, double b)
     {
       return make_cuDoubleComplex(b / a.x, b / a.y);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          div(float a, cuFloatComplex b)
+                               div(float a, cuFloatComplex b)
     {
       return make_cuFloatComplex(a / b.x, a / b.y);
     }
 
     __forceinline__ __device__ cuFloatComplex
-                          div(cuFloatComplex a, float b)
+                               div(cuFloatComplex a, float b)
     {
       return make_cuFloatComplex(b / a.x, b / a.y);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          div(double a, cuFloatComplex b)
+                               div(double a, cuFloatComplex b)
     {
       return make_cuDoubleComplex(a / b.x, a / b.y);
     }
 
     __forceinline__ __device__ cuDoubleComplex
-                          div(cuFloatComplex a, double b)
+                               div(cuFloatComplex a, double b)
     {
       return make_cuDoubleComplex(b / a.x, b / a.y);
     }

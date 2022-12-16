@@ -244,12 +244,12 @@ namespace dftfe
           totalLocallyOwnedCells);
 
         if (totalLocallyOwnedCells > 0)
-           dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
+          dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             cellStiffnessMatrixTimesVectorD.begin(),
             dst.begin(),
-            cellLocalProcIndexIdMapD.begin());          
+            cellLocalProcIndexIdMapD.begin());
 
 
         // think dirichlet hanging node linked to two master solved nodes

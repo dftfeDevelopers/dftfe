@@ -121,11 +121,12 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       //
       // compute V*C^{\dagger}*X
       //
-      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                d_totalPseudoWfcNonLocal,
-                                                1.0,
-                                                d_nonLocalPseudoPotentialConstantsDevice.begin(),
-                                                projectorKetTimesVector.begin());
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+        numberWaveFunctions,
+        d_totalPseudoWfcNonLocal,
+        1.0,
+        d_nonLocalPseudoPotentialConstantsDevice.begin(),
+        projectorKetTimesVector.begin());
 
 
       copyFromParallelNonLocalVecToAllCellsVec<<<
@@ -202,13 +203,13 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_tempRealVec.begin(),
         d_tempImagVec.begin());
 
-           dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
+      dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
         numberWaveFunctions,
         d_numLocallyOwnedCells * d_numberNodesPerElement,
-          d_cellHamMatrixTimesWaveMatrix.begin(),
+        d_cellHamMatrixTimesWaveMatrix.begin(),
         d_tempRealVec.begin(),
         d_tempImagVec.begin(),
-        d_flattenedArrayCellLocalProcIndexIdMapDevice.begin()); 
+        d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
 
       utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
@@ -222,9 +223,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
       numberWaveFunctions,
       d_numLocallyOwnedCells * d_numberNodesPerElement,
-        d_cellHamMatrixTimesWaveMatrix.begin(),
+      d_cellHamMatrixTimesWaveMatrix.begin(),
       dst,
-      d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());     
+      d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 }
 
 
@@ -311,9 +312,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   // compute V*C^{\dagger}*X
   //
   if (d_totalNonlocalElems > 0)
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                d_totalPseudoWfcNonLocal,
-                                                1.0,
-                                                d_nonLocalPseudoPotentialConstantsDevice.begin(),
-                                                projectorKetTimesVector.begin());    
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      numberWaveFunctions,
+      d_totalPseudoWfcNonLocal,
+      1.0,
+      d_nonLocalPseudoPotentialConstantsDevice.begin(),
+      projectorKetTimesVector.begin());
 }

@@ -352,11 +352,12 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                eigenVectorsFlattenedDevice);
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      totalNumberWaveFunctions,
+      localVectorSize,
+      1.0,
+      operatorMatrix.getSqrtMassVec(),
+      eigenVectorsFlattenedDevice);
 
 
     // two blocks of wavefunctions are filtered simultaneously when overlap
@@ -669,19 +670,21 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                eigenVectorsFlattenedDevice);
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      totalNumberWaveFunctions,
+      localVectorSize,
+      1.0,
+      operatorMatrix.getInvSqrtMassVec(),
+      eigenVectorsFlattenedDevice);
 
 
     if (eigenValues.size() != totalNumberWaveFunctions)
-      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(eigenValues.size(),
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                eigenVectorsRotFracDensityFlattenedDevice);      
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+        eigenValues.size(),
+        localVectorSize,
+        1.0,
+        operatorMatrix.getInvSqrtMassVec(),
+        eigenVectorsRotFracDensityFlattenedDevice);
 
     return d_upperBoundUnWantedSpectrum;
   }
@@ -817,11 +820,12 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis multiply
     // by M^{1/2}
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                eigenVectorsFlattenedDevice);   
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      totalNumberWaveFunctions,
+      localVectorSize,
+      1.0,
+      operatorMatrix.getSqrtMassVec(),
+      eigenVectorsFlattenedDevice);
 
 
     for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
@@ -997,11 +1001,12 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                eigenVectorsFlattenedDevice);  
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      totalNumberWaveFunctions,
+      localVectorSize,
+      1.0,
+      operatorMatrix.getInvSqrtMassVec(),
+      eigenVectorsFlattenedDevice);
   }
 
 
@@ -1065,11 +1070,12 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                eigenVectorsFlattenedDevice);  
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      totalNumberWaveFunctions,
+      localVectorSize,
+      1.0,
+      operatorMatrix.getSqrtMassVec(),
+      eigenVectorsFlattenedDevice);
 
 
 
@@ -1099,11 +1105,12 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                eigenVectorsFlattenedDevice);  
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      totalNumberWaveFunctions,
+      localVectorSize,
+      1.0,
+      operatorMatrix.getInvSqrtMassVec(),
+      eigenVectorsFlattenedDevice);
 
     dftfe::utils::deviceSynchronize();
     computingTimerStandard.leave_subsection(

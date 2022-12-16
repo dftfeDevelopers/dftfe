@@ -71,7 +71,8 @@ namespace dftfe
       const ValueType1 *     valueType1Arr,
       ValueType2 *           valueType2Arr)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
 
       for (dftfe::size_type index = globalThreadId; index < size;
            index += blockDim.x * gridDim.x)
@@ -88,7 +89,8 @@ namespace dftfe
       ValueType2 *                   copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
       const dftfe::size_type numberEntries =
         numContiguousBlocks * contiguousBlockSize;
 
@@ -114,7 +116,8 @@ namespace dftfe
       ValueType2 *                   copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
       const dftfe::size_type numberEntries =
         numContiguousBlocks * contiguousBlockSize;
 
@@ -177,8 +180,9 @@ namespace dftfe
         for (dftfe::size_type index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            dftfe::size_type blockIndex      = index / blockSizeFrom;
-            dftfe::size_type intraBlockIndex = index - blockIndex * blockSizeFrom;
+            dftfe::size_type blockIndex = index / blockSizeFrom;
+            dftfe::size_type intraBlockIndex =
+              index - blockIndex * blockSizeFrom;
             dftfe::utils::copyValue(copyToVec + blockIndex * blockSizeTo +
                                       startingId + intraBlockIndex,
                                     copyFromVec[index]);
@@ -199,17 +203,18 @@ namespace dftfe
     }
 
 
-    // x[iblock*blocksize+intrablockindex]=a*s[iblock]*x[iblock*blocksize+intrablockindex] strided block wise
+    // x[iblock*blocksize+intrablockindex]=a*s[iblock]*x[iblock*blocksize+intrablockindex]
+    // strided block wise
     template <typename ValueType1, typename ValueType2>
     __global__ void
-    stridedBlockScaleDeviceKernel(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const ValueType1              a,
-        const ValueType1 *             s,
-        ValueType2 *      x)
+    stridedBlockScaleDeviceKernel(const dftfe::size_type contiguousBlockSize,
+                                  const dftfe::size_type numContiguousBlocks,
+                                  const ValueType1       a,
+                                  const ValueType1 *     s,
+                                  ValueType2 *           x)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
       const dftfe::size_type numberEntries =
         numContiguousBlocks * contiguousBlockSize;
 
@@ -218,7 +223,8 @@ namespace dftfe
         {
           dftfe::size_type blockIndex = index / contiguousBlockSize;
           dftfe::utils::copyValue(
-            x + index,dftfe::utils::mult(dftfe::utils::mult(a,s[blockIndex]),x[index]));
+            x + index,
+            dftfe::utils::mult(dftfe::utils::mult(a, s[blockIndex]), x[index]));
         }
     }
 
@@ -238,15 +244,16 @@ namespace dftfe
                                                   dftfe::utils::mult(b, y[i])));
     }
 
-   __global__ void
+    __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
-      const dftfe::size_type                     contiguousBlockSize,
-      const dftfe::size_type                     numContiguousBlocks,
-      const double *                         addFromVec,
-      double *                               addToVec,
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double *                 addFromVec,
+      double *                       addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
       const dftfe::size_type numberEntries =
         numContiguousBlocks * contiguousBlockSize;
 
@@ -264,24 +271,25 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
-      const dftfe::size_type                     contiguousBlockSize,
-      const dftfe::size_type                     numContiguousBlocks,
-      const cuDoubleComplex *                addFromVec,
-      cuDoubleComplex *                      addToVec,
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const cuDoubleComplex *        addFromVec,
+      cuDoubleComplex *              addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {}
 
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
-      const dftfe::size_type                     contiguousBlockSize,
-      const dftfe::size_type                     numContiguousBlocks,
-      const double *                         addFromVec,
-      double *                               addToVecReal,
-      double *                               addToVecImag,
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double *                 addFromVec,
+      double *                       addToVecReal,
+      double *                       addToVecImag,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
       const dftfe::size_type numberEntries =
         numContiguousBlocks * contiguousBlockSize;
 
@@ -303,14 +311,15 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
-      const dftfe::size_type                     contiguousBlockSize,
-      const dftfe::size_type                     numContiguousBlocks,
-      const cuDoubleComplex *                addFromVec,
-      double *                               addToVecReal,
-      double *                               addToVecImag,
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const cuDoubleComplex *        addFromVec,
+      double *                       addToVecReal,
+      double *                       addToVecImag,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
       const dftfe::size_type numberEntries =
         numContiguousBlocks * contiguousBlockSize;
 
@@ -497,9 +506,8 @@ namespace dftfe
             const ValueType2       a,
             const ValueType2       b)
       {
-        axpbyDeviceKernel<<<
-          n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        axpbyDeviceKernel<<<n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           n,
           dftfe::utils::makeDataTypeDeviceCompatible(x),
           dftfe::utils::makeDataTypeDeviceCompatible(y),
@@ -509,38 +517,45 @@ namespace dftfe
 
       template <typename ValueType>
       void
-      axpyStridedBlockAtomicAdd(const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const ValueType *                         addFromVec,
-        ValueType *                               addToVec,
+      axpyStridedBlockAtomicAdd(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        ValueType *                    addToVec,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
       {
-         axpyStridedBlockAtomicAddDeviceKernel<<<
-          (contiguousBlockSize*numContiguousBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(contiguousBlockSize,
-                       numContiguousBlocks,
-             dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
-            dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
+        axpyStridedBlockAtomicAddDeviceKernel<<<
+          (contiguousBlockSize * numContiguousBlocks) /
+              dftfe::utils::DEVICE_BLOCK_SIZE +
+            1,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          contiguousBlockSize,
+          numContiguousBlocks,
+          dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+          dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
           addToVecStartingContiguousBlockIds);
       }
 
       template <typename ValueType>
       void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const ValueType *                addFromVec,
-        double *                               addToVecReal,
-        double *                               addToVecImag,
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        double *                       addToVecReal,
+        double *                       addToVecImag,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
       {
-         axpyStridedBlockAtomicAddDeviceKernel<<<
-          (contiguousBlockSize*numContiguousBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(contiguousBlockSize,
-                       numContiguousBlocks,
-             dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
-            addToVecReal,
-            addToVecImag,
+        axpyStridedBlockAtomicAddDeviceKernel<<<
+          (contiguousBlockSize * numContiguousBlocks) /
+              dftfe::utils::DEVICE_BLOCK_SIZE +
+            1,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          contiguousBlockSize,
+          numContiguousBlocks,
+          dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+          addToVecReal,
+          addToVecImag,
           addToVecStartingContiguousBlockIds);
       }
 
@@ -548,9 +563,8 @@ namespace dftfe
       void
       ascal(const dftfe::size_type n, ValueType1 *x, const ValueType2 a)
       {
-        ascalDeviceKernel<<<
-          n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        ascalDeviceKernel<<<n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           n,
           dftfe::utils::makeDataTypeDeviceCompatible(x),
           dftfe::utils::makeDataTypeDeviceCompatible(a));
@@ -558,20 +572,22 @@ namespace dftfe
 
       template <typename ValueType1, typename ValueType2>
       void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const ValueType1              a,
-        const ValueType1 *             s,
-        ValueType2 *      x)
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1       a,
+                        const ValueType1 *     s,
+                        ValueType2 *           x)
       {
-        stridedBlockScaleDeviceKernel<<<
-          (contiguousBlockSize*numContiguousBlocks)/ dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(contiguousBlockSize,
-                                      numContiguousBlocks,
-                                      dftfe::utils::makeDataTypeDeviceCompatible(a),
-                                      dftfe::utils::makeDataTypeDeviceCompatible(s),
-                                      dftfe::utils::makeDataTypeDeviceCompatible(x));
+        stridedBlockScaleDeviceKernel<<<(contiguousBlockSize *
+                                         numContiguousBlocks) /
+                                            dftfe::utils::DEVICE_BLOCK_SIZE +
+                                          1,
+                                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          contiguousBlockSize,
+          numContiguousBlocks,
+          dftfe::utils::makeDataTypeDeviceCompatible(a),
+          dftfe::utils::makeDataTypeDeviceCompatible(s),
+          dftfe::utils::makeDataTypeDeviceCompatible(x));
       }
 
       void
@@ -1083,135 +1099,111 @@ namespace dftfe
                                          const std::complex<float> *copyFromVec,
                                          std::complex<double> *     copyToVec);
 
-      //stridedBlockScale
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const double              a,
-        const double *             s,
-        double *      x);
+      // stridedBlockScale
+      template void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const double           a,
+                        const double *         s,
+                        double *               x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const float              a,
-        const float *             s,
-        float *      x);
+      template void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const float            a,
+                        const float *          s,
+                        float *                x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const std::complex<double>              a,
-        const std::complex<double> *             s,
-        std::complex<double> *      x);
+      template void
+      stridedBlockScale(const dftfe::size_type      contiguousBlockSize,
+                        const dftfe::size_type      numContiguousBlocks,
+                        const std::complex<double>  a,
+                        const std::complex<double> *s,
+                        std::complex<double> *      x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const std::complex<float>              a,
-        const std::complex<float> *             s,
-        std::complex<float> *      x);  
+      template void
+      stridedBlockScale(const dftfe::size_type     contiguousBlockSize,
+                        const dftfe::size_type     numContiguousBlocks,
+                        const std::complex<float>  a,
+                        const std::complex<float> *s,
+                        std::complex<float> *      x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const double              a,
-        const double *             s,
-        float *      x); 
+      template void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const double           a,
+                        const double *         s,
+                        float *                x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const float              a,
-        const float *             s,
-        double *      x); 
+      template void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const float            a,
+                        const float *          s,
+                        double *               x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const std::complex<double>              a,
-        const std::complex<double> *             s,
-        std::complex<float> *      x); 
+      template void
+      stridedBlockScale(const dftfe::size_type      contiguousBlockSize,
+                        const dftfe::size_type      numContiguousBlocks,
+                        const std::complex<double>  a,
+                        const std::complex<double> *s,
+                        std::complex<float> *       x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const std::complex<float>              a,
-        const std::complex<float> *             s,
-        std::complex<double> *      x);  
+      template void
+      stridedBlockScale(const dftfe::size_type     contiguousBlockSize,
+                        const dftfe::size_type     numContiguousBlocks,
+                        const std::complex<float>  a,
+                        const std::complex<float> *s,
+                        std::complex<double> *     x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const double              a,
-        const double *             s,
-        std::complex<double> *      x); 
+      template void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const double           a,
+                        const double *         s,
+                        std::complex<double> * x);
 
-      template 
-      void
-      stridedBlockScale(
-        const dftfe::size_type         contiguousBlockSize,
-        const dftfe::size_type         numContiguousBlocks,
-        const double              a,
-        const double *             s,
-        std::complex<float> *      x);   
+      template void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const double           a,
+                        const double *         s,
+                        std::complex<float> *  x);
 
-     //axpyStridedBlockAtomicAdd
-      template
-      void
+      // axpyStridedBlockAtomicAdd
+      template void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const double *                         addFromVec,
-        double *                               addToVec,
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const double *                 addFromVec,
+        double *                       addToVec,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 
-      template
-      void
+      template void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const std::complex<double> *                         addFromVec,
-        std::complex<double> *                               addToVec,
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const std::complex<double> *   addFromVec,
+        std::complex<double> *         addToVec,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 
-      template
-      void
+      template void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const double *                addFromVec,
-        double *                               addToVecReal,
-        double *                               addToVecImag,
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const double *                 addFromVec,
+        double *                       addToVecReal,
+        double *                       addToVecImag,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 
-      template
-      void
+      template void
       axpyStridedBlockAtomicAdd(
-        const dftfe::size_type                     contiguousBlockSize,
-        const dftfe::size_type                    numContiguousBlocks,
-        const std::complex<double> *                addFromVec,
-        double *                               addToVecReal,
-        double *                               addToVecImag,
-        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);        
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const std::complex<double> *   addFromVec,
+        double *                       addToVecReal,
+        double *                       addToVecImag,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 
     } // namespace deviceKernelsGeneric
   }   // namespace utils

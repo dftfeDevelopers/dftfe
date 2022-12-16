@@ -3103,21 +3103,22 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                scalar,
-                                                d_invSqrtMassVectorDevice.begin(),
-                                                src.begin());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      numberWaveFunctions,
+      localVectorSize,
+      scalar,
+      d_invSqrtMassVectorDevice.begin(),
+      src.begin());
 
 
     if (scaleFlag)
       {
-        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                d_sqrtMassVectorDevice.begin(),
-                                                dst.begin());
-
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+          numberWaveFunctions,
+          localVectorSize,
+          1.0,
+          d_sqrtMassVectorDevice.begin(),
+          dst.begin());
       }
 
 
@@ -3193,11 +3194,12 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                d_invSqrtMassVectorDevice.begin(),
-                                                dst.begin());  
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      numberWaveFunctions,
+      localVectorSize,
+      1.0,
+      d_invSqrtMassVectorDevice.begin(),
+      dst.begin());
 
 
 
@@ -3205,11 +3207,12 @@ namespace dftfe
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                1.0/scalar,
-                                                d_sqrtMassVectorDevice.begin(),
-                                                src.begin());      
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+        numberWaveFunctions,
+        localVectorSize,
+        1.0 / scalar,
+        d_sqrtMassVectorDevice.begin(),
+        src.begin());
   }
 
 
@@ -3239,20 +3242,22 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                scalar,
-                                                d_invSqrtMassVectorDevice.begin(),
-                                                src.begin());
- 
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      numberWaveFunctions,
+      localVectorSize,
+      scalar,
+      d_invSqrtMassVectorDevice.begin(),
+      src.begin());
+
 
     if (scaleFlag)
       {
-        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                d_sqrtMassVectorDevice.begin(),
-                                                dst.begin());        
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+          numberWaveFunctions,
+          localVectorSize,
+          1.0,
+          d_sqrtMassVectorDevice.begin(),
+          dst.begin());
       }
 
 
@@ -3290,21 +3295,23 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                1.0,
-                                                d_invSqrtMassVectorDevice.begin(),
-                                                dst.begin());  
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+      numberWaveFunctions,
+      localVectorSize,
+      1.0,
+      d_invSqrtMassVectorDevice.begin(),
+      dst.begin());
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
-                                                localVectorSize,
-                                                1.0/scalar,
-                                                d_sqrtMassVectorDevice.begin(),
-                                                src.begin());
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+        numberWaveFunctions,
+        localVectorSize,
+        1.0 / scalar,
+        d_sqrtMassVectorDevice.begin(),
+        src.begin());
   }
 
 

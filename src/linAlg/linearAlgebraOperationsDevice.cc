@@ -546,19 +546,21 @@ namespace dftfe
 
               // scale src vector with M^{-1/2}
               //
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                alpha1,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                YArray.begin());
- 
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                alpha1,
+                operatorMatrix.getInvSqrtMassVec(),
+                YArray.begin());
 
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                XArray.begin());
- 
+
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                operatorMatrix.getSqrtMassVec(),
+                XArray.begin());
+
 
               //
               // call HX
@@ -576,17 +578,19 @@ namespace dftfe
             {
               // unscale src vector with M^{1/2}
               //
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0/alpha1Old,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                XArray.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0 / alpha1Old,
+                operatorMatrix.getSqrtMassVec(),
+                XArray.begin());
 
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                YArray.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                operatorMatrix.getInvSqrtMassVec(),
+                YArray.begin());
 
 
               dftfe::utils::deviceKernelsGeneric::axpby(
@@ -758,18 +762,20 @@ namespace dftfe
 
               // scale src vector with M^{-1/2}
               //
-             dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                alpha1,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                YArray1.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                alpha1,
+                operatorMatrix.getInvSqrtMassVec(),
+                YArray1.begin());
 
 
-             dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                XArray1.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                operatorMatrix.getSqrtMassVec(),
+                XArray1.begin());
 
 
               //
@@ -794,17 +800,19 @@ namespace dftfe
 
               // scale src vector with M^{-1/2}
               //
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                alpha1,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                YArray2.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                alpha1,
+                operatorMatrix.getInvSqrtMassVec(),
+                YArray2.begin());
 
-             dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                XArray2.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                operatorMatrix.getSqrtMassVec(),
+                XArray2.begin());
 
               //
               // call HX
@@ -823,17 +831,19 @@ namespace dftfe
             {
               // unscale src vector with M^{1/2}
               //
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0/alpha1Old,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                XArray1.begin());
- 
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                YArray1.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0 / alpha1Old,
+                operatorMatrix.getSqrtMassVec(),
+                XArray1.begin());
+
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                operatorMatrix.getInvSqrtMassVec(),
+                YArray1.begin());
 
 
 
@@ -858,17 +868,19 @@ namespace dftfe
 
               // unscale src vector with M^{1/2}
               //
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0/alpha1Old,
-                                                operatorMatrix.getSqrtMassVec(),
-                                                XArray2.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0 / alpha1Old,
+                operatorMatrix.getSqrtMassVec(),
+                XArray2.begin());
 
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
-                                                localVectorSize,
-                                                1.0,
-                                                operatorMatrix.getInvSqrtMassVec(),
-                                                YArray2.begin());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+                numberVectors,
+                localVectorSize,
+                1.0,
+                operatorMatrix.getInvSqrtMassVec(),
+                YArray2.begin());
 
 
               dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,
