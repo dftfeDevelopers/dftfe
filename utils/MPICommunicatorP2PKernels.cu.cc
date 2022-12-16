@@ -27,7 +27,7 @@
  * @author Sambit Das.
  */
 
-#ifdef DFTFE_WITH_DEVICE_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #  include <DeviceKernelLauncherConstants.h>
 #  include <DeviceDataTypeOverloads.h>
 #  include <MPICommunicatorP2PKernels.h>

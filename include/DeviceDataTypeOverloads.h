@@ -21,9 +21,9 @@
 #  ifndef dftfeDeviceDataTypeOverloads_h
 #    define dftfeDeviceDataTypeOverloads_h
 
-#    ifdef DFTFE_WITH_DEVICE_CUDA
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #      include "DeviceDataTypeOverloads.cu.h"
-#    elif DFTFE_WITH_DEVICE_HIP
+#    elif DFTFE_WITH_DEVICE_LANG_HIP
 #      include "DeviceDataTypeOverloads.hip.h"     
 #    endif
 

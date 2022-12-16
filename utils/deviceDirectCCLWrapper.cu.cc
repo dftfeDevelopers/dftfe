@@ -18,7 +18,7 @@
 //
 
 #if defined(DFTFE_WITH_DEVICE)
-#  if defined(DFTFE_WITH_DEVICE_CUDA)
+#  if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
 #    include <iostream>
 
 #    include <deviceDirectCCLWrapper.h>

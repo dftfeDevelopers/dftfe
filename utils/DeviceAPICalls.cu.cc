@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 
 
-#ifdef DFTFE_WITH_DEVICE_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #  include <DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>

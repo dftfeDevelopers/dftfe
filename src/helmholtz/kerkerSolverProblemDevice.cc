@@ -792,7 +792,7 @@ namespace dftfe
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
-#ifdef DFTFE_WITH_DEVICE_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
                          smem);

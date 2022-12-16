@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 
 
-#ifdef DFTFE_WITH_DEVICE_HIP
+#ifdef DFTFE_WITH_DEVICE_LANG_HIP
 #  include <DeviceBlasWrapper.h>
 #  include <stdio.h>
 #  include <vector>

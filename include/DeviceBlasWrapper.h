@@ -38,7 +38,7 @@ namespace dftfe
       deviceBlasStatus_t
       setStream(deviceBlasHandle_t handle, deviceStream_t stream);
 
-#    ifdef DFTFE_WITH_DEVICE_CUDA
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       deviceBlasStatus_t
       setMathMode(deviceBlasHandle_t handle, deviceBlasMath_t mathMode);
 #    endif

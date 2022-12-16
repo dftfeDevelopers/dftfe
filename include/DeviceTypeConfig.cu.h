@@ -27,7 +27,7 @@ namespace dftfe
     typedef cudaStream_t    deviceStream_t;
     typedef cudaEvent_t     deviceEvent_t;
     typedef cuDoubleComplex deviceDoubleComplex;
-
+    typedef cuFloatComplex deviceFloatComplex;
 
     // static consts
     static const deviceError_t deviceSuccess = cudaSuccess;
