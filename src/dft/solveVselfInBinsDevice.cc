@@ -148,32 +148,6 @@ namespace dftfe
 
 
 
-      __global__ void
-      daxpyAtomicAddKernel(const unsigned int contiguousBlockSize,
-                           const unsigned int numContiguousBlocks,
-                           const double *     addFromVec,
-                           double *           addToVec,
-                           const dealii::types::global_dof_index
-                             *addToVecStartingContiguousBlockIds)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex      = index / contiguousBlockSize;
-            unsigned int intraBlockIndex = index % contiguousBlockSize;
-            atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      addFromVec[index]);
-          }
-      }
-
-
-
       void
       computeAX(
         dftfe::utils::deviceBlasHandle_t &    handle,
@@ -270,16 +244,13 @@ namespace dftfe
           totalLocallyOwnedCells);
 
         if (totalLocallyOwnedCells > 0)
-          daxpyAtomicAddKernel<<<
-            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE * totalLocallyOwnedCells *
-              numberNodesPerElement,
-            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+           dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             cellStiffnessMatrixTimesVectorD.begin(),
             dst.begin(),
-            cellLocalProcIndexIdMapD.begin());
+            cellLocalProcIndexIdMapD.begin());          
+
 
         // think dirichlet hanging node linked to two master solved nodes
         if ((localSize + ghostSize) > 0)
