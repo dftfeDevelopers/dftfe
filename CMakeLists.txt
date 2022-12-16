@@ -108,7 +108,7 @@ SET(TARGET_SRC
 IF ("${GPU_LANG}" STREQUAL "cuda")
 
 SET(DEVICE_SRC
-  ./utils/deviceKernelsGeneric.cu.cc
+  ./utils/DeviceKernelsGeneric.cc
   ./utils/deviceDirectCCLWrapper.cu.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
@@ -123,7 +123,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
   ./utils/DeviceBlasWrapper.cu.cc
-  ./utils/MPICommunicatorP2PKernels.cu.cc
+  ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc
@@ -134,8 +134,7 @@ SET(DEVICE_SRC
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 
 SET(DEVICE_SRC
-  ./utils/deviceKernelsGeneric.hip.cc
-  ./utils/deviceDirectCCLWrapper.hip.cc
+  ./utils/DeviceKernelsGeneric.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
@@ -149,7 +148,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.hip.cc
   ./utils/DeviceBlasWrapper.hip.cc
-  ./utils/MPICommunicatorP2PKernels.hip.cc
+  ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc

@@ -89,7 +89,7 @@ namespace dftfe
       accumAddFromRecvBufferDeviceKernel(
         const size_type        totalFlattenedSize,
         const size_type        blockSize,
-        const cuDoubleComplex *recvBuffer,
+        const dftfe::utils::deviceDoubleComplex *recvBuffer,
         const size_type *      ownedLocalIndicesForTargetProcs,
         double *               dataRealArray,
         double *               dataImagArray)
@@ -116,7 +116,7 @@ namespace dftfe
       accumAddFromRecvBufferDeviceKernel(
         const size_type       totalFlattenedSize,
         const size_type       blockSize,
-        const cuFloatComplex *recvBuffer,
+        const dftfe::utils::deviceFloatComplex *recvBuffer,
         const size_type *     ownedLocalIndicesForTargetProcs,
         float *               dataRealArray,
         float *               dataImagArray)
@@ -173,6 +173,7 @@ namespace dftfe
         const size_type blockSize,
         MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &sendBuffer)
     {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA      
       gatherSendBufferDeviceKernel<<<(ownedLocalIndicesForTargetProcs.size() *
                                       blockSize) /
                                          dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -184,6 +185,19 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP 
+      hipLaunchKernelGGL(gatherSendBufferDeviceKernel,(ownedLocalIndicesForTargetProcs.size() *
+                                      blockSize) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE +
+                                       1,
+                                     dftfe::utils::DEVICE_BLOCK_SIZE,
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        blockSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
+#endif                                     
     }
 
     template <>
@@ -215,7 +229,7 @@ namespace dftfe
         tempDoubleRealDataArray.data(),
         tempDoubleImagDataArray.data());
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA 
       accumAddFromRecvBufferDeviceKernel<<<
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -230,6 +244,22 @@ namespace dftfe
           tempDoubleRealDataArray.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
           tempDoubleImagDataArray.data()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(accumAddFromRecvBufferDeviceKernel,
+        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        blockSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempDoubleRealDataArray.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempDoubleImagDataArray.data()));
+#endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
         locallyOwnedSize * blockSize,
@@ -266,7 +296,7 @@ namespace dftfe
         tempFloatRealDataArray.data(),
         tempFloatImagDataArray.data());
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       accumAddFromRecvBufferDeviceKernel<<<
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -281,6 +311,22 @@ namespace dftfe
           tempFloatRealDataArray.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
           tempFloatImagDataArray.data()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(accumAddFromRecvBufferDeviceKernel,
+        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        blockSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempFloatRealDataArray.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempFloatImagDataArray.data()));
+#endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
         locallyOwnedSize * blockSize,
@@ -309,6 +355,7 @@ namespace dftfe
           &tempFloatImagDataArray,
         MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA      
       accumAddFromRecvBufferDeviceKernel<<<
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -320,6 +367,19 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(accumAddFromRecvBufferDeviceKernel,
+        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        blockSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+#endif
     }
 
     template <>
@@ -342,6 +402,7 @@ namespace dftfe
           &tempFloatImagDataArray,
         MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &dataArray)
     {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA       
       accumAddFromRecvBufferDeviceKernel<<<
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -353,6 +414,19 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(accumAddFromRecvBufferDeviceKernel,
+        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        blockSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+#endif
     }
 
     template class MPICommunicatorP2PKernels<double,
