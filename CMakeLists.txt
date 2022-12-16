@@ -109,7 +109,7 @@ IF ("${GPU_LANG}" STREQUAL "cuda")
 
 SET(DEVICE_SRC
   ./utils/DeviceKernelsGeneric.cc
-  ./utils/deviceDirectCCLWrapper.cu.cc
+  ./utils/DeviceDirectCCLWrapperNCCL.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
@@ -461,14 +461,16 @@ target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 #
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH
 #
-IF (WITH_NCCL)
-  find_package(NCCL REQUIRED)
-  IF (NCCL_FOUND)
-     MESSAGE(STATUS "Will Link With NCCL")
-     ADD_DEFINITIONS(-DDFTFE_WITH_NCCL)
-     find_package(MPI REQUIRED)
-     target_link_libraries(${TARGETLIB} PUBLIC NCCL MPI::MPI_CXX)
-  ENDIF()
+IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "cuda")
+ IF (WITH_NCCL)
+   find_package(NCCL REQUIRED)
+   IF (NCCL_FOUND)
+      MESSAGE(STATUS "Will Link With NCCL")
+      ADD_DEFINITIONS(-DDFTFE_WITH_CUDA_NCCL)
+      find_package(MPI REQUIRED)
+      target_link_libraries(${TARGETLIB} PUBLIC NCCL MPI::MPI_CXX)
+   ENDIF()
+ ENDIF()
 ENDIF()
 
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
