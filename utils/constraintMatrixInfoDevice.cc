@@ -659,11 +659,11 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      dftfe::utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice((fieldVector.localSize() *
-                                                   fieldVector.numVectors()),
-                                                  fieldVector.begin(),
-                                                  tempReal,
-                                                  tempImag);
+      dftfe::utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
+        (fieldVector.localSize() * fieldVector.numVectors()),
+        fieldVector.begin(),
+        tempReal,
+        tempImag);
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
@@ -696,11 +696,11 @@ namespace dftfe
         d_columnValuesDevice.begin(),
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
-      dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice((fieldVector.localSize() *
-                                                   fieldVector.numVectors()),
-                                                  tempReal,
-                                                  tempImag,
-                                                  fieldVector.begin());
+      dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
+        (fieldVector.localSize() * fieldVector.numVectors()),
+        tempReal,
+        tempImag,
+        fieldVector.begin());
     }
 
     //
@@ -717,11 +717,11 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      dftfe::utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice((fieldVector.localSize() *
-                                                   fieldVector.numVectors()),
-                                                  fieldVector.begin(),
-                                                  tempReal,
-                                                  tempImag);
+      dftfe::utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
+        (fieldVector.localSize() * fieldVector.numVectors()),
+        fieldVector.begin(),
+        tempReal,
+        tempImag);
 
 
       distributeSlaveToMasterKernelAtomicAdd<<<
@@ -754,11 +754,11 @@ namespace dftfe
         d_columnValuesDevice.begin(),
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
 
-      dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice((fieldVector.localSize() *
-                                                   fieldVector.numVectors()),
-                                                  tempReal,
-                                                  tempImag,
-                                                  fieldVector.begin());
+      dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
+        (fieldVector.localSize() * fieldVector.numVectors()),
+        tempReal,
+        tempImag,
+        fieldVector.begin());
     }
 
 

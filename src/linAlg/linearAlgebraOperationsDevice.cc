@@ -580,16 +580,11 @@ namespace dftfe
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
       dftfe::utils::deviceKernelsGeneric::axpby(
-        totalVectorSize,
-        XArray.begin(),
-        YArray.begin(),
-        alpha2,
-        (double)1);
+        totalVectorSize, XArray.begin(), YArray.begin(), alpha2, (double)1);
 
-      dftfe::utils::deviceKernelsGeneric::ascal(
-        totalVectorSize,
-        YArray.begin(),
-        alpha1);
+      dftfe::utils::deviceKernelsGeneric::ascal(totalVectorSize,
+                                                YArray.begin(),
+                                                alpha1);
 
       //
       // polynomial loop
@@ -604,11 +599,7 @@ namespace dftfe
           if (degree == 2)
             {
               dftfe::utils::deviceKernelsGeneric::axpby(
-                totalVectorSize,
-                YArray.begin(),
-                XArray.begin(),
-                coeff,
-                alpha2);
+                totalVectorSize, YArray.begin(), XArray.begin(), coeff, alpha2);
 
               // scale src vector with M^{-1/2}
               //
@@ -670,11 +661,7 @@ namespace dftfe
 
 
               dftfe::utils::deviceKernelsGeneric::axpby(
-                totalVectorSize,
-                YArray.begin(),
-                XArray.begin(),
-                coeff,
-                alpha2);
+                totalVectorSize, YArray.begin(), XArray.begin(), coeff, alpha2);
 
               scaleFlag = true;
               //
@@ -805,29 +792,19 @@ namespace dftfe
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
       dftfe::utils::deviceKernelsGeneric::axpby(
-        totalVectorSize,
-        XArray1.begin(),
-        YArray1.begin(),
-        alpha2,
-        (double)1);
+        totalVectorSize, XArray1.begin(), YArray1.begin(), alpha2, (double)1);
 
 
-      dftfe::utils::deviceKernelsGeneric::ascal(
-        totalVectorSize,
-        YArray1.begin(),
-        alpha1);
+      dftfe::utils::deviceKernelsGeneric::ascal(totalVectorSize,
+                                                YArray1.begin(),
+                                                alpha1);
 
       dftfe::utils::deviceKernelsGeneric::axpby(
-        totalVectorSize,
-        XArray2.begin(),
-        YArray2.begin(),
-        alpha2,
-        (double)1);
+        totalVectorSize, XArray2.begin(), YArray2.begin(), alpha2, (double)1);
 
-      dftfe::utils::deviceKernelsGeneric::ascal(
-        totalVectorSize,
-        YArray2.begin(),
-        alpha1);
+      dftfe::utils::deviceKernelsGeneric::ascal(totalVectorSize,
+                                                YArray2.begin(),
+                                                alpha1);
 
       bool overlap = false;
       //
@@ -844,12 +821,11 @@ namespace dftfe
 
           if (degree == 2)
             {
-              dftfe::utils::deviceKernelsGeneric::axpby(
-                totalVectorSize,
-                YArray1.begin(),
-                XArray1.begin(),
-                coeff,
-                alpha2);
+              dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,
+                                                        YArray1.begin(),
+                                                        XArray1.begin(),
+                                                        coeff,
+                                                        alpha2);
 
               // scale src vector with M^{-1/2}
               //
@@ -886,12 +862,11 @@ namespace dftfe
                                        dftParams.useMixedPrecCheby);
 
 
-              dftfe::utils::deviceKernelsGeneric::axpby(
-                totalVectorSize,
-                YArray2.begin(),
-                XArray2.begin(),
-                coeff,
-                alpha2);
+              dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,
+                                                        YArray2.begin(),
+                                                        XArray2.begin(),
+                                                        coeff,
+                                                        alpha2);
 
 
               // scale src vector with M^{-1/2}
@@ -954,12 +929,11 @@ namespace dftfe
                 operatorMatrix.getInvSqrtMassVec());
 
 
-              dftfe::utils::deviceKernelsGeneric::axpby(
-                totalVectorSize,
-                YArray1.begin(),
-                XArray1.begin(),
-                coeff,
-                alpha2);
+              dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,
+                                                        YArray1.begin(),
+                                                        XArray1.begin(),
+                                                        coeff,
+                                                        alpha2);
 
               scaleFlag = true;
               //
@@ -996,13 +970,12 @@ namespace dftfe
                 dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
                 operatorMatrix.getInvSqrtMassVec());
 
-                            
-              dftfe::utils::deviceKernelsGeneric::axpby(
-                totalVectorSize,
-                YArray2.begin(),
-                XArray2.begin(),
-                coeff,
-                alpha2);
+
+              dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,
+                                                        YArray2.begin(),
+                                                        XArray2.begin(),
+                                                        coeff,
+                                                        alpha2);
 
               //
               // call HX
@@ -1097,7 +1070,11 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors * localVectorSize,YArray1.begin(),tempFloatArray.begin());
+                  dftfe::utils::deviceKernelsGeneric::
+                    copyValueType1ArrToValueType2Arr(numberVectors *
+                                                       localVectorSize,
+                                                     YArray1.begin(),
+                                                     tempFloatArray.begin());
 
                   tempFloatArray.updateGhostValuesBegin();
                 }
@@ -1121,9 +1098,12 @@ namespace dftfe
                 {
                   tempFloatArray.updateGhostValuesEnd();
                   if (n_ghosts != 0)
-                     dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors * n_ghosts,
-                     tempFloatArray.begin() +localVectorSize * numberVectors,
-                     YArray1.begin() +localVectorSize * numberVectors);                    
+                    dftfe::utils::deviceKernelsGeneric::
+                      copyValueType1ArrToValueType2Arr(
+                        numberVectors * n_ghosts,
+                        tempFloatArray.begin() +
+                          localVectorSize * numberVectors,
+                        YArray1.begin() + localVectorSize * numberVectors);
                 }
               else
                 YArray1.updateGhostValuesEnd();
@@ -1136,7 +1116,11 @@ namespace dftfe
                 {
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
-                      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors * totalSize,XArray2.begin(),tempFloatArray.begin());
+                      dftfe::utils::deviceKernelsGeneric::
+                        copyValueType1ArrToValueType2Arr(
+                          numberVectors * totalSize,
+                          XArray2.begin(),
+                          tempFloatArray.begin());
 
                       tempFloatArray.accumulateAddLocallyOwnedBegin();
                     }
@@ -1208,7 +1192,11 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors * localVectorSize,YArray2.begin(),tempFloatArray.begin());
+                  dftfe::utils::deviceKernelsGeneric::
+                    copyValueType1ArrToValueType2Arr(numberVectors *
+                                                       localVectorSize,
+                                                     YArray2.begin(),
+                                                     tempFloatArray.begin());
 
                   tempFloatArray.updateGhostValuesBegin();
                 }
@@ -1231,9 +1219,12 @@ namespace dftfe
                 {
                   tempFloatArray.updateGhostValuesEnd();
                   if (n_ghosts != 0)
-                     dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors * n_ghosts,
-                     tempFloatArray.begin() +localVectorSize * numberVectors,
-                     YArray2.begin()+localVectorSize * numberVectors);  
+                    dftfe::utils::deviceKernelsGeneric::
+                      copyValueType1ArrToValueType2Arr(
+                        numberVectors * n_ghosts,
+                        tempFloatArray.begin() +
+                          localVectorSize * numberVectors,
+                        YArray2.begin() + localVectorSize * numberVectors);
                 }
               else
                 YArray2.updateGhostValuesEnd();
@@ -1244,7 +1235,10 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
-                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors * totalSize,XArray1.begin(),tempFloatArray.begin());
+                  dftfe::utils::deviceKernelsGeneric::
+                    copyValueType1ArrToValueType2Arr(numberVectors * totalSize,
+                                                     XArray1.begin(),
+                                                     tempFloatArray.begin());
 
                   tempFloatArray.accumulateAddLocallyOwnedBegin();
                 }
@@ -1307,7 +1301,11 @@ namespace dftfe
                   YArray2.zeroOutGhosts();
                   if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
-                      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numberVectors*totalSize,XArray2.begin(),tempFloatArray.begin());
+                      dftfe::utils::deviceKernelsGeneric::
+                        copyValueType1ArrToValueType2Arr(
+                          numberVectors * totalSize,
+                          XArray2.begin(),
+                          tempFloatArray.begin());
 
                       tempFloatArray.accumulateAddLocallyOwned();
 
@@ -2192,7 +2190,8 @@ namespace dftfe
         XSP(MPadded * N, dataTypes::numberFP32(0));
 
 
-      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(N*M,X,XSP.begin());
+      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+        N * M, X, XSP.begin());
 
       const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
       const unsigned int dofsBlockSize =
@@ -2563,7 +2562,8 @@ namespace dftfe
         XSP(MPadded * N, dataTypes::numberFP32(0));
 
 
-      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(N*M,X,XSP.begin());
+      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+        N * M, X, XSP.begin());
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -3424,7 +3424,8 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         XSP(MPadded * N, dataTypes::numberFP32(0));
 
-      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(N*M,X,XSP.begin());
+      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+        N * M, X, XSP.begin());
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -3739,7 +3740,8 @@ namespace dftfe
         XSP(MPadded * N, dataTypes::numberFP32(0));
 
 
-      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(N*M,X,XSP.begin());
+      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+        N * M, X, XSP.begin());
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -4127,13 +4129,9 @@ namespace dftfe
 
               for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                 {
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                    chebyBlockSize,
-                    N,
-                    M,
-                    k,
-                    X,
-                    XBlock.begin());
+                  dftfe::utils::deviceKernelsGeneric::
+                    stridedCopyToBlockConstantStride(
+                      chebyBlockSize, N, M, k, X, XBlock.begin());
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
                   HXBlock.setValue(0);
@@ -4144,13 +4142,13 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                                     scaleFlag,
                                     scalar,
                                     HXBlock);
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvec,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
+                  dftfe::utils::deviceKernelsGeneric::
+                    stridedCopyFromBlockConstantStride(B,
+                                                       chebyBlockSize,
+                                                       M,
+                                                       k - jvec,
+                                                       HXBlock.begin(),
+                                                       HXBlockFull.begin());
                 }
 
               computeResidualDeviceKernel<<<

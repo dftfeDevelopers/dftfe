@@ -408,7 +408,7 @@ namespace dftfe
           BVec,
           numCells * numNodesPerElement,
           Xb.begin(),
-            cellWaveFunctionMatrix.begin(),
+          cellWaveFunctionMatrix.begin(),
           (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin());
 
         const int blockSize    = cellsBlockSize;
@@ -424,10 +424,16 @@ namespace dftfe
           shapeFunctionValuesNLPReferenceD(numQuadsNLP * numNodesPerElement,
                                            dataTypes::number(0.0));
 
-        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numQuads * numNodesPerElement,(operatorMatrix.getShapeFunctionValuesTransposed()).begin(),shapeFunctionValuesReferenceD.begin());
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+          numQuads * numNodesPerElement,
+          (operatorMatrix.getShapeFunctionValuesTransposed()).begin(),
+          shapeFunctionValuesReferenceD.begin());
 
 
-        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numQuadsNLP * numNodesPerElement,(operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),shapeFunctionValuesNLPReferenceD.begin());
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+          numQuadsNLP * numNodesPerElement,
+          (operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),
+          shapeFunctionValuesNLPReferenceD.begin());
 
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
@@ -515,10 +521,14 @@ namespace dftfe
 
                     strideB = numNodesPerElement * numQuads;
 
-                    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentBlockSize * numQuads * numNodesPerElement,(operatorMatrix
-                         .getShapeFunctionGradientValuesXTransposed())
-                          .begin() +
-                        startingId * numQuads * numNodesPerElement,shapeFunctionGradientValuesXTransposedDevice.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      copyValueType1ArrToValueType2Arr(
+                        currentBlockSize * numQuads * numNodesPerElement,
+                        (operatorMatrix
+                           .getShapeFunctionGradientValuesXTransposed())
+                            .begin() +
+                          startingId * numQuads * numNodesPerElement,
+                        shapeFunctionGradientValuesXTransposedDevice.begin());
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
@@ -542,10 +552,14 @@ namespace dftfe
                       currentBlockSize);
 
 
-                    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentBlockSize * numQuads * numNodesPerElement,(operatorMatrix
-                         .getShapeFunctionGradientValuesYTransposed())
-                          .begin() +
-                        startingId * numQuads * numNodesPerElement,shapeFunctionGradientValuesYTransposedDevice.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      copyValueType1ArrToValueType2Arr(
+                        currentBlockSize * numQuads * numNodesPerElement,
+                        (operatorMatrix
+                           .getShapeFunctionGradientValuesYTransposed())
+                            .begin() +
+                          startingId * numQuads * numNodesPerElement,
+                        shapeFunctionGradientValuesYTransposedDevice.begin());
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
@@ -568,10 +582,14 @@ namespace dftfe
                       strideC,
                       currentBlockSize);
 
-                    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentBlockSize * numQuads * numNodesPerElement,(operatorMatrix
-                         .getShapeFunctionGradientValuesZTransposed())
-                          .begin() +
-                        startingId * numQuads * numNodesPerElement,shapeFunctionGradientValuesZTransposedDevice.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      copyValueType1ArrToValueType2Arr(
+                        currentBlockSize * numQuads * numNodesPerElement,
+                        (operatorMatrix
+                           .getShapeFunctionGradientValuesZTransposed())
+                            .begin() +
+                          startingId * numQuads * numNodesPerElement,
+                        shapeFunctionGradientValuesZTransposedDevice.begin());
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                       operatorMatrix.getDeviceBlasHandle(),
@@ -698,7 +716,11 @@ namespace dftfe
                       numNodesPerElement * 3,
                       currentBlockSize * numQuadsNLP);
 
-                    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentBlockSize * numQuadsNLP * numNodesPerElement * 3,shapeFunctionGradientValuesNLPD.begin(),shapeFunctionGradientValuesNLPDCopy.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      copyValueType1ArrToValueType2Arr(
+                        currentBlockSize * numQuadsNLP * numNodesPerElement * 3,
+                        shapeFunctionGradientValuesNLPD.begin(),
+                        shapeFunctionGradientValuesNLPDCopy.begin());
 
                     const int strideCNLPGrad = BVec * 3 * numQuadsNLP;
                     const int strideBNLPGrad =
@@ -992,13 +1014,8 @@ namespace dftfe
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
                                  ->local_size();
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-          numPsi,
-          N,
-          M,
-          startingVecId,
-          X,
-            deviceFlattenedArrayBlock.begin());
+        dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
+          numPsi, N, M, startingVecId, X, deviceFlattenedArrayBlock.begin());
         deviceFlattenedArrayBlock.updateGhostValues();
 
         (operatorMatrix.getOverloadedConstraintMatrix())

@@ -3272,18 +3272,14 @@ namespace dftfe
     if (singlePrecCommun)
       {
         dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-          numberWaveFunctions * localSize,
-          src.begin(),
-          tempFloatArray.begin());      
+          numberWaveFunctions * localSize, src.begin(), tempFloatArray.begin());
         tempFloatArray.updateGhostValues();
 
         if (n_ghosts != 0)
           dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
             numberWaveFunctions * n_ghosts,
-            tempFloatArray.begin() +
-              localSize * numberWaveFunctions,
-            src.begin() +
-              localSize * numberWaveFunctions);  
+            tempFloatArray.begin() + localSize * numberWaveFunctions,
+            src.begin() + localSize * numberWaveFunctions);
       }
     else
       {
@@ -3320,9 +3316,7 @@ namespace dftfe
     if (singlePrecCommun)
       {
         dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-          numberWaveFunctions * totalSize,
-          dst.begin(),
-          tempFloatArray.begin());        
+          numberWaveFunctions * totalSize, dst.begin(), tempFloatArray.begin());
 
         tempFloatArray.accumulateAddLocallyOwned();
 
@@ -3523,20 +3517,19 @@ namespace dftfe
       {
         if (chebMixedPrec)
           {
-            dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-              numberWaveFunctions * localSize,
-              src.begin(),
-                tempFloatArray.begin());            
+            dftfe::utils::deviceKernelsGeneric::
+              copyValueType1ArrToValueType2Arr(numberWaveFunctions * localSize,
+                                               src.begin(),
+                                               tempFloatArray.begin());
 
             tempFloatArray.updateGhostValues();
 
             if (n_ghosts != 0)
-              dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-                numberWaveFunctions * n_ghosts,
-                  tempFloatArray.begin() +
-                  localSize * numberWaveFunctions,
-                src.begin() +
-                  localSize * numberWaveFunctions);                
+              dftfe::utils::deviceKernelsGeneric::
+                copyValueType1ArrToValueType2Arr(
+                  numberWaveFunctions * n_ghosts,
+                  tempFloatArray.begin() + localSize * numberWaveFunctions,
+                  src.begin() + localSize * numberWaveFunctions);
           }
         else
           {
@@ -3585,9 +3578,7 @@ namespace dftfe
     if (chebMixedPrec)
       {
         dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-          numberWaveFunctions * totalSize,
-          dst.begin(),
-          tempFloatArray.begin());        
+          numberWaveFunctions * totalSize, dst.begin(), tempFloatArray.begin());
 
         tempFloatArray.accumulateAddLocallyOwned();
 
@@ -3676,13 +3667,9 @@ namespace dftfe
 
             for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
               {
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                  chebyBlockSize,
-                  N,
-                  M,
-                  k,
-                  X,
-                  XBlock.begin());
+                dftfe::utils::deviceKernelsGeneric::
+                  stridedCopyToBlockConstantStride(
+                    chebyBlockSize, N, M, k, X, XBlock.begin());
 
                 // evaluate XBlock^{T} times H^{T} and store in HXBlock
                 HXBlock.setValue(0);
@@ -3698,13 +3685,13 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                    false,
                    onlyHPrimePartForFirstOrderDensityMatResponse);
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvec,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
+                dftfe::utils::deviceKernelsGeneric::
+                  stridedCopyFromBlockConstantStride(B,
+                                                     chebyBlockSize,
+                                                     M,
+                                                     k - jvec,
+                                                     HXBlock.begin(),
+                                                     HXBlockFull.begin());
               }
 
             // Comptute local XTrunc^{T}*HConj*XConj.
@@ -3919,13 +3906,9 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
                 // wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                    chebyBlockSize,
-                    N,
-                    M,
-                    k,
-                    X,
-                    XBlock.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -3941,13 +3924,13 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                        false,
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvec,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(B,
+                                                         chebyBlockSize,
+                                                         M,
+                                                         k - jvec,
+                                                         HXBlock.begin(),
+                                                         HXBlockFull.begin());
                   }
 
                 // evalute X^{T} times HXBlock
@@ -3996,15 +3979,9 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-
-
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                    chebyBlockSize,
-                    N,
-                    M,
-                    k,
-                    X,
-                    XBlock.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4020,14 +3997,13 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                        false,
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvecNew,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
-
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(B,
+                                                         chebyBlockSize,
+                                                         M,
+                                                         k - jvecNew,
+                                                         HXBlock.begin(),
+                                                         HXBlockFull.begin());
                   }
 
                 // evalute X^{T} times HXBlock
@@ -4240,9 +4216,7 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
       XFP32(M * N, dataTypes::numberFP32(0.0));
 
     dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-      N * M,
-      X,
-      XFP32.begin()); 
+      N * M, X, XFP32.begin());
 
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST_PINNED>
@@ -4328,14 +4302,9 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
                 // blocks of B wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                    chebyBlockSize,
-                    N,
-                    M,
-                    k,
-                    X,
-                    XBlock.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4365,22 +4334,22 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                          onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvec + B > Noc)
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvec,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());                      
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(B,
+                                                           chebyBlockSize,
+                                                           M,
+                                                           k - jvec,
+                                                           HXBlock.begin(),
+                                                           HXBlockFull.begin());
                     else
-dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvec,
-                    HXBlock.begin(),
-                    HXBlockFullFP32.begin());                      
- 
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          B,
+                          chebyBlockSize,
+                          M,
+                          k - jvec,
+                          HXBlock.begin(),
+                          HXBlockFullFP32.begin());
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
@@ -4456,13 +4425,9 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                    chebyBlockSize,
-                    N,
-                    M,
-                    k,
-                    X,
-                    XBlock.begin());
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4492,21 +4457,22 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                          onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvecNew + B > Noc)
-  dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvecNew,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(B,
+                                                           chebyBlockSize,
+                                                           M,
+                                                           k - jvecNew,
+                                                           HXBlock.begin(),
+                                                           HXBlockFull.begin());
                     else
-  dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k-jvecNew,
-                    HXBlock.begin(),
-                    HXBlockFullFP32.begin());
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          B,
+                          chebyBlockSize,
+                          M,
+                          k - jvecNew,
+                          HXBlock.begin(),
+                          HXBlockFullFP32.begin());
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times

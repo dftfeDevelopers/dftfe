@@ -38,11 +38,11 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+  dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
     numberWaveFunctions,
     totalLocallyOwnedCells * d_numberNodesPerElement,
     src,
-      d_cellWaveFunctionMatrix.begin(),
+    d_cellWaveFunctionMatrix.begin(),
     d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
 

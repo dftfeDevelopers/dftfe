@@ -265,7 +265,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         totalLocallyOwnedCells * d_numberNodesPerElement,
         src,
-          d_cellWaveFunctionMatrix.begin(),
+        d_cellWaveFunctionMatrix.begin(),
         d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
       dftfe::utils::deviceBlasWrapper::gemmBatched(

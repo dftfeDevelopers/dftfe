@@ -282,10 +282,11 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           tempFloatImagDataArray.data()));
 
-      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(locallyOwnedSize * blockSize,
-                                                  tempFloatRealDataArray.data(),
-                                                  tempFloatImagDataArray.data(),
-                                                  dataArray.data());
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
+        locallyOwnedSize * blockSize,
+        tempFloatRealDataArray.data(),
+        tempFloatImagDataArray.data(),
+        dataArray.data());
     }
 
     template <>

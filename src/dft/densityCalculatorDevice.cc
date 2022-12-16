@@ -240,11 +240,11 @@ namespace dftfe
       shapeFunctionValuesTransposedDevice.setValue(zero);
 
 
-      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numNodesPerElement * numQuadPoints,
-                     (operatorMatrix.getShapeFunctionValuesTransposed(
-                            use2pPlusOneGLQuad))
-                           .begin(),
-                     shapeFunctionValuesTransposedDevice.begin()); 
+      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+        numNodesPerElement * numQuadPoints,
+        (operatorMatrix.getShapeFunctionValuesTransposed(use2pPlusOneGLQuad))
+          .begin(),
+        shapeFunctionValuesTransposedDevice.begin());
 
       dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
         shapeFunctionGradientValuesXTransposedDevice;
@@ -369,11 +369,12 @@ namespace dftfe
                               partialOccupVecDevice);
                         }
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                        BVec,
-                        totalNumWaveFunctions,
-                        numLocalDofs,
-                        jvec,
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyToBlockConstantStride(
+                          BVec,
+                          totalNumWaveFunctions,
+                          numLocalDofs,
+                          jvec,
                           X + numLocalDofs * totalNumWaveFunctions *
                                 ((dftParams.spinPolarized + 1) * kPoint +
                                  spinIndex),
@@ -396,15 +397,16 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                               const unsigned int startingCellId =
                                 iblock * cellsBlockSize;
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-                                BVec,
-                                currentCellsBlockSize * numNodesPerElement,
+                              dftfe::utils::deviceKernelsGeneric::
+                                stridedCopyToBlock(
+                                  BVec,
+                                  currentCellsBlockSize * numNodesPerElement,
                                   deviceFlattenedArrayBlock.begin(),
                                   cellWaveFunctionMatrix,
-                                (operatorMatrix
-                                   .getFlattenedArrayCellLocalProcIndexIdMap())
-                                    .begin() +
-                                  startingCellId * numNodesPerElement);
+                                  (operatorMatrix
+                                     .getFlattenedArrayCellLocalProcIndexIdMap())
+                                      .begin() +
+                                    startingCellId * numNodesPerElement);
 
                               NumberType scalarCoeffAlpha = 1.0;
                               NumberType scalarCoeffBeta  = 0;
@@ -439,32 +441,41 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
                                   strideB = numNodesPerElement * numQuadPoints;
 
 
-                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
-                           (operatorMatrix
-                                       .getShapeFunctionGradientValuesXTransposed())
-                                        .begin() +
-                                      startingCellId * numNodesPerElement *
-                                        numQuadPoints,
-                                  shapeFunctionGradientValuesXTransposedDevice
-                                        .begin()); 
+                                  dftfe::utils::deviceKernelsGeneric::
+                                    copyValueType1ArrToValueType2Arr(
+                                      currentCellsBlockSize *
+                                        numNodesPerElement * numQuadPoints,
+                                      (operatorMatrix
+                                         .getShapeFunctionGradientValuesXTransposed())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement *
+                                          numQuadPoints,
+                                      shapeFunctionGradientValuesXTransposedDevice
+                                        .begin());
 
-                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
-                           (operatorMatrix
-                                       .getShapeFunctionGradientValuesYTransposed())
-                                        .begin() +
-                                      startingCellId * numNodesPerElement *
-                                        numQuadPoints,
-                                  shapeFunctionGradientValuesYTransposedDevice
-                                        .begin()); 
+                                  dftfe::utils::deviceKernelsGeneric::
+                                    copyValueType1ArrToValueType2Arr(
+                                      currentCellsBlockSize *
+                                        numNodesPerElement * numQuadPoints,
+                                      (operatorMatrix
+                                         .getShapeFunctionGradientValuesYTransposed())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement *
+                                          numQuadPoints,
+                                      shapeFunctionGradientValuesYTransposedDevice
+                                        .begin());
 
-                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
-                           (operatorMatrix
-                                       .getShapeFunctionGradientValuesZTransposed())
-                                        .begin() +
-                                      startingCellId * numNodesPerElement *
-                                        numQuadPoints,
-                                  shapeFunctionGradientValuesZTransposedDevice
-                                        .begin()); 
+                                  dftfe::utils::deviceKernelsGeneric::
+                                    copyValueType1ArrToValueType2Arr(
+                                      currentCellsBlockSize *
+                                        numNodesPerElement * numQuadPoints,
+                                      (operatorMatrix
+                                         .getShapeFunctionGradientValuesZTransposed())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement *
+                                          numQuadPoints,
+                                      shapeFunctionGradientValuesZTransposedDevice
+                                        .begin());
 
                                   dftfe::utils::deviceBlasWrapper::
                                     gemmStridedBatched(
@@ -682,11 +693,12 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
                           partialOccupVecDevice);
 
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                        BVec,
-                        Nfr,
-                        numLocalDofs,
-                        jvec,
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyToBlockConstantStride(
+                          BVec,
+                          Nfr,
+                          numLocalDofs,
+                          jvec,
                           XFrac + numLocalDofs * Nfr *
                                     ((dftParams.spinPolarized + 1) * kPoint +
                                      spinIndex),
@@ -708,15 +720,16 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                               const unsigned int startingCellId =
                                 iblock * cellsBlockSize;
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-                                BVec,
-                                currentCellsBlockSize * numNodesPerElement,
+                              dftfe::utils::deviceKernelsGeneric::
+                                stridedCopyToBlock(
+                                  BVec,
+                                  currentCellsBlockSize * numNodesPerElement,
                                   deviceFlattenedArrayBlock.begin(),
                                   cellWaveFunctionMatrix,
-                                (operatorMatrix
-                                   .getFlattenedArrayCellLocalProcIndexIdMap())
-                                    .begin() +
-                                  startingCellId * numNodesPerElement);
+                                  (operatorMatrix
+                                     .getFlattenedArrayCellLocalProcIndexIdMap())
+                                      .begin() +
+                                    startingCellId * numNodesPerElement);
 
                               NumberType scalarCoeffAlpha = 1.0;
                               NumberType scalarCoeffBeta  = 0;
@@ -752,32 +765,41 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
                                 {
                                   strideB = numNodesPerElement * numQuadPoints;
 
-                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
-                           (operatorMatrix
-                                       .getShapeFunctionGradientValuesXTransposed())
-                                        .begin() +
-                                      startingCellId * numNodesPerElement *
-                                        numQuadPoints,
-                                  shapeFunctionGradientValuesXTransposedDevice
-                                        .begin()); 
+                                  dftfe::utils::deviceKernelsGeneric::
+                                    copyValueType1ArrToValueType2Arr(
+                                      currentCellsBlockSize *
+                                        numNodesPerElement * numQuadPoints,
+                                      (operatorMatrix
+                                         .getShapeFunctionGradientValuesXTransposed())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement *
+                                          numQuadPoints,
+                                      shapeFunctionGradientValuesXTransposedDevice
+                                        .begin());
 
-                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
-                           (operatorMatrix
-                                       .getShapeFunctionGradientValuesYTransposed())
-                                        .begin() +
-                                      startingCellId * numNodesPerElement *
-                                        numQuadPoints,
-                                  shapeFunctionGradientValuesYTransposedDevice
-                                        .begin()); 
+                                  dftfe::utils::deviceKernelsGeneric::
+                                    copyValueType1ArrToValueType2Arr(
+                                      currentCellsBlockSize *
+                                        numNodesPerElement * numQuadPoints,
+                                      (operatorMatrix
+                                         .getShapeFunctionGradientValuesYTransposed())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement *
+                                          numQuadPoints,
+                                      shapeFunctionGradientValuesYTransposedDevice
+                                        .begin());
 
-                                  dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(currentCellsBlockSize * numNodesPerElement *numQuadPoints,
-                           (operatorMatrix
-                                       .getShapeFunctionGradientValuesZTransposed())
-                                        .begin() +
-                                      startingCellId * numNodesPerElement *
-                                        numQuadPoints,
-                                  shapeFunctionGradientValuesZTransposedDevice
-                                        .begin()); 
+                                  dftfe::utils::deviceKernelsGeneric::
+                                    copyValueType1ArrToValueType2Arr(
+                                      currentCellsBlockSize *
+                                        numNodesPerElement * numQuadPoints,
+                                      (operatorMatrix
+                                         .getShapeFunctionGradientValuesZTransposed())
+                                          .begin() +
+                                        startingCellId * numNodesPerElement *
+                                          numQuadPoints,
+                                      shapeFunctionGradientValuesZTransposedDevice
+                                        .begin());
 
                                   dftfe::utils::deviceBlasWrapper::
                                     gemmStridedBatched(

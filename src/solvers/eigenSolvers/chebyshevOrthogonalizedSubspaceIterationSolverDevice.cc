@@ -455,23 +455,25 @@ namespace dftfe
 
             // copy from vector containg all wavefunction vectors to current
             // wavefunction vectors block
-            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                                BVec,
-                                totalNumberWaveFunctions,
-                                localVectorSize,
-                                jvec,
-                                eigenVectorsFlattenedDevice,
-                                deviceFlattenedArrayBlock.begin());              
+            dftfe::utils::deviceKernelsGeneric::
+              stridedCopyToBlockConstantStride(
+                BVec,
+                totalNumberWaveFunctions,
+                localVectorSize,
+                jvec,
+                eigenVectorsFlattenedDevice,
+                deviceFlattenedArrayBlock.begin());
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                                BVec,
-                                totalNumberWaveFunctions,
-                                localVectorSize,
-                                jvec+BVec,
-                                eigenVectorsFlattenedDevice,
-                                d_deviceFlattenedArrayBlock2.begin());
+              dftfe::utils::deviceKernelsGeneric::
+                stridedCopyToBlockConstantStride(
+                  BVec,
+                  totalNumberWaveFunctions,
+                  localVectorSize,
+                  jvec + BVec,
+                  eigenVectorsFlattenedDevice,
+                  d_deviceFlattenedArrayBlock2.begin());
 
             //
             // call Chebyshev filtering function only for the current block
@@ -518,24 +520,25 @@ namespace dftfe
 
             // copy current wavefunction vectors block to vector containing
             // all wavefunction vectors
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
-                                BVec,
-                                localVectorSize,
-                                jvec,
-                                deviceFlattenedArrayBlock.begin(),
-                                eigenVectorsFlattenedDevice);              
+            dftfe::utils::deviceKernelsGeneric::
+              stridedCopyFromBlockConstantStride(
+                totalNumberWaveFunctions,
+                BVec,
+                localVectorSize,
+                jvec,
+                deviceFlattenedArrayBlock.begin(),
+                eigenVectorsFlattenedDevice);
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
-                                BVec,
-                                localVectorSize,
-                                jvec+BVec,
-                                d_deviceFlattenedArrayBlock2.begin(),
-                                eigenVectorsFlattenedDevice);
-
+              dftfe::utils::deviceKernelsGeneric::
+                stridedCopyFromBlockConstantStride(
+                  totalNumberWaveFunctions,
+                  BVec,
+                  localVectorSize,
+                  jvec + BVec,
+                  d_deviceFlattenedArrayBlock2.begin(),
+                  eigenVectorsFlattenedDevice);
           }
         else
           {
@@ -928,23 +931,25 @@ namespace dftfe
                   {
                     // copy from vector containg all wavefunction vectors to
                     // current wavefunction vectors block
-            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                                BVec,
-                                totalNumberWaveFunctions,
-                                localVectorSize,
-                                jvec,
-                                eigenVectorsFlattenedDevice,
-                                deviceFlattenedArrayBlock.begin());              
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        BVec,
+                        totalNumberWaveFunctions,
+                        localVectorSize,
+                        jvec,
+                        eigenVectorsFlattenedDevice,
+                        deviceFlattenedArrayBlock.begin());
 
-            if (d_dftParams.overlapComputeCommunCheby &&
-                numSimultaneousBlocksCurrent == 2)
-            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-                                BVec,
-                                totalNumberWaveFunctions,
-                                localVectorSize,
-                                jvec+BVec,
-                                eigenVectorsFlattenedDevice,
-                                d_deviceFlattenedArrayBlock2.begin());
+                    if (d_dftParams.overlapComputeCommunCheby &&
+                        numSimultaneousBlocksCurrent == 2)
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyToBlockConstantStride(
+                          BVec,
+                          totalNumberWaveFunctions,
+                          localVectorSize,
+                          jvec + BVec,
+                          eigenVectorsFlattenedDevice,
+                          d_deviceFlattenedArrayBlock2.begin());
 
                     //
                     // call Chebyshev filtering function only for the current
@@ -992,23 +997,25 @@ namespace dftfe
 
                     // copy current wavefunction vectors block to vector
                     // containing all wavefunction vectors
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
-                                BVec,
-                                localVectorSize,
-                                jvec,
-                                deviceFlattenedArrayBlock.begin(),
-                                eigenVectorsFlattenedDevice);              
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(
+                        totalNumberWaveFunctions,
+                        BVec,
+                        localVectorSize,
+                        jvec,
+                        deviceFlattenedArrayBlock.begin(),
+                        eigenVectorsFlattenedDevice);
 
-            if (d_dftParams.overlapComputeCommunCheby &&
-                numSimultaneousBlocksCurrent == 2)
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
-                                totalNumberWaveFunctions,
-                                BVec,
-                                localVectorSize,
-                                jvec+BVec,
-                                d_deviceFlattenedArrayBlock2.begin(),
-                                eigenVectorsFlattenedDevice);
+                    if (d_dftParams.overlapComputeCommunCheby &&
+                        numSimultaneousBlocksCurrent == 2)
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          totalNumberWaveFunctions,
+                          BVec,
+                          localVectorSize,
+                          jvec + BVec,
+                          d_deviceFlattenedArrayBlock2.begin(),
+                          eigenVectorsFlattenedDevice);
                   }
                 else
                   {

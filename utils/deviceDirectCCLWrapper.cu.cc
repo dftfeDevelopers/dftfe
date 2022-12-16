@@ -145,9 +145,9 @@ namespace dftfe
       deviceStream_t &            stream)
     {
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
-                                                  send,
-                                                  tempReal,
-                                                  tempImag);
+                                                           send,
+                                                           tempReal,
+                                                           tempImag);
 #    ifdef DFTFE_WITH_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -168,9 +168,9 @@ namespace dftfe
 #    endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
-                                                  tempReal,
-                                                  tempImag,
-                                                  recv);
+                                                           tempReal,
+                                                           tempImag,
+                                                           recv);
       return 0;
     }
 
@@ -184,9 +184,9 @@ namespace dftfe
       deviceStream_t &           stream)
     {
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
-                                                  send,
-                                                  tempReal,
-                                                  tempImag);
+                                                           send,
+                                                           tempReal,
+                                                           tempImag);
 #    ifdef DFTFE_WITH_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -207,9 +207,9 @@ namespace dftfe
 #    endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
-                                                  tempReal,
-                                                  tempImag,
-                                                  recv);
+                                                           tempReal,
+                                                           tempImag,
+                                                           recv);
       return 0;
     }
 
@@ -260,14 +260,14 @@ namespace dftfe
       deviceStream_t &            stream)
     {
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size1,
-                                                  send1,
-                                                  tempReal1,
-                                                  tempImag1);
+                                                           send1,
+                                                           tempReal1,
+                                                           tempImag1);
 
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size2,
-                                                  send2,
-                                                  tempReal2,
-                                                  tempImag2);
+                                                           send2,
+                                                           tempReal2,
+                                                           tempImag2);
 
 #    ifdef DFTFE_WITH_NCCL
       ncclGroupStart();
@@ -303,14 +303,14 @@ namespace dftfe
 #    endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size1,
-                                                  tempReal1,
-                                                  tempImag1,
-                                                  recv1);
+                                                           tempReal1,
+                                                           tempImag1,
+                                                           recv1);
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size2,
-                                                  tempReal2,
-                                                  tempImag2,
-                                                  recv2);
+                                                           tempReal2,
+                                                           tempImag2,
+                                                           recv2);
 
       return 0;
     }

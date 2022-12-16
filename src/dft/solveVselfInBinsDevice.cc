@@ -173,7 +173,6 @@ namespace dftfe
       }
 
 
- 
 
       void
       computeAX(
@@ -233,7 +232,7 @@ namespace dftfe
                      scalarCoeffBeta  = 0.0;
 
         if (totalLocallyOwnedCells > 0)
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+          dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             temp.begin(), // src.begin(),

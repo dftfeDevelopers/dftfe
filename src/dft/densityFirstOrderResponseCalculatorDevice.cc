@@ -236,7 +236,10 @@ namespace dftfe
     shapeFunctionValuesTransposedDevice.setValue(zero);
 
 
-    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(numNodesPerElement * numQuadPoints,(operatorMatrix.getShapeFunctionValuesTransposed(true)).begin(),shapeFunctionValuesTransposedDevice.begin());
+    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+      numNodesPerElement * numQuadPoints,
+      (operatorMatrix.getShapeFunctionValuesTransposed(true)).begin(),
+      shapeFunctionValuesTransposedDevice.begin());
 
     for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
@@ -267,13 +270,15 @@ namespace dftfe
                       .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
                         densityMatDerFermiEnergyVecDevice);
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
                         BVec,
                         totalNumWaveFunctions,
                         numLocalDofs,
                         jvec,
-                        X +numLocalDofs * totalNumWaveFunctions *
-                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                        X + numLocalDofs * totalNumWaveFunctions *
+                              ((dftParams.spinPolarized + 1) * kPoint +
+                               spinIndex),
                         deviceFlattenedArrayXBlock.begin());
 
                     deviceFlattenedArrayXBlock.updateGhostValues();
@@ -282,14 +287,15 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                       ->distribute(deviceFlattenedArrayXBlock, BVec);
 
 
-dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
                         BVec,
                         totalNumWaveFunctions,
                         numLocalDofs,
                         jvec,
-                        XPrime +
-                        numLocalDofs * totalNumWaveFunctions *
-                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                        XPrime + numLocalDofs * totalNumWaveFunctions *
+                                   ((dftParams.spinPolarized + 1) * kPoint +
+                                    spinIndex),
                         deviceFlattenedArrayXPrimeBlock.begin());
 
                     deviceFlattenedArrayXPrimeBlock.updateGhostValues();
@@ -310,14 +316,16 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
 
 
 
-                            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-                  BVec,
-                  currentCellsBlockSize * numNodesPerElement,
-                  deviceFlattenedArrayXBlock.begin(),
-                    cellWaveFunctionMatrix.begin(),
-                     (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())
-                                          .begin() +
-                                        startingCellId * numNodesPerElement);
+                            dftfe::utils::deviceKernelsGeneric::
+                              stridedCopyToBlock(
+                                BVec,
+                                currentCellsBlockSize * numNodesPerElement,
+                                deviceFlattenedArrayXBlock.begin(),
+                                cellWaveFunctionMatrix.begin(),
+                                (operatorMatrix
+                                   .getFlattenedArrayCellLocalProcIndexIdMap())
+                                    .begin() +
+                                  startingCellId * numNodesPerElement);
 
                             NumberTypeLowPrec scalarCoeffAlpha = 1.0;
                             NumberTypeLowPrec scalarCoeffBeta  = 0.0;
@@ -347,15 +355,16 @@ dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                               currentCellsBlockSize);
 
 
-                         dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-                  BVec,
-                  currentCellsBlockSize * numNodesPerElement,
-                  deviceFlattenedArrayXPrimeBlock.begin(),
-                    cellWaveFunctionMatrix.begin(),
-                                                (operatorMatrix
-                                 .getFlattenedArrayCellLocalProcIndexIdMap())
-                                  .begin() +
-                                startingCellId * numNodesPerElement);
+                            dftfe::utils::deviceKernelsGeneric::
+                              stridedCopyToBlock(
+                                BVec,
+                                currentCellsBlockSize * numNodesPerElement,
+                                deviceFlattenedArrayXPrimeBlock.begin(),
+                                cellWaveFunctionMatrix.begin(),
+                                (operatorMatrix
+                                   .getFlattenedArrayCellLocalProcIndexIdMap())
+                                    .begin() +
+                                  startingCellId * numNodesPerElement);
 
                             dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
                               operatorMatrix.getDeviceBlasHandle(),

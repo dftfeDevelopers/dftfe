@@ -25,83 +25,82 @@ namespace dftfe
 {
   namespace utils
   {
-
     //
     // copyValue for homogeneous types
     //
     __inline__ __device__ void
-                          copyValue(double *  a, const double b)
+    copyValue(double *a, const double b)
     {
-      *a=b;
+      *a = b;
     }
 
     __inline__ __device__ void
-                          copyValue(float * a, const float  b)
+    copyValue(float *a, const float b)
     {
-      *a=b;
-    }
-   
-    __inline__ __device__ void
-                          copyValue(cuDoubleComplex * a, const cuDoubleComplex b)
-    {
-      *a=b;
+      *a = b;
     }
 
     __inline__ __device__ void
-                          copyValue(cuFloatComplex * a, const cuFloatComplex  b)
+    copyValue(cuDoubleComplex *a, const cuDoubleComplex b)
     {
-      *a=b;
+      *a = b;
+    }
+
+    __inline__ __device__ void
+    copyValue(cuFloatComplex *a, const cuFloatComplex b)
+    {
+      *a = b;
     }
 
     //
     // copyValue for heteregenous types
     //
     __inline__ __device__ void
-                          copyValue(float*  a, const double b)
+    copyValue(float *a, const double b)
     {
-      *a=b;
+      *a = b;
     }
 
     __inline__ __device__ void
-                          copyValue(double * a, const float  b)
+    copyValue(double *a, const float b)
     {
-      *a=b;
-    }
-   
-    __inline__ __device__ void
-                          copyValue(cuDoubleComplex * a, const cuFloatComplex b)
-    {
-      *a=make_cuDoubleComplex(b.x,b.y);
+      *a = b;
     }
 
     __inline__ __device__ void
-                          copyValue(cuFloatComplex * a, const cuDoubleComplex  b)
+    copyValue(cuDoubleComplex *a, const cuFloatComplex b)
     {
-      *a=make_cuFloatComplex(b.x,b.y);
+      *a = make_cuDoubleComplex(b.x, b.y);
     }
 
     __inline__ __device__ void
-                          copyValue(cuDoubleComplex * a, const double b)
+    copyValue(cuFloatComplex *a, const cuDoubleComplex b)
     {
-      *a=make_cuDoubleComplex(b,0);
+      *a = make_cuFloatComplex(b.x, b.y);
     }
 
     __inline__ __device__ void
-                          copyValue(cuFloatComplex * a, const float  b)
+    copyValue(cuDoubleComplex *a, const double b)
     {
-      *a=make_cuFloatComplex(b,0);
+      *a = make_cuDoubleComplex(b, 0);
     }
 
     __inline__ __device__ void
-                          copyValue(cuDoubleComplex * a, const float b)
+    copyValue(cuFloatComplex *a, const float b)
     {
-      *a=make_cuDoubleComplex(b,0);
+      *a = make_cuFloatComplex(b, 0);
     }
 
     __inline__ __device__ void
-                          copyValue(cuFloatComplex * a, const double b)
+    copyValue(cuDoubleComplex *a, const float b)
     {
-      *a=make_cuFloatComplex(b,0);
+      *a = make_cuDoubleComplex(b, 0);
+    }
+
+    __inline__ __device__ void
+    copyValue(cuFloatComplex *a, const double b)
+    {
+      *a = make_cuFloatComplex(b, 0);
     }
 
     // real part obverloads
