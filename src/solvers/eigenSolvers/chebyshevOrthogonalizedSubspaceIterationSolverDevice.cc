@@ -455,7 +455,7 @@ namespace dftfe
 
             // copy from vector containg all wavefunction vectors to current
             // wavefunction vectors block
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
+            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                                 BVec,
                                 totalNumberWaveFunctions,
                                 localVectorSize,
@@ -465,7 +465,7 @@ namespace dftfe
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
+            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                                 BVec,
                                 totalNumberWaveFunctions,
                                 localVectorSize,
@@ -928,7 +928,7 @@ namespace dftfe
                   {
                     // copy from vector containg all wavefunction vectors to
                     // current wavefunction vectors block
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
+            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                                 BVec,
                                 totalNumberWaveFunctions,
                                 localVectorSize,
@@ -938,7 +938,7 @@ namespace dftfe
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-            dftfe::utils::deviceKernelsGeneric::stridedCopyFromBlockConstantStride(
+            dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
                                 BVec,
                                 totalNumberWaveFunctions,
                                 localVectorSize,
