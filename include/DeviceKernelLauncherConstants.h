@@ -21,10 +21,31 @@
 #  ifndef dftfeDeviceKernelLauncherConstants_h
 #    define dftfeDeviceKernelLauncherConstants_h
 
-#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-#      include "DeviceKernelLauncherConstants.cu.h"
-#    elseif DFTFE_WITH_DEVICE_LANG_HIP
-#      include "DeviceKernelLauncherConstants.hip.h"
+#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+namespace dftfe
+{
+  namespace utils
+  {
+    static const int DEVICE_WARP_SIZE      = 32;
+    static const int DEVICE_MAX_BLOCK_SIZE = 1024;
+    static const int DEVICE_BLOCK_SIZE     = 256;
+
+  } // namespace utils
+} // namespace dftfe
+
+#    elif DFTFE_WITH_DEVICE_AMD
+
+namespace dftfe
+{
+  namespace utils
+  {
+    static const int DEVICE_WARP_SIZE      = 64;
+    static const int DEVICE_MAX_BLOCK_SIZE = 1024;
+    static const int DEVICE_BLOCK_SIZE     = 256;
+
+  } // namespace utils
+} // namespace dftfe
+
 #    endif
 
 #  endif // dftfeDeviceKernelLauncherConstants_h
