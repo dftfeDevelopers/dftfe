@@ -50,57 +50,6 @@ namespace dftfe
   namespace
   {
     __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      double *           srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) *
-            (*(scalingVector + gangBlockId));
-        }
-    }
-
-
-    __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      cuDoubleComplex *  srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            make_cuDoubleComplex(
-              (srcArray + (localThreadId + gangBlockId * contiguousBlockSize))
-                  ->x *
-                (*(scalingVector + gangBlockId)),
-              (srcArray + (localThreadId + gangBlockId * contiguousBlockSize))
-                  ->y *
-                (*(scalingVector + gangBlockId)));
-        }
-    }
-
-
-    __global__ void
     setZeroKernel(const unsigned int BVec,
                   const unsigned int M,
                   const unsigned int N,
@@ -403,14 +352,11 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
-      operatorMatrix.getSqrtMassVec());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                eigenVectorsFlattenedDevice);
 
 
     // two blocks of wavefunctions are filtered simultaneously when overlap
@@ -723,25 +669,19 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
-      operatorMatrix.getInvSqrtMassVec());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                eigenVectorsFlattenedDevice);
+
 
     if (eigenValues.size() != totalNumberWaveFunctions)
-      scaleDeviceKernel<<<(eigenValues.size() +
-                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        eigenValues.size(),
-        localVectorSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          eigenVectorsRotFracDensityFlattenedDevice),
-        operatorMatrix.getInvSqrtMassVec());
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(eigenValues.size(),
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                eigenVectorsRotFracDensityFlattenedDevice);      
 
     return d_upperBoundUnWantedSpectrum;
   }
@@ -877,14 +817,12 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis multiply
     // by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
-      operatorMatrix.getSqrtMassVec());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                eigenVectorsFlattenedDevice);   
+
 
     for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
       {
@@ -1059,14 +997,11 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
-      operatorMatrix.getInvSqrtMassVec());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                eigenVectorsFlattenedDevice);  
   }
 
 
@@ -1130,14 +1065,12 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    scaleDeviceKernel<<<(totalNumberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
-      operatorMatrix.getSqrtMassVec());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                eigenVectorsFlattenedDevice);  
+
 
 
     linearAlgebraOperationsDevice::densityMatrixEigenBasisFirstOrderResponse(
@@ -1166,14 +1099,11 @@ namespace dftfe
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
     // the usual FE basis
     //
-    scaleDeviceKernel<<<(totalNumberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(eigenVectorsFlattenedDevice),
-      operatorMatrix.getInvSqrtMassVec());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                eigenVectorsFlattenedDevice);  
 
     dftfe::utils::deviceSynchronize();
     computingTimerStandard.leave_subsection(

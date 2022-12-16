@@ -121,16 +121,12 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       //
       // compute V*C^{\dagger}*X
       //
-      scaleDeviceKernel<<<
-        (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numberWaveFunctions,
-        d_totalPseudoWfcNonLocal,
-        1.0,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          projectorKetTimesVector.begin()),
-        d_nonLocalPseudoPotentialConstantsDevice.begin());
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                d_totalPseudoWfcNonLocal,
+                                                1.0,
+                                                d_nonLocalPseudoPotentialConstantsDevice.begin(),
+                                                projectorKetTimesVector.begin());
+
 
       copyFromParallelNonLocalVecToAllCellsVec<<<
         (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -325,14 +321,9 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   // compute V*C^{\dagger}*X
   //
   if (d_totalNonlocalElems > 0)
-    scaleDeviceKernel<<<
-      (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      numberWaveFunctions,
-      d_totalPseudoWfcNonLocal,
-      1.0,
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        projectorKetTimesVector.begin()),
-      d_nonLocalPseudoPotentialConstantsDevice.begin());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                d_totalPseudoWfcNonLocal,
+                                                1.0,
+                                                d_nonLocalPseudoPotentialConstantsDevice.begin(),
+                                                projectorKetTimesVector.begin());    
 }

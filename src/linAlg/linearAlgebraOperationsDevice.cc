@@ -35,63 +35,6 @@ namespace dftfe
     namespace
     {
       __global__ void
-      scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                        const unsigned int numContiguousBlocks,
-                        const double       scalar,
-                        double *           srcArray,
-                        const double *     scalingVector)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerContiguousBlock =
-          (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-        const unsigned int gangBlockId =
-          blockIdx.x / numGangsPerContiguousBlock;
-        const unsigned int localThreadId =
-          globalThreadId -
-          gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-        if (globalThreadId <
-              numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-            localThreadId < contiguousBlockSize)
-          {
-            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-              *(srcArray +
-                (localThreadId + gangBlockId * contiguousBlockSize)) *
-              (*(scalingVector + gangBlockId) * scalar);
-          }
-      }
-
-
-      __global__ void
-      scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                        const unsigned int numContiguousBlocks,
-                        const double       scalar,
-                        cuDoubleComplex *  srcArray,
-                        const double *     scalingVector)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerContiguousBlock =
-          (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-        const unsigned int gangBlockId =
-          blockIdx.x / numGangsPerContiguousBlock;
-        const unsigned int localThreadId =
-          globalThreadId -
-          gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-        if (globalThreadId <
-              numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-            localThreadId < contiguousBlockSize)
-          {
-            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-              cuCmul(*(srcArray +
-                       (localThreadId + gangBlockId * contiguousBlockSize)),
-                     make_cuDoubleComplex(
-                       (*(scalingVector + gangBlockId) * scalar), 0));
-          }
-      }
-
-
-      __global__ void
       combinedDeviceKernel(const unsigned int contiguousBlockSize,
                            const unsigned int numContiguousBlocks,
                            double *           x,
@@ -603,25 +546,19 @@ namespace dftfe
 
               // scale src vector with M^{-1/2}
               //
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                alpha1,
-                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
-                operatorMatrix.getInvSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                alpha1,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                YArray.begin());
+ 
 
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0,
-                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                operatorMatrix.getSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                XArray.begin());
+ 
 
               //
               // call HX
@@ -639,25 +576,17 @@ namespace dftfe
             {
               // unscale src vector with M^{1/2}
               //
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0 / alpha1Old,
-                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
-                operatorMatrix.getSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0/alpha1Old,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                XArray.begin());
 
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0,
-                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
-                operatorMatrix.getInvSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                YArray.begin());
 
 
               dftfe::utils::deviceKernelsGeneric::axpby(
@@ -829,25 +758,19 @@ namespace dftfe
 
               // scale src vector with M^{-1/2}
               //
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                alpha1,
-                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                operatorMatrix.getInvSqrtMassVec());
+             dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                alpha1,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                YArray1.begin());
 
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0,
-                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                operatorMatrix.getSqrtMassVec());
+
+             dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                XArray1.begin());
+
 
               //
               // call HX
@@ -871,25 +794,17 @@ namespace dftfe
 
               // scale src vector with M^{-1/2}
               //
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                alpha1,
-                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                operatorMatrix.getInvSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                alpha1,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                YArray2.begin());
 
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0,
-                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                operatorMatrix.getSqrtMassVec());
+             dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                XArray2.begin());
 
               //
               // call HX
@@ -908,25 +823,18 @@ namespace dftfe
             {
               // unscale src vector with M^{1/2}
               //
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0 / alpha1Old,
-                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
-                operatorMatrix.getSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0/alpha1Old,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                XArray1.begin());
+ 
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                YArray1.begin());
 
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0,
-                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
-                operatorMatrix.getInvSqrtMassVec());
 
 
               dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,
@@ -950,25 +858,17 @@ namespace dftfe
 
               // unscale src vector with M^{1/2}
               //
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0 / alpha1Old,
-                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
-                operatorMatrix.getSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0/alpha1Old,
+                                                operatorMatrix.getSqrtMassVec(),
+                                                XArray2.begin());
 
-              scaleDeviceKernel<<<
-                (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberVectors,
-                localVectorSize,
-                1.0,
-                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
-                operatorMatrix.getInvSqrtMassVec());
+              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberVectors,
+                                                localVectorSize,
+                                                1.0,
+                                                operatorMatrix.getInvSqrtMassVec(),
+                                                YArray2.begin());
 
 
               dftfe::utils::deviceKernelsGeneric::axpby(totalVectorSize,

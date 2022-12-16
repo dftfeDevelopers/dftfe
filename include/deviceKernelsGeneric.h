@@ -108,6 +108,15 @@ namespace dftfe
       void
       ascal(const dftfe::size_type n, ValueType1 *x, const ValueType2 a);
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1              a,
+        const ValueType1 *             s,
+        ValueType2 *      x);
+
       void
       add(double *                          y,
           const double *                    x,

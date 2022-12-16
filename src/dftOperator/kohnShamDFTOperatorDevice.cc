@@ -37,55 +37,6 @@ namespace dftfe
   namespace
   {
     __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double       scalar,
-                      double *           srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) *
-            (*(scalingVector + gangBlockId) * scalar);
-        }
-    }
-
-    __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double       scalar,
-                      cuDoubleComplex *  srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            cuCmul(
-              *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)),
-              make_cuDoubleComplex((*(scalingVector + gangBlockId) * scalar),
-                                   0.0));
-        }
-    }
-
-
-    __global__ void
     copyFloatArrToDoubleArrLocallyOwned(const unsigned int  contiguousBlockSize,
                                         const unsigned int  numContiguousBlocks,
                                         const float *       floatArr,
@@ -3245,27 +3196,21 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      numberWaveFunctions,
-      localVectorSize,
-      scalar,
-      dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-      d_invSqrtMassVectorDevice.begin());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                scalar,
+                                                d_invSqrtMassVectorDevice.begin(),
+                                                src.begin());
+
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions +
-                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                              dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numberWaveFunctions,
-          localVectorSize,
-          1.0,
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-          d_sqrtMassVectorDevice.begin());
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                d_sqrtMassVectorDevice.begin(),
+                                                dst.begin());
+
       }
 
 
@@ -3341,30 +3286,23 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      numberWaveFunctions,
-      localVectorSize,
-      1.0,
-      dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-      d_invSqrtMassVectorDevice.begin());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                d_invSqrtMassVectorDevice.begin(),
+                                                dst.begin());  
+
 
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions +
-                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numberWaveFunctions,
-        localVectorSize,
-        1.0 / scalar,
-        dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-        d_sqrtMassVectorDevice.begin());
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                1.0/scalar,
+                                                d_sqrtMassVectorDevice.begin(),
+                                                src.begin());      
   }
 
 
@@ -3394,27 +3332,20 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      numberWaveFunctions,
-      localVectorSize,
-      scalar,
-      dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-      d_invSqrtMassVectorDevice.begin());
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                scalar,
+                                                d_invSqrtMassVectorDevice.begin(),
+                                                src.begin());
+ 
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions +
-                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                              dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numberWaveFunctions,
-          localVectorSize,
-          1.0,
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-          d_sqrtMassVectorDevice.begin());
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                d_sqrtMassVectorDevice.begin(),
+                                                dst.begin());        
       }
 
 
@@ -3452,30 +3383,21 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      numberWaveFunctions,
-      localVectorSize,
-      1.0,
-      dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-      d_invSqrtMassVectorDevice.begin());
-
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                1.0,
+                                                d_invSqrtMassVectorDevice.begin(),
+                                                dst.begin());  
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions +
-                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numberWaveFunctions,
-        localVectorSize,
-        1.0 / scalar,
-        dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-        d_sqrtMassVectorDevice.begin());
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(numberWaveFunctions,
+                                                localVectorSize,
+                                                1.0/scalar,
+                                                d_sqrtMassVectorDevice.begin(),
+                                                src.begin());
   }
 
 

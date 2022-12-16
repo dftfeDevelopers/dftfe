@@ -198,6 +198,30 @@ namespace dftfe
         dftfe::utils::copyValue(x + i, dftfe::utils::mult(a, x[i]));
     }
 
+
+    // x[iblock*blocksize+intrablockindex]=a*s[iblock]*x[iblock*blocksize+intrablockindex] strided block wise
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
+    stridedBlockScaleDeviceKernel(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1              a,
+        const ValueType1 *             s,
+        ValueType2 *      x)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex = index / contiguousBlockSize;
+          dftfe::utils::copyValue(
+            x + index,dftfe::utils::mult(dftfe::utils::mult(a,s[blockIndex]),x[index]));
+        }
+    }
+
     // y=a*x+b*y, with inc=1
     template <typename ValueType1, typename ValueType2>
     __global__ void
@@ -381,11 +405,9 @@ namespace dftfe
             const ValueType2       a,
             const ValueType2       b)
       {
-        axpbyDeviceKernel<<<std::min((n +
-                                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                       dftfe::utils::DEVICE_BLOCK_SIZE,
-                                     (dftfe::size_type)30000),
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        axpbyDeviceKernel<<<
+          n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           n,
           dftfe::utils::makeDataTypeDeviceCompatible(x),
           dftfe::utils::makeDataTypeDeviceCompatible(y),
@@ -397,14 +419,30 @@ namespace dftfe
       void
       ascal(const dftfe::size_type n, ValueType1 *x, const ValueType2 a)
       {
-        ascalDeviceKernel<<<std::min((n +
-                                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                       dftfe::utils::DEVICE_BLOCK_SIZE,
-                                     (dftfe::size_type)30000),
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        ascalDeviceKernel<<<
+          n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           n,
           dftfe::utils::makeDataTypeDeviceCompatible(x),
           dftfe::utils::makeDataTypeDeviceCompatible(a));
+      }
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1              a,
+        const ValueType1 *             s,
+        ValueType2 *      x)
+      {
+        stridedBlockScaleDeviceKernel<<<
+          (contiguousBlockSize*numContiguousBlocks)/ dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(contiguousBlockSize,
+                                      numContiguousBlocks,
+                                      dftfe::utils::makeDataTypeDeviceCompatible(a),
+                                      dftfe::utils::makeDataTypeDeviceCompatible(s),
+                                      dftfe::utils::makeDataTypeDeviceCompatible(x));
       }
 
       void
@@ -915,6 +953,97 @@ namespace dftfe
                                          const dftfe::size_type startingId,
                                          const std::complex<float> *copyFromVec,
                                          std::complex<double> *     copyToVec);
+
+      //stridedBlockScale
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const double              a,
+        const double *             s,
+        double *      x);
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const float              a,
+        const float *             s,
+        float *      x);
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const std::complex<double>              a,
+        const std::complex<double> *             s,
+        std::complex<double> *      x);
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const std::complex<float>              a,
+        const std::complex<float> *             s,
+        std::complex<float> *      x);  
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const double              a,
+        const double *             s,
+        float *      x); 
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const float              a,
+        const float *             s,
+        double *      x); 
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const std::complex<double>              a,
+        const std::complex<double> *             s,
+        std::complex<float> *      x); 
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const std::complex<float>              a,
+        const std::complex<float> *             s,
+        std::complex<double> *      x);  
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const double              a,
+        const double *             s,
+        std::complex<double> *      x); 
+
+      template 
+      void
+      stridedBlockScale(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const double              a,
+        const double *             s,
+        std::complex<float> *      x);         
 
     } // namespace deviceKernelsGeneric
   }   // namespace utils
