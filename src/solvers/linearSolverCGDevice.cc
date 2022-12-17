@@ -18,7 +18,7 @@
 //
 
 #include <linearSolverCGDevice.h>
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceKernelLauncherConstants.h>
 #include <MemoryTransfer.h>
@@ -117,17 +117,17 @@ namespace dftfe
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            deviceUtils::add(d_rvec.begin(),
-                             rhsDevice.begin(),
-                             -1.,
-                             d_xLocalDof,
-                             deviceBlasHandle);
+            dftfe::utils::deviceKernelsGeneric::add(d_rvec.begin(),
+                                                    rhsDevice.begin(),
+                                                    -1.,
+                                                    d_xLocalDof,
+                                                    deviceBlasHandle);
 
             // res = r.r
-            res = deviceUtils::l2_norm(d_rvec.begin(),
-                                       d_xLocalDof,
-                                       mpi_communicator,
-                                       deviceBlasHandle);
+            res = dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
+                                                              d_xLocalDof,
+                                                              mpi_communicator,
+                                                              deviceBlasHandle);
 
             initial_res = res;
 
@@ -154,10 +154,8 @@ namespace dftfe
                     beta = delta / beta;
 
                     // q = beta * q - d
-                    deviceUtils::sadd<double>(d_qvec.begin(),
-                                              d_dvec.begin(),
-                                              beta,
-                                              d_xLocalDof);
+                    dftfe::utils::deviceKernelsGeneric::sadd<double>(
+                      d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
                   }
                 else
                   {
@@ -171,11 +169,12 @@ namespace dftfe
                 problem.computeAX(d_dvec, d_qvec);
 
                 // alpha = q.d
-                alpha = deviceUtils::dot(d_qvec.begin(),
-                                         d_dvec.begin(),
-                                         d_xLocalDof,
-                                         mpi_communicator,
-                                         deviceBlasHandle);
+                alpha =
+                  dftfe::utils::deviceKernelsGeneric::dot(d_qvec.begin(),
+                                                          d_dvec.begin(),
+                                                          d_xLocalDof,
+                                                          mpi_communicator,
+                                                          deviceBlasHandle);
 
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));

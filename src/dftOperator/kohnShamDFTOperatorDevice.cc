@@ -17,7 +17,7 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
@@ -36,198 +36,6 @@ namespace dftfe
 {
   namespace
   {
-    __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double       scalar,
-                      double *           srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) *
-            (*(scalingVector + gangBlockId) * scalar);
-        }
-    }
-
-    __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double       scalar,
-                      cuDoubleComplex *  srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            cuCmul(
-              *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)),
-              make_cuDoubleComplex((*(scalingVector + gangBlockId) * scalar),
-                                   0.0));
-        }
-    }
-
-    template <typename numberType>
-    __global__ void
-    stridedCopyToBlockKernel(const unsigned int BVec,
-                             const unsigned int M,
-                             const numberType * xVec,
-                             const unsigned int N,
-                             numberType *       yVec,
-                             const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * BVec + localThreadId) =
-            *(xVec + gangBlockId * N + startingXVecId + localThreadId);
-        }
-    }
-
-
-    template <typename numberType>
-    __global__ void
-    stridedCopyFromBlockKernel(const unsigned int BVec,
-                               const unsigned int M,
-                               const numberType * xVec,
-                               const unsigned int N,
-                               numberType *       yVec,
-                               const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            *(xVec + gangBlockId * BVec + localThreadId);
-        }
-    }
-
-    __global__ void
-    stridedCopyFromBlockKernelFP32(const unsigned int BVec,
-                                   const unsigned int M,
-                                   const double *     xVec,
-                                   const unsigned int N,
-                                   float *            yVec,
-                                   const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            *(xVec + gangBlockId * BVec + localThreadId);
-        }
-    }
-
-    __global__ void
-    stridedCopyFromBlockKernelFP32(const unsigned int     BVec,
-                                   const unsigned int     M,
-                                   const cuDoubleComplex *xVec,
-                                   const unsigned int     N,
-                                   cuFloatComplex *       yVec,
-                                   const unsigned int     startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            cuComplexDoubleToFloat(
-              *(xVec + gangBlockId * BVec + localThreadId));
-        }
-    }
-
-
-    __global__ void
-    convDoubleArrToFloatArr(const unsigned int size,
-                            const double *     doubleArr,
-                            float *            floatArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        floatArr[index] = doubleArr[index];
-    }
-
-    __global__ void
-    convDoubleArrToFloatArr(const unsigned int     size,
-                            const cuDoubleComplex *doubleArr,
-                            cuFloatComplex *       floatArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        floatArr[index] = cuComplexDoubleToFloat(doubleArr[index]);
-    }
-
-
-    __global__ void
-    convFloatArrToDoubleArr(const unsigned int size,
-                            const float *      floatArr,
-                            double *           doubleArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        doubleArr[index] = floatArr[index];
-    }
-
-
-    __global__ void
-    convFloatArrToDoubleArr(const unsigned int    size,
-                            const cuFloatComplex *floatArr,
-                            cuDoubleComplex *     doubleArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
-    }
-
-
     __global__ void
     copyFloatArrToDoubleArrLocallyOwned(const unsigned int  contiguousBlockSize,
                                         const unsigned int  numContiguousBlocks,
@@ -268,122 +76,6 @@ namespace dftfe
         }
     }
 
-    template <typename numberType>
-    __global__ void
-    copyDeviceKernel(const unsigned int contiguousBlockSize,
-                     const unsigned int numContiguousBlocks,
-                     const numberType * copyFromVec,
-                     numberType *       copyToVec,
-                     const dealii::types::global_dof_index
-                       *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const double *                         addFromVec,
-      double *                               addToVec,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                              intraBlockIndex],
-                    addFromVec[index]);
-        }
-    }
-
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const cuDoubleComplex *                addFromVec,
-      cuDoubleComplex *                      addToVec,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {}
-
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const double *                         addFromVec,
-      double *                               addToVecReal,
-      double *                               addToVecImag,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          atomicAdd(
-            &addToVecReal[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index]);
-          atomicAdd(
-            &addToVecImag[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index]);
-        }
-    }
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const cuDoubleComplex *                addFromVec,
-      double *                               addToVecReal,
-      double *                               addToVecImag,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          atomicAdd(
-            &addToVecReal[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index].x);
-          atomicAdd(
-            &addToVecImag[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index].y);
-        }
-    }
-
 
     template <typename numberType>
     __global__ void
@@ -402,8 +94,6 @@ namespace dftfe
         {
           const unsigned int blockIndex      = index / numWfcs;
           const unsigned int intraBlockIndex = index % numWfcs;
-          // projectorKetTimesWfcParallelVec[index]
-          //        =reducedProjectorKetTimesWfcVec[indexMapFromParallelVecToReducedVec[blockIndex]*numWfcs+intraBlockIndex];
           projectorKetTimesWfcParallelVec
             [indexMapFromParallelVecToReducedVec[blockIndex] * numWfcs +
              intraBlockIndex] = reducedProjectorKetTimesWfcVec[index];
@@ -3413,51 +3103,36 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       scalar,
-      dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-      d_invSqrtMassVectorDevice.begin());
+      d_invSqrtMassVectorDevice.begin(),
+      src.begin());
+
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions +
-                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                              dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
           numberWaveFunctions,
           localVectorSize,
           1.0,
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-          d_sqrtMassVectorDevice.begin());
+          d_sqrtMassVectorDevice.begin(),
+          dst.begin());
       }
 
 
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numberWaveFunctions * localSize,
-          dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+          numberWaveFunctions * localSize, src.begin(), tempFloatArray.begin());
         tempFloatArray.updateGhostValues();
 
         if (n_ghosts != 0)
-          convFloatArrToDoubleArr<<<
-            (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE * n_ghosts,
-            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
             numberWaveFunctions * n_ghosts,
-            dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()) +
-              localSize * numberWaveFunctions,
-            dftfe::utils::makeDataTypeDeviceCompatible(src.begin()) +
-              localSize * numberWaveFunctions);
+            tempFloatArray.begin() + localSize * numberWaveFunctions,
+            src.begin() + localSize * numberWaveFunctions);
       }
     else
       {
@@ -3493,13 +3168,9 @@ namespace dftfe
     src.zeroOutGhosts();
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE * totalSize,
-                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numberWaveFunctions * totalSize,
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+          numberWaveFunctions * totalSize, dst.begin(), tempFloatArray.begin());
+
         tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
@@ -3523,30 +3194,25 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       1.0,
-      dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-      d_invSqrtMassVectorDevice.begin());
+      d_invSqrtMassVectorDevice.begin(),
+      dst.begin());
+
 
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions +
-                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
         numberWaveFunctions,
         localVectorSize,
         1.0 / scalar,
-        dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-        d_sqrtMassVectorDevice.begin());
+        d_sqrtMassVectorDevice.begin(),
+        src.begin());
   }
 
 
@@ -3576,27 +3242,22 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       scalar,
-      dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-      d_invSqrtMassVectorDevice.begin());
+      d_invSqrtMassVectorDevice.begin(),
+      src.begin());
+
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions +
-                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                              dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
           numberWaveFunctions,
           localVectorSize,
           1.0,
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-          d_sqrtMassVectorDevice.begin());
+          d_sqrtMassVectorDevice.begin(),
+          dst.begin());
       }
 
 
@@ -3634,30 +3295,23 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       1.0,
-      dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-      d_invSqrtMassVectorDevice.begin());
-
+      d_invSqrtMassVectorDevice.begin(),
+      dst.begin());
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions +
-                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
-                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
         numberWaveFunctions,
         localVectorSize,
         1.0 / scalar,
-        dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-        d_sqrtMassVectorDevice.begin());
+        d_sqrtMassVectorDevice.begin(),
+        src.begin());
   }
 
 
@@ -3699,27 +3353,19 @@ namespace dftfe
       {
         if (chebMixedPrec)
           {
-            convDoubleArrToFloatArr<<<
-              (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-              numberWaveFunctions * localSize,
-              dftfe::utils::makeDataTypeDeviceCompatible(src.begin()),
-              dftfe::utils::makeDataTypeDeviceCompatible(
-                tempFloatArray.begin()));
+            dftfe::utils::deviceKernelsGeneric::
+              copyValueType1ArrToValueType2Arr(numberWaveFunctions * localSize,
+                                               src.begin(),
+                                               tempFloatArray.begin());
+
             tempFloatArray.updateGhostValues();
 
             if (n_ghosts != 0)
-              convFloatArrToDoubleArr<<<
-                (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * n_ghosts,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numberWaveFunctions * n_ghosts,
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  tempFloatArray.begin()) +
-                  localSize * numberWaveFunctions,
-                dftfe::utils::makeDataTypeDeviceCompatible(src.begin()) +
-                  localSize * numberWaveFunctions);
+              dftfe::utils::deviceKernelsGeneric::
+                copyValueType1ArrToValueType2Arr(
+                  numberWaveFunctions * n_ghosts,
+                  tempFloatArray.begin() + localSize * numberWaveFunctions,
+                  src.begin() + localSize * numberWaveFunctions);
           }
         else
           {
@@ -3767,13 +3413,9 @@ namespace dftfe
 
     if (chebMixedPrec)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE * totalSize,
-                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numberWaveFunctions * totalSize,
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()),
-          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()));
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+          numberWaveFunctions * totalSize, dst.begin(), tempFloatArray.begin());
+
         tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
@@ -3861,16 +3503,9 @@ namespace dftfe
 
             for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
               {
-                stridedCopyToBlockKernel<<<
-                  (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                    dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                  chebyBlockSize,
-                  M,
-                  dftfe::utils::makeDataTypeDeviceCompatible(X),
-                  N,
-                  dftfe::utils::makeDataTypeDeviceCompatible(XBlock.begin()),
-                  k);
+                dftfe::utils::deviceKernelsGeneric::
+                  stridedCopyToBlockConstantStride(
+                    chebyBlockSize, N, M, k, X, XBlock.begin());
 
                 // evaluate XBlock^{T} times H^{T} and store in HXBlock
                 HXBlock.setValue(0);
@@ -3886,17 +3521,13 @@ namespace dftfe
                    false,
                    onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                stridedCopyFromBlockKernel<<<
-                  (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                    dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                  chebyBlockSize,
-                  M,
-                  dftfe::utils::makeDataTypeDeviceCompatible(HXBlock.begin()),
-                  B,
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    HXBlockFull.begin()),
-                  k - jvec);
+                dftfe::utils::deviceKernelsGeneric::
+                  stridedCopyFromBlockConstantStride(B,
+                                                     chebyBlockSize,
+                                                     M,
+                                                     k - jvec,
+                                                     HXBlock.begin(),
+                                                     HXBlockFull.begin());
               }
 
             // Comptute local XTrunc^{T}*HConj*XConj.
@@ -4111,17 +3742,9 @@ namespace dftfe
                 // wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<
-                      (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      chebyBlockSize,
-                      M,
-                      dftfe::utils::makeDataTypeDeviceCompatible(X),
-                      N,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        XBlock.begin()),
-                      k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4137,18 +3760,13 @@ namespace dftfe
                        false,
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                    stridedCopyFromBlockKernel<<<
-                      (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      chebyBlockSize,
-                      M,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        HXBlock.begin()),
-                      B,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        HXBlockFull.begin()),
-                      k - jvec);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(B,
+                                                         chebyBlockSize,
+                                                         M,
+                                                         k - jvec,
+                                                         HXBlock.begin(),
+                                                         HXBlockFull.begin());
                   }
 
                 // evalute X^{T} times HXBlock
@@ -4197,17 +3815,9 @@ namespace dftfe
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<
-                      (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      chebyBlockSize,
-                      M,
-                      dftfe::utils::makeDataTypeDeviceCompatible(X),
-                      N,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        XBlock.begin()),
-                      k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4223,18 +3833,13 @@ namespace dftfe
                        false,
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                    stridedCopyFromBlockKernel<<<
-                      (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      chebyBlockSize,
-                      M,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        HXBlock.begin()),
-                      B,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        HXBlockFull.begin()),
-                      k - jvecNew);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(B,
+                                                         chebyBlockSize,
+                                                         M,
+                                                         k - jvecNew,
+                                                         HXBlock.begin(),
+                                                         HXBlockFull.begin());
                   }
 
                 // evalute X^{T} times HXBlock
@@ -4445,12 +4050,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                 dftfe::utils::MemorySpace::DEVICE>
       XFP32(M * N, dataTypes::numberFP32(0.0));
-    convDoubleArrToFloatArr<<<(N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      N * M,
-      dftfe::utils::makeDataTypeDeviceCompatible(X),
-      dftfe::utils::makeDataTypeDeviceCompatible(XFP32.begin()));
+
+    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+      N * M, X, XFP32.begin());
 
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST_PINNED>
@@ -4536,17 +4138,9 @@ namespace dftfe
                 // blocks of B wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<
-                      (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      chebyBlockSize,
-                      M,
-                      dftfe::utils::makeDataTypeDeviceCompatible(X),
-                      N,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        XBlock.begin()),
-                      k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4576,33 +4170,22 @@ namespace dftfe
                          onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvec + B > Noc)
-                      stridedCopyFromBlockKernel<<<
-                        (chebyBlockSize +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                        chebyBlockSize,
-                        M,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlock.begin()),
-                        B,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlockFull.begin()),
-                        k - jvec);
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(B,
+                                                           chebyBlockSize,
+                                                           M,
+                                                           k - jvec,
+                                                           HXBlock.begin(),
+                                                           HXBlockFull.begin());
                     else
-                      stridedCopyFromBlockKernelFP32<<<
-                        (chebyBlockSize +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                        chebyBlockSize,
-                        M,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlock.begin()),
-                        B,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlockFullFP32.begin()),
-                        k - jvec);
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          B,
+                          chebyBlockSize,
+                          M,
+                          k - jvec,
+                          HXBlock.begin(),
+                          HXBlockFullFP32.begin());
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
@@ -4678,17 +4261,9 @@ namespace dftfe
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<
-                      (chebyBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                      chebyBlockSize,
-                      M,
-                      dftfe::utils::makeDataTypeDeviceCompatible(X),
-                      N,
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        XBlock.begin()),
-                      k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setValue(0);
@@ -4718,33 +4293,22 @@ namespace dftfe
                          onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvecNew + B > Noc)
-                      stridedCopyFromBlockKernel<<<
-                        (chebyBlockSize +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                        chebyBlockSize,
-                        M,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlock.begin()),
-                        B,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlockFull.begin()),
-                        k - jvecNew);
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(B,
+                                                           chebyBlockSize,
+                                                           M,
+                                                           k - jvecNew,
+                                                           HXBlock.begin(),
+                                                           HXBlockFull.begin());
                     else
-                      stridedCopyFromBlockKernelFP32<<<
-                        (chebyBlockSize +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                        chebyBlockSize,
-                        M,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlock.begin()),
-                        B,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          HXBlockFullFP32.begin()),
-                        k - jvecNew);
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          B,
+                          chebyBlockSize,
+                          M,
+                          k - jvecNew,
+                          HXBlock.begin(),
+                          HXBlockFullFP32.begin());
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times

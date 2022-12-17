@@ -35,7 +35,7 @@
 #  include <chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
 #  include <constraintMatrixInfoDevice.h>
 #  include <kohnShamDFTOperatorDevice.h>
-#  include "deviceHelpers.h"
+#  include "deviceKernelsGeneric.h"
 #  include <poissonSolverProblemDevice.h>
 #  include <kerkerSolverProblemDevice.h>
 #  include <linearSolverCGDevice.h>

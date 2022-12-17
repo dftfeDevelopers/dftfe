@@ -121,16 +121,13 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       //
       // compute V*C^{\dagger}*X
       //
-      scaleDeviceKernel<<<
-        (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
         numberWaveFunctions,
         d_totalPseudoWfcNonLocal,
         1.0,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          projectorKetTimesVector.begin()),
-        d_nonLocalPseudoPotentialConstantsDevice.begin());
+        d_nonLocalPseudoPotentialConstantsDevice.begin(),
+        projectorKetTimesVector.begin());
+
 
       copyFromParallelNonLocalVecToAllCellsVec<<<
         (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -199,28 +196,23 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (std::is_same<dataTypes::number, std::complex<double>>::value)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(
+      utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
         (d_parallelChebyBlockVectorDevice.localSize() *
          d_parallelChebyBlockVectorDevice.numVectors()),
         dst,
         d_tempRealVec.begin(),
         d_tempImagVec.begin());
 
-
-      daxpyAtomicAddKernel<<<(numberWaveFunctions +
-                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                               dftfe::utils::DEVICE_BLOCK_SIZE *
-                               d_numLocallyOwnedCells * d_numberNodesPerElement,
-                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+      dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
         numberWaveFunctions,
         d_numLocallyOwnedCells * d_numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          d_cellHamMatrixTimesWaveMatrix.begin()),
+        d_cellHamMatrixTimesWaveMatrix.begin(),
         d_tempRealVec.begin(),
         d_tempImagVec.begin(),
         d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
-      deviceUtils::copyRealArrsToComplexArrDevice(
+
+      utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
         (d_parallelChebyBlockVectorDevice.localSize() *
          d_parallelChebyBlockVectorDevice.numVectors()),
         d_tempRealVec.begin(),
@@ -228,16 +220,11 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         dst);
     }
   else
-    daxpyAtomicAddKernel<<<(numberWaveFunctions +
-                            (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                             dftfe::utils::DEVICE_BLOCK_SIZE *
-                             d_numLocallyOwnedCells * d_numberNodesPerElement,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+    dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
       numberWaveFunctions,
       d_numLocallyOwnedCells * d_numberNodesPerElement,
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        d_cellHamMatrixTimesWaveMatrix.begin()),
-      dftfe::utils::makeDataTypeDeviceCompatible(dst),
+      d_cellHamMatrixTimesWaveMatrix.begin(),
+      dst,
       d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 }
 
@@ -261,16 +248,11 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0)
     {
-      copyDeviceKernel<<<(numberWaveFunctions +
-                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE *
-                           totalLocallyOwnedCells * d_numberNodesPerElement,
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+      dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
         numberWaveFunctions,
         totalLocallyOwnedCells * d_numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(src),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          d_cellWaveFunctionMatrix.begin()),
+        src,
+        d_cellWaveFunctionMatrix.begin(),
         d_flattenedArrayCellLocalProcIndexIdMapDevice.begin());
 
       dftfe::utils::deviceBlasWrapper::gemmBatched(
@@ -330,14 +312,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   // compute V*C^{\dagger}*X
   //
   if (d_totalNonlocalElems > 0)
-    scaleDeviceKernel<<<
-      (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
       1.0,
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        projectorKetTimesVector.begin()),
-      d_nonLocalPseudoPotentialConstantsDevice.begin());
+      d_nonLocalPseudoPotentialConstantsDevice.begin(),
+      projectorKetTimesVector.begin());
 }

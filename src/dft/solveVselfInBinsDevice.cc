@@ -20,7 +20,7 @@
 #ifdef DFTFE_WITH_DEVICE
 #  include <solveVselfInBinsDevice.h>
 #  include <vectorUtilities.h>
-#  include <deviceHelpers.h>
+#  include <deviceKernelsGeneric.h>
 #  include <MemoryStorage.h>
 #  include <DeviceAPICalls.h>
 #  include <DeviceDataTypeOverloads.h>
@@ -146,83 +146,7 @@ namespace dftfe
           }
       }
 
-      /*
-      #  if __Device_ARCH__ < 600
-            __device__ double
-            atomicAdd(double *address, double val)
-            {
-              unsigned long long int *address_as_ull =
-                (unsigned long long int *)address;
-              unsigned long long int old = *address_as_ull, assumed;
 
-              do
-                {
-                  assumed = old;
-                  old     = atomicCAS(address_as_ull,
-                                  assumed,
-                                  __double_as_longlong(
-                                    val + __longlong_as_double(assumed)));
-
-                  // Note: uses integer comparison to avoid hang in case of NaN
-      (since
-                  // NaN != NaN)
-                }
-              while (assumed != old);
-
-              return __longlong_as_double(old);
-            }
-      #  endif
-      */
-
-
-      __global__ void
-      daxpyAtomicAddKernel(const unsigned int contiguousBlockSize,
-                           const unsigned int numContiguousBlocks,
-                           const double *     addFromVec,
-                           double *           addToVec,
-                           const dealii::types::global_dof_index
-                             *addToVecStartingContiguousBlockIds)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex      = index / contiguousBlockSize;
-            unsigned int intraBlockIndex = index % contiguousBlockSize;
-            atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      addFromVec[index]);
-          }
-      }
-
-
-      __global__ void
-      copyDeviceKernel(const unsigned int contiguousBlockSize,
-                       const unsigned int numContiguousBlocks,
-                       const double *     copyFromVec,
-                       double *           copyToVec,
-                       const dealii::types::global_dof_index
-                         *copyFromVecStartingContiguousBlockIds)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex      = index / contiguousBlockSize;
-            unsigned int intraBlockIndex = index % contiguousBlockSize;
-            copyToVec[index] =
-              copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex];
-          }
-      }
 
       void
       computeAX(
@@ -282,11 +206,7 @@ namespace dftfe
                      scalarCoeffBeta  = 0.0;
 
         if (totalLocallyOwnedCells > 0)
-          copyDeviceKernel<<<(numberVectors +
-                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                               dftfe::utils::DEVICE_BLOCK_SIZE *
-                               totalLocallyOwnedCells * numberNodesPerElement,
-                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             temp.begin(), // src.begin(),
@@ -324,16 +244,13 @@ namespace dftfe
           totalLocallyOwnedCells);
 
         if (totalLocallyOwnedCells > 0)
-          daxpyAtomicAddKernel<<<
-            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE * totalLocallyOwnedCells *
-              numberNodesPerElement,
-            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+          dftfe::utils::deviceKernelsGeneric::axpyStridedBlockAtomicAdd(
             numberVectors,
             totalLocallyOwnedCells * numberNodesPerElement,
             cellStiffnessMatrixTimesVectorD.begin(),
             dst.begin(),
             cellLocalProcIndexIdMapD.begin());
+
 
         // think dirichlet hanging node linked to two master solved nodes
         if ((localSize + ghostSize) > 0)

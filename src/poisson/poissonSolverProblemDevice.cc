@@ -444,12 +444,12 @@ namespace dftfe
   {
     // -\sum_{i \neq o} a_i * u_i computation which involves summation across
     // MPI tasks
-    const double constrainedNodeValue =
-      deviceUtils::dot(d_meanValueConstraintDeviceVec.begin(),
-                       vec.begin(),
-                       d_xLocalDof,
-                       mpi_communicator,
-                       *d_deviceBlasHandlePtr);
+    const double constrainedNodeValue = dftfe::utils::deviceKernelsGeneric::dot(
+      d_meanValueConstraintDeviceVec.begin(),
+      vec.begin(),
+      d_xLocalDof,
+      mpi_communicator,
+      *d_deviceBlasHandlePtr);
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
@@ -486,11 +486,12 @@ namespace dftfe
               d_meanValueConstraintProcId,
               mpi_communicator);
 
-    deviceUtils::add(vec.begin(),
-                     d_meanValueConstraintDeviceVec.begin(),
-                     constrainedNodeValue,
-                     d_xLocalDof,
-                     *d_deviceBlasHandlePtr);
+    dftfe::utils::deviceKernelsGeneric::add(
+      vec.begin(),
+      d_meanValueConstraintDeviceVec.begin(),
+      constrainedNodeValue,
+      d_xLocalDof,
+      *d_deviceBlasHandlePtr);
 
     // meanValueConstraintSetZero
     if (d_isMeanValueConstraintComputed)

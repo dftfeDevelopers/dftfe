@@ -22,7 +22,7 @@
 #    include <iostream>
 
 #    include <deviceDirectCCLWrapper.h>
-#    include <deviceHelpers.h>
+#    include <deviceKernelsGeneric.h>
 #    include <DeviceDataTypeOverloads.h>
 #    include <DeviceKernelLauncherConstants.h>
 #    if defined(DFTFE_WITH_NCCL)
@@ -144,10 +144,10 @@ namespace dftfe
       double *                    tempImag,
       deviceStream_t &            stream)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(size,
-                                                  send,
-                                                  tempReal,
-                                                  tempImag);
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
+                                                           send,
+                                                           tempReal,
+                                                           tempImag);
 #    ifdef DFTFE_WITH_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -167,10 +167,10 @@ namespace dftfe
       ncclGroupEnd();
 #    endif
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size,
-                                                  tempReal,
-                                                  tempImag,
-                                                  recv);
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
+                                                           tempReal,
+                                                           tempImag,
+                                                           recv);
       return 0;
     }
 
@@ -183,10 +183,10 @@ namespace dftfe
       float *                    tempImag,
       deviceStream_t &           stream)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(size,
-                                                  send,
-                                                  tempReal,
-                                                  tempImag);
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
+                                                           send,
+                                                           tempReal,
+                                                           tempImag);
 #    ifdef DFTFE_WITH_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -206,10 +206,10 @@ namespace dftfe
       ncclGroupEnd();
 #    endif
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size,
-                                                  tempReal,
-                                                  tempImag,
-                                                  recv);
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
+                                                           tempReal,
+                                                           tempImag,
+                                                           recv);
       return 0;
     }
 
@@ -259,15 +259,15 @@ namespace dftfe
       float *                     tempImag2,
       deviceStream_t &            stream)
     {
-      deviceUtils::copyComplexArrToRealArrsDevice(size1,
-                                                  send1,
-                                                  tempReal1,
-                                                  tempImag1);
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size1,
+                                                           send1,
+                                                           tempReal1,
+                                                           tempImag1);
 
-      deviceUtils::copyComplexArrToRealArrsDevice(size2,
-                                                  send2,
-                                                  tempReal2,
-                                                  tempImag2);
+      deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size2,
+                                                           send2,
+                                                           tempReal2,
+                                                           tempImag2);
 
 #    ifdef DFTFE_WITH_NCCL
       ncclGroupStart();
@@ -302,15 +302,15 @@ namespace dftfe
       ncclGroupEnd();
 #    endif
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size1,
-                                                  tempReal1,
-                                                  tempImag1,
-                                                  recv1);
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size1,
+                                                           tempReal1,
+                                                           tempImag1,
+                                                           recv1);
 
-      deviceUtils::copyRealArrsToComplexArrDevice(size2,
-                                                  tempReal2,
-                                                  tempImag2,
-                                                  recv2);
+      deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size2,
+                                                           tempReal2,
+                                                           tempImag2,
+                                                           recv2);
 
       return 0;
     }
