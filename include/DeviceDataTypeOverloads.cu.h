@@ -25,6 +25,20 @@ namespace dftfe
 {
   namespace utils
   {
+
+
+    __forceinline__ __device__ cuDoubleComplex
+                    makeComplex(double realPart, double imagPart)
+    {
+      return make_cuDoubleComplex(realPart, imagPart);
+    }
+
+    __forceinline__ __device__ cuFloatComplex
+                    makeComplex(float realPart, float imagPart)
+    {
+      return make_cuFloatComplex(realPart, imagPart);
+    }
+
     //
     // copyValue for homogeneous types
     //

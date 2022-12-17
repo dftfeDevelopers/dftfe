@@ -129,7 +129,7 @@ namespace
     const double *     vEffJxW,
     const double *     JxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    cuDoubleComplex *  cellHamiltonianMatrixFlattened,
+    dftfe::utils::deviceDoubleComplex *  cellHamiltonianMatrixFlattened,
     const double *     kPointCoordsVec,
     const double *     kSquareTimesHalfVec,
     const bool         externalPotCorr)
@@ -196,7 +196,7 @@ namespace
                                             numCells * numDofsPerCell *
                                             numDofsPerCell;
             cellHamiltonianMatrixFlattened[startIndex + index] =
-              make_cuDoubleComplex(
+              dftfe::utils::makeComplex(
                 0.5 * cellShapeFunctionGradientIntegral[index] + val +
                   kSquareTimesHalfVec[ikpt] * valRealKpt,
                 kPointCoordsVec[3 * ikpt + 0] * valImagKptX +
@@ -204,7 +204,7 @@ namespace
                   kPointCoordsVec[3 * ikpt + 2] * valImagKptZ);
             if (externalPotCorr)
               cellHamiltonianMatrixFlattened[startIndex + index] =
-                make_cuDoubleComplex(
+                dftfe::utils::makeComplex(
                   cellHamiltonianMatrixFlattened[startIndex + index].x +
                     cellHamiltonianMatrixExternalPotCorrFlattened[index],
                   cellHamiltonianMatrixFlattened[startIndex + index].y);
@@ -337,7 +337,7 @@ namespace
     const double *     JxW,
     const double *     derExcWithSigmaTimesGradRhoJxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    cuDoubleComplex *  cellHamiltonianMatrixFlattened,
+    dftfe::utils::deviceDoubleComplex *  cellHamiltonianMatrixFlattened,
     const double *     kPointCoordsVec,
     const double *     kSquareTimesHalfVec,
     const bool         externalPotCorr)
@@ -432,7 +432,7 @@ namespace
                                             numCells * numDofsPerCell *
                                             numDofsPerCell;
             cellHamiltonianMatrixFlattened[startIndex + index] =
-              make_cuDoubleComplex(
+              dftfe::utils::makeComplex(
                 0.5 * cellShapeFunctionGradientIntegral[index] + val +
                   kSquareTimesHalfVec[ikpt] * valRealKpt,
                 kPointCoordsVec[3 * ikpt + 0] * valImagKptX +
@@ -440,7 +440,7 @@ namespace
                   kPointCoordsVec[3 * ikpt + 2] * valImagKptZ);
             if (externalPotCorr)
               cellHamiltonianMatrixFlattened[startIndex + index] =
-                make_cuDoubleComplex(
+                dftfe::utils::makeComplex(
                   cellHamiltonianMatrixFlattened[startIndex + index].x +
                     cellHamiltonianMatrixExternalPotCorrFlattened[index],
                   cellHamiltonianMatrixFlattened[startIndex + index].y);
@@ -502,7 +502,7 @@ namespace
                           const double *shapeFunctionGradientValuesZTransposed,
                           const double *vEffPrimeJxW,
                           const double *JxW,
-                          cuDoubleComplex *cellHamiltonianPrimeMatrixFlattened)
+                          dftfe::utils::deviceDoubleComplex *cellHamiltonianPrimeMatrixFlattened)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -532,7 +532,7 @@ namespace
           }
 
         cellHamiltonianPrimeMatrixFlattened[index] =
-          make_cuDoubleComplex(val, 0.0);
+          dftfe::utils::makeComplex(val, 0.0);
       }
   }
 
@@ -549,7 +549,7 @@ namespace
     const double *     vEffPrimeJxW,
     const double *     JxW,
     const double *     derExcPrimeWithSigmaTimesGradRhoJxW,
-    cuDoubleComplex *  cellHamiltonianPrimeMatrixFlattened)
+    dftfe::utils::deviceDoubleComplex *  cellHamiltonianPrimeMatrixFlattened)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -624,7 +624,7 @@ namespace
           }
 
         cellHamiltonianPrimeMatrixFlattened[index] =
-          make_cuDoubleComplex(val, 0.0);
+          dftfe::utils::makeComplex(val, 0.0);
       }
   }
 

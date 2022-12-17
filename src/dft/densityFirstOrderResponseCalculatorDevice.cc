@@ -54,20 +54,20 @@ namespace dftfe
 
     __global__ void
     computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
-                                             cuDoubleComplex *  XQuads,
-                                             cuDoubleComplex *  XPrimeQuads)
+                                             dftfe::utils::deviceDoubleComplex *  XQuads,
+                                             dftfe::utils::deviceDoubleComplex *  XPrimeQuads)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const cuDoubleComplex psi      = XQuads[index];
-          const cuDoubleComplex psiPrime = XPrimeQuads[index];
+          const dftfe::utils::deviceDoubleComplex psi      = XQuads[index];
+          const dftfe::utils::deviceDoubleComplex psiPrime = XPrimeQuads[index];
           XPrimeQuads[index] =
-            make_cuDoubleComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
+            dftfe::utils::makeComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
           XQuads[index] =
-            make_cuDoubleComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+            dftfe::utils::makeComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
         }
     }
 
@@ -90,20 +90,20 @@ namespace dftfe
 
     __global__ void
     computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
-                                             cuFloatComplex *   XQuads,
-                                             cuFloatComplex *   XPrimeQuads)
+                                             dftfe::utils::deviceFloatComplex *   XQuads,
+                                             dftfe::utils::deviceFloatComplex *   XPrimeQuads)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const cuFloatComplex psi      = XQuads[index];
-          const cuFloatComplex psiPrime = XPrimeQuads[index];
+          const dftfe::utils::deviceFloatComplex psi      = XQuads[index];
+          const dftfe::utils::deviceFloatComplex psiPrime = XPrimeQuads[index];
           XPrimeQuads[index] =
-            make_cuFloatComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
+            dftfe::utils::makeComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
           XQuads[index] =
-            make_cuFloatComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+            dftfe::utils::makeComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
         }
     }
   } // namespace

@@ -59,9 +59,9 @@ namespace dftfe
     __global__ void
     copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
                                         const unsigned int numContiguousBlocks,
-                                        const cuFloatComplex *floatArr,
+                                        const dftfe::utils::deviceFloatComplex *floatArr,
                                         const unsigned int *locallyOwnedFlagArr,
-                                        cuDoubleComplex *   doubleArr)
+                                        dftfe::utils::deviceDoubleComplex *   doubleArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numberEntries =
@@ -209,8 +209,8 @@ namespace dftfe
     addNonLocalContributionDeviceKernel(
       const dealii::types::global_dof_index contiguousBlockSize,
       const dealii::types::global_dof_index numContiguousBlocks,
-      const cuDoubleComplex *               xVec,
-      cuDoubleComplex *                     yVec,
+      const dftfe::utils::deviceDoubleComplex *               xVec,
+      dftfe::utils::deviceDoubleComplex *                     yVec,
       const unsigned int *                  xVecToyVecBlockIdMap)
     {
       const dealii::types::global_dof_index globalThreadId =
@@ -227,7 +227,7 @@ namespace dftfe
             index % contiguousBlockSize;
           yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
                intraBlockIndex] =
-            cuCadd(yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
+            dftfe::utils::add(yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
                         intraBlockIndex],
                    xVec[index]);
         }

@@ -74,7 +74,7 @@ namespace dftfe
     setZeroKernel(const unsigned int BVec,
                   const unsigned int M,
                   const unsigned int N,
-                  cuDoubleComplex *  yVec,
+                  dftfe::utils::deviceDoubleComplex *  yVec,
                   const unsigned int startingXVecId)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -87,7 +87,7 @@ namespace dftfe
           localThreadId < BVec)
         {
           *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            make_cuDoubleComplex(0.0, 0.0);
+            dftfe::utils::makeComplex(0.0, 0.0);
         }
     }
 

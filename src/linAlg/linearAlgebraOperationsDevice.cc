@@ -67,8 +67,8 @@ namespace dftfe
       __global__ void
       combinedDeviceKernel(const unsigned int contiguousBlockSize,
                            const unsigned int numContiguousBlocks,
-                           cuDoubleComplex *  X,
-                           cuDoubleComplex *  Y,
+                           dftfe::utils::deviceDoubleComplex *  X,
+                           dftfe::utils::deviceDoubleComplex *  Y,
                            const double       a,
                            const double       b,
                            const double       scalar,
@@ -85,18 +85,18 @@ namespace dftfe
              index += blockDim.x * gridDim.x)
           {
             unsigned int blockIndex = index / contiguousBlockSize;
-            *(Y + index)            = make_cuDoubleComplex(
+            *(Y + index)            = dftfe::utils::makeComplex(
               (Y + index)->x * (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld),
               (Y + index)->y * (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld));
-            *(X + index) = make_cuDoubleComplex(
+            *(X + index) = dftfe::utils::makeComplex(
               (X + index)->x * (*(invSqrtMassVec + blockIndex)),
               (X + index)->y * (*(invSqrtMassVec + blockIndex)));
-            Y[index]     = make_cuDoubleComplex(a * X[index].x + b * Y[index].x,
+            Y[index]     = dftfe::utils::makeComplex(a * X[index].x + b * Y[index].x,
                                             a * X[index].y + b * Y[index].y);
-            *(X + index) = make_cuDoubleComplex(
+            *(X + index) = dftfe::utils::makeComplex(
               (X + index)->x * (*(invSqrtMassVec + blockIndex) * scalar),
               (X + index)->y * (*(invSqrtMassVec + blockIndex) * scalar));
-            *(Y + index) = make_cuDoubleComplex(
+            *(Y + index) = dftfe::utils::makeComplex(
               (Y + index)->x * (*(sqrtMassVec + blockIndex)),
               (Y + index)->y * (*(sqrtMassVec + blockIndex)));
           }
@@ -128,8 +128,8 @@ namespace dftfe
       __global__ void
       addSubspaceRotatedBlockToXKernel(const unsigned int    BDof,
                                        const unsigned int    BVec,
-                                       const cuFloatComplex *rotatedXBlockSP,
-                                       cuDoubleComplex *     X,
+                                       const dftfe::utils::deviceFloatComplex *rotatedXBlockSP,
+                                       dftfe::utils::deviceDoubleComplex *     X,
                                        const unsigned int    startingDofId,
                                        const unsigned int    startingVecId,
                                        const unsigned int    N)
@@ -142,7 +142,7 @@ namespace dftfe
             const unsigned int ivec  = i % BVec;
 
             *(X + N * (startingDofId + ibdof) + startingVecId + ivec) =
-              cuCadd(*(X + N * (startingDofId + ibdof) + startingVecId + ivec),
+              dftfe::utils::add(*(X + N * (startingDofId + ibdof) + startingVecId + ivec),
                      cuComplexFloatToDouble(
                        rotatedXBlockSP[ibdof * BVec + ivec]));
           }
@@ -168,8 +168,8 @@ namespace dftfe
 
 
       __global__ void
-      computeDiagQTimesXKernel(const cuDoubleComplex *diagValues,
-                               cuDoubleComplex *      X,
+      computeDiagQTimesXKernel(const dftfe::utils::deviceDoubleComplex *diagValues,
+                               dftfe::utils::deviceDoubleComplex *      X,
                                const unsigned int     N,
                                const unsigned int     M)
       {
@@ -181,7 +181,7 @@ namespace dftfe
             const unsigned int ivec = i % N;
 
             *(X + N * idof + ivec) =
-              cuCmul(*(X + N * idof + ivec), diagValues[ivec]);
+              dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
           }
       }
 
@@ -216,8 +216,8 @@ namespace dftfe
                                   const unsigned int     N,
                                   const unsigned int     startingVecId,
                                   const double *         eigenValues,
-                                  const cuDoubleComplex *X,
-                                  const cuDoubleComplex *Y,
+                                  const dftfe::utils::deviceDoubleComplex *X,
+                                  const dftfe::utils::deviceDoubleComplex *Y,
                                   double *               r)
       {
         for (int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -226,7 +226,7 @@ namespace dftfe
           {
             const unsigned int    dofIndex  = i / numVectors;
             const unsigned int    waveIndex = i % numVectors;
-            const cuDoubleComplex diff      = make_cuDoubleComplex(
+            const dftfe::utils::deviceDoubleComplex diff      = dftfe::utils::makeComplex(
               Y[i].x - X[dofIndex * N + startingVecId + waveIndex].x *
                          eigenValues[startingVecId + waveIndex],
               Y[i].y - X[dofIndex * N + startingVecId + waveIndex].y *
@@ -262,9 +262,9 @@ namespace dftfe
       copyFloatArrToDoubleArrLocallyOwned(
         const unsigned int    contiguousBlockSize,
         const unsigned int    numContiguousBlocks,
-        const cuFloatComplex *floatArr,
+        const dftfe::utils::deviceFloatComplex *floatArr,
         const unsigned int *  locallyOwnedFlagArr,
-        cuDoubleComplex *     doubleArr)
+        dftfe::utils::deviceDoubleComplex *     doubleArr)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
