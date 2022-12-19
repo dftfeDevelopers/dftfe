@@ -88,7 +88,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
       not d_dftParamsPtr->pinnedNodeForPBC)
 #else
   if (false)
-#endif    
+#endif
     {
 #ifdef DFTFE_WITH_DEVICE
       d_phiTotalSolverProblemDevice.reinit(
@@ -129,7 +129,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
       not d_dftParamsPtr->pinnedNodeForPBC)
 #else
   if (false)
-#endif    
+#endif
     {
 #ifdef DFTFE_WITH_DEVICE
       CGSolverDevice.solve(

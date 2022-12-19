@@ -104,10 +104,14 @@ namespace dftfe
     void
     deviceSetValue(ValueType *devPtr, ValueType value, size_type size)
     {
-      hipLaunchKernelGGL(setValueKernel, size / dftfe::utils::DEVICE_BLOCK_SIZE + 1, dftfe::utils::DEVICE_BLOCK_SIZE, 0, 0, 
-        makeDataTypeDeviceCompatible(devPtr),
-        makeDataTypeDeviceCompatible(value),
-        size);
+      hipLaunchKernelGGL(setValueKernel,
+                         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         makeDataTypeDeviceCompatible(devPtr),
+                         makeDataTypeDeviceCompatible(value),
+                         size);
     }
 
     template void

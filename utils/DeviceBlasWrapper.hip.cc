@@ -170,19 +170,19 @@ namespace dftfe
       {
         deviceBlasStatus_t status =
           hipblasZgemm(handle,
-                      transa,
-                      transb,
-                      m,
-                      n,
-                      k,
-                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(A),
-                      lda,
-                      dftfe::utils::makeDataTypeDeviceCompatible(B),
-                      ldb,
-                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(C),
-                      ldc);
+                       transa,
+                       transb,
+                       m,
+                       n,
+                       k,
+                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       lda,
+                       dftfe::utils::makeDataTypeDeviceCompatible(B),
+                       ldb,
+                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                       dftfe::utils::makeDataTypeDeviceCompatible(C),
+                       ldc);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
@@ -205,19 +205,19 @@ namespace dftfe
       {
         deviceBlasStatus_t status =
           hipblasCgemm(handle,
-                      transa,
-                      transb,
-                      m,
-                      n,
-                      k,
-                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(A),
-                      lda,
-                      dftfe::utils::makeDataTypeDeviceCompatible(B),
-                      ldb,
-                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(C),
-                      ldc);
+                       transa,
+                       transb,
+                       m,
+                       n,
+                       k,
+                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       lda,
+                       dftfe::utils::makeDataTypeDeviceCompatible(B),
+                       ldb,
+                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                       dftfe::utils::makeDataTypeDeviceCompatible(C),
+                       ldc);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
@@ -240,20 +240,20 @@ namespace dftfe
                   int                   batchCount)
       {
         deviceBlasStatus_t status = hipblasDgemmBatched(handle,
-                                                       transa,
-                                                       transb,
-                                                       m,
-                                                       n,
-                                                       k,
-                                                       alpha,
-                                                       Aarray,
-                                                       lda,
-                                                       Barray,
-                                                       ldb,
-                                                       beta,
-                                                       Carray,
-                                                       ldc,
-                                                       batchCount);
+                                                        transa,
+                                                        transb,
+                                                        m,
+                                                        n,
+                                                        k,
+                                                        alpha,
+                                                        Aarray,
+                                                        lda,
+                                                        Barray,
+                                                        ldb,
+                                                        beta,
+                                                        Carray,
+                                                        ldc,
+                                                        batchCount);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
@@ -277,20 +277,20 @@ namespace dftfe
       {
         deviceBlasStatus_t status =
           hipblasZgemmBatched(handle,
-                             transa,
-                             transb,
-                             m,
-                             n,
-                             k,
-                             (const deviceDoubleComplex *)alpha,
-                             (const deviceDoubleComplex **)Aarray,
-                             lda,
-                             (const deviceDoubleComplex **)Barray,
-                             ldb,
-                             (const deviceDoubleComplex *)beta,
-                             (deviceDoubleComplex **)Carray,
-                             ldc,
-                             batchCount);
+                              transa,
+                              transb,
+                              m,
+                              n,
+                              k,
+                              (const deviceDoubleComplex *)alpha,
+                              (const deviceDoubleComplex **)Aarray,
+                              lda,
+                              (const deviceDoubleComplex **)Barray,
+                              ldb,
+                              (const deviceDoubleComplex *)beta,
+                              (deviceDoubleComplex **)Carray,
+                              ldc,
+                              batchCount);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
@@ -316,23 +316,23 @@ namespace dftfe
                          int                   batchCount)
       {
         deviceBlasStatus_t status = hipblasDgemmStridedBatched(handle,
-                                                              transa,
-                                                              transb,
-                                                              m,
-                                                              n,
-                                                              k,
-                                                              alpha,
-                                                              A,
-                                                              lda,
-                                                              strideA,
-                                                              B,
-                                                              ldb,
-                                                              strideB,
-                                                              beta,
-                                                              C,
-                                                              ldc,
-                                                              strideC,
-                                                              batchCount);
+                                                               transa,
+                                                               transb,
+                                                               m,
+                                                               n,
+                                                               k,
+                                                               alpha,
+                                                               A,
+                                                               lda,
+                                                               strideA,
+                                                               B,
+                                                               ldb,
+                                                               strideB,
+                                                               beta,
+                                                               C,
+                                                               ldc,
+                                                               strideC,
+                                                               batchCount);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
@@ -358,23 +358,23 @@ namespace dftfe
                          int                   batchCount)
       {
         deviceBlasStatus_t status = hipblasSgemmStridedBatched(handle,
-                                                              transa,
-                                                              transb,
-                                                              m,
-                                                              n,
-                                                              k,
-                                                              alpha,
-                                                              A,
-                                                              lda,
-                                                              strideA,
-                                                              B,
-                                                              ldb,
-                                                              strideB,
-                                                              beta,
-                                                              C,
-                                                              ldc,
-                                                              strideC,
-                                                              batchCount);
+                                                               transa,
+                                                               transb,
+                                                               m,
+                                                               n,
+                                                               k,
+                                                               alpha,
+                                                               A,
+                                                               lda,
+                                                               strideA,
+                                                               B,
+                                                               ldb,
+                                                               strideB,
+                                                               beta,
+                                                               C,
+                                                               ldc,
+                                                               strideC,
+                                                               batchCount);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }

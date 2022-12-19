@@ -72,12 +72,12 @@ namespace dftfe
 
       __global__ void
       computeRhoGradRhoFromInterpolatedValues(
-        const unsigned int numberEntries,
-        dftfe::utils::deviceDoubleComplex *  rhoCellsWfcContributions,
-        dftfe::utils::deviceDoubleComplex *  gradRhoCellsWfcContributionsX,
-        dftfe::utils::deviceDoubleComplex *  gradRhoCellsWfcContributionsY,
-        dftfe::utils::deviceDoubleComplex *  gradRhoCellsWfcContributionsZ,
-        const bool         isEvaluateGradRho)
+        const unsigned int                 numberEntries,
+        dftfe::utils::deviceDoubleComplex *rhoCellsWfcContributions,
+        dftfe::utils::deviceDoubleComplex *gradRhoCellsWfcContributionsX,
+        dftfe::utils::deviceDoubleComplex *gradRhoCellsWfcContributionsY,
+        dftfe::utils::deviceDoubleComplex *gradRhoCellsWfcContributionsZ,
+        const bool                         isEvaluateGradRho)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -85,7 +85,8 @@ namespace dftfe
         for (unsigned int index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            const dftfe::utils::deviceDoubleComplex psi = rhoCellsWfcContributions[index];
+            const dftfe::utils::deviceDoubleComplex psi =
+              rhoCellsWfcContributions[index];
             rhoCellsWfcContributions[index] =
               dftfe::utils::makeComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
 
@@ -93,18 +94,24 @@ namespace dftfe
               {
                 const dftfe::utils::deviceDoubleComplex gradPsiX =
                   gradRhoCellsWfcContributionsX[index];
-                gradRhoCellsWfcContributionsX[index] = dftfe::utils::makeComplex(
-                  2.0 * (psi.x * gradPsiX.x + psi.y * gradPsiX.y), 0.0);
+                gradRhoCellsWfcContributionsX[index] =
+                  dftfe::utils::makeComplex(2.0 * (psi.x * gradPsiX.x +
+                                                   psi.y * gradPsiX.y),
+                                            0.0);
 
                 const dftfe::utils::deviceDoubleComplex gradPsiY =
                   gradRhoCellsWfcContributionsY[index];
-                gradRhoCellsWfcContributionsY[index] = dftfe::utils::makeComplex(
-                  2.0 * (psi.x * gradPsiY.x + psi.y * gradPsiY.y), 0.0);
+                gradRhoCellsWfcContributionsY[index] =
+                  dftfe::utils::makeComplex(2.0 * (psi.x * gradPsiY.x +
+                                                   psi.y * gradPsiY.y),
+                                            0.0);
 
                 const dftfe::utils::deviceDoubleComplex gradPsiZ =
                   gradRhoCellsWfcContributionsZ[index];
-                gradRhoCellsWfcContributionsZ[index] = dftfe::utils::makeComplex(
-                  2.0 * (psi.x * gradPsiZ.x + psi.y * gradPsiZ.y), 0.0);
+                gradRhoCellsWfcContributionsZ[index] =
+                  dftfe::utils::makeComplex(2.0 * (psi.x * gradPsiZ.x +
+                                                   psi.y * gradPsiZ.y),
+                                            0.0);
               }
           }
       }
@@ -563,7 +570,8 @@ namespace dftfe
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-                              hipLaunchKernelGGL(computeRhoGradRhoFromInterpolatedValues,
+                              hipLaunchKernelGGL(
+                                computeRhoGradRhoFromInterpolatedValues,
                                 (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE *
                                   numQuadPoints * currentCellsBlockSize,
@@ -580,7 +588,7 @@ namespace dftfe
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
-#endif                                
+#endif
 
                               dftfe::utils::deviceBlasWrapper::gemm(
                                 operatorMatrix.getDeviceBlasHandle(),
@@ -905,7 +913,8 @@ namespace dftfe
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-                              hipLaunchKernelGGL(computeRhoGradRhoFromInterpolatedValues,
+                              hipLaunchKernelGGL(
+                                computeRhoGradRhoFromInterpolatedValues,
                                 (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE *
                                   numQuadPoints * currentCellsBlockSize,

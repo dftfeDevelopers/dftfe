@@ -57,11 +57,12 @@ namespace dftfe
     }
 
     __global__ void
-    copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
-                                        const unsigned int numContiguousBlocks,
-                                        const dftfe::utils::deviceFloatComplex *floatArr,
-                                        const unsigned int *locallyOwnedFlagArr,
-                                        dftfe::utils::deviceDoubleComplex *   doubleArr)
+    copyFloatArrToDoubleArrLocallyOwned(
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
+      const dftfe::utils::deviceFloatComplex *floatArr,
+      const unsigned int *                    locallyOwnedFlagArr,
+      dftfe::utils::deviceDoubleComplex *     doubleArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numberEntries =
@@ -207,11 +208,11 @@ namespace dftfe
 
     __global__ void
     addNonLocalContributionDeviceKernel(
-      const dealii::types::global_dof_index contiguousBlockSize,
-      const dealii::types::global_dof_index numContiguousBlocks,
-      const dftfe::utils::deviceDoubleComplex *               xVec,
-      dftfe::utils::deviceDoubleComplex *                     yVec,
-      const unsigned int *                  xVecToyVecBlockIdMap)
+      const dealii::types::global_dof_index    contiguousBlockSize,
+      const dealii::types::global_dof_index    numContiguousBlocks,
+      const dftfe::utils::deviceDoubleComplex *xVec,
+      dftfe::utils::deviceDoubleComplex *      yVec,
+      const unsigned int *                     xVecToyVecBlockIdMap)
     {
       const dealii::types::global_dof_index globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -227,9 +228,10 @@ namespace dftfe
             index % contiguousBlockSize;
           yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
                intraBlockIndex] =
-            dftfe::utils::add(yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
-                        intraBlockIndex],
-                   xVec[index]);
+            dftfe::utils::add(
+              yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
+                   intraBlockIndex],
+              xVec[index]);
         }
     }
   } // namespace
@@ -3185,7 +3187,8 @@ namespace dftfe
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+        hipLaunchKernelGGL(
+          copyFloatArrToDoubleArrLocallyOwned,
           (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
           dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -3195,7 +3198,7 @@ namespace dftfe
           localSize,
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));          
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
 #endif
 
         dst.zeroOutGhosts();
@@ -3444,7 +3447,8 @@ namespace dftfe
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+        hipLaunchKernelGGL(
+          copyFloatArrToDoubleArrLocallyOwned,
           (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
           dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -3454,8 +3458,8 @@ namespace dftfe
           localSize,
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
-          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));          
-#endif          
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#endif
         dst.zeroOutGhosts();
       }
     else

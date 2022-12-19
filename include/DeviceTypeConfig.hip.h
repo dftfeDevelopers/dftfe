@@ -23,11 +23,11 @@ namespace dftfe
 {
   namespace utils
   {
-    typedef hipError_t     deviceError_t;
-    typedef hipStream_t    deviceStream_t;
-    typedef hipEvent_t     deviceEvent_t;
+    typedef hipError_t       deviceError_t;
+    typedef hipStream_t      deviceStream_t;
+    typedef hipEvent_t       deviceEvent_t;
     typedef hipDoubleComplex deviceDoubleComplex;
-    typedef hipFloatComplex deviceFloatComplex;
+    typedef hipFloatComplex  deviceFloatComplex;
 
     // static consts
     static const deviceError_t deviceSuccess = hipSuccess;

@@ -53,9 +53,10 @@ namespace dftfe
     }
 
     __global__ void
-    computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
-                                             dftfe::utils::deviceDoubleComplex *  XQuads,
-                                             dftfe::utils::deviceDoubleComplex *  XPrimeQuads)
+    computeRhoResponseFromInterpolatedValues(
+      const unsigned int                 numberEntries,
+      dftfe::utils::deviceDoubleComplex *XQuads,
+      dftfe::utils::deviceDoubleComplex *XPrimeQuads)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -64,8 +65,10 @@ namespace dftfe
         {
           const dftfe::utils::deviceDoubleComplex psi      = XQuads[index];
           const dftfe::utils::deviceDoubleComplex psiPrime = XPrimeQuads[index];
-          dftfe::utils::copyValue(XPrimeQuads+index,psi.x * psiPrime.x + psi.y * psiPrime.y);
-          dftfe::utils::copyValue(XQuads+index, psi.x * psi.x + psi.y * psi.y);
+          dftfe::utils::copyValue(XPrimeQuads + index,
+                                  psi.x * psiPrime.x + psi.y * psiPrime.y);
+          dftfe::utils::copyValue(XQuads + index,
+                                  psi.x * psi.x + psi.y * psi.y);
         }
     }
 
@@ -87,9 +90,10 @@ namespace dftfe
     }
 
     __global__ void
-    computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
-                                             dftfe::utils::deviceFloatComplex *   XQuads,
-                                             dftfe::utils::deviceFloatComplex *   XPrimeQuads)
+    computeRhoResponseFromInterpolatedValues(
+      const unsigned int                numberEntries,
+      dftfe::utils::deviceFloatComplex *XQuads,
+      dftfe::utils::deviceFloatComplex *XPrimeQuads)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -98,8 +102,10 @@ namespace dftfe
         {
           const dftfe::utils::deviceFloatComplex psi      = XQuads[index];
           const dftfe::utils::deviceFloatComplex psiPrime = XPrimeQuads[index];
-          dftfe::utils::copyValue(XPrimeQuads+index,psi.x * psiPrime.x + psi.y * psiPrime.y);
-          dftfe::utils::copyValue(XQuads+index,psi.x * psi.x + psi.y * psi.y);
+          dftfe::utils::copyValue(XPrimeQuads + index,
+                                  psi.x * psiPrime.x + psi.y * psiPrime.y);
+          dftfe::utils::copyValue(XQuads + index,
+                                  psi.x * psi.x + psi.y * psi.y);
         }
     }
   } // namespace
@@ -394,7 +400,8 @@ namespace dftfe
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 XPrimeQuadsDevice.begin()));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-                            hipLaunchKernelGGL(computeRhoResponseFromInterpolatedValues,
+                            hipLaunchKernelGGL(
+                              computeRhoResponseFromInterpolatedValues,
                               (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE *
                                 numQuadPoints * currentCellsBlockSize,
@@ -406,7 +413,7 @@ namespace dftfe
                                 XQuadsDevice.begin()),
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 XPrimeQuadsDevice.begin()));
-#endif 
+#endif
 
                             dftfe::utils::deviceBlasWrapper::gemm(
                               operatorMatrix.getDeviceBlasHandle(),

@@ -23,16 +23,16 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <MemoryTransfer.h>
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-#include <cooperative_groups.h>
-#include <cooperative_groups/reduce.h>
+#  include <cooperative_groups.h>
+#  include <cooperative_groups/reduce.h>
 #endif
 
 
 namespace dftfe
 {
-  namespace 
+  namespace
   {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA    
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     template <typename Type, int blockSize>
     __global__ void
     applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
@@ -240,8 +240,8 @@ namespace dftfe
       if (block.thread_rank() == 0)
         atomicAdd(&d_devSum[0], localSum);
     }
-#endif    
-  }
+#endif
+  } // namespace
 
   // constructor
   linearSolverCGDevice::linearSolverCGDevice(const MPI_Comm & mpi_comm_parent,
@@ -472,11 +472,10 @@ namespace dftfe
       <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-        AssertThrow(
-          false,
-          dealii::ExcMessage(
-            "DFT-FE Error: HIP kernel not implemented for this part."));
-#endif      
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: HIP kernel not implemented for this part."));
+#endif
 
     dftfe::utils::MemoryTransfer<
       dftfe::utils::MemorySpace::HOST,
@@ -506,10 +505,9 @@ namespace dftfe
       <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-        AssertThrow(
-          false,
-          dealii::ExcMessage(
-            "DFT-FE Error: HIP kernel not implemented for this part."));
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: HIP kernel not implemented for this part."));
 #endif
 
     dftfe::utils::MemoryTransfer<
@@ -542,10 +540,9 @@ namespace dftfe
                                                     alpha,
                                                     d_xLocalDof);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-        AssertThrow(
-          false,
-          dealii::ExcMessage(
-            "DFT-FE Error: HIP kernel not implemented for this part."));
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: HIP kernel not implemented for this part."));
 #endif
 
     dftfe::utils::MemoryTransfer<

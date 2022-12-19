@@ -191,7 +191,7 @@ namespace dftfe
         constraintsMatrixDataInfoDevice.distribute(temp, numberVectors);
 
         if ((localSize + ghostSize) > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
           scaleKernel<<<
             (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
@@ -199,15 +199,17 @@ namespace dftfe
             numberVectors * (localSize + ghostSize),
             temp.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
           hipLaunchKernelGGL(scaleKernel,
-            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
-            dftfe::utils::DEVICE_BLOCK_SIZE,
-            numberVectors * (localSize + ghostSize),
-            temp.begin(),
-            inhomoIdsColoredVecFlattenedD.begin());
-#endif            
+                             (numberVectors +
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE *
+                               (localSize + ghostSize),
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                             numberVectors * (localSize + ghostSize),
+                             temp.begin(),
+                             inhomoIdsColoredVecFlattenedD.begin());
+#  endif
         //
         // elemental matrix-multiplication
         //
@@ -262,8 +264,8 @@ namespace dftfe
 
 
         // think dirichlet hanging node linked to two master solved nodes
-        if ((localSize + ghostSize) > 0) 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+        if ((localSize + ghostSize) > 0)
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
           scaleKernel<<<
             (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
@@ -271,15 +273,17 @@ namespace dftfe
             numberVectors * (localSize + ghostSize),
             dst.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
           hipLaunchKernelGGL(scaleKernel,
-            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
-            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-            numberVectors * (localSize + ghostSize),
-            dst.begin(),
-            inhomoIdsColoredVecFlattenedD.begin()));
-#endif           
+                             (numberVectors +
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE *
+                               (localSize + ghostSize),
+                             dftfe::utils::DEVICE_BLOCK_SIZE >>>
+                               (numberVectors * (localSize + ghostSize),
+                                dst.begin(),
+                                inhomoIdsColoredVecFlattenedD.begin()));
+#  endif
 
 
         constraintsMatrixDataInfoDevice.distribute_slave_to_master(
@@ -288,7 +292,7 @@ namespace dftfe
         dst.accumulateAddLocallyOwned();
 
         if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
           scaleKernel<<<(numberVectors +
                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -296,15 +300,16 @@ namespace dftfe
             numberVectors * localSize,
             dst.begin(),
             inhomoIdsColoredVecFlattenedD.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-          hipLaunchKernelGGL(scaleKernel,(numberVectors +
-                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                        dftfe::utils::DEVICE_BLOCK_SIZE,
-            numberVectors * localSize,
-            dst.begin(),
-            inhomoIdsColoredVecFlattenedD.begin());
-#endif                        
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+          hipLaunchKernelGGL(scaleKernel,
+                             (numberVectors +
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                             numberVectors * localSize,
+                             dst.begin(),
+                             inhomoIdsColoredVecFlattenedD.begin());
+#  endif
 
         // src.zero_out_ghosts();
         // constraintsMatrixDataInfoDevice.set_zero(src,numberVectors);
@@ -318,19 +323,24 @@ namespace dftfe
                           double *           dst)
       {
         if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA          
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
           diagScaleKernel<<<(numberVectors +
                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
             numberVectors, localSize, src, diagonalA, dst);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-          hipLaunchKernelGGL(diagScaleKernel,(numberVectors +
-                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                              dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                            dftfe::utils::DEVICE_BLOCK_SIZE,
-            numberVectors, localSize, src, diagonalA, dst);
-#endif                            
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+          hipLaunchKernelGGL(diagScaleKernel,
+                             (numberVectors +
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                             numberVectors,
+                             localSize,
+                             src,
+                             diagonalA,
+                             dst);
+#  endif
       }
 
       void
@@ -344,7 +354,7 @@ namespace dftfe
                         double *                          residualNormSq)
       {
         if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA            
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
           dotProductContributionBlockedKernel<<<
             (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -352,15 +362,17 @@ namespace dftfe
                                                vec1,
                                                vec2,
                                                vecTemp);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-           hipLaunchKernelGGL(dotProductContributionBlockedKernel,
-            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-              dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-            dftfe::utils::DEVICE_BLOCK_SIZE,numberVectors * localSize,
-                                               vec1,
-                                               vec2,
-                                               vecTemp);
-#endif            
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+          hipLaunchKernelGGL(dotProductContributionBlockedKernel,
+                             (numberVectors +
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                             numberVectors * localSize,
+                             vec1,
+                             vec2,
+                             vecTemp);
+#  endif
 
         const double alpha = 1.0, beta = 0.0;
         dftfe::utils::deviceBlasWrapper::gemm(handle,
@@ -864,19 +876,24 @@ namespace dftfe
 
           // update x; x = x + alpha*d
           if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA             
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             daxpyBlockedKernel<<<(numberBins +
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins, localSize, d.begin(), alphaD.begin(), x.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-            hipLaunchKernelGGL(daxpyBlockedKernel,(numberBins +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-              numberBins, localSize, d.begin(), alphaD.begin(), x.begin());                                
-#endif
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+            hipLaunchKernelGGL(daxpyBlockedKernel,
+                               (numberBins +
+                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                 dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                               dftfe::utils::DEVICE_BLOCK_SIZE,
+                               numberBins,
+                               localSize,
+                               d.begin(),
+                               alphaD.begin(),
+                               x.begin());
+#  endif
 
           if (iter % 50 == 0)
             {
@@ -903,7 +920,7 @@ namespace dftfe
                         cellStiffnessMatrixTimesVectorD);
 
               if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA                 
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                 daxpyBlockedKernel<<<
                   (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                     dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -912,34 +929,43 @@ namespace dftfe
                                                      Ax.begin(),
                                                      negOneD.begin(),
                                                      r.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
                 hipLaunchKernelGGL(daxpyBlockedKernel,
-                  (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                  dftfe::utils::DEVICE_BLOCK_SIZE,numberBins,
-                                                     localSize,
-                                                     Ax.begin(),
-                                                     negOneD.begin(),
-                                                     r.begin());
-#endif                  
+                                   (numberBins +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE *
+                                     localSize,
+                                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   numberBins,
+                                   localSize,
+                                   Ax.begin(),
+                                   negOneD.begin(),
+                                   r.begin());
+#  endif
             }
           else
             {
               // negAlphaD = -alpha;
               if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA                
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                 dmaxpyBlockedKernel<<<
                   (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                     dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                   numberBins, localSize, q.begin(), alphaD.begin(), r.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
                 hipLaunchKernelGGL(dmaxpyBlockedKernel,
-                  (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                  dftfe::utils::DEVICE_BLOCK_SIZE,
-                  numberBins, localSize, q.begin(), alphaD.begin(), r.begin());
-#endif                  
+                                   (numberBins +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE *
+                                     localSize,
+                                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   numberBins,
+                                   localSize,
+                                   q.begin(),
+                                   alphaD.begin(),
+                                   r.begin());
+#  endif
             }
 
           // precondition_Jacobi(r,s);
@@ -995,35 +1021,41 @@ namespace dftfe
 
           // d *= beta;
           if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA            
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             scaleBlockedKernel<<<(numberBins +
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins, localSize, d.begin(), betaD.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP                              
-            hipLaunchKernelGGL(scaleBlockedKernel,(numberBins +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-              numberBins, localSize, d.begin(), betaD.begin()));
-#endif
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+            hipLaunchKernelGGL(
+              scaleBlockedKernel,
+              (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+              dftfe::utils::DEVICE_BLOCK_SIZE >>>
+                (numberBins, localSize, d.begin(), betaD.begin()));
+#  endif
 
           // d.add(1.0,s);
           if (localSize > 0)
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA             
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             daxpyBlockedKernel<<<(numberBins +
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins, localSize, s.begin(), posOneD.begin(), d.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-            hipLaunchKernelGGL(daxpyBlockedKernel,(numberBins +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-              numberBins, localSize, s.begin(), posOneD.begin(), d.begin());                                 
-#endif                                 
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+            hipLaunchKernelGGL(daxpyBlockedKernel,
+                               (numberBins +
+                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                 dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                               dftfe::utils::DEVICE_BLOCK_SIZE,
+                               numberBins,
+                               localSize,
+                               s.begin(),
+                               posOneD.begin(),
+                               d.begin());
+#  endif
           unsigned int isBreak = 1;
           // if(delta_new < relTolerance*relTolerance*delta_0)
           //  isBreak = 1;

@@ -2011,12 +2011,12 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA        
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges)
 #else
         if (false)
-#endif          
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
@@ -2289,7 +2289,7 @@ namespace dftfe
             not d_dftParamsPtr->pinnedNodeForPBC)
 #else
         if (false)
-#endif          
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             if (scfIter > 0)
@@ -3157,7 +3157,7 @@ namespace dftfe
                 not d_dftParamsPtr->pinnedNodeForPBC)
 #else
             if (false)
-#endif              
+#endif
               {
 #ifdef DFTFE_WITH_DEVICE
                 d_phiTotalSolverProblemDevice.reinit(
@@ -3413,7 +3413,7 @@ namespace dftfe
             not d_dftParamsPtr->pinnedNodeForPBC)
 #else
         if (false)
-#endif          
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             d_phiTotalSolverProblemDevice.reinit(

@@ -18,32 +18,32 @@
 #define dftfeDeviceExceptions_hiph
 
 
-#define DEVICE_API_CHECK(cmd)                       \
-  do                                                \
-    {                                               \
+#define DEVICE_API_CHECK(cmd)                      \
+  do                                               \
+    {                                              \
       hipError_t e = cmd;                          \
       if (e != hipSuccess)                         \
-        {                                           \
+        {                                          \
           printf("Failed: HIP error %s:%d '%s'\n", \
-                 __FILE__,                          \
-                 __LINE__,                          \
+                 __FILE__,                         \
+                 __LINE__,                         \
                  hipGetErrorString(e));            \
-          exit(EXIT_FAILURE);                       \
-        }                                           \
-    }                                               \
+          exit(EXIT_FAILURE);                      \
+        }                                          \
+    }                                              \
   while (0)
 
-#define DEVICEBLAS_API_CHECK(expr)                                                   \
-  {                                                                                  \
-    hipblasStatus_t __hipblas_error = expr;                                            \
-    if ((__hipblas_error) != HIPBLAS_STATUS_SUCCESS)                                   \
-      {                                                                              \
-        printf(                                                                      \
+#define DEVICEBLAS_API_CHECK(expr)                                                    \
+  {                                                                                   \
+    hipblasStatus_t __hipblas_error = expr;                                           \
+    if ((__hipblas_error) != HIPBLAS_STATUS_SUCCESS)                                  \
+      {                                                                               \
+        printf(                                                                       \
           "hipBLAS error on or before line number %d in file: %s. Error code: %d.\n", \
-          __LINE__,                                                                  \
-          __FILE__,                                                                  \
+          __LINE__,                                                                   \
+          __FILE__,                                                                   \
           __hipblas_error);                                                           \
-      }                                                                              \
+      }                                                                               \
   }
 
 

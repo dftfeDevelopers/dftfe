@@ -25,15 +25,14 @@ namespace dftfe
 {
   namespace utils
   {
-
     __forceinline__ __device__ hipDoubleComplex
-                    makeComplex(double realPart, double imagPart)
+                               makeComplex(double realPart, double imagPart)
     {
       return make_hipDoubleComplex(realPart, imagPart);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                    makeComplex(float realPart, float imagPart)
+                               makeComplex(float realPart, float imagPart)
     {
       return make_hipFloatComplex(realPart, imagPart);
     }
