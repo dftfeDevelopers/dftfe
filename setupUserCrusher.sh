@@ -83,7 +83,7 @@ function cmake_real() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir\
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-  -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DWITH_GPU_LANG=$gpuLang -DWITH_GPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+  -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
   -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
@@ -99,7 +99,7 @@ function cmake_cplx() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-  -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DWITH_GPU_LANG=$gpuLang -DWITH_GPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+  -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
   -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1

@@ -158,7 +158,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         dftfe::utils::makeDataTypeDeviceCompatible(
           d_projectorKetTimesVectorAllCellsDevice.begin()),
         d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.begin());
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(copyFromParallelNonLocalVecToAllCellsVec,
         (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * d_totalNonlocalElems *

@@ -64,10 +64,8 @@ namespace dftfe
         {
           const dftfe::utils::deviceDoubleComplex psi      = XQuads[index];
           const dftfe::utils::deviceDoubleComplex psiPrime = XPrimeQuads[index];
-          XPrimeQuads[index] =
-            dftfe::utils::makeComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
-          XQuads[index] =
-            dftfe::utils::makeComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+          dftfe::utils::copyValue(XPrimeQuads+index,psi.x * psiPrime.x + psi.y * psiPrime.y);
+          dftfe::utils::copyValue(XQuads+index, psi.x * psi.x + psi.y * psi.y);
         }
     }
 
@@ -100,10 +98,8 @@ namespace dftfe
         {
           const dftfe::utils::deviceFloatComplex psi      = XQuads[index];
           const dftfe::utils::deviceFloatComplex psiPrime = XPrimeQuads[index];
-          XPrimeQuads[index] =
-            dftfe::utils::makeComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
-          XQuads[index] =
-            dftfe::utils::makeComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+          dftfe::utils::copyValue(XPrimeQuads+index,psi.x * psiPrime.x + psi.y * psiPrime.y);
+          dftfe::utils::copyValue(XQuads+index,psi.x * psi.x + psi.y * psi.y);
         }
     }
   } // namespace

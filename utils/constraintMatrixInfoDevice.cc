@@ -170,7 +170,7 @@ namespace dftfe
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
                   localIndexMapUnflattenedToFlattened[constrainedColumnId];
-                xVec[xVecStartingIdRow + intraBlockIndex] =
+                dftfe::utils::copyValue(xVec+xVecStartingIdRow + intraBlockIndex,
                   dftfe::utils::add(xVec[xVecStartingIdRow + intraBlockIndex],
                          dftfe::utils::makeComplex(
                            xVec[xVecStartingIdColumn + intraBlockIndex].x *
@@ -178,7 +178,7 @@ namespace dftfe
                                [startingColumnNumber + i],
                            xVec[xVecStartingIdColumn + intraBlockIndex].y *
                              constraintColumnValuesAllRowsUnflattened
-                               [startingColumnNumber + i]));
+                               [startingColumnNumber + i])));
               }
           }
       }
@@ -225,7 +225,7 @@ namespace dftfe
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
                   localIndexMapUnflattenedToFlattened[constrainedColumnId];
-                xVec[xVecStartingIdRow + intraBlockIndex] =
+                dftfe::utils::copyValue(xVec+xVecStartingIdRow + intraBlockIndex,
                   dftfe::utils::add(xVec[xVecStartingIdRow + intraBlockIndex],
                           dftfe::utils::makeComplex(
                             xVec[xVecStartingIdColumn + intraBlockIndex].x *
@@ -233,7 +233,7 @@ namespace dftfe
                                 [startingColumnNumber + i],
                             xVec[xVecStartingIdColumn + intraBlockIndex].y *
                               constraintColumnValuesAllRowsUnflattened
-                                [startingColumnNumber + i]));
+                                [startingColumnNumber + i])));
               }
           }
       }
@@ -407,7 +407,7 @@ namespace dftfe
             const unsigned int intraBlockIndex = index % contiguousBlockSize;
             dftfe::utils::copyValue(xVec+localIndexMapUnflattenedToFlattened
                    [constraintLocalRowIdsUnflattened[blockIndex]] +
-                 intraBlockIndex,0);
+                 intraBlockIndex,0.0);
           }
       }
 
@@ -433,7 +433,7 @@ namespace dftfe
             const unsigned int intraBlockIndex = index % contiguousBlockSize;
             dftfe::utils::copyValue(xVec+localIndexMapUnflattenedToFlattened
                    [constraintLocalRowIdsUnflattened[blockIndex]] +
-                 intraBlockIndex,0);
+                 intraBlockIndex,0.0);
           }
       }
     } // namespace

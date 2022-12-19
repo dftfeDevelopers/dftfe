@@ -390,6 +390,32 @@ namespace dftfe
       return hipCaddf(a, b);
     }
 
+    __forceinline__ __device__ double
+                    add(double a, float b)
+    {
+      return a + b;
+    }
+
+    __forceinline__ __device__ double
+                    add(float a, double b)
+    {
+      return a + b;
+    }
+
+    __forceinline__ __device__ cuDoubleComplex
+                               add(hipDoubleComplex a, hipFloatComplex b)
+    {
+      return hipCadd(a, make_hipDoubleComplex(b.x, b.y));
+    }
+
+
+    __forceinline__ __device__ cuDoubleComplex
+                               add(hipFloatComplex a, hipDoubleComplex b)
+    {
+      return hipCadd(make_hipDoubleComplex(a.x, a.y), b);
+    }
+
+
     __forceinline__ __device__ size_type
                                sub(size_type a, size_type b)
     {

@@ -391,6 +391,32 @@ namespace dftfe
       return cuCaddf(a, b);
     }
 
+    __forceinline__ __device__ double
+                    add(double a, float b)
+    {
+      return a + b;
+    }
+
+    __forceinline__ __device__ double
+                    add(float a, double b)
+    {
+      return a + b;
+    }
+
+    __forceinline__ __device__ cuDoubleComplex
+                               add(cuDoubleComplex a, cuFloatComplex b)
+    {
+      return cuCadd(a, make_cuDoubleComplex(b.x, b.y));
+    }
+
+
+    __forceinline__ __device__ cuDoubleComplex
+                               add(cuFloatComplex a, cuDoubleComplex b)
+    {
+      return cuCadd(make_cuDoubleComplex(a.x, a.y), b);
+    }
+
+
     __forceinline__ __device__ size_type
                                sub(size_type a, size_type b)
     {
