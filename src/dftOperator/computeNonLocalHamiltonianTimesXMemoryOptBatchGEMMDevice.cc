@@ -89,6 +89,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
   if (d_totalNonlocalElems > 0 && !skip1)
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA    
     copyToDealiiParallelNonLocalVec<<<
       (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
@@ -100,6 +101,21 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       dftfe::utils::makeDataTypeDeviceCompatible(
         projectorKetTimesVector.begin()),
       d_projectorIdsParallelNumberingMapDevice.begin());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    hipLaunchKernelGGL(copyToDealiiParallelNonLocalVec,
+      (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
+      dftfe::utils::DEVICE_BLOCK_SIZE,
+      0,
+      0,
+      numberWaveFunctions,
+      d_totalPseudoWfcNonLocal,
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        d_projectorKetTimesVectorParFlattenedDevice.begin()),
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        projectorKetTimesVector.begin()),
+      d_projectorIdsParallelNumberingMapDevice.begin());
+#endif
 
   // Operations related to skip2 (extraction and C^{T}*X) are over. So return
   // control back to chebyshevFilter
@@ -128,7 +144,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_nonLocalPseudoPotentialConstantsDevice.begin(),
         projectorKetTimesVector.begin());
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       copyFromParallelNonLocalVecToAllCellsVec<<<
         (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * d_totalNonlocalElems *
@@ -142,6 +158,23 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         dftfe::utils::makeDataTypeDeviceCompatible(
           d_projectorKetTimesVectorAllCellsDevice.begin()),
         d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.begin());
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      hipLaunchKernelGGL(copyFromParallelNonLocalVecToAllCellsVec,
+        (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * d_totalNonlocalElems *
+          d_maxSingleAtomPseudoWfc,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
+        numberWaveFunctions,
+        d_totalNonlocalElems,
+        d_maxSingleAtomPseudoWfc,
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          projectorKetTimesVector.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          d_projectorKetTimesVectorAllCellsDevice.begin()),
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.begin());        
+#endif
 
       //
       // compute C*V*C^{\dagger}*x
@@ -177,6 +210,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
            ++iAtom)
         {
           const unsigned int accum = d_numberCellsAccumNonLocalAtoms[iAtom];
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA          
           addNonLocalContributionDeviceKernel<<<
             (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -191,6 +225,24 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
               d_cellHamMatrixTimesWaveMatrix.begin()),
             d_cellNodeIdMapNonLocalToLocalDevice.begin() +
               accum * d_numberNodesPerElement);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+          hipLaunchKernelGGL(addNonLocalContributionDeviceKernel,
+            (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE *
+              d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+            0,
+            0,
+            numberWaveFunctions,
+            d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
+            dftfe::utils::makeDataTypeDeviceCompatible(
+              d_cellHamMatrixTimesWaveMatrixNonLocalDevice.begin() +
+              accum * d_numberNodesPerElement * numberWaveFunctions),
+            dftfe::utils::makeDataTypeDeviceCompatible(
+              d_cellHamMatrixTimesWaveMatrix.begin()),
+            d_cellNodeIdMapNonLocalToLocalDevice.begin() +
+              accum * d_numberNodesPerElement);
+#endif            
         }
     }
 
@@ -293,6 +345,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
   if (d_totalNonlocalElems > 0)
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA    
     copyToDealiiParallelNonLocalVec<<<
       (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
@@ -304,6 +357,21 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       dftfe::utils::makeDataTypeDeviceCompatible(
         projectorKetTimesVector.begin()),
       d_projectorIdsParallelNumberingMapDevice.begin());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    hipLaunchKernelGGL(copyToDealiiParallelNonLocalVec,
+      (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * d_totalPseudoWfcNonLocal,
+      dftfe::utils::DEVICE_BLOCK_SIZE,
+      0,
+      0,
+      numberWaveFunctions,
+      d_totalPseudoWfcNonLocal,
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        d_projectorKetTimesVectorParFlattenedDevice.begin()),
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        projectorKetTimesVector.begin()),
+      d_projectorIdsParallelNumberingMapDevice.begin());
+#endif      
 
   projectorKetTimesVector.accumulateAddLocallyOwned();
   projectorKetTimesVector.updateGhostValues();

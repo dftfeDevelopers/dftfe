@@ -3174,6 +3174,7 @@ namespace dftfe
         tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyFloatArrToDoubleArrLocallyOwned<<<
           (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -3183,6 +3184,19 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          numberWaveFunctions,
+          localSize,
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));          
+#endif
 
         dst.zeroOutGhosts();
       }
@@ -3419,6 +3433,7 @@ namespace dftfe
         tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyFloatArrToDoubleArrLocallyOwned<<<
           (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -3428,7 +3443,19 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          numberWaveFunctions,
+          localSize,
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));          
+#endif          
         dst.zeroOutGhosts();
       }
     else

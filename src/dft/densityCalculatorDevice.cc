@@ -546,7 +546,7 @@ namespace dftfe
                                 }
 
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                               computeRhoGradRhoFromInterpolatedValues<<<
                                 (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -562,7 +562,25 @@ namespace dftfe
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                              hipLaunchKernelGGL(computeRhoGradRhoFromInterpolatedValues,
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
+                                  numQuadPoints * currentCellsBlockSize,
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                                0,
+                                0,
+                                currentCellsBlockSize * numQuadPoints * BVec,
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rhoWfcContributionsDevice.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceX.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceY.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceZ.begin()),
+                                isEvaluateGradRho);
+#endif                                
 
                               dftfe::utils::deviceBlasWrapper::gemm(
                                 operatorMatrix.getDeviceBlasHandle(),
@@ -870,7 +888,7 @@ namespace dftfe
                                 }
 
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                               computeRhoGradRhoFromInterpolatedValues<<<
                                 (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -886,7 +904,25 @@ namespace dftfe
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                              hipLaunchKernelGGL(computeRhoGradRhoFromInterpolatedValues,
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
+                                  numQuadPoints * currentCellsBlockSize,
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                                0,
+                                0,
+                                currentCellsBlockSize * numQuadPoints * BVec,
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rhoWfcContributionsDevice.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceX.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceY.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceZ.begin()),
+                                isEvaluateGradRho);
+#endif
 
                               dftfe::utils::deviceBlasWrapper::gemm(
                                 operatorMatrix.getDeviceBlasHandle(),

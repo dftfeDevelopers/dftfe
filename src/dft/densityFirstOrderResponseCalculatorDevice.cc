@@ -386,7 +386,7 @@ namespace dftfe
                               strideC,
                               currentCellsBlockSize);
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                             computeRhoResponseFromInterpolatedValues<<<
                               (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                 dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -397,6 +397,20 @@ namespace dftfe
                                 XQuadsDevice.begin()),
                               dftfe::utils::makeDataTypeDeviceCompatible(
                                 XPrimeQuadsDevice.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                            hipLaunchKernelGGL(computeRhoResponseFromInterpolatedValues,
+                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE *
+                                numQuadPoints * currentCellsBlockSize,
+                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                              0,
+                              0,
+                              BVec * numQuadPoints * currentCellsBlockSize,
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                XQuadsDevice.begin()),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                XPrimeQuadsDevice.begin()));
+#endif 
 
                             dftfe::utils::deviceBlasWrapper::gemm(
                               operatorMatrix.getDeviceBlasHandle(),
