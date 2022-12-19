@@ -612,7 +612,7 @@ namespace dftfe
                       strideC,
                       currentBlockSize);
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                     computeELocWfcEshelbyTensorContributions<<<
                       (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                         dftfe::utils::DEVICE_BLOCK_SIZE * currentBlockSize *
@@ -642,6 +642,39 @@ namespace dftfe
                       addEk
 #endif
                     );
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                    hipLaunchKernelGGL(computeELocWfcEshelbyTensorContributions,
+                      (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * currentBlockSize *
+                        numQuads * 9,
+                      0,
+                      0,
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                      BVec,
+                      currentBlockSize * numQuads * 9,
+                      numQuads,
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        psiQuadsFlatD.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        gradPsiQuadsXFlatD.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        gradPsiQuadsYFlatD.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        gradPsiQuadsZFlatD.begin()),
+                      eigenValuesD.begin(),
+                      partialOccupanciesD.begin(),
+#ifdef USE_COMPLEX
+                      kcoordx,
+                      kcoordy,
+                      kcoordz,
+#endif
+                      eshelbyTensorContributionsD.begin()
+#ifdef USE_COMPLEX
+                        ,
+                      addEk
+#endif
+                    );
+#endif
 
                     const double scalarCoeffAlphaEshelby = 1.0;
                     const double scalarCoeffBetaEshelby  = 1.0;
@@ -814,6 +847,7 @@ namespace dftfe
             const int startingIdNlp = iblocknlp * blockSizeNlp;
             if (currentBlockSizeNlp > 0)
               {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA                
                 nlpContractionContributionPsiIndexDeviceKernel<<<
                   (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                     dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * 3 *
@@ -832,6 +866,28 @@ namespace dftfe
                   projecterKetTimesFlattenedVectorLocalIdsD.begin(),
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     nlpContractionContributionD.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP                  
+                hipLaunchKernelGGL(nlpContractionContributionPsiIndexDeviceKernel,
+                  (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * 3 *
+                    currentBlockSizeNlp,
+                  0,
+                  0,
+                  dftfe::utils::DEVICE_BLOCK_SIZE,
+                  numPsi,
+                  numQuadsNLP * 3,
+                  currentBlockSizeNlp,
+                  startingIdNlp,
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesVectorParFlattenedD),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    gradPsiQuadsNLPD.begin()),
+                  partialOccupanciesD.begin(),
+                  nonTrivialIdToElemIdMapD.begin(),
+                  projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    nlpContractionContributionD.begin()));
+#endif
 
                 dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
@@ -867,6 +923,7 @@ namespace dftfe
                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp
                       [i];
 #ifdef USE_COMPLEX
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA                       
                 nlpContractionContributionPsiIndexDeviceKernel<<<
                   (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                     dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP *
@@ -885,6 +942,28 @@ namespace dftfe
                   projecterKetTimesFlattenedVectorLocalIdsD.begin(),
                   dftfe::utils::makeDataTypeDeviceCompatible(
                     nlpContractionContributionD.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                hipLaunchKernelGGL(nlpContractionContributionPsiIndexDeviceKernel,
+                  (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP *
+                    currentBlockSizeNlp,
+                  0,
+                  0,
+                  dftfe::utils::DEVICE_BLOCK_SIZE,
+                  numPsi,
+                  numQuadsNLP,
+                  currentBlockSizeNlp,
+                  startingIdNlp,
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    projectorKetTimesVectorParFlattenedD),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    psiQuadsNLPD.begin()),
+                  partialOccupanciesD.begin(),
+                  nonTrivialIdToElemIdMapD.begin(),
+                  projecterKetTimesFlattenedVectorLocalIdsD.begin(),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    nlpContractionContributionD.begin()));
+#endif
 
                 dftfe::utils::deviceBlasWrapper::gemm(
                   operatorMatrix.getDeviceBlasHandle(),
@@ -902,6 +981,7 @@ namespace dftfe
                   projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedDBlock
                     .begin(),
                   1);
+               
 
                 dftfe::utils::deviceMemcpyD2H(
                   dftfe::utils::makeDataTypeDeviceCompatible(

@@ -83,8 +83,12 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   electrostaticPotPrime = 0;
 
   // Reuses diagonalA and mean value constraints
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
   if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
       not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+  if (false)
+#endif    
     {
 #ifdef DFTFE_WITH_DEVICE
       d_phiTotalSolverProblemDevice.reinit(
@@ -120,8 +124,12 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         false);
     }
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
   if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
       not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+  if (false)
+#endif    
     {
 #ifdef DFTFE_WITH_DEVICE
       CGSolverDevice.solve(

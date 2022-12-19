@@ -610,6 +610,7 @@ namespace dftfe
             }
           else
             {
+#if DFTFE_WITH_DEVICE_LANG_CUDA              
               combinedDeviceKernel<<<
                 min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -625,6 +626,26 @@ namespace dftfe
                 alpha1Old,
                 operatorMatrix.getInvSqrtMassVec(),
                 operatorMatrix.getSqrtMassVec());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+              hipLaunchKernelGGL(combinedDeviceKernel,
+                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                    30000),
+                dftfe::utils::DEVICE_BLOCK_SIZE,                    
+                0,
+                0,
+                numberVectors,
+                localVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray.begin()),
+                coeff,
+                alpha2,
+                alpha1,
+                alpha1Old,
+                operatorMatrix.getInvSqrtMassVec(),
+                operatorMatrix.getSqrtMassVec());
+#endif                
+
               //
               // call HX
               //
@@ -956,6 +977,7 @@ namespace dftfe
                   projectorKetTimesVector2.accumulateAddLocallyOwnedBegin();
                 }
 
+#if DFTFE_WITH_DEVICE_LANG_CUDA
               combinedDeviceKernel<<<
                 min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -971,7 +993,25 @@ namespace dftfe
                 alpha1Old,
                 operatorMatrix.getInvSqrtMassVec(),
                 operatorMatrix.getSqrtMassVec());
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+              hipLaunchKernelGGL(combinedDeviceKernel,
+                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                    30000),
+                  dftfe::utils::DEVICE_BLOCK_SIZE, 
+                    0,
+                    0,
+                numberVectors,
+                localVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray1.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray1.begin()),
+                coeff,
+                alpha2,
+                alpha1,
+                alpha1Old,
+                operatorMatrix.getInvSqrtMassVec(),
+                operatorMatrix.getSqrtMassVec());
+#endif                
 
               if (overlap)
                 {
@@ -1058,6 +1098,7 @@ namespace dftfe
                     {
                       tempFloatArray.accumulateAddLocallyOwnedEnd();
 
+#if DFTFE_WITH_DEVICE_LANG_CUDA
                       copyFloatArrToDoubleArrLocallyOwned<<<
                         (numberVectors +
                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1072,7 +1113,24 @@ namespace dftfe
                           .begin(),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           XArray2.begin()));
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP    
+                      hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+                        (numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        0,
+                        numberVectors,
+                        localVectorSize,
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          tempFloatArray.begin()),
+                        (operatorMatrix
+                           .getLocallyOwnedProcBoundaryNodesVectorDevice())
+                          .begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XArray2.begin()));
+#endif
                       XArray2.zeroOutGhosts();
                     }
                   else
@@ -1082,6 +1140,7 @@ namespace dftfe
 
               projectorKetTimesVector1.accumulateAddLocallyOwnedBegin();
 
+#if DFTFE_WITH_DEVICE_LANG_CUDA
               combinedDeviceKernel<<<
                 min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -1097,6 +1156,25 @@ namespace dftfe
                 alpha1Old,
                 operatorMatrix.getInvSqrtMassVec(),
                 operatorMatrix.getSqrtMassVec());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+              hipLaunchKernelGGL(combinedDeviceKernel,
+                min((totalVectorSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                    30000),
+                    dftfe::utils::DEVICE_BLOCK_SIZE,   
+                    0,
+                    0,
+                numberVectors,
+                localVectorSize,
+                dftfe::utils::makeDataTypeDeviceCompatible(YArray2.begin()),
+                dftfe::utils::makeDataTypeDeviceCompatible(XArray2.begin()),
+                coeff,
+                alpha2,
+                alpha1,
+                alpha1Old,
+                operatorMatrix.getInvSqrtMassVec(),
+                operatorMatrix.getSqrtMassVec());                
+#endif                
 
               projectorKetTimesVector1.accumulateAddLocallyOwnedEnd();
 
@@ -1173,6 +1251,7 @@ namespace dftfe
                 {
                   tempFloatArray.accumulateAddLocallyOwnedEnd();
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                   copyFloatArrToDoubleArrLocallyOwned<<<
                     (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
@@ -1186,7 +1265,23 @@ namespace dftfe
                       .begin(),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       XArray1.begin()));
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                  hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+                    (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                    dftfe::utils::DEVICE_BLOCK_SIZE,
+                    0,
+                    0,
+                    numberVectors,
+                    localVectorSize,
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      tempFloatArray.begin()),
+                    (operatorMatrix
+                       .getLocallyOwnedProcBoundaryNodesVectorDevice())
+                      .begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      XArray1.begin()));
+#endif                    
                   XArray1.zeroOutGhosts();
                 }
               else
@@ -1221,6 +1316,7 @@ namespace dftfe
 
                       tempFloatArray.accumulateAddLocallyOwned();
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                       copyFloatArrToDoubleArrLocallyOwned<<<
                         (numberVectors +
                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -1235,7 +1331,24 @@ namespace dftfe
                           .begin(),
                         dftfe::utils::makeDataTypeDeviceCompatible(
                           XArray2.begin()));
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                      hipLaunchKernelGGL(copyFloatArrToDoubleArrLocallyOwned,
+                        (numberVectors +
+                         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        0,
+                        numberVectors,
+                        localVectorSize,
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          tempFloatArray.begin()),
+                        (operatorMatrix
+                           .getLocallyOwnedProcBoundaryNodesVectorDevice())
+                          .begin(),
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          XArray2.begin()));
+#endif
                       XArray2.zeroOutGhosts();
                     }
                   else
@@ -2210,6 +2323,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(diagValuesHost.begin()),
         N * sizeof(dataTypes::number));
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA 
       computeDiagQTimesXKernel<<<(M * N +
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -2218,6 +2332,18 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         N,
         M);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(computeDiagQTimesXKernel,(M * N +
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 0,
+                                 0,
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        N,
+        M);
+#endif
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -2410,6 +2536,7 @@ namespace dftfe
                         rotatedVectorsMatBlockSP.begin(),
                         BVec);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                       addSubspaceRotatedBlockToXKernel<<<
                         (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -2424,6 +2551,22 @@ namespace dftfe
                         idof,
                         jvec,
                         N);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                      hipLaunchKernelGGL(addSubspaceRotatedBlockToXKernel,
+                        (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        streamCompute,
+                        BDof,
+                        BVec,
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotatedVectorsMatBlockSP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(X),
+                        idof,
+                        jvec,
+                        N);
+#endif
                     }
                 } // block loop over dofs
             }     // band parallalelization loop
@@ -2590,6 +2733,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(diagValuesHost.begin()),
         N * sizeof(dataTypes::number));
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       computeDiagQTimesXKernel<<<(M * N +
                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                    dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -2598,6 +2742,18 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(X),
         N,
         M);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(computeDiagQTimesXKernel,(M * N +
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 0,
+                                 0,
+        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        N,
+        M);
+#endif
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -2791,7 +2947,7 @@ namespace dftfe
                         rotatedVectorsMatBlockSP.begin(),
                         BVec);
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                       addSubspaceRotatedBlockToXKernel<<<
                         (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                           dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -2806,6 +2962,22 @@ namespace dftfe
                         idof,
                         jvec,
                         N);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                      hipLaunchKernelGGL(addSubspaceRotatedBlockToXKernel,
+                        (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        streamCompute,
+                        BDof,
+                        BVec,
+                        dftfe::utils::makeDataTypeDeviceCompatible(
+                          rotatedVectorsMatBlockSP.begin()),
+                        dftfe::utils::makeDataTypeDeviceCompatible(X),
+                        idof,
+                        jvec,
+                        N);                        
+#endif
                     }
                 } // block loop over dofs
             }     // band parallelization
@@ -4063,6 +4235,7 @@ namespace dftfe
                                                        HXBlockFull.begin());
                 }
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
               computeResidualDeviceKernel<<<
                 (B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                   dftfe::utils::DEVICE_BLOCK_SIZE * M,
@@ -4075,6 +4248,22 @@ namespace dftfe
                 dftfe::utils::makeDataTypeDeviceCompatible(X),
                 dftfe::utils::makeDataTypeDeviceCompatible(HXBlockFull.begin()),
                 residualSqDevice.begin());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+              hipLaunchKernelGGL(computeResidualDeviceKernel,
+                (B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                  dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                dftfe::utils::DEVICE_BLOCK_SIZE,
+                0,
+                0,
+                B,
+                M,
+                N,
+                jvec,
+                eigenValuesDevice.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(X),
+                dftfe::utils::makeDataTypeDeviceCompatible(HXBlockFull.begin()),
+                residualSqDevice.begin());
+#endif                
 
               dftfe::utils::deviceBlasWrapper::gemm(
                 handle,

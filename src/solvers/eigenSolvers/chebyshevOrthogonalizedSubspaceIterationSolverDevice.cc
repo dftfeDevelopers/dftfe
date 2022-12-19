@@ -491,6 +491,7 @@ namespace dftfe
           {
             // set to zero wavefunctions which wont go through chebyshev
             // filtering inside a given band group
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA 
             setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                               dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
@@ -501,6 +502,20 @@ namespace dftfe
               dftfe::utils::makeDataTypeDeviceCompatible(
                 eigenVectorsFlattenedDevice),
               jvec);
+#elif DFTFE_WITH_DEVICE_LANG_HIP 
+            hipLaunchKernelGGL(setZeroKernel,(numSimultaneousBlocksCurrent * BVec +
+                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                              dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+              0,
+              0,
+              numSimultaneousBlocksCurrent * BVec,
+              localVectorSize,
+              totalNumberWaveFunctions,
+              dftfe::utils::makeDataTypeDeviceCompatible(
+                eigenVectorsFlattenedDevice),
+              jvec);
+#endif      
           }
 
       } // block loop
@@ -963,6 +978,7 @@ namespace dftfe
                   {
                     // set to zero wavefunctions which wont go through chebyshev
                     // filtering inside a given band group
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                     setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
                                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                       dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -974,6 +990,21 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                         eigenVectorsFlattenedDevice),
                       jvec);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                    hipLaunchKernelGGL((numSimultaneousBlocksCurrent * BVec +
+                                     (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                      dftfe::utils::DEVICE_BLOCK_SIZE *
+                                      localVectorSize,
+                                    dftfe::utils::DEVICE_BLOCK_SIZE,
+                      0,
+                      0,
+                      numSimultaneousBlocksCurrent * BVec,
+                      localVectorSize,
+                      totalNumberWaveFunctions,
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        eigenVectorsFlattenedDevice),
+                      jvec);
+#endif                                    
                   }
 
               } // cheby block loop

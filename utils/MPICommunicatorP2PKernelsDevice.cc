@@ -191,6 +191,8 @@ namespace dftfe
                                          dftfe::utils::DEVICE_BLOCK_SIZE +
                                        1,
                                      dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
@@ -249,7 +251,9 @@ namespace dftfe
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
@@ -316,7 +320,9 @@ namespace dftfe
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
+         dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
@@ -372,7 +378,9 @@ namespace dftfe
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
+         dftfe::utils::DEVICE_BLOCK_SIZE,         
+        0,
+        0,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
@@ -419,7 +427,9 @@ namespace dftfe
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,          
+        0,
+        0,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
