@@ -12,7 +12,6 @@ fi
 # Path to project source
 SRC=`dirname $0` # location of source directory
 
-
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
@@ -27,14 +26,19 @@ xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
 ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
 
+
 #Paths for optional external libraries
 NCCL_PATH=""
-mdiPath="/home/dsambit/exaaltInterfaceRelated/MDI_Library/install"
-
+mdiPath=""
 
 #Toggle GPU compilation
 withGPU=OFF
-withGPUAwareMPI=ON
+gpuLang="cuda"     # Use "cuda"/"hip"
+gpuVendor="nvidia" # Use "nvidia/amd"
+withGPUAwareMPI=OFF #Please use this option with care
+                   #Only use if the machine supports 
+                   #device aware MPI and is profiled
+                   #to be fast
 
 #Option to link to NCCL library (Only for GPU compilation)
 withNCCL=OFF
@@ -49,10 +53,12 @@ device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS
 device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
 
+
+#Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
 withHigherQuadPSP=OFF
 
-#Optmization flag: Release for optimized mode and Debug for debug mode compilation
+# build type: "Release" or "Debug"
 build_type=Release
 
 testing=ON
@@ -71,32 +77,31 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 function cmake_real() {
   mkdir -p real && cd real
   cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
-  -DCMAKE_CXX_FLAGS="$cxx_flags"\
+    -DCMAKE_CXX_FLAGS="$cxx_flags"\
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-	-DXML_INCLUDE_DIR=$xmlIncludeDir \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir\
   -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
-  -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
-  -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP\
-	  $1
+  -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+  -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
   cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
-  -DCMAKE_CXX_FLAGS="$cxx_flags" \
+    -DCMAKE_CXX_FLAGS="$cxx_flags"\
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath\
-  -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
-  -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+  -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
+  -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
   -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
@@ -115,11 +120,11 @@ fi
 cd $out
 
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j4
+cmake_real "$SRC" && make -j8
 cd ..
 
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j4
+cmake_cplx "$SRC" && make -j8
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
