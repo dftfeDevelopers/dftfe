@@ -55,7 +55,9 @@ namespace dftfe
       ValueType *      dst,
       const ValueType *src)
     {
-      memoryTransferKernelsDevice::deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
+      memoryTransferKernelsDevice::deviceMemcpyD2H(dst,
+                                                   src,
+                                                   size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -85,7 +87,9 @@ namespace dftfe
       ValueType *      dst,
       const ValueType *src)
     {
-      memoryTransferKernelsDevice::deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
+      memoryTransferKernelsDevice::deviceMemcpyD2H(dst,
+                                                   src,
+                                                   size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -95,7 +99,9 @@ namespace dftfe
       ValueType *      dst,
       const ValueType *src)
     {
-      memoryTransferKernelsDevice::deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
+      memoryTransferKernelsDevice::deviceMemcpyH2D(dst,
+                                                   src,
+                                                   size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -105,7 +111,9 @@ namespace dftfe
       ValueType *      dst,
       const ValueType *src)
     {
-      memoryTransferKernelsDevice::deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
+      memoryTransferKernelsDevice::deviceMemcpyH2D(dst,
+                                                   src,
+                                                   size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -115,7 +123,9 @@ namespace dftfe
       ValueType *      dst,
       const ValueType *src)
     {
-      memoryTransferKernelsDevice::deviceMemcpyD2D(dst, src, size * sizeof(ValueType));
+      memoryTransferKernelsDevice::deviceMemcpyD2D(dst,
+                                                   src,
+                                                   size * sizeof(ValueType));
     }
 #endif // DFTFE_WITH_DEVICE
   }    // namespace utils

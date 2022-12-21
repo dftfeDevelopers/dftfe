@@ -144,9 +144,9 @@ namespace dftfe
             const unsigned int ivec  = i % BVec;
 
             *(X + N * (startingDofId + ibdof) + startingVecId + ivec) =
-              dftfe::utils::add(
-                *(X + N * (startingDofId + ibdof) + startingVecId + ivec),
-                rotatedXBlockSP[ibdof * BVec + ivec]);
+              dftfe::utils::add(*(X + N * (startingDofId + ibdof) +
+                                  startingVecId + ivec),
+                                rotatedXBlockSP[ibdof * BVec + ivec]);
           }
       }
 
@@ -280,7 +280,7 @@ namespace dftfe
           {
             unsigned int blockIndex = index / contiguousBlockSize;
             if (locallyOwnedFlagArr[blockIndex] == 1)
-              dftfe::utils::copyValue(doubleArr+index, floatArr[index]);
+              dftfe::utils::copyValue(doubleArr + index, floatArr[index]);
           }
       }
     } // namespace

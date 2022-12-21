@@ -73,7 +73,7 @@ namespace dftfe
         {
           unsigned int blockIndex = index / contiguousBlockSize;
           if (locallyOwnedFlagArr[blockIndex] == 1)
-            dftfe::utils::copyValue(doubleArr+index,floatArr[index]);
+            dftfe::utils::copyValue(doubleArr + index, floatArr[index]);
         }
     }
 
