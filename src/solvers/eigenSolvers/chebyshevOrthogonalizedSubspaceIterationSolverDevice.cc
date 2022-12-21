@@ -993,7 +993,8 @@ namespace dftfe
                         eigenVectorsFlattenedDevice),
                       jvec);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-                    hipLaunchKernelGGL(setZeroKernel,
+                    hipLaunchKernelGGL(
+                      setZeroKernel,
                       (numSimultaneousBlocksCurrent * BVec +
                        (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                         dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,

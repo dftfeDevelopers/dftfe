@@ -19,8 +19,8 @@
  */
 
 #ifdef DFTFE_WITH_DEVICE
-#include <MemoryTransferKernelsDevice.h>
-#include <DeviceAPICalls.h>
+#  include <MemoryTransferKernelsDevice.h>
+#  include <DeviceAPICalls.h>
 
 namespace dftfe
 {
@@ -28,26 +28,26 @@ namespace dftfe
   {
     namespace memoryTransferKernelsDevice
     {
-          void
-        deviceMemcpyD2H(void *dst, const void *src, size_type count)
-        {
-          dftfe::utils::deviceMemcpyD2H(dst,src,count);
-        }
+      void
+      deviceMemcpyD2H(void *dst, const void *src, size_type count)
+      {
+        dftfe::utils::deviceMemcpyD2H(dst, src, count);
+      }
 
-          void
-        deviceMemcpyH2D(void *dst, const void *src, size_type count)
-        {
-          dftfe::utils::deviceMemcpyH2D(dst,src,count);
-        }
+      void
+      deviceMemcpyH2D(void *dst, const void *src, size_type count)
+      {
+        dftfe::utils::deviceMemcpyH2D(dst, src, count);
+      }
 
-          void
-        deviceMemcpyD2D(void *dst, const void *src, size_type count)
-        {
-          dftfe::utils::deviceMemcpyD2D(dst,src,count);
-        }
+      void
+      deviceMemcpyD2D(void *dst, const void *src, size_type count)
+      {
+        dftfe::utils::deviceMemcpyD2D(dst, src, count);
+      }
 
 
-    }
-  }    // namespace utils
+    } // namespace memoryTransferKernelsDevice
+  }   // namespace utils
 } // namespace dftfe
 #endif

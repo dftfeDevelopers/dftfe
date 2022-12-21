@@ -284,9 +284,9 @@ namespace dftfe
                              dftfe::utils::DEVICE_BLOCK_SIZE,
                              0,
                              0,
-                               numberVectors * (localSize + ghostSize),
-                                dst.begin(),
-                                inhomoIdsColoredVecFlattenedD.begin());
+                             numberVectors * (localSize + ghostSize),
+                             dst.begin(),
+                             inhomoIdsColoredVecFlattenedD.begin());
 #  endif
 
 
@@ -1044,11 +1044,17 @@ namespace dftfe
                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
               numberBins, localSize, d.begin(), betaD.begin());
 #  elif DFTFE_WITH_DEVICE_LANG_HIP
-            hipLaunchKernelGGL(
-              scaleBlockedKernel,
-              (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-              dftfe::utils::DEVICE_BLOCK_SIZE,0,0,numberBins, localSize, d.begin(), betaD.begin());
+            hipLaunchKernelGGL(scaleBlockedKernel,
+                               (numberBins +
+                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                 dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+                               dftfe::utils::DEVICE_BLOCK_SIZE,
+                               0,
+                               0,
+                               numberBins,
+                               localSize,
+                               d.begin(),
+                               betaD.begin());
 #  endif
 
           // d.add(1.0,s);

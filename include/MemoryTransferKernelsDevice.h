@@ -22,7 +22,7 @@
 #define dftfeMemoryTransferKernelsDevice_h
 
 #ifdef DFTFE_WITH_DEVICE
-#include <TypeConfig.h>
+#  include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -30,28 +30,28 @@ namespace dftfe
   {
     namespace memoryTransferKernelsDevice
     {
-    /**
-     * @brief Copy array from device to host
-     * @param count The memory size in bytes of the array
-     */
-    void
-    deviceMemcpyD2H(void *dst, const void *src, size_type count);
+      /**
+       * @brief Copy array from device to host
+       * @param count The memory size in bytes of the array
+       */
+      void
+      deviceMemcpyD2H(void *dst, const void *src, size_type count);
 
-    /**
-     * @brief Copy array from device to device
-     * @param count The memory size in bytes of the array
-     */
-    void
-    deviceMemcpyD2D(void *dst, const void *src, size_type count);
+      /**
+       * @brief Copy array from device to device
+       * @param count The memory size in bytes of the array
+       */
+      void
+      deviceMemcpyD2D(void *dst, const void *src, size_type count);
 
-    /**
-     * @brief Copy array from host to device
-     * @param count The memory size in bytes of the array
-     */
-    void
-    deviceMemcpyH2D(void *dst, const void *src, size_type count);
-      
-    };
+      /**
+       * @brief Copy array from host to device
+       * @param count The memory size in bytes of the array
+       */
+      void
+      deviceMemcpyH2D(void *dst, const void *src, size_type count);
+
+    }; // namespace memoryTransferKernelsDevice
   }    // namespace utils
 } // namespace dftfe
 
