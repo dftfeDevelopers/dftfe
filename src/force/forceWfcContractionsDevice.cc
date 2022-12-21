@@ -708,9 +708,9 @@ namespace dftfe
                       (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                         dftfe::utils::DEVICE_BLOCK_SIZE * currentBlockSize *
                         numQuads * 9,
-                      0,
-                      0,
                       dftfe::utils::DEVICE_BLOCK_SIZE,
+                      0,
+                      0,
                       BVec,
                       currentBlockSize * numQuads * 9,
                       numQuads,
@@ -933,9 +933,9 @@ namespace dftfe
                   (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                     dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * 3 *
                     currentBlockSizeNlp,
-                  0,
-                  0,
                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                  0,
+                  0,
                   numPsi,
                   numQuadsNLP * 3,
                   currentBlockSizeNlp,
@@ -1010,9 +1010,9 @@ namespace dftfe
                   (numPsi + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                     dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP *
                     currentBlockSizeNlp,
-                  0,
-                  0,
                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                  0,
+                  0,
                   numPsi,
                   numQuadsNLP,
                   currentBlockSizeNlp,
