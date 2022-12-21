@@ -23,7 +23,6 @@
 #include <deal.II/base/config.h>
 #include <deal.II/base/types.h>
 
-#include <DeviceTypeConfig.h>
 // Include generic C++ headers
 #include <fstream>
 #include <iostream>

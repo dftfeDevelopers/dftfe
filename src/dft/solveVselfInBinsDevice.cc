@@ -206,6 +206,8 @@ namespace dftfe
                                dftfe::utils::DEVICE_BLOCK_SIZE *
                                (localSize + ghostSize),
                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                             0,
+                             0,
                              numberVectors * (localSize + ghostSize),
                              temp.begin(),
                              inhomoIdsColoredVecFlattenedD.begin());
@@ -279,7 +281,9 @@ namespace dftfe
                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                dftfe::utils::DEVICE_BLOCK_SIZE *
                                (localSize + ghostSize),
-                             dftfe::utils::DEVICE_BLOCK_SIZE >>>
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                             0,
+                             0,
                                (numberVectors * (localSize + ghostSize),
                                 dst.begin(),
                                 inhomoIdsColoredVecFlattenedD.begin()));
@@ -306,6 +310,8 @@ namespace dftfe
                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                             0,
+                             0,
                              numberVectors * localSize,
                              dst.begin(),
                              inhomoIdsColoredVecFlattenedD.begin());
@@ -335,6 +341,8 @@ namespace dftfe
                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                             0,
+                             0,
                              numberVectors,
                              localSize,
                              src,
@@ -368,6 +376,8 @@ namespace dftfe
                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                             0,
+                             0,
                              numberVectors * localSize,
                              vec1,
                              vec2,
@@ -888,6 +898,8 @@ namespace dftfe
                                 (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                  dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                               0,
+                               0,
                                numberBins,
                                localSize,
                                d.begin(),
@@ -936,6 +948,8 @@ namespace dftfe
                                      dftfe::utils::DEVICE_BLOCK_SIZE *
                                      localSize,
                                    dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   0,
+                                   0,
                                    numberBins,
                                    localSize,
                                    Ax.begin(),
@@ -960,6 +974,8 @@ namespace dftfe
                                      dftfe::utils::DEVICE_BLOCK_SIZE *
                                      localSize,
                                    dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   0,
+                                   0,
                                    numberBins,
                                    localSize,
                                    q.begin(),
@@ -1032,8 +1048,7 @@ namespace dftfe
               scaleBlockedKernel,
               (numberBins + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                 dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
-              dftfe::utils::DEVICE_BLOCK_SIZE >>>
-                (numberBins, localSize, d.begin(), betaD.begin()));
+              dftfe::utils::DEVICE_BLOCK_SIZE,0,0,numberBins, localSize, d.begin(), betaD.begin());
 #  endif
 
           // d.add(1.0,s);
@@ -1050,6 +1065,8 @@ namespace dftfe
                                 (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                  dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                               0,
+                               0,
                                numberBins,
                                localSize,
                                s.begin(),

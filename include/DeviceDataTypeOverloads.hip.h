@@ -20,7 +20,9 @@
 
 #include <complex>
 #include <hip/hip_complex.h>
+#include <hip/hip_runtime.h>
 #include <TypeConfig.h>
+
 namespace dftfe
 {
   namespace utils
@@ -401,14 +403,14 @@ namespace dftfe
       return a + b;
     }
 
-    __forceinline__ __device__ cuDoubleComplex
+    __forceinline__ __device__ hipDoubleComplex
                                add(hipDoubleComplex a, hipFloatComplex b)
     {
       return hipCadd(a, make_hipDoubleComplex(b.x, b.y));
     }
 
 
-    __forceinline__ __device__ cuDoubleComplex
+    __forceinline__ __device__ hipDoubleComplex
                                add(hipFloatComplex a, hipDoubleComplex b)
     {
       return hipCadd(make_hipDoubleComplex(a.x, a.y), b);

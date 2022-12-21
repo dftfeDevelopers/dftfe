@@ -491,6 +491,8 @@ namespace dftfe
               dftfe::utils::DEVICE_BLOCK_SIZE +
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
           contiguousBlockSize,
           numContiguousBlocks,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
@@ -527,6 +529,8 @@ namespace dftfe
               dftfe::utils::DEVICE_BLOCK_SIZE +
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
           contiguousBlockSize,
           numContiguousBlocks,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVecBlock),
@@ -560,6 +564,8 @@ namespace dftfe
           stridedCopyToBlockConstantStrideDeviceKernel,
           (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
           blockSizeTo,
           blockSizeFrom,
           numBlocks,
@@ -594,6 +600,8 @@ namespace dftfe
           stridedCopyFromBlockConstantStrideDeviceKernel,
           (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
           blockSizeTo,
           blockSizeFrom,
           numBlocks,
@@ -659,6 +667,8 @@ namespace dftfe
                                dftfe::utils::DEVICE_BLOCK_SIZE +
                              1,
                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
                            contiguousBlockSize,
                            numContiguousBlocks,
                            dftfe::utils::makeDataTypeDeviceCompatible(
@@ -696,6 +706,8 @@ namespace dftfe
                                dftfe::utils::DEVICE_BLOCK_SIZE +
                              1,
                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
                            contiguousBlockSize,
                            numContiguousBlocks,
                            dftfe::utils::makeDataTypeDeviceCompatible(
@@ -753,6 +765,8 @@ namespace dftfe
                                dftfe::utils::DEVICE_BLOCK_SIZE +
                              1,
                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
                            contiguousBlockSize,
                            numContiguousBlocks,
                            dftfe::utils::makeDataTypeDeviceCompatible(a),
