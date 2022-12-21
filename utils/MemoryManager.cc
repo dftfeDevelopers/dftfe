@@ -30,6 +30,7 @@
 #include <DeviceAPICalls.h>
 #include <algorithm>
 #include <MemoryManager.h>
+#include <complex>
 
 namespace dftfe
 {
