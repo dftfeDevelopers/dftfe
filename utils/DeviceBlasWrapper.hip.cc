@@ -168,7 +168,8 @@ namespace dftfe
            std::complex<double> *      C,
            int                         ldc)
       {
-        deviceBlasStatus_t status =
+        deviceBlasStatus_t status; 
+        /*
           hipblasZgemm(handle,
                        transa,
                        transb,
@@ -184,6 +185,7 @@ namespace dftfe
                        dftfe::utils::makeDataTypeDeviceCompatible(C),
                        ldc);
         DEVICEBLAS_API_CHECK(status);
+        */
         return status;
       }
 
@@ -203,7 +205,8 @@ namespace dftfe
            std::complex<float> *      C,
            int                        ldc)
       {
-        deviceBlasStatus_t status =
+        deviceBlasStatus_t status; 
+        /*
           hipblasCgemm(handle,
                        transa,
                        transb,
@@ -219,6 +222,7 @@ namespace dftfe
                        dftfe::utils::makeDataTypeDeviceCompatible(C),
                        ldc);
         DEVICEBLAS_API_CHECK(status);
+        */
         return status;
       }
 
@@ -275,7 +279,8 @@ namespace dftfe
                   int                         ldc,
                   int                         batchCount)
       {
-        deviceBlasStatus_t status =
+        deviceBlasStatus_t status;
+        /*
           hipblasZgemmBatched(handle,
                               transa,
                               transb,
@@ -292,6 +297,7 @@ namespace dftfe
                               ldc,
                               batchCount);
         DEVICEBLAS_API_CHECK(status);
+        */
         return status;
       }
 
@@ -400,7 +406,9 @@ namespace dftfe
                          long long int               strideC,
                          int                         batchCount)
       {
-        deviceBlasStatus_t status = hipblasZgemmStridedBatched(
+        deviceBlasStatus_t status;
+        /*
+        hipblasZgemmStridedBatched(
           handle,
           transa,
           transb,
@@ -420,6 +428,7 @@ namespace dftfe
           strideC,
           batchCount);
         DEVICEBLAS_API_CHECK(status);
+        */
         return status;
       }
 
@@ -443,7 +452,9 @@ namespace dftfe
                          long long int              strideC,
                          int                        batchCount)
       {
-        deviceBlasStatus_t status = hipblasCgemmStridedBatched(
+        deviceBlasStatus_t status;
+        /*
+        hipblasCgemmStridedBatched(
           handle,
           transa,
           transb,
@@ -463,6 +474,7 @@ namespace dftfe
           strideC,
           batchCount);
         DEVICEBLAS_API_CHECK(status);
+        */
         return status;
       }
 

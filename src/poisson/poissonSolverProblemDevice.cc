@@ -800,6 +800,7 @@ namespace dftfe
                   const Type *J,
                   const int * map)
   {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA    
     // V = AU
     // gridDim.x = cells;
     // First index is fastest convention used
@@ -1185,6 +1186,7 @@ namespace dftfe
         for (int j = 0; j < K; j++)
           atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
       }
+#endif  
   }
 
 
