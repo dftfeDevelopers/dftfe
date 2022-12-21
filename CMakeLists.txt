@@ -112,7 +112,7 @@ IF ("${GPU_LANG}" STREQUAL "cuda")
 SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
-  ./utils/DeviceDirectCCLWrapperNCCL.cc
+  ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
@@ -139,7 +139,7 @@ ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
-  ./utils/DeviceDirectCCLWrapperNCCL.cc
+  ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
