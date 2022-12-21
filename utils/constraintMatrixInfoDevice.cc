@@ -746,7 +746,7 @@ namespace dftfe
         d_columnIdsLocalDevice.begin(),
         d_columnValuesDevice.begin(),
         d_localIndexMapUnflattenedToFlattenedDevice.begin());
-#elif
+#elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         distributeSlaveToMasterKernelAtomicAdd,
         min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /

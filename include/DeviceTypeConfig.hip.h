@@ -17,6 +17,7 @@
 #ifndef dftfeDeviceTypeConfig_hiph
 #define dftfeDeviceTypeConfig_hiph
 
+#include <hip/hip_runtime.h>
 #include <hip/hip_complex.h>
 #include <hipblas.h>
 namespace dftfe

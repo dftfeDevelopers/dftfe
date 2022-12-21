@@ -272,6 +272,19 @@ namespace dftfe
       return a * b;
     }
 
+    __forceinline__ __device__ double
+                    mult(float a, double b)
+    {
+      return a * b;
+    }
+
+    __forceinline__ __device__ double
+                    mult(double a, float b)
+    {
+      return a * b;
+    }
+
+
     //
     // mult for complex homogenous types
     // (e.g., cuDoubleComplex and cuDoubleComplex)

@@ -284,9 +284,9 @@ namespace dftfe
                              dftfe::utils::DEVICE_BLOCK_SIZE,
                              0,
                              0,
-                               (numberVectors * (localSize + ghostSize),
+                               numberVectors * (localSize + ghostSize),
                                 dst.begin(),
-                                inhomoIdsColoredVecFlattenedD.begin()));
+                                inhomoIdsColoredVecFlattenedD.begin());
 #  endif
 
 
