@@ -15,38 +15,39 @@
 // ---------------------------------------------------------------------
 
 /*
- * @author Ian C. Lin., Sambit Das
+ * @author Sambit Das.
  */
+
 #ifdef DFTFE_WITH_DEVICE
-#  ifndef dftfeDeviceKernelLauncherConstants_h
-#    define dftfeDeviceKernelLauncherConstants_h
-
-#    ifdef DFTFE_WITH_DEVICE_NVIDIA
-namespace dftfe
-{
-  namespace utils
-  {
-    static const int DEVICE_WARP_SIZE      = 32;
-    static const int DEVICE_MAX_BLOCK_SIZE = 1024;
-    static const int DEVICE_BLOCK_SIZE     = 256;
-
-  } // namespace utils
-} // namespace dftfe
-
-#    elif DFTFE_WITH_DEVICE_AMD
+#  include <MemoryTransferKernelsDevice.h>
+#  include <DeviceAPICalls.h>
 
 namespace dftfe
 {
   namespace utils
   {
-    static const int DEVICE_WARP_SIZE      = 64;
-    static const int DEVICE_MAX_BLOCK_SIZE = 1024;
-    static const int DEVICE_BLOCK_SIZE     = 256;
+    namespace memoryTransferKernelsDevice
+    {
+      void
+      deviceMemcpyD2H(void *dst, const void *src, size_type count)
+      {
+        dftfe::utils::deviceMemcpyD2H(dst, src, count);
+      }
 
-  } // namespace utils
+      void
+      deviceMemcpyH2D(void *dst, const void *src, size_type count)
+      {
+        dftfe::utils::deviceMemcpyH2D(dst, src, count);
+      }
+
+      void
+      deviceMemcpyD2D(void *dst, const void *src, size_type count)
+      {
+        dftfe::utils::deviceMemcpyD2D(dst, src, count);
+      }
+
+
+    } // namespace memoryTransferKernelsDevice
+  }   // namespace utils
 } // namespace dftfe
-
-#    endif
-
-#  endif // dftfeDeviceKernelLauncherConstants_h
-#endif   // DFTFE_WITH_DEVICE
+#endif

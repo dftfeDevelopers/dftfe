@@ -17,25 +17,22 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii/install_complex_cpu"
-alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
-libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/install_libxc5.2.3"
-spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
+dealiiDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/dealii/installnovect"
+alglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/alglib/cpp/src"
+libxcDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/libxc/install"
+spglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
-
-
+ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/elpa/install"
 
 #Paths for optional external libraries
 NCCL_PATH=""
 mdiPath=""
 
 #Toggle GPU compilation
-withGPU=OFF
-gpuLang="cuda"     # Use "cuda"/"hip"
-gpuVendor="nvidia" # Use "nvidia/amd"
+withGPU=ON
+gpuLang="hip"     # Use "cuda"/"hip"
+gpuVendor="amd" # Use "nvidia/amd"
 withGPUAwareMPI=OFF #Please use this option with care
                    #Only use if the machine supports 
                    #device aware MPI and is profiled
@@ -46,12 +43,12 @@ withNCCL=OFF
 withMDI=OFF
 
 #Compiler options and flags
-cxx_compiler=mpic++  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-fPIC" #sets DCMAKE_CXX_FLAGS
+cxx_compiler=CC  #sets DCMAKE_CXX_COMPILER
+cxx_flags="-fPIC -march=native" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
-device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA/HIP_FLAGS 
+device_flags="-I${MPICH_DIR}/include" # set DCMAKE_CXX_CUDA/HIP_FLAGS 
                            #(only applicable for withGPU=ON)
-device_architectures="70" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES 
+device_architectures="gfx90a" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
 
 
@@ -81,7 +78,7 @@ function cmake_real() {
     cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -94,7 +91,7 @@ function cmake_real() {
     cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -107,7 +104,7 @@ function cmake_real() {
     cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -116,7 +113,7 @@ function cmake_real() {
     -DWITH_COMPLEX=OFF\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
-  fi 
+  fi  
 }
 
 function cmake_cplx() {
@@ -125,7 +122,7 @@ function cmake_cplx() {
     cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -138,7 +135,7 @@ function cmake_cplx() {
     cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -151,7 +148,7 @@ function cmake_cplx() {
     cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -161,6 +158,7 @@ function cmake_cplx() {
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
   fi
+
 }
 
 RCol='\e[0m'

@@ -57,11 +57,12 @@ namespace dftfe
     }
 
     __global__ void
-    copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
-                                        const unsigned int numContiguousBlocks,
-                                        const cuFloatComplex *floatArr,
-                                        const unsigned int *locallyOwnedFlagArr,
-                                        cuDoubleComplex *   doubleArr)
+    copyFloatArrToDoubleArrLocallyOwned(
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
+      const dftfe::utils::deviceFloatComplex *floatArr,
+      const unsigned int *                    locallyOwnedFlagArr,
+      dftfe::utils::deviceDoubleComplex *     doubleArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numberEntries =
@@ -72,7 +73,7 @@ namespace dftfe
         {
           unsigned int blockIndex = index / contiguousBlockSize;
           if (locallyOwnedFlagArr[blockIndex] == 1)
-            doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
+            dftfe::utils::copyValue(doubleArr + index, floatArr[index]);
         }
     }
 
@@ -207,11 +208,11 @@ namespace dftfe
 
     __global__ void
     addNonLocalContributionDeviceKernel(
-      const dealii::types::global_dof_index contiguousBlockSize,
-      const dealii::types::global_dof_index numContiguousBlocks,
-      const cuDoubleComplex *               xVec,
-      cuDoubleComplex *                     yVec,
-      const unsigned int *                  xVecToyVecBlockIdMap)
+      const dealii::types::global_dof_index    contiguousBlockSize,
+      const dealii::types::global_dof_index    numContiguousBlocks,
+      const dftfe::utils::deviceDoubleComplex *xVec,
+      dftfe::utils::deviceDoubleComplex *      yVec,
+      const unsigned int *                     xVecToyVecBlockIdMap)
     {
       const dealii::types::global_dof_index globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -227,9 +228,10 @@ namespace dftfe
             index % contiguousBlockSize;
           yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
                intraBlockIndex] =
-            cuCadd(yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
-                        intraBlockIndex],
-                   xVec[index]);
+            dftfe::utils::add(
+              yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
+                   intraBlockIndex],
+              xVec[index]);
         }
     }
   } // namespace
@@ -3174,6 +3176,7 @@ namespace dftfe
         tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyFloatArrToDoubleArrLocallyOwned<<<
           (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -3183,6 +3186,20 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          copyFloatArrToDoubleArrLocallyOwned,
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          numberWaveFunctions,
+          localSize,
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#endif
 
         dst.zeroOutGhosts();
       }
@@ -3419,6 +3436,7 @@ namespace dftfe
         tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyFloatArrToDoubleArrLocallyOwned<<<
           (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
@@ -3428,7 +3446,20 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
           d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          copyFloatArrToDoubleArrLocallyOwned,
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          numberWaveFunctions,
+          localSize,
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#endif
         dst.zeroOutGhosts();
       }
     else
@@ -4515,7 +4546,7 @@ namespace dftfe
 
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMDevice.cc"
 #include "hamiltonianMatrixCalculatorFlattenedDevice.cc"
-#include "instDevice.cc"
 #include "matrixVectorProductImplementationsDevice.cc"
 #include "shapeFunctionDataCalculatorDevice.cc"
+#include "instDevice.cc"
 } // namespace dftfe

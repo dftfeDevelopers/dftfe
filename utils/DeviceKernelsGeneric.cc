@@ -30,6 +30,20 @@ namespace dftfe
 {
   namespace
   {
+    template <typename ValueType>
+    __global__ void
+    saddKernel(ValueType *y, ValueType *x, const ValueType beta, const int size)
+    {
+      const int globalId = threadIdx.x + blockIdx.x * blockDim.x;
+
+      for (int idx = globalId; idx < size; idx += blockDim.x * gridDim.x)
+        {
+          y[idx] = beta * y[idx] - x[idx];
+          x[idx] = 0;
+        }
+    }
+
+
     template <typename ValueTypeComplex, typename ValueTypeReal>
     __global__ void
     copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type  size,
@@ -271,10 +285,10 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const cuDoubleComplex *        addFromVec,
-      cuDoubleComplex *              addToVec,
+      const dftfe::size_type                   contiguousBlockSize,
+      const dftfe::size_type                   numContiguousBlocks,
+      const dftfe::utils::deviceDoubleComplex *addFromVec,
+      dftfe::utils::deviceDoubleComplex *      addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {}
 
@@ -311,11 +325,11 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const cuDoubleComplex *        addFromVec,
-      double *                       addToVecReal,
-      double *                       addToVecImag,
+      const dftfe::size_type                   contiguousBlockSize,
+      const dftfe::size_type                   numContiguousBlocks,
+      const dftfe::utils::deviceDoubleComplex *addFromVec,
+      double *                                 addToVecReal,
+      double *                                 addToVecImag,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -364,7 +378,6 @@ namespace dftfe
       }
 
 
-
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
       copyComplexArrToRealArrsDevice(const dftfe::size_type  size,
@@ -372,6 +385,7 @@ namespace dftfe
                                      ValueTypeReal *         realArr,
                                      ValueTypeReal *         imagArr)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyComplexArrToRealArrsDeviceKernel<<<
           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -379,6 +393,18 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(complexArr),
           realArr,
           imagArr);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(copyComplexArrToRealArrsDeviceKernel,
+                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           size,
+                           dftfe::utils::makeDataTypeDeviceCompatible(
+                             complexArr),
+                           realArr,
+                           imagArr);
+#endif
       }
 
 
@@ -390,6 +416,7 @@ namespace dftfe
                                      const ValueTypeReal *  imagArr,
                                      ValueTypeComplex *     complexArr)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyRealArrsToComplexArrDeviceKernel<<<
           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -397,6 +424,18 @@ namespace dftfe
           realArr,
           imagArr,
           dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(copyRealArrsToComplexArrDeviceKernel,
+                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           size,
+                           realArr,
+                           imagArr,
+                           dftfe::utils::makeDataTypeDeviceCompatible(
+                             complexArr));
+#endif
       }
 
       template <typename ValueType1, typename ValueType2>
@@ -405,12 +444,24 @@ namespace dftfe
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyValueType1ArrToValueType2ArrDeviceKernel<<<
           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           size,
           dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
           dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          copyValueType1ArrToValueType2ArrDeviceKernel,
+          size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          size,
+          dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+          dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+#endif
       }
 
       template <typename ValueType1, typename ValueType2>
@@ -422,6 +473,7 @@ namespace dftfe
         ValueType2 *                   copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         stridedCopyToBlockDeviceKernel<<<(contiguousBlockSize *
                                           numContiguousBlocks) /
                                              dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -432,6 +484,21 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
           copyFromVecStartingContiguousBlockIds);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          stridedCopyToBlockDeviceKernel,
+          (contiguousBlockSize * numContiguousBlocks) /
+              dftfe::utils::DEVICE_BLOCK_SIZE +
+            1,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          contiguousBlockSize,
+          numContiguousBlocks,
+          dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+          dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
+          copyFromVecStartingContiguousBlockIds);
+#endif
       }
 
 
@@ -444,6 +511,7 @@ namespace dftfe
         ValueType2 *                   copyToVec,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         stridedCopyFromBlockDeviceKernel<<<(contiguousBlockSize *
                                             numContiguousBlocks) /
                                                dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -454,6 +522,21 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVecBlock),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec),
           copyFromVecStartingContiguousBlockIds);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          stridedCopyFromBlockDeviceKernel,
+          (contiguousBlockSize * numContiguousBlocks) /
+              dftfe::utils::DEVICE_BLOCK_SIZE +
+            1,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          contiguousBlockSize,
+          numContiguousBlocks,
+          dftfe::utils::makeDataTypeDeviceCompatible(copyFromVecBlock),
+          dftfe::utils::makeDataTypeDeviceCompatible(copyToVec),
+          copyFromVecStartingContiguousBlockIds);
+#endif
       }
 
 
@@ -466,6 +549,7 @@ namespace dftfe
                                        const ValueType1 *     copyFromVec,
                                        ValueType2 *           copyToVec)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         stridedCopyToBlockConstantStrideDeviceKernel<<<
           (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -475,6 +559,20 @@ namespace dftfe
           startingId,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          stridedCopyToBlockConstantStrideDeviceKernel,
+          (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          blockSizeTo,
+          blockSizeFrom,
+          numBlocks,
+          startingId,
+          dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+          dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+#endif
       }
 
 
@@ -487,6 +585,7 @@ namespace dftfe
                                          const ValueType1 *     copyFromVec,
                                          ValueType2 *           copyToVec)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         stridedCopyFromBlockConstantStrideDeviceKernel<<<
           (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -496,6 +595,20 @@ namespace dftfe
           startingId,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          stridedCopyFromBlockConstantStrideDeviceKernel,
+          (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          blockSizeTo,
+          blockSizeFrom,
+          numBlocks,
+          startingId,
+          dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+          dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+#endif
       }
 
       template <typename ValueType1, typename ValueType2>
@@ -506,6 +619,7 @@ namespace dftfe
             const ValueType2       a,
             const ValueType2       b)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         axpbyDeviceKernel<<<n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           n,
@@ -513,6 +627,18 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(y),
           dftfe::utils::makeDataTypeDeviceCompatible(a),
           dftfe::utils::makeDataTypeDeviceCompatible(b));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(axpbyDeviceKernel,
+                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           n,
+                           dftfe::utils::makeDataTypeDeviceCompatible(x),
+                           dftfe::utils::makeDataTypeDeviceCompatible(y),
+                           dftfe::utils::makeDataTypeDeviceCompatible(a),
+                           dftfe::utils::makeDataTypeDeviceCompatible(b));
+#endif
       }
 
       template <typename ValueType>
@@ -524,6 +650,7 @@ namespace dftfe
         ValueType *                    addToVec,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         axpyStridedBlockAtomicAddDeviceKernel<<<
           (contiguousBlockSize * numContiguousBlocks) /
               dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -534,6 +661,21 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
           addToVecStartingContiguousBlockIds);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(axpyStridedBlockAtomicAddDeviceKernel,
+                           (contiguousBlockSize * numContiguousBlocks) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE +
+                             1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           contiguousBlockSize,
+                           numContiguousBlocks,
+                           dftfe::utils::makeDataTypeDeviceCompatible(
+                             addFromVec),
+                           dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
+                           addToVecStartingContiguousBlockIds);
+#endif
       }
 
       template <typename ValueType>
@@ -546,6 +688,7 @@ namespace dftfe
         double *                       addToVecImag,
         const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         axpyStridedBlockAtomicAddDeviceKernel<<<
           (contiguousBlockSize * numContiguousBlocks) /
               dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -557,17 +700,44 @@ namespace dftfe
           addToVecReal,
           addToVecImag,
           addToVecStartingContiguousBlockIds);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(axpyStridedBlockAtomicAddDeviceKernel,
+                           (contiguousBlockSize * numContiguousBlocks) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE +
+                             1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           contiguousBlockSize,
+                           numContiguousBlocks,
+                           dftfe::utils::makeDataTypeDeviceCompatible(
+                             addFromVec),
+                           addToVecReal,
+                           addToVecImag,
+                           addToVecStartingContiguousBlockIds);
+#endif
       }
 
       template <typename ValueType1, typename ValueType2>
       void
       ascal(const dftfe::size_type n, ValueType1 *x, const ValueType2 a)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         ascalDeviceKernel<<<n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           n,
           dftfe::utils::makeDataTypeDeviceCompatible(x),
           dftfe::utils::makeDataTypeDeviceCompatible(a));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(ascalDeviceKernel,
+                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           n,
+                           dftfe::utils::makeDataTypeDeviceCompatible(x),
+                           dftfe::utils::makeDataTypeDeviceCompatible(a));
+#endif
       }
 
       template <typename ValueType1, typename ValueType2>
@@ -578,6 +748,7 @@ namespace dftfe
                         const ValueType1 *     s,
                         ValueType2 *           x)
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         stridedBlockScaleDeviceKernel<<<(contiguousBlockSize *
                                          numContiguousBlocks) /
                                             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -588,6 +759,46 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(a),
           dftfe::utils::makeDataTypeDeviceCompatible(s),
           dftfe::utils::makeDataTypeDeviceCompatible(x));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(stridedBlockScaleDeviceKernel,
+                           (contiguousBlockSize * numContiguousBlocks) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE +
+                             1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           contiguousBlockSize,
+                           numContiguousBlocks,
+                           dftfe::utils::makeDataTypeDeviceCompatible(a),
+                           dftfe::utils::makeDataTypeDeviceCompatible(s),
+                           dftfe::utils::makeDataTypeDeviceCompatible(x));
+#endif
+      }
+
+
+      template <typename ValueType>
+      void
+      sadd(ValueType *y, ValueType *x, const ValueType beta, const int size)
+      {
+        const int gridSize =
+          (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
+          (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+        saddKernel<<<gridSize, dftfe::utils::DEVICE_BLOCK_SIZE>>>(y,
+                                                                  x,
+                                                                  beta,
+                                                                  size);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(saddKernel,
+                           gridSize,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           y,
+                           x,
+                           beta,
+                           size);
+#endif
       }
 
       void
@@ -639,32 +850,6 @@ namespace dftfe
         return sum;
       }
 
-      template <typename ValueType>
-      __global__ void
-      saddKernel(ValueType *     y,
-                 ValueType *     x,
-                 const ValueType beta,
-                 const int       size)
-      {
-        const int globalId = threadIdx.x + blockIdx.x * blockDim.x;
-
-        for (int idx = globalId; idx < size; idx += blockDim.x * gridDim.x)
-          {
-            y[idx] = beta * y[idx] - x[idx];
-            x[idx] = 0;
-          }
-      }
-
-      template <typename ValueType>
-      void
-      sadd(ValueType *y, ValueType *x, const ValueType beta, const int size)
-      {
-        const int gridSize =
-          (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
-          (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
-        saddKernel<ValueType>
-          <<<gridSize, dftfe::utils::DEVICE_BLOCK_SIZE>>>(y, x, beta, size);
-      }
 
 
       template void

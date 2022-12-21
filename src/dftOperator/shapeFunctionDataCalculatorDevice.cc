@@ -186,6 +186,7 @@ namespace shapeFuncDevice
                 const int startingQuadId = jblock * blockSizeQuads;
                 if (currentQuadsBlockSize > 0)
                   {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                     computeShapeGradNINJIntegralContribution<<<
                       (currentQuadsBlockSize +
                        (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -205,6 +206,30 @@ namespace shapeFuncDevice
                       gradNQuadValuesZD.begin(),
                       jxwQuadValuesD.begin(),
                       shapeGradNINJIntegralContributionD.begin());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                    hipLaunchKernelGGL(
+                      computeShapeGradNINJIntegralContribution,
+                      (currentQuadsBlockSize +
+                       (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * numNodesPerElem *
+                        numNodesPerElem * currentElemsBlockSize,
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                      0,
+                      0,
+                      currentQuadsBlockSize,
+                      numQuads,
+                      startingQuadId,
+                      numNodesPerElem,
+                      currentElemsBlockSize,
+                      gradNQuadValuesXD.begin(),
+                      gradNQuadValuesYD.begin(),
+                      gradNQuadValuesZD.begin(),
+                      gradNQuadValuesXD.begin(),
+                      gradNQuadValuesYD.begin(),
+                      gradNQuadValuesZD.begin(),
+                      jxwQuadValuesD.begin(),
+                      shapeGradNINJIntegralContributionD.begin());
+#endif
 
                     const double scalarCoeffAlpha = 1.0;
                     const double scalarCoeffBeta  = 1.0;

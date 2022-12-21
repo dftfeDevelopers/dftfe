@@ -73,6 +73,4 @@ namespace dftfe
 
 } // namespace dftfe
 
-#include "../utils/MemoryManager.t.cc"
-
 #endif

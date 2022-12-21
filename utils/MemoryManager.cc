@@ -29,7 +29,8 @@
 
 #include <DeviceAPICalls.h>
 #include <algorithm>
-
+#include <MemoryManager.h>
+#include <complex>
 
 namespace dftfe
 {
@@ -112,7 +113,62 @@ namespace dftfe
       deviceSetValue(ptr, val, size);
     }
 
+    template class MemoryManager<int, dftfe::utils::MemorySpace::DEVICE>;
+
+    template class MemoryManager<unsigned int,
+                                 dftfe::utils::MemorySpace::DEVICE>;
+
+    template class MemoryManager<long int, dftfe::utils::MemorySpace::DEVICE>;
+
+    template class MemoryManager<unsigned long int,
+                                 dftfe::utils::MemorySpace::DEVICE>;
+
+    template class MemoryManager<double, dftfe::utils::MemorySpace::DEVICE>;
+    template class MemoryManager<float, dftfe::utils::MemorySpace::DEVICE>;
+    template class MemoryManager<std::complex<double>,
+                                 dftfe::utils::MemorySpace::DEVICE>;
+    template class MemoryManager<std::complex<float>,
+                                 dftfe::utils::MemorySpace::DEVICE>;
+
+    template class MemoryManager<int, dftfe::utils::MemorySpace::HOST_PINNED>;
+
+    template class MemoryManager<unsigned int,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+
+    template class MemoryManager<long int,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+
+    template class MemoryManager<unsigned long int,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+
+
+    template class MemoryManager<double,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MemoryManager<float, dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MemoryManager<std::complex<double>,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MemoryManager<std::complex<float>,
+                                 dftfe::utils::MemorySpace::HOST_PINNED>;
+
 #endif // DFTFE_WITH_DEVICE
-  }    // namespace utils
+
+    template class MemoryManager<int, dftfe::utils::MemorySpace::HOST>;
+
+    template class MemoryManager<unsigned int, dftfe::utils::MemorySpace::HOST>;
+
+    template class MemoryManager<long int, dftfe::utils::MemorySpace::HOST>;
+
+    template class MemoryManager<unsigned long int,
+                                 dftfe::utils::MemorySpace::HOST>;
+
+
+    template class MemoryManager<double, dftfe::utils::MemorySpace::HOST>;
+    template class MemoryManager<float, dftfe::utils::MemorySpace::HOST>;
+    template class MemoryManager<std::complex<double>,
+                                 dftfe::utils::MemorySpace::HOST>;
+    template class MemoryManager<std::complex<float>,
+                                 dftfe::utils::MemorySpace::HOST>;
+
+  } // namespace utils
 
 } // namespace dftfe

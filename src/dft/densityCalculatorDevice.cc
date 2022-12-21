@@ -72,12 +72,12 @@ namespace dftfe
 
       __global__ void
       computeRhoGradRhoFromInterpolatedValues(
-        const unsigned int numberEntries,
-        cuDoubleComplex *  rhoCellsWfcContributions,
-        cuDoubleComplex *  gradRhoCellsWfcContributionsX,
-        cuDoubleComplex *  gradRhoCellsWfcContributionsY,
-        cuDoubleComplex *  gradRhoCellsWfcContributionsZ,
-        const bool         isEvaluateGradRho)
+        const unsigned int                 numberEntries,
+        dftfe::utils::deviceDoubleComplex *rhoCellsWfcContributions,
+        dftfe::utils::deviceDoubleComplex *gradRhoCellsWfcContributionsX,
+        dftfe::utils::deviceDoubleComplex *gradRhoCellsWfcContributionsY,
+        dftfe::utils::deviceDoubleComplex *gradRhoCellsWfcContributionsZ,
+        const bool                         isEvaluateGradRho)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -85,26 +85,33 @@ namespace dftfe
         for (unsigned int index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            const cuDoubleComplex psi = rhoCellsWfcContributions[index];
+            const dftfe::utils::deviceDoubleComplex psi =
+              rhoCellsWfcContributions[index];
             rhoCellsWfcContributions[index] =
-              make_cuDoubleComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+              dftfe::utils::makeComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
 
             if (isEvaluateGradRho)
               {
-                const cuDoubleComplex gradPsiX =
+                const dftfe::utils::deviceDoubleComplex gradPsiX =
                   gradRhoCellsWfcContributionsX[index];
-                gradRhoCellsWfcContributionsX[index] = make_cuDoubleComplex(
-                  2.0 * (psi.x * gradPsiX.x + psi.y * gradPsiX.y), 0.0);
+                gradRhoCellsWfcContributionsX[index] =
+                  dftfe::utils::makeComplex(2.0 * (psi.x * gradPsiX.x +
+                                                   psi.y * gradPsiX.y),
+                                            0.0);
 
-                const cuDoubleComplex gradPsiY =
+                const dftfe::utils::deviceDoubleComplex gradPsiY =
                   gradRhoCellsWfcContributionsY[index];
-                gradRhoCellsWfcContributionsY[index] = make_cuDoubleComplex(
-                  2.0 * (psi.x * gradPsiY.x + psi.y * gradPsiY.y), 0.0);
+                gradRhoCellsWfcContributionsY[index] =
+                  dftfe::utils::makeComplex(2.0 * (psi.x * gradPsiY.x +
+                                                   psi.y * gradPsiY.y),
+                                            0.0);
 
-                const cuDoubleComplex gradPsiZ =
+                const dftfe::utils::deviceDoubleComplex gradPsiZ =
                   gradRhoCellsWfcContributionsZ[index];
-                gradRhoCellsWfcContributionsZ[index] = make_cuDoubleComplex(
-                  2.0 * (psi.x * gradPsiZ.x + psi.y * gradPsiZ.y), 0.0);
+                gradRhoCellsWfcContributionsZ[index] =
+                  dftfe::utils::makeComplex(2.0 * (psi.x * gradPsiZ.x +
+                                                   psi.y * gradPsiZ.y),
+                                            0.0);
               }
           }
       }
@@ -546,7 +553,7 @@ namespace dftfe
                                 }
 
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                               computeRhoGradRhoFromInterpolatedValues<<<
                                 (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -562,7 +569,26 @@ namespace dftfe
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                              hipLaunchKernelGGL(
+                                computeRhoGradRhoFromInterpolatedValues,
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
+                                  numQuadPoints * currentCellsBlockSize,
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                                0,
+                                0,
+                                currentCellsBlockSize * numQuadPoints * BVec,
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rhoWfcContributionsDevice.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceX.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceY.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceZ.begin()),
+                                isEvaluateGradRho);
+#endif
 
                               dftfe::utils::deviceBlasWrapper::gemm(
                                 operatorMatrix.getDeviceBlasHandle(),
@@ -870,7 +896,7 @@ namespace dftfe
                                 }
 
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                               computeRhoGradRhoFromInterpolatedValues<<<
                                 (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                   dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -886,7 +912,26 @@ namespace dftfe
                                 dftfe::utils::makeDataTypeDeviceCompatible(
                                   gradRhoWfcContributionsDeviceZ.begin()),
                                 isEvaluateGradRho);
-
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                              hipLaunchKernelGGL(
+                                computeRhoGradRhoFromInterpolatedValues,
+                                (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                  dftfe::utils::DEVICE_BLOCK_SIZE *
+                                  numQuadPoints * currentCellsBlockSize,
+                                dftfe::utils::DEVICE_BLOCK_SIZE,
+                                0,
+                                0,
+                                currentCellsBlockSize * numQuadPoints * BVec,
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  rhoWfcContributionsDevice.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceX.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceY.begin()),
+                                dftfe::utils::makeDataTypeDeviceCompatible(
+                                  gradRhoWfcContributionsDeviceZ.begin()),
+                                isEvaluateGradRho);
+#endif
 
                               dftfe::utils::deviceBlasWrapper::gemm(
                                 operatorMatrix.getDeviceBlasHandle(),

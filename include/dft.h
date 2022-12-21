@@ -1342,7 +1342,7 @@ namespace dftfe
     std::vector<std::vector<dataTypes::number>>
       d_eigenVectorsDensityMatrixPrimeSTL;
 
-    /// cuda eigenvectors
+    /// device eigenvectors
 #ifdef DFTFE_WITH_DEVICE
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>

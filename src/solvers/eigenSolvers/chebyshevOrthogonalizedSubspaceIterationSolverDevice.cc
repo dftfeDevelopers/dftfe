@@ -71,11 +71,11 @@ namespace dftfe
 
 
     __global__ void
-    setZeroKernel(const unsigned int BVec,
-                  const unsigned int M,
-                  const unsigned int N,
-                  cuDoubleComplex *  yVec,
-                  const unsigned int startingXVecId)
+    setZeroKernel(const unsigned int                 BVec,
+                  const unsigned int                 M,
+                  const unsigned int                 N,
+                  dftfe::utils::deviceDoubleComplex *yVec,
+                  const unsigned int                 startingXVecId)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
@@ -87,7 +87,7 @@ namespace dftfe
           localThreadId < BVec)
         {
           *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            make_cuDoubleComplex(0.0, 0.0);
+            dftfe::utils::makeComplex(0.0, 0.0);
         }
     }
 
@@ -491,6 +491,7 @@ namespace dftfe
           {
             // set to zero wavefunctions which wont go through chebyshev
             // filtering inside a given band group
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                               dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
@@ -501,6 +502,22 @@ namespace dftfe
               dftfe::utils::makeDataTypeDeviceCompatible(
                 eigenVectorsFlattenedDevice),
               jvec);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+            hipLaunchKernelGGL(setZeroKernel,
+                               (numSimultaneousBlocksCurrent * BVec +
+                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                 dftfe::utils::DEVICE_BLOCK_SIZE *
+                                 localVectorSize,
+                               dftfe::utils::DEVICE_BLOCK_SIZE,
+                               0,
+                               0,
+                               numSimultaneousBlocksCurrent * BVec,
+                               localVectorSize,
+                               totalNumberWaveFunctions,
+                               dftfe::utils::makeDataTypeDeviceCompatible(
+                                 eigenVectorsFlattenedDevice),
+                               jvec);
+#endif
           }
 
       } // block loop
@@ -963,6 +980,7 @@ namespace dftfe
                   {
                     // set to zero wavefunctions which wont go through chebyshev
                     // filtering inside a given band group
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                     setZeroKernel<<<(numSimultaneousBlocksCurrent * BVec +
                                      (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                       dftfe::utils::DEVICE_BLOCK_SIZE *
@@ -974,6 +992,22 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                         eigenVectorsFlattenedDevice),
                       jvec);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                    hipLaunchKernelGGL(
+                      setZeroKernel,
+                      (numSimultaneousBlocksCurrent * BVec +
+                       (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                        dftfe::utils::DEVICE_BLOCK_SIZE * localVectorSize,
+                      dftfe::utils::DEVICE_BLOCK_SIZE,
+                      0,
+                      0,
+                      numSimultaneousBlocksCurrent * BVec,
+                      localVectorSize,
+                      totalNumberWaveFunctions,
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        eigenVectorsFlattenedDevice),
+                      jvec);
+#endif
                   }
 
               } // cheby block loop

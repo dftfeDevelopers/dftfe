@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // ---------------------------------------------------------------------
 //
 // Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
@@ -15,7 +16,7 @@
 // ---------------------------------------------------------------------
 
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_HIP
 #  include <DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
@@ -45,7 +46,7 @@ namespace dftfe
     deviceError_t
     deviceReset()
     {
-      deviceError_t err = cudaDeviceReset();
+      deviceError_t err = hipDeviceReset();
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -54,7 +55,7 @@ namespace dftfe
     deviceError_t
     deviceMemGetInfo(size_t *free, size_t *total)
     {
-      deviceError_t err = cudaMemGetInfo(free, total);
+      deviceError_t err = hipMemGetInfo(free, total);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -62,7 +63,7 @@ namespace dftfe
     deviceError_t
     getDeviceCount(int *count)
     {
-      deviceError_t err = cudaGetDeviceCount(count);
+      deviceError_t err = hipGetDeviceCount(count);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -70,7 +71,7 @@ namespace dftfe
     deviceError_t
     getDevice(int *deviceId)
     {
-      deviceError_t err = cudaGetDevice(deviceId);
+      deviceError_t err = hipGetDevice(deviceId);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -78,7 +79,7 @@ namespace dftfe
     deviceError_t
     setDevice(int deviceId)
     {
-      deviceError_t err = cudaSetDevice(deviceId);
+      deviceError_t err = hipSetDevice(deviceId);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -86,7 +87,7 @@ namespace dftfe
     deviceError_t
     deviceMalloc(void **devPtr, size_type size)
     {
-      deviceError_t err = cudaMalloc(devPtr, size);
+      deviceError_t err = hipMalloc(devPtr, size);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -94,7 +95,7 @@ namespace dftfe
     deviceError_t
     deviceMemset(void *devPtr, int value, size_type count)
     {
-      deviceError_t err = cudaMemset(devPtr, value, count);
+      deviceError_t err = hipMemset(devPtr, value, count);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -103,11 +104,14 @@ namespace dftfe
     void
     deviceSetValue(ValueType *devPtr, ValueType value, size_type size)
     {
-      setValueKernel<<<size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        makeDataTypeDeviceCompatible(devPtr),
-        makeDataTypeDeviceCompatible(value),
-        size);
+      hipLaunchKernelGGL(setValueKernel,
+                         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         makeDataTypeDeviceCompatible(devPtr),
+                         makeDataTypeDeviceCompatible(value),
+                         size);
     }
 
     template void
@@ -143,7 +147,7 @@ namespace dftfe
     deviceError_t
     deviceFree(void *devPtr)
     {
-      deviceError_t err = cudaFree(devPtr);
+      deviceError_t err = hipFree(devPtr);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -151,7 +155,7 @@ namespace dftfe
     deviceError_t
     deviceHostMalloc(void **hostPtr, size_type size)
     {
-      deviceError_t err = cudaMallocHost(hostPtr, size);
+      deviceError_t err = hipHostMalloc(hostPtr, size);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -159,7 +163,7 @@ namespace dftfe
     deviceError_t
     deviceHostFree(void *hostPtr)
     {
-      deviceError_t err = cudaFreeHost(hostPtr);
+      deviceError_t err = hipHostFree(hostPtr);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -167,7 +171,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, size_type count)
     {
-      deviceError_t err = cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost);
+      deviceError_t err = hipMemcpy(dst, src, count, hipMemcpyDeviceToHost);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -175,14 +179,14 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2D(void *dst, const void *src, size_type count)
     {
-      deviceError_t err = cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice);
+      deviceError_t err = hipMemcpy(dst, src, count, hipMemcpyDeviceToDevice);
       DEVICE_API_CHECK(err);
       return err;
     }
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, size_type count)
     {
-      deviceError_t err = cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice);
+      deviceError_t err = hipMemcpy(dst, src, count, hipMemcpyHostToDevice);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -195,8 +199,8 @@ namespace dftfe
                        size_type   width,
                        size_type   height)
     {
-      deviceError_t err = cudaMemcpy2D(
-        dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToHost);
+      deviceError_t err = hipMemcpy2D(
+        dst, dpitch, src, spitch, width, height, hipMemcpyDeviceToHost);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -210,8 +214,8 @@ namespace dftfe
                        size_type   width,
                        size_type   height)
     {
-      deviceError_t err = cudaMemcpy2D(
-        dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToDevice);
+      deviceError_t err = hipMemcpy2D(
+        dst, dpitch, src, spitch, width, height, hipMemcpyDeviceToDevice);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -224,8 +228,8 @@ namespace dftfe
                        size_type   width,
                        size_type   height)
     {
-      deviceError_t err = cudaMemcpy2D(
-        dst, dpitch, src, spitch, width, height, cudaMemcpyHostToDevice);
+      deviceError_t err = hipMemcpy2D(
+        dst, dpitch, src, spitch, width, height, hipMemcpyHostToDevice);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -233,7 +237,7 @@ namespace dftfe
     deviceError_t
     deviceSynchronize()
     {
-      deviceError_t err = cudaDeviceSynchronize();
+      deviceError_t err = hipDeviceSynchronize();
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -245,7 +249,7 @@ namespace dftfe
                          deviceStream_t stream)
     {
       deviceError_t err =
-        cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToHost, stream);
+        hipMemcpyAsync(dst, src, count, hipMemcpyDeviceToHost, stream);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -257,7 +261,7 @@ namespace dftfe
                          deviceStream_t stream)
     {
       deviceError_t err =
-        cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToDevice, stream);
+        hipMemcpyAsync(dst, src, count, hipMemcpyDeviceToDevice, stream);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -269,7 +273,7 @@ namespace dftfe
                          deviceStream_t stream)
     {
       deviceError_t err =
-        cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice, stream);
+        hipMemcpyAsync(dst, src, count, hipMemcpyHostToDevice, stream);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -277,7 +281,7 @@ namespace dftfe
     deviceError_t
     deviceStreamCreate(deviceStream_t *pStream)
     {
-      deviceError_t err = cudaStreamCreate(pStream);
+      deviceError_t err = hipStreamCreate(pStream);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -285,7 +289,7 @@ namespace dftfe
     deviceError_t
     deviceStreamDestroy(deviceStream_t stream)
     {
-      deviceError_t err = cudaStreamDestroy(stream);
+      deviceError_t err = hipStreamDestroy(stream);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -293,7 +297,7 @@ namespace dftfe
     deviceError_t
     deviceEventCreate(deviceEvent_t *pEvent)
     {
-      deviceError_t err = cudaEventCreate(pEvent);
+      deviceError_t err = hipEventCreate(pEvent);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -301,7 +305,7 @@ namespace dftfe
     deviceError_t
     deviceEventDestroy(deviceEvent_t event)
     {
-      deviceError_t err = cudaEventDestroy(event);
+      deviceError_t err = hipEventDestroy(event);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -309,7 +313,7 @@ namespace dftfe
     deviceError_t
     deviceEventRecord(deviceEvent_t event, deviceStream_t stream)
     {
-      deviceError_t err = cudaEventRecord(event, stream);
+      deviceError_t err = hipEventRecord(event, stream);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -317,7 +321,7 @@ namespace dftfe
     deviceError_t
     deviceEventSynchronize(deviceEvent_t event)
     {
-      deviceError_t err = cudaEventSynchronize(event);
+      deviceError_t err = hipEventSynchronize(event);
       DEVICE_API_CHECK(err);
       return err;
     }
@@ -327,7 +331,7 @@ namespace dftfe
                           deviceEvent_t  event,
                           unsigned int   flags)
     {
-      deviceError_t err = cudaStreamWaitEvent(stream, event, flags);
+      deviceError_t err = hipStreamWaitEvent(stream, event, flags);
       DEVICE_API_CHECK(err);
       return err;
     }

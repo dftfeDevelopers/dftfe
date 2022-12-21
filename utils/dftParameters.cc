@@ -1851,7 +1851,7 @@ namespace dftfe
           scalapackBlockSize = 32;
       }
 
-#ifndef DFTFE_WITH_NCCL
+#ifndef DFTFE_WITH_CUDA_NCCL
     useDeviceDirectAllReduce = false;
 #endif
 

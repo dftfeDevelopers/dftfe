@@ -163,7 +163,7 @@ namespace dftfe
       int  myRank;
       int  totalRanks;
       bool commCreated;
-#    ifdef DFTFE_WITH_NCCL
+#    ifdef DFTFE_WITH_CUDA_NCCL
       void *ncclIdPtr;
       void *ncclCommPtr;
 #    endif

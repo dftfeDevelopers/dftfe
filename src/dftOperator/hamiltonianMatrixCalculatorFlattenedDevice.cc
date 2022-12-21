@@ -129,10 +129,10 @@ namespace
     const double *     vEffJxW,
     const double *     JxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    cuDoubleComplex *  cellHamiltonianMatrixFlattened,
-    const double *     kPointCoordsVec,
-    const double *     kSquareTimesHalfVec,
-    const bool         externalPotCorr)
+    dftfe::utils::deviceDoubleComplex *cellHamiltonianMatrixFlattened,
+    const double *                     kPointCoordsVec,
+    const double *                     kSquareTimesHalfVec,
+    const bool                         externalPotCorr)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -196,7 +196,7 @@ namespace
                                             numCells * numDofsPerCell *
                                             numDofsPerCell;
             cellHamiltonianMatrixFlattened[startIndex + index] =
-              make_cuDoubleComplex(
+              dftfe::utils::makeComplex(
                 0.5 * cellShapeFunctionGradientIntegral[index] + val +
                   kSquareTimesHalfVec[ikpt] * valRealKpt,
                 kPointCoordsVec[3 * ikpt + 0] * valImagKptX +
@@ -204,7 +204,7 @@ namespace
                   kPointCoordsVec[3 * ikpt + 2] * valImagKptZ);
             if (externalPotCorr)
               cellHamiltonianMatrixFlattened[startIndex + index] =
-                make_cuDoubleComplex(
+                dftfe::utils::makeComplex(
                   cellHamiltonianMatrixFlattened[startIndex + index].x +
                     cellHamiltonianMatrixExternalPotCorrFlattened[index],
                   cellHamiltonianMatrixFlattened[startIndex + index].y);
@@ -337,10 +337,10 @@ namespace
     const double *     JxW,
     const double *     derExcWithSigmaTimesGradRhoJxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    cuDoubleComplex *  cellHamiltonianMatrixFlattened,
-    const double *     kPointCoordsVec,
-    const double *     kSquareTimesHalfVec,
-    const bool         externalPotCorr)
+    dftfe::utils::deviceDoubleComplex *cellHamiltonianMatrixFlattened,
+    const double *                     kPointCoordsVec,
+    const double *                     kSquareTimesHalfVec,
+    const bool                         externalPotCorr)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -432,7 +432,7 @@ namespace
                                             numCells * numDofsPerCell *
                                             numDofsPerCell;
             cellHamiltonianMatrixFlattened[startIndex + index] =
-              make_cuDoubleComplex(
+              dftfe::utils::makeComplex(
                 0.5 * cellShapeFunctionGradientIntegral[index] + val +
                   kSquareTimesHalfVec[ikpt] * valRealKpt,
                 kPointCoordsVec[3 * ikpt + 0] * valImagKptX +
@@ -440,7 +440,7 @@ namespace
                   kPointCoordsVec[3 * ikpt + 2] * valImagKptZ);
             if (externalPotCorr)
               cellHamiltonianMatrixFlattened[startIndex + index] =
-                make_cuDoubleComplex(
+                dftfe::utils::makeComplex(
                   cellHamiltonianMatrixFlattened[startIndex + index].x +
                     cellHamiltonianMatrixExternalPotCorrFlattened[index],
                   cellHamiltonianMatrixFlattened[startIndex + index].y);
@@ -492,17 +492,18 @@ namespace
 
 
   __global__ void
-  hamPrimeMatrixKernelLDA(const unsigned int numCells,
-                          const unsigned int numDofsPerCell,
-                          const unsigned int numQuadPoints,
-                          const double *     shapeFunctionValues,
-                          const double *     shapeFunctionValuesTransposed,
-                          const double *shapeFunctionGradientValuesXTransposed,
-                          const double *shapeFunctionGradientValuesYTransposed,
-                          const double *shapeFunctionGradientValuesZTransposed,
-                          const double *vEffPrimeJxW,
-                          const double *JxW,
-                          cuDoubleComplex *cellHamiltonianPrimeMatrixFlattened)
+  hamPrimeMatrixKernelLDA(
+    const unsigned int                 numCells,
+    const unsigned int                 numDofsPerCell,
+    const unsigned int                 numQuadPoints,
+    const double *                     shapeFunctionValues,
+    const double *                     shapeFunctionValuesTransposed,
+    const double *                     shapeFunctionGradientValuesXTransposed,
+    const double *                     shapeFunctionGradientValuesYTransposed,
+    const double *                     shapeFunctionGradientValuesZTransposed,
+    const double *                     vEffPrimeJxW,
+    const double *                     JxW,
+    dftfe::utils::deviceDoubleComplex *cellHamiltonianPrimeMatrixFlattened)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -532,24 +533,24 @@ namespace
           }
 
         cellHamiltonianPrimeMatrixFlattened[index] =
-          make_cuDoubleComplex(val, 0.0);
+          dftfe::utils::makeComplex(val, 0.0);
       }
   }
 
   __global__ void
   hamPrimeMatrixKernelGGAMemOpt(
-    const unsigned int numCells,
-    const unsigned int numDofsPerCell,
-    const unsigned int numQuadPoints,
-    const double *     shapeFunctionValues,
-    const double *     shapeFunctionValuesTransposed,
-    const double *     shapeFunctionGradientValuesXTransposed,
-    const double *     shapeFunctionGradientValuesYTransposed,
-    const double *     shapeFunctionGradientValuesZTransposed,
-    const double *     vEffPrimeJxW,
-    const double *     JxW,
-    const double *     derExcPrimeWithSigmaTimesGradRhoJxW,
-    cuDoubleComplex *  cellHamiltonianPrimeMatrixFlattened)
+    const unsigned int                 numCells,
+    const unsigned int                 numDofsPerCell,
+    const unsigned int                 numQuadPoints,
+    const double *                     shapeFunctionValues,
+    const double *                     shapeFunctionValuesTransposed,
+    const double *                     shapeFunctionGradientValuesXTransposed,
+    const double *                     shapeFunctionGradientValuesYTransposed,
+    const double *                     shapeFunctionGradientValuesZTransposed,
+    const double *                     vEffPrimeJxW,
+    const double *                     JxW,
+    const double *                     derExcPrimeWithSigmaTimesGradRhoJxW,
+    dftfe::utils::deviceDoubleComplex *cellHamiltonianPrimeMatrixFlattened)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -624,7 +625,7 @@ namespace
           }
 
         cellHamiltonianPrimeMatrixFlattened[index] =
-          make_cuDoubleComplex(val, 0.0);
+          dftfe::utils::makeComplex(val, 0.0);
       }
   }
 
@@ -752,6 +753,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       !d_isStiffnessMatrixExternalPotCorrComputed &&
       !onlyHPrimePartForFirstOrderDensityMatResponse)
     {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                d_numberNodesPerElement +
                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -764,6 +766,24 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_shapeFunctionValueTransposedLpspDevice.begin(),
         d_vEffExternalPotCorrJxWDevice.begin(),
         d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin());
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(
+        hamMatrixExtPotCorr,
+        (d_numLocallyOwnedCells * d_numberNodesPerElement *
+           d_numberNodesPerElement +
+         (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
+        d_numLocallyOwnedCells,
+        d_numberNodesPerElement,
+        d_numQuadPointsLpsp,
+        d_shapeFunctionValueLpspDevice.begin(),
+        d_shapeFunctionValueTransposedLpspDevice.begin(),
+        d_vEffExternalPotCorrJxWDevice.begin(),
+        d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin());
+#endif
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
     }
@@ -772,6 +792,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     {
       if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamPrimeMatrixKernelGGAMemOpt<<<
           (d_numLocallyOwnedCells * d_numberNodesPerElement *
              d_numberNodesPerElement +
@@ -793,8 +814,35 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             d_cellHamiltonianMatrixFlattenedDevice.begin() +
             spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
               d_numberNodesPerElement));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          hamPrimeMatrixKernelGGAMemOpt,
+          (d_numLocallyOwnedCells * d_numberNodesPerElement *
+             d_numberNodesPerElement +
+           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          d_numLocallyOwnedCells,
+          d_numberNodesPerElement,
+          d_numQuadPoints,
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin() +
+            spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
+              d_numberNodesPerElement));
+#endif
       else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
                                      d_numberNodesPerElement *
                                      d_numberNodesPerElement +
@@ -815,11 +863,37 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             d_cellHamiltonianMatrixFlattenedDevice.begin() +
             spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
               d_numberNodesPerElement));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          hamPrimeMatrixKernelLDA,
+          (d_numLocallyOwnedCells * d_numberNodesPerElement *
+             d_numberNodesPerElement +
+           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          d_numLocallyOwnedCells,
+          d_numberNodesPerElement,
+          d_numQuadPoints,
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin() +
+            spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
+              d_numberNodesPerElement));
+#endif
     }
   else
     {
       if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                       d_numberNodesPerElement *
                                       d_numberNodesPerElement +
@@ -848,8 +922,42 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           d_kSquareTimesHalfVecDevice.begin(),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          hamMatrixKernelGGAMemOpt,
+          (d_numLocallyOwnedCells * d_numberNodesPerElement *
+             d_numberNodesPerElement +
+           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          d_numLocallyOwnedCells,
+          d_numberNodesPerElement,
+          d_numQuadPoints,
+          spinIndex,
+          (1 + dftPtr->d_dftParamsPtr->spinPolarized),
+          dftPtr->d_kPointWeights.size(),
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
+          d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin()),
+          d_kpointCoordsVecDevice.begin(),
+          d_kSquareTimesHalfVecDevice.begin(),
+          dftPtr->d_dftParamsPtr->isPseudopotential ||
+            dftPtr->d_dftParamsPtr->smearedNuclearCharges);
+#endif
       else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                 d_numberNodesPerElement +
                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -876,6 +984,38 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           d_kSquareTimesHalfVecDevice.begin(),
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          hamMatrixKernelLDA,
+          (d_numLocallyOwnedCells * d_numberNodesPerElement *
+             d_numberNodesPerElement +
+           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          d_numLocallyOwnedCells,
+          d_numberNodesPerElement,
+          d_numQuadPoints,
+          spinIndex,
+          (1 + dftPtr->d_dftParamsPtr->spinPolarized),
+          dftPtr->d_kPointWeights.size(),
+          d_shapeFunctionValueDevice.begin(),
+          d_shapeFunctionValueTransposedDevice.begin(),
+          d_shapeFunctionGradientValueXTransposedDevice.begin(),
+          d_shapeFunctionGradientValueYTransposedDevice.begin(),
+          d_shapeFunctionGradientValueZTransposedDevice.begin(),
+          d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
+          d_vEffJxWDevice.begin(),
+          d_cellJxWValuesDevice.begin(),
+          d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(
+            d_cellHamiltonianMatrixFlattenedDevice.begin()),
+          d_kpointCoordsVecDevice.begin(),
+          d_kSquareTimesHalfVecDevice.begin(),
+          dftPtr->d_dftParamsPtr->isPseudopotential ||
+            dftPtr->d_dftParamsPtr->smearedNuclearCharges);
+#endif
     }
 
 

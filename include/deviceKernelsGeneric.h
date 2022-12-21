@@ -22,6 +22,7 @@
 #    include <MemorySpaceType.h>
 #    include <headers.h>
 #    include <TypeConfig.h>
+#    include <DeviceTypeConfig.h>
 
 namespace dftfe
 {

@@ -14,7 +14,15 @@ ENDIF()
 
 PROJECT(${TARGET} LANGUAGES CXX)
 IF (WITH_GPU)
-    enable_language(CUDA)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip ***\n\n"
+    )
+    ENDIF()
 ENDIF()
 
 
@@ -88,7 +96,9 @@ SET(TARGET_SRC
   ./utils/pseudoConverter.cc
   ./utils/Exceptions.cc
   ./utils/MPIRequestersNBX.cc
+  ./utils/MPICommunicatorP2P.cc
   ./utils/MPICommunicatorP2PKernels.cc
+  ./utils/MemoryManager.cc
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
@@ -97,9 +107,12 @@ SET(TARGET_SRC
   ./src/mdi/libraryMDI.cpp
   )
 
+IF ("${GPU_LANG}" STREQUAL "cuda")
+
 SET(DEVICE_SRC
-  ./utils/deviceKernelsGeneric.cu.cc
-  ./utils/deviceDirectCCLWrapper.cu.cc
+  ./utils/MemoryTransferKernelsDevice.cc
+  ./utils/DeviceKernelsGeneric.cc
+  ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
@@ -113,7 +126,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
   ./utils/DeviceBlasWrapper.cu.cc
-  ./utils/MPICommunicatorP2PKernels.cu.cc
+  ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
   ./src/solvers/linearSolverProblemDevice.cc
@@ -121,12 +134,46 @@ SET(DEVICE_SRC
   ./src/helmholtz/kerkerSolverProblemDevice.cc
   )
 
+ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+
+SET(DEVICE_SRC
+  ./utils/MemoryTransferKernelsDevice.cc
+  ./utils/DeviceKernelsGeneric.cc
+  ./utils/DeviceDirectCCLWrapper.cc
+  ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
+  ./src/dftOperator/operatorDevice.cc
+  ./src/dftOperator/kohnShamDFTOperatorDevice.cc
+  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
+  ./src/linAlg/linearAlgebraOperationsDevice.cc
+  ./src/linAlg/pseudoGSDevice.cc
+  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/force/forceWfcContractionsDevice.cc
+  ./utils/constraintMatrixInfoDevice.cc
+  ./utils/DeviceAPICalls.hip.cc
+  ./utils/DeviceBlasWrapper.hip.cc
+  ./utils/MPICommunicatorP2PKernelsDevice.cc
+  ./src/solvers/linearSolverDevice.cc
+  ./src/solvers/linearSolverCGDevice.cc
+  ./src/solvers/linearSolverProblemDevice.cc
+  ./src/poisson/poissonSolverProblemDevice.cc
+  ./src/helmholtz/kerkerSolverProblemDevice.cc
+  )
+
+ENDIF()
+
+
 IF (WITH_GPU)
   LIST(APPEND TARGET_SRC ${DEVICE_SRC})
 ENDIF()
 
 IF (WITH_GPU)
-    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+       set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+       set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE HIP)
+    ENDIF()
 ENDIF()
 
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
@@ -195,16 +242,30 @@ ENDIF()
 #
 IF (WITH_GPU)
   ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
-  ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_CUDA)
-  MESSAGE(STATUS "DFTFE with GPU")
+  
+  IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_NVIDIA)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AMD)
+  ENDIF()
+
+  IF ("${GPU_LANG}" STREQUAL "cuda")
+    MESSAGE(STATUS "DFTFE with GPU LANG CUDA")
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
+    target_link_libraries(${TARGETLIB} PUBLIC CUDA::cudart)
+    target_link_libraries(${TARGETLIB} PUBLIC CUDA::cublas)
+  ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+    MESSAGE(STATUS "DFTFE with GPU LANG HIP")
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_HIP)
+    find_package(hipblas)
+    target_link_libraries(${TARGETLIB} PUBLIC roc::hipblas)
+  ENDIF()
   IF (WITH_GPU_AWARE_MPI)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)
     MESSAGE(STATUS "DFTFE with GPU Aware MPI")
   ENDIF()
-  find_package(CUDAToolkit REQUIRED)
-  target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
-  target_link_libraries(${TARGETLIB} PUBLIC CUDA::cudart)
-  target_link_libraries(${TARGETLIB} PUBLIC CUDA::cublas)
 ENDIF()
 
 TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC ${DFTFE_MPI_LIBRARIES})
@@ -408,14 +469,16 @@ target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 #
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH
 #
-IF (WITH_NCCL)
-  find_package(NCCL REQUIRED)
-  IF (NCCL_FOUND)
-     MESSAGE(STATUS "Will Link With NCCL")
-     ADD_DEFINITIONS(-DDFTFE_WITH_NCCL)
-     find_package(MPI REQUIRED)
-     target_link_libraries(${TARGETLIB} PUBLIC NCCL MPI::MPI_CXX)
-  ENDIF()
+IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "cuda")
+ IF (WITH_NCCL)
+   find_package(NCCL REQUIRED)
+   IF (NCCL_FOUND)
+      MESSAGE(STATUS "Will Link With NCCL")
+      ADD_DEFINITIONS(-DDFTFE_WITH_CUDA_NCCL)
+      find_package(MPI REQUIRED)
+      target_link_libraries(${TARGETLIB} PUBLIC NCCL MPI::MPI_CXX)
+   ENDIF()
+ ENDIF()
 ENDIF()
 
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)

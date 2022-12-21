@@ -21,8 +21,10 @@
 #  ifndef dftfeDeviceTypeConfig_h
 #    define dftfeDeviceTypeConfig_h
 
-#    ifdef DFTFE_WITH_DEVICE_CUDA
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #      include "DeviceTypeConfig.cu.h"
+#    elif DFTFE_WITH_DEVICE_LANG_HIP
+#      include "DeviceTypeConfig.hip.h"
 #    endif
 
 #  endif // dftfeDeviceTypeConfig_h
