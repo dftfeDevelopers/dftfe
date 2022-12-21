@@ -419,6 +419,37 @@ namespace dftfe
         return d_blockSize;
       }
 
+#ifdef DFTFE_WITH_DEVICE
+    template class MPICommunicatorP2P<double,
+                                             dftfe::utils::MemorySpace::DEVICE>;
+    template class MPICommunicatorP2P<float,
+                                             dftfe::utils::MemorySpace::DEVICE>;
+    template class MPICommunicatorP2P<std::complex<double>,
+                                             dftfe::utils::MemorySpace::DEVICE>;
+    template class MPICommunicatorP2P<std::complex<float>,
+                                             dftfe::utils::MemorySpace::DEVICE>;
+
+    template class MPICommunicatorP2P<double,
+                                             dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MPICommunicatorP2P<float,
+                                             dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MPICommunicatorP2P<std::complex<double>,
+                                             dftfe::utils::MemorySpace::HOST_PINNED>;
+    template class MPICommunicatorP2P<std::complex<float>,
+                                             dftfe::utils::MemorySpace::HOST_PINNED>;
+
+#endif // DFTFE_WITH_DEVICE
+
+    template class MPICommunicatorP2P<double,
+                                             dftfe::utils::MemorySpace::HOST>;
+    template class MPICommunicatorP2P<float,
+                                             dftfe::utils::MemorySpace::HOST>;
+    template class MPICommunicatorP2P<std::complex<double>,
+                                             dftfe::utils::MemorySpace::HOST>;
+    template class MPICommunicatorP2P<std::complex<float>,
+                                             dftfe::utils::MemorySpace::HOST>;
+
+
     } // namespace mpi
   }   // namespace utils
 } // namespace dftfe

@@ -21,7 +21,7 @@
 #    define linearSolverDevice_H_
 
 #    include <linearSolverProblemDevice.h>
-
+# include<DeviceTypeConfig.h>
 namespace dftfe
 {
   /**

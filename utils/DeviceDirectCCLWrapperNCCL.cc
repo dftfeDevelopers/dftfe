@@ -18,7 +18,6 @@
 //
 
 #if defined(DFTFE_WITH_DEVICE)
-#  if defined(DFTFE_WITH_DEVICE_LANG_CUDA)
 #    include <iostream>
 
 #    include <deviceDirectCCLWrapper.h>
@@ -316,5 +315,4 @@ namespace dftfe
     }
   } // namespace utils
 } // namespace dftfe
-#  endif
 #endif

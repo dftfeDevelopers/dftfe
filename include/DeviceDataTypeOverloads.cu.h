@@ -583,6 +583,19 @@ namespace dftfe
       return a;
     }
 
+    inline long int *
+    makeDataTypeDeviceCompatible(long int *a)
+    {
+      return a;
+    }
+
+    inline const long int *
+    makeDataTypeDeviceCompatible(const long int *a)
+    {
+      return a;
+    }
+
+
     inline size_type *
     makeDataTypeDeviceCompatible(size_type *a)
     {
@@ -660,6 +673,13 @@ namespace dftfe
     {
       return a;
     }
+
+    inline long int
+    makeDataTypeDeviceCompatible(long int a)
+    {
+      return a;
+    }
+
 
     inline size_type
     makeDataTypeDeviceCompatible(size_type a)

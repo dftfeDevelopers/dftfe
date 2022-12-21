@@ -4546,7 +4546,7 @@ namespace dftfe
 
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMDevice.cc"
 #include "hamiltonianMatrixCalculatorFlattenedDevice.cc"
-#include "instDevice.cc"
 #include "matrixVectorProductImplementationsDevice.cc"
 #include "shapeFunctionDataCalculatorDevice.cc"
+#include "instDevice.cc"
 } // namespace dftfe

@@ -111,5 +111,4 @@ namespace dftfe
     } // namespace mpi
   }   // namespace utils
 } // namespace dftfe
-#include "../utils/MPICommunicatorP2P.t.cc"
 #endif // dftfeMPICommunicatorP2P_h

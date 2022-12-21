@@ -96,7 +96,9 @@ SET(TARGET_SRC
   ./utils/pseudoConverter.cc
   ./utils/Exceptions.cc
   ./utils/MPIRequestersNBX.cc
+  ./utils/MPICommunicatorP2P.cc
   ./utils/MPICommunicatorP2PKernels.cc
+  ./utils/MemoryManager.cc
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
@@ -108,6 +110,7 @@ SET(TARGET_SRC
 IF ("${GPU_LANG}" STREQUAL "cuda")
 
 SET(DEVICE_SRC
+  ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapperNCCL.cc
   ./src/dft/densityCalculatorDevice.cc
@@ -134,7 +137,9 @@ SET(DEVICE_SRC
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 
 SET(DEVICE_SRC
+  ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
+  ./utils/DeviceDirectCCLWrapperNCCL.cc
   ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
@@ -254,6 +259,8 @@ IF (WITH_GPU)
   ELSEIF ("${GPU_LANG}" STREQUAL "hip")
     MESSAGE(STATUS "DFTFE with GPU LANG HIP")
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_HIP)
+    find_package(hipblas)
+    target_link_libraries(${TARGETLIB} PUBLIC roc::hipblas)
   ENDIF()
   IF (WITH_GPU_AWARE_MPI)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)

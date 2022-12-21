@@ -29,6 +29,46 @@ namespace dftfe
   {
     namespace deviceBlasWrapper
     {
+      namespace
+      {
+    inline hipblasDoubleComplex
+    makeDataTypeHipBlasCompatible(std::complex<double> a)
+    {
+      return hipblasDoubleComplex(a.real(), a.imag());
+    }
+
+    inline hipblasComplex
+    makeDataTypeHipBlasCompatible(std::complex<float> a)
+    {
+      return hipblasComplex(a.real(), a.imag());
+    }
+       
+    inline hipblasComplex *
+    makeDataTypeHipBlasCompatible(std::complex<float> *a)
+    {
+      return reinterpret_cast<hipblasComplex *>(a);
+    }
+
+    inline const hipblasComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<float> *a)
+    {
+      return reinterpret_cast<const hipblasComplex *>(a);
+    }
+
+    inline hipblasDoubleComplex *
+    makeDataTypeHipBlasCompatible(std::complex<double> *a)
+    {
+      return reinterpret_cast<hipblasDoubleComplex *>(a);
+    }
+
+    inline const hipblasDoubleComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<double> *a)
+    {
+      return reinterpret_cast<const hipblasDoubleComplex *>(a);
+    }
+
+      }
+
       deviceBlasStatus_t
       create(deviceBlasHandle_t *pHandle)
       {
@@ -168,24 +208,21 @@ namespace dftfe
            std::complex<double> *      C,
            int                         ldc)
       {
-        deviceBlasStatus_t status; 
-        /*
-          hipblasZgemm(handle,
+        deviceBlasStatus_t status=hipblasZgemm(handle,
                        transa,
                        transb,
                        m,
                        n,
                        k,
-                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       makeDataTypeHipBlasCompatible(alpha),
+                       makeDataTypeHipBlasCompatible(A),
                        lda,
-                       dftfe::utils::makeDataTypeDeviceCompatible(B),
+                       makeDataTypeHipBlasCompatible(B),
                        ldb,
-                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                       dftfe::utils::makeDataTypeDeviceCompatible(C),
+                       makeDataTypeHipBlasCompatible(beta),
+                       makeDataTypeHipBlasCompatible(C),
                        ldc);
         DEVICEBLAS_API_CHECK(status);
-        */
         return status;
       }
 
@@ -205,24 +242,21 @@ namespace dftfe
            std::complex<float> *      C,
            int                        ldc)
       {
-        deviceBlasStatus_t status; 
-        /*
-          hipblasCgemm(handle,
+        deviceBlasStatus_t status=hipblasCgemm(handle,
                        transa,
                        transb,
                        m,
                        n,
                        k,
-                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       makeDataTypeHipBlasCompatible(alpha),
+                       makeDataTypeHipBlasCompatible(A),
                        lda,
-                       dftfe::utils::makeDataTypeDeviceCompatible(B),
+                       makeDataTypeHipBlasCompatible(B),
                        ldb,
-                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                       dftfe::utils::makeDataTypeDeviceCompatible(C),
+                       makeDataTypeHipBlasCompatible(beta),
+                       makeDataTypeHipBlasCompatible(C),
                        ldc);
         DEVICEBLAS_API_CHECK(status);
-        */
         return status;
       }
 
@@ -279,25 +313,22 @@ namespace dftfe
                   int                         ldc,
                   int                         batchCount)
       {
-        deviceBlasStatus_t status;
-        /*
-          hipblasZgemmBatched(handle,
+        deviceBlasStatus_t status=hipblasZgemmBatched(handle,
                               transa,
                               transb,
                               m,
                               n,
                               k,
-                              (const deviceDoubleComplex *)alpha,
-                              (const deviceDoubleComplex **)Aarray,
+                              (const hipblasDoubleComplex *)alpha,
+                              (const hipblasDoubleComplex **)Aarray,
                               lda,
-                              (const deviceDoubleComplex **)Barray,
+                              (const hipblasDoubleComplex **)Barray,
                               ldb,
-                              (const deviceDoubleComplex *)beta,
-                              (deviceDoubleComplex **)Carray,
+                              (const hipblasDoubleComplex *)beta,
+                              (hipblasDoubleComplex **)Carray,
                               ldc,
                               batchCount);
         DEVICEBLAS_API_CHECK(status);
-        */
         return status;
       }
 
@@ -406,29 +437,26 @@ namespace dftfe
                          long long int               strideC,
                          int                         batchCount)
       {
-        deviceBlasStatus_t status;
-        /*
-        hipblasZgemmStridedBatched(
+        deviceBlasStatus_t status=hipblasZgemmStridedBatched(
           handle,
           transa,
           transb,
           m,
           n,
           k,
-          dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-          dftfe::utils::makeDataTypeDeviceCompatible(A),
+          makeDataTypeHipBlasCompatible(alpha),
+          makeDataTypeHipBlasCompatible(A),
           lda,
           strideA,
-          dftfe::utils::makeDataTypeDeviceCompatible(B),
+          makeDataTypeHipBlasCompatible(B),
           ldb,
           strideB,
-          dftfe::utils::makeDataTypeDeviceCompatible(beta),
-          dftfe::utils::makeDataTypeDeviceCompatible(C),
+          makeDataTypeHipBlasCompatible(beta),
+          makeDataTypeHipBlasCompatible(C),
           ldc,
           strideC,
           batchCount);
         DEVICEBLAS_API_CHECK(status);
-        */
         return status;
       }
 
@@ -452,29 +480,26 @@ namespace dftfe
                          long long int              strideC,
                          int                        batchCount)
       {
-        deviceBlasStatus_t status;
-        /*
-        hipblasCgemmStridedBatched(
+        deviceBlasStatus_t status=hipblasCgemmStridedBatched(
           handle,
           transa,
           transb,
           m,
           n,
           k,
-          dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-          dftfe::utils::makeDataTypeDeviceCompatible(A),
+          makeDataTypeHipBlasCompatible(alpha),
+          makeDataTypeHipBlasCompatible(A),
           lda,
           strideA,
-          dftfe::utils::makeDataTypeDeviceCompatible(B),
+          makeDataTypeHipBlasCompatible(B),
           ldb,
           strideB,
-          dftfe::utils::makeDataTypeDeviceCompatible(beta),
-          dftfe::utils::makeDataTypeDeviceCompatible(C),
+          makeDataTypeHipBlasCompatible(beta),
+          makeDataTypeHipBlasCompatible(C),
           ldc,
           strideC,
           batchCount);
         DEVICEBLAS_API_CHECK(status);
-        */
         return status;
       }
 
