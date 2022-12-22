@@ -155,7 +155,7 @@ namespace dftfe
     deviceError_t
     deviceHostMalloc(void **hostPtr, size_type size)
     {
-      deviceError_t err = hipHostMalloc(hostPtr, size);
+      deviceError_t err = hipHostMalloc(hostPtr, size,hipHostMallocNonCoherent);
       DEVICE_API_CHECK(err);
       return err;
     }
