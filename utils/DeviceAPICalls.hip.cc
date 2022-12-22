@@ -41,6 +41,12 @@ namespace dftfe
             devPtr[i] = value;
           }
       }
+
+      __global__ void emptyKernel(void) 
+      {
+      }
+
+
     } // namespace
 
     deviceError_t
@@ -48,6 +54,13 @@ namespace dftfe
     {
       deviceError_t err = hipDeviceReset();
       DEVICE_API_CHECK(err);
+
+      hipLaunchKernelGGL(emptyKernel,
+                         1,
+                         1,
+                         0,
+                         0);
+
       return err;
     }
 
