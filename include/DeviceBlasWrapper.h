@@ -29,6 +29,11 @@ namespace dftfe
   {
     namespace deviceBlasWrapper
     {
+#    ifdef DFTFE_WITH_DEVICE_VENDOR_AMD      
+      void
+      initialize();
+#endif      
+
       deviceBlasStatus_t
       create(deviceBlasHandle_t *pHandle);
 
