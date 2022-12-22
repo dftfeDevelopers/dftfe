@@ -107,13 +107,13 @@ namespace shapeFuncDevice
                                                      0.0);
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      jxwQuadValuesD;
+      jxwQuadValuesD(cellJxWValues.size());
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      gradNQuadValuesXD;
+      gradNQuadValuesXD(shapeFunctionGradientValuesX.size());
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      gradNQuadValuesYD;
+      gradNQuadValuesYD(shapeFunctionGradientValuesX.size());
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      gradNQuadValuesZD;
+      gradNQuadValuesZD(shapeFunctionGradientValuesX.size());
 
     for (int iblock = 0; iblock < (numberElemBlocks + 1); iblock++)
       {
@@ -169,13 +169,9 @@ namespace shapeFuncDevice
                   iElem++;
                 }
 
-            jxwQuadValuesD.resize(cellJxWValues.size());
             jxwQuadValuesD.copyFrom(cellJxWValues);
-            gradNQuadValuesXD.resize(shapeFunctionGradientValuesX.size());
             gradNQuadValuesXD.copyFrom(shapeFunctionGradientValuesX);
-            gradNQuadValuesYD.resize(shapeFunctionGradientValuesY.size());
             gradNQuadValuesYD.copyFrom(shapeFunctionGradientValuesY);
-            gradNQuadValuesZD.resize(shapeFunctionGradientValuesZ.size());
             gradNQuadValuesZD.copyFrom(shapeFunctionGradientValuesZ);
 
             for (int jblock = 0; jblock < (numberQuadsBlocks + 1); jblock++)
