@@ -95,14 +95,14 @@ namespace shapeFuncDevice
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       onesVecD(blockSizeQuads, 1.0);
 
-    std::vector<double> cellJxWValues(blockSizeElems * numQuads);
-    std::vector<double> shapeFunctionGradientValuesX(blockSizeElems * numQuads *
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> cellJxWValues(blockSizeElems * numQuads);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> shapeFunctionGradientValuesX(blockSizeElems * numQuads *
                                                        numNodesPerElem,
                                                      0.0);
-    std::vector<double> shapeFunctionGradientValuesY(blockSizeElems * numQuads *
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> shapeFunctionGradientValuesY(blockSizeElems * numQuads *
                                                        numNodesPerElem,
                                                      0.0);
-    std::vector<double> shapeFunctionGradientValuesZ(blockSizeElems * numQuads *
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> shapeFunctionGradientValuesZ(blockSizeElems * numQuads *
                                                        numNodesPerElem,
                                                      0.0);
 
