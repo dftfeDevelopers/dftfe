@@ -29,10 +29,10 @@ namespace dftfe
   {
     namespace deviceBlasWrapper
     {
-#    ifdef DFTFE_WITH_DEVICE_AMD      
+#    ifdef DFTFE_WITH_DEVICE_AMD
       void
       initialize();
-#endif      
+#    endif
 
       deviceBlasStatus_t
       create(deviceBlasHandle_t *pHandle);

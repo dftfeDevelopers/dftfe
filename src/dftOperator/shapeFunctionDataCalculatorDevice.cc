@@ -95,16 +95,17 @@ namespace shapeFuncDevice
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       onesVecD(blockSizeQuads, 1.0);
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> cellJxWValues(blockSizeElems * numQuads);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> shapeFunctionGradientValuesX(blockSizeElems * numQuads *
-                                                       numNodesPerElem,
-                                                     0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> shapeFunctionGradientValuesY(blockSizeElems * numQuads *
-                                                       numNodesPerElem,
-                                                     0.0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED> shapeFunctionGradientValuesZ(blockSizeElems * numQuads *
-                                                       numNodesPerElem,
-                                                     0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+      cellJxWValues(blockSizeElems * numQuads);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+      shapeFunctionGradientValuesX(blockSizeElems * numQuads * numNodesPerElem,
+                                   0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+      shapeFunctionGradientValuesY(blockSizeElems * numQuads * numNodesPerElem,
+                                   0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+      shapeFunctionGradientValuesZ(blockSizeElems * numQuads * numNodesPerElem,
+                                   0.0);
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       jxwQuadValuesD(cellJxWValues.size());

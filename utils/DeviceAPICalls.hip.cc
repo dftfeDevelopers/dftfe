@@ -42,9 +42,9 @@ namespace dftfe
           }
       }
 
-      __global__ void emptyKernel(void) 
-      {
-      }
+      __global__ void
+      emptyKernel(void)
+      {}
 
 
     } // namespace
@@ -55,11 +55,7 @@ namespace dftfe
       deviceError_t err = hipDeviceReset();
       DEVICE_API_CHECK(err);
 
-      hipLaunchKernelGGL(emptyKernel,
-                         1,
-                         1,
-                         0,
-                         0);
+      hipLaunchKernelGGL(emptyKernel, 1, 1, 0, 0);
 
       return err;
     }
@@ -168,7 +164,8 @@ namespace dftfe
     deviceError_t
     deviceHostMalloc(void **hostPtr, size_type size)
     {
-      deviceError_t err = hipHostMalloc(hostPtr, size,hipHostMallocNonCoherent);
+      deviceError_t err =
+        hipHostMalloc(hostPtr, size, hipHostMallocNonCoherent);
       DEVICE_API_CHECK(err);
       return err;
     }
