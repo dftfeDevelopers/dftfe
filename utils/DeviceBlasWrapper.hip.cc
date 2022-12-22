@@ -23,9 +23,9 @@
 #  include <DeviceKernelLauncherConstants.h>
 #  include <Exceptions.h>
 #  include <hipblas.h>
-#ifdef DFTFE_WITH_DEVICE_AMD
-#include <rocblas.h>
-#endif
+#  ifdef DFTFE_WITH_DEVICE_AMD
+#    include <rocblas.h>
+#  endif
 namespace dftfe
 {
   namespace utils
@@ -72,13 +72,13 @@ namespace dftfe
 
       } // namespace
 
-#ifdef DFTFE_WITH_DEVICE_AMD      
+#  ifdef DFTFE_WITH_DEVICE_AMD
       void
       initialize()
       {
-              rocblas_initialize();
+        rocblas_initialize();
       }
-#endif
+#  endif
 
 
       deviceBlasStatus_t
