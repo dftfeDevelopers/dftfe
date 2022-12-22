@@ -23,7 +23,7 @@
 #  include <DeviceKernelLauncherConstants.h>
 #  include <Exceptions.h>
 #  include <hipblas.h>
-#ifdef DFTFE_WITH_DEVICE_VENDOR_AMD
+#ifdef DFTFE_WITH_DEVICE_AMD
 #include <rocblas.h>
 #endif
 namespace dftfe
@@ -72,7 +72,7 @@ namespace dftfe
 
       } // namespace
 
-#ifdef DFTFE_WITH_DEVICE_VENDOR_AMD      
+#ifdef DFTFE_WITH_DEVICE_AMD      
       void
       initialize()
       {
