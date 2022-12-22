@@ -99,14 +99,14 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
         }
     }
 
-  // initialize helmholtz solver function object with the quantity required for
-  // computing rhs, solution vector and mixing constant
+    // initialize helmholtz solver function object with the quantity required
+    // for computing rhs, solution vector and mixing constant
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
 #else
-    if (false)
+  if (false)
 #endif
-   {
+    {
 #ifdef DFTFE_WITH_DEVICE
       kerkerPreconditionedResidualSolverProblemDevice.reinit(
         d_preCondResidualVector, gradDensityResidualValuesMap);
@@ -116,11 +116,11 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
     kerkerPreconditionedResidualSolverProblem.reinit(
       d_preCondResidualVector, gradDensityResidualValuesMap);
 
-  // solve the Helmholtz system to compute preconditioned residual
+    // solve the Helmholtz system to compute preconditioned residual
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
 #else
-    if (false)
+  if (false)
 #endif
     {
 #ifdef DFTFE_WITH_DEVICE
@@ -399,9 +399,9 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
       << std::endl;
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
 #else
-    if (false)
+  if (false)
 #endif
     {
 #ifdef DFTFE_WITH_DEVICE
@@ -413,11 +413,11 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
     kerkerPreconditionedResidualSolverProblem.reinit(
       d_preCondResidualVector, gradDensityResidualValuesMap);
 
-  // solve the Helmholtz system to compute preconditioned residual
+    // solve the Helmholtz system to compute preconditioned residual
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+  if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
 #else
-    if (false)
+  if (false)
 #endif
     {
 #ifdef DFTFE_WITH_DEVICE
