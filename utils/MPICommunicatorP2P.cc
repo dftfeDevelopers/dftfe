@@ -23,7 +23,7 @@
 #include <MPICommunicatorP2PKernels.h>
 #include <MPITags.h>
 #include <Exceptions.h>
-
+#include <DeviceAPICalls.h>
 
 namespace dftfe
 {
