@@ -44,9 +44,9 @@ withMDI=OFF
 
 #Compiler options and flags
 cxx_compiler=CC  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-fPIC -march=native" #sets DCMAKE_CXX_FLAGS
+cxx_flags="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64 -fPIC -march=native" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
-device_flags="-I${MPICH_DIR}/include" # set DCMAKE_CXX_CUDA/HIP_FLAGS 
+device_flags="-munsafe-fp-atomics -I${MPICH_DIR}/include -L${MPICH_DIR}/lib -lmpi -L${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa" # set DCMAKE_CXX_CUDA/HIP_FLAGS 
                            #(only applicable for withGPU=ON)
 device_architectures="gfx90a" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
