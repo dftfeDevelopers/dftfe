@@ -24,7 +24,7 @@ libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/install_libxc5.2.3"
 spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
+ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install202211"
 
 
 #Paths for optional external libraries

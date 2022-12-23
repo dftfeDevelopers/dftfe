@@ -25,46 +25,10 @@
 #include "dftParameters.h"
 
 #include <vector>
-extern "C"
-{
-#include <elpa.hh>
-}
+#include <elpa/elpa.h>
 
 namespace dftfe
 {
-  inline void
-  elpaCholesky(elpa_t &handle, double *a, int *error)
-  {
-    elpa_cholesky_d(handle, a, error);
-  }
-
-  inline void
-  elpaCholesky(elpa_t &handle, std::complex<double> *a, int *error)
-  {
-    elpa_cholesky_dc(handle, reinterpret_cast<_Complex double *>(a), error);
-  }
-
-  inline void
-  elpaEigenvectors(elpa_t &handle, double *a, double *ev, double *q, int *error)
-  {
-    elpa_eigenvectors_d(handle, a, ev, q, error);
-  }
-
-  inline void
-  elpaEigenvectors(elpa_t &              handle,
-                   std::complex<double> *a,
-                   double *              ev,
-                   std::complex<double> *q,
-                   int *                 error)
-  {
-    elpa_eigenvectors_dc(handle,
-                         reinterpret_cast<_Complex double *>(a),
-                         ev,
-                         reinterpret_cast<_Complex double *>(q),
-                         error);
-  }
-
-
   /**
    * @brief Manager class for ELPA and ScaLAPACK
    *

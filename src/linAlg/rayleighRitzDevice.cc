@@ -156,7 +156,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(elpaScala.getElpaHandle(),
+              elpa_eigenvectors(elpaScala.getElpaHandle(),
                                &projHamPar.local_el(0, 0),
                                &eigenValues[0],
                                &eigenVectors.local_el(0, 0),
@@ -385,7 +385,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(elpaScala.getElpaHandle(),
+              elpa_cholesky(elpaScala.getElpaHandle(),
                            &overlapMatParConjTrans.local_el(0, 0),
                            &error);
               AssertThrow(error == ELPA_OK,
@@ -556,7 +556,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(elpaScala.getElpaHandle(),
+              elpa_eigenvectors(elpaScala.getElpaHandle(),
                                &projHamPar.local_el(0, 0),
                                &eigenValues[0],
                                &eigenVectors.local_el(0, 0),
@@ -811,7 +811,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(elpaScala.getElpaHandle(),
+              elpa_cholesky(elpaScala.getElpaHandle(),
                            &overlapMatParConjTrans.local_el(0, 0),
                            &error);
               AssertThrow(error == ELPA_OK,
@@ -1017,7 +1017,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
+              elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
                                &projHamPar.local_el(0, 0),
                                &allEigenValues[0],
                                &eigenVectors.local_el(0, 0),

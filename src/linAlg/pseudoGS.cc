@@ -138,7 +138,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(elpaScala.getElpaHandle(),
+              elpa_cholesky(elpaScala.getElpaHandle(),
                            &overlapMatParConjTrans.local_el(0, 0),
                            &error);
               AssertThrow(error == ELPA_OK,
