@@ -747,8 +747,8 @@ namespace dftfe
             {
               int error;
               elpa_cholesky(elpaScala.getElpaHandle(),
-                           &overlapMatParConjTrans.local_el(0, 0),
-                           &error);
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_cholesky error."));
@@ -879,10 +879,10 @@ namespace dftfe
             {
               int error;
               elpa_eigenvectors(elpaScala.getElpaHandle(),
-                               &projHamPar.local_el(0, 0),
-                               &eigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+                                &projHamPar.local_el(0, 0),
+                                &eigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_eigenvectors error."));
@@ -1082,10 +1082,10 @@ namespace dftfe
             {
               int error;
               elpa_eigenvectors(elpaScala.getElpaHandle(),
-                               &projHamPar.local_el(0, 0),
-                               &eigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+                                &projHamPar.local_el(0, 0),
+                                &eigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_eigenvectors error."));
@@ -1269,8 +1269,8 @@ namespace dftfe
             {
               int error;
               elpa_cholesky(elpaScala.getElpaHandle(),
-                           &overlapMatParConjTrans.local_el(0, 0),
-                           &error);
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_cholesky error."));
@@ -1427,10 +1427,10 @@ namespace dftfe
             {
               int error;
               elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
-                               &projHamPar.local_el(0, 0),
-                               &allEigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+                                &projHamPar.local_el(0, 0),
+                                &allEigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(
                 error == ELPA_OK,
                 dealii::ExcMessage(
@@ -1693,10 +1693,10 @@ namespace dftfe
             {
               int error;
               elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
-                               &projHamPar.local_el(0, 0),
-                               &allEigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+                                &projHamPar.local_el(0, 0),
+                                &allEigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(
                 error == ELPA_OK,
                 dealii::ExcMessage(
@@ -1857,10 +1857,10 @@ namespace dftfe
         {
           int error;
           elpa_eigenvectors(elpaScala.getElpaHandle(),
-                              &projHamPar.local_el(0, 0),
-                              &eigenValues[0],
-                              &eigenVectors.local_el(0, 0),
-                              &error);
+                            &projHamPar.local_el(0, 0),
+                            &eigenValues[0],
+                            &eigenVectors.local_el(0, 0),
+                            &error);
           AssertThrow(error == ELPA_OK,
                       dealii::ExcMessage(
                         "DFT-FE Error: elpa_eigenvectors error."));
@@ -1905,8 +1905,8 @@ namespace dftfe
         {
           int error;
           elpa_cholesky(elpaScala.getElpaHandle(),
-                          &overlapMatParTrans.local_el(0, 0),
-                          &error);
+                        &overlapMatParTrans.local_el(0, 0),
+                        &error);
           AssertThrow(error == ELPA_OK,
                       dealii::ExcMessage(
                         "DFT-FE Error: elpa_cholesky_d error."));
@@ -1960,8 +1960,8 @@ namespace dftfe
         {
           int error;
           elpa_invert_triangular(elpaScala.getElpaHandle(),
-                            &LMatPar.local_el(0, 0),
-                            &error);
+                                 &LMatPar.local_el(0, 0),
+                                 &error);
           AssertThrow(error == ELPA_OK,
                       dealii::ExcMessage(
                         "DFT-FE Error: elpa_invert_trm_d error."));
@@ -2031,10 +2031,10 @@ namespace dftfe
         {
           int error;
           elpa_eigenvectors(elpaScala.getElpaHandle(),
-                              &projHamPar.local_el(0, 0),
-                              &eigenValues[0],
-                              &eigenVectors.local_el(0, 0),
-                              &error);
+                            &projHamPar.local_el(0, 0),
+                            &eigenValues[0],
+                            &eigenVectors.local_el(0, 0),
+                            &error);
           AssertThrow(error == ELPA_OK,
                       dealii::ExcMessage(
                         "DFT-FE Error: elpa_eigenvectors error."));
@@ -2114,10 +2114,10 @@ namespace dftfe
         {
           int error;
           elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
-                              &projHamPar.local_el(0, 0),
-                              &allEigenValues[0],
-                              &eigenVectors.local_el(0, 0),
-                              &error);
+                            &projHamPar.local_el(0, 0),
+                            &allEigenValues[0],
+                            &eigenVectors.local_el(0, 0),
+                            &error);
           AssertThrow(
             error == ELPA_OK,
             dealii::ExcMessage(
@@ -2204,8 +2204,8 @@ namespace dftfe
         {
           int error;
           elpa_cholesky(elpaScala.getElpaHandle(),
-                          &overlapMatParTrans.local_el(0, 0),
-                          &error);
+                        &overlapMatParTrans.local_el(0, 0),
+                        &error);
           AssertThrow(error == ELPA_OK,
                       dealii::ExcMessage(
                         "DFT-FE Error: elpa_cholesky_d error."));
@@ -2259,8 +2259,8 @@ namespace dftfe
         {
           int error;
           elpa_invert_triangular(elpaScala.getElpaHandle(),
-                            &LMatPar.local_el(0, 0),
-                            &error);
+                                 &LMatPar.local_el(0, 0),
+                                 &error);
           AssertThrow(error == ELPA_OK,
                       dealii::ExcMessage(
                         "DFT-FE Error: elpa_invert_trm_d error."));
@@ -2325,10 +2325,10 @@ namespace dftfe
         {
           int error;
           elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
-                              &projHamPar.local_el(0, 0),
-                              &allEigenValues[0],
-                              &eigenVectors.local_el(0, 0),
-                              &error);
+                            &projHamPar.local_el(0, 0),
+                            &allEigenValues[0],
+                            &eigenVectors.local_el(0, 0),
+                            &error);
           AssertThrow(
             error == ELPA_OK,
             dealii::ExcMessage(

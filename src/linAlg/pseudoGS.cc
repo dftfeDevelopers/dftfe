@@ -139,8 +139,8 @@ namespace dftfe
             {
               int error;
               elpa_cholesky(elpaScala.getElpaHandle(),
-                           &overlapMatParConjTrans.local_el(0, 0),
-                           &error);
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_cholesky error."));
