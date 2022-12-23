@@ -57,13 +57,13 @@ subsection SCF parameters
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-6
-  set STARTING WFC=ATOMIC
+  set STARTING WFC=RANDOM
   subsection Eigen-solver parameters
-       set CHEBYSHEV POLYNOMIAL DEGREE       = 20
-       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
-       set SPECTRUM SPLIT CORE EIGENSTATES=90
-       set CHEBY WFC BLOCK SIZE=45
-       set WFC BLOCK SIZE=45
+       set CHEBYSHEV POLYNOMIAL DEGREE       = 10
+       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 172
+       set SPECTRUM SPLIT CORE EIGENSTATES=86
+       set CHEBY WFC BLOCK SIZE=43
+       set WFC BLOCK SIZE=43
        set CHEBYSHEV FILTER TOLERANCE=1e-5
        set USE MIXED PREC CGS SR=true
        set OVERLAP COMPUTE COMMUN ORTHO RR=false

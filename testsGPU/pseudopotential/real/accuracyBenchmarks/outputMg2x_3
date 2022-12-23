@@ -1,10 +1,5 @@
 number of atoms: 31
 number of atoms types: 1
-Z:12
-=============================================================================================================================
-number of electrons: 310
-number of eigen values: 180
-=============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 1.176399999999999935e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 1.917200000000000060e+01 0.000000000000000000e+00
@@ -55,15 +50,18 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 52791
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 310
+number of eigen values: 172
+=============================================================================================================================
 
 Reading initial guess for electron-density.....
 
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 23 iterations.
+SCF iterations converged to the specified tolerance after: 24 iterations.
 
 Energy computations (Hartree) 
 -------------------
              Total energy:         -1666.902180
-
