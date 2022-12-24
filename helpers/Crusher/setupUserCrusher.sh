@@ -17,13 +17,13 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/dealii/installnovect"
+dealiiDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/dealii/installblisnovect"
 alglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/alglib/cpp/src"
 libxcDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/libxc/install"
 spglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/elpa/install"
+ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/elpa/installblis"
 
 #Paths for optional external libraries
 NCCL_PATH=""
@@ -33,7 +33,7 @@ mdiPath=""
 withGPU=ON
 gpuLang="hip"     # Use "cuda"/"hip"
 gpuVendor="amd" # Use "nvidia/amd"
-withGPUAwareMPI=OFF #Please use this option with care
+withGPUAwareMPI=ON #Please use this option with care
                    #Only use if the machine supports 
                    #device aware MPI and is profiled
                    #to be fast
@@ -44,9 +44,10 @@ withMDI=OFF
 
 #Compiler options and flags
 cxx_compiler=CC  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64 -fPIC -march=native" #sets DCMAKE_CXX_FLAGS
+cxx_flags="-fPIC -I${MPICH_DIR}/include -I${ROCM_PATH}/include" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
-device_flags="-munsafe-fp-atomics -I${MPICH_DIR}/include -L${MPICH_DIR}/lib -lmpi -L${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa" # set DCMAKE_CXX_CUDA/HIP_FLAGS 
+device_flags="-O2 -munsafe-fp-atomics -I${MPICH_DIR}/include -I${ROCM_PATH}/include"
+                           #setDCMAKE_CXX_CUDA/HIP_FLAGS 
                            #(only applicable for withGPU=ON)
 device_architectures="gfx90a" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
@@ -75,7 +76,7 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 function cmake_real() {
   mkdir -p real && cd real
   if [ "$gpuLang" = "cuda" ]; then
-    cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
@@ -88,7 +89,7 @@ function cmake_real() {
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
   elif [ "$gpuLang" = "hip" ]; then
-    cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
@@ -99,9 +100,10 @@ function cmake_real() {
     -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
     -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+    -DCMAKE_SHARED_LINKER_FLAGS="-L${ROCM_PATH}/lib -lamdhip64 -L${MPICH_DIR}/lib -lmpi -L${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa"\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1  
   else
-    cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
@@ -119,7 +121,7 @@ function cmake_real() {
 function cmake_cplx() {
   mkdir -p complex && cd complex
   if [ "$gpuLang" = "cuda" ]; then
-    cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
@@ -132,7 +134,7 @@ function cmake_cplx() {
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
   elif [ "$gpuLang" = "hip" ]; then
-    cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
@@ -142,10 +144,11 @@ function cmake_cplx() {
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
     -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
     -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
+    -DCMAKE_SHARED_LINKER_FLAGS="-L${ROCM_PATH}/lib -lamdhip64 -L${MPICH_DIR}/lib -lmpi -L${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
   else
-    cmake -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
