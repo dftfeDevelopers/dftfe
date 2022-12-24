@@ -150,6 +150,9 @@ namespace dftfe
     deviceStreamDestroy(deviceStream_t stream);
 
     deviceError_t
+    deviceStreamSynchronize(deviceStream_t stream);
+
+    deviceError_t
     deviceEventCreate(deviceEvent_t *pEvent);
 
     deviceError_t

@@ -24,6 +24,8 @@
 #  include <deviceKernelsGeneric.h>
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceAPICalls.h>
+#  include <Exceptions.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
 #    include <nccl.h>
 #  endif
@@ -32,18 +34,6 @@ namespace dftfe
 {
   namespace utils
   {
-#  define MPICHECK(cmd)                                                      \
-    do                                                                       \
-      {                                                                      \
-        int e = cmd;                                                         \
-        if (e != MPI_SUCCESS)                                                \
-          {                                                                  \
-            printf("Failed: MPI error %s:%d '%d'\n", __FILE__, __LINE__, e); \
-            exit(EXIT_FAILURE);                                              \
-          }                                                                  \
-      }                                                                      \
-    while (0)
-
 #  if defined(DFTFE_WITH_CUDA_NCCL)
 #    define NCCLCHECK(cmd)                              \
       do                                                \
@@ -63,11 +53,13 @@ namespace dftfe
 
     DeviceCCLWrapper::DeviceCCLWrapper()
       : commCreated(false)
+      , d_mpiComm(MPI_COMM_NULL)
     {}
 
     void
     DeviceCCLWrapper::init(const MPI_Comm &mpiComm)
     {
+      MPICHECK(MPI_Comm_dup(mpiComm, &d_mpiComm));
       MPICHECK(MPI_Comm_size(mpiComm, &totalRanks));
       MPICHECK(MPI_Comm_rank(mpiComm, &myRank));
 #  ifdef DFTFE_WITH_CUDA_NCCL
@@ -87,6 +79,7 @@ namespace dftfe
 
     DeviceCCLWrapper::~DeviceCCLWrapper()
     {
+      MPI_Comm_free(&d_mpiComm);
 #  ifdef DFTFE_WITH_CUDA_NCCL
       if (commCreated)
         {
@@ -111,7 +104,20 @@ namespace dftfe
                               ncclSum,
                               *((ncclComm_t *)ncclCommPtr),
                               stream));
+#  elif DFTFE_WITH_DEVICE_AWARE_MPI
+      dftfe::utils::deviceStreamSynchronize(stream);
+      if (send == recv)
+        MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                               recv,
+                               size,
+                               dataTypes::mpi_type_id(recv),
+                               MPI_SUM,
+                               d_mpiComm));
+      else
+        MPICHECK(MPI_Allreduce(
+          send, recv, size, dataTypes::mpi_type_id(recv), MPI_SUM, d_mpiComm));
 #  endif
+
       return 0;
     }
 
@@ -129,6 +135,18 @@ namespace dftfe
                               ncclSum,
                               *((ncclComm_t *)ncclCommPtr),
                               stream));
+#  elif DFTFE_WITH_DEVICE_AWARE_MPI
+      dftfe::utils::deviceStreamSynchronize(stream);
+      if (send == recv)
+        MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                               recv,
+                               size,
+                               dataTypes::mpi_type_id(recv),
+                               MPI_SUM,
+                               d_mpiComm));
+      else
+        MPICHECK(MPI_Allreduce(
+          send, recv, size, dataTypes::mpi_type_id(recv), MPI_SUM, d_mpiComm));
 #  endif
       return 0;
     }
@@ -143,11 +161,11 @@ namespace dftfe
       double *                    tempImag,
       deviceStream_t &            stream)
     {
+#  ifdef DFTFE_WITH_CUDA_NCCL
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
                                                            send,
                                                            tempReal,
                                                            tempImag);
-#  ifdef DFTFE_WITH_CUDA_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal,
                               (void *)tempReal,
@@ -164,12 +182,26 @@ namespace dftfe
                               *((ncclComm_t *)ncclCommPtr),
                               stream));
       ncclGroupEnd();
-#  endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
                                                            tempReal,
                                                            tempImag,
                                                            recv);
+#  elif DFTFE_WITH_DEVICE_AWARE_MPI
+      dftfe::utils::deviceStreamSynchronize(stream);
+      if (send == recv)
+        MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                               recv,
+                               size,
+                               dataTypes::mpi_type_id(recv),
+                               MPI_SUM,
+                               d_mpiComm));
+      else
+        MPICHECK(MPI_Allreduce(
+          send, recv, size, dataTypes::mpi_type_id(recv), MPI_SUM, d_mpiComm));
+#  endif
+
+
       return 0;
     }
 
@@ -182,11 +214,11 @@ namespace dftfe
       float *                    tempImag,
       deviceStream_t &           stream)
     {
+#  ifdef DFTFE_WITH_CUDA_NCCL
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
                                                            send,
                                                            tempReal,
                                                            tempImag);
-#  ifdef DFTFE_WITH_CUDA_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal,
                               (void *)tempReal,
@@ -203,12 +235,25 @@ namespace dftfe
                               *((ncclComm_t *)ncclCommPtr),
                               stream));
       ncclGroupEnd();
-#  endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
                                                            tempReal,
                                                            tempImag,
                                                            recv);
+#  elif DFTFE_WITH_DEVICE_AWARE_MPI
+      dftfe::utils::deviceStreamSynchronize(stream);
+      if (send == recv)
+        MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                               recv,
+                               size,
+                               dataTypes::mpi_type_id(recv),
+                               MPI_SUM,
+                               d_mpiComm));
+      else
+        MPICHECK(MPI_Allreduce(
+          send, recv, size, dataTypes::mpi_type_id(recv), MPI_SUM, d_mpiComm));
+#  endif
+
       return 0;
     }
 
@@ -240,6 +285,40 @@ namespace dftfe
                               *((ncclComm_t *)ncclCommPtr),
                               stream));
       ncclGroupEnd();
+#  elif DFTFE_WITH_DEVICE_AWARE_MPI
+      dftfe::utils::deviceStreamSynchronize(stream);
+      if (send1 == recv1 && send2 == recv2)
+        {
+          MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                                 recv1,
+                                 size1,
+                                 dataTypes::mpi_type_id(recv1),
+                                 MPI_SUM,
+                                 d_mpiComm));
+
+          MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                                 recv2,
+                                 size2,
+                                 dataTypes::mpi_type_id(recv2),
+                                 MPI_SUM,
+                                 d_mpiComm));
+        }
+      else
+        {
+          MPICHECK(MPI_Allreduce(send1,
+                                 recv1,
+                                 size1,
+                                 dataTypes::mpi_type_id(recv1),
+                                 MPI_SUM,
+                                 d_mpiComm));
+
+          MPICHECK(MPI_Allreduce(send2,
+                                 recv2,
+                                 size2,
+                                 dataTypes::mpi_type_id(recv2),
+                                 MPI_SUM,
+                                 d_mpiComm));
+        }
 #  endif
       return 0;
     }
@@ -258,6 +337,7 @@ namespace dftfe
       float *                     tempImag2,
       deviceStream_t &            stream)
     {
+#  ifdef DFTFE_WITH_CUDA_NCCL
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size1,
                                                            send1,
                                                            tempReal1,
@@ -268,7 +348,6 @@ namespace dftfe
                                                            tempReal2,
                                                            tempImag2);
 
-#  ifdef DFTFE_WITH_CUDA_NCCL
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)tempReal1,
                               (void *)tempReal1,
@@ -299,7 +378,6 @@ namespace dftfe
                               *((ncclComm_t *)ncclCommPtr),
                               stream));
       ncclGroupEnd();
-#  endif
 
       deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size1,
                                                            tempReal1,
@@ -310,7 +388,41 @@ namespace dftfe
                                                            tempReal2,
                                                            tempImag2,
                                                            recv2);
+#  elif DFTFE_WITH_DEVICE_AWARE_MPI
+      dftfe::utils::deviceStreamSynchronize(stream);
+      if (send1 == recv1 && send2 == recv2)
+        {
+          MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                                 recv1,
+                                 size1,
+                                 dataTypes::mpi_type_id(recv1),
+                                 MPI_SUM,
+                                 d_mpiComm));
 
+          MPICHECK(MPI_Allreduce(MPI_IN_PLACE,
+                                 recv2,
+                                 size2,
+                                 dataTypes::mpi_type_id(recv2),
+                                 MPI_SUM,
+                                 d_mpiComm));
+        }
+      else
+        {
+          MPICHECK(MPI_Allreduce(send1,
+                                 recv1,
+                                 size1,
+                                 dataTypes::mpi_type_id(recv1),
+                                 MPI_SUM,
+                                 d_mpiComm));
+
+          MPICHECK(MPI_Allreduce(send2,
+                                 recv2,
+                                 size2,
+                                 dataTypes::mpi_type_id(recv2),
+                                 MPI_SUM,
+                                 d_mpiComm));
+        }
+#  endif
       return 0;
     }
   } // namespace utils
