@@ -114,6 +114,9 @@ namespace dftfe
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
+#if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+        dftfe::utils::deviceSynchronize();
+#endif
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
@@ -270,6 +273,9 @@ namespace dftfe
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
+#if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+        dftfe::utils::deviceSynchronize();
+#endif
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
