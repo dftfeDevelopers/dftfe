@@ -79,7 +79,8 @@ namespace dftfe
 
     DeviceCCLWrapper::~DeviceCCLWrapper()
     {
-      MPI_Comm_free(&d_mpiComm);
+      if (d_mpiComm != MPI_COMM_NULL)
+        MPI_Comm_free(&d_mpiComm);
 #  ifdef DFTFE_WITH_CUDA_NCCL
       if (commCreated)
         {
