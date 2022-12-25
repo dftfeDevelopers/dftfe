@@ -155,25 +155,53 @@ namespace dftfe
             AssertThrow(error == ELPA_OK,
                         dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
+#    ifdef DFTFE_WITH_DEVICE
+
             if (dftParams.useELPADeviceKernel)
               {
-                elpa_set_integer(elpaHandle, "gpu", 1, &error);
+#    ifdef DFTFE_WITH_DEVICE_NVIDIA                
+                elpa_set_integer(elpaHandle, "nvidia-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
                 elpa_set_integer(elpaHandle,
                                  "real_kernel",
-                                 ELPA_2STAGE_REAL_GPU,
-                                 &error);
-
-                elpa_set_integer(elpaHandle,
-                                 "complex_kernel",
-                                 ELPA_2STAGE_COMPLEX_GPU,
+                                 ELPA_2STAGE_REAL_NVIDIA_GPU,
                                  &error);
 
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+
+                elpa_set_integer(elpaHandle,
+                                 "complex_kernel",
+                                 ELPA_2STAGE_COMPLEX_NVIDIA_GPU,
+                                 &error);
+
+                AssertThrow(error == ELPA_OK,
+                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#elif DFTFE_WITH_DEVICE_AMD
+                elpa_set_integer(elpaHandle, "nvidia-amd", 1, &error);
+                AssertThrow(error == ELPA_OK,
+                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+
+                elpa_set_integer(elpaHandle,
+                                 "real_kernel",
+                                 ELPA_2STAGE_REAL_AMD_GPU,
+                                 &error);
+
+                AssertThrow(error == ELPA_OK,
+                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+
+                elpa_set_integer(elpaHandle,
+                                 "complex_kernel",
+                                 ELPA_2STAGE_COMPLEX_AMD_GPU,
+                                 &error);
+
+                AssertThrow(error == ELPA_OK,
+                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#endif
               }
+#endif              
 
               // elpa_set_integer(elpaHandle,
               // "real_kernel",ELPA_2STAGE_REAL_AVX512_BLOCK6, &error);
