@@ -180,7 +180,7 @@ namespace dftfe
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 #elif DFTFE_WITH_DEVICE_AMD
-                elpa_set_integer(elpaHandle, "nvidia-amd", 1, &error);
+                elpa_set_integer(elpaHandle, "amd-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
