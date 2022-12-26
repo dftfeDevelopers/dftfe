@@ -42,10 +42,11 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 
 #ifdef DFTFE_WITH_DEVICE
   if (d_dftParamsPtr->useDevice)
-    deviceUtils::copyDeviceVecToDeviceVec(
-      d_eigenVectorsFlattenedDevice.begin(),
-      d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
-      d_eigenVectorsFlattenedDevice.size());
+    dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                 dftfe::utils::MemorySpace::DEVICE>::
+      copy(d_eigenVectorsFlattenedDevice.size(),
+           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
+           d_eigenVectorsFlattenedDevice.begin());
 #endif
   if (!d_dftParamsPtr->useDevice)
     d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
@@ -82,8 +83,12 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   electrostaticPotPrime = 0;
 
   // Reuses diagonalA and mean value constraints
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
   if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
       not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+  if (false)
+#endif
     {
 #ifdef DFTFE_WITH_DEVICE
       d_phiTotalSolverProblemDevice.reinit(
@@ -97,7 +102,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         dummy,
         d_smearedChargeQuadratureIdElectro,
         charge,
-        d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
+        d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
         false,
         false);
 #endif
@@ -119,15 +124,20 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         false);
     }
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
   if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
       not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+  if (false)
+#endif
     {
 #ifdef DFTFE_WITH_DEVICE
-      CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                           d_dftParamsPtr->absPoissonSolverToleranceLRD,
-                           d_dftParamsPtr->maxLinearSolverIterations,
-                           d_kohnShamDFTOperatorDevicePtr->getCublasHandle(),
-                           d_dftParamsPtr->verbosity);
+      CGSolverDevice.solve(
+        d_phiTotalSolverProblemDevice,
+        d_dftParamsPtr->absPoissonSolverToleranceLRD,
+        d_dftParamsPtr->maxLinearSolverIterations,
+        d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
+        d_dftParamsPtr->verbosity);
 #endif
     }
   else
@@ -448,8 +458,8 @@ dftClass<FEOrder, FEOrderElectro>::
   if (d_dftParamsPtr->useDevice)
     {
       if (d_dftParamsPtr->singlePrecLRD)
-        computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
-                                           dataTypes::numberFP32Device>(
+        computeRhoFirstOrderResponseDevice<dataTypes::number,
+                                           dataTypes::numberFP32>(
           d_eigenVectorsFlattenedDevice.begin(),
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
           d_densityMatDerFermiEnergy,
@@ -471,8 +481,8 @@ dftClass<FEOrder, FEOrderElectro>::
           interBandGroupComm,
           *d_dftParamsPtr);
       else
-        computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
-                                           dataTypes::numberDevice>(
+        computeRhoFirstOrderResponseDevice<dataTypes::number,
+                                           dataTypes::number>(
           d_eigenVectorsFlattenedDevice.begin(),
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
           d_densityMatDerFermiEnergy,

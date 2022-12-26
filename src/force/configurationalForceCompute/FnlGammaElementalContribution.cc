@@ -172,11 +172,14 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
                         } // pseudowavefunctions loop
 
                       FVectQuads[q][0][iSubCell] +=
-                        dftPtr->d_kPointWeights[kPoint] * 2.0 * realPart(F[0]);
+                        dftPtr->d_kPointWeights[kPoint] * 2.0 *
+                        dftfe::utils::realPart(F[0]);
                       FVectQuads[q][1][iSubCell] +=
-                        dftPtr->d_kPointWeights[kPoint] * 2.0 * realPart(F[1]);
+                        dftPtr->d_kPointWeights[kPoint] * 2.0 *
+                        dftfe::utils::realPart(F[1]);
                       FVectQuads[q][2][iSubCell] +=
-                        dftPtr->d_kPointWeights[kPoint] * 2.0 * realPart(F[2]);
+                        dftPtr->d_kPointWeights[kPoint] * 2.0 *
+                        dftfe::utils::realPart(F[2]);
 
                       // std::cout<<F[0] <<std::endl;
                       // std::cout<<F[1] <<std::endl;
@@ -315,11 +318,14 @@ void forceClass<FEOrder, FEOrderElectro>::FnlGammaxElementalContribution(
                         } // pseudowavefunctions loop
 
                       FVectQuads[q][0][iSubCell] +=
-                        dftPtr->d_kPointWeights[kPoint] * 2.0 * realPart(F[0]);
+                        dftPtr->d_kPointWeights[kPoint] * 2.0 *
+                        dftfe::utils::realPart(F[0]);
                       FVectQuads[q][1][iSubCell] +=
-                        dftPtr->d_kPointWeights[kPoint] * 2.0 * realPart(F[1]);
+                        dftPtr->d_kPointWeights[kPoint] * 2.0 *
+                        dftfe::utils::realPart(F[1]);
                       FVectQuads[q][2][iSubCell] +=
-                        dftPtr->d_kPointWeights[kPoint] * 2.0 * realPart(F[2]);
+                        dftPtr->d_kPointWeights[kPoint] * 2.0 *
+                        dftfe::utils::realPart(F[2]);
                     } // quad-loop
                 }     // kpoint loop
             }         // non-trivial cell check

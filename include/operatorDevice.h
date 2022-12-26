@@ -23,17 +23,15 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
-#    include <cublas_v2.h>
+#    include <DeviceBlasWrapper.h>
+#    include <MemoryStorage.h>
 #    include <headers.h>
-#    include <thrust/device_vector.h>
-#    include <thrust/host_vector.h>
 #    include "process_grid.h"
 #    include "scalapackWrapper.h"
 
 #    include <vector>
 
 #    include "deviceDirectCCLWrapper.h"
-#    include "distributedMulticomponentVec.h"
 
 namespace dftfe
 {
@@ -62,13 +60,13 @@ namespace dftfe
 
 
     virtual void
-    createCublasHandle() = 0;
+    createDeviceBlasHandle() = 0;
 
     virtual void
-    destroyCublasHandle() = 0;
+    destroyDeviceBlasHandle() = 0;
 
-    virtual cublasHandle_t &
-    getCublasHandle() = 0;
+    virtual dftfe::utils::deviceBlasHandle_t &
+    getDeviceBlasHandle() = 0;
 
     virtual const double *
     getSqrtMassVec() = 0;
@@ -79,55 +77,68 @@ namespace dftfe
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientIntegral() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientIntegralElectro() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValues() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false) = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValuesNLPTransposed() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesXTransposed() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesYTransposed() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesZTransposed() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesNLPTransposed() = 0;
 
-    virtual thrust::device_vector<double> &
+    virtual dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getInverseJacobiansNLP() = 0;
 
-    virtual thrust::device_vector<dealii::types::global_dof_index> &
+    virtual dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getFlattenedArrayCellLocalProcIndexIdMap() = 0;
 
-    virtual thrust::device_vector<dataTypes::numberThrustDevice> &
+    virtual dftfe::utils::MemoryStorage<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getCellWaveFunctionMatrix() = 0;
 
     virtual distributedCPUVec<dataTypes::number> &
     getParallelVecSingleComponent() = 0;
 
-    virtual distributedDeviceVec<dataTypes::numberDevice> &
+    virtual distributedDeviceVec<dataTypes::number> &
     getParallelChebyBlockVectorDevice() = 0;
 
-    virtual distributedDeviceVec<dataTypes::numberDevice> &
+    virtual distributedDeviceVec<dataTypes::number> &
     getParallelChebyBlockVector2Device() = 0;
 
-    virtual distributedDeviceVec<dataTypes::numberDevice> &
+    virtual distributedDeviceVec<dataTypes::number> &
     getParallelProjectorKetTimesBlockVectorDevice() = 0;
 
-    virtual thrust::device_vector<unsigned int> &
+    virtual dftfe::utils::MemoryStorage<unsigned int,
+                                        dftfe::utils::MemorySpace::DEVICE> &
     getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
 
     /**
@@ -180,28 +191,27 @@ namespace dftfe
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
     virtual void
-    HX(distributedDeviceVec<dataTypes::numberDevice> &X,
-       distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-       const unsigned int                             localVectorSize,
-       const unsigned int                             numberComponents,
-       const bool                                     scaleFlag,
-       const double                                   scalar,
-       distributedDeviceVec<dataTypes::numberDevice> &Y,
-       const bool                                     doUnscalingX = true,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse    = false) = 0;
+    HX(distributedDeviceVec<dataTypes::number> &X,
+       distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+       const unsigned int                       localVectorSize,
+       const unsigned int                       numberComponents,
+       const bool                               scaleFlag,
+       const double                             scalar,
+       distributedDeviceVec<dataTypes::number> &Y,
+       const bool                               doUnscalingX    = true,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     virtual void
-    HXCheby(
-      distributedDeviceVec<dataTypes::numberDevice> &    X,
-      distributedDeviceVec<dataTypes::numberFP32Device> &XTemp,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberComponents,
-      distributedDeviceVec<dataTypes::numberDevice> &Y,
-      bool                                           mixPrecFlag = false,
-      bool returnBeforeCompressSkipUpdateSkipNonLocal            = false,
-      bool returnBeforeCompressSkipUpdateSkipLocal               = false) = 0;
+    HXCheby(distributedDeviceVec<dataTypes::number> &    X,
+            distributedDeviceVec<dataTypes::numberFP32> &XTemp,
+            distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+            const unsigned int                       localVectorSize,
+            const unsigned int                       numberComponents,
+            distributedDeviceVec<dataTypes::number> &Y,
+            bool                                     mixPrecFlag = false,
+            bool returnBeforeCompressSkipUpdateSkipNonLocal      = false,
+            bool returnBeforeCompressSkipUpdateSkipLocal         = false) = 0;
 
     /**
      * @brief implementation of non-local projector kets times psi product
@@ -214,9 +224,9 @@ namespace dftfe
      */
     virtual void
     computeNonLocalProjectorKetTimesXTimesV(
-      const dataTypes::numberDevice *                src,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             numberWaveFunctions) = 0;
+      const dataTypes::number *                src,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+      const unsigned int                       numberWaveFunctions) = 0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis
@@ -229,22 +239,22 @@ namespace dftfe
      * projector kets times block wavefunction vectors
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
     virtual void
-    XtHX(const dataTypes::numberDevice *                X,
-         distributedDeviceVec<dataTypes::numberDevice> &Xb,
-         distributedDeviceVec<dataTypes::numberDevice> &HXb,
-         distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-         const unsigned int                             M,
-         const unsigned int                             N,
-         cublasHandle_t &                               handle,
+    XtHX(const dataTypes::number *                X,
+         distributedDeviceVec<dataTypes::number> &Xb,
+         distributedDeviceVec<dataTypes::number> &HXb,
+         distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+         const unsigned int                       M,
+         const unsigned int                       N,
+         dftfe::utils::deviceBlasHandle_t &       handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-         DeviceCCLWrapper &devicecclMpiCommDomain,
+         utils::DeviceCCLWrapper &devicecclMpiCommDomain,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
@@ -259,23 +269,23 @@ namespace dftfe
      * projector kets times block wavefunction vectors
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
     virtual void
     XtHXOverlapComputeCommun(
-      const dataTypes::numberDevice *                  X,
-      distributedDeviceVec<dataTypes::numberDevice> &  Xb,
-      distributedDeviceVec<dataTypes::numberDevice> &  HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     /**
@@ -295,25 +305,25 @@ namespace dftfe
      * @param M number of local dofs
      * @param N total number of wavefunction vectors
      * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
-     * @param handle cublasHandle
+     * @param handle deviceBlasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
     virtual void
     XtHXMixedPrecOverlapComputeCommun(
-      const dataTypes::numberDevice *                    X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &    floatXb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
@@ -386,47 +396,55 @@ namespace dftfe
     //
     const dealii::MatrixFree<3, double> *d_matrix_free_data;
 
-    thrust::device_vector<double>
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_cellShapeFunctionGradientIntegralFlattenedDevice;
 
-    thrust::device_vector<double>
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
 
-    thrust::device_vector<double> d_shapeFunctionValueDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueDevice;
 
-    thrust::device_vector<double> d_shapeFunctionValueTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionValueNLPTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionValueNLPTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueXTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionGradientValueXTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueYTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionGradientValueYTransposedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueZTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_shapeFunctionGradientValueZTransposedDevice;
 
-    thrust::device_vector<double>
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunctionGradientValueNLPTransposedDevice;
 
-    thrust::device_vector<double> d_inverseJacobiansNLPDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_inverseJacobiansNLPDevice;
 
     /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
     /// gradients
-    thrust::device_vector<double> d_glShapeFunctionValueTransposedDevice;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      d_glShapeFunctionValueTransposedDevice;
 
 
-    thrust::device_vector<dealii::types::global_dof_index>
+    dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_flattenedArrayCellLocalProcIndexIdMapDevice;
 
-    thrust::device_vector<dataTypes::numberThrustDevice>
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_cellWaveFunctionMatrix;
 
-    distributedDeviceVec<dataTypes::numberDevice>
-      d_parallelChebyBlockVectorDevice;
+    distributedDeviceVec<dataTypes::number> d_parallelChebyBlockVectorDevice;
 
-    distributedDeviceVec<dataTypes::numberDevice>
-      d_parallelChebyBlockVector2Device;
+    distributedDeviceVec<dataTypes::number> d_parallelChebyBlockVector2Device;
 
-    distributedDeviceVec<dataTypes::numberDevice>
+    distributedDeviceVec<dataTypes::number>
       d_parallelProjectorKetTimesBlockVectorDevice;
 
     distributedCPUVec<dataTypes::number> d_parallelVecSingleComponent;

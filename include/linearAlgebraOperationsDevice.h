@@ -18,7 +18,6 @@
 #  ifndef linearAlgebraOperationsDevice_h
 #    define linearAlgebraOperationsDevice_h
 
-#    include <cublas_v2.h>
 #    include <headers.h>
 #    include <operatorDevice.h>
 #    include "process_grid.h"
@@ -60,316 +59,6 @@ namespace dftfe
             int *                 info);
   }
 
-  inline cublasStatus_t
-  cublasXgemm(cublasHandle_t    handle,
-              cublasOperation_t transa,
-              cublasOperation_t transb,
-              int               m,
-              int               n,
-              int               k,
-              const double *    alpha,
-              const double *    A,
-              int               lda,
-              const double *    B,
-              int               ldb,
-              const double *    beta,
-              double *          C,
-              int               ldc)
-  {
-    return cublasDgemm(
-      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline cublasStatus_t
-  cublasXgemm(cublasHandle_t    handle,
-              cublasOperation_t transa,
-              cublasOperation_t transb,
-              int               m,
-              int               n,
-              int               k,
-              const float *     alpha,
-              const float *     A,
-              int               lda,
-              const float *     B,
-              int               ldb,
-              const float *     beta,
-              float *           C,
-              int               ldc)
-  {
-    return cublasSgemm(
-      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline cublasStatus_t
-  cublasXgemm(cublasHandle_t         handle,
-              cublasOperation_t      transa,
-              cublasOperation_t      transb,
-              int                    m,
-              int                    n,
-              int                    k,
-              const cuDoubleComplex *alpha,
-              const cuDoubleComplex *A,
-              int                    lda,
-              const cuDoubleComplex *B,
-              int                    ldb,
-              const cuDoubleComplex *beta,
-              cuDoubleComplex *      C,
-              int                    ldc)
-  {
-    return cublasZgemm(
-      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline cublasStatus_t
-  cublasXgemm(cublasHandle_t    handle,
-              cublasOperation_t transa,
-              cublasOperation_t transb,
-              int               m,
-              int               n,
-              int               k,
-              const cuComplex * alpha,
-              const cuComplex * A,
-              int               lda,
-              const cuComplex * B,
-              int               ldb,
-              const cuComplex * beta,
-              cuComplex *       C,
-              int               ldc)
-  {
-    return cublasCgemm(
-      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline cublasStatus_t
-  cublasXgemmBatched(cublasHandle_t    handle,
-                     cublasOperation_t transa,
-                     cublasOperation_t transb,
-                     int               m,
-                     int               n,
-                     int               k,
-                     const double *    alpha,
-                     const double *    Aarray[],
-                     int               lda,
-                     const double *    Barray[],
-                     int               ldb,
-                     const double *    beta,
-                     double *          Carray[],
-                     int               ldc,
-                     int               batchCount)
-  {
-    return cublasDgemmBatched(handle,
-                              transa,
-                              transb,
-                              m,
-                              n,
-                              k,
-                              alpha,
-                              Aarray,
-                              lda,
-                              Barray,
-                              ldb,
-                              beta,
-                              Carray,
-                              ldc,
-                              batchCount);
-  }
-
-
-  inline cublasStatus_t
-  cublasXgemmBatched(cublasHandle_t         handle,
-                     cublasOperation_t      transa,
-                     cublasOperation_t      transb,
-                     int                    m,
-                     int                    n,
-                     int                    k,
-                     const cuDoubleComplex *alpha,
-                     const cuDoubleComplex *Aarray[],
-                     int                    lda,
-                     const cuDoubleComplex *Barray[],
-                     int                    ldb,
-                     const cuDoubleComplex *beta,
-                     cuDoubleComplex *      Carray[],
-                     int                    ldc,
-                     int                    batchCount)
-  {
-    return cublasZgemmBatched(handle,
-                              transa,
-                              transb,
-                              m,
-                              n,
-                              k,
-                              alpha,
-                              Aarray,
-                              lda,
-                              Barray,
-                              ldb,
-                              beta,
-                              Carray,
-                              ldc,
-                              batchCount);
-  }
-
-  inline cublasStatus_t
-  cublasXgemmStridedBatched(cublasHandle_t    handle,
-                            cublasOperation_t transa,
-                            cublasOperation_t transb,
-                            int               m,
-                            int               n,
-                            int               k,
-                            const double *    alpha,
-                            const double *    A,
-                            int               lda,
-                            long long int     strideA,
-                            const double *    B,
-                            int               ldb,
-                            long long int     strideB,
-                            const double *    beta,
-                            double *          C,
-                            int               ldc,
-                            long long int     strideC,
-                            int               batchCount)
-  {
-    return cublasDgemmStridedBatched(handle,
-                                     transa,
-                                     transb,
-                                     m,
-                                     n,
-                                     k,
-                                     alpha,
-                                     A,
-                                     lda,
-                                     strideA,
-                                     B,
-                                     ldb,
-                                     strideB,
-                                     beta,
-                                     C,
-                                     ldc,
-                                     strideC,
-                                     batchCount);
-  }
-
-  inline cublasStatus_t
-  cublasXgemmStridedBatched(cublasHandle_t    handle,
-                            cublasOperation_t transa,
-                            cublasOperation_t transb,
-                            int               m,
-                            int               n,
-                            int               k,
-                            const float *     alpha,
-                            const float *     A,
-                            int               lda,
-                            long long int     strideA,
-                            const float *     B,
-                            int               ldb,
-                            long long int     strideB,
-                            const float *     beta,
-                            float *           C,
-                            int               ldc,
-                            long long int     strideC,
-                            int               batchCount)
-  {
-    return cublasSgemmStridedBatched(handle,
-                                     transa,
-                                     transb,
-                                     m,
-                                     n,
-                                     k,
-                                     alpha,
-                                     A,
-                                     lda,
-                                     strideA,
-                                     B,
-                                     ldb,
-                                     strideB,
-                                     beta,
-                                     C,
-                                     ldc,
-                                     strideC,
-                                     batchCount);
-  }
-
-
-  inline cublasStatus_t
-  cublasXgemmStridedBatched(cublasHandle_t         handle,
-                            cublasOperation_t      transa,
-                            cublasOperation_t      transb,
-                            int                    m,
-                            int                    n,
-                            int                    k,
-                            const cuDoubleComplex *alpha,
-                            const cuDoubleComplex *A,
-                            int                    lda,
-                            long long int          strideA,
-                            const cuDoubleComplex *B,
-                            int                    ldb,
-                            long long int          strideB,
-                            const cuDoubleComplex *beta,
-                            cuDoubleComplex *      C,
-                            int                    ldc,
-                            long long int          strideC,
-                            int                    batchCount)
-  {
-    return cublasZgemmStridedBatched(handle,
-                                     transa,
-                                     transb,
-                                     m,
-                                     n,
-                                     k,
-                                     alpha,
-                                     A,
-                                     lda,
-                                     strideA,
-                                     B,
-                                     ldb,
-                                     strideB,
-                                     beta,
-                                     C,
-                                     ldc,
-                                     strideC,
-                                     batchCount);
-  }
-
-
-  inline cublasStatus_t
-  cublasXgemmStridedBatched(cublasHandle_t        handle,
-                            cublasOperation_t     transa,
-                            cublasOperation_t     transb,
-                            int                   m,
-                            int                   n,
-                            int                   k,
-                            const cuFloatComplex *alpha,
-                            const cuFloatComplex *A,
-                            int                   lda,
-                            long long int         strideA,
-                            const cuFloatComplex *B,
-                            int                   ldb,
-                            long long int         strideB,
-                            const cuFloatComplex *beta,
-                            cuFloatComplex *      C,
-                            int                   ldc,
-                            long long int         strideC,
-                            int                   batchCount)
-  {
-    return cublasCgemmStridedBatched(handle,
-                                     transa,
-                                     transb,
-                                     m,
-                                     n,
-                                     k,
-                                     alpha,
-                                     A,
-                                     lda,
-                                     strideA,
-                                     B,
-                                     ldb,
-                                     strideB,
-                                     beta,
-                                     C,
-                                     ldc,
-                                     strideC,
-                                     batchCount);
-  }
 
   /**
    *  @brief Contains functions for linear algebra operations on Device
@@ -384,12 +73,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -403,12 +92,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -422,12 +111,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -441,12 +130,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::numberDevice *                  X,
+      const dataTypes::number *                        X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
@@ -457,27 +146,28 @@ namespace dftfe
     /** @brief CGS orthogonalization
      */
     void
-    pseudoGramSchmidtOrthogonalization(elpaScalaManager &       elpaScala,
-                                       dataTypes::numberDevice *X,
-                                       const unsigned int       M,
-                                       const unsigned int       N,
-                                       const MPI_Comm &         mpiCommParent,
-                                       const MPI_Comm &         mpiCommDomain,
-                                       DeviceCCLWrapper &devicecclMpiCommDomain,
-                                       const MPI_Comm &  interBandGroupComm,
-                                       cublasHandle_t &  handle,
-                                       const dftParameters &dftParams,
-                                       const bool useMixedPrecOverall = false);
+    pseudoGramSchmidtOrthogonalization(
+      elpaScalaManager &                elpaScala,
+      dataTypes::number *               X,
+      const unsigned int                M,
+      const unsigned int                N,
+      const MPI_Comm &                  mpiCommParent,
+      const MPI_Comm &                  mpiCommDomain,
+      utils::DeviceCCLWrapper &         devicecclMpiCommDomain,
+      const MPI_Comm &                  interBandGroupComm,
+      dftfe::utils::deviceBlasHandle_t &handle,
+      const dftParameters &             dftParams,
+      const bool                        useMixedPrecOverall = false);
 
     void
     subspaceRotationScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                              X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -487,28 +177,28 @@ namespace dftfe
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const dataTypes::numberDevice *                  X,
-      dataTypes::numberDevice *                        XFrac,
+      const dataTypes::number *                        X,
+      dataTypes::number *                              XFrac,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
       const bool rotationMatTranspose = false);
 
     void
     subspaceRotationCGSMixedPrecScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                              X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -517,13 +207,13 @@ namespace dftfe
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      dataTypes::numberDevice *                        X,
+      dataTypes::number *                              X,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const dftParameters &                            dftParams,
@@ -532,87 +222,87 @@ namespace dftfe
 
     void
     rayleighRitz(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool useMixedPrecOverall = false);
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall = false);
 
     void
     rayleighRitzGEP(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool useMixedPrecOverall = false);
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall = false);
 
     void
     rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      dataTypes::numberDevice *                          XFrac,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const unsigned int                             Noc,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool useMixedPrecOverall = false);
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
+      dataTypes::number *                          X,
+      dataTypes::number *                          XFrac,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const unsigned int                           Noc,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall = false);
 
 
     void
     densityMatrixEigenBasisFirstOrderResponse(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      const std::vector<double> &                    eigenValues,
-      const double                                   fermiEnergy,
-      std::vector<double> &                          densityMatDerFermiEnergy,
-      dftfe::elpaScalaManager &                      elpaScala,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams);
+      operatorDFTDeviceClass &                     operatorMatrix,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      const std::vector<double> &                  eigenValues,
+      const double                                 fermiEnergy,
+      std::vector<double> &                        densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &                    elpaScala,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams);
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
      *  k-step Lanczos method.
@@ -623,12 +313,12 @@ namespace dftfe
      */
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
-      operatorDFTDeviceClass &                       operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &Xb,
-      distributedDeviceVec<dataTypes::numberDevice> &Yb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             blockSize,
-      const dftParameters &                          dftParams);
+      operatorDFTDeviceClass &                 operatorMatrix,
+      distributedDeviceVec<dataTypes::number> &Xb,
+      distributedDeviceVec<dataTypes::number> &Yb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+      const unsigned int                       blockSize,
+      const dftParameters &                    dftParams);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -644,57 +334,56 @@ namespace dftfe
      */
     void
     chebyshevFilter(
-      operatorDFTDeviceClass &operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice>
-        &X, // thrust::device_vector<dataTypes::number> & X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Y,
-      distributedDeviceVec<dataTypes::numberFP32Device> &Z,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberComponents,
-      const unsigned int                             m,
-      const double                                   a,
-      const double                                   b,
-      const double                                   a0,
-      const bool                                     mixedPrecOverall,
-      const dftParameters &                          dftParams);
+      operatorDFTDeviceClass &                     operatorMatrix,
+      distributedDeviceVec<dataTypes::number> &    X,
+      distributedDeviceVec<dataTypes::number> &    Y,
+      distributedDeviceVec<dataTypes::numberFP32> &Z,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           localVectorSize,
+      const unsigned int                           numberComponents,
+      const unsigned int                           m,
+      const double                                 a,
+      const double                                 b,
+      const double                                 a0,
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams);
 
 
     void
     chebyshevFilter(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      distributedDeviceVec<dataTypes::numberDevice> &    X1,
-      distributedDeviceVec<dataTypes::numberDevice> &    Y1,
-      distributedDeviceVec<dataTypes::numberFP32Device> &Z,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector1,
-      distributedDeviceVec<dataTypes::numberDevice> &X2,
-      distributedDeviceVec<dataTypes::numberDevice> &Y2,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector2,
-      const unsigned int                             localVectorSize,
-      const unsigned int                             numberComponents,
-      const unsigned int                             m,
-      const double                                   a,
-      const double                                   b,
-      const double                                   a0,
-      const bool                                     mixedPrecOverall,
-      const dftParameters &                          dftParams);
+      operatorDFTDeviceClass &                     operatorMatrix,
+      distributedDeviceVec<dataTypes::number> &    X1,
+      distributedDeviceVec<dataTypes::number> &    Y1,
+      distributedDeviceVec<dataTypes::numberFP32> &Z,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector1,
+      distributedDeviceVec<dataTypes::number> &    X2,
+      distributedDeviceVec<dataTypes::number> &    Y2,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector2,
+      const unsigned int                           localVectorSize,
+      const unsigned int                           numberComponents,
+      const unsigned int                           m,
+      const double                                 a,
+      const double                                 b,
+      const double                                 a0,
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams);
 
     void
     computeEigenResidualNorm(
-      operatorDFTDeviceClass &                       operatorMatrix,
-      dataTypes::numberDevice *                      X,
-      distributedDeviceVec<dataTypes::numberDevice> &Xb,
-      distributedDeviceVec<dataTypes::numberDevice> &HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const std::vector<double> &                    eigenValues,
-      const MPI_Comm &                               mpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      cublasHandle_t &                               handle,
-      std::vector<double> &                          residualNorm,
-      const dftParameters &                          dftParams,
-      const bool                                     useBandParal = false);
+      operatorDFTDeviceClass &                 operatorMatrix,
+      dataTypes::number *                      X,
+      distributedDeviceVec<dataTypes::number> &Xb,
+      distributedDeviceVec<dataTypes::number> &HXb,
+      distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+      const unsigned int                       M,
+      const unsigned int                       N,
+      const std::vector<double> &              eigenValues,
+      const MPI_Comm &                         mpiCommDomain,
+      const MPI_Comm &                         interBandGroupComm,
+      dftfe::utils::deviceBlasHandle_t &       handle,
+      std::vector<double> &                    residualNorm,
+      const dftParameters &                    dftParams,
+      const bool                               useBandParal = false);
   } // namespace linearAlgebraOperationsDevice
 } // namespace dftfe
 #  endif

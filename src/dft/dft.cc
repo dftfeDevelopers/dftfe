@@ -39,6 +39,7 @@
 #include <pseudoUtils.h>
 #include <symmetry.h>
 #include <vectorUtilities.h>
+#include <MemoryTransfer.h>
 
 #include <algorithm>
 #include <cmath>
@@ -201,7 +202,7 @@ namespace dftfe
     d_isRestartGroundStateCalcFromChk = false;
 
 #if defined(DFTFE_WITH_DEVICE)
-    d_devicecclMpiCommDomainPtr = new DeviceCCLWrapper;
+    d_devicecclMpiCommDomainPtr = new utils::DeviceCCLWrapper;
     if (d_dftParamsPtr->useDeviceDirectAllReduce)
       d_devicecclMpiCommDomainPtr->init(mpi_comm_domain);
 #endif
@@ -1826,7 +1827,7 @@ namespace dftfe
 
         if (initializeCublas)
           {
-            kohnShamDFTEigenOperatorDevice.createCublasHandle();
+            kohnShamDFTEigenOperatorDevice.createDeviceBlasHandle();
           }
 
         AssertThrow(
@@ -1942,7 +1943,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
-          d_kohnShamDFTOperatorDevicePtr->destroyCublasHandle();
+          d_kohnShamDFTOperatorDevicePtr->destroyDeviceBlasHandle();
 #endif
 
         delete d_kohnShamDFTOperatorPtr;
@@ -2009,8 +2010,12 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges)
+#else
+        if (false)
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
@@ -2277,9 +2282,13 @@ namespace dftfe
             << std::endl
             << "Poisson solve for total electrostatic potential (rhoIn+b): ";
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+        if (false)
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             if (scfIter > 0)
@@ -2294,7 +2303,7 @@ namespace dftfe
                 d_bQuadValuesAllAtoms,
                 d_smearedChargeQuadratureIdElectro,
                 *rhoInValues,
-                kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                 false,
                 false,
                 d_dftParamsPtr->smearedNuclearCharges,
@@ -2316,7 +2325,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   *rhoInValues,
-                  kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   true,
                   d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
                     d_dftParamsPtr->periodicZ &&
@@ -2378,16 +2387,20 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+        if (false)
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             CGSolverDevice.solve(
               d_phiTotalSolverProblemDevice,
               d_dftParamsPtr->absLinearSolverTolerance,
               d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               d_dftParamsPtr->verbosity);
 #endif
           }
@@ -3137,9 +3150,13 @@ namespace dftfe
 
             computing_timer.enter_subsection("phiTot solve");
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             if (d_dftParamsPtr->useDevice and
                 d_dftParamsPtr->floatingNuclearCharges and
                 not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+            if (false)
+#endif
               {
 #ifdef DFTFE_WITH_DEVICE
                 d_phiTotalSolverProblemDevice.reinit(
@@ -3153,7 +3170,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   *rhoOutValues,
-                  kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   false,
                   false,
                   d_dftParamsPtr->smearedNuclearCharges,
@@ -3167,7 +3184,7 @@ namespace dftfe
                   d_phiTotalSolverProblemDevice,
                   d_dftParamsPtr->absLinearSolverTolerance,
                   d_dftParamsPtr->maxLinearSolverIterations,
-                  kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   d_dftParamsPtr->verbosity);
 #endif
               }
@@ -3348,6 +3365,37 @@ namespace dftfe
       pcout << "SCF iterations converged to the specified tolerance after: "
             << scfIter << " iterations." << std::endl;
 
+    const unsigned int numberBandGroups =
+      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+    const unsigned int localVectorSize =
+      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
+
+    if (numberBandGroups > 1 && !d_dftParamsPtr->useDevice)
+      {
+        MPI_Barrier(interBandGroupComm);
+        const unsigned int blockSize =
+          d_dftParamsPtr->mpiAllReduceMessageBlockSizeMB * 1e+6 /
+          sizeof(dataTypes::number);
+        for (unsigned int kPoint = 0;
+             kPoint <
+             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+             ++kPoint)
+          for (unsigned int i = 0; i < d_numEigenValues * localVectorSize;
+               i += blockSize)
+            {
+              const unsigned int currentBlockSize =
+                std::min(blockSize, d_numEigenValues * localVectorSize - i);
+              MPI_Allreduce(MPI_IN_PLACE,
+                            &d_eigenVectorsFlattenedSTL[kPoint][0] + i,
+                            currentBlockSize,
+                            dataTypes::mpi_type_id(
+                              &d_eigenVectorsFlattenedSTL[kPoint][0]),
+                            MPI_SUM,
+                            interBandGroupComm);
+            }
+      }
+
     if ((!d_dftParamsPtr->computeEnergyEverySCF ||
          d_numEigenValuesRR != d_numEigenValues))
       {
@@ -3358,9 +3406,13 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
+#else
+        if (false)
+#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             d_phiTotalSolverProblemDevice.reinit(
@@ -3374,7 +3426,7 @@ namespace dftfe
               d_bQuadValuesAllAtoms,
               d_smearedChargeQuadratureIdElectro,
               *rhoOutValues,
-              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               false,
               false,
               d_dftParamsPtr->smearedNuclearCharges,
@@ -3388,7 +3440,7 @@ namespace dftfe
               d_phiTotalSolverProblemDevice,
               d_dftParamsPtr->absLinearSolverTolerance,
               d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getCublasHandle(),
+              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               d_dftParamsPtr->verbosity);
 #endif
           }
@@ -3549,20 +3601,13 @@ namespace dftfe
            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          deviceUtils::copyDeviceVecToHostVec(
-            d_eigenVectorsFlattenedDevice.begin() +
-              kPoint * d_eigenVectorsFlattenedSTL[0].size(),
-            reinterpret_cast<dataTypes::numberDevice *>(
-              &d_eigenVectorsFlattenedSTL[kPoint][0]),
-            d_eigenVectorsFlattenedSTL[kPoint].size());
+          d_eigenVectorsFlattenedDevice.copyTo<dftfe::utils::MemorySpace::HOST>(
+            &d_eigenVectorsFlattenedSTL[kPoint][0],
+            d_eigenVectorsFlattenedSTL[kPoint].size(),
+            (kPoint * d_eigenVectorsFlattenedSTL[0].size()),
+            0);
         }
 #endif
-
-    const unsigned int numberBandGroups =
-      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-
-    const unsigned int localVectorSize =
-      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
 
 
     if (d_dftParamsPtr->isIonForce)

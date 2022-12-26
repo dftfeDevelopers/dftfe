@@ -24,61 +24,10 @@
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 #include <linearAlgebraOperations.h>
+#include <DataTypeOverloads.h>
 
 namespace dftfe
 {
-  namespace
-  {
-    double
-    realPart(const double x)
-    {
-      return x;
-    }
-
-    double
-    realPart(const std::complex<double> x)
-    {
-      return x.real();
-    }
-
-    double
-    complexConj(const double x)
-    {
-      return x;
-    }
-
-    std::complex<double>
-    complexConj(const std::complex<double> x)
-    {
-      return std::conj(x);
-    }
-
-    float
-    realPart(const float x)
-    {
-      return x;
-    }
-
-    float
-    realPart(const std::complex<float> x)
-    {
-      return x.real();
-    }
-
-    float
-    complexConj(const float x)
-    {
-      return x;
-    }
-
-    std::complex<float>
-    complexConj(const std::complex<float> x)
-    {
-      return std::conj(x);
-    }
-
-  } // namespace
-
   template <typename T>
   void
   computeRhoFirstOrderResponseCPU(
@@ -324,9 +273,9 @@ namespace dftfe
                               rhoResponseContributionHam[icell * numQuadPoints +
                                                          iquad] +=
                                 kPointWeights[kPoint] * spinPolarizedFactor *
-                                realPart(
+                                dftfe::utils::realPart(
                                   wfcQuads[iquad * currentBlockSize + iWave] *
-                                  complexConj(
+                                  dftfe::utils::complexConj(
                                     wfcPrimeQuads[iquad * currentBlockSize +
                                                   iWave]));
 
@@ -334,9 +283,9 @@ namespace dftfe
                                 [icell * numQuadPoints + iquad] +=
                                 kPointWeights[kPoint] * spinPolarizedFactor *
                                 densityMatDerFermiEnergyVec[jvec + iWave] *
-                                realPart(
+                                dftfe::utils::realPart(
                                   wfcQuads[iquad * currentBlockSize + iWave] *
-                                  complexConj(
+                                  dftfe::utils::complexConj(
                                     wfcQuads[iquad * currentBlockSize +
                                              iWave]));
                             }
@@ -720,9 +669,9 @@ namespace dftfe
                               rhoResponseContributionHam[icell * numQuadPoints +
                                                          iquad] +=
                                 kPointWeights[kPoint] * spinPolarizedFactor *
-                                realPart(
+                                dftfe::utils::realPart(
                                   wfcQuads[iquad * currentBlockSize + iWave] *
-                                  complexConj(
+                                  dftfe::utils::complexConj(
                                     wfcPrimeQuads[iquad * currentBlockSize +
                                                   iWave]));
 
@@ -730,9 +679,9 @@ namespace dftfe
                                 [icell * numQuadPoints + iquad] +=
                                 kPointWeights[kPoint] * spinPolarizedFactor *
                                 densityMatDerFermiEnergyVec[jvec + iWave] *
-                                realPart(
+                                dftfe::utils::realPart(
                                   wfcQuads[iquad * currentBlockSize + iWave] *
-                                  complexConj(
+                                  dftfe::utils::complexConj(
                                     wfcQuads[iquad * currentBlockSize +
                                              iWave]));
                             }

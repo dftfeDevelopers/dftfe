@@ -81,14 +81,8 @@
 #  include <deal.II/base/smartpointer.h>
 #  include <deal.II/base/types.h>
 
-#  if defined(DFTFE_WITH_DEVICE)
-#    include <cuComplex.h>
-#    include <thrust/device_vector.h>
-#    include <thrust/complex.h>
-#  endif
-
-#  include "dftfeDataTypes.h"
-#  include "distributedMulticomponentVec.h"
+#  include <dftfeDataTypes.h>
+#  include <MultiVector.h>
 
 // Include generic C++ headers
 #  include <fstream>
@@ -104,14 +98,10 @@ namespace dftfe
     dealii::LinearAlgebra::distributed::Vector<elem_type,
                                                dealii::MemorySpace::Host>;
 #ifdef DFTFE_WITH_DEVICE
-  // template <typename elem_type>
-  // using distributedDeviceVec =
-  //  dealii::LinearAlgebra::distributed::Vector<elem_type,
-  //                                             dealii::MemorySpace::CUDA>;
-
   template <typename NumberType>
   using distributedDeviceVec =
-    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::Device>;
+    dftfe::linearAlgebra::MultiVector<NumberType,
+                                      dftfe::utils::MemorySpace::DEVICE>;
 
 #endif
 } // namespace dftfe

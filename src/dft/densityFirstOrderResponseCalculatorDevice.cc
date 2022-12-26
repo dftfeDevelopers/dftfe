@@ -21,224 +21,20 @@
 #include <densityFirstOrderResponseCalculator.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
-#include "deviceHelpers.h"
-#include <cuComplex.h>
-#include "linearAlgebraOperationsDevice.h"
+#include <deviceKernelsGeneric.h>
+#include <linearAlgebraOperationsDevice.h>
+#include <MemoryStorage.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 
 namespace dftfe
 {
   namespace
   {
-    template <typename NumberType>
-    __global__ void
-    stridedCopyToBlockKernel(const unsigned int BVec,
-                             const NumberType * xVec,
-                             const unsigned int M,
-                             const unsigned int N,
-                             NumberType *       yVec,
-                             const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries  = M * BVec;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / BVec;
-          unsigned int intraBlockIndex = index - blockIndex * BVec;
-          yVec[index] = xVec[blockIndex * N + startingXVecId + intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int contiguousBlockSize,
-                                 const unsigned int numContiguousBlocks,
-                                 const double *     copyFromVec,
-                                 double *           copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int contiguousBlockSize,
-                                 const unsigned int numContiguousBlocks,
-                                 const double *     copyFromVec,
-                                 float *            copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int     contiguousBlockSize,
-                                 const unsigned int     numContiguousBlocks,
-                                 const cuDoubleComplex *copyFromVec,
-                                 cuDoubleComplex *      copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    copyGlobalToCellDeviceKernel(const unsigned int     contiguousBlockSize,
-                                 const unsigned int     numContiguousBlocks,
-                                 const cuDoubleComplex *copyFromVec,
-                                 cuFloatComplex *       copyToVec,
-                                 const dealii::types::global_dof_index
-                                   *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex = index / contiguousBlockSize;
-          unsigned int intraBlockIndex =
-            index - blockIndex * contiguousBlockSize;
-          copyToVec[index] = make_cuFloatComplex(
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex]
-              .x,
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex]
-              .y);
-        }
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     double *           copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        copyToVec[index] = copyFromVec[index];
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     cuDoubleComplex *  copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        {
-          copyToVec[index] = make_cuDoubleComplex(copyFromVec[index], 0.0);
-        }
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     float *            copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        copyToVec[index] = copyFromVec[index];
-    }
-
-    __global__ void
-    copyDeviceKernel(const unsigned int size,
-                     const double *     copyFromVec,
-                     cuFloatComplex *   copyToVec)
-    {
-      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-           index < size;
-           index += blockDim.x * gridDim.x)
-        {
-          copyToVec[index] = make_cuFloatComplex(copyFromVec[index], 0.0);
-        }
-    }
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       double *           copyToVec)
-    {
-      copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
-    }
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       cuDoubleComplex *  copyToVec)
-    {
-      copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
-    }
-
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       float *            copyToVec)
-    {
-      copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
-    }
-
-    void
-    copyDoubleToNumber(const double *     copyFromVec,
-                       const unsigned int size,
-                       cuFloatComplex *   copyToVec)
-    {
-      copyDeviceKernel<<<
-        (size + (deviceConstants::blockSize - 1)) / deviceConstants::blockSize,
-        deviceConstants::blockSize>>>(size, copyFromVec, copyToVec);
-    }
-
     __global__ void
     computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
                                              double *           XQuads,
@@ -257,21 +53,22 @@ namespace dftfe
     }
 
     __global__ void
-    computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
-                                             cuDoubleComplex *  XQuads,
-                                             cuDoubleComplex *  XPrimeQuads)
+    computeRhoResponseFromInterpolatedValues(
+      const unsigned int                 numberEntries,
+      dftfe::utils::deviceDoubleComplex *XQuads,
+      dftfe::utils::deviceDoubleComplex *XPrimeQuads)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const cuDoubleComplex psi      = XQuads[index];
-          const cuDoubleComplex psiPrime = XPrimeQuads[index];
-          XPrimeQuads[index] =
-            make_cuDoubleComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
-          XQuads[index] =
-            make_cuDoubleComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+          const dftfe::utils::deviceDoubleComplex psi      = XQuads[index];
+          const dftfe::utils::deviceDoubleComplex psiPrime = XPrimeQuads[index];
+          dftfe::utils::copyValue(XPrimeQuads + index,
+                                  psi.x * psiPrime.x + psi.y * psiPrime.y);
+          dftfe::utils::copyValue(XQuads + index,
+                                  psi.x * psi.x + psi.y * psi.y);
         }
     }
 
@@ -293,21 +90,22 @@ namespace dftfe
     }
 
     __global__ void
-    computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
-                                             cuFloatComplex *   XQuads,
-                                             cuFloatComplex *   XPrimeQuads)
+    computeRhoResponseFromInterpolatedValues(
+      const unsigned int                numberEntries,
+      dftfe::utils::deviceFloatComplex *XQuads,
+      dftfe::utils::deviceFloatComplex *XPrimeQuads)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const cuFloatComplex psi      = XQuads[index];
-          const cuFloatComplex psiPrime = XPrimeQuads[index];
-          XPrimeQuads[index] =
-            make_cuFloatComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
-          XQuads[index] =
-            make_cuFloatComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+          const dftfe::utils::deviceFloatComplex psi      = XQuads[index];
+          const dftfe::utils::deviceFloatComplex psiPrime = XPrimeQuads[index];
+          dftfe::utils::copyValue(XPrimeQuads + index,
+                                  psi.x * psiPrime.x + psi.y * psiPrime.y);
+          dftfe::utils::copyValue(XQuads + index,
+                                  psi.x * psi.x + psi.y * psi.y);
         }
     }
   } // namespace
@@ -340,7 +138,7 @@ namespace dftfe
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
-    cudaDeviceSynchronize();
+    dftfe::utils::deviceSynchronize();
     MPI_Barrier(mpiCommParent);
     double             device_time = MPI_Wtime();
     const unsigned int numKPoints  = kPointWeights.size();
@@ -361,34 +159,34 @@ namespace dftfe
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
-    const NumberTypeLowPrec zero =
-      deviceUtils::makeNumberFromReal<NumberTypeLowPrec>(0.0);
-    const NumberTypeLowPrec one =
-      deviceUtils::makeNumberFromReal<NumberTypeLowPrec>(1.0);
-    const NumberTypeLowPrec scalarCoeffAlphaRho =
-      deviceUtils::makeNumberFromReal<NumberTypeLowPrec>(1.0);
-    const NumberTypeLowPrec scalarCoeffBetaRho =
-      deviceUtils::makeNumberFromReal<NumberTypeLowPrec>(1.0);
+    const NumberTypeLowPrec zero                = 0;
+    const NumberTypeLowPrec one                 = 1.0;
+    const NumberTypeLowPrec scalarCoeffAlphaRho = 1.0;
+    const NumberTypeLowPrec scalarCoeffBetaRho  = 1.0;
 
     const unsigned int cellsBlockSize = 50;
     const unsigned int numCellBlocks  = totalLocallyOwnedCells / cellsBlockSize;
     const unsigned int remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       rhoResponseContributionHamDevice(totalLocallyOwnedCells * numQuadPoints,
                                        zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       rhoResponseContributionFermiEnergyDevice(totalLocallyOwnedCells *
                                                  numQuadPoints,
                                                zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::HOST>
       rhoResponseContributionHamHost(totalLocallyOwnedCells * numQuadPoints,
                                      zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::HOST>
       rhoResponseContributionFermiEnergyHost(totalLocallyOwnedCells *
                                                numQuadPoints,
                                              zero);
@@ -403,17 +201,22 @@ namespace dftfe
     std::vector<double> rhoResponseValuesSpinPolarizedFermiEnergyFlattenedHost(
       totalLocallyOwnedCells * numQuadPoints * 2, 0.0);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       XQuadsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       XPrimeQuadsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       onesVecDevice(BVec, one);
 
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::HOST>
       densityMatDerFermiEnergyVec(BVec, zero);
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       densityMatDerFermiEnergyVecDevice(BVec, zero);
 
     distributedDeviceVec<NumberType> &deviceFlattenedArrayXBlock =
@@ -422,38 +225,31 @@ namespace dftfe
     distributedDeviceVec<NumberType> &deviceFlattenedArrayXPrimeBlock =
       operatorMatrix.getParallelChebyBlockVector2Device();
 
-    const unsigned int numGhosts =
-      deviceFlattenedArrayXBlock.ghostFlattenedSize();
 
-    // NumberType *cellWaveFunctionMatrix = reinterpret_cast<NumberType *>(
-    //  thrust::raw_pointer_cast(&operatorMatrix.getCellWaveFunctionMatrix()[0]));
-
-    deviceUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Device>
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
       cellWaveFunctionMatrix(cellsBlockSize * numNodesPerElement * BVec, zero);
 
-    NumberTypeLowPrec *shapeFunctionValuesTransposedDevice;
+    dftfe::utils::MemoryStorage<NumberTypeLowPrec,
+                                dftfe::utils::MemorySpace::DEVICE>
+      shapeFunctionValuesTransposedDevice(numNodesPerElement * numQuadPoints,
+                                          zero);
 
-    DeviceCHECK(cudaMalloc((void **)&shapeFunctionValuesTransposedDevice,
-                           numNodesPerElement * numQuadPoints *
-                             sizeof(NumberTypeLowPrec)));
-    DeviceCHECK(cudaMemset(shapeFunctionValuesTransposedDevice,
-                           0,
-                           numNodesPerElement * numQuadPoints *
-                             sizeof(NumberTypeLowPrec)));
+    shapeFunctionValuesTransposedDevice.setValue(zero);
 
-    copyDoubleToNumber(thrust::raw_pointer_cast(
-                         &(operatorMatrix.getShapeFunctionValuesTransposed(
-                           true)[0])),
-                       numNodesPerElement * numQuadPoints,
-                       shapeFunctionValuesTransposedDevice);
+
+    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+      numNodesPerElement * numQuadPoints,
+      (operatorMatrix.getShapeFunctionValuesTransposed(true)).begin(),
+      shapeFunctionValuesTransposedDevice.begin());
 
     for (unsigned int spinIndex = 0; spinIndex < (1 + dftParams.spinPolarized);
          ++spinIndex)
       {
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
           {
-            rhoResponseContributionHamDevice.set(zero);
-            rhoResponseContributionFermiEnergyDevice.set(zero);
+            rhoResponseContributionHamDevice.setValue(zero);
+            rhoResponseContributionFermiEnergyDevice.setValue(zero);
 
             for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
                  jvec += BVec)
@@ -467,49 +263,42 @@ namespace dftfe
                          ++iEigenVec)
                       {
                         *(densityMatDerFermiEnergyVec.begin() + iEigenVec) =
-                          deviceUtils::makeNumberFromReal<NumberTypeLowPrec>(
-                            densityMatDerFermiEnergy
-                              [(dftParams.spinPolarized + 1) * kPoint +
-                               spinIndex][jvec + iEigenVec]);
+                          densityMatDerFermiEnergy
+                            [(dftParams.spinPolarized + 1) * kPoint + spinIndex]
+                            [jvec + iEigenVec];
                       }
 
-                    deviceUtils::copyHostVecToDeviceVec(
-                      densityMatDerFermiEnergyVec.begin(),
-                      densityMatDerFermiEnergyVecDevice.begin(),
-                      densityMatDerFermiEnergyVecDevice.size());
+                    densityMatDerFermiEnergyVec
+                      .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
+                        densityMatDerFermiEnergyVecDevice);
 
-                    stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * numLocalDofs,
-                      deviceConstants::blockSize>>>(
-                      BVec,
-                      X +
-                        numLocalDofs * totalNumWaveFunctions *
-                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
-                      numLocalDofs,
-                      totalNumWaveFunctions,
-                      deviceFlattenedArrayXBlock.begin(),
-                      jvec);
-
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        BVec,
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
+                        X + numLocalDofs * totalNumWaveFunctions *
+                              ((dftParams.spinPolarized + 1) * kPoint +
+                               spinIndex),
+                        deviceFlattenedArrayXBlock.begin());
 
                     deviceFlattenedArrayXBlock.updateGhostValues();
 
                     (operatorMatrix.getOverloadedConstraintMatrix())
                       ->distribute(deviceFlattenedArrayXBlock, BVec);
 
-                    stridedCopyToBlockKernel<<<
-                      (BVec + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * numLocalDofs,
-                      deviceConstants::blockSize>>>(
-                      BVec,
-                      XPrime +
-                        numLocalDofs * totalNumWaveFunctions *
-                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
-                      numLocalDofs,
-                      totalNumWaveFunctions,
-                      deviceFlattenedArrayXPrimeBlock.begin(),
-                      jvec);
 
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        BVec,
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
+                        XPrime + numLocalDofs * totalNumWaveFunctions *
+                                   ((dftParams.spinPolarized + 1) * kPoint +
+                                    spinIndex),
+                        deviceFlattenedArrayXPrimeBlock.begin());
 
                     deviceFlattenedArrayXPrimeBlock.updateGhostValues();
 
@@ -528,35 +317,29 @@ namespace dftfe
                               iblock * cellsBlockSize;
 
 
-                            copyGlobalToCellDeviceKernel<<<
-                              (BVec + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize *
-                                currentCellsBlockSize * numNodesPerElement,
-                              deviceConstants::blockSize>>>(
-                              BVec,
-                              currentCellsBlockSize * numNodesPerElement,
-                              deviceFlattenedArrayXBlock.begin(),
-                              cellWaveFunctionMatrix.begin(),
-                              thrust::raw_pointer_cast(
-                                &(operatorMatrix
-                                    .getFlattenedArrayCellLocalProcIndexIdMap()
-                                      [startingCellId * numNodesPerElement])));
 
-                            NumberTypeLowPrec scalarCoeffAlpha =
-                              deviceUtils::makeNumberFromReal<
-                                NumberTypeLowPrec>(1.0);
-                            NumberTypeLowPrec scalarCoeffBeta =
-                              deviceUtils::makeNumberFromReal<
-                                NumberTypeLowPrec>(0.0);
+                            dftfe::utils::deviceKernelsGeneric::
+                              stridedCopyToBlock(
+                                BVec,
+                                currentCellsBlockSize * numNodesPerElement,
+                                deviceFlattenedArrayXBlock.begin(),
+                                cellWaveFunctionMatrix.begin(),
+                                (operatorMatrix
+                                   .getFlattenedArrayCellLocalProcIndexIdMap())
+                                    .begin() +
+                                  startingCellId * numNodesPerElement);
+
+                            NumberTypeLowPrec scalarCoeffAlpha = 1.0;
+                            NumberTypeLowPrec scalarCoeffBeta  = 0.0;
                             int strideA = BVec * numNodesPerElement;
                             int strideB = 0;
                             int strideC = BVec * numQuadPoints;
 
 
-                            cublasXgemmStridedBatched(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
@@ -564,7 +347,7 @@ namespace dftfe
                               cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
-                              shapeFunctionValuesTransposedDevice,
+                              shapeFunctionValuesTransposedDevice.begin(),
                               numNodesPerElement,
                               strideB,
                               &scalarCoeffBeta,
@@ -573,25 +356,22 @@ namespace dftfe
                               strideC,
                               currentCellsBlockSize);
 
-                            copyGlobalToCellDeviceKernel<<<
-                              (BVec + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize *
+
+                            dftfe::utils::deviceKernelsGeneric::
+                              stridedCopyToBlock(
+                                BVec,
                                 currentCellsBlockSize * numNodesPerElement,
-                              deviceConstants::blockSize>>>(
-                              BVec,
-                              currentCellsBlockSize * numNodesPerElement,
-                              deviceFlattenedArrayXPrimeBlock.begin(),
-                              cellWaveFunctionMatrix.begin(),
-                              thrust::raw_pointer_cast(
-                                &(operatorMatrix
-                                    .getFlattenedArrayCellLocalProcIndexIdMap()
-                                      [startingCellId * numNodesPerElement])));
+                                deviceFlattenedArrayXPrimeBlock.begin(),
+                                cellWaveFunctionMatrix.begin(),
+                                (operatorMatrix
+                                   .getFlattenedArrayCellLocalProcIndexIdMap())
+                                    .begin() +
+                                  startingCellId * numNodesPerElement);
 
-
-                            cublasXgemmStridedBatched(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
@@ -599,7 +379,7 @@ namespace dftfe
                               cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
-                              shapeFunctionValuesTransposedDevice,
+                              shapeFunctionValuesTransposedDevice.begin(),
                               numNodesPerElement,
                               strideB,
                               &scalarCoeffBeta,
@@ -608,20 +388,37 @@ namespace dftfe
                               strideC,
                               currentCellsBlockSize);
 
-
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                             computeRhoResponseFromInterpolatedValues<<<
-                              (BVec + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize * numQuadPoints *
-                                currentCellsBlockSize,
-                              deviceConstants::blockSize>>>(
+                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE *
+                                numQuadPoints * currentCellsBlockSize,
+                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                               BVec * numQuadPoints * currentCellsBlockSize,
-                              XQuadsDevice.begin(),
-                              XPrimeQuadsDevice.begin());
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                XQuadsDevice.begin()),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                XPrimeQuadsDevice.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+                            hipLaunchKernelGGL(
+                              computeRhoResponseFromInterpolatedValues,
+                              (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                dftfe::utils::DEVICE_BLOCK_SIZE *
+                                numQuadPoints * currentCellsBlockSize,
+                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                              0,
+                              0,
+                              BVec * numQuadPoints * currentCellsBlockSize,
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                XQuadsDevice.begin()),
+                              dftfe::utils::makeDataTypeDeviceCompatible(
+                                XPrimeQuadsDevice.begin()));
+#endif
 
-                            cublasXgemm(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemm(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
@@ -635,10 +432,10 @@ namespace dftfe
                                 startingCellId * numQuadPoints,
                               1);
 
-                            cublasXgemm(
-                              operatorMatrix.getCublasHandle(),
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_N,
+                            dftfe::utils::deviceBlasWrapper::gemm(
+                              operatorMatrix.getDeviceBlasHandle(),
+                              dftfe::utils::DEVICEBLAS_OP_N,
+                              dftfe::utils::DEVICEBLAS_OP_N,
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
@@ -658,16 +455,20 @@ namespace dftfe
               }             // wave function block loop
 
 
-            // do cuda memcopy to host
-            deviceUtils::copyDeviceVecToHostVec(
-              rhoResponseContributionHamDevice.begin(),
-              rhoResponseContributionHamHost.begin(),
-              totalLocallyOwnedCells * numQuadPoints);
+            // do memcopy to host
+            rhoResponseContributionHamDevice
+              .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                rhoResponseContributionHamHost.begin(),
+                totalLocallyOwnedCells * numQuadPoints,
+                0,
+                0);
 
-            deviceUtils::copyDeviceVecToHostVec(
-              rhoResponseContributionFermiEnergyDevice.begin(),
-              rhoResponseContributionFermiEnergyHost.begin(),
-              totalLocallyOwnedCells * numQuadPoints);
+            rhoResponseContributionFermiEnergyDevice
+              .template copyTo<dftfe::utils::MemorySpace::HOST>(
+                rhoResponseContributionFermiEnergyHost.begin(),
+                totalLocallyOwnedCells * numQuadPoints,
+                0,
+                0);
 
             for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
               for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
@@ -675,7 +476,7 @@ namespace dftfe
                   rhoResponseValuesHamFlattenedHost[icell * numQuadPoints +
                                                     iquad] +=
                     kPointWeights[kPoint] * spinPolarizedFactor *
-                    deviceUtils::makeRealFromNumber(
+                    dftfe::utils::realPart(
                       *(rhoResponseContributionHamHost.begin() +
                         icell * numQuadPoints + iquad));
 
@@ -683,7 +484,7 @@ namespace dftfe
                                                               numQuadPoints +
                                                             iquad] +=
                     kPointWeights[kPoint] * spinPolarizedFactor *
-                    deviceUtils::makeRealFromNumber(
+                    dftfe::utils::realPart(
                       *(rhoResponseContributionFermiEnergyHost.begin() +
                         icell * numQuadPoints + iquad));
                 }
@@ -697,14 +498,14 @@ namespace dftfe
                       rhoResponseValuesSpinPolarizedHamFlattenedHost
                         [icell * numQuadPoints * 2 + iquad * 2 + spinIndex] +=
                         kPointWeights[kPoint] *
-                        deviceUtils::makeRealFromNumber(
+                        dftfe::utils::realPart(
                           *(rhoResponseContributionHamHost.begin() +
                             icell * numQuadPoints + iquad));
 
                       rhoResponseValuesSpinPolarizedFermiEnergyFlattenedHost
                         [icell * numQuadPoints * 2 + iquad * 2 + spinIndex] +=
                         kPointWeights[kPoint] *
-                        deviceUtils::makeRealFromNumber(
+                        dftfe::utils::realPart(
                           *(rhoResponseContributionFermiEnergyHost.begin() +
                             icell * numQuadPoints + iquad));
                     }
@@ -814,8 +615,7 @@ namespace dftfe
           iElem++;
         }
 
-    DeviceCHECK(cudaFree(shapeFunctionValuesTransposedDevice));
-    cudaDeviceSynchronize();
+    dftfe::utils::deviceSynchronize();
     MPI_Barrier(mpiCommParent);
     device_time = MPI_Wtime() - device_time;
 
@@ -825,10 +625,9 @@ namespace dftfe
   }
 
   template void
-  computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
-                                     dataTypes::numberDevice>(
-    const dataTypes::numberDevice *                X,
-    const dataTypes::numberDevice *                XPrime,
+  computeRhoFirstOrderResponseDevice<dataTypes::number, dataTypes::number>(
+    const dataTypes::number *                      X,
+    const dataTypes::number *                      XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
@@ -851,10 +650,9 @@ namespace dftfe
     const dftParameters &dftParams);
 
   template void
-  computeRhoFirstOrderResponseDevice<dataTypes::numberDevice,
-                                     dataTypes::numberFP32Device>(
-    const dataTypes::numberDevice *                X,
-    const dataTypes::numberDevice *                XPrime,
+  computeRhoFirstOrderResponseDevice<dataTypes::number, dataTypes::numberFP32>(
+    const dataTypes::number *                      X,
+    const dataTypes::number *                      XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,

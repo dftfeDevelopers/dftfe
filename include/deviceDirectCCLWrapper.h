@@ -19,150 +19,156 @@
 #  ifndef deviceDirectCCLWrapper_h
 #    define deviceDirectCCLWrapper_h
 
+#    include <complex>
 #    include <mpi.h>
-#    include <cuComplex.h>
+#    include <DeviceTypeConfig.h>
 
 namespace dftfe
 {
-  /**
-   *  @brief Wrapper class for Device Direct collective communications library.
-   *  Adapted from
-   * https://code.ornl.gov/99R/olcf-cookbook/-/blob/develop/comms/nccl_allreduce.rst
-   *
-   *  @author Sambit Das, David M. Rogers
-   */
-  class DeviceCCLWrapper
+  namespace utils
   {
-  public:
-    DeviceCCLWrapper();
+    /**
+     *  @brief Wrapper class for Device Direct collective communications library.
+     *  Adapted from
+     * https://code.ornl.gov/99R/olcf-cookbook/-/blob/develop/comms/nccl_allreduce.rst
+     *
+     *  @author Sambit Das, David M. Rogers
+     */
+    class DeviceCCLWrapper
+    {
+    public:
+      DeviceCCLWrapper();
 
-    void
-    init(const MPI_Comm &mpiComm);
+      void
+      init(const MPI_Comm &mpiComm);
 
-    ~DeviceCCLWrapper();
+      ~DeviceCCLWrapper();
 
-    int
-    deviceDirectAllReduceWrapper(const float * send,
-                                 float *       recv,
-                                 int           size,
-                                 cudaStream_t &stream);
-
-
-    int
-    deviceDirectAllReduceWrapper(const double *send,
-                                 double *      recv,
-                                 int           size,
-                                 cudaStream_t &stream);
-
-
-    int
-    deviceDirectAllReduceWrapper(const cuDoubleComplex *send,
-                                 cuDoubleComplex *      recv,
-                                 int                    size,
-                                 double *               tempReal,
-                                 double *               tempImag,
-                                 cudaStream_t &         stream);
-
-    int
-    deviceDirectAllReduceWrapper(const cuFloatComplex *send,
-                                 cuFloatComplex *      recv,
-                                 int                   size,
-                                 float *               tempReal,
-                                 float *               tempImag,
-                                 cudaStream_t &        stream);
+      int
+      deviceDirectAllReduceWrapper(const float *   send,
+                                   float *         recv,
+                                   int             size,
+                                   deviceStream_t &stream);
 
 
-    int
-    deviceDirectAllReduceMixedPrecGroupWrapper(const double *send1,
-                                               const float * send2,
-                                               double *      recv1,
-                                               float *       recv2,
-                                               int           size1,
-                                               int           size2,
-                                               cudaStream_t &stream);
-
-    int
-    deviceDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
-                                               const cuFloatComplex * send2,
-                                               cuDoubleComplex *      recv1,
-                                               cuFloatComplex *       recv2,
-                                               int                    size1,
-                                               int                    size2,
-                                               double *               tempReal1,
-                                               float *                tempReal2,
-                                               double *               tempImag1,
-                                               float *                tempImag2,
-                                               cudaStream_t &         stream);
+      int
+      deviceDirectAllReduceWrapper(const double *  send,
+                                   double *        recv,
+                                   int             size,
+                                   deviceStream_t &stream);
 
 
+      int
+      deviceDirectAllReduceWrapper(const std::complex<double> *send,
+                                   std::complex<double> *      recv,
+                                   int                         size,
+                                   double *                    tempReal,
+                                   double *                    tempImag,
+                                   deviceStream_t &            stream);
 
-    inline void
-    deviceDirectAllReduceWrapper(const cuFloatComplex *send,
-                                 cuFloatComplex *      recv,
-                                 int                   size,
-                                 cudaStream_t &        stream)
-    {}
-
-
-    inline void
-    deviceDirectAllReduceWrapper(const cuDoubleComplex *send,
-                                 cuDoubleComplex *      recv,
-                                 int                    size,
-                                 cudaStream_t &         stream)
-    {}
-
-    inline void
-    deviceDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
-                                               const cuFloatComplex * send2,
-                                               cuDoubleComplex *      recv1,
-                                               cuFloatComplex *       recv2,
-                                               int                    size1,
-                                               int                    size2,
-                                               cudaStream_t &         stream)
-    {}
+      int
+      deviceDirectAllReduceWrapper(const std::complex<float> *send,
+                                   std::complex<float> *      recv,
+                                   int                        size,
+                                   float *                    tempReal,
+                                   float *                    tempImag,
+                                   deviceStream_t &           stream);
 
 
-    inline void
-    deviceDirectAllReduceWrapper(const double *send,
-                                 double *      recv,
-                                 int           size,
-                                 double *      tempReal,
-                                 double *      tempImag,
-                                 cudaStream_t &stream)
-    {}
+      int
+      deviceDirectAllReduceMixedPrecGroupWrapper(const double *  send1,
+                                                 const float *   send2,
+                                                 double *        recv1,
+                                                 float *         recv2,
+                                                 int             size1,
+                                                 int             size2,
+                                                 deviceStream_t &stream);
 
-    inline void
-    deviceDirectAllReduceWrapper(const float * send,
-                                 float *       recv,
-                                 int           size,
-                                 float *       tempReal,
-                                 float *       tempImag,
-                                 cudaStream_t &stream)
-    {}
+      int
+      deviceDirectAllReduceMixedPrecGroupWrapper(
+        const std::complex<double> *send1,
+        const std::complex<float> * send2,
+        std::complex<double> *      recv1,
+        std::complex<float> *       recv2,
+        int                         size1,
+        int                         size2,
+        double *                    tempReal1,
+        float *                     tempReal2,
+        double *                    tempImag1,
+        float *                     tempImag2,
+        deviceStream_t &            stream);
 
-    inline void
-    deviceDirectAllReduceMixedPrecGroupWrapper(const double *send1,
-                                               const float * send2,
-                                               double *      recv1,
-                                               float *       recv2,
-                                               int           size1,
-                                               int           size2,
-                                               double *      tempReal1,
-                                               float *       tempReal2,
-                                               double *      tempImag1,
-                                               float *       tempImag2,
-                                               cudaStream_t &stream)
-    {}
 
-  private:
-    int  myRank;
-    int  totalRanks;
-    bool commCreated;
-#    ifdef DFTFE_WITH_NCCL
-    void *ncclIdPtr;
-    void *ncclCommPtr;
+
+      inline void
+      deviceDirectAllReduceWrapper(const std::complex<float> *send,
+                                   std::complex<float> *      recv,
+                                   int                        size,
+                                   deviceStream_t &           stream)
+      {}
+
+
+      inline void
+      deviceDirectAllReduceWrapper(const std::complex<double> *send,
+                                   std::complex<double> *      recv,
+                                   int                         size,
+                                   deviceStream_t &            stream)
+      {}
+
+      inline void
+      deviceDirectAllReduceMixedPrecGroupWrapper(
+        const std::complex<double> *send1,
+        const std::complex<float> * send2,
+        std::complex<double> *      recv1,
+        std::complex<float> *       recv2,
+        int                         size1,
+        int                         size2,
+        deviceStream_t &            stream)
+      {}
+
+
+      inline void
+      deviceDirectAllReduceWrapper(const double *  send,
+                                   double *        recv,
+                                   int             size,
+                                   double *        tempReal,
+                                   double *        tempImag,
+                                   deviceStream_t &stream)
+      {}
+
+      inline void
+      deviceDirectAllReduceWrapper(const float *   send,
+                                   float *         recv,
+                                   int             size,
+                                   float *         tempReal,
+                                   float *         tempImag,
+                                   deviceStream_t &stream)
+      {}
+
+      inline void
+      deviceDirectAllReduceMixedPrecGroupWrapper(const double *  send1,
+                                                 const float *   send2,
+                                                 double *        recv1,
+                                                 float *         recv2,
+                                                 int             size1,
+                                                 int             size2,
+                                                 double *        tempReal1,
+                                                 float *         tempReal2,
+                                                 double *        tempImag1,
+                                                 float *         tempImag2,
+                                                 deviceStream_t &stream)
+      {}
+
+    private:
+      int  myRank;
+      int  totalRanks;
+      bool commCreated;
+#    ifdef DFTFE_WITH_CUDA_NCCL
+      void *ncclIdPtr;
+      void *ncclCommPtr;
 #    endif
-  };
+    };
+  } // namespace utils
 } // namespace dftfe
 
 #  endif

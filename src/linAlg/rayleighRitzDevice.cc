@@ -20,6 +20,7 @@
 #include "linearAlgebraOperationsDevice.h"
 #include "linearAlgebraOperationsInternal.h"
 #include "constants.h"
+#include <DeviceAPICalls.h>
 
 namespace dftfe
 {
@@ -27,23 +28,23 @@ namespace dftfe
   {
     void
     rayleighRitz(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool                                     useMixedPrecOverall)
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -73,7 +74,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       computing_timer.enter_subsection("Blocked XtHX, RR step");
 
       if (dftParams.overlapComputeCommunOrthoRR)
@@ -99,7 +100,7 @@ namespace dftfe
                             projHamPar,
                             devicecclMpiCommDomain);
 
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       computing_timer.leave_subsection("Blocked XtHX, RR step");
 
       //
@@ -110,7 +111,7 @@ namespace dftfe
       eigenValues.resize(numberEigenValues);
       if (dftParams.useELPA)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
           dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
                                                                  processGrid,
@@ -171,16 +172,16 @@ namespace dftfe
 
 
           eigenVectors.copy_to(projHamPar);
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection("ELPA eigen decomp, RR step");
         }
       else
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
           eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, N - 1), true);
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
 
@@ -191,7 +192,7 @@ namespace dftfe
       // rotate the basis in the subspace X = X*Q, implemented as
       // X^{T}=Qc^{C}*X^{T} with X^{T} stored in the column major format
       //
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       computing_timer.enter_subsection("Blocked subspace rotation, RR step");
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParCopy(N,
                                                                processGrid,
@@ -222,29 +223,29 @@ namespace dftfe
                                   projHamParCopy,
                                   dftParams,
                                   false);
-      cudaDeviceSynchronize();
+      dftfe::utils::deviceSynchronize();
       computing_timer.leave_subsection("Blocked subspace rotation, RR step");
     }
 
     void
     rayleighRitzGEP(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool                                     useMixedPrecOverall)
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -268,7 +269,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
@@ -348,7 +349,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
@@ -440,7 +441,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection(
             "HConjProj= X^{T}*HConj*XConj, RR GEP step");
         }
@@ -483,7 +484,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection(
             "HConjProj= X^{T}*HConj*XConj, RR GEP step");
         }
@@ -604,7 +605,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrecOverall))
             computing_timer.enter_subsection(
               "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
@@ -643,7 +644,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrecOverall))
             computing_timer.leave_subsection(
               "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
@@ -655,25 +656,25 @@ namespace dftfe
 
     void
     rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::numberDevice *                          X,
-      dataTypes::numberDevice *                          XFrac,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const unsigned int                             Noc,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      std::vector<double> &                          eigenValues,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams,
-      const bool                                     useMixedPrecOverall)
+      operatorDFTDeviceClass &                     operatorMatrix,
+      elpaScalaManager &                           elpaScala,
+      dataTypes::number *                          X,
+      dataTypes::number *                          XFrac,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const unsigned int                           Noc,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      std::vector<double> &                        eigenValues,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams,
+      const bool                                   useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -696,7 +697,7 @@ namespace dftfe
       //
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
@@ -777,7 +778,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
@@ -866,7 +867,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
@@ -932,7 +933,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
@@ -1094,7 +1095,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection(
             "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
         }
@@ -1121,14 +1122,14 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection(
             "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
         }
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
@@ -1168,7 +1169,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
@@ -1181,24 +1182,24 @@ namespace dftfe
 
     void
     densityMatrixEigenBasisFirstOrderResponse(
-      operatorDFTDeviceClass &                           operatorMatrix,
-      dataTypes::numberDevice *                          X,
-      distributedDeviceVec<dataTypes::numberDevice> &    Xb,
-      distributedDeviceVec<dataTypes::numberFP32Device> &floatXb,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXb,
-      distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-      const unsigned int                             M,
-      const unsigned int                             N,
-      const MPI_Comm &                               mpiCommParent,
-      const MPI_Comm &                               mpiCommDomain,
-      DeviceCCLWrapper &                             devicecclMpiCommDomain,
-      const MPI_Comm &                               interBandGroupComm,
-      const std::vector<double> &                    eigenValues,
-      const double                                   fermiEnergy,
-      std::vector<double> &                          densityMatDerFermiEnergy,
-      dftfe::elpaScalaManager &                      elpaScala,
-      cublasHandle_t &                               handle,
-      const dftParameters &                          dftParams)
+      operatorDFTDeviceClass &                     operatorMatrix,
+      dataTypes::number *                          X,
+      distributedDeviceVec<dataTypes::number> &    Xb,
+      distributedDeviceVec<dataTypes::numberFP32> &floatXb,
+      distributedDeviceVec<dataTypes::number> &    HXb,
+      distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommParent,
+      const MPI_Comm &                             mpiCommDomain,
+      utils::DeviceCCLWrapper &                    devicecclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      const std::vector<double> &                  eigenValues,
+      const double                                 fermiEnergy,
+      std::vector<double> &                        densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &                    elpaScala,
+      dftfe::utils::deviceBlasHandle_t &           handle,
+      const dftParameters &                        dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -1223,7 +1224,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection("Blocked XtHX, DMFOR step");
         }
 
@@ -1275,13 +1276,13 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection("Blocked XtHX, DMFOR step");
         }
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection(
             "Recursive fermi operator expansion operations, DMFOR step");
         }
@@ -1368,7 +1369,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection(
             "Recursive fermi operator expansion operations, DMFOR step");
         }
@@ -1379,7 +1380,7 @@ namespace dftfe
       //
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection(
             "Blocked subspace transformation, DMFOR step");
         }
@@ -1442,7 +1443,7 @@ namespace dftfe
 
       if (dftParams.deviceFineGrainedTimings)
         {
-          cudaDeviceSynchronize();
+          dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection(
             "Blocked subspace transformation, DMFOR step");
         }

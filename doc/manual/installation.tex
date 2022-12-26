@@ -1,4 +1,4 @@
-All the underlying installation instructions assume a Linux operating system. We assume standard tools and libraries like CMake, compilers- (C, C++ and Fortran), CUDA (in case of GPU architectures), MPI, and math(BLAS-LAPACK) libraries are pre-installed. Most high-performance computers would have the latest version of these libraries in the default environment. However, in many cases you would have to use \href{http://modules.sourceforge.net/}{Environment Modules} to set the correct environment variables for the above and compilation tools like \href{http://www.cmake.org/}{CMake}. For example, on one of the high-performance computers (UMICH Greatlakes) we develop and test the \dftfe{} code, we can use the following commands to set the desired environment variables
+All the underlying installation instructions assume a Linux operating system. We assume standard tools and libraries like CMake, compilers- (C, C++ and Fortran), CUDA/HIP (in case of GPU architectures), MPI, and math(BLAS-LAPACK) libraries are pre-installed. Most high-performance computers would have the latest version of these libraries in the default environment. However, in many cases you would have to use \href{http://modules.sourceforge.net/}{Environment Modules} to set the correct environment variables for the above and compilation tools like \href{http://www.cmake.org/}{CMake}. For example, on one of the high-performance computers (UMICH Greatlakes) we develop and test the \dftfe{} code, we can use the following commands to set the desired environment variables
 \begin{verbatim}
 $ module load cmake/3.18.2
 $ module load gcc/8.2.0
@@ -7,11 +7,11 @@ $ module load mkl/2018.0.4
 $ module load cuda/11.0.2 (if installing for GPUs)
 \end{verbatim}
 %In the above mpilibrary denotes the MPI library you are using in your system(for eg: openmpi, mpich or intel-mpi). 
-Note the above are shown only as an example. We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), CUDA, MPI and math libraries available on your high-performance computer. DFT-FE's installation requires also the following minimum versions of the above compilers and libraries:
+Note the above are shown only as an example. We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), CUDA/HIP, MPI and math libraries available on your high-performance computer. DFT-FE's installation requires also the following minimum versions of the above compilers and libraries:
 \begin{itemize}
     \item CMake 3.17.0
     \item GCC 8.2.0
-    \item CUDA 11.0.2 (if installing for GPUs)
+    \item CUDA 11.0.2/ ROCm (if installing for NVIDIA / AMD GPUs)
 \end{itemize}
 \textcolor{red}{\bf We currently do not support Intel compilers due to a compilation issue of the deal.II library. Please use GNU compilers only.} Further, if version of CMake greater than 3.17.0 is not available on your machine please install latest version from here \href{http://www.cmake.org/}{CMake} or use pre-installed binaries most appropriate for your machine.
 
@@ -124,7 +124,7 @@ Assuming the above dependencies (p4est and ScaLAPACK) are installed, we now brie
 $ git clone -b dealiiCustomizedCUDARelease https://github.com/dftfeDevelopers/dealii.git
 \end{verbatim}
 
-\item In addition to requiring C, C++ and Fortran compilers, MPI library, and CMake, deal.II additionaly requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the deal.II's bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues. Further if installing on NVIDIA GPUs, deal.II requires CUDA (minimum version 11.0.2).
+\item In addition to requiring C, C++ and Fortran compilers, MPI library, and CMake, deal.II additionaly requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the deal.II's bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues. Please do not install deal.II with GPU support as that is not needed by DFT-FE.
 
 \item
 \begin{verbatim}
@@ -137,6 +137,7 @@ $ make install
 \end{verbatim}
 {\bf ``otherCmakeOptions'' include} the following options for CPU installation:
 \begin{verbatim}
+-DCMAKE_CXX_STANDARD=14
 -DCMAKE_C_COMPILER=c_compiler
 -DCMAKE_CXX_COMPILER=cxx_compiler
 -DCMAKE_Fortran_COMPILER=fortran_compiler
@@ -158,12 +159,7 @@ $ make install
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
 \end{verbatim}
-and additional cmake options for GPU installation:
-\begin{verbatim}
--DDEAL_II_CUDA_FLAGS=gpu_arch_flag (eg. "-arch=sm_70")
--DDEAL_II_WITH_CUDA=ON 
--DDEAL_II_MPI_WITH_CUDA_SUPPORT=ON
-\end{verbatim}
+
 
 
 \end{enumerate}	
@@ -171,14 +167,16 @@ and additional cmake options for GPU installation:
 \begin{verbatim}
 $ mkdir build
 $ cd build
-$ cmake -DCMAKE_C_COMPILER=gcc 
+$ cmake
+-DCMAKE_CXX_STANDARD=14
+-DCMAKE_C_COMPILER=gcc 
 -DCMAKE_CXX_COMPILER=g++
 -DCMAKE_Fortran_COMPILER=gfortran
 -DMPI_C_COMPILER=mpicc 
 -DMPI_CXX_COMPILER=mpicxx 
 -DMPI_Fortran_COMPILER=mpif90
--DCMAKE_CXX_FLAGS="-march=native"
--DCMAKE_C_FLAGS="-march=native"
+-DCMAKE_CXX_FLAGS="-march=native -std=c++14"
+-DCMAKE_C_FLAGS="-march=native -std=c++14"
 -DDEAL_II_CXX_FLAGS_RELEASE="-O2"
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
 -DDEAL_II_WITH_MPI=ON
@@ -299,7 +297,7 @@ If you are not familiar with Git, you may download the current release tarball f
 withGPU=OFF
 withNCCL=OFF
 \end{verbatim}
-For GPU compilation, \verb|withGPU| must be set to ON.
+For GPU compilation, \verb|withGPU|, \verb|gpuLang|, and \verb|gpuVendor| should be set \verb|ON|, \verb|"cuda"/"hip"| and \verb|"nvidia"/"amd"| respectively. Also appropriate C++ compiler, device (denoting GPU) compilation and architecture flags must be passed to access CUDA/HIP compiler for device code compilation. \textcolor{red}{\bf CAUTION! GPU enabled DFT-FE compilation must only be run on machines with GPU access.} 
 \item To compile \dftfe{}, first create a build directory anywhere on your machine. Next from inside the build directory do
 \begin{verbatim}
 $ bash $dftfe_source/setupUser.sh

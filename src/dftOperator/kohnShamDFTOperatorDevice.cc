@@ -17,7 +17,12 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceBlasWrapper.h>
 #include <kohnShamDFTOperatorDevice.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -27,232 +32,10 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 
-
 namespace dftfe
 {
   namespace
   {
-    /*
-    #if __Device_ARCH__ < 600
-        __device__ double
-        atomicAdd(double *address, double val)
-        {
-          unsigned long long int *address_as_ull =
-            (unsigned long long int *)address;
-          unsigned long long int old = *address_as_ull, assumed;
-
-          do
-            {
-              assumed = old;
-              old     = atomicCAS(address_as_ull,
-                              assumed,
-                              __double_as_longlong(val +
-                                                   __longlong_as_double(assumed)));
-
-              // Note: uses integer comparison to avoid hang in case of NaN
-    (since
-              // NaN != NaN)
-            }
-          while (assumed != old);
-
-          return __longlong_as_double(old);
-        }
-    #endif
-    */
-
-
-    __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double       scalar,
-                      double *           srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) *
-            (*(scalingVector + gangBlockId) * scalar);
-        }
-    }
-
-    __global__ void
-    scaleDeviceKernel(const unsigned int contiguousBlockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double       scalar,
-                      cuDoubleComplex *  srcArray,
-                      const double *     scalingVector)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerContiguousBlock =
-        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
-      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
-      if (globalThreadId <
-            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
-          localThreadId < contiguousBlockSize)
-        {
-          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
-            cuCmul(
-              *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)),
-              make_cuDoubleComplex((*(scalingVector + gangBlockId) * scalar),
-                                   0.0));
-        }
-    }
-
-    template <typename numberType>
-    __global__ void
-    stridedCopyToBlockKernel(const unsigned int BVec,
-                             const unsigned int M,
-                             const numberType * xVec,
-                             const unsigned int N,
-                             numberType *       yVec,
-                             const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * BVec + localThreadId) =
-            *(xVec + gangBlockId * N + startingXVecId + localThreadId);
-        }
-    }
-
-
-    template <typename numberType>
-    __global__ void
-    stridedCopyFromBlockKernel(const unsigned int BVec,
-                               const unsigned int M,
-                               const numberType * xVec,
-                               const unsigned int N,
-                               numberType *       yVec,
-                               const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            *(xVec + gangBlockId * BVec + localThreadId);
-        }
-    }
-
-    __global__ void
-    stridedCopyFromBlockKernelFP32(const unsigned int BVec,
-                                   const unsigned int M,
-                                   const double *     xVec,
-                                   const unsigned int N,
-                                   float *            yVec,
-                                   const unsigned int startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            *(xVec + gangBlockId * BVec + localThreadId);
-        }
-    }
-
-    __global__ void
-    stridedCopyFromBlockKernelFP32(const unsigned int     BVec,
-                                   const unsigned int     M,
-                                   const cuDoubleComplex *xVec,
-                                   const unsigned int     N,
-                                   cuFloatComplex *       yVec,
-                                   const unsigned int     startingXVecId)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
-      const unsigned int localThreadId =
-        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-          localThreadId < BVec)
-        {
-          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-            cuComplexDoubleToFloat(
-              *(xVec + gangBlockId * BVec + localThreadId));
-        }
-    }
-
-
-    __global__ void
-    convDoubleArrToFloatArr(const unsigned int size,
-                            const double *     doubleArr,
-                            float *            floatArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        floatArr[index] = doubleArr[index];
-    }
-
-    __global__ void
-    convDoubleArrToFloatArr(const unsigned int     size,
-                            const cuDoubleComplex *doubleArr,
-                            cuFloatComplex *       floatArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        floatArr[index] = cuComplexDoubleToFloat(doubleArr[index]);
-    }
-
-
-    __global__ void
-    convFloatArrToDoubleArr(const unsigned int size,
-                            const float *      floatArr,
-                            double *           doubleArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        doubleArr[index] = floatArr[index];
-    }
-
-
-    __global__ void
-    convFloatArrToDoubleArr(const unsigned int    size,
-                            const cuFloatComplex *floatArr,
-                            cuDoubleComplex *     doubleArr)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-
-      for (unsigned int index = globalThreadId; index < size;
-           index += blockDim.x * gridDim.x)
-        doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
-    }
-
-
     __global__ void
     copyFloatArrToDoubleArrLocallyOwned(const unsigned int  contiguousBlockSize,
                                         const unsigned int  numContiguousBlocks,
@@ -274,11 +57,12 @@ namespace dftfe
     }
 
     __global__ void
-    copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
-                                        const unsigned int numContiguousBlocks,
-                                        const cuFloatComplex *floatArr,
-                                        const unsigned int *locallyOwnedFlagArr,
-                                        cuDoubleComplex *   doubleArr)
+    copyFloatArrToDoubleArrLocallyOwned(
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
+      const dftfe::utils::deviceFloatComplex *floatArr,
+      const unsigned int *                    locallyOwnedFlagArr,
+      dftfe::utils::deviceDoubleComplex *     doubleArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numberEntries =
@@ -289,123 +73,7 @@ namespace dftfe
         {
           unsigned int blockIndex = index / contiguousBlockSize;
           if (locallyOwnedFlagArr[blockIndex] == 1)
-            doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
-        }
-    }
-
-    template <typename numberType>
-    __global__ void
-    copyDeviceKernel(const unsigned int contiguousBlockSize,
-                     const unsigned int numContiguousBlocks,
-                     const numberType * copyFromVec,
-                     numberType *       copyToVec,
-                     const dealii::types::global_dof_index
-                       *copyFromVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          copyToVec[index] =
-            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
-                        intraBlockIndex];
-        }
-    }
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const double *                         addFromVec,
-      double *                               addToVec,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                              intraBlockIndex],
-                    addFromVec[index]);
-        }
-    }
-
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const cuDoubleComplex *                addFromVec,
-      cuDoubleComplex *                      addToVec,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {}
-
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const double *                         addFromVec,
-      double *                               addToVecReal,
-      double *                               addToVecImag,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          atomicAdd(
-            &addToVecReal[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index]);
-          atomicAdd(
-            &addToVecImag[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index]);
-        }
-    }
-
-    __global__ void
-    daxpyAtomicAddKernel(
-      const unsigned int                     contiguousBlockSize,
-      const unsigned int                     numContiguousBlocks,
-      const cuDoubleComplex *                addFromVec,
-      double *                               addToVecReal,
-      double *                               addToVecImag,
-      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
-    {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-
-      for (unsigned int index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          unsigned int blockIndex      = index / contiguousBlockSize;
-          unsigned int intraBlockIndex = index % contiguousBlockSize;
-          atomicAdd(
-            &addToVecReal[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index].x);
-          atomicAdd(
-            &addToVecImag[addToVecStartingContiguousBlockIds[blockIndex] +
-                          intraBlockIndex],
-            addFromVec[index].y);
+            dftfe::utils::copyValue(doubleArr + index, floatArr[index]);
         }
     }
 
@@ -427,8 +95,6 @@ namespace dftfe
         {
           const unsigned int blockIndex      = index / numWfcs;
           const unsigned int intraBlockIndex = index % numWfcs;
-          // projectorKetTimesWfcParallelVec[index]
-          //        =reducedProjectorKetTimesWfcVec[indexMapFromParallelVecToReducedVec[blockIndex]*numWfcs+intraBlockIndex];
           projectorKetTimesWfcParallelVec
             [indexMapFromParallelVecToReducedVec[blockIndex] * numWfcs +
              intraBlockIndex] = reducedProjectorKetTimesWfcVec[index];
@@ -542,11 +208,11 @@ namespace dftfe
 
     __global__ void
     addNonLocalContributionDeviceKernel(
-      const dealii::types::global_dof_index contiguousBlockSize,
-      const dealii::types::global_dof_index numContiguousBlocks,
-      const cuDoubleComplex *               xVec,
-      cuDoubleComplex *                     yVec,
-      const unsigned int *                  xVecToyVecBlockIdMap)
+      const dealii::types::global_dof_index    contiguousBlockSize,
+      const dealii::types::global_dof_index    numContiguousBlocks,
+      const dftfe::utils::deviceDoubleComplex *xVec,
+      dftfe::utils::deviceDoubleComplex *      yVec,
+      const unsigned int *                     xVecToyVecBlockIdMap)
     {
       const dealii::types::global_dof_index globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -562,9 +228,10 @@ namespace dftfe
             index % contiguousBlockSize;
           yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
                intraBlockIndex] =
-            cuCadd(yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
-                        intraBlockIndex],
-                   xVec[index]);
+            dftfe::utils::add(
+              yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
+                   intraBlockIndex],
+              xVec[index]);
         }
     }
   } // namespace
@@ -614,40 +281,45 @@ namespace dftfe
         free(h_d_A);
         free(h_d_B);
         free(h_d_C);
-        DeviceCHECK(cudaFree(d_A));
-        DeviceCHECK(cudaFree(d_B));
-        DeviceCHECK(cudaFree(d_C));
+        dftfe::utils::deviceFree(d_A);
+        dftfe::utils::deviceFree(d_B);
+        dftfe::utils::deviceFree(d_C);
       }
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::createCublasHandle()
+  kohnShamDFTOperatorDeviceClass<FEOrder,
+                                 FEOrderElectro>::createDeviceBlasHandle()
   {
-    cublasCreate(&d_cublasHandle);
+    dftfe::utils::deviceBlasWrapper::create(&d_deviceBlasHandle);
+#ifdef DFTFE_WTIH_DEVICE_CUDA
     if (dftPtr->d_dftParamsPtr->useTF32Device)
-      cublasSetMathMode(d_cublasHandle, CUBLAS_TF32_TENSOR_OP_MATH);
+      dftfe::utils::deviceBlasWrapper::setMathMode(
+        d_deviceBlasHandle, DEVICEBLAS_TF32_TENSOR_OP_MATH);
+#endif
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::destroyCublasHandle()
+  kohnShamDFTOperatorDeviceClass<FEOrder,
+                                 FEOrderElectro>::destroyDeviceBlasHandle()
   {
-    cublasDestroy(d_cublasHandle);
+    dftfe::utils::deviceBlasWrapper::destroy(d_deviceBlasHandle);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  cublasHandle_t &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getCublasHandle()
+  dftfe::utils::deviceBlasHandle_t &
+  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getDeviceBlasHandle()
   {
-    return d_cublasHandle;
+    return d_deviceBlasHandle;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const double *
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getSqrtMassVec()
   {
-    return thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]);
+    return d_sqrtMassVectorDevice.begin();
   }
 
 
@@ -655,7 +327,7 @@ namespace dftfe
   const double *
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getInvSqrtMassVec()
   {
-    return thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]);
+    return d_invSqrtMassVectorDevice.begin();
   }
 
 
@@ -669,7 +341,7 @@ namespace dftfe
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientIntegral()
   {
@@ -678,7 +350,7 @@ namespace dftfe
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientIntegralElectro()
   {
@@ -687,7 +359,7 @@ namespace dftfe
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder,
                                  FEOrderElectro>::getShapeFunctionValues()
   {
@@ -696,7 +368,7 @@ namespace dftfe
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad)
   {
@@ -705,7 +377,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionValuesNLPTransposed()
   {
@@ -713,7 +385,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientValuesXTransposed()
   {
@@ -721,7 +393,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientValuesYTransposed()
   {
@@ -729,7 +401,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientValuesZTransposed()
   {
@@ -737,7 +409,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientValuesNLPTransposed()
   {
@@ -745,7 +417,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
+  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder,
                                  FEOrderElectro>::getInverseJacobiansNLP()
   {
@@ -754,7 +426,8 @@ namespace dftfe
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<dealii::types::global_dof_index> &
+  dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                              dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getFlattenedArrayCellLocalProcIndexIdMap()
   {
@@ -762,7 +435,8 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<dataTypes::numberThrustDevice> &
+  dftfe::utils::MemoryStorage<dataTypes::number,
+                              dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder,
                                  FEOrderElectro>::getCellWaveFunctionMatrix()
   {
@@ -778,7 +452,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  distributedDeviceVec<dataTypes::numberDevice> &
+  distributedDeviceVec<dataTypes::number> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelChebyBlockVectorDevice()
   {
@@ -786,7 +460,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  distributedDeviceVec<dataTypes::numberDevice> &
+  distributedDeviceVec<dataTypes::number> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelChebyBlockVector2Device()
   {
@@ -794,7 +468,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  distributedDeviceVec<dataTypes::numberDevice> &
+  distributedDeviceVec<dataTypes::number> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelProjectorKetTimesBlockVectorDevice()
   {
@@ -802,7 +476,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<unsigned int> &
+  dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE> &
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getLocallyOwnedProcBoundaryNodesVectorDevice()
   {
@@ -852,7 +526,7 @@ namespace dftfe
     bool               flag)
   {
     d_kpointCoordsVecDevice.resize(dftPtr->d_kPointCoordinates.size());
-    d_kpointCoordsVecDevice = dftPtr->d_kPointCoordinates;
+    d_kpointCoordsVecDevice.copyFrom(dftPtr->d_kPointCoordinates);
 
     std::vector<double> kpointSquareTimesHalfTemp(
       dftPtr->d_kPointWeights.size());
@@ -867,7 +541,7 @@ namespace dftfe
                    dftPtr->d_kPointCoordinates[3 * i + 2]);
       }
     d_kSquareTimesHalfVecDevice.resize(kpointSquareTimesHalfTemp.size());
-    d_kSquareTimesHalfVecDevice = kpointSquareTimesHalfTemp;
+    d_kSquareTimesHalfVecDevice.copyFrom(kpointSquareTimesHalfTemp);
 
     distributedCPUVec<dataTypes::number> flattenedArray;
     if (flag)
@@ -885,17 +559,20 @@ namespace dftfe
 
     size_t free_t, total_t;
 
-    cudaMemGetInfo(&free_t, &total_t);
+    dftfe::utils::deviceMemGetInfo(&free_t, &total_t);
     if (dftPtr->d_dftParamsPtr->verbosity >= 2)
-      pcout << "starting free mem: " << free_t << ", total mem: " << total_t
-            << std::endl;
+      pcout << "starting free mem on device: " << free_t
+            << ", total mem on device: " << total_t << std::endl;
 
     const unsigned int BVec =
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, numberWaveFunctions);
-    d_parallelChebyBlockVectorDevice.reinit(
+
+
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
       dftPtr->matrix_free_data.get_vector_partitioner(
         dftPtr->d_densityDofHandlerIndex),
-      BVec);
+      BVec,
+      d_parallelChebyBlockVectorDevice);
 
     if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_parallelChebyBlockVector2Device.reinit(
@@ -903,14 +580,12 @@ namespace dftfe
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       {
-        d_tempRealVec.resize(
-          (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
-           d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-          0.0);
-        d_tempImagVec.resize(
-          (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
-           d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
-          0.0);
+        d_tempRealVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
+                              d_parallelChebyBlockVectorDevice.numVectors()),
+                             0.0);
+        d_tempImagVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
+                              d_parallelChebyBlockVectorDevice.numVectors()),
+                             0.0);
       }
 
     const unsigned int n_ghosts =
@@ -922,8 +597,8 @@ namespace dftfe
         .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
         ->local_size();
 
-    thrust::host_vector<unsigned int> locallyOwnedProcBoundaryNodesVector(
-      localSize, 0);
+    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::HOST>
+      locallyOwnedProcBoundaryNodesVector(localSize, 0);
 
     const std::vector<std::pair<unsigned int, unsigned int>>
       &locallyOwnedProcBoundaryNodes =
@@ -947,9 +622,8 @@ namespace dftfe
     d_locallyOwnedProcBoundaryNodesVectorDevice.resize(localSize);
 
 
-    d_locallyOwnedProcBoundaryNodesVectorDevice =
-      locallyOwnedProcBoundaryNodesVector;
-
+    d_locallyOwnedProcBoundaryNodesVectorDevice.copyFrom(
+      locallyOwnedProcBoundaryNodesVector);
 
     vectorTools::computeCellLocalIndexSetMap(
       flattenedArray.get_partitioner(),
@@ -961,8 +635,10 @@ namespace dftfe
       d_macroCellIdToNormalCellIdMap,
       d_flattenedArrayCellLocalProcIndexIdMap);
 
-    d_flattenedArrayCellLocalProcIndexIdMapDevice =
-      d_flattenedArrayCellLocalProcIndexIdMap;
+    d_flattenedArrayCellLocalProcIndexIdMapDevice.resize(
+      d_flattenedArrayCellLocalProcIndexIdMap.size());
+    d_flattenedArrayCellLocalProcIndexIdMapDevice.copyFrom(
+      d_flattenedArrayCellLocalProcIndexIdMap);
 
 
 
@@ -985,7 +661,7 @@ namespace dftfe
       d_numLocallyOwnedCells * d_numberNodesPerElement *
         d_numberNodesPerElement * dftPtr->d_kPointWeights.size() *
         (1 + dftPtr->d_dftParamsPtr->spinPolarized),
-      dataTypes::numberThrustDevice(0.0));
+      dataTypes::number(0.0));
 
     if (dftPtr->d_dftParamsPtr->isPseudopotential)
       d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.resize(
@@ -1007,9 +683,10 @@ namespace dftfe
 
     if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
-        d_parallelProjectorKetTimesBlockVectorDevice.reinit(
-          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
-
+        dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+          BVec,
+          d_parallelProjectorKetTimesBlockVectorDevice);
 
         d_totalPseudoWfcNonLocal = 0;
         d_totalNonlocalElems     = 0;
@@ -1041,7 +718,7 @@ namespace dftfe
         d_maxSingleAtomPseudoWfc = maxPseudoWfc;
         d_cellHamMatrixTimesWaveMatrixNonLocalDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_numberNodesPerElement,
-          dataTypes::numberThrustDevice(0.0));
+          dataTypes::number(0.0));
         d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
         d_cellHamiltonianMatrixNonLocalFlattenedConjugate.resize(
           dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
@@ -1060,7 +737,7 @@ namespace dftfe
           d_totalNonlocalElems * d_numberNodesPerElement, 0);
         d_projectorKetTimesVectorAllCellsDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_maxSingleAtomPseudoWfc,
-          dataTypes::numberThrustDevice(0.0));
+          dataTypes::number(0.0));
 
         d_projectorIdsParallelNumberingMap.clear();
         d_projectorIdsParallelNumberingMap.resize(d_totalPseudoWfcNonLocal, 0);
@@ -1224,75 +901,93 @@ namespace dftfe
               }
           }
 
-        d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice =
-          d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
-        d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice =
-          d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
-        d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice =
-          d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal;
-        d_projectorIdsParallelNumberingMapDevice =
-          d_projectorIdsParallelNumberingMap;
-        // d_indexMapFromParallelNonLocalVecToReducedVecDevice=d_indexMapFromParallelNonLocalVecToReducedVec;
-        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice =
-          d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
-        d_projectorKetTimesVectorAllCellsReductionDevice =
-          d_projectorKetTimesVectorAllCellsReduction;
-        d_nonLocalPseudoPotentialConstantsDevice =
-          d_nonLocalPseudoPotentialConstants;
-        d_cellNodeIdMapNonLocalToLocalDevice = d_cellNodeIdMapNonLocalToLocal;
+        d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.resize(
+          d_cellHamiltonianMatrixNonLocalFlattenedConjugate.size());
+        d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.copyFrom(
+          d_cellHamiltonianMatrixNonLocalFlattenedConjugate);
+
+        d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.resize(
+          d_cellHamiltonianMatrixNonLocalFlattenedTranspose.size());
+        d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.copyFrom(
+          d_cellHamiltonianMatrixNonLocalFlattenedTranspose);
+
+        d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice.resize(
+          d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal.size());
+        d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice.copyFrom(
+          d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal);
+
+        d_projectorIdsParallelNumberingMapDevice.resize(
+          d_projectorIdsParallelNumberingMap.size());
+        d_projectorIdsParallelNumberingMapDevice.copyFrom(
+          d_projectorIdsParallelNumberingMap);
+
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.resize(
+          d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.size());
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.copyFrom(
+          d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec);
+
+        d_projectorKetTimesVectorAllCellsReductionDevice.resize(
+          d_projectorKetTimesVectorAllCellsReduction.size());
+        d_projectorKetTimesVectorAllCellsReductionDevice.copyFrom(
+          d_projectorKetTimesVectorAllCellsReduction);
+
+        d_nonLocalPseudoPotentialConstantsDevice.resize(
+          d_nonLocalPseudoPotentialConstants.size());
+        d_nonLocalPseudoPotentialConstantsDevice.copyFrom(
+          d_nonLocalPseudoPotentialConstants);
+
+        d_cellNodeIdMapNonLocalToLocalDevice.resize(
+          d_cellNodeIdMapNonLocalToLocal.size());
+        d_cellNodeIdMapNonLocalToLocalDevice.copyFrom(
+          d_cellNodeIdMapNonLocalToLocal);
 
         if (d_isMallocCalled)
           {
             free(h_d_A);
             free(h_d_B);
             free(h_d_C);
-            DeviceCHECK(cudaFree(d_A));
-            DeviceCHECK(cudaFree(d_B));
-            DeviceCHECK(cudaFree(d_C));
+            dftfe::utils::deviceFree(d_A);
+            dftfe::utils::deviceFree(d_B);
+            dftfe::utils::deviceFree(d_C);
           }
-        h_d_A = (dataTypes::numberDevice **)malloc(
-          d_totalNonlocalElems * sizeof(dataTypes::numberDevice *));
-        h_d_B = (dataTypes::numberDevice **)malloc(
-          d_totalNonlocalElems * sizeof(dataTypes::numberDevice *));
-        h_d_C = (dataTypes::numberDevice **)malloc(
-          d_totalNonlocalElems * sizeof(dataTypes::numberDevice *));
+        h_d_A = (dataTypes::number **)malloc(d_totalNonlocalElems *
+                                             sizeof(dataTypes::number *));
+        h_d_B = (dataTypes::number **)malloc(d_totalNonlocalElems *
+                                             sizeof(dataTypes::number *));
+        h_d_C = (dataTypes::number **)malloc(d_totalNonlocalElems *
+                                             sizeof(dataTypes::number *));
 
         for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
           {
-            h_d_A[i] = reinterpret_cast<dataTypes::numberDevice *>(
-              thrust::raw_pointer_cast(
-                &d_cellWaveFunctionMatrix[d_nonlocalElemIdToLocalElemIdMap[i] *
-                                          numberWaveFunctions *
-                                          d_numberNodesPerElement]));
-            h_d_C[i] = reinterpret_cast<dataTypes::numberDevice *>(
-              thrust::raw_pointer_cast(
-                &d_projectorKetTimesVectorAllCellsDevice
-                  [i * numberWaveFunctions * d_maxSingleAtomPseudoWfc]));
+            h_d_A[i] = d_cellWaveFunctionMatrix.begin() +
+                       d_nonlocalElemIdToLocalElemIdMap[i] *
+                         numberWaveFunctions * d_numberNodesPerElement;
+            h_d_C[i] = d_projectorKetTimesVectorAllCellsDevice.begin() +
+                       i * numberWaveFunctions * d_maxSingleAtomPseudoWfc;
           }
 
-        cudaMalloc((void **)&d_A,
-                   d_totalNonlocalElems * sizeof(dataTypes::numberDevice *));
-        cudaMalloc((void **)&d_B,
-                   d_totalNonlocalElems * sizeof(dataTypes::numberDevice *));
-        cudaMalloc((void **)&d_C,
-                   d_totalNonlocalElems * sizeof(dataTypes::numberDevice *));
+        dftfe::utils::deviceMalloc((void **)&d_A,
+                                   d_totalNonlocalElems *
+                                     sizeof(dataTypes::number *));
+        dftfe::utils::deviceMalloc((void **)&d_B,
+                                   d_totalNonlocalElems *
+                                     sizeof(dataTypes::number *));
+        dftfe::utils::deviceMalloc((void **)&d_C,
+                                   d_totalNonlocalElems *
+                                     sizeof(dataTypes::number *));
 
-        cudaMemcpy(d_A,
-                   h_d_A,
-                   d_totalNonlocalElems * sizeof(dataTypes::number *),
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(d_C,
-                   h_d_C,
-                   d_totalNonlocalElems * sizeof(dataTypes::number *),
-                   cudaMemcpyHostToDevice);
+        dftfe::utils::deviceMemcpyH2D(
+          d_A, h_d_A, d_totalNonlocalElems * sizeof(dataTypes::number *));
+        dftfe::utils::deviceMemcpyH2D(
+          d_C, h_d_C, d_totalNonlocalElems * sizeof(dataTypes::number *));
 
         d_isMallocCalled = true;
       }
 
-    cudaMemGetInfo(&free_t, &total_t);
+    dftfe::utils::deviceMemGetInfo(&free_t, &total_t);
     if (dftPtr->d_dftParamsPtr->verbosity >= 2)
-      pcout << "free mem after reinit allocations: " << free_t
-            << ", total mem: " << total_t << std::endl;
+      pcout << "free mem on device after reinit allocations: " << free_t
+            << ", total mem on device: " << total_t << std::endl;
   }
 
   //
@@ -1378,15 +1073,15 @@ namespace dftfe
     d_invSqrtMassVectorDevice.resize(numberLocalDofs + numberGhostDofs);
     d_sqrtMassVectorDevice.resize(numberLocalDofs + numberGhostDofs);
 
-    cudaMemcpy(thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]),
-               invSqrtMassVec.begin(),
-               (numberLocalDofs + numberGhostDofs) * sizeof(double),
-               cudaMemcpyHostToDevice);
+    dftfe::utils::deviceMemcpyH2D(d_invSqrtMassVectorDevice.begin(),
+                                  invSqrtMassVec.begin(),
+                                  (numberLocalDofs + numberGhostDofs) *
+                                    sizeof(double));
 
-    cudaMemcpy(thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]),
-               sqrtMassVec.begin(),
-               (numberLocalDofs + numberGhostDofs) * sizeof(double),
-               cudaMemcpyHostToDevice);
+    dftfe::utils::deviceMemcpyH2D(d_sqrtMassVectorDevice.begin(),
+                                  sqrtMassVec.begin(),
+                                  (numberLocalDofs + numberGhostDofs) *
+                                    sizeof(double));
 
     computing_timer.leave_subsection(
       "kohnShamDFTOperatorDeviceClass Mass assembly");
@@ -1406,18 +1101,15 @@ namespace dftfe
       {
         for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
           {
-            h_d_B[i] = reinterpret_cast<dataTypes::numberDevice *>(
-              thrust::raw_pointer_cast(
-                &d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice
-                  [d_kPointIndex * d_totalNonlocalElems *
-                     d_numberNodesPerElement * d_maxSingleAtomPseudoWfc +
-                   i * d_numberNodesPerElement * d_maxSingleAtomPseudoWfc]));
+            h_d_B[i] =
+              d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.begin() +
+              d_kPointIndex * d_totalNonlocalElems * d_numberNodesPerElement *
+                d_maxSingleAtomPseudoWfc +
+              i * d_numberNodesPerElement * d_maxSingleAtomPseudoWfc;
           }
 
-        cudaMemcpy(d_B,
-                   h_d_B,
-                   d_totalNonlocalElems * sizeof(dataTypes::number *),
-                   cudaMemcpyHostToDevice);
+        dftfe::utils::deviceMemcpyH2D(
+          d_B, h_d_B, d_totalNonlocalElems * sizeof(dataTypes::number *));
       }
   }
 
@@ -1500,7 +1192,8 @@ namespace dftfe
           iElemCount++;
         }
 
-    d_vEffJxWDevice = d_vEffJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
     if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
          dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
         !d_isStiffnessMatrixExternalPotCorrComputed)
@@ -1647,8 +1340,13 @@ namespace dftfe
           iElemCount++;
         }
 
-    d_vEffJxWDevice                        = d_vEffJxW;
-    d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
+
+    d_derExcWithSigmaTimesGradRhoJxWDevice.resize(
+      d_derExcWithSigmaTimesGradRhoJxW.size());
+    d_derExcWithSigmaTimesGradRhoJxWDevice.copyFrom(
+      d_derExcWithSigmaTimesGradRhoJxW);
 
     if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
          dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
@@ -1743,7 +1441,9 @@ namespace dftfe
           iElemCount++;
         }
 
-    d_vEffJxWDevice = d_vEffJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
+
 
     if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
          dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
@@ -1920,8 +1620,13 @@ namespace dftfe
           iElemCount++;
         }
 
-    d_vEffJxWDevice                        = d_vEffJxW;
-    d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
+
+    d_derExcWithSigmaTimesGradRhoJxWDevice.resize(
+      d_derExcWithSigmaTimesGradRhoJxW.size());
+    d_derExcWithSigmaTimesGradRhoJxWDevice.copyFrom(
+      d_derExcWithSigmaTimesGradRhoJxW);
 
     if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
          dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
@@ -1971,7 +1676,8 @@ namespace dftfe
           iElem++;
         }
 
-    d_vEffExternalPotCorrJxWDevice = d_vEffExternalPotCorrJxW;
+    d_vEffExternalPotCorrJxWDevice.resize(d_vEffExternalPotCorrJxW.size());
+    d_vEffExternalPotCorrJxWDevice.copyFrom(d_vEffExternalPotCorrJxW);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -2069,7 +1775,8 @@ namespace dftfe
           } // if cellPtr->is_locally_owned() loop
 
       } // cell loop
-    d_vEffJxWDevice = d_vEffJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
   }
 
 
@@ -2407,7 +2114,8 @@ namespace dftfe
           } // if cellPtr->is_locally_owned() loop
 
       } // cell loop
-    d_vEffJxWDevice = d_vEffJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
   }
 
 
@@ -2638,8 +2346,13 @@ namespace dftfe
           iElemCount++;
         }
 
-    d_vEffJxWDevice                        = d_vEffJxW;
-    d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
+
+    d_derExcWithSigmaTimesGradRhoJxWDevice.resize(
+      d_derExcWithSigmaTimesGradRhoJxW.size());
+    d_derExcWithSigmaTimesGradRhoJxWDevice.copyFrom(
+      d_derExcWithSigmaTimesGradRhoJxW);
   }
 
 
@@ -3355,24 +3068,29 @@ namespace dftfe
           } // if cellPtr->is_locally_owned() loop
 
       } // cell loop
-    d_vEffJxWDevice                        = d_vEffJxW;
-    d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
+    d_vEffJxWDevice.resize(d_vEffJxW.size());
+    d_vEffJxWDevice.copyFrom(d_vEffJxW);
+
+    d_derExcWithSigmaTimesGradRhoJxWDevice.resize(
+      d_derExcWithSigmaTimesGradRhoJxW.size());
+    d_derExcWithSigmaTimesGradRhoJxWDevice.copyFrom(
+      d_derExcWithSigmaTimesGradRhoJxW);
   }
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::HX(
-    distributedDeviceVec<dataTypes::numberDevice> &    src,
-    distributedDeviceVec<dataTypes::numberFP32Device> &tempFloatArray,
-    distributedDeviceVec<dataTypes::numberDevice> &    projectorKetTimesVector,
-    const unsigned int                                 localVectorSize,
-    const unsigned int                                 numberWaveFunctions,
-    const bool                                         scaleFlag,
-    const double                                       scalar,
-    distributedDeviceVec<dataTypes::numberDevice> &    dst,
-    const bool                                         doUnscalingSrc,
-    const bool                                         singlePrecCommun,
+    distributedDeviceVec<dataTypes::number> &    src,
+    distributedDeviceVec<dataTypes::numberFP32> &tempFloatArray,
+    distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+    const unsigned int                           localVectorSize,
+    const unsigned int                           numberWaveFunctions,
+    const bool                                   scaleFlag,
+    const double                                 scalar,
+    distributedDeviceVec<dataTypes::number> &    dst,
+    const bool                                   doUnscalingSrc,
+    const bool                                   singlePrecCommun,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     const unsigned int n_ghosts =
@@ -3387,44 +3105,33 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       scalar,
-      src.begin(),
-      thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+      d_invSqrtMassVectorDevice.begin(),
+      src.begin());
+
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions +
-                             (deviceConstants::blockSize - 1)) /
-                              deviceConstants::blockSize * localVectorSize,
-                            deviceConstants::blockSize>>>(
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
           numberWaveFunctions,
           localVectorSize,
           1.0,
-          dst.begin(),
-          thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+          d_sqrtMassVectorDevice.begin(),
+          dst.begin());
       }
 
 
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions +
-                                   (deviceConstants::blockSize - 1)) /
-                                    deviceConstants::blockSize * localSize,
-                                  deviceConstants::blockSize>>>(
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
           numberWaveFunctions * localSize, src.begin(), tempFloatArray.begin());
         tempFloatArray.updateGhostValues();
 
         if (n_ghosts != 0)
-          convFloatArrToDoubleArr<<<(numberWaveFunctions +
-                                     (deviceConstants::blockSize - 1)) /
-                                      deviceConstants::blockSize * n_ghosts,
-                                    deviceConstants::blockSize>>>(
+          dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
             numberWaveFunctions * n_ghosts,
             tempFloatArray.begin() + localSize * numberWaveFunctions,
             src.begin() + localSize * numberWaveFunctions);
@@ -3454,10 +3161,7 @@ namespace dftfe
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       getOverloadedConstraintMatrix()->distribute_slave_to_master(
-        dst,
-        thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[0]),
-        numberWaveFunctions);
+        dst, d_tempRealVec.begin(), d_tempImagVec.begin(), numberWaveFunctions);
     else
       getOverloadedConstraintMatrix()->distribute_slave_to_master(
         dst, numberWaveFunctions);
@@ -3466,59 +3170,66 @@ namespace dftfe
     src.zeroOutGhosts();
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions +
-                                   (deviceConstants::blockSize - 1)) /
-                                    deviceConstants::blockSize * totalSize,
-                                  deviceConstants::blockSize>>>(
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
           numberWaveFunctions * totalSize, dst.begin(), tempFloatArray.begin());
-        tempFloatArray.compressAdd();
+
+        tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyFloatArrToDoubleArrLocallyOwned<<<
-          (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-            deviceConstants::blockSize * localSize,
-          deviceConstants::blockSize>>>(
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           numberWaveFunctions,
           localSize,
-          tempFloatArray.begin(),
-          thrust::raw_pointer_cast(
-            &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
-          dst.begin());
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          copyFloatArrToDoubleArrLocallyOwned,
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          numberWaveFunctions,
+          localSize,
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#endif
 
         dst.zeroOutGhosts();
       }
     else
       {
-        dst.compressAdd();
+        dst.accumulateAddLocallyOwned();
       }
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       1.0,
-      dst.begin(),
-      thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+      d_invSqrtMassVectorDevice.begin(),
+      dst.begin());
+
 
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions +
-                           (deviceConstants::blockSize - 1)) /
-                            deviceConstants::blockSize * localVectorSize,
-                          deviceConstants::blockSize>>>(
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
         numberWaveFunctions,
         localVectorSize,
         1.0 / scalar,
-        src.begin(),
-        thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+        d_sqrtMassVectorDevice.begin(),
+        src.begin());
   }
 
 
@@ -3526,14 +3237,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::HX(
-    distributedDeviceVec<dataTypes::numberDevice> &src,
-    distributedDeviceVec<dataTypes::numberDevice> &projectorKetTimesVector,
-    const unsigned int                             localVectorSize,
-    const unsigned int                             numberWaveFunctions,
-    const bool                                     scaleFlag,
-    const double                                   scalar,
-    distributedDeviceVec<dataTypes::numberDevice> &dst,
-    const bool                                     doUnscalingSrc,
+    distributedDeviceVec<dataTypes::number> &src,
+    distributedDeviceVec<dataTypes::number> &projectorKetTimesVector,
+    const unsigned int                       localVectorSize,
+    const unsigned int                       numberWaveFunctions,
+    const bool                               scaleFlag,
+    const double                             scalar,
+    distributedDeviceVec<dataTypes::number> &dst,
+    const bool                               doUnscalingSrc,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     const unsigned int n_ghosts =
@@ -3548,27 +3259,22 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       scalar,
-      src.begin(),
-      thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+      d_invSqrtMassVectorDevice.begin(),
+      src.begin());
+
 
     if (scaleFlag)
       {
-        scaleDeviceKernel<<<(numberWaveFunctions +
-                             (deviceConstants::blockSize - 1)) /
-                              deviceConstants::blockSize * localVectorSize,
-                            deviceConstants::blockSize>>>(
+        dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
           numberWaveFunctions,
           localVectorSize,
           1.0,
-          dst.begin(),
-          thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+          d_sqrtMassVectorDevice.begin(),
+          dst.begin());
       }
 
 
@@ -3594,45 +3300,35 @@ namespace dftfe
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       getOverloadedConstraintMatrix()->distribute_slave_to_master(
-        dst,
-        thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[0]),
-        numberWaveFunctions);
+        dst, d_tempRealVec.begin(), d_tempImagVec.begin(), numberWaveFunctions);
     else
       getOverloadedConstraintMatrix()->distribute_slave_to_master(
         dst, numberWaveFunctions);
 
 
     src.zeroOutGhosts();
-    dst.compressAdd();
+    dst.accumulateAddLocallyOwned();
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleDeviceKernel<<<(numberWaveFunctions +
-                         (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * localVectorSize,
-                        deviceConstants::blockSize>>>(
+    dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
       numberWaveFunctions,
       localVectorSize,
       1.0,
-      dst.begin(),
-      thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
-
+      d_invSqrtMassVectorDevice.begin(),
+      dst.begin());
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleDeviceKernel<<<(numberWaveFunctions +
-                           (deviceConstants::blockSize - 1)) /
-                            deviceConstants::blockSize * localVectorSize,
-                          deviceConstants::blockSize>>>(
+      dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
         numberWaveFunctions,
         localVectorSize,
         1.0 / scalar,
-        src.begin(),
-        thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+        d_sqrtMassVectorDevice.begin(),
+        src.begin());
   }
 
 
@@ -3650,15 +3346,15 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::HXCheby(
-    distributedDeviceVec<dataTypes::numberDevice> &    src,
-    distributedDeviceVec<dataTypes::numberFP32Device> &tempFloatArray,
-    distributedDeviceVec<dataTypes::numberDevice> &    projectorKetTimesVector,
-    const unsigned int                                 localVectorSize,
-    const unsigned int                                 numberWaveFunctions,
-    distributedDeviceVec<dataTypes::numberDevice> &    dst,
-    bool                                               chebMixedPrec,
-    bool                                               computePart1,
-    bool                                               computePart2)
+    distributedDeviceVec<dataTypes::number> &    src,
+    distributedDeviceVec<dataTypes::numberFP32> &tempFloatArray,
+    distributedDeviceVec<dataTypes::number> &    projectorKetTimesVector,
+    const unsigned int                           localVectorSize,
+    const unsigned int                           numberWaveFunctions,
+    distributedDeviceVec<dataTypes::number> &    dst,
+    bool                                         chebMixedPrec,
+    bool                                         computePart1,
+    bool                                         computePart2)
   {
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -3674,22 +3370,19 @@ namespace dftfe
       {
         if (chebMixedPrec)
           {
-            convDoubleArrToFloatArr<<<
-              (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-                deviceConstants::blockSize * localSize,
-              deviceConstants::blockSize>>>(numberWaveFunctions * localSize,
-                                            src.begin(),
-                                            tempFloatArray.begin());
+            dftfe::utils::deviceKernelsGeneric::
+              copyValueType1ArrToValueType2Arr(numberWaveFunctions * localSize,
+                                               src.begin(),
+                                               tempFloatArray.begin());
+
             tempFloatArray.updateGhostValues();
 
             if (n_ghosts != 0)
-              convFloatArrToDoubleArr<<<(numberWaveFunctions +
-                                         (deviceConstants::blockSize - 1)) /
-                                          deviceConstants::blockSize * n_ghosts,
-                                        deviceConstants::blockSize>>>(
-                numberWaveFunctions * n_ghosts,
-                tempFloatArray.begin() + localSize * numberWaveFunctions,
-                src.begin() + localSize * numberWaveFunctions);
+              dftfe::utils::deviceKernelsGeneric::
+                copyValueType1ArrToValueType2Arr(
+                  numberWaveFunctions * n_ghosts,
+                  tempFloatArray.begin() + localSize * numberWaveFunctions,
+                  src.begin() + localSize * numberWaveFunctions);
           }
         else
           {
@@ -3725,10 +3418,7 @@ namespace dftfe
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       getOverloadedConstraintMatrix()->distribute_slave_to_master(
-        dst,
-        thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[0]),
-        numberWaveFunctions);
+        dst, d_tempRealVec.begin(), d_tempImagVec.begin(), numberWaveFunctions);
     else
       getOverloadedConstraintMatrix()->distribute_slave_to_master(
         dst, numberWaveFunctions);
@@ -3740,30 +3430,41 @@ namespace dftfe
 
     if (chebMixedPrec)
       {
-        convDoubleArrToFloatArr<<<(numberWaveFunctions +
-                                   (deviceConstants::blockSize - 1)) /
-                                    deviceConstants::blockSize * totalSize,
-                                  deviceConstants::blockSize>>>(
+        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
           numberWaveFunctions * totalSize, dst.begin(), tempFloatArray.begin());
-        tempFloatArray.compressAdd();
+
+        tempFloatArray.accumulateAddLocallyOwned();
 
         // copy locally owned processor boundary nodes only to dst vector
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyFloatArrToDoubleArrLocallyOwned<<<
-          (numberWaveFunctions + (deviceConstants::blockSize - 1)) /
-            deviceConstants::blockSize * localSize,
-          deviceConstants::blockSize>>>(
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
           numberWaveFunctions,
           localSize,
-          tempFloatArray.begin(),
-          thrust::raw_pointer_cast(
-            &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
-          dst.begin());
-
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+        hipLaunchKernelGGL(
+          copyFloatArrToDoubleArrLocallyOwned,
+          (numberWaveFunctions + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+            dftfe::utils::DEVICE_BLOCK_SIZE * localSize,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          0,
+          numberWaveFunctions,
+          localSize,
+          dftfe::utils::makeDataTypeDeviceCompatible(tempFloatArray.begin()),
+          d_locallyOwnedProcBoundaryNodesVectorDevice.begin(),
+          dftfe::utils::makeDataTypeDeviceCompatible(dst.begin()));
+#endif
         dst.zeroOutGhosts();
       }
     else
       {
-        dst.compressAdd();
+        dst.accumulateAddLocallyOwned();
       }
   }
 
@@ -3772,16 +3473,16 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::XtHX(
-    const dataTypes::numberDevice *                  X,
-    distributedDeviceVec<dataTypes::numberDevice> &  XBlock,
-    distributedDeviceVec<dataTypes::numberDevice> &  HXBlock,
-    distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+    const dataTypes::number *                        X,
+    distributedDeviceVec<dataTypes::number> &        XBlock,
+    distributedDeviceVec<dataTypes::number> &        HXBlock,
+    distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
     const unsigned int                               M,
     const unsigned int                               N,
-    cublasHandle_t &                                 handle,
+    dftfe::utils::deviceBlasHandle_t &               handle,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-    DeviceCCLWrapper &                               devicecclMpiCommDomain,
+    utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3804,17 +3505,20 @@ namespace dftfe
     const unsigned int vectorsBlockSize =
       std::min(dftPtr->d_dftParamsPtr->wfcBlockSize, N);
 
-    dataTypes::number *projHamBlockHost;
-    cudaMallocHost((void **)&projHamBlockHost,
-                   vectorsBlockSize * N * sizeof(dataTypes::number));
-    std::memset(projHamBlockHost,
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::HOST_PINNED>
+      projHamBlockHost;
+    projHamBlockHost.resize(vectorsBlockSize * N, 0);
+    std::memset(projHamBlockHost.begin(),
                 0,
                 vectorsBlockSize * N * sizeof(dataTypes::number));
 
-    thrust::device_vector<dataTypes::numberThrustDevice> HXBlockFull(
-      vectorsBlockSize * M, dataTypes::numberThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberThrustDevice> projHamBlock(
-      vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
 
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {
@@ -3830,15 +3534,12 @@ namespace dftfe
 
             for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
               {
-                stridedCopyToBlockKernel<<<(chebyBlockSize +
-                                            (deviceConstants::blockSize - 1)) /
-                                             deviceConstants::blockSize * M,
-                                           deviceConstants::blockSize>>>(
-                  chebyBlockSize, M, X, N, XBlock.begin(), k);
+                dftfe::utils::deviceKernelsGeneric::
+                  stridedCopyToBlockConstantStride(
+                    chebyBlockSize, N, M, k, X, XBlock.begin());
 
                 // evaluate XBlock^{T} times H^{T} and store in HXBlock
-                HXBlock.setZero();
-                // thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
+                HXBlock.setValue(0);
                 const bool   scaleFlag = false;
                 const double scalar    = 1.0;
                 HX(XBlock,
@@ -3851,55 +3552,48 @@ namespace dftfe
                    false,
                    onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                stridedCopyFromBlockKernel<<<
-                  (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                    deviceConstants::blockSize * M,
-                  deviceConstants::blockSize>>>(
-                  chebyBlockSize,
-                  M,
-                  HXBlock.begin(),
-                  B,
-                  reinterpret_cast<dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&HXBlockFull[0])),
-                  k - jvec);
+                dftfe::utils::deviceKernelsGeneric::
+                  stridedCopyFromBlockConstantStride(B,
+                                                     chebyBlockSize,
+                                                     M,
+                                                     k - jvec,
+                                                     HXBlock.begin(),
+                                                     HXBlockFull.begin());
               }
 
             // Comptute local XTrunc^{T}*HConj*XConj.
             const dataTypes::number alpha = dataTypes::number(1.0),
                                     beta  = dataTypes::number(0.0);
             const unsigned int D          = N - jvec;
-            cublasXgemm(
+            dftfe::utils::deviceBlasWrapper::gemm(
               handle,
-              CUBLAS_OP_N,
+              dftfe::utils::DEVICEBLAS_OP_N,
               std::is_same<dataTypes::number, std::complex<double>>::value ?
-                CUBLAS_OP_C :
-                CUBLAS_OP_T,
+                dftfe::utils::DEVICEBLAS_OP_C :
+                dftfe::utils::DEVICEBLAS_OP_T,
               D,
               B,
               M,
-              reinterpret_cast<const dataTypes::numberDevice *>(&alpha),
+              &alpha,
               X + jvec,
               N,
-              reinterpret_cast<const dataTypes::numberDevice *>(
-                thrust::raw_pointer_cast(&HXBlockFull[0])),
+              HXBlockFull.begin(),
               B,
-              reinterpret_cast<const dataTypes::numberDevice *>(&beta),
-              reinterpret_cast<dataTypes::numberDevice *>(
-                thrust::raw_pointer_cast(&projHamBlock[0])),
+              &beta,
+              projHamBlock.begin(),
               D);
 
-            cudaMemcpy(projHamBlockHost,
-                       reinterpret_cast<dataTypes::numberDevice *>(
-                         thrust::raw_pointer_cast(&projHamBlock[0])),
-                       D * B * sizeof(dataTypes::numberDevice),
-                       cudaMemcpyDeviceToHost);
+            dftfe::utils::deviceMemcpyD2H(
+              projHamBlockHost.begin(),
+              dftfe::utils::makeDataTypeDeviceCompatible(projHamBlock.begin()),
+              D * B * sizeof(dataTypes::number));
 
 
             // Sum local projHamBlock across domain decomposition processors
             MPI_Allreduce(MPI_IN_PLACE,
-                          projHamBlockHost,
+                          projHamBlockHost.begin(),
                           D * B,
-                          dataTypes::mpi_type_id(projHamBlockHost),
+                          dataTypes::mpi_type_id(projHamBlockHost.begin()),
                           MPI_SUM,
                           mpi_communicator);
 
@@ -3925,7 +3619,6 @@ namespace dftfe
           } // band parallelization
       }
 
-    DeviceCHECK(cudaFreeHost(projHamBlockHost));
 
     if (numberBandGroups > 1)
       {
@@ -3941,16 +3634,16 @@ namespace dftfe
   void
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     XtHXOverlapComputeCommun(
-      const dataTypes::numberDevice *                  X,
-      distributedDeviceVec<dataTypes::numberDevice> &  XBlock,
-      distributedDeviceVec<dataTypes::numberDevice> &  HXBlock,
-      distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        XBlock,
+      distributedDeviceVec<dataTypes::number> &        HXBlock,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -4005,51 +3698,54 @@ namespace dftfe
     const unsigned int numberBlocks = N / vectorsBlockSize;
 
     // create separate Device streams for Device->CPU copy and computation
-    cudaStream_t streamCompute, streamDataMove;
-    DeviceCHECK(cudaStreamCreate(&streamCompute));
-    DeviceCHECK(cudaStreamCreate(&streamDataMove));
+    dftfe::utils::deviceStream_t streamCompute, streamDataMove;
+    dftfe::utils::deviceStreamCreate(&streamCompute);
+    dftfe::utils::deviceStreamCreate(&streamDataMove);
 
-    // attach cublas handle to compute stream
-    cublasSetStream(handle, streamCompute);
+    // attach deviceblas handle to compute stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
     // create array of compute and copy events on Devices
     // for all the blocks. These are required for synchronization
     // between compute, copy and communication as discussed above in the
     // pseudo code
-    cudaEvent_t computeEvents[numberBlocks];
-    cudaEvent_t copyEvents[numberBlocks];
+    dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+    dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
     for (int i = 0; i < numberBlocks; ++i)
       {
-        DeviceCHECK(cudaEventCreate(&computeEvents[i]));
-        DeviceCHECK(cudaEventCreate(&copyEvents[i]));
+        dftfe::utils::deviceEventCreate(&computeEvents[i]);
+        dftfe::utils::deviceEventCreate(&copyEvents[i]);
       }
 
-    dataTypes::number *projHamBlockHost;
-    DeviceCHECK(
-      cudaMallocHost((void **)&projHamBlockHost,
-                     vectorsBlockSize * N * sizeof(dataTypes::number)));
-    std::memset(projHamBlockHost,
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::HOST_PINNED>
+      projHamBlockHost;
+    projHamBlockHost.resize(vectorsBlockSize * N, 0);
+    std::memset(projHamBlockHost.begin(),
                 0,
                 vectorsBlockSize * N * sizeof(dataTypes::number));
 
-    thrust::device_vector<dataTypes::numberThrustDevice> HXBlockFull(
-      vectorsBlockSize * M, dataTypes::numberThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberThrustDevice> projHamBlock(
-      vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberThrustDevice> projHamBlockNext(
-      vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
 
-    dataTypes::numberValueType *tempReal;
-    dataTypes::numberValueType *tempImag;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                dftfe::utils::MemorySpace::DEVICE>
+      tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                dftfe::utils::MemorySpace::DEVICE>
+      tempImag;
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       {
-        DeviceCHECK(cudaMalloc((void **)&tempReal,
-                               vectorsBlockSize * N *
-                                 sizeof(dataTypes::numberValueType)));
-        DeviceCHECK(cudaMalloc((void **)&tempImag,
-                               vectorsBlockSize * N *
-                                 sizeof(dataTypes::numberValueType)));
+        tempReal.resize(vectorsBlockSize * N, 0);
+        tempImag.resize(vectorsBlockSize * N, 0);
       }
 
     unsigned int blockCount = 0;
@@ -4077,14 +3773,12 @@ namespace dftfe
                 // wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<
-                      (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * M,
-                      deviceConstants::blockSize>>>(
-                      chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     HX(XBlock,
@@ -4097,43 +3791,37 @@ namespace dftfe
                        false,
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                    stridedCopyFromBlockKernel<<<
-                      (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * M,
-                      deviceConstants::blockSize>>>(
-                      chebyBlockSize,
-                      M,
-                      HXBlock.begin(),
-                      B,
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&HXBlockFull[0])),
-                      k - jvec);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(B,
+                                                         chebyBlockSize,
+                                                         M,
+                                                         k - jvec,
+                                                         HXBlock.begin(),
+                                                         HXBlockFull.begin());
                   }
 
                 // evalute X^{T} times HXBlock
-                cublasXgemm(
+                dftfe::utils::deviceBlasWrapper::gemm(
                   handle,
-                  CUBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   std::is_same<dataTypes::number, std::complex<double>>::value ?
-                    CUBLAS_OP_C :
-                    CUBLAS_OP_T,
+                    dftfe::utils::DEVICEBLAS_OP_C :
+                    dftfe::utils::DEVICEBLAS_OP_T,
                   D,
                   B,
                   M,
-                  reinterpret_cast<const dataTypes::numberDevice *>(&alpha),
+                  &alpha,
                   X + jvec,
                   N,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&HXBlockFull[0])),
+                  HXBlockFull.begin(),
                   B,
-                  reinterpret_cast<const dataTypes::numberDevice *>(&beta),
-                  reinterpret_cast<dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&projHamBlock[0])),
+                  &beta,
+                  projHamBlock.begin(),
                   D);
 
                 // record completion of compute for first block
-                DeviceCHECK(
-                  cudaEventRecord(computeEvents[blockCount], streamCompute));
+                dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                streamCompute);
               }
 
 
@@ -4143,8 +3831,8 @@ namespace dftfe
             // compute on currentblock and swap is over. Note that at this point
             // there is nothing queued in the streamDataMove as all previous
             // operations in that stream are over.
-            if ((cudaEventSynchronize(computeEvents[blockCount]) ==
-                 cudaSuccess) &&
+            if ((dftfe::utils::deviceEventSynchronize(
+                   computeEvents[blockCount]) == dftfe::utils::deviceSuccess) &&
                 (jvec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
               projHamBlock.swap(projHamBlockNext);
 
@@ -4158,14 +3846,12 @@ namespace dftfe
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<<<
-                      (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * M,
-                      deviceConstants::blockSize>>>(
-                      chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     HX(XBlock,
@@ -4178,43 +3864,37 @@ namespace dftfe
                        false,
                        onlyHPrimePartForFirstOrderDensityMatResponse);
 
-                    stridedCopyFromBlockKernel<<<
-                      (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                        deviceConstants::blockSize * M,
-                      deviceConstants::blockSize>>>(
-                      chebyBlockSize,
-                      M,
-                      HXBlock.begin(),
-                      B,
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&HXBlockFull[0])),
-                      k - jvecNew);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyFromBlockConstantStride(B,
+                                                         chebyBlockSize,
+                                                         M,
+                                                         k - jvecNew,
+                                                         HXBlock.begin(),
+                                                         HXBlockFull.begin());
                   }
 
                 // evalute X^{T} times HXBlock
-                cublasXgemm(
+                dftfe::utils::deviceBlasWrapper::gemm(
                   handle,
-                  CUBLAS_OP_N,
+                  dftfe::utils::DEVICEBLAS_OP_N,
                   std::is_same<dataTypes::number, std::complex<double>>::value ?
-                    CUBLAS_OP_C :
-                    CUBLAS_OP_T,
+                    dftfe::utils::DEVICEBLAS_OP_C :
+                    dftfe::utils::DEVICEBLAS_OP_T,
                   DNew,
                   B,
                   M,
-                  reinterpret_cast<const dataTypes::numberDevice *>(&alpha),
+                  &alpha,
                   X + jvecNew,
                   N,
-                  reinterpret_cast<const dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&HXBlockFull[0])),
+                  HXBlockFull.begin(),
                   B,
-                  reinterpret_cast<const dataTypes::numberDevice *>(&beta),
-                  reinterpret_cast<dataTypes::numberDevice *>(
-                    thrust::raw_pointer_cast(&projHamBlockNext[0])),
+                  &beta,
+                  projHamBlockNext.begin(),
                   DNew);
 
                 // record completion of compute for next block
-                DeviceCHECK(cudaEventRecord(computeEvents[blockCount + 1],
-                                            streamCompute));
+                dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
+                                                streamCompute);
               }
 
             if (dftPtr->d_dftParamsPtr->useDeviceDirectAllReduce)
@@ -4224,47 +3904,44 @@ namespace dftfe
                                  std::complex<double>>::value)
                   {
                     devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&projHamBlock[0])),
-                      reinterpret_cast<dataTypes::numberDevice *>(
-                        thrust::raw_pointer_cast(&projHamBlock[0])),
+                      projHamBlock.begin(),
+                      projHamBlock.begin(),
                       D * B,
-                      tempReal,
-                      tempImag,
+                      tempReal.begin(),
+                      tempImag.begin(),
                       streamDataMove);
                   }
                 else
                   devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                    reinterpret_cast<dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&projHamBlock[0])),
-                    reinterpret_cast<dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&projHamBlock[0])),
+                    projHamBlock.begin(),
+                    projHamBlock.begin(),
                     D * B,
                     streamDataMove);
               }
 
-            cudaMemcpyAsync(projHamBlockHost,
-                            reinterpret_cast<const dataTypes::numberDevice *>(
-                              thrust::raw_pointer_cast(&projHamBlock[0])),
-                            D * B * sizeof(dataTypes::numberDevice),
-                            cudaMemcpyDeviceToHost,
-                            streamDataMove);
+            dftfe::utils::deviceMemcpyAsyncD2H(
+              projHamBlockHost.begin(),
+              dftfe::utils::makeDataTypeDeviceCompatible(projHamBlock.begin()),
+              D * B * sizeof(dataTypes::number),
+              streamDataMove);
 
             // record completion of Device->CPU copy for current block
-            DeviceCHECK(
-              cudaEventRecord(copyEvents[blockCount], streamDataMove));
+            dftfe::utils::deviceEventRecord(copyEvents[blockCount],
+                                            streamDataMove);
 
             // Check that Device->CPU on the current block has been completed.
             // If completed, perform blocking MPI commmunication on the current
             // block and copy to ScaLAPACK matrix
-            if (cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
+            if (dftfe::utils::deviceEventSynchronize(copyEvents[blockCount]) ==
+                dftfe::utils::deviceSuccess)
               {
                 // Sum local projHamBlock across domain decomposition processors
                 if (!dftPtr->d_dftParamsPtr->useDeviceDirectAllReduce)
                   MPI_Allreduce(MPI_IN_PLACE,
-                                projHamBlockHost,
+                                projHamBlockHost.begin(),
                                 D * B,
-                                dataTypes::mpi_type_id(projHamBlockHost),
+                                dataTypes::mpi_type_id(
+                                  projHamBlockHost.begin()),
                                 MPI_SUM,
                                 mpi_communicator);
 
@@ -4292,23 +3969,17 @@ namespace dftfe
         blockCount += 1;
       }
 
-    DeviceCHECK(cudaFreeHost(projHamBlockHost));
-    if (std::is_same<dataTypes::number, std::complex<double>>::value)
-      {
-        DeviceCHECK(cudaFree(tempReal));
-        DeviceCHECK(cudaFree(tempImag));
-      }
-    // return cublas handle to default stream
-    cublasSetStream(handle, NULL);
+    // return deviceblas handle to default stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
     for (int i = 0; i < numberBlocks; ++i)
       {
-        DeviceCHECK(cudaEventDestroy(computeEvents[i]));
-        DeviceCHECK(cudaEventDestroy(copyEvents[i]));
+        dftfe::utils::deviceEventDestroy(computeEvents[i]);
+        dftfe::utils::deviceEventDestroy(copyEvents[i]);
       }
 
-    DeviceCHECK(cudaStreamDestroy(streamCompute));
-    DeviceCHECK(cudaStreamDestroy(streamDataMove));
+    dftfe::utils::deviceStreamDestroy(streamCompute);
+    dftfe::utils::deviceStreamDestroy(streamDataMove);
 
     if (numberBandGroups > 1)
       {
@@ -4351,18 +4022,18 @@ namespace dftfe
   void
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     XtHXMixedPrecOverlapComputeCommun(
-      const dataTypes::numberDevice *                    X,
-      distributedDeviceVec<dataTypes::numberDevice> &    XBlock,
-      distributedDeviceVec<dataTypes::numberFP32Device> &tempFloatBlock,
-      distributedDeviceVec<dataTypes::numberDevice> &    HXBlock,
-      distributedDeviceVec<dataTypes::numberDevice> &  projectorKetTimesVector,
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        XBlock,
+      distributedDeviceVec<dataTypes::numberFP32> &    tempFloatBlock,
+      distributedDeviceVec<dataTypes::number> &        HXBlock,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
-      cublasHandle_t &                                 handle,
+      dftfe::utils::deviceBlasHandle_t &               handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      DeviceCCLWrapper &                               devicecclMpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -4386,85 +4057,89 @@ namespace dftfe
 
     const unsigned int numberBlocks = N / vectorsBlockSize;
 
-    // create cuda compute and copy streams
-    cudaStream_t streamCompute, streamDataMove;
-    DeviceCHECK(cudaStreamCreate(&streamCompute));
-    DeviceCHECK(cudaStreamCreate(&streamDataMove));
+    // create device compute and copy streams
+    dftfe::utils::deviceStream_t streamCompute, streamDataMove;
+    dftfe::utils::deviceStreamCreate(&streamCompute);
+    dftfe::utils::deviceStreamCreate(&streamDataMove);
 
-    // attach cublas handle to compute stream
-    cublasSetStream(handle, streamCompute);
+    // attach deviceblas handle to compute stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, streamCompute);
 
     // create array of compute and copy events on Devices
     // for all the blocks. These are required for synchronization
     // between compute, copy and communication as discussed above in the
     // pseudo code
-    cudaEvent_t computeEvents[numberBlocks];
-    cudaEvent_t copyEvents[numberBlocks];
+    dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
+    dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
     for (int i = 0; i < numberBlocks; ++i)
       {
-        DeviceCHECK(cudaEventCreate(&computeEvents[i]));
-        DeviceCHECK(cudaEventCreate(&copyEvents[i]));
+        dftfe::utils::deviceEventCreate(&computeEvents[i]);
+        dftfe::utils::deviceEventCreate(&copyEvents[i]);
       }
 
-    thrust::device_vector<dataTypes::numberFP32ThrustDevice> XFP32(
-      M * N, dataTypes::numberFP32ThrustDevice(0.0));
-    convDoubleArrToFloatArr<<<(N + (deviceConstants::blockSize - 1)) /
-                                deviceConstants::blockSize * M,
-                              deviceConstants::blockSize>>>(
-      N * M,
-      X,
-      reinterpret_cast<dataTypes::numberFP32Device *>(
-        thrust::raw_pointer_cast(&XFP32[0])));
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                dftfe::utils::MemorySpace::DEVICE>
+      XFP32(M * N, dataTypes::numberFP32(0.0));
 
-    dataTypes::number *projHamBlockHost;
-    DeviceCHECK(
-      cudaMallocHost((void **)&projHamBlockHost,
-                     vectorsBlockSize * N * sizeof(dataTypes::number)));
-    std::memset(projHamBlockHost,
+    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+      N * M, X, XFP32.begin());
+
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::HOST_PINNED>
+      projHamBlockHost;
+    projHamBlockHost.resize(vectorsBlockSize * N, 0);
+    std::memset(projHamBlockHost.begin(),
                 0,
                 vectorsBlockSize * N * sizeof(dataTypes::number));
 
-    dataTypes::numberFP32 *projHamBlockHostFP32;
-    DeviceCHECK(
-      cudaMallocHost((void **)&projHamBlockHostFP32,
-                     vectorsBlockSize * N * sizeof(dataTypes::numberFP32)));
-    std::memset(projHamBlockHostFP32,
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                dftfe::utils::MemorySpace::HOST_PINNED>
+      projHamBlockHostFP32;
+    projHamBlockHostFP32.resize(vectorsBlockSize * N, 0);
+    std::memset(projHamBlockHostFP32.begin(),
                 0,
                 vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-    thrust::device_vector<dataTypes::numberThrustDevice> HXBlockFull(
-      vectorsBlockSize * M, dataTypes::numberThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberFP32ThrustDevice> HXBlockFullFP32(
-      vectorsBlockSize * M, dataTypes::numberFP32ThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberThrustDevice> projHamBlock(
-      vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberFP32ThrustDevice> projHamBlockFP32(
-      vectorsBlockSize * N, dataTypes::numberFP32ThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberThrustDevice> projHamBlockNext(
-      vectorsBlockSize * N, dataTypes::numberThrustDevice(0.0));
-    thrust::device_vector<dataTypes::numberFP32ThrustDevice>
-      projHamBlockFP32Next(vectorsBlockSize * N,
-                           dataTypes::numberFP32ThrustDevice(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                dftfe::utils::MemorySpace::DEVICE>
+      HXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlockFP32(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                dftfe::utils::MemorySpace::DEVICE>
+      projHamBlockFP32Next(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
 
-    dataTypes::numberValueType *    tempReal;
-    dataTypes::numberValueType *    tempImag;
-    dataTypes::numberFP32ValueType *tempRealFP32;
-    dataTypes::numberFP32ValueType *tempImagFP32;
+
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                dftfe::utils::MemorySpace::DEVICE>
+      tempReal;
+    dftfe::utils::MemoryStorage<dataTypes::numberValueType,
+                                dftfe::utils::MemorySpace::DEVICE>
+      tempImag;
+
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                dftfe::utils::MemorySpace::DEVICE>
+      tempRealFP32;
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
+                                dftfe::utils::MemorySpace::DEVICE>
+      tempImagFP32;
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       {
-        DeviceCHECK(cudaMalloc((void **)&tempReal,
-                               vectorsBlockSize * N *
-                                 sizeof(dataTypes::numberValueType)));
-        DeviceCHECK(cudaMalloc((void **)&tempImag,
-                               vectorsBlockSize * N *
-                                 sizeof(dataTypes::numberValueType)));
-        DeviceCHECK(cudaMalloc((void **)&tempRealFP32,
-                               vectorsBlockSize * N *
-                                 sizeof(dataTypes::numberFP32ValueType)));
-        DeviceCHECK(cudaMalloc((void **)&tempImagFP32,
-                               vectorsBlockSize * N *
-                                 sizeof(dataTypes::numberFP32ValueType)));
+        tempReal.resize(vectorsBlockSize * N, 0);
+        tempImag.resize(vectorsBlockSize * N, 0);
+        tempRealFP32.resize(vectorsBlockSize * N, 0);
+        tempImagFP32.resize(vectorsBlockSize * N, 0);
       }
 
     unsigned int blockCount = 0;
@@ -4494,14 +4169,12 @@ namespace dftfe
                 // blocks of B wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<dataTypes::numberDevice>
-                      <<<(chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                           deviceConstants::blockSize * M,
-                         deviceConstants::blockSize>>>(
-                        chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     if (jvec + B > Noc)
@@ -4528,83 +4201,68 @@ namespace dftfe
                          onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvec + B > Noc)
-                      stridedCopyFromBlockKernel<dataTypes::numberDevice>
-                        <<<(chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                             deviceConstants::blockSize * M,
-                           deviceConstants::blockSize>>>(
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(B,
+                                                           chebyBlockSize,
+                                                           M,
+                                                           k - jvec,
+                                                           HXBlock.begin(),
+                                                           HXBlockFull.begin());
+                    else
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          B,
                           chebyBlockSize,
                           M,
+                          k - jvec,
                           HXBlock.begin(),
-                          B,
-                          reinterpret_cast<dataTypes::numberDevice *>(
-                            thrust::raw_pointer_cast(&HXBlockFull[0])),
-                          k - jvec);
-                    else
-                      stridedCopyFromBlockKernelFP32<<<
-                        (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * M,
-                        deviceConstants::blockSize>>>(
-                        chebyBlockSize,
-                        M,
-                        HXBlock.begin(),
-                        B,
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
-                        k - jvec);
+                          HXBlockFullFP32.begin());
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                 // HXBlockFullFP32Conj
                 if (jvec + B > Noc)
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     D,
                     B,
                     M,
-                    reinterpret_cast<const dataTypes::numberDevice *>(&alpha),
+                    &alpha,
                     X + jvec,
                     N,
-                    reinterpret_cast<const dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&HXBlockFull[0])),
+                    HXBlockFull.begin(),
                     B,
-                    reinterpret_cast<const dataTypes::numberDevice *>(&beta),
-                    reinterpret_cast<dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&projHamBlock[0])),
+                    &beta,
+                    projHamBlock.begin(),
                     D);
                 else
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::numberFP32,
                                  std::complex<float>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     D,
                     B,
                     M,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      &alphaFP32),
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&XFP32[0])) +
-                      jvec,
+                    &alphaFP32,
+                    XFP32.begin() + jvec,
                     N,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
+                    HXBlockFullFP32.begin(),
                     B,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      &betaFP32),
-                    reinterpret_cast<dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                    &betaFP32,
+                    projHamBlockFP32.begin(),
                     D);
 
                 // record completion of compute for next block
-                DeviceCHECK(
-                  cudaEventRecord(computeEvents[blockCount], streamCompute));
+                dftfe::utils::deviceEventRecord(computeEvents[blockCount],
+                                                streamCompute);
               }
 
             // Before swap host thread needs to wait till compute on
@@ -4613,8 +4271,8 @@ namespace dftfe
             // compute on currentblock and swap is over. Note that at this point
             // there is nothing queued in the streamDataMove as all previous
             // operations in that stream are over.
-            if ((cudaEventSynchronize(computeEvents[blockCount]) ==
-                 cudaSuccess) &&
+            if ((dftfe::utils::deviceEventSynchronize(
+                   computeEvents[blockCount]) == dftfe::utils::deviceSuccess) &&
                 (jvec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
               {
                 if (jvec + B > Noc)
@@ -4634,14 +4292,12 @@ namespace dftfe
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<dataTypes::numberDevice>
-                      <<<(chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                           deviceConstants::blockSize * M,
-                         deviceConstants::blockSize>>>(
-                        chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    dftfe::utils::deviceKernelsGeneric::
+                      stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock.setZero();
+                    HXBlock.setValue(0);
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     if (jvecNew + B > Noc)
@@ -4668,83 +4324,68 @@ namespace dftfe
                          onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvecNew + B > Noc)
-                      stridedCopyFromBlockKernel<<<
-                        (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * M,
-                        deviceConstants::blockSize>>>(
-                        chebyBlockSize,
-                        M,
-                        HXBlock.begin(),
-                        B,
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&HXBlockFull[0])),
-                        k - jvecNew);
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(B,
+                                                           chebyBlockSize,
+                                                           M,
+                                                           k - jvecNew,
+                                                           HXBlock.begin(),
+                                                           HXBlockFull.begin());
                     else
-                      stridedCopyFromBlockKernelFP32<<<
-                        (chebyBlockSize + (deviceConstants::blockSize - 1)) /
-                          deviceConstants::blockSize * M,
-                        deviceConstants::blockSize>>>(
-                        chebyBlockSize,
-                        M,
-                        HXBlock.begin(),
-                        B,
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
-                        k - jvecNew);
+                      dftfe::utils::deviceKernelsGeneric::
+                        stridedCopyFromBlockConstantStride(
+                          B,
+                          chebyBlockSize,
+                          M,
+                          k - jvecNew,
+                          HXBlock.begin(),
+                          HXBlockFullFP32.begin());
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                 // HXBlockFullFP32Conj
                 if (jvecNew + B > Noc)
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     DNew,
                     B,
                     M,
-                    reinterpret_cast<const dataTypes::numberDevice *>(&alpha),
+                    &alpha,
                     X + jvecNew,
                     N,
-                    reinterpret_cast<const dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&HXBlockFull[0])),
+                    HXBlockFull.begin(),
                     B,
-                    reinterpret_cast<const dataTypes::numberDevice *>(&beta),
-                    reinterpret_cast<dataTypes::numberDevice *>(
-                      thrust::raw_pointer_cast(&projHamBlockNext[0])),
+                    &beta,
+                    projHamBlockNext.begin(),
                     DNew);
                 else
-                  cublasXgemm(
+                  dftfe::utils::deviceBlasWrapper::gemm(
                     handle,
-                    CUBLAS_OP_N,
+                    dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::numberFP32,
                                  std::complex<float>>::value ?
-                      CUBLAS_OP_C :
-                      CUBLAS_OP_T,
+                      dftfe::utils::DEVICEBLAS_OP_C :
+                      dftfe::utils::DEVICEBLAS_OP_T,
                     DNew,
                     B,
                     M,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      &alphaFP32),
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&XFP32[0])) +
-                      jvecNew,
+                    &alphaFP32,
+                    XFP32.begin() + jvecNew,
                     N,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
+                    HXBlockFullFP32.begin(),
                     B,
-                    reinterpret_cast<const dataTypes::numberFP32Device *>(
-                      &betaFP32),
-                    reinterpret_cast<dataTypes::numberFP32Device *>(
-                      thrust::raw_pointer_cast(&projHamBlockFP32Next[0])),
+                    &betaFP32,
+                    projHamBlockFP32Next.begin(),
                     DNew);
 
                 // record completion of compute for next block
-                DeviceCHECK(cudaEventRecord(computeEvents[blockCount + 1],
-                                            streamCompute));
+                dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
+                                                streamCompute);
               }
 
             if (dftPtr->d_dftParamsPtr->useDeviceDirectAllReduce)
@@ -4754,20 +4395,16 @@ namespace dftfe
                     if (std::is_same<dataTypes::number,
                                      std::complex<double>>::value)
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&projHamBlock[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&projHamBlock[0])),
+                        projHamBlock.begin(),
+                        projHamBlock.begin(),
                         D * B,
-                        tempReal,
-                        tempImag,
+                        tempReal.begin(),
+                        tempImag.begin(),
                         streamDataMove);
                     else
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&projHamBlock[0])),
-                        reinterpret_cast<dataTypes::numberDevice *>(
-                          thrust::raw_pointer_cast(&projHamBlock[0])),
+                        projHamBlock.begin(),
+                        projHamBlock.begin(),
                         D * B,
                         streamDataMove);
                   }
@@ -4776,49 +4413,45 @@ namespace dftfe
                     if (std::is_same<dataTypes::number,
                                      std::complex<double>>::value)
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                        projHamBlockFP32.begin(),
+                        projHamBlockFP32.begin(),
                         D * B,
-                        tempRealFP32,
-                        tempImagFP32,
+                        tempRealFP32.begin(),
+                        tempImagFP32.begin(),
                         streamDataMove);
                     else
                       devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                        reinterpret_cast<dataTypes::numberFP32Device *>(
-                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                        projHamBlockFP32.begin(),
+                        projHamBlockFP32.begin(),
                         D * B,
                         streamDataMove);
                   }
               }
 
             if (jvec + B > Noc)
-              cudaMemcpyAsync(projHamBlockHost,
-                              reinterpret_cast<const dataTypes::numberDevice *>(
-                                thrust::raw_pointer_cast(&projHamBlock[0])),
-                              D * B * sizeof(dataTypes::number),
-                              cudaMemcpyDeviceToHost,
-                              streamDataMove);
+              dftfe::utils::deviceMemcpyAsyncD2H(
+                projHamBlockHost.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  projHamBlock.begin()),
+                D * B * sizeof(dataTypes::number),
+                streamDataMove);
             else
-              cudaMemcpyAsync(
-                projHamBlockHostFP32,
-                reinterpret_cast<const dataTypes::numberFP32Device *>(
-                  thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+              dftfe::utils::deviceMemcpyAsyncD2H(
+                projHamBlockHostFP32.begin(),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  projHamBlockFP32.begin()),
                 D * B * sizeof(dataTypes::numberFP32),
-                cudaMemcpyDeviceToHost,
                 streamDataMove);
 
             // record completion of Device->CPU copy for current block
-            DeviceCHECK(
-              cudaEventRecord(copyEvents[blockCount], streamDataMove));
+            dftfe::utils::deviceEventRecord(copyEvents[blockCount],
+                                            streamDataMove);
 
             // Check that Device->CPU on the current block has been completed.
             // If completed, perform blocking MPI commmunication on the current
             // block and copy to ScaLAPACK matrix
-            if (cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
+            if (dftfe::utils::deviceEventSynchronize(copyEvents[blockCount]) ==
+                dftfe::utils::deviceSuccess)
               {
                 if (jvec + B > Noc)
                   {
@@ -4826,9 +4459,10 @@ namespace dftfe
                     // processors
                     if (!dftPtr->d_dftParamsPtr->useDeviceDirectAllReduce)
                       MPI_Allreduce(MPI_IN_PLACE,
-                                    projHamBlockHost,
+                                    projHamBlockHost.begin(),
                                     D * B,
-                                    dataTypes::mpi_type_id(projHamBlockHost),
+                                    dataTypes::mpi_type_id(
+                                      projHamBlockHost.begin()),
                                     MPI_SUM,
                                     mpi_communicator);
 
@@ -4858,10 +4492,10 @@ namespace dftfe
                     // processors
                     if (!dftPtr->d_dftParamsPtr->useDeviceDirectAllReduce)
                       MPI_Allreduce(MPI_IN_PLACE,
-                                    projHamBlockHostFP32,
+                                    projHamBlockHostFP32.begin(),
                                     D * B,
                                     dataTypes::mpi_type_id(
-                                      projHamBlockHostFP32),
+                                      projHamBlockHostFP32.begin()),
                                     MPI_SUM,
                                     mpi_communicator);
 
@@ -4890,26 +4524,17 @@ namespace dftfe
         blockCount += 1;
       }
 
-    DeviceCHECK(cudaFreeHost(projHamBlockHost));
-    DeviceCHECK(cudaFreeHost(projHamBlockHostFP32));
-    if (std::is_same<dataTypes::number, std::complex<double>>::value)
-      {
-        DeviceCHECK(cudaFree(tempReal));
-        DeviceCHECK(cudaFree(tempImag));
-        DeviceCHECK(cudaFree(tempRealFP32));
-        DeviceCHECK(cudaFree(tempImagFP32));
-      }
-    // return cublas handle to default stream
-    cublasSetStream(handle, NULL);
+    // return deviceblas handle to default stream
+    dftfe::utils::deviceBlasWrapper::setStream(handle, NULL);
 
     for (int i = 0; i < numberBlocks; ++i)
       {
-        DeviceCHECK(cudaEventDestroy(computeEvents[i]));
-        DeviceCHECK(cudaEventDestroy(copyEvents[i]));
+        dftfe::utils::deviceEventDestroy(computeEvents[i]);
+        dftfe::utils::deviceEventDestroy(copyEvents[i]);
       }
 
-    DeviceCHECK(cudaStreamDestroy(streamCompute));
-    DeviceCHECK(cudaStreamDestroy(streamDataMove));
+    dftfe::utils::deviceStreamDestroy(streamCompute);
+    dftfe::utils::deviceStreamDestroy(streamDataMove);
 
     if (numberBandGroups > 1)
       {
@@ -4921,7 +4546,7 @@ namespace dftfe
 
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMDevice.cc"
 #include "hamiltonianMatrixCalculatorFlattenedDevice.cc"
-#include "instDevice.cc"
 #include "matrixVectorProductImplementationsDevice.cc"
 #include "shapeFunctionDataCalculatorDevice.cc"
+#include "instDevice.cc"
 } // namespace dftfe

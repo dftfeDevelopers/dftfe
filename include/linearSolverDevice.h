@@ -21,7 +21,7 @@
 #    define linearSolverDevice_H_
 
 #    include <linearSolverProblemDevice.h>
-
+#    include <DeviceTypeConfig.h>
 namespace dftfe
 {
   /**
@@ -47,12 +47,12 @@ namespace dftfe
      *                   2 - all debug output.
      */
     virtual void
-    solve(linearSolverProblemDevice &problem,
-          const double               absTolerance,
-          const unsigned int         maxNumberIterations,
-          cublasHandle_t &           handle,
-          const int                  debugLevel     = 0,
-          bool                       distributeFlag = true) = 0;
+    solve(linearSolverProblemDevice &       problem,
+          const double                      absTolerance,
+          const unsigned int                maxNumberIterations,
+          dftfe::utils::deviceBlasHandle_t &handle,
+          const int                         debugLevel     = 0,
+          bool                              distributeFlag = true) = 0;
 
   private:
   };

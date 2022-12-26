@@ -18,10 +18,231 @@
 //
 
 #include <linearSolverCGDevice.h>
-#include <deviceHelpers.h>
+#include <deviceKernelsGeneric.h>
+#include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <MemoryTransfer.h>
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#  include <cooperative_groups.h>
+#  include <cooperative_groups/reduce.h>
+#endif
+
 
 namespace dftfe
 {
+  namespace
+  {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+    template <typename Type, int blockSize>
+    __global__ void
+    applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
+                                                Type *      d_devSum,
+                                                const Type *d_rvec,
+                                                const Type *d_jacobi,
+                                                const int   N)
+    {
+      __shared__ Type smem[blockSize];
+
+      int tid = threadIdx.x;
+      int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+      cooperative_groups::thread_block block =
+        cooperative_groups::this_thread_block();
+
+      Type localSum;
+
+      if (idx < N)
+        {
+          Type jacobi = d_jacobi[idx];
+          Type r      = d_rvec[idx];
+
+          localSum    = jacobi * r * r;
+          d_dvec[idx] = jacobi * r;
+        }
+      else
+        localSum = 0;
+
+      if (idx + blockSize < N)
+        {
+          Type jacobi = d_jacobi[idx + blockSize];
+          Type r      = d_rvec[idx + blockSize];
+          localSum += jacobi * r * r;
+          d_dvec[idx + blockSize] = jacobi * r;
+        }
+
+      smem[tid] = localSum;
+      cooperative_groups::sync(block);
+
+      for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+           size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
+           size /= 2)
+        {
+          if ((blockSize >= size) && (tid < size / 2))
+            smem[tid] = localSum = localSum + smem[tid + size / 2];
+
+          cooperative_groups::sync(block);
+        }
+
+      cooperative_groups::thread_block_tile<dftfe::utils::DEVICE_WARP_SIZE>
+        tileWarp =
+          cooperative_groups::tiled_partition<dftfe::utils::DEVICE_WARP_SIZE>(
+            block);
+
+      if (block.thread_rank() < dftfe::utils::DEVICE_WARP_SIZE)
+        {
+          if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
+            localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
+
+          for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
+            localSum += tileWarp.shfl_down(localSum, offset);
+        }
+
+      if (block.thread_rank() == 0)
+        atomicAdd(&d_devSum[0], localSum);
+    }
+
+
+    template <typename Type, int blockSize>
+    __global__ void
+    applyPreconditionComputeDotProductAndSaddKernel(Type *      d_qvec,
+                                                    Type *      d_devSum,
+                                                    const Type *d_rvec,
+                                                    const Type *d_jacobi,
+                                                    const int   N)
+    {
+      __shared__ Type smem[blockSize];
+
+      int tid = threadIdx.x;
+      int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+      cooperative_groups::thread_block block =
+        cooperative_groups::this_thread_block();
+
+      Type localSum;
+
+      if (idx < N)
+        {
+          Type jacobi = d_jacobi[idx];
+          Type r      = d_rvec[idx];
+
+          localSum    = jacobi * r * r;
+          d_qvec[idx] = -1 * jacobi * r;
+        }
+      else
+        localSum = 0;
+
+      if (idx + blockSize < N)
+        {
+          Type jacobi = d_jacobi[idx + blockSize];
+          Type r      = d_rvec[idx + blockSize];
+          localSum += jacobi * r * r;
+          d_qvec[idx + blockSize] = -1 * jacobi * r;
+        }
+
+      smem[tid] = localSum;
+      cooperative_groups::sync(block);
+
+      for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+           size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
+           size /= 2)
+        {
+          if ((blockSize >= size) && (tid < size / 2))
+            smem[tid] = localSum = localSum + smem[tid + size / 2];
+
+          cooperative_groups::sync(block);
+        }
+
+      cooperative_groups::thread_block_tile<dftfe::utils::DEVICE_WARP_SIZE>
+        tileWarp =
+          cooperative_groups::tiled_partition<dftfe::utils::DEVICE_WARP_SIZE>(
+            block);
+
+      if (block.thread_rank() < dftfe::utils::DEVICE_WARP_SIZE)
+        {
+          if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
+            localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
+
+          for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
+            localSum += tileWarp.shfl_down(localSum, offset);
+        }
+
+      if (block.thread_rank() == 0)
+        atomicAdd(&d_devSum[0], localSum);
+    }
+
+
+    template <typename Type, int blockSize>
+    __global__ void
+    scaleXRandComputeNormKernel(Type *      x,
+                                Type *      d_rvec,
+                                Type *      d_devSum,
+                                const Type *d_qvec,
+                                const Type *d_dvec,
+                                const Type  alpha,
+                                const int   N)
+    {
+      __shared__ Type smem[blockSize];
+
+      int tid = threadIdx.x;
+      int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+      cooperative_groups::thread_block block =
+        cooperative_groups::this_thread_block();
+
+      Type localSum;
+
+      if (idx < N)
+        {
+          Type rNew;
+          Type rOld = d_rvec[idx];
+          x[idx] += alpha * d_qvec[idx];
+          rNew        = rOld + alpha * d_dvec[idx];
+          localSum    = rNew * rNew;
+          d_rvec[idx] = rNew;
+        }
+      else
+        localSum = 0;
+
+      if (idx + blockSize < N)
+        {
+          Type rNew;
+          Type rOld = d_rvec[idx + blockSize];
+          x[idx + blockSize] += alpha * d_qvec[idx + blockSize];
+          rNew = rOld + alpha * d_dvec[idx + blockSize];
+          localSum += rNew * rNew;
+          d_rvec[idx + blockSize] = rNew;
+        }
+
+      smem[tid] = localSum;
+      cooperative_groups::sync(block);
+
+      for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+           size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
+           size /= 2)
+        {
+          if ((blockSize >= size) && (tid < size / 2))
+            smem[tid] = localSum = localSum + smem[tid + size / 2];
+
+          cooperative_groups::sync(block);
+        }
+
+      cooperative_groups::thread_block_tile<dftfe::utils::DEVICE_WARP_SIZE>
+        tileWarp =
+          cooperative_groups::tiled_partition<dftfe::utils::DEVICE_WARP_SIZE>(
+            block);
+
+      if (block.thread_rank() < dftfe::utils::DEVICE_WARP_SIZE)
+        {
+          if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
+            localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
+
+          for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
+            localSum += tileWarp.shfl_down(localSum, offset);
+        }
+
+      if (block.thread_rank() == 0)
+        atomicAdd(&d_devSum[0], localSum);
+    }
+#endif
+  } // namespace
+
   // constructor
   linearSolverCGDevice::linearSolverCGDevice(const MPI_Comm & mpi_comm_parent,
                                              const MPI_Comm & mpi_comm_domain,
@@ -39,12 +260,13 @@ namespace dftfe
 
   // solve
   void
-  linearSolverCGDevice::solve(linearSolverProblemDevice &problem,
-                              const double               absTolerance,
-                              const unsigned int         maxNumberIterations,
-                              cublasHandle_t &           cublasHandle,
-                              const int                  debugLevel,
-                              bool                       distributeFlag)
+  linearSolverCGDevice::solve(
+    linearSolverProblemDevice &       problem,
+    const double                      absTolerance,
+    const unsigned int                maxNumberIterations,
+    dftfe::utils::deviceBlasHandle_t &deviceBlasHandle,
+    const int                         debugLevel,
+    bool                              distributeFlag)
   {
     int this_process;
     MPI_Comm_rank(mpi_communicator, &this_process);
@@ -56,11 +278,17 @@ namespace dftfe
     distributedCPUVec<double> rhsHost;
     problem.computeRhs(rhsHost);
 
-    distributedDeviceVec<double> rhsDevice;
-    rhsDevice.reinit(rhsHost.get_partitioner(), 1);
+    distributedDeviceVec<double> &x = problem.getX();
+    distributedDeviceVec<double>  rhsDevice;
+    rhsDevice.reinit(x);
 
-    deviceUtils::copyHostVecToDeviceVec<double>(
-      rhsHost.begin(), rhsDevice.begin(), rhsDevice.locallyOwnedDofsSize());
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(rhsDevice.locallyOwnedSize() *
+                                               rhsDevice.numVectors(),
+                                             rhsDevice.begin(),
+                                             rhsHost.begin());
+
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
@@ -70,12 +298,11 @@ namespace dftfe
             << time - start_time << std::endl;
 
 
-    distributedDeviceVec<double> &x        = problem.getX();
     distributedDeviceVec<double> &d_Jacobi = problem.getPreconditioner();
 
     d_devSum.resize(1);
-    d_devSumPtr = thrust::raw_pointer_cast(d_devSum.data());
-    d_xLocalDof = x.locallyOwnedDofsSize();
+    d_devSumPtr = d_devSum.data();
+    d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
 
     double res = 0.0, initial_res = 0.0;
     bool   conv = false;
@@ -105,17 +332,17 @@ namespace dftfe
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            deviceUtils::add(d_rvec.begin(),
-                             rhsDevice.begin(),
-                             -1.,
-                             d_xLocalDof,
-                             cublasHandle);
+            dftfe::utils::deviceKernelsGeneric::add(d_rvec.begin(),
+                                                    rhsDevice.begin(),
+                                                    -1.,
+                                                    d_xLocalDof,
+                                                    deviceBlasHandle);
 
             // res = r.r
-            res = deviceUtils::l2_norm(d_rvec.begin(),
-                                       d_xLocalDof,
-                                       mpi_communicator,
-                                       cublasHandle);
+            res = dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
+                                                              d_xLocalDof,
+                                                              mpi_communicator,
+                                                              deviceBlasHandle);
 
             initial_res = res;
 
@@ -142,10 +369,8 @@ namespace dftfe
                     beta = delta / beta;
 
                     // q = beta * q - d
-                    deviceUtils::sadd<double>(d_qvec.begin(),
-                                              d_dvec.begin(),
-                                              beta,
-                                              d_xLocalDof);
+                    dftfe::utils::deviceKernelsGeneric::sadd<double>(
+                      d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
                   }
                 else
                   {
@@ -159,11 +384,12 @@ namespace dftfe
                 problem.computeAX(d_dvec, d_qvec);
 
                 // alpha = q.d
-                alpha = deviceUtils::dot(d_qvec.begin(),
-                                         d_dvec.begin(),
-                                         d_xLocalDof,
-                                         mpi_communicator,
-                                         cublasHandle);
+                alpha =
+                  dftfe::utils::deviceKernelsGeneric::dot(d_qvec.begin(),
+                                                          d_dvec.begin(),
+                                                          d_xLocalDof,
+                                                          mpi_communicator,
+                                                          deviceBlasHandle);
 
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));
@@ -229,225 +455,31 @@ namespace dftfe
   }
 
 
-  template <typename Type, int blockSize>
-  __global__ void
-  applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
-                                              Type *      d_devSum,
-                                              const Type *d_rvec,
-                                              const Type *d_jacobi,
-                                              const int   N)
-  {
-    __shared__ Type smem[blockSize];
-
-    int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
-    cooperative_groups::thread_block block =
-      cooperative_groups::this_thread_block();
-
-    Type localSum;
-
-    if (idx < N)
-      {
-        Type jacobi = d_jacobi[idx];
-        Type r      = d_rvec[idx];
-
-        localSum    = jacobi * r * r;
-        d_dvec[idx] = jacobi * r;
-      }
-    else
-      localSum = 0;
-
-    if (idx + blockSize < N)
-      {
-        Type jacobi = d_jacobi[idx + blockSize];
-        Type r      = d_rvec[idx + blockSize];
-        localSum += jacobi * r * r;
-        d_dvec[idx + blockSize] = jacobi * r;
-      }
-
-    smem[tid] = localSum;
-    cooperative_groups::sync(block);
-
-    for (int size = deviceConstants::maxBlockSize / 2;
-         size >= 4 * deviceConstants::warpSize;
-         size /= 2)
-      {
-        if ((blockSize >= size) && (tid < size / 2))
-          smem[tid] = localSum = localSum + smem[tid + size / 2];
-
-        cooperative_groups::sync(block);
-      }
-
-    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
-      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
-
-    if (block.thread_rank() < deviceConstants::warpSize)
-      {
-        if (blockSize >= 2 * deviceConstants::warpSize)
-          localSum += smem[tid + deviceConstants::warpSize];
-
-        for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
-          localSum += tileWarp.shfl_down(localSum, offset);
-      }
-
-    if (block.thread_rank() == 0)
-      atomicAdd(&d_devSum[0], localSum);
-  }
-
-
-  template <typename Type, int blockSize>
-  __global__ void
-  applyPreconditionComputeDotProductAndSaddKernel(Type *      d_qvec,
-                                                  Type *      d_devSum,
-                                                  const Type *d_rvec,
-                                                  const Type *d_jacobi,
-                                                  const int   N)
-  {
-    __shared__ Type smem[blockSize];
-
-    int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
-    cooperative_groups::thread_block block =
-      cooperative_groups::this_thread_block();
-
-    Type localSum;
-
-    if (idx < N)
-      {
-        Type jacobi = d_jacobi[idx];
-        Type r      = d_rvec[idx];
-
-        localSum    = jacobi * r * r;
-        d_qvec[idx] = -1 * jacobi * r;
-      }
-    else
-      localSum = 0;
-
-    if (idx + blockSize < N)
-      {
-        Type jacobi = d_jacobi[idx + blockSize];
-        Type r      = d_rvec[idx + blockSize];
-        localSum += jacobi * r * r;
-        d_qvec[idx + blockSize] = -1 * jacobi * r;
-      }
-
-    smem[tid] = localSum;
-    cooperative_groups::sync(block);
-
-    for (int size = deviceConstants::maxBlockSize / 2;
-         size >= 4 * deviceConstants::warpSize;
-         size /= 2)
-      {
-        if ((blockSize >= size) && (tid < size / 2))
-          smem[tid] = localSum = localSum + smem[tid + size / 2];
-
-        cooperative_groups::sync(block);
-      }
-
-    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
-      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
-
-    if (block.thread_rank() < deviceConstants::warpSize)
-      {
-        if (blockSize >= 2 * deviceConstants::warpSize)
-          localSum += smem[tid + deviceConstants::warpSize];
-
-        for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
-          localSum += tileWarp.shfl_down(localSum, offset);
-      }
-
-    if (block.thread_rank() == 0)
-      atomicAdd(&d_devSum[0], localSum);
-  }
-
-
-  template <typename Type, int blockSize>
-  __global__ void
-  scaleXRandComputeNormKernel(Type *      x,
-                              Type *      d_rvec,
-                              Type *      d_devSum,
-                              const Type *d_qvec,
-                              const Type *d_dvec,
-                              const Type  alpha,
-                              const int   N)
-  {
-    __shared__ Type smem[blockSize];
-
-    int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
-    cooperative_groups::thread_block block =
-      cooperative_groups::this_thread_block();
-
-    Type localSum;
-
-    if (idx < N)
-      {
-        Type rNew;
-        Type rOld = d_rvec[idx];
-        x[idx] += alpha * d_qvec[idx];
-        rNew        = rOld + alpha * d_dvec[idx];
-        localSum    = rNew * rNew;
-        d_rvec[idx] = rNew;
-      }
-    else
-      localSum = 0;
-
-    if (idx + blockSize < N)
-      {
-        Type rNew;
-        Type rOld = d_rvec[idx + blockSize];
-        x[idx + blockSize] += alpha * d_qvec[idx + blockSize];
-        rNew = rOld + alpha * d_dvec[idx + blockSize];
-        localSum += rNew * rNew;
-        d_rvec[idx + blockSize] = rNew;
-      }
-
-    smem[tid] = localSum;
-    cooperative_groups::sync(block);
-
-    for (int size = deviceConstants::maxBlockSize / 2;
-         size >= 4 * deviceConstants::warpSize;
-         size /= 2)
-      {
-        if ((blockSize >= size) && (tid < size / 2))
-          smem[tid] = localSum = localSum + smem[tid + size / 2];
-
-        cooperative_groups::sync(block);
-      }
-
-    cooperative_groups::thread_block_tile<deviceConstants::warpSize> tileWarp =
-      cooperative_groups::tiled_partition<deviceConstants::warpSize>(block);
-
-    if (block.thread_rank() < deviceConstants::warpSize)
-      {
-        if (blockSize >= 2 * deviceConstants::warpSize)
-          localSum += smem[tid + deviceConstants::warpSize];
-
-        for (int offset = tileWarp.size() / 2; offset > 0; offset /= 2)
-          localSum += tileWarp.shfl_down(localSum, offset);
-      }
-
-    if (block.thread_rank() == 0)
-      atomicAdd(&d_devSum[0], localSum);
-  }
-
-
   double
   linearSolverCGDevice::applyPreconditionAndComputeDotProduct(
     const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
-                       (deviceConstants::blockSize * 2);
+    const int blocks =
+      (d_xLocalDof + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+      (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
-    cudaMemset(d_devSumPtr, 0, sizeof(double));
+    dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     applyPreconditionAndComputeDotProductKernel<double,
-                                                deviceConstants::blockSize>
-      <<<blocks, deviceConstants::blockSize>>>(
+                                                dftfe::utils::DEVICE_BLOCK_SIZE>
+      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: HIP kernel not implemented for this part."));
+#endif
 
-    local_sum = d_devSum[0];
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(1, &local_sum, d_devSum.begin());
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
@@ -460,17 +492,27 @@ namespace dftfe
     const double *d_jacobi)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
-                       (deviceConstants::blockSize * 2);
+    const int blocks =
+      (d_xLocalDof + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+      (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
-    cudaMemset(d_devSumPtr, 0, sizeof(double));
+    dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
-    applyPreconditionComputeDotProductAndSaddKernel<double,
-                                                    deviceConstants::blockSize>
-      <<<blocks, deviceConstants::blockSize>>>(
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+    applyPreconditionComputeDotProductAndSaddKernel<
+      double,
+      dftfe::utils::DEVICE_BLOCK_SIZE>
+      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: HIP kernel not implemented for this part."));
+#endif
 
-    local_sum = d_devSum[0];
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(1, &local_sum, d_devSum.begin());
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 
@@ -482,21 +524,30 @@ namespace dftfe
   linearSolverCGDevice::scaleXRandComputeNorm(double *x, const double &alpha)
   {
     double    local_sum = 0.0, sum = 0.0;
-    const int blocks = (d_xLocalDof + (deviceConstants::blockSize * 2 - 1)) /
-                       (deviceConstants::blockSize * 2);
+    const int blocks =
+      (d_xLocalDof + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+      (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
-    cudaMemset(d_devSumPtr, 0, sizeof(double));
+    dftfe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
 
-    scaleXRandComputeNormKernel<double, deviceConstants::blockSize>
-      <<<blocks, deviceConstants::blockSize>>>(x,
-                                               d_rvec.begin(),
-                                               d_devSumPtr,
-                                               d_qvec.begin(),
-                                               d_dvec.begin(),
-                                               alpha,
-                                               d_xLocalDof);
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+    scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>
+      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(x,
+                                                    d_rvec.begin(),
+                                                    d_devSumPtr,
+                                                    d_qvec.begin(),
+                                                    d_dvec.begin(),
+                                                    alpha,
+                                                    d_xLocalDof);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    AssertThrow(false,
+                dealii::ExcMessage(
+                  "DFT-FE Error: HIP kernel not implemented for this part."));
+#endif
 
-    local_sum = d_devSum[0];
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(1, &local_sum, d_devSum.begin());
 
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
 

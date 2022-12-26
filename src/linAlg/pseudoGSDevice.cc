@@ -25,17 +25,18 @@ namespace dftfe
   namespace linearAlgebraOperationsDevice
   {
     void
-    pseudoGramSchmidtOrthogonalization(elpaScalaManager &       elpaScala,
-                                       dataTypes::numberDevice *X,
-                                       const unsigned int       M,
-                                       const unsigned int       N,
-                                       const MPI_Comm &         mpiCommParent,
-                                       const MPI_Comm &         mpiCommDomain,
-                                       DeviceCCLWrapper &devicecclMpiCommDomain,
-                                       const MPI_Comm &  interBandGroupComm,
-                                       cublasHandle_t &  handle,
-                                       const dftParameters &dftParams,
-                                       const bool           useMixedPrecOverall)
+    pseudoGramSchmidtOrthogonalization(
+      elpaScalaManager &                elpaScala,
+      dataTypes::number *               X,
+      const unsigned int                M,
+      const unsigned int                N,
+      const MPI_Comm &                  mpiCommParent,
+      const MPI_Comm &                  mpiCommDomain,
+      utils::DeviceCCLWrapper &         devicecclMpiCommDomain,
+      const MPI_Comm &                  interBandGroupComm,
+      dftfe::utils::deviceBlasHandle_t &handle,
+      const dftParameters &             dftParams,
+      const bool                        useMixedPrecOverall)
     {
       dealii::ConditionalOStream pcout(
         std::cout,

@@ -42,7 +42,7 @@
 
 #include "dft.h"
 #include "dftParameters.h"
-#include "deviceHelpers.h"
+#include "deviceKernelsGeneric.h"
 #include "dftUtils.h"
 #include "dftfeWrapper.h"
 #include "fileReaders.h"
@@ -723,7 +723,7 @@ namespace dftfe
             setDeviceToMPITaskBindingInternally &&
             !d_isDeviceToMPITaskBindingSetInternally)
           {
-            dftfe::deviceUtils::setupDevice();
+            dftfe::utils::deviceKernelsGeneric::setupDevice();
             d_isDeviceToMPITaskBindingSetInternally = true;
           }
 #endif

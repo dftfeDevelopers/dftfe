@@ -19,6 +19,9 @@
 
 #include <constants.h>
 #include <kerkerSolverProblemDevice.h>
+#include <DeviceAPICalls.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <MemoryTransfer.h>
 
 namespace dftfe
 {
@@ -57,11 +60,13 @@ namespace dftfe
 
     matrixFreeDataPRefined.initialize_dof_vector(x,
                                                  d_matrixFreeVectorComponent);
-    d_xDevice.reinit(x.get_partitioner(), 1);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      x.get_partitioner(), 1, d_xDevice);
+
 
     d_xPtr      = &x;
-    d_xLocalDof = d_xDevice.locallyOwnedDofsSize();
-    d_xLen = d_xDevice.locallyOwnedDofsSize() + d_xDevice.ghostFlattenedSize();
+    d_xLocalDof = d_xDevice.locallyOwnedSize() * d_xDevice.numVectors();
+    d_xLen      = d_xDevice.localSize() * d_xDevice.numVectors();
 
     computeDiagonalA();
 
@@ -82,9 +87,11 @@ namespace dftfe
     d_xPtr                      = &x;
     d_quadGradResidualValuesPtr = &quadPointValues;
 
-    deviceUtils::copyHostVecToDeviceVec<double>(d_xPtr->begin(),
-                                                d_xDevice.begin(),
-                                                d_xLocalDof);
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_xDevice.begin(),
+                                             d_xPtr->begin());
   }
 
 
@@ -124,9 +131,11 @@ namespace dftfe
   void
   kerkerSolverProblemDevice<FEOrderElectro>::copyXfromDeviceToHost()
   {
-    deviceUtils::copyDeviceVecToHostVec<double>(d_xDevice.begin(),
-                                                d_xPtr->begin(),
-                                                d_xLen);
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::HOST,
+      dftfe::utils::MemorySpace::DEVICE>::copy(d_xLen,
+                                               d_xPtr->begin(),
+                                               d_xDevice.begin());
   }
 
 
@@ -259,10 +268,15 @@ namespace dftfe
           d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
     d_diagonalA.compress(dealii::VectorOperation::insert);
-    d_diagonalAdevice.reinit(d_diagonalA.get_partitioner(), 1);
-    deviceUtils::copyHostVecToDeviceVec<double>(d_diagonalA.begin(),
-                                                d_diagonalAdevice.begin(),
-                                                d_xLocalDof);
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      d_diagonalA.get_partitioner(), 1, d_diagonalAdevice);
+
+
+    dftfe::utils::MemoryTransfer<
+      dftfe::utils::MemorySpace::DEVICE,
+      dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
+                                             d_diagonalAdevice.begin(),
+                                             d_diagonalA.begin());
   }
 
 
@@ -283,6 +297,7 @@ namespace dftfe
                   const int * map,
                   const Type  coeffHelmholtz)
   {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     // V = AU
     // gridDim.x = cells;
     // First index is fastest convention used
@@ -304,7 +319,7 @@ namespace dftfe
     const int mapShift = blockIdx.x * M * K;
 
     // Copy Shape Function Values and Gradients to shared memory
-#pragma unroll
+#  pragma unroll
     for (int i = threadIdx.x; i < 2 * N * (K + N); i += blockDim.x)
       sharedP[i] = P[i];
 
@@ -323,7 +338,7 @@ namespace dftfe
       {
         Type x[N], u[K];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -331,12 +346,12 @@ namespace dftfe
           {
             u[k] = U[map[i + k * M + mapShift]];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * u[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[i + j * M] = x[j];
       }
@@ -352,7 +367,7 @@ namespace dftfe
         int a = i % K;
         int b = i / K;
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -360,12 +375,12 @@ namespace dftfe
           {
             x[k] = sharedX[a + k * K + b * M];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               y[j] += sharedP[j + k * N] * x[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedY[a + (j + b * N) * K] = y[j];
       }
@@ -378,7 +393,7 @@ namespace dftfe
       {
         Type x[N], y[K];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -386,12 +401,12 @@ namespace dftfe
           {
             y[k] = sharedY[k + i * K];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * y[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[j + i * N] = x[j];
       }
@@ -404,7 +419,7 @@ namespace dftfe
       {
         Type y[N], x[N];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -412,12 +427,12 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               y[j] += sharedD[j + k * N] * x[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedY[i + j * N * N] = y[j];
       }
@@ -431,7 +446,7 @@ namespace dftfe
         int a = i % N;
         int b = i / N;
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -439,12 +454,12 @@ namespace dftfe
           {
             x[k] = sharedX[a + (k + b * N) * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               z[j] += sharedD[j + k * N] * x[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedZ[a + (j + b * N) * N] = z[j];
       }
@@ -455,7 +470,7 @@ namespace dftfe
       {
         Type t[N], x[N];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           t[j] = 0.0;
 
@@ -463,12 +478,12 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               t[j] += sharedD[j + k * N] * x[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedT[j + i * N] = t[j];
       }
@@ -480,7 +495,7 @@ namespace dftfe
     const int JShift = blockIdx.x * dim * dim;
 
     // Copy Jacobian Factor to shared memory
-#pragma unroll
+#  pragma unroll
     for (int i = threadIdx.x; i < dim * dim; i += blockDim.x)
       sharedJ[i] = J[i + JShift];
 
@@ -489,7 +504,7 @@ namespace dftfe
     __syncthreads();
 
     // Gemm with Jacobian Factor
-#pragma unroll
+#  pragma unroll
     for (int i = threadIdx.x; i < N * N * N; i += blockDim.x)
       {
         Type v[3];
@@ -522,7 +537,7 @@ namespace dftfe
       {
         Type x[N], y[N], h[N];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -530,12 +545,12 @@ namespace dftfe
           {
             y[k] = sharedY[i + k * N * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               x[j] += sharedDT[j + k * N] * y[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           {
             h[j]                   = sharedX[i + j * N * N];
@@ -554,7 +569,7 @@ namespace dftfe
         int a = i % N;
         int b = i / N;
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -562,12 +577,12 @@ namespace dftfe
           {
             z[k] = sharedZ[a + (k + b * N) * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               y[j] += sharedDT[j + k * N] * z[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[a + (j + b * N) * N] += y[j];
       }
@@ -580,7 +595,7 @@ namespace dftfe
       {
         Type z[N], t[N];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -588,12 +603,12 @@ namespace dftfe
           {
             t[k] = sharedT[k + i * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < N; j++)
               z[j] += sharedDT[j + k * N] * t[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[j + i * N] += z[j];
       }
@@ -606,7 +621,7 @@ namespace dftfe
       {
         Type y[K], x[N];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -614,12 +629,12 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < K; j++)
           sharedY[i + j * N * N] = y[j];
       }
@@ -635,7 +650,7 @@ namespace dftfe
         int a = i % N;
         int b = i / N;
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < K; j++)
           x[j] = 0.0;
 
@@ -643,12 +658,12 @@ namespace dftfe
           {
             y[k] = sharedY[a + (k + b * N) * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < K; j++)
               x[j] += sharedPT[j + k * K] * y[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < K; j++)
           sharedX[a + (j + b * K) * N] = x[j];
       }
@@ -661,7 +676,7 @@ namespace dftfe
       {
         Type y[K], x[N];
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -669,15 +684,16 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#pragma unroll
+#  pragma unroll
             for (int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#pragma unroll
+#  pragma unroll
         for (int j = 0; j < K; j++)
           atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
       }
+#endif
   }
 
 
@@ -700,7 +716,8 @@ namespace dftfe
 
     // Shape Function Values, Gradients and their Transposes
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-    thrust::host_vector<double> shapeFunction(2 * q * (p + q));
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      shapeFunction(2 * q * (p + q));
 
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
@@ -722,7 +739,8 @@ namespace dftfe
         }
 
     // Jacobian
-    thrust::host_vector<double> jacobianFactor(dim * dim * d_nLocalCells);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      jacobianFactor(dim * dim * d_nLocalCells);
 
     auto cellOffsets = mappingData.data_index_offsets;
 
@@ -744,7 +762,8 @@ namespace dftfe
                           [k][i][0];
 
     // Map making
-    thrust::host_vector<int> map(nDofsPerCell * d_nLocalCells);
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::HOST> map(
+      nDofsPerCell * d_nLocalCells);
 
     for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
       std::memcpy(map.data() + cellIdx * nDofsPerCell,
@@ -759,20 +778,27 @@ namespace dftfe
                   nDofsPerCell * sizeof(unsigned int));
 
     // Construct the device vectors
-    d_shapeFunction  = shapeFunction;
-    d_jacobianFactor = jacobianFactor;
-    d_map            = map;
+    d_shapeFunction.resize(shapeFunction.size());
+    d_shapeFunction.copyFrom(shapeFunction);
 
-    d_shapeFunctionPtr  = thrust::raw_pointer_cast(d_shapeFunction.data());
-    d_jacobianFactorPtr = thrust::raw_pointer_cast(d_jacobianFactor.data());
-    d_mapPtr            = thrust::raw_pointer_cast(d_map.data());
+    d_jacobianFactor.resize(jacobianFactor.size());
+    d_jacobianFactor.copyFrom(jacobianFactor);
+
+    d_map.resize(map.size());
+    d_map.copyFrom(map);
+
+    d_shapeFunctionPtr  = d_shapeFunction.data();
+    d_jacobianFactorPtr = d_jacobianFactor.data();
+    d_mapPtr            = d_map.data();
 
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     cudaFuncSetAttribute(computeAXKernel<double, p * p, q, p, dim>,
                          cudaFuncAttributeMaxDynamicSharedMemorySize,
                          smem);
+#endif
   }
 
 
@@ -788,14 +814,14 @@ namespace dftfe
     constexpr int threads =
       (FEOrderElectro < 7 ?
          96 :
-         FEOrderElectro == 7 ? 64 : deviceConstants::blockSize);
+         FEOrderElectro == 7 ? 64 : dftfe::utils::DEVICE_BLOCK_SIZE);
     const int        blocks         = d_nLocalCells;
     const double     coeffHelmholtz = 4 * M_PI * d_gamma;
     constexpr size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
-    cudaMemset(Ax.begin(), 0, d_xLen * sizeof(double));
-
+    dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
+    // std::cout<<"HELLO 1"<<std::endl;
     x.updateGhostValues();
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
@@ -811,8 +837,8 @@ namespace dftfe
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
-
-    Ax.compressAdd();
+    // std::cout<<"HELLO 2"<<std::endl;
+    Ax.accumulateAddLocallyOwned();
   }
 
 #include "kerkerSolverProblemDevice.inst.cc"

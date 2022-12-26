@@ -13,27 +13,38 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
+//
 
-#ifndef dftfeMemorySpace_h
-#define dftfeMemorySpace_h
+/*
+ * @author Bikash Kanungo, Sambit Das
+ */
+
+#ifndef dftfeMPITags_h
+#define dftfeMPITags_h
+
+#include <TypeConfig.h>
+#include <vector>
+#include <cstdint>
+
+#include <mpi.h>
 
 namespace dftfe
 {
-  namespace MemorySpace
+  namespace utils
   {
-    /**
-     * Structure describing Host memory space.
-     */
-    struct Host
-    {};
+    namespace mpi
+    {
+      enum class MPITags : std::uint16_t
+      {
+        DUMMY_MPI_TAG = 100,
+        MPI_REQUESTERS_NBX_TAG,
+        MPI_P2P_PATTERN_TAG,
 
-    /**
-     * Structure describing Device memory space.
-     */
-    struct Device
-    {};
+        MPI_P2P_COMMUNICATOR_SCATTER_TAG,
 
-  } // namespace MemorySpace
-} // namespace dftfe
-
-#endif
+        MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
+      };
+    } // end of namespace mpi
+  }   // end of namespace utils
+} // end of namespace dftfe
+#endif // dftfeMPITags_h
