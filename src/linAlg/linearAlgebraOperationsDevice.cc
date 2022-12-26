@@ -1642,14 +1642,13 @@ namespace dftfe
                   else
                     {
                       if (idof == 0)
-                        MPI_Allreduce(
-                          MPI_IN_PLACE,
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            rotationMatBlockHost.begin() + jvec * N),
-                          BVec * N,
-                          dataTypes::mpi_type_id(rotationMatBlockHost.begin()),
-                          MPI_SUM,
-                          mpiCommDomain);
+                        MPI_Allreduce(MPI_IN_PLACE,
+                                      rotationMatBlockHost.begin() + jvec * N,
+                                      BVec * N,
+                                      dataTypes::mpi_type_id(
+                                        rotationMatBlockHost.begin()),
+                                      MPI_SUM,
+                                      mpiCommDomain);
 
                       dftfe::utils::deviceMemcpyH2D(
                         dftfe::utils::makeDataTypeDeviceCompatible(
