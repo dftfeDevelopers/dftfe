@@ -305,6 +305,14 @@ namespace dftfe
     }
 
     deviceError_t
+    deviceStreamSynchronize(deviceStream_t stream)
+    {
+      deviceError_t err = hipStreamSynchronize(stream);
+      DEVICE_API_CHECK(err);
+      return err;
+    }
+
+    deviceError_t
     deviceEventCreate(deviceEvent_t *pEvent)
     {
       deviceError_t err = hipEventCreate(pEvent);
