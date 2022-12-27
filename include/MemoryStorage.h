@@ -74,7 +74,7 @@ namespace dftfe
        * @param[in] size size of the Vector
        * @param[in] initVal initial value of elements of the Vector
        */
-      explicit MemoryStorage(size_type size, ValueType initVal = 0);
+      explicit MemoryStorage(size_t size, ValueType initVal = 0);
 
       /**
        * @brief Destructor
@@ -155,7 +155,7 @@ namespace dftfe
        * @returns reference to the element of the Vector
        * @throws exception if i >= size of the Vector
        */
-      reference operator[](size_type i);
+      reference operator[](size_t i);
 
       /**
        * @brief Operator to get a const reference to a element of the Vector
@@ -163,7 +163,7 @@ namespace dftfe
        * @returns const reference to the element of the Vector
        * @throws exception if i >= size of the Vector
        */
-      const_reference operator[](size_type i) const;
+      const_reference operator[](size_t i) const;
 
       void
       swap(MemoryStorage &rhs);
@@ -175,13 +175,13 @@ namespace dftfe
        * @param[in] initVal initial value of elements of the Vector
        */
       void
-      resize(size_type size, ValueType initVal = ValueType());
+      resize(size_t size, ValueType initVal = ValueType());
 
       /**
        * @brief Returns the dimension of the Vector
        * @returns size of the Vector
        */
-      size_type
+      size_t
       size() const;
 
       /**
@@ -246,9 +246,9 @@ namespace dftfe
       template <dftfe::utils::MemorySpace memorySpaceDst>
       void
       copyTo(MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage,
-             const size_type                           N,
-             const size_type                           srcOffset,
-             const size_type                           dstOffset) const;
+             const size_t                              N,
+             const size_t                              srcOffset,
+             const size_t                              dstOffset) const;
 
       /**
        * @brief Copies data from a MemoryStorage object in a different memory space.
@@ -297,9 +297,9 @@ namespace dftfe
       template <dftfe::utils::MemorySpace memorySpaceSrc>
       void
       copyFrom(MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
-               const size_type                           N,
-               const size_type                           srcOffset,
-               const size_type                           dstOffset);
+               const size_t                              N,
+               const size_t                              srcOffset,
+               const size_t                              dstOffset);
 
       /**
        * @brief Copies the data to a memory pointed by a raw pointer
@@ -344,10 +344,10 @@ namespace dftfe
        */
       template <dftfe::utils::MemorySpace memorySpaceDst>
       void
-      copyTo(ValueType *     dst,
-             const size_type N,
-             const size_type srcOffset,
-             const size_type dstOffset) const;
+      copyTo(ValueType *  dst,
+             const size_t N,
+             const size_t srcOffset,
+             const size_t dstOffset) const;
 
       /**
        * @brief Copies data from a memory pointed by a raw pointer into
@@ -392,9 +392,9 @@ namespace dftfe
       template <dftfe::utils::MemorySpace memorySpaceSrc>
       void
       copyFrom(const ValueType *src,
-               const size_type  N,
-               const size_type  srcOffset,
-               const size_type  dstOffset);
+               const size_t     N,
+               const size_t     srcOffset,
+               const size_t     dstOffset);
 
       /**
        * @brief Copies the data to a C++ STL vector, which always resides in
@@ -445,9 +445,9 @@ namespace dftfe
        */
       void
       copyTo(std::vector<ValueType> &dst,
-             const size_type         N,
-             const size_type         srcOffset,
-             const size_type         dstOffset) const;
+             const size_t            N,
+             const size_t            srcOffset,
+             const size_t            dstOffset) const;
 
       /**
        * @brief Copies data from a C++ STL vector to the MemoryStorage object,
@@ -489,14 +489,14 @@ namespace dftfe
        */
       void
       copyFrom(const std::vector<ValueType> &src,
-               const size_type               N,
-               const size_type               srcOffset,
-               const size_type               dstOffset);
+               const size_t                  N,
+               const size_t                  srcOffset,
+               const size_t                  dstOffset);
 
 
     private:
       ValueType *d_data = nullptr;
-      size_type  d_size = 0;
+      size_t     d_size = 0;
     };
 
     //

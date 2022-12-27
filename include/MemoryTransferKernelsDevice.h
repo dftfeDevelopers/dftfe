@@ -35,21 +35,21 @@ namespace dftfe
        * @param count The memory size in bytes of the array
        */
       void
-      deviceMemcpyD2H(void *dst, const void *src, size_type count);
+      deviceMemcpyD2H(void *dst, const void *src, size_t count);
 
       /**
        * @brief Copy array from device to device
        * @param count The memory size in bytes of the array
        */
       void
-      deviceMemcpyD2D(void *dst, const void *src, size_type count);
+      deviceMemcpyD2D(void *dst, const void *src, size_t count);
 
       /**
        * @brief Copy array from host to device
        * @param count The memory size in bytes of the array
        */
       void
-      deviceMemcpyH2D(void *dst, const void *src, size_type count);
+      deviceMemcpyH2D(void *dst, const void *src, size_t count);
 
     }; // namespace memoryTransferKernelsDevice
   }    // namespace utils

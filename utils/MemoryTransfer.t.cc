@@ -30,7 +30,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -41,7 +41,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -51,7 +51,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -63,7 +63,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -73,7 +73,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST_PINNED>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -83,7 +83,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::DEVICE>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -95,7 +95,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -107,7 +107,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST_PINNED>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {
@@ -119,7 +119,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE>::copy(
-      size_type        size,
+      size_t           size,
       ValueType *      dst,
       const ValueType *src)
     {

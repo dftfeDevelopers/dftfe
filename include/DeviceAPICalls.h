@@ -25,10 +25,10 @@ namespace dftfe
     setDevice(int deviceId);
 
     deviceError_t
-    deviceMalloc(void **devPtr, size_type size);
+    deviceMalloc(void **devPtr, size_t size);
 
     deviceError_t
-    deviceMemset(void *devPtr, int value, size_type count);
+    deviceMemset(void *devPtr, int value, size_t count);
 
     /**
      * @brief
@@ -38,13 +38,13 @@ namespace dftfe
      */
     template <typename ValueType>
     void
-    deviceSetValue(ValueType *devPtr, ValueType value, size_type size);
+    deviceSetValue(ValueType *devPtr, ValueType value, size_t size);
 
     deviceError_t
     deviceFree(void *devPtr);
 
     deviceError_t
-    deviceHostMalloc(void **hostPtr, size_type size);
+    deviceHostMalloc(void **hostPtr, size_t size);
 
     deviceError_t
     deviceHostFree(void *hostPtr);
@@ -54,21 +54,21 @@ namespace dftfe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyD2H(void *dst, const void *src, size_type count);
+    deviceMemcpyD2H(void *dst, const void *src, size_t count);
 
     /**
      * @brief Copy array from device to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyD2D(void *dst, const void *src, size_type count);
+    deviceMemcpyD2D(void *dst, const void *src, size_t count);
 
     /**
      * @brief Copy array from host to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyH2D(void *dst, const void *src, size_type count);
+    deviceMemcpyH2D(void *dst, const void *src, size_t count);
 
     /**
      * @brief Copy 2D array from device to host
@@ -76,11 +76,11 @@ namespace dftfe
      */
     deviceError_t
     deviceMemcpyD2H_2D(void *      dst,
-                       size_type   dpitch,
+                       size_t      dpitch,
                        const void *src,
-                       size_type   spitch,
-                       size_type   width,
-                       size_type   height);
+                       size_t      spitch,
+                       size_t      width,
+                       size_t      height);
 
     /**
      * @brief Copy 2D array from device to device
@@ -88,11 +88,11 @@ namespace dftfe
      */
     deviceError_t
     deviceMemcpyD2D_2D(void *      dst,
-                       size_type   dpitch,
+                       size_t      dpitch,
                        const void *src,
-                       size_type   spitch,
-                       size_type   width,
-                       size_type   height);
+                       size_t      spitch,
+                       size_t      width,
+                       size_t      height);
 
     /**
      * @brief Copy 2D array from host to device
@@ -100,11 +100,11 @@ namespace dftfe
      */
     deviceError_t
     deviceMemcpyH2D_2D(void *      dst,
-                       size_type   dpitch,
+                       size_t      dpitch,
                        const void *src,
-                       size_type   spitch,
-                       size_type   width,
-                       size_type   height);
+                       size_t      spitch,
+                       size_t      width,
+                       size_t      height);
 
     /**
      * @brief HOST-DEVICE synchronization
@@ -119,7 +119,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyAsyncD2H(void *         dst,
                          const void *   src,
-                         size_type      count,
+                         size_t         count,
                          deviceStream_t stream = 0);
 
     /**
@@ -129,7 +129,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyAsyncD2D(void *         dst,
                          const void *   src,
-                         size_type      count,
+                         size_t         count,
                          deviceStream_t stream = 0);
 
     /**
@@ -139,7 +139,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyAsyncH2D(void *         dst,
                          const void *   src,
-                         size_type      count,
+                         size_t         count,
                          deviceStream_t stream = 0);
 
 

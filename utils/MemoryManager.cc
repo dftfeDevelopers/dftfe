@@ -38,7 +38,7 @@ namespace dftfe
   {
     template <typename ValueType>
     void
-    MemoryManager<ValueType, MemorySpace::HOST>::allocate(size_type   size,
+    MemoryManager<ValueType, MemorySpace::HOST>::allocate(size_t      size,
                                                           ValueType **ptr)
     {
       *ptr = new ValueType[size];
@@ -53,7 +53,7 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    MemoryManager<ValueType, MemorySpace::HOST>::set(size_type  size,
+    MemoryManager<ValueType, MemorySpace::HOST>::set(size_t     size,
                                                      ValueType *ptr,
                                                      ValueType  val)
     {
@@ -64,7 +64,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST_PINNED>::allocate(
-      size_type   size,
+      size_t      size,
       ValueType **ptr)
     {
       deviceHostMalloc((void **)ptr, size * sizeof(ValueType));
@@ -81,7 +81,7 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    MemoryManager<ValueType, MemorySpace::HOST_PINNED>::set(size_type  size,
+    MemoryManager<ValueType, MemorySpace::HOST_PINNED>::set(size_t     size,
                                                             ValueType *ptr,
                                                             ValueType  val)
     {
@@ -91,7 +91,7 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(size_type   size,
+    MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(size_t      size,
                                                             ValueType **ptr)
     {
       deviceMalloc((void **)ptr, size * sizeof(ValueType));
@@ -106,7 +106,7 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    MemoryManager<ValueType, MemorySpace::DEVICE>::set(size_type  size,
+    MemoryManager<ValueType, MemorySpace::DEVICE>::set(size_t     size,
                                                        ValueType *ptr,
                                                        ValueType  val)
     {

@@ -16,13 +16,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_type size, ValueType **ptr);
+      allocate(size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, ValueType *ptr, ValueType val);
+      set(size_t size, ValueType *ptr, ValueType val);
     };
 
     template <typename ValueType>
@@ -30,13 +30,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_type size, ValueType **ptr);
+      allocate(size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, ValueType *ptr, ValueType val);
+      set(size_t size, ValueType *ptr, ValueType val);
     };
 
 #ifdef DFTFE_WITH_DEVICE
@@ -45,13 +45,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_type size, ValueType **ptr);
+      allocate(size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, ValueType *ptr, ValueType val);
+      set(size_t size, ValueType *ptr, ValueType val);
     };
 
 
@@ -60,13 +60,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_type size, ValueType **ptr);
+      allocate(size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, ValueType *ptr, ValueType val);
+      set(size_t size, ValueType *ptr, ValueType val);
     };
 #endif // DFTFE_WITH_DEVICE
   }    // namespace utils
