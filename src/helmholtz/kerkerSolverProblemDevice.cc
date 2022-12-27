@@ -791,7 +791,7 @@ namespace dftfe
     d_jacobianFactorPtr = d_jacobianFactor.data();
     d_mapPtr            = d_map.data();
 
-    constexpr size_t smem =
+    constexpr std::size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -815,9 +815,9 @@ namespace dftfe
       (FEOrderElectro < 7 ?
          96 :
          FEOrderElectro == 7 ? 64 : dftfe::utils::DEVICE_BLOCK_SIZE);
-    const int        blocks         = d_nLocalCells;
-    const double     coeffHelmholtz = 4 * M_PI * d_gamma;
-    constexpr size_t smem =
+    const int             blocks         = d_nLocalCells;
+    const double          coeffHelmholtz = 4 * M_PI * d_gamma;
+    constexpr std::size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
