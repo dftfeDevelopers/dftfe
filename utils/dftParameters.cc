@@ -1380,6 +1380,8 @@ namespace dftfe
       saveRhoData           = prm.get_bool("SAVE RHO DATA");
       loadRhoData           = prm.get_bool("LOAD RHO DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
+      if(solverMode=="NEB")
+        saveRhoData=true;
     }
     prm.leave_subsection();
 

@@ -130,7 +130,7 @@ namespace dftfe
                                                     Image == 0 ? true : false,
                                                     "NEB",
                                                     d_restartFilesPath,
-                                                    false));
+                                                    Image == 0 ? false : true));
           }
       }
       else
@@ -442,7 +442,7 @@ namespace dftfe
                   {
                     double temp = (atomLocationsiplus[iCharge][j] -
                                    atomLocationsi[iCharge][j]);
-                    pcout<<temp<<std::endl;               
+                    //pcout<<temp<<std::endl;               
                     if (temp > d_Length[j] / 2)
                       {
                         //pcout<<iCharge<<" "<<j<<"Before: "<<temp;
