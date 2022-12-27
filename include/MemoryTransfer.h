@@ -40,7 +40,7 @@ namespace dftfe
        */
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -49,7 +49,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
 #ifdef DFTFE_WITH_DEVICE
@@ -59,7 +59,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -68,7 +68,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -77,7 +77,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -86,7 +86,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -95,7 +95,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -104,7 +104,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -113,7 +113,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 
     template <>
@@ -122,7 +122,7 @@ namespace dftfe
     public:
       template <typename ValueType>
       static void
-      copy(size_t size, ValueType *dst, const ValueType *src);
+      copy(std::size_t size, ValueType *dst, const ValueType *src);
     };
 #endif // DFTFE_WITH_DEVICE
   }    // namespace utils

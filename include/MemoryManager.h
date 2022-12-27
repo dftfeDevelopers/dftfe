@@ -3,6 +3,7 @@
 
 #include <TypeConfig.h>
 #include <MemorySpaceType.h>
+#include <vector>
 
 namespace dftfe
 {
@@ -16,13 +17,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_t size, ValueType **ptr);
+      allocate(std::size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_t size, ValueType *ptr, ValueType val);
+      set(std::size_t size, ValueType *ptr, ValueType val);
     };
 
     template <typename ValueType>
@@ -30,13 +31,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_t size, ValueType **ptr);
+      allocate(std::size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_t size, ValueType *ptr, ValueType val);
+      set(std::size_t size, ValueType *ptr, ValueType val);
     };
 
 #ifdef DFTFE_WITH_DEVICE
@@ -45,13 +46,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_t size, ValueType **ptr);
+      allocate(std::size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_t size, ValueType *ptr, ValueType val);
+      set(std::size_t size, ValueType *ptr, ValueType val);
     };
 
 
@@ -60,13 +61,13 @@ namespace dftfe
     {
     public:
       static void
-      allocate(size_t size, ValueType **ptr);
+      allocate(std::size_t size, ValueType **ptr);
 
       static void
       deallocate(ValueType *ptr);
 
       static void
-      set(size_t size, ValueType *ptr, ValueType val);
+      set(std::size_t size, ValueType *ptr, ValueType val);
     };
 #endif // DFTFE_WITH_DEVICE
   }    // namespace utils
