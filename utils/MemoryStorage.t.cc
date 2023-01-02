@@ -31,8 +31,8 @@ namespace dftfe
     //
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MemoryStorage<ValueType, memorySpace>::MemoryStorage(
-      const size_type size,
-      const ValueType initVal)
+      const std::size_t size,
+      const ValueType   initVal)
       : d_size(size)
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::allocate(size,
@@ -44,8 +44,8 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     void
-    MemoryStorage<ValueType, memorySpace>::resize(const size_type size,
-                                                  const ValueType initVal)
+    MemoryStorage<ValueType, memorySpace>::resize(const std::size_t size,
+                                                  const ValueType   initVal)
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
       d_size = size;
@@ -110,7 +110,7 @@ namespace dftfe
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-    size_type
+    std::size_t
     MemoryStorage<ValueType, memorySpace>::size() const
     {
       return d_size;
@@ -180,7 +180,7 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::reference
-      MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
+      MemoryStorage<ValueType, memorySpace>::operator[](const std::size_t i)
     {
       throwException<InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -190,7 +190,8 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::const_reference
-      MemoryStorage<ValueType, memorySpace>::operator[](const size_type i) const
+      MemoryStorage<ValueType, memorySpace>::
+      operator[](const std::size_t i) const
     {
       throwException<InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -203,12 +204,12 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::swap(
       MemoryStorage<ValueType, memorySpace> &rhs)
     {
-      ValueType *     tempData = d_data;
-      const size_type tempSize = d_size;
-      d_data                   = rhs.d_data;
-      d_size                   = rhs.d_size;
-      rhs.d_data               = tempData;
-      rhs.d_size               = tempSize;
+      ValueType *       tempData = d_data;
+      const std::size_t tempSize = d_size;
+      d_data                     = rhs.d_data;
+      d_size                     = rhs.d_size;
+      rhs.d_data                 = tempData;
+      rhs.d_size                 = tempSize;
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -243,9 +244,9 @@ namespace dftfe
     void
     MemoryStorage<ValueType, memorySpace>::copyTo(
       MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage,
-      const size_type                           N,
-      const size_type                           srcOffset,
-      const size_type                           dstOffset) const
+      const std::size_t                         N,
+      const std::size_t                         srcOffset,
+      const std::size_t                         dstOffset) const
     {
       throwException<LengthError>(
         srcOffset + N <= d_size,
@@ -281,9 +282,9 @@ namespace dftfe
     void
     MemoryStorage<ValueType, memorySpace>::copyFrom(
       MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
-      const size_type                           N,
-      const size_type                           srcOffset,
-      const size_type                           dstOffset)
+      const std::size_t                         N,
+      const std::size_t                         srcOffset,
+      const std::size_t                         dstOffset)
     {
       throwException<LengthError>(
         srcOffset + N <= srcMemoryStorage.size(),
@@ -313,10 +314,10 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpaceDst>
     void
     MemoryStorage<ValueType, memorySpace>::copyTo(
-      ValueType *     dst,
-      const size_type N,
-      const size_type srcOffset,
-      const size_type dstOffset) const
+      ValueType *       dst,
+      const std::size_t N,
+      const std::size_t srcOffset,
+      const std::size_t dstOffset) const
     {
       throwException<LengthError>(
         srcOffset + N <= d_size,
@@ -340,10 +341,10 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     template <dftfe::utils::MemorySpace memorySpaceSrc>
     void
-    MemoryStorage<ValueType, memorySpace>::copyFrom(const ValueType *src,
-                                                    const size_type  N,
-                                                    const size_type  srcOffset,
-                                                    const size_type  dstOffset)
+    MemoryStorage<ValueType, memorySpace>::copyFrom(const ValueType * src,
+                                                    const std::size_t N,
+                                                    const std::size_t srcOffset,
+                                                    const std::size_t dstOffset)
     {
       throwException<LengthError>(
         dstOffset + N <= d_size,
@@ -370,9 +371,9 @@ namespace dftfe
     void
     MemoryStorage<ValueType, memorySpace>::copyTo(
       std::vector<ValueType> &dst,
-      const size_type         N,
-      const size_type         srcOffset,
-      const size_type         dstOffset) const
+      const std::size_t       N,
+      const std::size_t       srcOffset,
+      const std::size_t       dstOffset) const
     {
       throwException<LengthError>(
         srcOffset + N <= d_size,
@@ -404,9 +405,9 @@ namespace dftfe
     void
     MemoryStorage<ValueType, memorySpace>::copyFrom(
       const std::vector<ValueType> &src,
-      const size_type               N,
-      const size_type               srcOffset,
-      const size_type               dstOffset)
+      const std::size_t             N,
+      const std::size_t             srcOffset,
+      const std::size_t             dstOffset)
     {
       throwException<LengthError>(
         dstOffset + N <= d_size,

@@ -29,19 +29,19 @@ namespace dftfe
     namespace memoryTransferKernelsDevice
     {
       void
-      deviceMemcpyD2H(void *dst, const void *src, size_type count)
+      deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
       {
         dftfe::utils::deviceMemcpyD2H(dst, src, count);
       }
 
       void
-      deviceMemcpyH2D(void *dst, const void *src, size_type count)
+      deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
       {
         dftfe::utils::deviceMemcpyH2D(dst, src, count);
       }
 
       void
-      deviceMemcpyD2D(void *dst, const void *src, size_type count)
+      deviceMemcpyD2D(void *dst, const void *src, std::size_t count)
       {
         dftfe::utils::deviceMemcpyD2D(dst, src, count);
       }

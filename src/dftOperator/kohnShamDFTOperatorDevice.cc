@@ -557,7 +557,7 @@ namespace dftfe
       1,
       d_parallelVecSingleComponent);
 
-    size_t free_t, total_t;
+    std::size_t free_t, total_t;
 
     dftfe::utils::deviceMemGetInfo(&free_t, &total_t);
     if (dftPtr->d_dftParamsPtr->verbosity >= 2)

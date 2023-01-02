@@ -112,7 +112,7 @@ namespace dftfe
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           Patterns::Bool(),
-          "[Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
+          "[Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -1904,7 +1904,7 @@ namespace dftfe
           scalapackBlockSize = 32;
       }
 
-#ifndef DFTFE_WITH_CUDA_NCCL
+#if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
     useDeviceDirectAllReduce = false;
 #endif
 

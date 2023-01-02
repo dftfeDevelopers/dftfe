@@ -197,14 +197,14 @@ namespace dftfe
     // conjugate overloads
     //
 
-    __forceinline__ __device__ size_type
-                               conj(size_type a)
+    __forceinline__ __device__ unsigned int
+                    conj(unsigned int a)
     {
       return a;
     }
 
-    __forceinline__ __device__ global_size_type
-                               conj(global_size_type a)
+    __forceinline__ __device__ unsigned long int
+                    conj(unsigned long int a)
     {
       return a;
     }
@@ -242,14 +242,14 @@ namespace dftfe
     //
     // mult for real homogeneous types e.g. (double, double)
     //
-    __forceinline__ __device__ size_type
-                               mult(size_type a, size_type b)
+    __forceinline__ __device__ unsigned int
+                    mult(unsigned int a, unsigned int b)
     {
       return a * b;
     }
 
-    __forceinline__ __device__ global_size_type
-                               mult(global_size_type a, global_size_type b)
+    __forceinline__ __device__ unsigned long int
+                    mult(unsigned long int a, unsigned long int b)
     {
       return a * b;
     }
@@ -359,14 +359,14 @@ namespace dftfe
     }
 
 
-    __forceinline__ __device__ size_type
-                               add(size_type a, size_type b)
+    __forceinline__ __device__ unsigned int
+                    add(unsigned int a, unsigned int b)
     {
       return a + b;
     }
 
-    __forceinline__ __device__ global_size_type
-                               add(global_size_type a, global_size_type b)
+    __forceinline__ __device__ unsigned long int
+                    add(unsigned long int a, unsigned long int b)
     {
       return a + b;
     }
@@ -428,14 +428,14 @@ namespace dftfe
     }
 
 
-    __forceinline__ __device__ size_type
-                               sub(size_type a, size_type b)
+    __forceinline__ __device__ unsigned int
+                    sub(unsigned int a, unsigned int b)
     {
       return a - b;
     }
 
-    __forceinline__ __device__ global_size_type
-                               sub(global_size_type a, global_size_type b)
+    __forceinline__ __device__ unsigned long int
+                    sub(unsigned long int a, unsigned long int b)
     {
       return a - b;
     }
@@ -470,14 +470,14 @@ namespace dftfe
       return cuCsubf(a, b);
     }
 
-    __forceinline__ __device__ size_type
-                               div(size_type a, size_type b)
+    __forceinline__ __device__ unsigned int
+                    div(unsigned int a, unsigned int b)
     {
       return a / b;
     }
 
-    __forceinline__ __device__ global_size_type
-                               div(global_size_type a, global_size_type b)
+    __forceinline__ __device__ unsigned long int
+                    div(unsigned long int a, unsigned long int b)
     {
       return a / b;
     }
@@ -596,26 +596,26 @@ namespace dftfe
     }
 
 
-    inline size_type *
-    makeDataTypeDeviceCompatible(size_type *a)
+    inline unsigned int *
+    makeDataTypeDeviceCompatible(unsigned int *a)
     {
       return a;
     }
 
-    inline const size_type *
-    makeDataTypeDeviceCompatible(const size_type *a)
+    inline const unsigned int *
+    makeDataTypeDeviceCompatible(const unsigned int *a)
     {
       return a;
     }
 
-    inline global_size_type *
-    makeDataTypeDeviceCompatible(global_size_type *a)
+    inline unsigned long int *
+    makeDataTypeDeviceCompatible(unsigned long int *a)
     {
       return a;
     }
 
-    inline const global_size_type *
-    makeDataTypeDeviceCompatible(const global_size_type *a)
+    inline const unsigned long int *
+    makeDataTypeDeviceCompatible(const unsigned long int *a)
     {
       return a;
     }
@@ -681,14 +681,14 @@ namespace dftfe
     }
 
 
-    inline size_type
-    makeDataTypeDeviceCompatible(size_type a)
+    inline unsigned int
+    makeDataTypeDeviceCompatible(unsigned int a)
     {
       return a;
     }
 
-    inline global_size_type
-    makeDataTypeDeviceCompatible(global_size_type a)
+    inline unsigned long int
+    makeDataTypeDeviceCompatible(unsigned long int a)
     {
       return a;
     }

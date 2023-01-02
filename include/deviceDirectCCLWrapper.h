@@ -160,9 +160,10 @@ namespace dftfe
       {}
 
     private:
-      int  myRank;
-      int  totalRanks;
-      bool commCreated;
+      int      myRank;
+      int      totalRanks;
+      MPI_Comm d_mpiComm;
+      bool     commCreated;
 #    ifdef DFTFE_WITH_CUDA_NCCL
       void *ncclIdPtr;
       void *ncclCommPtr;
