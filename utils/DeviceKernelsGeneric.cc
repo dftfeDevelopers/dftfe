@@ -32,11 +32,15 @@ namespace dftfe
   {
     template <typename ValueType>
     __global__ void
-    saddKernel(ValueType *y, ValueType *x, const ValueType beta, const dftfe::size_type size)
+    saddKernel(ValueType *            y,
+               ValueType *            x,
+               const ValueType        beta,
+               const dftfe::size_type size)
     {
       const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dftfe::size_type idx = globalId; idx < size; idx += blockDim.x * gridDim.x)
+      for (dftfe::size_type idx = globalId; idx < size;
+           idx += blockDim.x * gridDim.x)
         {
           y[idx] = beta * y[idx] - x[idx];
           x[idx] = 0;
@@ -782,7 +786,10 @@ namespace dftfe
 
       template <typename ValueType>
       void
-      sadd(ValueType *y, ValueType *x, const ValueType beta, const dftfe::size_type size)
+      sadd(ValueType *            y,
+           ValueType *            x,
+           const ValueType        beta,
+           const dftfe::size_type size)
       {
         const dftfe::size_type gridSize =
           (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
@@ -809,7 +816,7 @@ namespace dftfe
       add(double *                          y,
           const double *                    x,
           const double                      alpha,
-          const dftfe::size_type                         size,
+          const dftfe::size_type            size,
           dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
       {
         dftfe::size_type incx = 1, incy = 1;
@@ -819,12 +826,12 @@ namespace dftfe
 
       double
       l2_norm(const double *                    x,
-              const dftfe::size_type                         size,
+              const dftfe::size_type            size,
               const MPI_Comm &                  mpi_communicator,
               dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
       {
-        dftfe::size_type   incx = 1;
-        double local_nrm, nrm = 0;
+        dftfe::size_type incx = 1;
+        double           local_nrm, nrm = 0;
 
         dftfe::utils::deviceBlasWrapper::nrm2(
           deviceBlasHandle, size, x, incx, &local_nrm);
@@ -839,12 +846,12 @@ namespace dftfe
       double
       dot(const double *                    x,
           const double *                    y,
-          const dftfe::size_type                         size,
+          const dftfe::size_type            size,
           const MPI_Comm &                  mpi_communicator,
           dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
       {
-        dftfe::size_type   incx = 1, incy = 1;
-        double local_sum, sum = 0;
+        dftfe::size_type incx = 1, incy = 1;
+        double           local_sum, sum = 0;
 
         dftfe::utils::deviceBlasWrapper::dot(
           deviceBlasHandle, size, x, incx, y, incy, &local_sum);
@@ -892,7 +899,10 @@ namespace dftfe
                                      std::complex<float> *  complexArr);
 
       template void
-      sadd(double *y, double *x, const double beta, const dftfe::size_type size);
+      sadd(double *               y,
+           double *               x,
+           const double           beta,
+           const dftfe::size_type size);
 
       // for axpby
       template void
