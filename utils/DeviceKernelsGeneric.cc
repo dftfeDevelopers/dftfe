@@ -32,11 +32,11 @@ namespace dftfe
   {
     template <typename ValueType>
     __global__ void
-    saddKernel(ValueType *y, ValueType *x, const ValueType beta, const int size)
+    saddKernel(ValueType *y, ValueType *x, const ValueType beta, const dftfe::size_type size)
     {
-      const int globalId = threadIdx.x + blockIdx.x * blockDim.x;
+      const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (int idx = globalId; idx < size; idx += blockDim.x * gridDim.x)
+      for (dftfe::size_type idx = globalId; idx < size; idx += blockDim.x * gridDim.x)
         {
           y[idx] = beta * y[idx] - x[idx];
           x[idx] = 0;
@@ -211,7 +211,7 @@ namespace dftfe
                       ValueType1 *           x,
                       const ValueType2       a)
     {
-      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+      for (dftfe::size_type i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
            i += blockDim.x * gridDim.x)
         dftfe::utils::copyValue(x + i, dftfe::utils::mult(a, x[i]));
     }
@@ -251,7 +251,7 @@ namespace dftfe
                       const ValueType2       a,
                       const ValueType2       b)
     {
-      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+      for (dftfe::size_type i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
            i += blockDim.x * gridDim.x)
         dftfe::utils::copyValue(y + i,
                                 dftfe::utils::add(dftfe::utils::mult(a, x[i]),
@@ -782,9 +782,9 @@ namespace dftfe
 
       template <typename ValueType>
       void
-      sadd(ValueType *y, ValueType *x, const ValueType beta, const int size)
+      sadd(ValueType *y, ValueType *x, const ValueType beta, const dftfe::size_type size)
       {
-        const int gridSize =
+        const dftfe::size_type gridSize =
           (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
           (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -809,21 +809,21 @@ namespace dftfe
       add(double *                          y,
           const double *                    x,
           const double                      alpha,
-          const int                         size,
+          const dftfe::size_type                         size,
           dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
       {
-        int incx = 1, incy = 1;
+        dftfe::size_type incx = 1, incy = 1;
         dftfe::utils::deviceBlasWrapper::axpy(
           deviceBlasHandle, size, &alpha, x, incx, y, incy);
       }
 
       double
       l2_norm(const double *                    x,
-              const int                         size,
+              const dftfe::size_type                         size,
               const MPI_Comm &                  mpi_communicator,
               dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
       {
-        int    incx = 1;
+        dftfe::size_type   incx = 1;
         double local_nrm, nrm = 0;
 
         dftfe::utils::deviceBlasWrapper::nrm2(
@@ -839,11 +839,11 @@ namespace dftfe
       double
       dot(const double *                    x,
           const double *                    y,
-          const int                         size,
+          const dftfe::size_type                         size,
           const MPI_Comm &                  mpi_communicator,
           dftfe::utils::deviceBlasHandle_t &deviceBlasHandle)
       {
-        int    incx = 1, incy = 1;
+        dftfe::size_type   incx = 1, incy = 1;
         double local_sum, sum = 0;
 
         dftfe::utils::deviceBlasWrapper::dot(
@@ -892,7 +892,7 @@ namespace dftfe
                                      std::complex<float> *  complexArr);
 
       template void
-      sadd(double *y, double *x, const double beta, const int size);
+      sadd(double *y, double *x, const double beta, const dftfe::size_type size);
 
       // for axpby
       template void
