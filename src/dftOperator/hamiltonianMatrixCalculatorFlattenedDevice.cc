@@ -45,6 +45,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             val +=
@@ -95,6 +96,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             val +=
@@ -155,6 +157,7 @@ namespace
         double valImagKptY = 0;
         double valImagKptZ = 0;
 
+#  pragma unroll
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             const double shapeI =
@@ -190,6 +193,7 @@ namespace
               gradShapeZI * shapeJ * JxW[cellIndex * numQuadPoints + q];
           }
 
+#  pragma unroll
         for (unsigned int ikpt = 0; ikpt < numkPoints; ++ikpt)
           {
             const unsigned int startIndex = (nspin * ikpt + spinIndex) *
@@ -252,6 +256,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             const double shapeI =
@@ -363,6 +368,7 @@ namespace
         double valImagKptY = 0;
         double valImagKptZ = 0;
 
+#  pragma unroll
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             const double shapeI =
@@ -426,6 +432,7 @@ namespace
               gradShapeZI * shapeJ * JxW[cellIndex * numQuadPoints + q];
           }
 
+#  pragma unroll
         for (unsigned int ikpt = 0; ikpt < numkPoints; ++ikpt)
           {
             const unsigned int startIndex = (nspin * ikpt + spinIndex) *
@@ -478,6 +485,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             val +=
@@ -521,6 +529,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0.0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             const double shapeI =
@@ -568,6 +577,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0.0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             const double shapeI =
@@ -661,6 +671,7 @@ namespace
           flattenedCellDofIndex % numDofsPerCell;
 
         double val = 0.0;
+#  pragma unroll        
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
             const double shapeI =
