@@ -21,6 +21,7 @@
 #include "linearAlgebraOperationsInternal.h"
 #include "constants.h"
 #include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
 
 namespace dftfe
 {
@@ -863,7 +864,88 @@ namespace dftfe
         computing_timer.leave_subsection(
           "Cholesky and triangular matrix invert, RR GEP step");
 
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
+            computing_timer.enter_subsection(
+              "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
+          else
+            computing_timer.enter_subsection(
+              "X^{T}=Lconj^{-1}*X^{T}, RR GEP step");
+        }
 
+      //
+      // X^{T}=LConj^{-1}*X^{T}
+      //
+      if (useMixedPrecOverall && dftParams.useMixedPrecCGS_SR)
+        subspaceRotationCGSMixedPrecScalapack(X,
+                                              M,
+                                              N,
+                                              handle,
+                                              processGrid,
+                                              mpiCommDomain,
+                                              devicecclMpiCommDomain,
+                                              interBandGroupComm,
+                                              LMatPar,
+                                              dftParams,
+                                              false);
+      else
+        subspaceRotationScalapack(X,
+                                  M,
+                                  N,
+                                  handle,
+                                  processGrid,
+                                  mpiCommDomain,
+                                  devicecclMpiCommDomain,
+                                  interBandGroupComm,
+                                  LMatPar,
+                                  dftParams,
+                                  false,
+                                  true);
+
+      const unsigned int numberBandGroups =
+        dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+
+      if (numberBandGroups > 1)
+        {
+          std::vector<dataTypes::number> eigenVectorsFlattenedHost(
+            M*N, dataTypes::number(0.0));
+
+          dftfe::utils::deviceMemcpyD2H(
+            dftfe::utils::makeDataTypeDeviceCompatible(&eigenVectorsFlattenedHost[0]),
+            X,
+            M*N*sizeof(dataTypes::number));
+
+          MPI_Barrier(interBandGroupComm);
+
+
+          MPI_Allreduce(MPI_IN_PLACE,
+                        &eigenVectorsFlattenedHost[0],
+                        M*N,
+                        dataTypes::mpi_type_id(&eigenVectorsFlattenedHost[0]),
+                        MPI_SUM,
+                        interBandGroupComm);
+
+          MPI_Barrier(interBandGroupComm);
+
+          dftfe::utils::deviceMemcpyH2D(
+            X,
+            dftfe::utils::makeDataTypeDeviceCompatible(&eigenVectorsFlattenedHost[0]),
+            M*N*sizeof(dataTypes::number));
+        }
+
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
+            computing_timer.leave_subsection(
+              "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
+          else
+            computing_timer.leave_subsection(
+              "X^{T}=Lconj^{-1}*X^{T}, RR GEP step");
+        }
 
       if (dftParams.deviceFineGrainedTimings)
         {
@@ -930,22 +1012,6 @@ namespace dftfe
                                 devicecclMpiCommDomain);
         }
 
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
-            computing_timer.leave_subsection(
-              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.leave_subsection(
-              "HConjProj=X^{T}*HConj*XConj, RR GEP step");
-        }
-
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.enter_subsection(
-          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
-
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
         N, processGrid, rowsBlockSize);
@@ -981,21 +1047,25 @@ namespace dftfe
               }
           }
 
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
+            computing_timer.leave_subsection(
+              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
+          else
+            computing_timer.leave_subsection(
+              "HConjProj=X^{T}*HConj*XConj, RR GEP step");
+        }
+
+
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParCopy(N,
                                                                processGrid,
                                                                rowsBlockSize);
 
-      // compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
-      // conjugate transpose LAPACK notation)
-      LMatPar.mmult(projHamParCopy, projHamPar);
-      projHamParCopy.zmCmult(projHamPar, LMatPar);
-
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.leave_subsection(
-          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
-      // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
-      // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
+      // compute standard eigendecomposition HConjProj: {QConj,D}
+      // HConjProj=QConj*D*QConj^{C}
       //
       const unsigned int Nfr = N - Noc;
       eigenValues.resize(Nfr);
@@ -1097,15 +1167,14 @@ namespace dftfe
         {
           dftfe::utils::deviceSynchronize();
           computing_timer.enter_subsection(
-            "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
+            "Xfr^{T}={QfrConj}^{C}*X^{T}, RR GEP step");
         }
 
       //
       // rotate the basis in the subspace
-      // Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}
+      // Xfr^{T}={QfrConj}^{C}*X^{T}
       //
       projHamParCopy.copy_conjugate_transposed(projHamPar);
-      projHamParCopy.mmult(projHamPar, LMatPar);
 
       subspaceRotationSpectrumSplitScalapack(X,
                                              XFrac,
@@ -1116,7 +1185,7 @@ namespace dftfe
                                              processGrid,
                                              mpiCommDomain,
                                              devicecclMpiCommDomain,
-                                             projHamPar,
+                                             projHamParCopy,
                                              dftParams,
                                              false);
 
@@ -1124,59 +1193,10 @@ namespace dftfe
         {
           dftfe::utils::deviceSynchronize();
           computing_timer.leave_subsection(
-            "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
+            "Xfr^{T}={QfrConj}^{C}*X^{T}, RR GEP step");
         }
 
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
-          else
-            computing_timer.enter_subsection(
-              "X^{T}=Lconj^{-1}*X^{T}, RR GEP step");
-        }
 
-      //
-      // X^{T}=LConj^{-1}*X^{T}
-      //
-      if (useMixedPrecOverall && dftParams.useMixedPrecCGS_SR)
-        subspaceRotationCGSMixedPrecScalapack(X,
-                                              M,
-                                              N,
-                                              handle,
-                                              processGrid,
-                                              mpiCommDomain,
-                                              devicecclMpiCommDomain,
-                                              interBandGroupComm,
-                                              LMatPar,
-                                              dftParams,
-                                              false);
-      else
-        subspaceRotationScalapack(X,
-                                  M,
-                                  N,
-                                  handle,
-                                  processGrid,
-                                  mpiCommDomain,
-                                  devicecclMpiCommDomain,
-                                  interBandGroupComm,
-                                  LMatPar,
-                                  dftParams,
-                                  false,
-                                  true);
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
-            computing_timer.leave_subsection(
-              "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
-          else
-            computing_timer.leave_subsection(
-              "X^{T}=Lconj^{-1}*X^{T}, RR GEP step");
-        }
     }
 
 
