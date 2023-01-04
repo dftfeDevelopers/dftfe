@@ -22,11 +22,58 @@
 #include "constants.h"
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include <DeviceKernelLauncherConstants.h>
 
 namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
+
+    namespace
+    {
+      __global__ void
+      setZeroKernel(const unsigned int BVec,
+                    const unsigned int M,
+                    const unsigned int N,
+                    double *           yVec,
+                    const unsigned int startingXVecId)
+      {
+        const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
+        const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
+        const unsigned int localThreadId =
+          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
+
+        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
+            localThreadId < BVec)
+          {
+            *(yVec + gangBlockId * N + startingXVecId + localThreadId) = 0.0;
+          }
+      }
+
+
+      __global__ void
+      setZeroKernel(const unsigned int                 BVec,
+                    const unsigned int                 M,
+                    const unsigned int                 N,
+                    dftfe::utils::deviceDoubleComplex *yVec,
+                    const unsigned int                 startingXVecId)
+      {
+        const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
+        const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
+        const unsigned int localThreadId =
+          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
+
+        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
+            localThreadId < BVec)
+          {
+            *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
+              dftfe::utils::makeComplex(0.0, 0.0);
+          }
+      }
+    }
+
     void
     rayleighRitz(
       operatorDFTDeviceClass &                     operatorMatrix,
@@ -910,6 +957,56 @@ namespace dftfe
 
       if (numberBandGroups > 1)
         {
+          // band group parallelization data structures
+          const unsigned int bandGroupTaskId =
+            dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+          std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+          dftUtils::createBandParallelizationIndices(
+            interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
+
+          const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+          for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+            {
+              // Correct block dimensions if block "goes off edge of" the matrix
+              const unsigned int BVec = std::min(vectorsBlockSize, N - jvec);
+
+              if (!((jvec + BVec) <=
+                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
+                  (jvec + BVec) >
+                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
+                {
+          // set to zero wavefunctions which are not inside a given band paral group
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+            setZeroKernel<<<(BVec +
+                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                              dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+              BVec,
+              M,
+              N,
+              dftfe::utils::makeDataTypeDeviceCompatible(X),
+              jvec);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+            hipLaunchKernelGGL(setZeroKernel,
+                               (BVec +
+                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                 dftfe::utils::DEVICE_BLOCK_SIZE *
+                                 M,
+                               dftfe::utils::DEVICE_BLOCK_SIZE,
+                               0,
+                               0,
+                               BVec,
+                               M,
+                               N,
+                               dftfe::utils::makeDataTypeDeviceCompatible(X),
+                               jvec);
+#endif
+                  
+                }
+            }
+
+
+
           std::vector<dataTypes::number> eigenVectorsFlattenedHost(
             M*N, dataTypes::number(0.0));
 
