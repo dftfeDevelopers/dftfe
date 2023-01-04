@@ -28,7 +28,6 @@ namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
-
     namespace
     {
       __global__ void
@@ -38,9 +37,11 @@ namespace dftfe
                     double *           yVec,
                     const unsigned int startingXVecId)
       {
-        const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numGangsPerBVec =
+          (BVec + blockDim.x - 1) / blockDim.x;
+        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
         const unsigned int localThreadId =
           globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
 
@@ -59,9 +60,11 @@ namespace dftfe
                     dftfe::utils::deviceDoubleComplex *yVec,
                     const unsigned int                 startingXVecId)
       {
-        const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numGangsPerBVec =
+          (BVec + blockDim.x - 1) / blockDim.x;
+        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
         const unsigned int localThreadId =
           globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
 
@@ -72,7 +75,7 @@ namespace dftfe
               dftfe::utils::makeComplex(0.0, 0.0);
           }
       }
-    }
+    } // namespace
 
     void
     rayleighRitz(
@@ -964,63 +967,64 @@ namespace dftfe
           dftUtils::createBandParallelizationIndices(
             interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-          const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+          const unsigned int vectorsBlockSize =
+            std::min(dftParams.wfcBlockSize, N);
           for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
             {
               // Correct block dimensions if block "goes off edge of" the matrix
               const unsigned int BVec = std::min(vectorsBlockSize, N - jvec);
 
               if (!((jvec + BVec) <=
-                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-                  (jvec + BVec) >
-                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
+                      bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
+                    (jvec + BVec) >
+                      bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 {
-          // set to zero wavefunctions which are not inside a given band paral group
+                  // set to zero wavefunctions which are not inside a given band
+                  // paral group
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-            setZeroKernel<<<(BVec +
-                             (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                              dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-              BVec,
-              M,
-              N,
-              dftfe::utils::makeDataTypeDeviceCompatible(X),
-              jvec);
+                  setZeroKernel<<<(BVec +
+                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                    dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+                    BVec,
+                    M,
+                    N,
+                    dftfe::utils::makeDataTypeDeviceCompatible(X),
+                    jvec);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-            hipLaunchKernelGGL(setZeroKernel,
-                               (BVec +
-                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                 dftfe::utils::DEVICE_BLOCK_SIZE *
-                                 M,
-                               dftfe::utils::DEVICE_BLOCK_SIZE,
-                               0,
-                               0,
-                               BVec,
-                               M,
-                               N,
-                               dftfe::utils::makeDataTypeDeviceCompatible(X),
-                               jvec);
+                  hipLaunchKernelGGL(
+                    setZeroKernel,
+                    (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                      dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                    dftfe::utils::DEVICE_BLOCK_SIZE,
+                    0,
+                    0,
+                    BVec,
+                    M,
+                    N,
+                    dftfe::utils::makeDataTypeDeviceCompatible(X),
+                    jvec);
 #endif
-                  
                 }
             }
 
 
 
           std::vector<dataTypes::number> eigenVectorsFlattenedHost(
-            M*N, dataTypes::number(0.0));
+            M * N, dataTypes::number(0.0));
 
           dftfe::utils::deviceMemcpyD2H(
-            dftfe::utils::makeDataTypeDeviceCompatible(&eigenVectorsFlattenedHost[0]),
+            dftfe::utils::makeDataTypeDeviceCompatible(
+              &eigenVectorsFlattenedHost[0]),
             X,
-            M*N*sizeof(dataTypes::number));
+            M * N * sizeof(dataTypes::number));
 
           MPI_Barrier(interBandGroupComm);
 
 
           MPI_Allreduce(MPI_IN_PLACE,
                         &eigenVectorsFlattenedHost[0],
-                        M*N,
+                        M * N,
                         dataTypes::mpi_type_id(&eigenVectorsFlattenedHost[0]),
                         MPI_SUM,
                         interBandGroupComm);
@@ -1029,8 +1033,9 @@ namespace dftfe
 
           dftfe::utils::deviceMemcpyH2D(
             X,
-            dftfe::utils::makeDataTypeDeviceCompatible(&eigenVectorsFlattenedHost[0]),
-            M*N*sizeof(dataTypes::number));
+            dftfe::utils::makeDataTypeDeviceCompatible(
+              &eigenVectorsFlattenedHost[0]),
+            M * N * sizeof(dataTypes::number));
         }
 
       if (dftParams.deviceFineGrainedTimings)
@@ -1292,8 +1297,6 @@ namespace dftfe
           computing_timer.leave_subsection(
             "Xfr^{T}={QfrConj}^{C}*X^{T}, RR GEP step");
         }
-
-
     }
 
 
