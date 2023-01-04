@@ -146,17 +146,23 @@ namespace dftfe
               int error;
 
               if (dftParams.useELPADeviceKernel)
-              {
+                {
 #ifdef DFTFE_WITH_DEVICE_NVIDIA
-                elpa_set_integer(elpaScala.getElpaHandle(), "nvidia-gpu", 0, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "nvidia-gpu",
+                                   0,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 #elif DFTFE_WITH_DEVICE_AMD
-                elpa_set_integer(elpaScala.getElpaHandle(), "amd-gpu", 0, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "amd-gpu",
+                                   0,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 #endif
-              }
+                }
 
 
               elpa_cholesky(elpaScala.getElpaHandle(),
@@ -167,19 +173,23 @@ namespace dftfe
                             "DFT-FE Error: elpa_cholesky error."));
 
               if (dftParams.useELPADeviceKernel)
-              {
+                {
 #ifdef DFTFE_WITH_DEVICE_NVIDIA
-                elpa_set_integer(elpaScala.getElpaHandle(), "nvidia-gpu", 1, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "nvidia-gpu",
+                                   1,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 #elif DFTFE_WITH_DEVICE_AMD
-                elpa_set_integer(elpaScala.getElpaHandle(), "amd-gpu", 1, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "amd-gpu",
+                                   1,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 #endif
-              }
-
-
+                }
             }
           overlapMatPar.copy_conjugate_transposed(overlapMatParConjTrans);
           overlapMatPropertyPostCholesky =

@@ -155,11 +155,11 @@ namespace dftfe
             AssertThrow(error == ELPA_OK,
                         dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
-#    ifdef DFTFE_WITH_DEVICE
+#ifdef DFTFE_WITH_DEVICE
 
             if (dftParams.useELPADeviceKernel)
               {
-#    ifdef DFTFE_WITH_DEVICE_NVIDIA                
+#  ifdef DFTFE_WITH_DEVICE_NVIDIA
                 elpa_set_integer(elpaHandle, "nvidia-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
@@ -179,7 +179,7 @@ namespace dftfe
 
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#elif DFTFE_WITH_DEVICE_AMD
+#  elif DFTFE_WITH_DEVICE_AMD
                 elpa_set_integer(elpaHandle, "amd-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
@@ -199,9 +199,9 @@ namespace dftfe
 
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#endif
+#  endif
               }
-#endif              
+#endif
 
               // elpa_set_integer(elpaHandle,
               // "real_kernel",ELPA_2STAGE_REAL_AVX512_BLOCK6, &error);
