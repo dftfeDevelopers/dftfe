@@ -207,11 +207,11 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(elpaScala.getElpaHandle(),
-                               &projHamPar.local_el(0, 0),
-                               &eigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+              elpa_eigenvectors(elpaScala.getElpaHandle(),
+                                &projHamPar.local_el(0, 0),
+                                &eigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_eigenvectors error."));
@@ -436,12 +436,51 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(elpaScala.getElpaHandle(),
-                           &overlapMatParConjTrans.local_el(0, 0),
-                           &error);
+
+              if (dftParams.useELPADeviceKernel)
+                {
+#ifdef DFTFE_WITH_DEVICE_NVIDIA
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "nvidia-gpu",
+                                   0,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#elif DFTFE_WITH_DEVICE_AMD
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "amd-gpu",
+                                   0,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#endif
+                }
+
+              elpa_cholesky(elpaScala.getElpaHandle(),
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_cholesky error."));
+
+              if (dftParams.useELPADeviceKernel)
+                {
+#ifdef DFTFE_WITH_DEVICE_NVIDIA
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "nvidia-gpu",
+                                   1,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#elif DFTFE_WITH_DEVICE_AMD
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "amd-gpu",
+                                   1,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#endif
+                }
             }
           overlapMatPar.copy_conjugate_transposed(overlapMatParConjTrans);
           overlapMatPropertyPostCholesky =
@@ -607,11 +646,11 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(elpaScala.getElpaHandle(),
-                               &projHamPar.local_el(0, 0),
-                               &eigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+              elpa_eigenvectors(elpaScala.getElpaHandle(),
+                                &projHamPar.local_el(0, 0),
+                                &eigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_eigenvectors error."));
@@ -862,12 +901,52 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(elpaScala.getElpaHandle(),
-                           &overlapMatParConjTrans.local_el(0, 0),
-                           &error);
+
+              if (dftParams.useELPADeviceKernel)
+                {
+#ifdef DFTFE_WITH_DEVICE_NVIDIA
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "nvidia-gpu",
+                                   0,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#elif DFTFE_WITH_DEVICE_AMD
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "amd-gpu",
+                                   0,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#endif
+                }
+
+
+              elpa_cholesky(elpaScala.getElpaHandle(),
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_cholesky error."));
+
+              if (dftParams.useELPADeviceKernel)
+                {
+#ifdef DFTFE_WITH_DEVICE_NVIDIA
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "nvidia-gpu",
+                                   1,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#elif DFTFE_WITH_DEVICE_AMD
+                  elpa_set_integer(elpaScala.getElpaHandle(),
+                                   "amd-gpu",
+                                   1,
+                                   &error);
+                  AssertThrow(error == ELPA_OK,
+                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+#endif
+                }
             }
           overlapMatPar.copy_conjugate_transposed(overlapMatParConjTrans);
           overlapMatPropertyPostCholesky =
@@ -1189,11 +1268,11 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
-                               &projHamPar.local_el(0, 0),
-                               &allEigenValues[0],
-                               &eigenVectors.local_el(0, 0),
-                               &error);
+              elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
+                                &projHamPar.local_el(0, 0),
+                                &allEigenValues[0],
+                                &eigenVectors.local_el(0, 0),
+                                &error);
               AssertThrow(
                 error == ELPA_OK,
                 dealii::ExcMessage(

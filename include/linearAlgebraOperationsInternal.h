@@ -23,10 +23,7 @@
 #include "scalapackWrapper.h"
 #include "dftParameters.h"
 
-extern "C"
-{
-#include <elpa.hh>
-}
+#include <elpa/elpa.h>
 
 namespace dftfe
 {

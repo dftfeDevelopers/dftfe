@@ -23,7 +23,7 @@ libxcDir="/ccs/proj/mat239/software/libxc/installGcc9.1.0"
 spglibDir="/ccs/proj/mat239/software/spglib/installGcc9.1.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/ccs/proj/mat239/software/elpa/installGcc9.1.0New"
+ELPA_PATH="/ccs/proj/mat239/software/elpa/install202211"
 
 #Paths for optional external libraries
 NCCL_PATH="/ccs/proj/mat239/software/ncclnew/build"
