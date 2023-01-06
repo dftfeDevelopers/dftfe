@@ -616,40 +616,40 @@ namespace dftfe
     else
       {
         if (d_dftParams.useSubspaceProjectedSHEPGPU)
-        {
-          linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
-          elpaScala,
-          eigenVectorsFlattenedDevice,
-          localVectorSize,
-          totalNumberWaveFunctions,
-          d_mpiCommParent,
-          operatorMatrix.getMPICommunicator(),
-          devicecclMpiCommDomain,
-          interBandGroupComm,
-          deviceBlasHandle,
-          d_dftParams,
-          useMixedPrecOverall);
+          {
+            linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
+              elpaScala,
+              eigenVectorsFlattenedDevice,
+              localVectorSize,
+              totalNumberWaveFunctions,
+              d_mpiCommParent,
+              operatorMatrix.getMPICommunicator(),
+              devicecclMpiCommDomain,
+              interBandGroupComm,
+              deviceBlasHandle,
+              d_dftParams,
+              useMixedPrecOverall);
 
 
-          linearAlgebraOperationsDevice::rayleighRitz(
-          operatorMatrix,
-          elpaScala,
-          eigenVectorsFlattenedDevice,
-          deviceFlattenedArrayBlock,
-          d_deviceFlattenedFloatArrayBlock,
-          d_YArray,
-          projectorKetTimesVector,
-          localVectorSize,
-          totalNumberWaveFunctions,
-          d_mpiCommParent,
-          operatorMatrix.getMPICommunicator(),
-          devicecclMpiCommDomain,
-          interBandGroupComm,
-          eigenValues,
-          deviceBlasHandle,
-          d_dftParams,
-          useMixedPrecOverall);
-        }
+            linearAlgebraOperationsDevice::rayleighRitz(
+              operatorMatrix,
+              elpaScala,
+              eigenVectorsFlattenedDevice,
+              deviceFlattenedArrayBlock,
+              d_deviceFlattenedFloatArrayBlock,
+              d_YArray,
+              projectorKetTimesVector,
+              localVectorSize,
+              totalNumberWaveFunctions,
+              d_mpiCommParent,
+              operatorMatrix.getMPICommunicator(),
+              devicecclMpiCommDomain,
+              interBandGroupComm,
+              eigenValues,
+              deviceBlasHandle,
+              d_dftParams,
+              useMixedPrecOverall);
+          }
         else
           {
             linearAlgebraOperationsDevice::rayleighRitzGEP(

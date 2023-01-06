@@ -1537,8 +1537,7 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
-        useSubspaceProjectedSHEPGPU =
-          prm.get_bool("SUBSPACE PROJ SHEP GPU");
+        useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
       }
       prm.leave_subsection();
     }
