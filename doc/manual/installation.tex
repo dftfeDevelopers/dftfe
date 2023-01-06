@@ -4,7 +4,8 @@ $ module load cmake/3.18.2
 $ module load gcc/8.2.0
 $ module load openmpi/3.1.4
 $ module load mkl/2018.0.4
-$ module load cuda/11.0.2 (if installing for GPUs)
+$ module load cuda/11.0.2 (if installing for NVIDIA GPUs)
+$ module load rocm/5.1.0 (if installing for AMD GPUs)
 \end{verbatim}
 %In the above mpilibrary denotes the MPI library you are using in your system(for eg: openmpi, mpich or intel-mpi). 
 Note the above are shown only as an example. We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), CUDA/HIP, MPI and math libraries available on your high-performance computer. DFT-FE's installation requires also the following minimum versions of the above compilers and libraries:
@@ -55,10 +56,10 @@ $ make install
 \end{verbatim}
 There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
 
-\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.1.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
+\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
 %Alternatively one can also use the python based installer~\url{http://www.netlib.org/scalapack/scalapack_installer.tgz} for Linux.
 
-\item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download version elpa-2020.05.002 (this version has been thoroughly tested) from \url{https://elpa.mpcdf.mpg.de/software/} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
+\item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download the latest version elpa-2022.11.001 from \url{https://elpa.mpcdf.mpg.de/software/} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
 \begin{verbatim}
 $ cd elpaDir
 $ mkdir build
@@ -77,29 +78,62 @@ $ make install
 \end{verbatim}
 The MKL paths and linker flags were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU Fortran compiler (Note the usage of \verb|-lmkl_gf_lp64| flag above).\\ 
 
-If the machine of interest has NVIDIA GPUs and CUDA library, ELPA can take advantage of GPUs. For example on OLCF Summit GPU nodes, we use the following configure line
+If the machine of interest has NVIDIA/AMD GPUs and CUDA/ROCm compiler, ELPA can take advantage of GPUs. For example on OLCF Summit GPU nodes, we use the following configure line
 \begin{verbatim}
-../configure FC=mpif90 CC=mpicc FCFLAGS="-O2
--fPIC -mcpu=power9 -mvsx -maltivec" CFLAGS="-O2
--fPIC -mcpu=power9 -mvsx -maltivec"
---enable-nvidia-gpu
---with-NVIDIA-GPU-compute-capability="sm_70"
---with-cuda-path="$OLCF_CUDA_ROOT"
---with-cuda-sdk-path="$OLCF_CUDA_ROOT"
---prefix=elpa_install_path
-LDFLAGS="-L$netlib_scalapack_installation_path/lib -lscalapack  
--L/$OLCF_ESSL_ROOT/lib64 -lessl
--L/$OLCF_NETLIB_LAPACK_ROOT/lib64 -llapack
--L/$OLCF_OPENBLAS_ROOT/lib -lopenblas"
---disable-sse --disable-sse-assembly
---disable-avx --disable-avx2 --disable-avx512
---enable-c-tests=no
+../configure CXX=mpic++ FC=mpif90 CC=mpicc 
+CXXFLAGS="-O2 -fPIC -mcpu=power9 -mvsx -maltivec"
+FCFLAGS="-O2 -fPIC -mcpu=power9 -mvsx -maltivec" 
+CFLAGS="-O2 -fPIC -mcpu=power9 -mvsx -maltivec"
+--enable-nvidia-gpu --with-NVIDIA-GPU-compute-capability="sm_70" 
+--enable-gpu-streams=nvidia --with-cuda-path="$OLCF_CUDA_ROOT"
+--with-cuda-sdk-path="$OLCF_CUDA_ROOT" 
+--prefix=elpa_install_path 
+LDFLAGS="-L$scalapack_lib_path -lscalapack  
+-L$OLCF_ESSL_ROOT/lib64 -lessl 
+-L$OLCF_NETLIB_LAPACK_ROOT/lib64 -llapack 
+-L$OLCF_OPENBLAS_ROOT/lib -lopenblas"
+--disable-sse --disable-sse-assembly --disable-avx 
+--disable-avx2 --disable-avx512 --enable-c-tests=no --enable-cpp-tests=no
+--enable-option-checking=fatal --enable-shared 
 \end{verbatim}
+
+
+We provice another ELPA installation example on OLCF Crusher nodes with AMD GPUs and ROCm compiler:
+\begin{verbatim}
+../configure CXX=hipcc CC=hipcc FC=ftn 
+FCFLAGS="-march=znver3 -O2 -fPIC" 
+CFLAGS="-march=znver3 -fPIC -O2 -I${ROCM_PATH}/include 
+-I${ROCM_PATH}/hip/include -I${ROCM_PATH}/hipcub/include
+-I${ROCM_PATH}/rocblas/include  --amdgpu-target=gfx90a
+-I${MPICH_DIR}/include" CXXFLAGS="-march=znver3 -std=c++14 
+-I${ROCM_PATH}/include -fPIC -O2 -I${ROCM_PATH}/hip/include 
+-I${ROCM_PATH}/hipcub/include -I${ROCM_PATH}/rocblas/include 
+--amdgpu-target=gfx90a -I${MPICH_DIR}/include" --enable-amd-gpu
+--enable-gpu-streams=amd --prefix=elpa_install_path
+LIBS="-L${ROCM_PATH}/lib -lamdhip64 -L${ROCM_PATH}/rocblas/lib 
+-lrocblas -L${MPICH_DIR}/lib -lmpi -L${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa 
+-L$scalapack_lib_path -lscalapack
+-L/sw/crusher/spack-envs/base/opt/cray-sles15-zen3/gcc-11.2.0/openblas-0.3.17-fip547hyhcrii2xgj5rmge3oyxgnfhkp/lib -lopenblas 
+-L$netlib_lapack_lib_path -llapack" 
+--disable-sse --disable-sse-assembly --disable-avx --disable-avx2 
+--disable-avx512 --enable-c-tests=no --enable-option-checking=fatal
+--enable-shared --enable-cpp-tests=no --enable-hipcub
+\end{verbatim}
+
+
 Note the use of LDFLAGS instead of SCALAPACK\_LDFLAGS and SCALAPACK\_FCFLAGS, since we are using netlib ScaLAPACK instead of Intel MKL ScaLAPACK in the above. Also note use of
 \begin{verbatim}
     --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-avx512
 \end{verbatim} 
-above. \textcolor{red}{\bf Some or all of these options may be required for systems without Intel CPUs such as IBM Power and AMD Epyc processors depending on what they support.}
+above. \textcolor{red}{\bf Some or all of these options may be required for systems without Intel CPUs such as IBM Power and AMD Epyc processors depending on what they support.} Finally, we remark that to avoid errors during ELPA configuration step, please export the library paths of ScaLAPACK and blas libraries, for example:
+\begin{verbatim}
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$blas_lib_path
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$netlib_lapack_lib_path
+
+export LD_LIBRARY_PATH=
+$LD_LIBRARY_PATH:$ROCM_PATH/lib:$ROCM_PATH/hip/lib:$ROCM_PATH/lib:$ROCM_PATH/rocblas/lib
+\end{verbatim}
 
 \item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{http://www.p4est.org/}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
@@ -109,7 +143,7 @@ $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
 
 %Also download the script from \url{https://github.com/dftfeDevelopers/dftfe/raw/manual/p4est-setup.sh} if using Intel compilers, or from \url{https://dealii.org/developer/external-libs/p4est.html} if using GCC compilers. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 
-\item {\bf nccl (optional)}: nccl is an optional dependency for DFT-FE for optimal GPU Direct MPI collective communication calls. This library is recommended for running very large system sizes (greater than 20,000 electrons) on GPUs using DFT-FE. Caution: nccl library requires appropriate hardware support for GPU Direct MPI communication and CUDA Aware MPI library. To install nccl, clone development version \url{https://github.com/NVIDIA/nccl} and follow installation instructions therein.
+\item {\bf nccl/rccl (optional)}: nccl (CUDA) and rccl (ROCm) libraries are optional dependency for DFT-FE for optimal GPU Direct MPI collective communication calls. This library is recommended for running very large system sizes (greater than 20,000 electrons) on GPUs using DFT-FE. Caution: nccl/rccl library requires appropriate hardware support for GPU Direct MPI communication and GPU Aware MPI library. To install nccl/rccl, use the appropriate release version (corresponding to the CUDA/ROCm compiler version) from \url{https://github.com/NVIDIA/nccl} (CUDA) \url{https://github.com/ROCmSoftwarePlatform/rccl} (ROCm) and follow installation instructions therein.
 
 \end{enumerate}
 
@@ -124,7 +158,7 @@ Assuming the above dependencies (p4est and ScaLAPACK) are installed, we now brie
 $ git clone -b dealiiCustomizedCUDARelease https://github.com/dftfeDevelopers/dealii.git
 \end{verbatim}
 
-\item In addition to requiring C, C++ and Fortran compilers, MPI library, and CMake, deal.II additionaly requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the deal.II's bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues. Please do not install deal.II with GPU support as that is not needed by DFT-FE.
+\item In addition to requiring C, C++ and Fortran compilers, MPI library, and CMake, deal.II additionally requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the deal.II's bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues. Please do not install deal.II with GPU support as that is not needed by DFT-FE. Further, when installing deal.II for (DFT-FE with GPU support), one must use \verb|-DDEAL_II_ALLOW_PLATFORM_INTROSPECTION=OFF| to avoid compilation failure of DFT-FE.
 
 \item
 \begin{verbatim}
@@ -295,7 +329,7 @@ If you are not familiar with Git, you may download the current release tarball f
 \item Set paths to external libraries (deal.II, ALGLIB, Libxc, spglib, Libxml2, and ELPA), C++ compiler, and C++ compiler flags in \verb|setupUser.sh|, which is a script to compile \dftfe~using cmake. nccl library can also be optionally provided in case of GPU compilation. If compiling only for CPUs, set the following to OFF
 \begin{verbatim}
 withGPU=OFF
-withNCCL=OFF
+withDCCL=OFF
 \end{verbatim}
 For GPU compilation, \verb|withGPU|, \verb|gpuLang|, and \verb|gpuVendor| should be set \verb|ON|, \verb|"cuda"/"hip"| and \verb|"nvidia"/"amd"| respectively. Also appropriate C++ compiler, device (denoting GPU) compilation and architecture flags must be passed to access CUDA/HIP compiler for device code compilation. \textcolor{red}{\bf CAUTION! GPU enabled DFT-FE compilation must only be run on machines with GPU access.} 
 \item To compile \dftfe{}, first create a build directory anywhere on your machine. Next from inside the build directory do
