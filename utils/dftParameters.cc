@@ -919,6 +919,13 @@ namespace dftfe
             "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
+            "SUBSPACE PROJ SHEP GPU",
+            "true",
+            Patterns::Bool(),
+            "[Advanced] Solve a standard hermitian eigenvalue problem in the Rayleigh Ritz step instead of a generalized hermitian eigenvalue problem on GPUs. Default setting is true.");
+
+
+          prm.declare_entry(
             "USE MIXED PREC CGS SR",
             "false",
             Patterns::Bool(),
@@ -1189,6 +1196,7 @@ namespace dftfe
     reuseWfcGeoOpt                                 = false;
     reuseDensityGeoOpt                             = 0;
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
+    useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
     useMixedPrecCGS_O                              = false;
     useMixedPrecXTHXSpectrumSplit                  = false;
@@ -1529,6 +1537,7 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
+        useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
       }
       prm.leave_subsection();
     }

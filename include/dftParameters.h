@@ -110,6 +110,7 @@ namespace dftfe
     bool         reuseWfcGeoOpt;
     unsigned int reuseDensityGeoOpt;
     double       mpiAllReduceMessageBlockSizeMB;
+    bool         useSubspaceProjectedSHEPGPU;
     bool         useMixedPrecCGS_SR;
     bool         useMixedPrecCGS_O;
     bool         useMixedPrecXTHXSpectrumSplit;

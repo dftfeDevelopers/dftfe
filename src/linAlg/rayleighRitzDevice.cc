@@ -125,8 +125,12 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      dftfe::utils::deviceSynchronize();
-      computing_timer.enter_subsection("Blocked XtHX, RR step");
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          computing_timer.enter_subsection(
+            "HConjProj= X^{T}*HConj*XConj, RR step");
+        }
 
       if (dftParams.overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXOverlapComputeCommun(X,
@@ -151,8 +155,12 @@ namespace dftfe
                             projHamPar,
                             devicecclMpiCommDomain);
 
-      dftfe::utils::deviceSynchronize();
-      computing_timer.leave_subsection("Blocked XtHX, RR step");
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          computing_timer.leave_subsection(
+            "HConjProj= X^{T}*HConj*XConj, RR step");
+        }
 
       //
       // compute eigendecomposition of ProjHam HConjProj= QConj*D*QConj^{C} (C
@@ -162,8 +170,11 @@ namespace dftfe
       eigenValues.resize(numberEigenValues);
       if (dftParams.useELPA)
         {
-          dftfe::utils::deviceSynchronize();
-          computing_timer.enter_subsection("ELPA eigen decomp, RR step");
+          if (dftParams.deviceFineGrainedTimings)
+            {
+              dftfe::utils::deviceSynchronize();
+              computing_timer.enter_subsection("ELPA eigen decomp, RR step");
+            }
           dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
                                                                  processGrid,
                                                                  rowsBlockSize);
@@ -223,8 +234,12 @@ namespace dftfe
 
 
           eigenVectors.copy_to(projHamPar);
-          dftfe::utils::deviceSynchronize();
-          computing_timer.leave_subsection("ELPA eigen decomp, RR step");
+
+          if (dftParams.deviceFineGrainedTimings)
+            {
+              dftfe::utils::deviceSynchronize();
+              computing_timer.leave_subsection("ELPA eigen decomp, RR step");
+            }
         }
       else
         {
@@ -243,8 +258,16 @@ namespace dftfe
       // rotate the basis in the subspace X = X*Q, implemented as
       // X^{T}=Qc^{C}*X^{T} with X^{T} stored in the column major format
       //
-      dftfe::utils::deviceSynchronize();
-      computing_timer.enter_subsection("Blocked subspace rotation, RR step");
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrecOverall))
+            computing_timer.enter_subsection(
+              "X^{T}={QConj}^{C}*X^{T}, RR step");
+          else
+            computing_timer.enter_subsection(
+              "X^{T}={QConj}^{C}*X^{T} mixed prec, RR step");
+        }
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParCopy(N,
                                                                processGrid,
                                                                rowsBlockSize);
@@ -274,8 +297,16 @@ namespace dftfe
                                   projHamParCopy,
                                   dftParams,
                                   false);
-      dftfe::utils::deviceSynchronize();
-      computing_timer.leave_subsection("Blocked subspace rotation, RR step");
+      if (dftParams.deviceFineGrainedTimings)
+        {
+          dftfe::utils::deviceSynchronize();
+          if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrecOverall))
+            computing_timer.leave_subsection(
+              "X^{T}={QConj}^{C}*X^{T}, RR step");
+          else
+            computing_timer.leave_subsection(
+              "X^{T}={QConj}^{C}*X^{T} mixed prec, RR step");
+        }
     }
 
     void
