@@ -616,7 +616,7 @@ namespace dftfe
     else
       {
 
-        if (d_dftParams.useSubspaceProjectedSHEP)
+        if (d_dftParams.useSubspaceProjectedSHEPGPU)
         {
           linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
           elpaScala,
