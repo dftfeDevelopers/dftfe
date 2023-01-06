@@ -1537,8 +1537,7 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
-        useSubspaceProjectedSHEP =
-          prm.get_bool("SUBSPACE PROJ SHEP");
+        useSubspaceProjectedSHEP = prm.get_bool("SUBSPACE PROJ SHEP");
       }
       prm.leave_subsection();
     }

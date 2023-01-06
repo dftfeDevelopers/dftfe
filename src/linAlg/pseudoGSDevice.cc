@@ -29,7 +29,6 @@ namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
-
     namespace
     {
       __global__ void
@@ -113,8 +112,7 @@ namespace dftfe
         {
           dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "SConj=X^{T}XConj Mixed Prec");
+            computing_timer.enter_subsection("SConj=X^{T}XConj Mixed Prec");
           else
             computing_timer.enter_subsection("SConj=X^{T}XConj");
         }
@@ -193,8 +191,7 @@ namespace dftfe
         {
           dftfe::utils::deviceSynchronize();
           if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
-            computing_timer.leave_subsection(
-              "SConj=X^{T}XConj Mixed Prec");
+            computing_timer.leave_subsection("SConj=X^{T}XConj Mixed Prec");
           else
             computing_timer.leave_subsection("SConj=X^{T}XConj");
         }
@@ -202,7 +199,7 @@ namespace dftfe
       // SConj=LConj*L^{T}
       if (dftParams.deviceFineGrainedTimings)
         computing_timer.enter_subsection(
-          "Cholesky and triangular matrix invert");      
+          "Cholesky and triangular matrix invert");
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParams.useELPA)
@@ -323,8 +320,7 @@ namespace dftfe
             computing_timer.enter_subsection(
               "X^{T}=Lconj^{-1}*X^{T} Mixed Prec");
           else
-            computing_timer.enter_subsection(
-              "X^{T}=Lconj^{-1}*X^{T}");
+            computing_timer.enter_subsection("X^{T}=Lconj^{-1}*X^{T}");
         }
 
       // X^{T}=LConj^{-1}*X^{T} with X^{T} stored in
@@ -446,10 +442,8 @@ namespace dftfe
             computing_timer.leave_subsection(
               "X^{T}=Lconj^{-1}*X^{T} Mixed Prec");
           else
-            computing_timer.leave_subsection(
-              "X^{T}=Lconj^{-1}*X^{T}");
+            computing_timer.leave_subsection("X^{T}=Lconj^{-1}*X^{T}");
         }
-
     }
   } // namespace linearAlgebraOperationsDevice
 } // namespace dftfe
