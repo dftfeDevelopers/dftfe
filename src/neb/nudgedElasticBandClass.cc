@@ -61,6 +61,9 @@ namespace dftfe
     // Read Coordinates file and create coordinates for each image
 
     MPI_Barrier(d_mpiCommParent);
+    d_solverRestart = d_isRestart;
+
+
     if (!d_isRestart)
       {
         d_totalUpdateCalls = 0;
@@ -135,43 +138,91 @@ namespace dftfe
       }
       else
       {
-                 std::vector<std::vector<double>> tmp, ionOptData;
+            if (d_restartFilesPath != ".")
+              {
+
+              }
+            if (d_restartFilesPath == ".")
+              {
+                d_restartFilesPath = "./nebRestart";
+
+              }
+
+
+                 std::vector<std::vector<double>> tmp, ionOptData,tmp2;
         dftUtils::readFile(1, ionOptData, d_restartFilesPath + "/ionOpt.dat");
-        dftUtils::readFile(1, tmp, d_restartFilesPath + "/step.chk");
+        dftUtils::readFile(1, tmp, d_restartFilesPath + "/Step.chk");
+        dftUtils::readFile(1, tmp2, d_restartFilesPath + "/Step.chk.old");
         int  solver            = ionOptData[0][0];
         bool usePreconditioner = ionOptData[1][0] > 1e-6;
+        d_numberGlobalCharges = ionOptData[2][0]/ d_numberOfImages;
         d_totalUpdateCalls     = tmp[0][0];
+        int Checkcall = tmp2[0][0];
+        if(Checkcall != d_totalUpdateCalls) 
+               d_totalUpdateCalls = Checkcall;  
         tmp.clear();
         dftUtils::readFile(1,
                            tmp,
-                           d_restartFilesPath + "/step" +
+                           d_restartFilesPath + "/Step" +
                              std::to_string(d_totalUpdateCalls) +
                              "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
-        d_relaxationFlags.resize(d_numberGlobalCharges * 3);
+        pcout<<"Solver update: NEB is in Restart mode"<<std::endl;
+        pcout<<"Checking for files in Step: "<<d_totalUpdateCalls<<std::endl;
+        /*d_relaxationFlags.resize(d_numberGlobalCharges * 3);
         bool relaxationFlagsMatch = true;
         for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
           {
             for (unsigned int j = 0; j < 3; ++j)
               {
                 relaxationFlagsMatch = (d_relaxationFlags[i * 3 + j] ==
-                                        (int)ionOptData[i * 3 + j + 2][0]) &&
+                                        (int)ionOptData[i * 3 + j + 3][0]) &&
                                        relaxationFlagsMatch;
               }
-          }
-        if (solver != d_solver ||
+          } */
+        /*if (solver != d_solver ||
             usePreconditioner !=
               d_dftPtr->getParametersObject().usePreconditioner)
           pcout
             << "Solver has changed since last save, the newly set solver will start from scratch."
-            << std::endl;
-        if (!relaxationFlagsMatch)
+            << std::endl; */
+        /*if (!relaxationFlagsMatch)
           pcout
             << "Relaxations flags have changed since last save, the solver will be reset to work with the new flags."
-            << std::endl;
+            << std::endl;*/
+
+        for (int Image = 0; Image < d_numberOfImages; Image++)
+          {
+            std::string coordinatesFile, domainVectorsFile;
+            coordinatesFile = d_restartFilesPath +
+                              "/Step"+std::to_string(d_totalUpdateCalls)+"/Image"+ std::to_string(Image) +
+                              "atomsFracCoordCurrent.chk";
+            domainVectorsFile = d_restartFilesPath + "/Step"+std::to_string(d_totalUpdateCalls)+"/Image"+ std::to_string(Image) +
+                                 "domainBoundingVectorsCurrent.chk";
+
+
+            d_dftfeWrapper.push_back(
+              std::make_unique<dftfe::dftfeWrapper>(parameter_file,
+                                                    coordinatesFile,
+                                                    domainVectorsFile,
+                                                    d_mpiCommParent,
+                                                    Image == 0 ? true : false,
+                                                    Image == 0 ? true : false,
+                                                    "NEB",
+                                                    d_restartFilesPath,
+                                                    Image == 0 ? false : true));
+          }
+
 
       }
     d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
+    if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+      d_solver = 0;
+    else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+      d_solver = 1;
+    else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+      d_solver = 2;
+
     AssertThrow(
       d_dftPtr->getParametersObject().natoms == d_numberGlobalCharges,
       ExcMessage(
@@ -773,12 +824,12 @@ namespace dftfe
     else if (solverReturn == nonLinearSolver::FAILURE)
       {
         pcout << " ...Ion force relaxation failed " << std::endl;
-        d_totalUpdateCalls = -1;
+        //d_totalUpdateCalls = -1;
       }
     else if (solverReturn == nonLinearSolver::MAX_ITER_REACHED)
       {
         pcout << " ...Maximum iterations reached " << std::endl;
-        d_totalUpdateCalls = -2;
+        //d_totalUpdateCalls = -2;
       }
 
 
@@ -789,7 +840,7 @@ namespace dftfe
         pcout << "Free Energy of Image: " << i + 1 << "  = "
               << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
       }
-    pcout << "--------------Error Results(Ha/bohr)-------------" << std::endl;
+    pcout << "--------------NEB Step No: "<<d_totalUpdateCalls<<" Error Results(Ha/bohr)-------------" << std::endl;
     for (int i = 0; i < d_numberOfImages; i++)
       {
         d_NEBImageno = i;
@@ -1123,6 +1174,14 @@ namespace dftfe
       {
         std::string savePath =
           d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
+        std::vector<std::vector<double>> tmpData(1,
+                                                 std::vector<double>(1, 0.0));
+
+        tmpData[0][0] = d_totalUpdateCalls;
+        dftUtils::writeDataIntoFile(tmpData,
+                                    d_restartFilesPath + "/Step.chk",
+                                    d_mpiCommParent);
+
         if (d_this_mpi_process == 0)
           mkdir(savePath.c_str(), ACCESSPERMS);
 
@@ -1137,11 +1196,10 @@ namespace dftfe
             d_dftfeWrapper[i]->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/Image"+std::to_string(i));
           }        
         d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
-        std::vector<std::vector<double>> tmpData(1,
-                                                 std::vector<double>(1, 0.0));
-        tmpData[0][0] = d_totalUpdateCalls;
+
+        
         dftUtils::writeDataIntoFile(tmpData,
-                                    d_restartFilesPath + "/step.chk",
+                                    d_restartFilesPath + "/Step.chk",
                                     d_mpiCommParent);
       }
   }
@@ -1342,13 +1400,7 @@ namespace dftfe
   void
   nudgedElasticBandClass::init()
   {
-    d_solverRestart = d_isRestart;
-    if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
-      d_solver = 0;
-    else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
-      d_solver = 1;
-    else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
-      d_solver = 2;
+
 
 
     double step_time;
@@ -1416,22 +1468,23 @@ namespace dftfe
     
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-    std::vector<std::vector<double>> ionOptData(2 + d_numberGlobalCharges * 3,
+    std::vector<std::vector<double>> ionOptData(3 + d_numberGlobalCharges * 3,
                                                 std::vector<double>(1, 0.0));
     ionOptData[0][0] = d_solver;
     ionOptData[1][0] =
       d_dftPtr->getParametersObject().usePreconditioner ? 1 : 0;
+    ionOptData[2][0] = d_numberGlobalCharges*d_numberOfImages;  
     for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
           {
-            ionOptData[i * 3 + j + 2][0] = d_relaxationFlags[i * 3 + j];
+            ionOptData[i * 3 + j + 3][0] = d_relaxationFlags[i * 3 + j];
           }
       }
-    /*if (!d_dftPtr->getParametersObject().reproducible_output)
+    if (!d_dftPtr->getParametersObject().reproducible_output)
       dftUtils::writeDataIntoFile(ionOptData,
                                   d_restartFilesPath + "/ionOpt.dat",
-                                  mpi_communicator);*/
+                                  d_mpiCommParent);
     d_ImageError.resize(d_numberOfImages);
     double Force;
     MPI_Barrier(d_mpiCommParent);
@@ -1498,7 +1551,7 @@ namespace dftfe
       d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
         d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
-        d_dftPtr->getParametersObject().maxOptIter,
+        d_maximumNEBIteration,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
         d_dftPtr->getParametersObject().maxIonUpdateStep,
@@ -1507,14 +1560,14 @@ namespace dftfe
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
         d_dftPtr->getParametersObject().usePreconditioner,
         d_dftPtr->getParametersObject().maxIonUpdateStep,
-        d_dftPtr->getParametersObject().maxOptIter,
+        d_maximumNEBIteration,
         d_dftPtr->getParametersObject().lbfgsNumPastSteps,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
         true);
     else
       d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
-        d_dftPtr->getParametersObject().maxOptIter,
+        d_maximumNEBIteration,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
         1e-4,
