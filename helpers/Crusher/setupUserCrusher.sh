@@ -23,7 +23,7 @@ libxcDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/libxc/install"
 spglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/elpa/installcpuopenblas"
+ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/elpa/installgpuhipcubopenblas"
 
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries

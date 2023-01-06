@@ -615,7 +615,24 @@ namespace dftfe
       }
     else
       {
-        linearAlgebraOperationsDevice::rayleighRitzGEP(
+
+        if (d_dftParams.useSubspaceProjectedSHEP)
+        {
+          linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
+          elpaScala,
+          eigenVectorsFlattenedDevice,
+          localVectorSize,
+          totalNumberWaveFunctions,
+          d_mpiCommParent,
+          operatorMatrix.getMPICommunicator(),
+          devicecclMpiCommDomain,
+          interBandGroupComm,
+          deviceBlasHandle,
+          d_dftParams,
+          useMixedPrecOverall);
+
+
+          linearAlgebraOperationsDevice::rayleighRitz(
           operatorMatrix,
           elpaScala,
           eigenVectorsFlattenedDevice,
@@ -633,6 +650,28 @@ namespace dftfe
           deviceBlasHandle,
           d_dftParams,
           useMixedPrecOverall);
+        }
+        else
+        {
+          linearAlgebraOperationsDevice::rayleighRitzGEP(
+          operatorMatrix,
+          elpaScala,
+          eigenVectorsFlattenedDevice,
+          deviceFlattenedArrayBlock,
+          d_deviceFlattenedFloatArrayBlock,
+          d_YArray,
+          projectorKetTimesVector,
+          localVectorSize,
+          totalNumberWaveFunctions,
+          d_mpiCommParent,
+          operatorMatrix.getMPICommunicator(),
+          devicecclMpiCommDomain,
+          interBandGroupComm,
+          eigenValues,
+          deviceBlasHandle,
+          d_dftParams,
+          useMixedPrecOverall);
+        }
       }
 
 
