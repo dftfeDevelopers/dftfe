@@ -245,22 +245,6 @@ The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES| and \verb|-DLAPACK_
 
 %Note that in the above procedure one is installing the development version of deal.II library and this version is continuously updated by deal.II developers, which can sometimes lead to installation issues on certain compilers. If you face any issues during the installation procedure of deal.II development version as explained above, you may alternatively obtain the current release version of deal.II by downloading and unpacking the .tar.gz file from \url{https://www.dealii.org/download.html} and following the same procedure as above. If you still face installation issues, and/or if you have any questions about the deal.II installation, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists}.\\
 
-{\bf Using AVX, AVX-512 instructions in deal.II:}\\
-deal.II compilation will automatically try to pick the available vector instructions on the sytem like SSE2, AVX and AVX-512, and generate the following output message during compilation   
-\begin{verbatim}
--- Performing Test DEAL_II_HAVE_SSE2
--- Performing Test DEAL_II_HAVE_SSE2 - Success/Failed
--- Performing Test DEAL_II_HAVE_AVX
--- Performing Test DEAL_II_HAVE_AVX - Success/Failed
--- Performing Test DEAL_II_HAVE_AVX512
--- Performing Test DEAL_II_HAVE_AVX512 - Success/Failed
--- Performing Test DEAL_II_HAVE_OPENMP_SIMD
--- Performing Test DEAL_II_HAVE_OPENMP_SIMD - Success/Failed
-\end{verbatim}
-``Success'', means deal.II was able to use the corresponding vector instructions, and ``Failed'' would mean otherwise. If deal.II is not able to pick an available vector instruction on your high-performance computer, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists} and/or contact your high-performance computer support for guidance on how to use the correct compiler flags for AVX or AVX-512. 
-
-Ensure that deal.II picks up AVX-512, which is strongly recommended for obtaining maximum performance on the new Intel Xeon Phi (KNL) and Skylake processors, both of which support Intel AVX-512 instructions.
-
 \subsubsection{Instructions for simple-dftd3 and dftd4}
 
 \begin{enumerate}
