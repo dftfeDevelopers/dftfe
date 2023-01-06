@@ -150,13 +150,6 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   const unsigned int numMacroCells = matrixFreeData.n_macro_cells();
 
-#if defined(DFTFE_WITH_DEVICE)
-  AssertThrow(
-    numMacroCells == numPhysicalCells,
-    ExcMessage(
-      "DFT-FE Error: dealii for Device DFT-FE must be compiled without any vectorization enabled."));
-#endif
-
 
   std::vector<std::vector<double>> partialOccupancies(
     dftPtr->d_kPointWeights.size(),
