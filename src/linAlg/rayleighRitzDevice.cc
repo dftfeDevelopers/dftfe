@@ -171,10 +171,10 @@ namespace dftfe
       if (dftParams.useELPA)
         {
           if (dftParams.deviceFineGrainedTimings)
-          {
-            dftfe::utils::deviceSynchronize();
-            computing_timer.enter_subsection("ELPA eigen decomp, RR step");
-          }
+            {
+              dftfe::utils::deviceSynchronize();
+              computing_timer.enter_subsection("ELPA eigen decomp, RR step");
+            }
           dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
                                                                  processGrid,
                                                                  rowsBlockSize);
@@ -236,10 +236,10 @@ namespace dftfe
           eigenVectors.copy_to(projHamPar);
 
           if (dftParams.deviceFineGrainedTimings)
-          {
-             dftfe::utils::deviceSynchronize();
-             computing_timer.leave_subsection("ELPA eigen decomp, RR step");
-          }
+            {
+              dftfe::utils::deviceSynchronize();
+              computing_timer.leave_subsection("ELPA eigen decomp, RR step");
+            }
         }
       else
         {

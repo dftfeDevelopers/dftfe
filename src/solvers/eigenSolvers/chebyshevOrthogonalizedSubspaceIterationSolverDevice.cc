@@ -615,7 +615,6 @@ namespace dftfe
       }
     else
       {
-
         if (d_dftParams.useSubspaceProjectedSHEPGPU)
         {
           linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
@@ -652,26 +651,26 @@ namespace dftfe
           useMixedPrecOverall);
         }
         else
-        {
-          linearAlgebraOperationsDevice::rayleighRitzGEP(
-          operatorMatrix,
-          elpaScala,
-          eigenVectorsFlattenedDevice,
-          deviceFlattenedArrayBlock,
-          d_deviceFlattenedFloatArrayBlock,
-          d_YArray,
-          projectorKetTimesVector,
-          localVectorSize,
-          totalNumberWaveFunctions,
-          d_mpiCommParent,
-          operatorMatrix.getMPICommunicator(),
-          devicecclMpiCommDomain,
-          interBandGroupComm,
-          eigenValues,
-          deviceBlasHandle,
-          d_dftParams,
-          useMixedPrecOverall);
-        }
+          {
+            linearAlgebraOperationsDevice::rayleighRitzGEP(
+              operatorMatrix,
+              elpaScala,
+              eigenVectorsFlattenedDevice,
+              deviceFlattenedArrayBlock,
+              d_deviceFlattenedFloatArrayBlock,
+              d_YArray,
+              projectorKetTimesVector,
+              localVectorSize,
+              totalNumberWaveFunctions,
+              d_mpiCommParent,
+              operatorMatrix.getMPICommunicator(),
+              devicecclMpiCommDomain,
+              interBandGroupComm,
+              eigenValues,
+              deviceBlasHandle,
+              d_dftParams,
+              useMixedPrecOverall);
+          }
       }
 
 
