@@ -28,13 +28,15 @@
 #  include <Exceptions.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
 #    include <nccl.h>
+#  elif defined(DFTFE_WITH_HIP_RCCL)
+#    include <rccl.h>
 #  endif
 
 namespace dftfe
 {
   namespace utils
   {
-#  if defined(DFTFE_WITH_CUDA_NCCL)
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
 #    define NCCLCHECK(cmd)                              \
       do                                                \
         {                                               \
@@ -62,7 +64,7 @@ namespace dftfe
       MPICHECK(MPI_Comm_dup(mpiComm, &d_mpiComm));
       MPICHECK(MPI_Comm_size(mpiComm, &totalRanks));
       MPICHECK(MPI_Comm_rank(mpiComm, &myRank));
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       ncclIdPtr   = (void *)(new ncclUniqueId);
       ncclCommPtr = (void *)(new ncclComm_t);
       if (myRank == 0)
@@ -81,7 +83,7 @@ namespace dftfe
     {
       if (d_mpiComm != MPI_COMM_NULL)
         MPI_Comm_free(&d_mpiComm);
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       if (commCreated)
         {
           ncclCommDestroy(*((ncclComm_t *)ncclCommPtr));
@@ -97,7 +99,7 @@ namespace dftfe
                                                    int             size,
                                                    deviceStream_t &stream)
     {
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       NCCLCHECK(ncclAllReduce((const void *)send,
                               (void *)recv,
                               size,
@@ -128,7 +130,7 @@ namespace dftfe
                                                    int             size,
                                                    deviceStream_t &stream)
     {
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       NCCLCHECK(ncclAllReduce((const void *)send,
                               (void *)recv,
                               size,
@@ -162,7 +164,7 @@ namespace dftfe
       double *                    tempImag,
       deviceStream_t &            stream)
     {
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
                                                            send,
                                                            tempReal,
@@ -215,7 +217,7 @@ namespace dftfe
       float *                    tempImag,
       deviceStream_t &           stream)
     {
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
                                                            send,
                                                            tempReal,
@@ -269,7 +271,7 @@ namespace dftfe
       int             size2,
       deviceStream_t &stream)
     {
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       ncclGroupStart();
       NCCLCHECK(ncclAllReduce((const void *)send1,
                               (void *)recv1,
@@ -338,7 +340,7 @@ namespace dftfe
       float *                     tempImag2,
       deviceStream_t &            stream)
     {
-#  ifdef DFTFE_WITH_CUDA_NCCL
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)      
       deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size1,
                                                            send1,
                                                            tempReal1,
