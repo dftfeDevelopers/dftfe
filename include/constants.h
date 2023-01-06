@@ -96,7 +96,7 @@ namespace dftfe
   constexpr unsigned int
   C_num1DQuadNLPSP()
   {
-    return 14; // Can be changed from 14 to 18 Step 1
+    return 18; // Can be changed from 14 to 18 Step 1
   }
 
   /// number of copies 1d quad rule non-local PSP
