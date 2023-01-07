@@ -64,23 +64,23 @@ namespace dftfe
               d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
                 blockSize,
               0.0);
-
-            if (std::is_same<ValueType, std::complex<double>>::value)
+          }
+#endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+          
+          if (std::is_same<ValueType, std::complex<double>>::value)
               {
                 d_tempDoubleRealArrayForAtomics.resize(
                   (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
                 d_tempDoubleImagArrayForAtomics.resize(
                   (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
               }
-            else if (std::is_same<ValueType, std::complex<float>>::value)
+          else if (std::is_same<ValueType, std::complex<float>>::value)
               {
                 d_tempFloatRealArrayForAtomics.resize(
                   (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
                 d_tempFloatImagArrayForAtomics.resize(
                   (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
               }
-          }
-#endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
       }
 
 
