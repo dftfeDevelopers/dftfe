@@ -155,31 +155,31 @@ namespace dftfe
             devicecclMpiCommDomain);
         }
       else
-      {
-        if (dftParams.overlapComputeCommunOrthoRR)
-          operatorMatrix.XtHXOverlapComputeCommun(X,
-                                                Xb,
-                                                HXb,
-                                                projectorKetTimesVector,
-                                                M,
-                                                N,
-                                                handle,
-                                                processGrid,
-                                                projHamPar,
-                                                devicecclMpiCommDomain);
-        else
-          operatorMatrix.XtHX(X,
-                            Xb,
-                            HXb,
-                            projectorKetTimesVector,
-                            M,
-                            N,
-                            handle,
-                            processGrid,
-                            projHamPar,
-                            devicecclMpiCommDomain);
-      }
-     
+        {
+          if (dftParams.overlapComputeCommunOrthoRR)
+            operatorMatrix.XtHXOverlapComputeCommun(X,
+                                                    Xb,
+                                                    HXb,
+                                                    projectorKetTimesVector,
+                                                    M,
+                                                    N,
+                                                    handle,
+                                                    processGrid,
+                                                    projHamPar,
+                                                    devicecclMpiCommDomain);
+          else
+            operatorMatrix.XtHX(X,
+                                Xb,
+                                HXb,
+                                projectorKetTimesVector,
+                                M,
+                                N,
+                                handle,
+                                processGrid,
+                                projHamPar,
+                                devicecclMpiCommDomain);
+        }
+
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
