@@ -17,17 +17,17 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/dealii/installopenblas"
+dealiiDir="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/dealii/installopenblas"
 alglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/alglib/cpp/src"
 libxcDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/libxc/install"
 spglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/elpa/installgpuhipcubopenblas"
+ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/elpa/installgpu"
 
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries
-DCCL_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/rccl/rccl-rocm-5.1.3/build" 
+DCCL_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/rccl/build" 
 mdiPath=""
 
 #Toggle GPU compilation
