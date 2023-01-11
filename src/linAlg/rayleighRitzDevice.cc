@@ -125,41 +125,70 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
+
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          computing_timer.enter_subsection(
-            "HConjProj= X^{T}*HConj*XConj, RR step");
+          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
+            computing_timer.enter_subsection(
+              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR step");
+          else
+            computing_timer.enter_subsection(
+              "HConjProj=X^{T}*HConj*XConj, RR step");
         }
 
-      if (dftParams.overlapComputeCommunOrthoRR)
-        operatorMatrix.XtHXOverlapComputeCommun(X,
-                                                Xb,
-                                                HXb,
-                                                projectorKetTimesVector,
-                                                M,
-                                                N,
-                                                handle,
-                                                processGrid,
-                                                projHamPar,
-                                                devicecclMpiCommDomain);
+
+      if (useMixedPrecOverall && dftParams.useMixedPrecXTHXSpectrumSplit)
+        {
+          operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
+            X,
+            Xb,
+            floatXb,
+            HXb,
+            projectorKetTimesVector,
+            M,
+            N,
+            dftParams.numCoreWfcXtHX,
+            handle,
+            processGrid,
+            projHamPar,
+            devicecclMpiCommDomain);
+        }
       else
-        operatorMatrix.XtHX(X,
-                            Xb,
-                            HXb,
-                            projectorKetTimesVector,
-                            M,
-                            N,
-                            handle,
-                            processGrid,
-                            projHamPar,
-                            devicecclMpiCommDomain);
+        {
+          if (dftParams.overlapComputeCommunOrthoRR)
+            operatorMatrix.XtHXOverlapComputeCommun(X,
+                                                    Xb,
+                                                    HXb,
+                                                    projectorKetTimesVector,
+                                                    M,
+                                                    N,
+                                                    handle,
+                                                    processGrid,
+                                                    projHamPar,
+                                                    devicecclMpiCommDomain);
+          else
+            operatorMatrix.XtHX(X,
+                                Xb,
+                                HXb,
+                                projectorKetTimesVector,
+                                M,
+                                N,
+                                handle,
+                                processGrid,
+                                projHamPar,
+                                devicecclMpiCommDomain);
+        }
 
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          computing_timer.leave_subsection(
-            "HConjProj= X^{T}*HConj*XConj, RR step");
+          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
+            computing_timer.leave_subsection(
+              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR step");
+          else
+            computing_timer.leave_subsection(
+              "HConjProj=X^{T}*HConj*XConj, RR step");
         }
 
       //

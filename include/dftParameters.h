@@ -98,6 +98,7 @@ namespace dftfe
 
     std::string  startingWFCType;
     unsigned int numCoreWfcRR;
+    unsigned int numCoreWfcXtHX;
     unsigned int wfcBlockSize;
     unsigned int chebyWfcBlockSize;
     unsigned int subspaceRotDofsBlockSize;
