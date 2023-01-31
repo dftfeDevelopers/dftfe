@@ -70,6 +70,12 @@ namespace dftfe
        */
       void
       precomputeMaps(
+        const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+          &                partitioner2,
+        const unsigned int blockSize);
+
+      void
+      precomputeMaps(
         const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
           &partitioner1,
         const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>

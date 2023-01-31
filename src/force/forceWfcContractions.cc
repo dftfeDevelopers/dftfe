@@ -34,7 +34,7 @@ namespace dftfe
       void
       interpolatePsiComputeELocWfcEshelbyTensor(
         operatorDFTClass &                    operatorMatrix,
-        distributedCPUVec<dataTypes::number> &Xb,
+        distributedCPUMultiVec<dataTypes::number> &Xb,
         const unsigned int                    BVec,
         const unsigned int                    numCells,
         const unsigned int                    numQuads,
@@ -69,7 +69,7 @@ namespace dftfe
               {
                 dftfe::xcopy(
                   &BVec,
-                  Xb.begin() +
+                  Xb.data() +
                     operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()
                       [icell * numNodesPerElement + iNode],
                   &inc,
@@ -605,8 +605,8 @@ namespace dftfe
       void
       computeBlockContribution(
         operatorDFTClass &                    operatorMatrix,
-        distributedCPUVec<dataTypes::number> &flattenedArrayBlock,
-        distributedCPUVec<dataTypes::number> &projectorKetTimesVector,
+        distributedCPUMultiVec<dataTypes::number> &flattenedArrayBlock,
+        distributedCPUMultiVec<dataTypes::number> &projectorKetTimesVector,
         const std::vector<dataTypes::number> &X,
         const std::vector<double> &           eigenValues,
         const std::vector<double> &           partialOccupancies,
@@ -653,7 +653,7 @@ namespace dftfe
       {
         for (unsigned int iNode = 0; iNode < M; ++iNode)
           for (unsigned int iWave = 0; iWave < numPsi; ++iWave)
-            flattenedArrayBlock.local_element(iNode * numPsi + iWave) =
+            flattenedArrayBlock.data()[iNode * numPsi + iWave] =
               X[iNode * N + startingVecId + iWave];
 
         (operatorMatrix.getOverloadedConstraintMatrix())
@@ -700,7 +700,7 @@ namespace dftfe
                   gradPsiQuadsNLPFlat,
                   partialOccupancies,
                   onesVecNLP,
-                  projectorKetTimesVector.begin(),
+                  projectorKetTimesVector.data(),
                   nonTrivialIdToElemIdMap,
                   projecterKetTimesFlattenedVectorLocalIds,
                   numCells,
@@ -768,10 +768,10 @@ namespace dftfe
         std::min((unsigned int)2, bandGroupLowHighPlusOneIndices[1]);
 
 
-      distributedCPUVec<dataTypes::number> flattenedArrayBlock;
+      distributedCPUMultiVec<dataTypes::number> flattenedArrayBlock;
 
 
-      distributedCPUVec<dataTypes::number> &projectorKetTimesVector =
+      distributedCPUMultiVec<dataTypes::number> &projectorKetTimesVector =
         operatorMatrix.getParallelProjectorKetTimesBlockVector();
 
 

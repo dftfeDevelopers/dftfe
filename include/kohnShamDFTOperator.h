@@ -69,11 +69,11 @@ namespace dftfe
      * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
      */
     void
-    HX(distributedCPUVec<dataTypes::number> &src,
+    HX(distributedCPUMultiVec<dataTypes::number> &src,
        const unsigned int                    numberComponents,
        const bool                            scaleFlag,
        const double                          scalar,
-       distributedCPUVec<dataTypes::number> &dst,
+       distributedCPUMultiVec<dataTypes::number> &dst,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
@@ -103,14 +103,14 @@ node is stored
            * @param cellDstWaveFunctionMatrix containing sum of cell level dst vector and operator times given multi-vectors product
            */
     void
-    HX(distributedCPUVec<dataTypes::number> &src,
+    HX(distributedCPUMultiVec<dataTypes::number> &src,
        std::vector<dataTypes::number> &      cellSrcWaveFunctionMatrix,
        const unsigned int                    numberComponents,
        const bool                            scaleFlag,
        const double                          scalar,
        const double                          scalarA,
        const double                          scalarB,
-       distributedCPUVec<dataTypes::number> &dst,
+       distributedCPUMultiVec<dataTypes::number> &dst,
        std::vector<dataTypes::number> &      cellDstWaveFunctionMatrix);
 
 
@@ -339,13 +339,18 @@ node is stored
            bool                                  flag);
 
     void
+    reinit(const unsigned int                    wavefunBlockSize,
+           distributedCPUMultiVec<dataTypes::number> &X,
+           bool                                  flag);
+
+    void
     reinit(const unsigned int wavefunBlockSize);
 
 
     void
     initCellWaveFunctionMatrix(
       const unsigned int                    numberWaveFunctions,
-      distributedCPUVec<dataTypes::number> &X,
+      distributedCPUMultiVec<dataTypes::number> &X,
       std::vector<dataTypes::number> &      cellWaveFunctionMatrix);
 
 
@@ -353,7 +358,7 @@ node is stored
     fillGlobalArrayFromCellWaveFunctionMatrix(
       const unsigned int                    wavefunBlockSize,
       const std::vector<dataTypes::number> &cellWaveFunctionMatrix,
-      distributedCPUVec<dataTypes::number> &X);
+      distributedCPUMultiVec<dataTypes::number> &X);
 
     void
     initWithScalar(const unsigned int              numberWaveFunctions,
@@ -377,7 +382,7 @@ node is stored
     const std::vector<dealii::types::global_dof_index> &
     getFlattenedArrayCellLocalProcIndexIdMap() const;
 
-    distributedCPUVec<dataTypes::number> &
+    distributedCPUMultiVec<dataTypes::number> &
     getParallelProjectorKetTimesBlockVector();
 
     const std::vector<double> &
@@ -468,27 +473,27 @@ node is stored
      */
     void
     computeLocalHamiltonianTimesX(
-      const distributedCPUVec<dataTypes::number> &src,
+      const distributedCPUMultiVec<dataTypes::number> &src,
       const unsigned int                          numberWaveFunctions,
-      distributedCPUVec<dataTypes::number> &      dst,
+      distributedCPUMultiVec<dataTypes::number> &      dst,
       const double                                scalar = 1.0);
 
     void
     computeLocalHamiltonianTimesX(
-      const distributedCPUVec<dataTypes::number> &src,
+      const distributedCPUMultiVec<dataTypes::number> &src,
       std::vector<dataTypes::number> &            cellSrcWaveFunctionMatrix,
       const unsigned int                          numberWaveFunctions,
-      distributedCPUVec<dataTypes::number> &      dst,
+      distributedCPUMultiVec<dataTypes::number> &      dst,
       std::vector<dataTypes::number> &            cellDstWaveFunctionMatrix,
       const double                                scalar = 1.0);
 
 
     void
     computeHamiltonianTimesXInternal(
-      const distributedCPUVec<dataTypes::number> &src,
+      const distributedCPUMultiVec<dataTypes::number> &src,
       std::vector<dataTypes::number> &            cellSrcWaveFunctionMatrix,
       const unsigned int                          numberWaveFunctions,
-      distributedCPUVec<dataTypes::number> &      dst,
+      distributedCPUMultiVec<dataTypes::number> &      dst,
       std::vector<dataTypes::number> &            cellDstWaveFunctionMatrix,
       const double                                scalar    = 1.0,
       const double                                scalarA   = 1.0,
@@ -509,15 +514,15 @@ node is stored
      */
     void
     computeNonLocalHamiltonianTimesX(
-      const distributedCPUVec<dataTypes::number> &src,
+      const distributedCPUMultiVec<dataTypes::number> &src,
       const unsigned int                          numberWaveFunctions,
-      distributedCPUVec<dataTypes::number> &      dst,
+      distributedCPUMultiVec<dataTypes::number> &      dst,
       const double                                scalar = 1.0) const;
 
     void
     computeNonLocalProjectorKetTimesXTimesV(
-      distributedCPUVec<dataTypes::number> &src,
-      distributedCPUVec<dataTypes::number> &projectorKetTimesVectorFlattened,
+      distributedCPUMultiVec<dataTypes::number> &src,
+      distributedCPUMultiVec<dataTypes::number> &projectorKetTimesVectorFlattened,
       const unsigned int                    numberWaveFunctions);
 
 

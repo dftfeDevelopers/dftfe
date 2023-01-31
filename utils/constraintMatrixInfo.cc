@@ -202,6 +202,29 @@ namespace dftfe
         }
     }
 
+    void
+    constraintMatrixInfo::precomputeMaps(
+      const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+        &                mpiPattern,
+        const unsigned int blockSize)
+    {
+      //
+      // Get required sizes
+      //
+      const unsigned int totalSize = mpiPattern->localOwnedSize()+mpiPattern->localGhostSize();
+
+      d_localIndexMapUnflattenedToFlattened.clear();
+      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
+
+      //
+      // fill the data array
+      //
+      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
+        {
+          d_localIndexMapUnflattenedToFlattened[ilocalDof] = (dealii::types::global_dof_index)ilocalDof*(dealii::types::global_dof_index)blockSize;
+        }
+    }
+
 
 
     //
@@ -278,6 +301,56 @@ namespace dftfe
     }
 
 
+    template <typename T>
+    void
+    constraintMatrixInfo::distribute(distributedCPUMultiVec<T> &fieldVector,
+                                     const unsigned int    blockSize) const
+    {
+      fieldVector.updateGhostValues();
+
+
+      unsigned int       count = 0;
+      const unsigned int inc   = 1;
+      std::vector<T>     newValuesBlock(blockSize, 0.0);
+      for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+        {
+          std::fill(newValuesBlock.begin(),
+                    newValuesBlock.end(),
+                    d_inhomogenities[i]);
+
+          const dealii::types::global_dof_index startingLocalDofIndexRow =
+            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+
+          for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
+            {
+              Assert(
+                count < d_columnIdsGlobal.size(),
+                dealii::ExcMessage(
+                  "Overloaded distribute for flattened array has indices out of bounds"));
+
+              const dealii::types::global_dof_index
+                startingLocalDofIndexColumn =
+                  d_localIndexMapUnflattenedToFlattened
+                    [d_columnIdsLocal[count]];
+
+              T alpha = d_columnValues[count];
+
+              callaxpy(&blockSize,
+                       &alpha,
+                       fieldVector.data() + startingLocalDofIndexColumn,
+                       &inc,
+                       &newValuesBlock[0],
+                       &inc);
+              count++;
+            }
+
+          std::copy(&newValuesBlock[0],
+                    &newValuesBlock[0] + blockSize,
+                    fieldVector.data() + startingLocalDofIndexRow);
+        }
+    }
+
+
 
     //
     // set the constrained degrees of freedom to values so that constraints
@@ -325,6 +398,46 @@ namespace dftfe
 
     template <typename T>
     void
+    constraintMatrixInfo::distribute_slave_to_master(
+      distributedCPUMultiVec<T> &fieldVector,
+      const unsigned int    blockSize) const
+    {
+      unsigned int       count = 0;
+      const unsigned int inc   = 1;
+      for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+        {
+          const dealii::types::global_dof_index startingLocalDofIndexRow =
+            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+          for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
+            {
+              const dealii::types::global_dof_index
+                startingLocalDofIndexColumn =
+                  d_localIndexMapUnflattenedToFlattened
+                    [d_columnIdsLocal[count]];
+
+              T alpha = d_columnValues[count];
+              callaxpy(&blockSize,
+                       &alpha,
+                       fieldVector.data() + startingLocalDofIndexRow,
+                       &inc,
+                       fieldVector.data() + startingLocalDofIndexColumn,
+                       &inc);
+
+
+              count++;
+            }
+
+          //
+          // set slave contribution to zero
+          //
+          std::fill(fieldVector.data() + startingLocalDofIndexRow,
+                    fieldVector.data() + startingLocalDofIndexRow + blockSize,
+                    0.0);
+        }
+    }
+
+    template <typename T>
+    void
     constraintMatrixInfo::set_zero(distributedCPUVec<T> &fieldVector,
                                    const unsigned int    blockSize) const
     {
@@ -336,6 +449,23 @@ namespace dftfe
           // set constrained nodes to zero
           std::fill(fieldVector.begin() + startingLocalDofIndexRow,
                     fieldVector.begin() + startingLocalDofIndexRow + blockSize,
+                    0.0);
+        }
+    }
+
+    template <typename T>
+    void
+    constraintMatrixInfo::set_zero(distributedCPUMultiVec<T> &fieldVector,
+                                   const unsigned int    blockSize) const
+    {
+      for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+        {
+          const dealii::types::global_dof_index startingLocalDofIndexRow =
+            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+
+          // set constrained nodes to zero
+          std::fill(fieldVector.data() + startingLocalDofIndexRow,
+                    fieldVector.data() + startingLocalDofIndexRow + blockSize,
                     0.0);
         }
     }
@@ -371,6 +501,21 @@ namespace dftfe
     template void
     constraintMatrixInfo::set_zero(
       distributedCPUVec<dataTypes::number> &fieldVector,
+      const unsigned int                    blockSize) const;
+
+    template void
+    constraintMatrixInfo::distribute(
+      distributedCPUMultiVec<dataTypes::number> &fieldVector,
+      const unsigned int                    blockSize) const;
+
+    template void
+    constraintMatrixInfo::distribute_slave_to_master(
+      distributedCPUMultiVec<dataTypes::number> &fieldVector,
+      const unsigned int                    blockSize) const;
+
+    template void
+    constraintMatrixInfo::set_zero(
+      distributedCPUMultiVec<dataTypes::number> &fieldVector,
       const unsigned int                    blockSize) const;
 
   } // namespace dftUtils

@@ -1530,7 +1530,7 @@ namespace dftfe
     /// computation pre-initialization of the parallel layout is more efficient
     /// than creating the parallel layout for every nonLocalHamiltionan times
     /// wavefunction computation
-    distributedCPUVec<std::complex<double>>
+    distributedCPUMultiVec<std::complex<double>>
       d_projectorKetTimesVectorParFlattened;
 #else
     std::vector<std::vector<std::vector<double>>>
@@ -1544,7 +1544,7 @@ namespace dftfe
     /// computation pre-initialization of the parallel layout is more efficient
     /// than creating the parallel layout for every nonLocalHamiltionan times
     /// wavefunction computation
-    distributedCPUVec<double> d_projectorKetTimesVectorParFlattened;
+    distributedCPUMultiVec<double> d_projectorKetTimesVectorParFlattened;
 #endif
 
     //

@@ -23,8 +23,8 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeNonLocalProjectorKetTimesXTimesV(
-    distributedCPUVec<std::complex<double>> &src,
-    distributedCPUVec<std::complex<double>> &projectorKetTimesVectorFlattened,
+    distributedCPUMultiVec<std::complex<double>> &src,
+    distributedCPUMultiVec<std::complex<double>> &projectorKetTimesVectorFlattened,
     const unsigned int                       numberWaveFunctions)
 {
   std::map<unsigned int, std::vector<std::complex<double>>>
@@ -76,7 +76,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   dealii::types::global_dof_index localNodeId =
                     d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
                   zcopy_(&numberWaveFunctions,
-                         src.begin() + localNodeId,
+                         src.data() + localNodeId,
                          &inc,
                          &cellWaveFunctionMatrix[numberWaveFunctions * iNode],
                          &inc);
@@ -115,7 +115,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell loop
 
-  projectorKetTimesVectorFlattened = std::complex<double>(0.0, 0.0);
+  projectorKetTimesVectorFlattened.setValue(std::complex<double>(0.0, 0.0));
 
 
   for (unsigned int iAtom = 0;
@@ -138,14 +138,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                   iPseudoAtomicWave],
                  &inc,
-                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 projectorKetTimesVectorFlattened.data() +id * numberWaveFunctions,
                  &inc);
         }
     }
 
 
-  projectorKetTimesVectorFlattened.compress(VectorOperation::add);
-  projectorKetTimesVectorFlattened.update_ghost_values();
+  projectorKetTimesVectorFlattened.accumulateAddLocallyOwned();
+  projectorKetTimesVectorFlattened.updateGhostValues();
 
   //
   // compute V*C^{T}*X
@@ -184,8 +184,8 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeNonLocalProjectorKetTimesXTimesV(
-    distributedCPUVec<double> &src,
-    distributedCPUVec<double> &projectorKetTimesVectorFlattened,
+    distributedCPUMultiVec<double> &src,
+    distributedCPUMultiVec<double> &projectorKetTimesVectorFlattened,
     const unsigned int         numberWaveFunctions)
 {
   std::map<unsigned int, std::vector<double>> projectorKetTimesVector;
@@ -238,7 +238,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   dealii::types::global_dof_index localNodeId =
                     d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
                   dcopy_(&numberWaveFunctions,
-                         src.begin() + localNodeId,
+                         src.data() + localNodeId,
                          &inc,
                          &cellWaveFunctionMatrix[numberWaveFunctions * iNode],
                          &inc);
@@ -275,7 +275,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell loop
 
-  projectorKetTimesVectorFlattened = 0.0;
+  projectorKetTimesVectorFlattened.setValue(0.0);
 
   for (unsigned int iAtom = 0;
        iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -298,13 +298,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                   iPseudoAtomicWave],
                  &inc,
-                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 projectorKetTimesVectorFlattened.data() + id * numberWaveFunctions,
                  &inc);
         }
     }
 
-  projectorKetTimesVectorFlattened.compress(VectorOperation::add);
-  projectorKetTimesVectorFlattened.update_ghost_values();
+  projectorKetTimesVectorFlattened.accumulateAddLocallyOwned();
+  projectorKetTimesVectorFlattened.updateGhostValues();
 
   //
   // compute V*C^{T}*X
@@ -331,7 +331,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
           dscal_(&numberWaveFunctions,
                  &nonlocalConstantV,
-                 &projectorKetTimesVectorFlattened[id * numberWaveFunctions],
+                 projectorKetTimesVectorFlattened.data() + id * numberWaveFunctions,
                  &inc);
         }
     }

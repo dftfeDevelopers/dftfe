@@ -70,6 +70,11 @@ namespace dftfe
            bool                                  flag) = 0;
 
     virtual void
+    reinit(const unsigned int                    wavefunBlockSize,
+           distributedCPUMultiVec<dataTypes::number> &X,
+           bool                                  flag) = 0;
+
+    virtual void
     reinit(const unsigned int wavefunBlockSize) = 0;
 
     virtual void
@@ -79,7 +84,7 @@ namespace dftfe
     virtual void
     initCellWaveFunctionMatrix(
       const unsigned int                    numberWaveFunctions,
-      distributedCPUVec<dataTypes::number> &X,
+      distributedCPUMultiVec<dataTypes::number> &X,
       std::vector<dataTypes::number> &      cellWaveFunctionMatrix) = 0;
 
 
@@ -87,7 +92,7 @@ namespace dftfe
     fillGlobalArrayFromCellWaveFunctionMatrix(
       const unsigned int                    wavefunBlockSize,
       const std::vector<dataTypes::number> &cellWaveFunctionMatrix,
-      distributedCPUVec<dataTypes::number> &X) = 0;
+      distributedCPUMultiVec<dataTypes::number> &X) = 0;
 
     virtual void
     initWithScalar(const unsigned int              numberWaveFunctions,
@@ -131,29 +136,29 @@ namespace dftfe
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
     virtual void
-    HX(distributedCPUVec<dataTypes::number> &X,
+    HX(distributedCPUMultiVec<dataTypes::number> &X,
        const unsigned int                    numberComponents,
        const bool                            scaleFlag,
        const double                          scalar,
-       distributedCPUVec<dataTypes::number> &Y,
+       distributedCPUMultiVec<dataTypes::number> &Y,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     virtual void
-    HX(distributedCPUVec<dataTypes::number> &src,
+    HX(distributedCPUMultiVec<dataTypes::number> &src,
        std::vector<dataTypes::number> &      cellSrcWaveFunctionMatrix,
        const unsigned int                    numberWaveFunctions,
        const bool                            scaleFlag,
        const double                          scalar,
        const double                          scalarA,
        const double                          scalarB,
-       distributedCPUVec<dataTypes::number> &dst,
+       distributedCPUMultiVec<dataTypes::number> &dst,
        std::vector<dataTypes::number> &      cellDstWaveFunctionMatrix) = 0;
 
     virtual void
     computeNonLocalProjectorKetTimesXTimesV(
-      distributedCPUVec<dataTypes::number> &src,
-      distributedCPUVec<dataTypes::number> &projectorKetTimesVectorFlattened,
+      distributedCPUMultiVec<dataTypes::number> &src,
+      distributedCPUMultiVec<dataTypes::number> &projectorKetTimesVectorFlattened,
       const unsigned int                    numberWaveFunctions) = 0;
 
 
@@ -251,7 +256,7 @@ namespace dftfe
     getFlattenedArrayCellLocalProcIndexIdMap() const = 0;
 
 
-    virtual distributedCPUVec<dataTypes::number> &
+    virtual distributedCPUMultiVec<dataTypes::number> &
     getParallelProjectorKetTimesBlockVector() = 0;
 
 

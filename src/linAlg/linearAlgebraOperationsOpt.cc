@@ -276,7 +276,7 @@ namespace dftfe
     template <typename T>
     void
     chebyshevFilter(operatorDFTClass &    operatorMatrix,
-                    distributedCPUVec<T> &XArray,
+                    distributedCPUMultiVec<T> &XArray,
                     const unsigned int    numberWaveFunctions,
                     const unsigned int    m,
                     const double          a,
@@ -290,19 +290,13 @@ namespace dftfe
       sigma1 = sigma;
       gamma  = 2.0 / sigma1;
 
-      distributedCPUVec<T> YArray; //,YNewArray;
 
       //
       // create YArray
-      //
-      YArray.reinit(XArray);
-
-
-      //
       // initialize to zeros.
       // x
       const T zeroValue = 0.0;
-      YArray            = zeroValue;
+      distributedCPUMultiVec<T> YArray(XArray,zeroValue); //,YNewArray;
 
 
       //
@@ -317,10 +311,9 @@ namespace dftfe
       double alpha1 = sigma1 / e, alpha2 = -c;
 
       //
-      // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
+      // YArray = alpha1*(YArray + alpha2*XArray) and YArray = alpha1*YArray
       //
-      YArray.add(alpha2, XArray);
-      YArray *= alpha1;
+      YArray.addAndScale(alpha1,alpha2, XArray);
 
       //
       // polynomial loop
@@ -331,10 +324,9 @@ namespace dftfe
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
 
           //
-          // multiply XArray with alpha2
+          // XArray = alpha2 * XArray - c * alpha1 * YArray
           //
-          XArray *= alpha2;
-          XArray.add(-c * alpha1, YArray);
+          XArray.scaleAndAdd(alpha2,-c * alpha1, YArray);
 
 
           //
@@ -367,7 +359,7 @@ namespace dftfe
     template <typename T>
     void
     chebyshevFilterOpt(operatorDFTClass &              operatorMatrix,
-                       distributedCPUVec<T> &          XArray,
+                       distributedCPUMultiVec<T> &          XArray,
                        std::vector<dataTypes::number> &cellXWaveFunctionMatrix,
                        const unsigned int              numberWaveFunctions,
                        const unsigned int              m,
@@ -382,7 +374,6 @@ namespace dftfe
       sigma1 = sigma;
       gamma  = 2.0 / sigma1;
 
-      distributedCPUVec<T> YArray;
       std::vector<T>       cellYWaveFunctionMatrix;
 
       // init cellYWaveFunctionMatrix to a given scalar
@@ -400,15 +391,10 @@ namespace dftfe
 
       //
       // create YArray
-      //
-      YArray.reinit(XArray);
-
-
-      //
       // initialize to zeros.
       // x
       const T zeroValue = 0.0;
-      YArray            = zeroValue;
+      distributedCPUMultiVec<T> YArray(XArray,zeroValue);
 
 
       //
@@ -438,18 +424,18 @@ namespace dftfe
       //
       // Do surface nodes recursive iteration for dealii vectors
       //
-      const unsigned int numberDofs = YArray.local_size() / numberWaveFunctions;
+      const unsigned int numberDofs = YArray.locallyOwnedSize();
       for (unsigned int iDof = 0; iDof < numberDofs; ++iDof)
         {
           if (globalArrayClassificationMap[iDof] == 1)
             {
               for (unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
                 {
-                  YArray.local_element(iDof * numberWaveFunctions + iWave) =
+                  YArray.data()[iDof * numberWaveFunctions + iWave] =
                     alpha1 *
-                      YArray.local_element(iDof * numberWaveFunctions + iWave) +
+                      YArray.data()[iDof * numberWaveFunctions + iWave] +
                     alpha1 * alpha2 *
-                      XArray.local_element(iDof * numberWaveFunctions + iWave);
+                      XArray.data()[iDof * numberWaveFunctions + iWave];
                 }
             }
         }
@@ -489,12 +475,12 @@ namespace dftfe
                     {
                       // XArray.local_element(iDof*numberWaveFunctions+iWave) *=
                       // alpha2;
-                      XArray.local_element(iDof * numberWaveFunctions + iWave) =
-                        alpha2 * XArray.local_element(
-                                   iDof * numberWaveFunctions + iWave) -
+                      XArray.data()[iDof * numberWaveFunctions + iWave] =
+                        alpha2 * XArray.data()[
+                                   iDof * numberWaveFunctions + iWave] -
                         c * alpha1 *
-                          YArray.local_element(iDof * numberWaveFunctions +
-                                               iWave);
+                          YArray.data()[iDof * numberWaveFunctions +
+                                               iWave];
                     }
                 }
             }
@@ -2420,7 +2406,7 @@ namespace dftfe
         interBandGroupComm, totalNumberVectors, bandGroupLowHighPlusOneIndices);
 
       // create temporary arrays XBlock,HXBlock
-      distributedCPUVec<T> XBlock, HXBlock;
+      distributedCPUMultiVec<T> XBlock, HXBlock;
 
       // Do H*X using a blocked approach and compute
       // the residual norms: H*XBlock-XBlock*D, where
@@ -2447,16 +2433,16 @@ namespace dftfe
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              XBlock = T(0.);
+              XBlock.setValue(T(0.));
               // fill XBlock from X:
               for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
-                  XBlock.local_element(iNode * B + iWave) =
+                  XBlock.data()[iNode * B + iWave] =
                     X[iNode * totalNumberVectors + jvec + iWave];
 
               MPI_Barrier(mpiCommDomain);
               // evaluate H times XBlock and store in HXBlock
-              HXBlock                = T(0.);
+              HXBlock.setValue(T(0.));
               const bool   scaleFlag = false;
               const double scalar    = 1.0;
               operatorMatrix.HX(XBlock, B, scaleFlag, scalar, HXBlock);
@@ -2466,9 +2452,9 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; iWave++)
                   {
                     const double temp =
-                      std::abs(HXBlock.local_element(B * iDof + iWave) -
+                      std::abs(HXBlock.data()[B * iDof + iWave] -
                                eigenValues[jvec + iWave] *
-                                 XBlock.local_element(B * iDof + iWave));
+                                 XBlock.data()[B * iDof + iWave]);
                     residualNormSquare[jvec + iWave] += temp * temp;
                   }
             }
@@ -2891,7 +2877,7 @@ namespace dftfe
     template <typename T>
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(operatorDFTClass &operatorMatrix,
-                                        const distributedCPUVec<T> &vect,
+                                        const distributedCPUMultiVec<T> &vect,
                                         const dftParameters &       dftParams)
     {
       const unsigned int this_mpi_process =
@@ -2908,37 +2894,42 @@ namespace dftfe
       //
       // generate random vector v
       //
-      distributedCPUVec<T> vVector, fVector, v0Vector;
+      distributedCPUMultiVec<T> vVector, fVector, v0Vector;
       vVector.reinit(vect);
       fVector.reinit(vect);
 
-      vVector = T(0.0), fVector = T(0.0);
+      vVector.setValue(T(0.0));
+      fVector.setValue(T(0.0));
       std::srand(this_mpi_process);
-      const unsigned int local_size = vVector.local_size();
+      const unsigned int local_size = vVector.locallyOwnedSize();
 
       for (unsigned int i = 0; i < local_size; i++)
-        vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+        vVector.data()[i] = ((double)std::rand()) / ((double)RAND_MAX);
 
       operatorMatrix.getOverloadedConstraintMatrix()->set_zero(vVector, 1);
 
-      vVector.update_ghost_values();
+      vVector.updateGhostValues();
 
       //
       // evaluate l2 norm
       //
-      vVector /= vVector.l2_norm();
-      vVector.update_ghost_values();
+      double vVecNorm;
+      vVector.l2Norm(&vVecNorm);
+      vVector.scale(1/vVecNorm);
+      vVector.updateGhostValues();
 
       //
       // call matrix times X
       //
-      fVector                = T(0);
+      fVector.setValue(T(0));
       const bool   scaleFlag = false;
       const double scalar    = 1.0;
       operatorMatrix.HX(vVector, 1, scaleFlag, scalar, fVector);
+      double fVecNorm;
+      fVector.l2Norm(&fVecNorm);
 
       // evaluate fVector^{H}*vVector
-      alpha = fVector * vVector;
+      fVector.dot(vVector,&alpha);
       fVector.add(-1.0 * alpha, vVector);
       std::vector<T> Tlanczos(lanczosIterations * lanczosIterations, 0.0);
 
@@ -2948,16 +2939,16 @@ namespace dftfe
       // filling only lower triangular part
       for (unsigned int j = 1; j < lanczosIterations; j++)
         {
-          beta     = fVector.l2_norm();
+          fVector.l2Norm(&beta);
           v0Vector = vVector;
-          vVector.equ(1.0 / beta, fVector);
+          vVector.scaleAndAdd(0.0,1.0 / beta, fVector);
 
-          fVector = T(0);
+          fVector.setValue(T(0));
           operatorMatrix.HX(vVector, 1, scaleFlag, scalar, fVector);
 
           fVector.add(-1.0 * beta, v0Vector); // beta is real
 
-          alpha = fVector * vVector;
+          fVector.dot(vVector,&alpha);
           fVector.add(-1.0 * alpha, vVector);
 
           index += 1;
@@ -3013,7 +3004,8 @@ namespace dftfe
         }
       std::sort(eigenValuesT.begin(), eigenValuesT.end());
       //
-      const double fvectorNorm = fVector.l2_norm();
+      double fvectorNorm;
+      fVector.l2Norm(&fvectorNorm);
       if (dftParams.verbosity >= 5 && this_mpi_process == 0)
         {
           std::cout << "bUp1: " << eigenValuesT[lanczosIterations - 1]
@@ -3239,13 +3231,13 @@ namespace dftfe
     template std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
       operatorDFTClass &,
-      const distributedCPUVec<dataTypes::number> &,
+      const distributedCPUMultiVec<dataTypes::number> &,
       const dftParameters &dftParams);
 
 
     template void
     chebyshevFilter(operatorDFTClass &operatorMatrix,
-                    distributedCPUVec<dataTypes::number> &,
+                    distributedCPUMultiVec<dataTypes::number> &,
                     const unsigned int,
                     const unsigned int,
                     const double,
@@ -3254,7 +3246,7 @@ namespace dftfe
 
     template void
     chebyshevFilterOpt(operatorDFTClass &                    operatorMatrix,
-                       distributedCPUVec<dataTypes::number> &X,
+                       distributedCPUMultiVec<dataTypes::number> &X,
                        std::vector<dataTypes::number> &cellWaveFunctionMatrix,
                        const unsigned int              numberComponents,
                        const unsigned int              m,
