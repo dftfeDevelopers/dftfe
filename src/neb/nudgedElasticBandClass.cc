@@ -62,25 +62,83 @@ namespace dftfe
 
     MPI_Barrier(d_mpiCommParent);
     d_solverRestart = d_isRestart;
+    if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
+      {
+        std::vector<std::vector<int>>    tempRelaxFlagsData;
+        std::vector<std::vector<double>> tempForceData;
+        dftUtils::readRelaxationFlagsFile(
+          6,
+          tempRelaxFlagsData,
+          tempForceData,
+          d_dftPtr->getParametersObject().ionRelaxFlagsFile);
+        AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
+                    ExcMessage(
+                      "Incorrect number of entries in relaxationFlags file"));
+        d_relaxationFlags.clear();
+        d_externalForceOnAtom.clear();
+
+
+
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
+                d_externalForceOnAtom.push_back(tempForceData[i][j]);
+              }
+          }
+        // print relaxation flags
+        pcout << " --------------Ion force relaxation flags----------------"
+              << std::endl;
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            pcout << tempRelaxFlagsData[i][0] << "  "
+                  << tempRelaxFlagsData[i][1] << "  "
+                  << tempRelaxFlagsData[i][2] << std::endl;
+          }
+        pcout << " --------------------------------------------------"
+              << std::endl;
+      }
+    else
+      {
+        d_relaxationFlags.clear();
+        d_externalForceOnAtom.clear();
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                d_relaxationFlags.push_back(1.0);
+                d_externalForceOnAtom.push_back(0.0);
+              }
+          }
+      }
+    d_countrelaxationFlags = 0;
+    for (int i = 0; i < d_relaxationFlags.size(); i++)
+      {
+        if (d_relaxationFlags[i] == 1)
+          d_countrelaxationFlags++;
+      }
+    pcout << " Total No. of relaxation flags: " << d_countrelaxationFlags
+          << std::endl;
 
 
     if (!d_isRestart)
       {
         d_totalUpdateCalls = 0;
-        
-          {
-            if (d_restartFilesPath != ".")
-              {
-                if (d_this_mpi_process == 0)
+
+        {
+          if (d_restartFilesPath != ".")
+            {
+              if (d_this_mpi_process == 0)
                 mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-              }
-            else
-              {
-                d_restartFilesPath = "./nebRestart";
-                if (d_this_mpi_process == 0)
+            }
+          else
+            {
+              d_restartFilesPath = "./nebRestart";
+              if (d_this_mpi_process == 0)
                 mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-              }
-          }
+            }
+        }
 
 
         std::string Folder = d_restartFilesPath + "/Step0";
@@ -96,9 +154,8 @@ namespace dftfe
         for (int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
-            coordinatesFile = d_restartFilesPath +
-                              "/Step0/Image"+ std::to_string(Image) +
-                              "coordinates.inp";
+            coordinatesFile = d_restartFilesPath + "/Step0/Image" +
+                              std::to_string(Image) + "coordinates.inp";
             domainVectorsFile = d_restartFilesPath + "/Step0/Image" +
                                 std::to_string(Image) + "domainVectors.inp";
             std::vector<std::vector<double>> coordinates, domainVectors;
@@ -136,69 +193,44 @@ namespace dftfe
                                                     Image == 0 ? false : true));
           }
       }
-      else
+    else
       {
-            if (d_restartFilesPath != ".")
-              {
+        if (d_restartFilesPath == ".")
+          {
+            d_restartFilesPath = "./nebRestart";
+          }
 
-              }
-            if (d_restartFilesPath == ".")
-              {
-                d_restartFilesPath = "./nebRestart";
-
-              }
-
-
-                 std::vector<std::vector<double>> tmp, ionOptData,tmp2;
-        dftUtils::readFile(1, ionOptData, d_restartFilesPath + "/ionOpt.dat");
-        dftUtils::readFile(1, tmp, d_restartFilesPath + "/Step.chk");
-        dftUtils::readFile(1, tmp2, d_restartFilesPath + "/Step.chk.old");
-        int  solver            = ionOptData[0][0];
-        bool usePreconditioner = ionOptData[1][0] > 1e-6;
-        d_numberGlobalCharges = ionOptData[2][0]/ d_numberOfImages;
-        d_totalUpdateCalls     = tmp[0][0];
-        int Checkcall = tmp2[0][0];
-        if(Checkcall != d_totalUpdateCalls) 
-               d_totalUpdateCalls = Checkcall;  
-        tmp.clear();
+        bool                             Periodic;
+        std::vector<std::vector<double>> nudgedElasticBandData, tmp;
+        dftUtils::readFile(1,
+                           nudgedElasticBandData,
+                           d_restartFilesPath + "/nudgedElasticBand.dat");
+        int  solver            = nudgedElasticBandData[0][0];
+        bool usePreconditioner = nudgedElasticBandData[1][0] > 1e-6;
+        d_numberGlobalCharges  = nudgedElasticBandData[2][0] / d_numberOfImages;
+        d_totalUpdateCalls     = checkRestart(Periodic);
         dftUtils::readFile(1,
                            tmp,
                            d_restartFilesPath + "/Step" +
                              std::to_string(d_totalUpdateCalls) +
                              "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
-        pcout<<"Solver update: NEB is in Restart mode"<<std::endl;
-        pcout<<"Checking for files in Step: "<<d_totalUpdateCalls<<std::endl;
-        /*d_relaxationFlags.resize(d_numberGlobalCharges * 3);
-        bool relaxationFlagsMatch = true;
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                relaxationFlagsMatch = (d_relaxationFlags[i * 3 + j] ==
-                                        (int)ionOptData[i * 3 + j + 3][0]) &&
-                                       relaxationFlagsMatch;
-              }
-          } */
-        /*if (solver != d_solver ||
-            usePreconditioner !=
-              d_dftPtr->getParametersObject().usePreconditioner)
-          pcout
-            << "Solver has changed since last save, the newly set solver will start from scratch."
-            << std::endl; */
-        /*if (!relaxationFlagsMatch)
-          pcout
-            << "Relaxations flags have changed since last save, the solver will be reset to work with the new flags."
-            << std::endl;*/
+        pcout << "Solver update: NEB is in Restart mode" << std::endl;
+        pcout << "Checking for files in Step: " << d_totalUpdateCalls
+              << std::endl;
 
         for (int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
-            coordinatesFile = d_restartFilesPath +
-                              "/Step"+std::to_string(d_totalUpdateCalls)+"/Image"+ std::to_string(Image) +
-                              "atomsFracCoordCurrent.chk";
-            domainVectorsFile = d_restartFilesPath + "/Step"+std::to_string(d_totalUpdateCalls)+"/Image"+ std::to_string(Image) +
-                                 "domainBoundingVectorsCurrent.chk";
+            coordinatesFile = d_restartFilesPath + "/Step" +
+                              std::to_string(d_totalUpdateCalls) + "/Image" +
+                              std::to_string(Image) +
+                              (Periodic ? "atomsFracCoordCurrent.chk" :
+                                          "atomsFracCoordCurrent.chk");
+            domainVectorsFile = d_restartFilesPath + "/Step" +
+                                std::to_string(d_totalUpdateCalls) + "/Image" +
+                                std::to_string(Image) +
+                                "domainBoundingVectorsCurrent.chk";
 
 
             d_dftfeWrapper.push_back(
@@ -212,8 +244,6 @@ namespace dftfe
                                                     d_restartFilesPath,
                                                     Image == 0 ? false : true));
           }
-
-
       }
     d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
     if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
@@ -292,17 +322,13 @@ namespace dftfe
                                       atomLocationsi[iCharge][j];
                         if (temp > d_Length[j] / 2)
                           {
-                            // pcout<<"Before: "<<temp;
                             temp -= d_Length[j];
                             temp = -temp;
-                            // pcout<<" After: "<<temp<<std::endl;
                           }
                         else if (temp < -d_Length[j] / 2)
                           {
-                            // pcout<<"Before: "<<temp;
                             temp += d_Length[j];
                             temp = -temp;
-                            // pcout<<" After: "<<temp<<std::endl;
                           }
                         tangent[count] = temp;
                         count++;
@@ -322,17 +348,13 @@ namespace dftfe
                                       atomLocationsiminus[iCharge][j];
                         if (temp > d_Length[j] / 2)
                           {
-                            // pcout<<"Before: "<<temp;
                             temp -= d_Length[j];
                             temp = -temp;
-                            // pcout<<" After: "<<temp<<std::endl;
                           }
                         else if (temp < -d_Length[j] / 2)
                           {
-                            // pcout<<"Before: "<<temp;
                             temp += d_Length[j];
                             temp = -temp;
-                            // pcout<<" After: "<<temp<<std::endl;
                           }
                         tangent[count] = temp;
                         count++;
@@ -363,31 +385,23 @@ namespace dftfe
                                            atomLocationsiminus[iCharge][j];
                             if (temp1 > d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp1;
                                 temp1 -= d_Length[j];
                                 temp1 = -temp1;
-                                // pcout<<" After: "<<temp1<<std::endl;
                               }
                             else if (temp1 < -d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp1;
                                 temp1 += d_Length[j];
                                 temp1 = -temp1;
-                                // pcout<<" After: "<<temp1<<std::endl;
                               }
                             if (temp2 > d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp2;
                                 temp2 -= d_Length[j];
                                 temp2 = -temp2;
-                                // pcout<<" After: "<<temp2<<std::endl;
                               }
                             else if (temp2 < -d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp2;
                                 temp2 += d_Length[j];
                                 temp2 = -temp2;
-                                // pcout<<" After: "<<temp2<<std::endl;
                               }
 
 
@@ -413,31 +427,23 @@ namespace dftfe
                                            atomLocationsiminus[iCharge][j];
                             if (temp1 > d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp1;
                                 temp1 -= d_Length[j];
                                 temp1 = -temp1;
-                                // pcout<<" After: "<<temp1<<std::endl;
                               }
                             else if (temp1 < -d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp1;
                                 temp1 += d_Length[j];
                                 temp1 = -temp1;
-                                // pcout<<" After: "<<temp1<<std::endl;
                               }
                             if (temp2 > d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp2;
                                 temp2 -= d_Length[j];
                                 temp2 = -temp2;
-                                // pcout<<" After: "<<temp2<<std::endl;
                               }
                             else if (temp2 < -d_Length[j] / 2)
                               {
-                                // pcout<<"Before: "<<temp2;
                                 temp2 += d_Length[j];
                                 temp2 = -temp2;
-                                // pcout<<" After: "<<temp2<<std::endl;
                               }
                             tangent[count] =
                               deltaVmin * (temp1) + deltaVmax * (temp2);
@@ -458,17 +464,13 @@ namespace dftfe
                                          atomLocationsiminus[iCharge][j]);
                           if (temp > d_Length[j] / 2)
                             {
-                              // pcout<<"Before: "<<temp;
                               temp -= d_Length[j];
                               temp = -temp;
-                              // pcout<<" After: "<<temp<<std::endl;
                             }
                           else if (temp < -d_Length[j] / 2)
                             {
-                              // pcout<<"Before: "<<temp;
                               temp += d_Length[j];
                               temp = -temp;
-                              // pcout<<" After: "<<temp<<std::endl;
                             }
                           tangent[count] = temp;
                           count++;
@@ -493,20 +495,16 @@ namespace dftfe
                   {
                     double temp = (atomLocationsiplus[iCharge][j] -
                                    atomLocationsi[iCharge][j]);
-                    //pcout<<temp<<std::endl;               
+
                     if (temp > d_Length[j] / 2)
                       {
-                        //pcout<<iCharge<<" "<<j<<"Before: "<<temp;
                         temp -= d_Length[j];
                         temp = -temp;
-                        //pcout<<" After: "<<temp<<std::endl;
                       }
                     else if (temp < -d_Length[j] / 2)
                       {
-                        // pcout<<iCharge<<" "<<j<<"Before: "<<temp;
                         temp += d_Length[j];
                         temp = -temp;
-                        // pcout<<" After: "<<temp<<std::endl;
                       }
                     tangent[count] = temp;
                     count++;
@@ -532,17 +530,13 @@ namespace dftfe
                                    atomLocationsiminus[iCharge][j]);
                     if (temp > d_Length[j] / 2)
                       {
-                        // pcout<<iCharge<<" "<<j<<"Before: "<<temp;
                         temp -= d_Length[j];
                         temp = -temp;
-                        // pcout<<" After: "<<temp<<std::endl;
                       }
                     else if (temp < -d_Length[j] / 2)
                       {
-                        // pcout<<iCharge<<" "<<j<<"Before: "<<temp;
                         temp += d_Length[j];
                         temp = -temp;
-                        // pcout<<" After: "<<temp<<std::endl;
                       }
                     tangent[count] = temp;
                     count++;
@@ -563,11 +557,10 @@ namespace dftfe
     for (i = 0; i < len; i++)
       {
         norm = norm + v[i] * v[i];
-
       }
-      pcout<<std::endl;
+    pcout << std::endl;
     norm = sqrt(norm);
-    // pcout<<"Norm: "<<norm<<std::endl;
+
     AssertThrow(
       norm > 0.000000000001,
       ExcMessage(
@@ -613,16 +606,12 @@ namespace dftfe
 
                     if (d_Length[j] / 2 <= v1[count])
                       {
-                        // pcout<<"Before: "<<v1[count];
                         v1[count] -= d_Length[j];
-                        // pcout<<" After: "<<v1[count]<<std::endl;
                       }
 
                     if (d_Length[j] / 2 <= v2[count])
                       {
-                        // pcout<<"Before: "<<v2[count];
                         v2[count] -= d_Length[j];
-                        // pcout<<" After: "<<v2[count]<<std::endl;
                       }
                     count++;
                   }
@@ -657,9 +646,7 @@ namespace dftfe
                                           atomLocationsi[iCharge][j]);
                     if (d_Length[j] / 2 <= v1[count])
                       {
-                        // pcout<<"Before: "<<v1[count];
                         v1[count] -= d_Length[j];
-                        // pcout<<" After: "<<v1[count]<<std::endl;
                       }
                     count++;
                   }
@@ -691,9 +678,7 @@ namespace dftfe
                                           atomLocationsi[iCharge][j]);
                     if (d_Length[j] / 2 <= v2[count])
                       {
-                        // pcout<<"Before: "<<v2[count];
                         v2[count] -= d_Length[j];
-                        // pcout<<" After: "<<v2[count]<<std::endl;
                       }
                     count++;
                   }
@@ -705,20 +690,19 @@ namespace dftfe
         CalculateSpringConstant(image - 1, kminus);
         innerproduct = -0.5 * (k + kminus) * norm2;
       }
-    pcout << "Spring Force on image: " << image << std::endl;
+    // pcout << "Spring Force on image: " << image << std::endl;
     for (count = 0; count < d_countrelaxationFlags; count++)
       {
         ForceSpring[count] = innerproduct * tangent[count];
-        // pcout<<ForceSpring[count]<<"  "<<tangent[count]<<std::endl;
       }
   }
 
 
   void
   nudgedElasticBandClass::CalculateForceparallel(
-    int                  image,
-    std::vector<double> &Forceparallel,
-    const std::vector<double>  &tangent)
+    int                        image,
+    std::vector<double> &      Forceparallel,
+    const std::vector<double> &tangent)
   {
     if (true)
       {
@@ -733,10 +717,9 @@ namespace dftfe
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
-
                     MPI_Barrier(d_mpiCommParent);
-                    Innerproduct = Innerproduct + forceonAtoms[iCharge][j] *
-                                                    tangent[count];
+                    Innerproduct =
+                      Innerproduct + forceonAtoms[iCharge][j] * tangent[count];
                     count++;
                   }
               }
@@ -751,10 +734,10 @@ namespace dftfe
 
   void
   nudgedElasticBandClass::CalculateForceperpendicular(
-    int                  image,
-    std::vector<double> &Forceperpendicular,
-    const std::vector<double>  &Forceparallel,
-    const std::vector<double>  &tangent)
+    int                        image,
+    std::vector<double> &      Forceperpendicular,
+    const std::vector<double> &Forceparallel,
+    const std::vector<double> &tangent)
   {
     std::vector<std::vector<double>> forceonAtoms =
       (d_dftfeWrapper[image])->getForcesAtoms();
@@ -780,8 +763,8 @@ namespace dftfe
   {
     nonLinearSolver::ReturnValueType solverReturn =
       d_nonLinearSolverPtr->solve(*this,
-                                  d_restartFilesPath + "/ionRelax.chk",
-                                  false);
+                                  d_solverRestartPath + "/ionRelax.chk",
+                                  d_solverRestart);
 
     if (solverReturn == nonLinearSolver::SUCCESS &&
         d_dftPtr->getParametersObject().verbosity >= 1)
@@ -793,11 +776,25 @@ namespace dftfe
           << std::endl;
         pcout << "--------------Final Ground State Results-------------"
               << std::endl;
+        double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
         for (int i = 0; i < d_numberOfImages; i++)
           {
-            pcout << "Free Energy of Image: " << i + 1 << "  = "
+            pcout << "Free Energy of Image in meV: " << i + 1 << "  = "
                   << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
+            maxEnergy =
+              std::max(maxEnergy, (d_dftfeWrapper[i])->getDFTFreeEnergy());
           }
+        pcout << "--- Converged Activation Energy---" << std::endl;
+        pcout << "--> Activation Energy (meV): " << std::setprecision(5)
+              << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
+              << std::endl;
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(5)
+              << (maxEnergy -
+                  (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
+              << std::endl;
+        pcout << "-----------------------------------" << std::endl;
         pcout << "--------------Final Error Results(Ha/bohr)-------------"
               << std::endl;
         for (int i = 0; i < d_numberOfImages; i++)
@@ -818,46 +815,51 @@ namespace dftfe
             pcout << "Error of Image: " << i + 1 << "  = " << Force
                   << " Ha/bohr" << std::endl;
           }
+        pcout << "------------------------------------------------------"
+              << std::endl;
         return d_totalUpdateCalls;
       }
 
     else if (solverReturn == nonLinearSolver::FAILURE)
       {
         pcout << " ...Ion force relaxation failed " << std::endl;
-        //d_totalUpdateCalls = -1;
+        d_totalUpdateCalls = -1;
       }
     else if (solverReturn == nonLinearSolver::MAX_ITER_REACHED)
       {
         pcout << " ...Maximum iterations reached " << std::endl;
-        //d_totalUpdateCalls = -2;
+        d_totalUpdateCalls = -2;
       }
 
-
-
-    pcout << "--------------Ground State Results-------------" << std::endl;
-    for (int i = 0; i < d_numberOfImages; i++)
+    if (solverReturn != nonLinearSolver::SUCCESS &&
+        d_dftPtr->getParametersObject().verbosity >= 1)
       {
-        pcout << "Free Energy of Image: " << i + 1 << "  = "
-              << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
-      }
-    pcout << "--------------NEB Step No: "<<d_totalUpdateCalls<<" Error Results(Ha/bohr)-------------" << std::endl;
-    for (int i = 0; i < d_numberOfImages; i++)
-      {
-        d_NEBImageno = i;
-        std::vector<double> tangent(d_countrelaxationFlags, 0.0);
-        std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
-        std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
-        double              Force = 0.0;
+        pcout << "--------------Ground State Results-------------" << std::endl;
+        for (int i = 0; i < d_numberOfImages; i++)
+          {
+            pcout << "Free Energy of Image: " << i + 1 << "  = "
+                  << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
+          }
+        pcout << "--------------NEB Step No: " << d_totalUpdateCalls
+              << " Error Results(Ha/bohr)-------------" << std::endl;
+        for (int i = 0; i < d_numberOfImages; i++)
+          {
+            d_NEBImageno = i;
+            std::vector<double> tangent(d_countrelaxationFlags, 0.0);
+            std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
+            std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
+            double              Force = 0.0;
 
-        CalculatePathTangent(d_NEBImageno, tangent);
-        CalculateForceparallel(d_NEBImageno, Forceparallel, tangent);
-        CalculateForceperpendicular(d_NEBImageno,
-                                    Forceperpendicular,
-                                    Forceparallel,
-                                    tangent);
-        LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
-        pcout << "Error of Image: " << i + 1 << "  = " << Force << " Ha/bohr"
-              << std::endl;
+            CalculatePathTangent(d_NEBImageno, tangent);
+            CalculateForceparallel(d_NEBImageno, Forceparallel, tangent);
+            CalculateForceperpendicular(d_NEBImageno,
+                                        Forceperpendicular,
+                                        Forceparallel,
+                                        tangent);
+            LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
+            pcout << "Error of Image: " << i + 1 << "  = " << Force
+                  << " Ha/bohr" << std::endl;
+          }
       }
     return d_totalUpdateCalls;
   }
@@ -897,94 +899,102 @@ namespace dftfe
   {
     gradient.clear();
     std::vector<int> flagmultiplier(d_numberOfImages, 1);
-    bool             flag = false;
+    flagmultiplier[0]                    = 0;
+    flagmultiplier[d_numberOfImages - 1] = 0;
+    bool flag                            = false;
+    pcout << "----------------------------------------------" << std::endl;
+    pcout << "          NEB STEP: " << d_totalUpdateCalls << "          "
+          << std::endl;
+    pcout << "----------------------------------------------" << std::endl;
     pcout << "    "
           << " Image No "
           << "    "
           << "Internal Energy in Ha"
           << "    "
           << "Free Energy in Ha"
-          << "    " << std::endl;
-    for (int i = 0; i < d_numberOfImages; i++)
+          << "    "
+          << "Max Force Error in Ha/bohr" << std::endl;
+    double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
+    for (int image = 0; image < d_numberOfImages; image++)
       {
-        double FreeEnergy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
+        double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
         double InternalEnergy =
-          (d_dftfeWrapper[i])->getDFTFreeEnergy() +
-          (d_dftfeWrapper[i])->getElectronicEntropicEnergy();
-        pcout << "    " << i << "    " << InternalEnergy << "    " << FreeEnergy
-              << "    " << std::endl;
-      }
-    pcout << "************Error in gradient***************" << std::endl;
-    double Force = 0.0;
-    ImageError(0, Force);
-    d_ImageError[0] = Force;
+          (d_dftfeWrapper[image])->getDFTFreeEnergy() +
+          (d_dftfeWrapper[image])->getElectronicEntropicEnergy();
+        double ForceError = 0.0;
+        d_NEBImageno      = image;
+        ImageError(image, ForceError);
+        d_ImageError[image] = ForceError;
+        if (ForceError < 0.95 * d_optimizertolerance && d_imageFreeze &&
+            (image != 0 || image != d_numberOfImages - 1))
+          flagmultiplier[image] = 0;
 
-    for (int i = 1; i < d_numberOfImages - 1; i++)
-      {
-        d_NEBImageno = i;
-        ImageError(d_NEBImageno, Force);
-        d_ImageError[i] = Force;
-
-        pcout << "The Force on image no. " << d_NEBImageno << " is " << Force
-              << " in Ha/bohr" << std::endl;
-        if (Force < 0.95 * d_optimizertolerance && d_imageFreeze)
-          flagmultiplier[i] = 0;
-        if (Force <= d_optimizertolerance)
-          {
-            flag = true;
-            pcout << "Image no. " << i + 1 << " has converged with value of"
-                  << Force << " vs tolerance of" << d_optimizertolerance
-                  << std::endl;
-          }
-        else if (Force > d_optimizertolerance)
+        if (ForceError <= d_optimizertolerance)
+          flag = true;
+        else
           flag = false;
+        if (flagmultiplier[image] == 0)
+          pcout << "    "
+                << " Image: " << image << "(T)"
+                << "    " << InternalEnergy << "    " << FreeEnergy << "    "
+                << ForceError << std::endl;
+        else
+          pcout << "    "
+                << " Image: " << image << "(F)"
+                << "    " << InternalEnergy << "    " << FreeEnergy << "    "
+                << ForceError << std::endl;
+        maxEnergy =
+          std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
-
-    ImageError(d_numberOfImages - 1, Force);
-    d_ImageError[d_numberOfImages - 1] = Force;
-
+    pcout << "--> Activation Energy (meV): " << std::setprecision(5)
+          << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) * C_haToeV *
+               1000
+          << std::endl;
+    pcout << "<-- Activation Energy (meV): " << std::setprecision(5)
+          << (maxEnergy -
+              (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+               C_haToeV * 1000
+          << std::endl;
+    pcout << "----------------------------------------------" << std::endl;
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
-
-    pcout << "Image No. Norm of F_per   Norm of Spring Force" << std::endl;
-    for (int image = 1; image < d_numberOfImages - 1; image++)
+    else
       {
-        std::vector<double> tangent(d_countrelaxationFlags, 0.0);
-        std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
-        std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
-        std::vector<double> SpringForce(d_countrelaxationFlags, 0.0);
-        std::vector<double> ForceonImage(d_countrelaxationFlags, 0.0);
-        CalculatePathTangent(image, tangent);
-        CalculateForceparallel(image, Forceparallel, tangent);
-        CalculateForceperpendicular(image,
-                                    Forceperpendicular,
-                                    Forceparallel,
-                                    tangent);
-        CalculateSpringForce(image, SpringForce, tangent);
-        CalculateForceonImage(Forceperpendicular, SpringForce, ForceonImage);
-        double F_spring = 0.0;
-        double F_per    = 0.0;
-        LNorm(F_per, Forceperpendicular, 0, d_countrelaxationFlags);
-        LNorm(F_spring, SpringForce, 0, d_countrelaxationFlags);
-        pcout << image << "  " << F_per << "  " << F_spring << std::endl;
-
-        // pcout<<"Before start of optimization Image Force: "<<Force<<"
-        // Ha/Bohr" <<std:endl;
-
-        for (int i = 0; i < d_countrelaxationFlags; i++)
+        for (int image = 1; image < d_numberOfImages - 1; image++)
           {
-            if (flag == false)
-              gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
-            else
-              gradient.push_back(-Forceperpendicular[i] *
-                                 flagmultiplier[image]);
+            d_NEBImageno = image;
+            std::vector<double> tangent(d_countrelaxationFlags, 0.0);
+            std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
+            std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
+            std::vector<double> SpringForce(d_countrelaxationFlags, 0.0);
+            std::vector<double> ForceonImage(d_countrelaxationFlags, 0.0);
+            CalculatePathTangent(image, tangent);
+            CalculateForceparallel(image, Forceparallel, tangent);
+            CalculateForceperpendicular(image,
+                                        Forceperpendicular,
+                                        Forceparallel,
+                                        tangent);
+            CalculateSpringForce(image, SpringForce, tangent);
+            CalculateForceonImage(Forceperpendicular,
+                                  SpringForce,
+                                  ForceonImage);
+            double F_spring = 0.0;
+            double F_per    = 0.0;
+            LNorm(F_per, Forceperpendicular, 0, d_countrelaxationFlags);
+            LNorm(F_spring, SpringForce, 0, d_countrelaxationFlags);
+            pcout << image << "  " << F_per << "  " << F_spring << std::endl;
+
+
+
+            for (int i = 0; i < d_countrelaxationFlags; i++)
+              {
+                if (flag == false)
+                  gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
+                else
+                  gradient.push_back(-Forceperpendicular[i] *
+                                     flagmultiplier[image]);
+              }
           }
-      }
-    pcout << "##Frozen images are: ";
-    for (int image = 1; image < d_numberOfImages - 1; image++)
-      {
-        if (flagmultiplier[image] == 0)
-          pcout << " " << image << " ";
       }
 
 
@@ -993,7 +1003,7 @@ namespace dftfe
     for (unsigned int i = 0; i < gradient.size(); ++i)
       {
         const double temp = std::sqrt(gradient[i] * gradient[i]);
-        // pcout<<i<<"   "<<temp<<std::endl;
+
         if (temp > d_maximumAtomForceToBeRelaxed)
           d_maximumAtomForceToBeRelaxed = temp;
       }
@@ -1005,22 +1015,19 @@ namespace dftfe
 
   void
   nudgedElasticBandClass::CalculateForceonImage(
-    const std::vector<double>  &Forceperpendicular,
-    const std::vector<double>  &SpringForce,
-    std::vector<double> &ForceonImage)
+    const std::vector<double> &Forceperpendicular,
+    const std::vector<double> &SpringForce,
+    std::vector<double> &      ForceonImage)
   {
     unsigned int count = 0;
-    // pcout<<"Forces on Image "<<d_NEBImageno<<std::endl;
+
     for (count = 0; count < d_countrelaxationFlags; count++)
       {
         if (d_NEBImageno > 0 && d_NEBImageno < d_numberOfImages)
           ForceonImage[count] = SpringForce[count] + Forceperpendicular[count];
         else
           ForceonImage[count] = Forceperpendicular[count];
-        // pcout<<count<<"  "<<SpringForce[count]<<"
-        // "<<Forceperpendicular[count] <<"  "<<ForceonImage[count]<<std::endl;
       }
-    // pcout<<"****************************"<<std::endl;
   }
 
 
@@ -1030,7 +1037,7 @@ namespace dftfe
                                  const bool useSingleAtomSolutionsInitialGuess)
   {
     std::vector<std::vector<double>> globalAtomsDisplacements(
-      d_numberGlobalCharges,std::vector<double>(3, 0.0));
+      d_numberGlobalCharges, std::vector<double>(3, 0.0));
     d_forceOnImages.clear();
     for (int image = 1; image < d_numberOfImages - 1; image++)
       {
@@ -1045,7 +1052,8 @@ namespace dftfe
           }
         MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
-        pcout << "###Displacements for image: " << image << std::endl;
+        if (d_dftPtr->getParametersObject().verbosity > 4)
+          pcout << "--Displacements for image: " << image << std::endl;
         for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
           {
             for (unsigned int j = 0; j < 3; ++j)
@@ -1068,9 +1076,10 @@ namespace dftfe
                       }
                   }
               }
-            pcout << globalAtomsDisplacements[i][0] << " "
-                  << globalAtomsDisplacements[i][1] << " "
-                  << globalAtomsDisplacements[i][2] << std::endl;
+            if (d_dftPtr->getParametersObject().verbosity > 4)
+              pcout << globalAtomsDisplacements[i][0] << " "
+                    << globalAtomsDisplacements[i][1] << " "
+                    << globalAtomsDisplacements[i][2] << std::endl;
             MPI_Bcast(&(globalAtomsDisplacements[i][0]),
                       3,
                       MPI_DOUBLE,
@@ -1080,25 +1089,14 @@ namespace dftfe
 
 
 
-        /*double factor;
-        if (d_maximumAtomForceToBeRelaxed >= 1e-03)
-          factor = 1.30; // Modified
-        else if (d_maximumAtomForceToBeRelaxed < 1e-03 &&
-                 d_maximumAtomForceToBeRelaxed >= 1e-04)
-          factor = 1.25;
-        else if (d_maximumAtomForceToBeRelaxed < 1e-04)
-          factor = 1.15;
-        // MPI_Barrier required here...
-        factor = 1.0;*/
         if (multiplier == 1)
           {
             MPI_Barrier(d_mpiCommParent);
             (d_dftfeWrapper[image])
-              ->updateAtomPositions(
-                globalAtomsDisplacements); 
-
-            pcout << "--Positions of image: " << image << " updated--"
-                  << std::endl;
+              ->updateAtomPositions(globalAtomsDisplacements);
+            if (d_dftPtr->getParametersObject().verbosity > 4)
+              pcout << "--Positions of image: " << image << " updated--"
+                    << std::endl;
             MPI_Barrier(d_mpiCommParent);
             std::tuple<double, bool, double> groundStateOutput =
               (d_dftfeWrapper[image])->computeDFTFreeEnergy(true, false);
@@ -1137,32 +1135,6 @@ namespace dftfe
   nudgedElasticBandClass::solution(std::vector<double> &solution)
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
-    /*solution.clear();
-    pcout << "The size of solution vector is: " << solution.size() << std::endl;
-    pcout << "Size of relaxation flags: " << d_relaxationFlags.size()
-          << std::endl;
-    for (int image = 1; image < d_numberOfImages - 1; image++)
-      {
-        pcout << "Image no.: " << image << std::endl;
-        std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
-        atomLocations =
-          (d_dftfeWrapper[image])->getAtomPositionsCart();
-        atomLocationsInitial = d_atomLocationsInitial[image];
-        pcout << "AtomLocation size  " << atomLocations.size() << " "
-              << atomLocationsInitial.size() << std::endl;
-        for (int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            for (int j = 0; j < 3; ++j)
-              {
-                if (d_relaxationFlags[3 * i + j] == 1)
-                  {
-                    solution.push_back(atomLocations[i][j] -
-                                       atomLocationsInitial[i][j]);
-                  }
-              }
-          }
-      }
-    // pcout<<"The size of solution vector is: "<<solution.size()<<std::endl; */
   }
 
 
@@ -1191,13 +1163,14 @@ namespace dftfe
         dftUtils::writeDataIntoFile(forceData,
                                     savePath + "/maxForce.chk",
                                     d_mpiCommParent);
-        for(int i = 0; i < d_numberOfImages; i++)
+        for (int i = 0; i < d_numberOfImages; i++)
           {
-            d_dftfeWrapper[i]->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/Image"+std::to_string(i));
-          }        
+            d_dftfeWrapper[i]->writeDomainAndAtomCoordinatesFloatingCharges(
+              savePath + "/Image" + std::to_string(i));
+          }
         d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
 
-        
+
         dftUtils::writeDataIntoFile(tmpData,
                                     d_restartFilesPath + "/Step.chk",
                                     d_mpiCommParent);
@@ -1220,10 +1193,6 @@ namespace dftfe
 
     int midImage = d_numberOfImages / 2;
     functionValue.push_back((d_dftfeWrapper[midImage])->getDFTFreeEnergy());
-
-
-
-    // functionValue.push_back( dftPtr[3]->getInternalEnergy());
   }
 
 
@@ -1291,10 +1260,10 @@ namespace dftfe
 
 
     SpringConstant =
-      0.5 * (ksum - kdiff * std::cos(pi * (Ei - Emin) / (deltaE)));
+      0.5 * (ksum - kdiff * std::cos(C_pi * (Ei - Emin) / (deltaE)));
 
-    pcout << "Image number " << NEBImage
-          << " Spring Constant: " << SpringConstant << std::endl;
+    // pcout << "Image number " << NEBImage
+    //      << " Spring Constant: " << SpringConstant << std::endl;
   }
 
 
@@ -1400,90 +1369,32 @@ namespace dftfe
   void
   nudgedElasticBandClass::init()
   {
-
-
-
     double step_time;
 
 
-    if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
-      {
-        std::vector<std::vector<int>>    tempRelaxFlagsData;
-        std::vector<std::vector<double>> tempForceData;
-        dftUtils::readRelaxationFlagsFile(
-          6,
-          tempRelaxFlagsData,
-          tempForceData,
-          d_dftPtr->getParametersObject().ionRelaxFlagsFile);
-        AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
-                    ExcMessage(
-                      "Incorrect number of entries in relaxationFlags file"));
-        d_relaxationFlags.clear();
-        d_externalForceOnAtom.clear();
 
-
-
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
-                d_externalForceOnAtom.push_back(tempForceData[i][j]);
-              }
-          }
-        // print relaxation flags
-        pcout << " --------------Ion force relaxation flags----------------"
-              << std::endl;
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            pcout << tempRelaxFlagsData[i][0] << "  "
-                  << tempRelaxFlagsData[i][1] << "  "
-                  << tempRelaxFlagsData[i][2] << std::endl;
-          }
-        pcout << " --------------------------------------------------"
-              << std::endl;
-      }
-    else
-      {
-        d_relaxationFlags.clear();
-        d_externalForceOnAtom.clear();
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                d_relaxationFlags.push_back(1.0);
-                d_externalForceOnAtom.push_back(0.0);
-              }
-          }
-      }
-    d_countrelaxationFlags = 0;
-    for (int i = 0; i < d_relaxationFlags.size(); i++)
-      {
-        if (d_relaxationFlags[i] == 1)
-          d_countrelaxationFlags++;
-      }
-        pcout << " Total No. of relaxation flags: " << d_countrelaxationFlags
-              << std::endl;
-
-    
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-      mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
-    std::vector<std::vector<double>> ionOptData(3 + d_numberGlobalCharges * 3,
-                                                std::vector<double>(1, 0.0));
-    ionOptData[0][0] = d_solver;
-    ionOptData[1][0] =
-      d_dftPtr->getParametersObject().usePreconditioner ? 1 : 0;
-    ionOptData[2][0] = d_numberGlobalCharges*d_numberOfImages;  
+    std::vector<std::vector<double>> nudgedElasticBandData(
+      3 + d_numberGlobalCharges * 3, std::vector<double>(1, 0.0));
+    nudgedElasticBandData[0][0] = d_solver;
+    nudgedElasticBandData[1][0] = 0;
+    nudgedElasticBandData[2][0] = d_numberGlobalCharges * d_numberOfImages;
+    nudgedElasticBandData[3][0] =
+      d_dftPtr->getParametersObject().periodicX ? 1 : 0;
+    nudgedElasticBandData[4][0] =
+      d_dftPtr->getParametersObject().periodicY ? 1 : 0;
+    nudgedElasticBandData[5][0] =
+      d_dftPtr->getParametersObject().periodicZ ? 1 : 0;
     for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
           {
-            ionOptData[i * 3 + j + 3][0] = d_relaxationFlags[i * 3 + j];
+            nudgedElasticBandData[i * 3 + j + 6][0] =
+              d_relaxationFlags[i * 3 + j];
           }
       }
     if (!d_dftPtr->getParametersObject().reproducible_output)
-      dftUtils::writeDataIntoFile(ionOptData,
-                                  d_restartFilesPath + "/ionOpt.dat",
+      dftUtils::writeDataIntoFile(nudgedElasticBandData,
+                                  d_restartFilesPath + "/nudgedElasticBand.dat",
                                   d_mpiCommParent);
     d_ImageError.resize(d_numberOfImages);
     double Force;
@@ -1498,8 +1409,6 @@ namespace dftfe
         if (!std::get<1>(groundState))
           pcout << " NEB Warning!!: Ground State of Image: " << d_NEBImageno
                 << " did not converge" << std::endl;
-        pcout << "##Completed initial GS of image: " << d_NEBImageno
-              << std::endl;
       }
     bool flag = true;
     pcout
@@ -1522,7 +1431,7 @@ namespace dftfe
     for (int i = 0; i < d_numberOfImages; i++)
       {
         d_NEBImageno = i;
-        Force         = 0.0;
+        Force        = 0.0;
         ImageError(d_NEBImageno, Force);
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
         pcout << "    " << i << "    " << Force << "    " << Energy << "    "
@@ -1575,7 +1484,6 @@ namespace dftfe
         0.8,
         d_dftPtr->getParametersObject().maxIonUpdateStep,
         true);
-    // print relaxation flags
 
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       {
@@ -1688,69 +1596,103 @@ namespace dftfe
   }
 
   int
-  nudgedElasticBandClass::checkRestart(std::string &coordinatesFile,
-                                       std::string &domainVectorsFile,
-                                       bool &       scfRestart)
+  nudgedElasticBandClass::checkRestart(bool &periodic)
 
-{
-  /*    int step1 = 0;
-
-    if (d_isRestart)
+  {
+    std::vector<std::vector<double>> tmp, nudgedElasticBandData, tmp2;
+    dftUtils::readFile(1,
+                       nudgedElasticBandData,
+                       d_restartFilesPath + "/nudgedElasticBand.dat");
+    dftUtils::readFile(1, tmp, d_restartFilesPath + "/Step.chk");
+    dftUtils::readFile(1, tmp2, d_restartFilesPath + "/Step.chk.old");
+    int  solver            = nudgedElasticBandData[0][0];
+    bool usePreconditioner = nudgedElasticBandData[1][0] > 1e-6;
+    d_numberGlobalCharges  = nudgedElasticBandData[2][0] / d_numberOfImages;
+    periodic               = nudgedElasticBandData[3][0] == 1 ||
+               nudgedElasticBandData[4][0] == 1 ||
+               nudgedElasticBandData[5][0] == 1;
+    d_totalUpdateCalls = tmp[0][0];
+    int Checkcall      = tmp2[0][0];
+    if (Checkcall != d_totalUpdateCalls)
+      d_totalUpdateCalls = Checkcall;
+    tmp.clear();
+    dftUtils::readFile(1,
+                       tmp,
+                       d_restartFilesPath + "/Step" +
+                         std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
+    // d_maximumAtomForceToBeRelaxed = tmp[0][0];
+    pcout << "Solver update: NEB is in Restart mode" << std::endl;
+    pcout << "Checking for files in Step: " << d_totalUpdateCalls << std::endl;
+    std::string path =
+      d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
+    bool flag = true;
+    pcout << "Looking for files of Step " << d_totalUpdateCalls
+          << " at: " << path << std::endl;
+    while (flag && d_totalUpdateCalls > 1)
       {
-        std::vector<std::vector<double>> t1, nebData;
-        pcout << " NEB is in Restart Mode" << std::endl;
-        dftfe::dftUtils::readFile(
-          3, nebData, d_restartFilesPath + "/nebRestart/nudgedElasticBand.dat");
-        dftfe::dftUtils::readFile(1,
-                                  t1,
-                                  d_restartFilesPath + "/nebRestart/Step.chk");
-        step1                  = t1[0][0];
-        std::string tempfolder = d_restartFilesPath + "/nebRestart/Step";
-        bool        flag       = true;
-        std::string path2      = tempfolder + std::to_string(step1);
-        pcout << "Looking for files of Step " << step1 << " at: " << path2
-              << std::endl;
-        while (flag && step1 > 1)
+        path =
+          d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
+        for (int image = 0; image < d_numberOfImages; image++)
           {
-            for(image = 0; image < d_numberOfImages; image++)
-            {
-            std::string path = tempfolder + std::to_string(step1)+"/Image"+std::to_string(image);
             std::string file1;
-            if (nebData[4][0] == 1 || nebData[4][1] == 1 || nebData[4][2] == 1)
-              file1 = path + "/atomsFracCoordCurrent.chk";
+            if (periodic)
+              file1 = path + "/Image" + std::to_string(image) +
+                      "atomsFracCoordCurrent.chk";
             else
-              file1 = path + "/atomsCartCoordCurrent.chk";
-            std::string   file2 = path + "/domainBoundingVectorsCurrent.chk";
+              file1 = path + "/Image" + std::to_string(image) +
+                      "/atomsCartCoordCurrent.chk";
+            std::string file2 = path + "/Image" + std::to_string(image) +
+                                "/domainBoundingVectorsCurrent.chk";
             std::ifstream readFile1(file1.c_str());
             std::ifstream readFile2(file2.c_str());
-            flage = flag && !readFile1.fail() && !readFile2.fail();
-            }
-
-            if (flag)
-              {
-
-                coordinatesFile   = file1;
-                domainVectorsFile = file2;
-
-                pcout << " Restart files are found in: " << path << std::endl;
-                break;
-              }
-
-            else
-              {
-                pcout << "----Error opening restart files present in: " << path
-                      << std::endl
-                      << "Switching to time: " << --step1 << " ----"
-                      << std::endl;
-              }
+            flag = flag && !readFile1.fail() && !readFile2.fail();
           }
-        if (step1 == t1[0][0])
-          scfRestart = true;
-        else
-          scfRestart = false;
-      }
 
-    return (step1); */
-}
+        if (flag)
+          {
+            pcout << " Restart files are found in: " << path << std::endl;
+            break;
+          }
+
+        else
+          {
+            pcout << "----Error opening restart files present in: " << path
+                  << std::endl
+                  << "Switching to time: " << --d_totalUpdateCalls << " ----"
+                  << std::endl;
+          }
+      }
+    tmp.clear();
+    dftUtils::readFile(1,
+                       tmp,
+                       d_restartFilesPath + "/step" +
+                         std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
+    d_maximumAtomForceToBeRelaxed = tmp[0][0];
+    d_relaxationFlags.resize(d_numberGlobalCharges * 3);
+    bool relaxationFlagsMatch = true;
+    for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+      {
+        for (unsigned int j = 0; j < 3; ++j)
+          {
+            relaxationFlagsMatch =
+              (d_relaxationFlags[i * 3 + j] ==
+               (int)nudgedElasticBandData[i * 3 + j + 6][0]) &&
+              relaxationFlagsMatch;
+          }
+      }
+    if (solver != d_solver)
+      pcout
+        << "Solver has changed since last save, the newly set solver will start from scratch."
+        << std::endl;
+    if (!relaxationFlagsMatch)
+      pcout
+        << "Relaxations flags have changed since last save, the solver will be reset to work with the new flags."
+        << std::endl;
+    d_solverRestart = (relaxationFlagsMatch) && (solver == d_solver);
+    d_solverRestartPath =
+      d_restartFilesPath + "/step" + std::to_string(d_totalUpdateCalls);
+
+    return (d_totalUpdateCalls);
+  }
 
 } // namespace dftfe

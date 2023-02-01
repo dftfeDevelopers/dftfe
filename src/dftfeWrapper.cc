@@ -1128,7 +1128,8 @@ namespace dftfe
 
 
   void
-  dftfeWrapper::writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const
+  dftfeWrapper::writeDomainAndAtomCoordinatesFloatingCharges(
+    const std::string Path) const
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,

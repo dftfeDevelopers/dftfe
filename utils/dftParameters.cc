@@ -1395,8 +1395,8 @@ namespace dftfe
       saveRhoData           = prm.get_bool("SAVE RHO DATA");
       loadRhoData           = prm.get_bool("LOAD RHO DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-      if(solverMode=="NEB")
-        saveRhoData=true;
+      if (solverMode == "NEB")
+        saveRhoData = true;
     }
     prm.leave_subsection();
 
@@ -1765,6 +1765,11 @@ namespace dftfe
         wfcBlockSize == chebyWfcBlockSize,
         ExcMessage(
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
+
+    AssertThrow(
+      !(solverMode == "NEB" && usePreconditioner == true),
+      ExcMessage(
+        "DFT-FE Error: the current NEB implementation does not allow Preconditioner to be used for optimization"));
   }
 
 
