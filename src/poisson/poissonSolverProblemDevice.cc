@@ -1309,9 +1309,7 @@ namespace dftfe
     constexpr int p   = FEOrderElectro + 1;
     constexpr int q   = p;
     constexpr int threads =
-      (FEOrderElectro < 7 ?
-         96 :
-         FEOrderElectro == 7 ? 64 : 256);
+      (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
     const int             blocks = d_nLocalCells;
     constexpr std::size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
@@ -1325,8 +1323,23 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     computeAXKernel<double, p * p, q, p, dim><<<blocks, threads, smem>>>(
       Ax.begin(), x.begin(), d_shapeFunctionPtr, d_jacobianFactorPtr, d_mapPtr);
+
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(
+                         computeAXKernel<double, p * p, q, p, dim>),
+                       blocks,
+                       threads,
+                       smem,
+                       0,
+                       Ax.begin(),
+                       x.begin(),
+                       d_shapeFunctionPtr,
+                       d_jacobianFactorPtr,
+                       d_mapPtr);
+#endif
 
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 
