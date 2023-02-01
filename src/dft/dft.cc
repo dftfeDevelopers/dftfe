@@ -67,10 +67,7 @@
 #  include <linearAlgebraOperationsDevice.h>
 #endif
 
-extern "C"
-{
-#include <elpa.hh>
-}
+#include <elpa/elpa.h>
 
 
 namespace dftfe

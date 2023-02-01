@@ -98,6 +98,7 @@ namespace dftfe
 
     std::string  startingWFCType;
     unsigned int numCoreWfcRR;
+    unsigned int numCoreWfcXtHX;
     unsigned int wfcBlockSize;
     unsigned int chebyWfcBlockSize;
     unsigned int subspaceRotDofsBlockSize;
@@ -110,6 +111,7 @@ namespace dftfe
     bool         reuseWfcGeoOpt;
     unsigned int reuseDensityGeoOpt;
     double       mpiAllReduceMessageBlockSizeMB;
+    bool         useSubspaceProjectedSHEPGPU;
     bool         useMixedPrecCGS_SR;
     bool         useMixedPrecCGS_O;
     bool         useMixedPrecXTHXSpectrumSplit;

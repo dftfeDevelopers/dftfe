@@ -844,6 +844,12 @@ namespace dftfe
             Patterns::Integer(0),
             "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
+          prm.declare_entry("XTHX CORE EIGENSTATES",
+                            "0",
+                            Patterns::Integer(0),
+                            "[Advanced] For mixed precision optimization.");
+
+
           prm.declare_entry(
             "SPECTRUM SPLIT STARTING SCF ITER",
             "0",
@@ -917,6 +923,13 @@ namespace dftfe
             "true",
             Patterns::Bool(),
             "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
+
+          prm.declare_entry(
+            "SUBSPACE PROJ SHEP GPU",
+            "true",
+            Patterns::Bool(),
+            "[Advanced] Solve a standard hermitian eigenvalue problem in the Rayleigh Ritz step instead of a generalized hermitian eigenvalue problem on GPUs. Default setting is true.");
+
 
           prm.declare_entry(
             "USE MIXED PREC CGS SR",
@@ -1237,9 +1250,11 @@ namespace dftfe
     natoms                                         = 0;
     natomTypes                                     = 0;
     numCoreWfcRR                                   = 0;
+    numCoreWfcXtHX                                 = 0;
     reuseWfcGeoOpt                                 = false;
     reuseDensityGeoOpt                             = 0;
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
+    useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
     useMixedPrecCGS_O                              = false;
     useMixedPrecXTHXSpectrumSplit                  = false;
@@ -1550,7 +1565,8 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcRR = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+        numCoreWfcRR   = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+        numCoreWfcXtHX = prm.get_integer("XTHX CORE EIGENSTATES");
         spectrumSplitStartingScfIter =
           prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
         chebyshevOrder = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
@@ -1582,6 +1598,7 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
+        useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
       }
       prm.leave_subsection();
     }

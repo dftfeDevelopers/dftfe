@@ -140,25 +140,28 @@ namespace dftfe
       add(double *                          y,
           const double *                    x,
           const double                      alpha,
-          const int                         size,
+          const dftfe::size_type            size,
           dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
       double
       l2_norm(const double *                    x,
-              const int                         size,
+              const dftfe::size_type            size,
               const MPI_Comm &                  mpi_communicator,
               dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
       double
       dot(const double *                    x,
           const double *                    y,
-          const int                         size,
+          const dftfe::size_type            size,
           const MPI_Comm &                  mpi_communicator,
           dftfe::utils::deviceBlasHandle_t &deviceBlasHandle);
 
       template <typename ValueType>
       void
-      sadd(ValueType *y, ValueType *x, const ValueType beta, const int size);
+      sadd(ValueType *            y,
+           ValueType *            x,
+           const ValueType        beta,
+           const dftfe::size_type size);
 
     } // namespace deviceKernelsGeneric
   }   // namespace utils

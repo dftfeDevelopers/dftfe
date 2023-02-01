@@ -138,9 +138,9 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(elpaScala.getElpaHandle(),
-                           &overlapMatParConjTrans.local_el(0, 0),
-                           &error);
+              elpa_cholesky(elpaScala.getElpaHandle(),
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_cholesky error."));

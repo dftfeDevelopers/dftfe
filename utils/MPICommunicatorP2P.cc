@@ -64,7 +64,12 @@ namespace dftfe
               d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
                 blockSize,
               0.0);
+          }
+#endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
+#if defined(DFTFE_WITH_DEVICE)
+        if (memorySpace == MemorySpace::DEVICE)
+          {
             if (std::is_same<ValueType, std::complex<double>>::value)
               {
                 d_tempDoubleRealArrayForAtomics.resize(
@@ -80,7 +85,7 @@ namespace dftfe
                   (d_locallyOwnedSize + d_ghostSize) * d_blockSize, 0);
               }
           }
-#endif // defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+#endif
       }
 
 

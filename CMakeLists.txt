@@ -463,7 +463,7 @@ ENDIF()
 #
 # ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
-find_package(ELPA 2020 REQUIRED)
+find_package(ELPA 2022 REQUIRED)
 MESSAGE(STATUS "Will Link With ELPA")
 target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 
@@ -471,7 +471,7 @@ target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH
 #
 IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "cuda")
- IF (WITH_NCCL)
+ IF (WITH_DCCL)
    find_package(NCCL REQUIRED)
    IF (NCCL_FOUND)
       MESSAGE(STATUS "Will Link With NCCL")
@@ -481,6 +481,22 @@ IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "cuda")
    ENDIF()
  ENDIF()
 ENDIF()
+
+#
+# RCCL. Pass path to -DCMAKE_PREFIX_PATH
+#
+IF (WITH_GPU AND "${GPU_LANG}" STREQUAL "hip")
+ IF (WITH_DCCL)
+   find_package(RCCL REQUIRED)
+   IF (RCCL_FOUND)
+      MESSAGE(STATUS "Will Link With RCCL")
+      ADD_DEFINITIONS(-DDFTFE_WITH_HIP_RCCL)
+      find_package(MPI REQUIRED)
+      target_link_libraries(${TARGETLIB} PUBLIC RCCL MPI::MPI_CXX)
+   ENDIF()
+ ENDIF()
+ENDIF()
+
 
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 TARGET_LINK_LIBRARIES(${TARGET} PUBLIC ${TARGETLIB})

@@ -164,7 +164,7 @@ namespace dftfe
       int      totalRanks;
       MPI_Comm d_mpiComm;
       bool     commCreated;
-#    ifdef DFTFE_WITH_CUDA_NCCL
+#    if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
       void *ncclIdPtr;
       void *ncclCommPtr;
 #    endif
