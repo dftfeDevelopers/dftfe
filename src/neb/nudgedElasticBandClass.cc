@@ -62,65 +62,6 @@ namespace dftfe
 
     MPI_Barrier(d_mpiCommParent);
     d_solverRestart = d_isRestart;
-    if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
-      {
-        std::vector<std::vector<int>>    tempRelaxFlagsData;
-        std::vector<std::vector<double>> tempForceData;
-        dftUtils::readRelaxationFlagsFile(
-          6,
-          tempRelaxFlagsData,
-          tempForceData,
-          d_dftPtr->getParametersObject().ionRelaxFlagsFile);
-        AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
-                    ExcMessage(
-                      "Incorrect number of entries in relaxationFlags file"));
-        d_relaxationFlags.clear();
-        d_externalForceOnAtom.clear();
-
-
-
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
-                d_externalForceOnAtom.push_back(tempForceData[i][j]);
-              }
-          }
-        // print relaxation flags
-        pcout << " --------------Ion force relaxation flags----------------"
-              << std::endl;
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            pcout << tempRelaxFlagsData[i][0] << "  "
-                  << tempRelaxFlagsData[i][1] << "  "
-                  << tempRelaxFlagsData[i][2] << std::endl;
-          }
-        pcout << " --------------------------------------------------"
-              << std::endl;
-      }
-    else
-      {
-        d_relaxationFlags.clear();
-        d_externalForceOnAtom.clear();
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-          {
-            for (unsigned int j = 0; j < 3; ++j)
-              {
-                d_relaxationFlags.push_back(1.0);
-                d_externalForceOnAtom.push_back(0.0);
-              }
-          }
-      }
-    d_countrelaxationFlags = 0;
-    for (int i = 0; i < d_relaxationFlags.size(); i++)
-      {
-        if (d_relaxationFlags[i] == 1)
-          d_countrelaxationFlags++;
-      }
-    pcout << " Total No. of relaxation flags: " << d_countrelaxationFlags
-          << std::endl;
-
 
     if (!d_isRestart)
       {
@@ -902,18 +843,22 @@ namespace dftfe
     flagmultiplier[0]                    = 0;
     flagmultiplier[d_numberOfImages - 1] = 0;
     bool flag                            = false;
-    pcout << "----------------------------------------------" << std::endl;
-    pcout << "          NEB STEP: " << d_totalUpdateCalls << "          "
+    pcout
+      << "-----------------------------------------------------------------------"
+      << std::endl;
+    pcout << "                            NEB STEP: " << d_totalUpdateCalls
           << std::endl;
-    pcout << "----------------------------------------------" << std::endl;
+    pcout
+      << "-----------------------------------------------------------------------"
+      << std::endl;
     pcout << "    "
-          << " Image No "
-          << "    "
-          << "Internal Energy in Ha"
-          << "    "
-          << "Free Energy in Ha"
-          << "    "
-          << "Max Force Error in Ha/bohr" << std::endl;
+          << " Image No. "
+          << " "
+          << "Internal Energy (Ha)"
+          << " "
+          << "Free Energy (Ha)"
+          << " "
+          << "Max Force Error (Ha/bohr)" << std::endl;
     double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
     for (int image = 0; image < d_numberOfImages; image++)
       {
@@ -935,12 +880,12 @@ namespace dftfe
           flag = false;
         if (flagmultiplier[image] == 0)
           pcout << "    "
-                << " Image: " << image << "(T)"
+                << "  " << image << "(T)"
                 << "    " << InternalEnergy << "    " << FreeEnergy << "    "
                 << ForceError << std::endl;
         else
           pcout << "    "
-                << " Image: " << image << "(F)"
+                << "  " << image << "(F)"
                 << "    " << InternalEnergy << "    " << FreeEnergy << "    "
                 << ForceError << std::endl;
         maxEnergy =
@@ -982,7 +927,7 @@ namespace dftfe
             double F_per    = 0.0;
             LNorm(F_per, Forceperpendicular, 0, d_countrelaxationFlags);
             LNorm(F_spring, SpringForce, 0, d_countrelaxationFlags);
-            pcout << image << "  " << F_per << "  " << F_spring << std::endl;
+            // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
 
 
 
@@ -1370,11 +1315,99 @@ namespace dftfe
   nudgedElasticBandClass::init()
   {
     double step_time;
+    if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
+      {
+        std::vector<std::vector<int>>    tempRelaxFlagsData;
+        std::vector<std::vector<double>> tempForceData;
+        dftUtils::readRelaxationFlagsFile(
+          6,
+          tempRelaxFlagsData,
+          tempForceData,
+          d_dftPtr->getParametersObject().ionRelaxFlagsFile);
+        AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
+                    ExcMessage(
+                      "Incorrect number of entries in relaxationFlags file"));
+        d_relaxationFlags.clear();
+        d_externalForceOnAtom.clear();
 
+
+
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
+                d_externalForceOnAtom.push_back(tempForceData[i][j]);
+              }
+          }
+        // print relaxation flags
+        pcout << " --------------Ion force relaxation flags----------------"
+              << std::endl;
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            pcout << tempRelaxFlagsData[i][0] << "  "
+                  << tempRelaxFlagsData[i][1] << "  "
+                  << tempRelaxFlagsData[i][2] << std::endl;
+          }
+        pcout << " --------------------------------------------------"
+              << std::endl;
+      }
+    else
+      {
+        d_relaxationFlags.clear();
+        d_externalForceOnAtom.clear();
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                d_relaxationFlags.push_back(1.0);
+                d_externalForceOnAtom.push_back(0.0);
+              }
+          }
+      }
+    d_countrelaxationFlags = 0;
+    for (int i = 0; i < d_relaxationFlags.size(); i++)
+      {
+        if (d_relaxationFlags[i] == 1)
+          d_countrelaxationFlags++;
+      }
+    pcout << " Total No. of relaxation flags: " << d_countrelaxationFlags
+          << std::endl;
+    if (d_isRestart)
+      {
+        std::vector<std::vector<double>> nudgedElasticBandData;
+        dftUtils::readFile(1,
+                           nudgedElasticBandData,
+                           d_restartFilesPath + "/nudgedElasticBand.dat");
+
+        bool relaxationFlagsMatch = true;
+        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          {
+            for (unsigned int j = 0; j < 3; ++j)
+              {
+                relaxationFlagsMatch =
+                  (d_relaxationFlags[i * 3 + j] ==
+                   (int)nudgedElasticBandData[i * 3 + j + 6][0]) &&
+                  relaxationFlagsMatch;
+              }
+          }
+        if (nudgedElasticBandData[0][0] != d_solver)
+          pcout
+            << "Solver has changed since last save, the newly set solver will start from scratch."
+            << std::endl;
+        if (!relaxationFlagsMatch)
+          pcout
+            << "Relaxations flags have changed since last save, the solver will be reset to work with the new flags."
+            << std::endl;
+        d_solverRestart =
+          (relaxationFlagsMatch) && (nudgedElasticBandData[0][0] == d_solver);
+        d_solverRestartPath =
+          d_restartFilesPath + "/step" + std::to_string(d_totalUpdateCalls);
+      }
 
 
     std::vector<std::vector<double>> nudgedElasticBandData(
-      3 + d_numberGlobalCharges * 3, std::vector<double>(1, 0.0));
+      6 + d_numberGlobalCharges * 3, std::vector<double>(1, 0.0));
     nudgedElasticBandData[0][0] = d_solver;
     nudgedElasticBandData[1][0] = 0;
     nudgedElasticBandData[2][0] = d_numberGlobalCharges * d_numberOfImages;
@@ -1669,28 +1702,7 @@ namespace dftfe
                          std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
     d_maximumAtomForceToBeRelaxed = tmp[0][0];
     d_relaxationFlags.resize(d_numberGlobalCharges * 3);
-    bool relaxationFlagsMatch = true;
-    for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
-      {
-        for (unsigned int j = 0; j < 3; ++j)
-          {
-            relaxationFlagsMatch =
-              (d_relaxationFlags[i * 3 + j] ==
-               (int)nudgedElasticBandData[i * 3 + j + 6][0]) &&
-              relaxationFlagsMatch;
-          }
-      }
-    if (solver != d_solver)
-      pcout
-        << "Solver has changed since last save, the newly set solver will start from scratch."
-        << std::endl;
-    if (!relaxationFlagsMatch)
-      pcout
-        << "Relaxations flags have changed since last save, the solver will be reset to work with the new flags."
-        << std::endl;
-    d_solverRestart = (relaxationFlagsMatch) && (solver == d_solver);
-    d_solverRestartPath =
-      d_restartFilesPath + "/step" + std::to_string(d_totalUpdateCalls);
+
 
     return (d_totalUpdateCalls);
   }
