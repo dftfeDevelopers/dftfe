@@ -346,6 +346,12 @@ namespace dftfe
 
             initial_res = res;
 
+            pcout << "\nInit res: " << res << "\n";
+
+            problem.computeAX(x, d_rvec);
+
+            return;
+
             if (res < absTolerance)
               conv = true;
             if (conv)
