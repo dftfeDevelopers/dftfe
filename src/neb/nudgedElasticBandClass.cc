@@ -499,7 +499,6 @@ namespace dftfe
       {
         norm = norm + v[i] * v[i];
       }
-    pcout << std::endl;
     norm = sqrt(norm);
 
     AssertThrow(
@@ -631,7 +630,6 @@ namespace dftfe
         CalculateSpringConstant(image - 1, kminus);
         innerproduct = -0.5 * (k + kminus) * norm2;
       }
-    // pcout << "Spring Force on image: " << image << std::endl;
     for (count = 0; count < d_countrelaxationFlags; count++)
       {
         ForceSpring[count] = innerproduct * tangent[count];
@@ -1212,45 +1210,7 @@ namespace dftfe
   }
 
 
-  void
-  nudgedElasticBandClass::WriteRestartFiles(int step)
-  {
-    /*std::vector<std::vector<double>> stepIndexData(1, std::vector<double>(1,
-    0)); stepIndexData[0][0] = double(step); pcout<<"Writing restart files for
-    step: "<<step<<std::endl; std::string Folder = "nebRestart/Step";
-    std::string tempfolder = Folder +  std::to_string(step);
-      mkdir(tempfolder.c_str(), ACCESSPERMS);
-      Folder = "nebRestart";
-      std::string newFolder3 = Folder + "/" + "step.chk";
-      dftUtils::writeDataIntoFile(stepIndexData, newFolder3,d_mpiCommParent);
-      std::string cordFolder = tempfolder + "/";
-      for(int i=0; i < d_numberOfImages; i++)
-      {
-        dftPtr[i]->NEBwriteDomainAndAtomCoordinates(cordFolder,std::to_string(i));
-      }
-      dftUtils::writeDataIntoFile(stepIndexData, newFolder3,d_mpiCommParent);
-          if(d_this_mpi_process == 0)
-          {
-            std::ofstream outfile;
-            outfile.open(tempfolder+"/coordinates.inp", std::ios_base::app);
-            for(int i=0; i < d_numberOfImages; i++)
-            {
-              std::vector<std::vector<double>> atomLocations;
-              std::string coordinatesfolder =
-    tempfolder+"/coordinates.inp"+std::to_string(i);
-              dftUtils::readFile(5,atomLocations,coordinatesfolder);
-              for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
-              {
-                outfile<<atomLocations[iCharge][0]<<"
-    "<<atomLocations[iCharge][1]<< "  "<<atomLocations[iCharge][2]
-                        <<"  "<<atomLocations[iCharge][3]<<"
-    "<<atomLocations[iCharge][4]<<std::endl;
-              }
-            }
-            outfile.close();
-          }
-    */
-  }
+
 
   void
   nudgedElasticBandClass::ImageError(int image, double &Force)
@@ -1402,7 +1362,7 @@ namespace dftfe
         d_solverRestart =
           (relaxationFlagsMatch) && (nudgedElasticBandData[0][0] == d_solver);
         d_solverRestartPath =
-          d_restartFilesPath + "/step" + std::to_string(d_totalUpdateCalls);
+          d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
       }
 
 
@@ -1445,7 +1405,6 @@ namespace dftfe
       }
     bool flag = true;
     pcout
-      << std::endl
       << "-------------------------------------------------------------------------------"
       << std::endl;
     pcout << " --------------------Initial NEB Data "
@@ -1483,7 +1442,6 @@ namespace dftfe
     pcout << "Time taken for initial dft solve of all images: " << step_time
           << std::endl;
     pcout
-      << std::endl
       << "-------------------------------------------------------------------------------"
       << std::endl;
 
@@ -1658,13 +1616,14 @@ namespace dftfe
     pcout << "Checking for files in Step: " << d_totalUpdateCalls << std::endl;
     std::string path =
       d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
-    bool flag = true;
+    bool        flag       = false;
     pcout << "Looking for files of Step " << d_totalUpdateCalls
           << " at: " << path << std::endl;
-    while (flag && d_totalUpdateCalls > 1)
+    while (!flag && d_totalUpdateCalls > 1)
       {
         path =
           d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
+        flag = true;  
         for (int image = 0; image < d_numberOfImages; image++)
           {
             std::string file1;
@@ -1673,12 +1632,15 @@ namespace dftfe
                       "atomsFracCoordCurrent.chk";
             else
               file1 = path + "/Image" + std::to_string(image) +
-                      "/atomsCartCoordCurrent.chk";
+                      "atomsCartCoordCurrent.chk";
             std::string file2 = path + "/Image" + std::to_string(image) +
-                                "/domainBoundingVectorsCurrent.chk";
+                                "domainBoundingVectorsCurrent.chk";
             std::ifstream readFile1(file1.c_str());
             std::ifstream readFile2(file2.c_str());
             flag = flag && !readFile1.fail() && !readFile2.fail();
+            pcout<<!readFile1.fail()<<" "<<file1<<std::endl;
+            pcout<<!readFile2.fail()<<" "<<file2<<std::endl;
+            pcout<<"Image no: "<<image<<" "<<flag<<std::endl;
           }
 
         if (flag)
@@ -1691,14 +1653,14 @@ namespace dftfe
           {
             pcout << "----Error opening restart files present in: " << path
                   << std::endl
-                  << "Switching to time: " << --d_totalUpdateCalls << " ----"
+                  << "Switching to Step No: " << --d_totalUpdateCalls << " ----"
                   << std::endl;
           }
       }
     tmp.clear();
     dftUtils::readFile(1,
                        tmp,
-                       d_restartFilesPath + "/step" +
+                       d_restartFilesPath + "/Step" +
                          std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
     d_maximumAtomForceToBeRelaxed = tmp[0][0];
     d_relaxationFlags.resize(d_numberGlobalCharges * 3);
