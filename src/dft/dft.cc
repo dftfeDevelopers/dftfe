@@ -2008,12 +2008,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
