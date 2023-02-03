@@ -467,11 +467,9 @@ namespace dftfe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
 
+      template<typename ValueBaseType>
       void
-      l2Norm(double* normVec) const;
-
-      void
-      l2NormFullLocal(double* normVec) const;
+      l2Norm(ValueBaseType* normVec) const;
 
 
       global_size_type

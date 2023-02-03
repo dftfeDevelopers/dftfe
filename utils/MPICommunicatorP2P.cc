@@ -111,7 +111,7 @@ namespace dftfe
 
         // initiate non-blocking receives from ghost processors
         ValueType *recvArrayStartPtr =
-          dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+          dataArray.data() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
@@ -159,7 +159,7 @@ namespace dftfe
               d_sendRecvBuffer);
 
         // initiate non-blocking sends to target processors
-        ValueType *sendArrayStartPtr = d_sendRecvBuffer.begin();
+        ValueType *sendArrayStartPtr = d_sendRecvBuffer.data();
 
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
@@ -271,7 +271,7 @@ namespace dftfe
         //  d_mpiPatternP2P->getTargetProcIds().size());
 
         // initiate non-blocking receives from target processors
-        ValueType *recvArrayStartPtr = d_sendRecvBuffer.begin();
+        ValueType *recvArrayStartPtr = d_sendRecvBuffer.data();
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
@@ -310,7 +310,7 @@ namespace dftfe
 
         // initiate non-blocking sends to ghost processors
         ValueType *sendArrayStartPtr =
-          dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+          dataArray.data() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)

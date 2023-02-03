@@ -833,7 +833,7 @@ namespace dftfe
 
 
   {
-    const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
+    const unsigned int numberDofs = src.locallyOwnedSize();
     const unsigned int inc        = 1;
 
     //
@@ -845,7 +845,7 @@ namespace dftfe
           d_invSqrtMassVector.local_element(i) * scalar;
         zdscal_(&numberWaveFunctions,
                 &scalingCoeff,
-                src.begin() + i * numberWaveFunctions,
+                src.data() + i * numberWaveFunctions,
                 &inc);
       }
 
@@ -857,7 +857,7 @@ namespace dftfe
             const double scalingCoeff = d_sqrtMassVector.local_element(i);
             zdscal_(&numberWaveFunctions,
                     &scalingCoeff,
-                    dst.begin() + i * numberWaveFunctions,
+                    dst.data() + i * numberWaveFunctions,
                     &inc);
           }
       }
@@ -895,6 +895,7 @@ namespace dftfe
 
     src.zeroOutGhosts();
     dst.accumulateAddLocallyOwned();
+    dst.zeroOutGhosts();
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
@@ -904,7 +905,7 @@ namespace dftfe
         const double scalingCoeff = d_invSqrtMassVector.local_element(i);
         zdscal_(&numberWaveFunctions,
                 &scalingCoeff,
-                dst.begin() + i * numberWaveFunctions,
+                dst.data() + i * numberWaveFunctions,
                 &inc);
       }
 
@@ -1156,6 +1157,7 @@ namespace dftfe
 
     src.zeroOutGhosts();
     dst.accumulateAddLocallyOwned();
+    dst.zeroOutGhosts();
 
     // unscale cell level src vector
     for (unsigned int iDof = 0; iDof < numberDofs; ++iDof)
@@ -1220,7 +1222,7 @@ namespace dftfe
           {
             dscal_(&numberWaveFunctions,
                    &d_invSqrtMassVector.local_element(i),
-                   dst.begin() + i * numberWaveFunctions,
+                   dst.data() + i * numberWaveFunctions,
                    &inc);
           }
       }
@@ -1274,8 +1276,8 @@ namespace dftfe
     HX(XTemp, numberWaveFunctions, scaleFlag, scalar, Y);
 
 #ifdef USE_COMPLEX
-    for (unsigned int i = 0; i < Y.local_size(); ++i)
-      Y.local_element(i) = std::conj(Y.local_element(i));
+    for (unsigned int i = 0; i < Y.locallyOwnedSize(); ++i)
+      Y.data()[i] = std::conj(Y.data()[i]);
 
     char                       transA = 'N';
     char                       transB = 'T';

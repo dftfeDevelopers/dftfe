@@ -116,8 +116,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell loop
 
-  dftPtr->d_projectorKetTimesVectorParFlattened =
-    std::complex<double>(0.0, 0.0);
+  dftPtr->d_projectorKetTimesVectorParFlattened.setValue(std::complex<double>(0.0, 0.0));
 
 
   for (unsigned int iAtom = 0;
@@ -136,20 +135,20 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           const unsigned int id =
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
+            // std::cout<<"DEBUG d_projectorKetTimesVectorParFlattened "<<this_mpi_process<<" "<<dftPtr->d_projectorKetTimesVectorParFlattened.localSize()*dftPtr->d_projectorKetTimesVectorParFlattened.numVectors()<<" "<<dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions<<numberWaveFunctions<<" "<<id<<" "<<dftPtr->d_projectorKetTimesVectorParFlattened.numVectors()<<" "<<dftPtr->d_projectorKetTimesVectorParFlattened.localSize()<<" "<<dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->locally_owned_size()<<" "<<dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->n_ghost_indices()<<std::endl;
           zcopy_(
             &numberWaveFunctions,
             &projectorKetTimesVector[atomId]
                                     [numberWaveFunctions * iPseudoAtomicWave],
             &inc,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
+            &dftPtr->d_projectorKetTimesVectorParFlattened.data()[dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
             &inc);
         }
     }
 
 
-  dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
-  dftPtr->d_projectorKetTimesVectorParFlattened.update_ghost_values();
+  dftPtr->d_projectorKetTimesVectorParFlattened.accumulateAddLocallyOwned();
+  dftPtr->d_projectorKetTimesVectorParFlattened.updateGhostValues();
 
   //
   // compute V*C^{T}*X
@@ -179,14 +178,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           zscal_(
             &numberWaveFunctions,
             &nonlocalConstantV,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
+            &dftPtr->d_projectorKetTimesVectorParFlattened.data()[dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
             &inc);
 
           zcopy_(
             &numberWaveFunctions,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
+            &dftPtr->d_projectorKetTimesVectorParFlattened.data()[dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
             &inc,
             &projectorKetTimesVector[atomId]
                                     [numberWaveFunctions * iPseudoAtomicWave],
@@ -376,8 +373,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             &projectorKetTimesVector[atomId]
                                     [numberWaveFunctions * iPseudoAtomicWave],
             &inc,
-            dftPtr->d_projectorKetTimesVectorParFlattened.data()+id *
-                                                           numberWaveFunctions,
+            &dftPtr->d_projectorKetTimesVectorParFlattened.data()[dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
             &inc);
         }
     }
@@ -411,14 +407,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           dscal_(
             &numberWaveFunctions,
             &nonlocalConstantV,
-            dftPtr->d_projectorKetTimesVectorParFlattened.data()+id *
-                                                           numberWaveFunctions,
+            &dftPtr->d_projectorKetTimesVectorParFlattened.data()[dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
             &inc);
 
           dcopy_(
             &numberWaveFunctions,
-            dftPtr->d_projectorKetTimesVectorParFlattened.data()+id *
-                                                           numberWaveFunctions,
+            &dftPtr->d_projectorKetTimesVectorParFlattened.data()[dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
             &inc,
             &projectorKetTimesVector[atomId]
                                     [numberWaveFunctions * iPseudoAtomicWave],

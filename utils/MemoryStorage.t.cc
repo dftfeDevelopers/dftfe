@@ -76,6 +76,7 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::clear()
     {
       dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
+      d_size = 0;
       d_data = nullptr;
     }
 
