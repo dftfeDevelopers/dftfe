@@ -190,7 +190,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                                                       iPseudoAtomicWave],
                      &inc,
                      dftPtr->d_projectorKetTimesVectorParFlattened.data()+
-                        id * numberWaveFunctions,
+                        dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions,
                      &inc);
             }
         }
@@ -224,12 +224,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
               dscal_(&numberWaveFunctions,
                      &nonlocalConstantV,
                      dftPtr->d_projectorKetTimesVectorParFlattened.data()+
-                        id * numberWaveFunctions,
+                        dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions,
                      &inc);
 
               dcopy_(&numberWaveFunctions,
                      dftPtr->d_projectorKetTimesVectorParFlattened.data()+
-                        id * numberWaveFunctions,
+                        dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions,
                      &inc,
                      &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                       iPseudoAtomicWave],
