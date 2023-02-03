@@ -823,19 +823,6 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
 
-    pcout
-      << "\nBefore x norm: "
-      << dftfe::utils::deviceKernelsGeneric::l2_norm(x.begin(),
-                                                     d_xLocalDof,
-                                                     mpi_communicator,
-                                                     *d_deviceBlasHandlePtr);
-    pcout
-      << "\nBefore Ax norm: "
-      << dftfe::utils::deviceKernelsGeneric::l2_norm(Ax.begin(),
-                                                     d_xLocalDof,
-                                                     mpi_communicator,
-                                                     *d_deviceBlasHandlePtr);
-
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     computeAXKernel<double, p * p, q, p, dim>
       <<<blocks, threads, smem>>>(Ax.begin(),
@@ -859,20 +846,6 @@ namespace dftfe
                        d_mapPtr,
                        coeffHelmholtz);
 #endif
-
-    pcout
-      << "\nAfter x norm: "
-      << dftfe::utils::deviceKernelsGeneric::l2_norm(x.begin(),
-                                                     d_xLocalDof,
-                                                     mpi_communicator,
-                                                     *d_deviceBlasHandlePtr);
-    pcout
-      << "\nAfter Ax norm: "
-      << dftfe::utils::deviceKernelsGeneric::l2_norm(Ax.begin(),
-                                                     d_xLocalDof,
-                                                     mpi_communicator,
-                                                     *d_deviceBlasHandlePtr);
-    hipPeekAtLastError();
 
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 

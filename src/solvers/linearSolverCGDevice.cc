@@ -346,9 +346,34 @@ namespace dftfe
 
             initial_res = res;
 
-            pcout << "\nInit res: " << res << "\n";
+            pcout << "\nInit res: " << res
+
+              << "\nx norm: "
+              << dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
+                                                             d_xLocalDof,
+                                                             mpi_communicator,
+                                                             deviceBlasHandle)
+
+              << "\nAx norm: "
+              << dftfe::utils::deviceKernelsGeneric::l2_norm(x.begin(),
+                                                             d_xLocalDof,
+                                                             mpi_communicator,
+                                                             deviceBlasHandle);
 
             problem.computeAX(x, d_rvec);
+
+            pcout
+              << "\nx norm: "
+              << dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
+                                                             d_xLocalDof,
+                                                             mpi_communicator,
+                                                             deviceBlasHandle)
+
+              << "\nAx norm: "
+              << dftfe::utils::deviceKernelsGeneric::l2_norm(x.begin(),
+                                                             d_xLocalDof,
+                                                             mpi_communicator,
+                                                             deviceBlasHandle) << "\n";
 
             return;
 
