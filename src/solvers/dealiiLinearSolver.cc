@@ -106,23 +106,6 @@ namespace dftfe
             res         = gvec.l2_norm();
             initial_res = res;
 
-            srand(0);
-
-            for (int i = 0; i < gvec.local_size(); i++)
-              gvec[i] = (double)rand() / RAND_MAX;
-
-            pcout << "\nInit res: " << res << "\nx norm: " << gvec.l2_norm()
-
-                  << "\nAx norm: " << x.l2_norm();
-
-            problem.vmult(x, gvec);
-
-            pcout << "\nx norm: " << gvec.l2_norm()
-
-                  << "\nAx norm: " << x.l2_norm() << "\n";
-
-            return;
-
             if (res < absTolerance)
               conv = true;
             if (conv)

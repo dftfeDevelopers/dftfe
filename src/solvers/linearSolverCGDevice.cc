@@ -34,7 +34,6 @@ namespace dftfe
                                               const int   N)
   {
     __shared__ Type smem[blockSize];
-    unsigned        mask = 0xffffffff;
 
     int tid = threadIdx.x;
     int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
@@ -80,7 +79,15 @@ namespace dftfe
 
         for (int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
-          localSum += __shfl_down_sync(mask, localSum, offset);
+          {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+            unsigned mask = 0xffffffff;
+            localSum += __shfl_down_sync(mask, localSum, offset);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+            localSum +=
+              __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
+#endif
+          }
       }
 
     if (tid == 0)
@@ -97,7 +104,6 @@ namespace dftfe
                                                   const int   N)
   {
     __shared__ Type smem[blockSize];
-    unsigned        mask = 0xffffffff;
 
     int tid = threadIdx.x;
     int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
@@ -142,7 +148,15 @@ namespace dftfe
 
         for (int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
-          localSum += __shfl_down_sync(mask, localSum, offset);
+          {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+            unsigned mask = 0xffffffff;
+            localSum += __shfl_down_sync(mask, localSum, offset);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+            localSum +=
+              __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
+#endif
+          }
       }
 
     if (tid == 0)
@@ -161,7 +175,6 @@ namespace dftfe
                               const int   N)
   {
     __shared__ Type smem[blockSize];
-    unsigned        mask = 0xffffffff;
 
     int tid = threadIdx.x;
     int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
@@ -210,7 +223,15 @@ namespace dftfe
 
         for (int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
-          localSum += __shfl_down_sync(mask, localSum, offset);
+          {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+            unsigned mask = 0xffffffff;
+            localSum += __shfl_down_sync(mask, localSum, offset);
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+            localSum +=
+              __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
+#endif
+          }
       }
 
     if (tid == 0)
@@ -319,51 +340,6 @@ namespace dftfe
                                                               deviceBlasHandle);
 
             initial_res = res;
-
-            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-              tempX(d_xLocalDof);
-
-            srand(0);
-
-            for (int i = 0; i < d_xLocalDof; i++)
-              tempX[i] = (double)rand() / RAND_MAX;
-
-            dftfe::utils::MemoryTransfer<
-              dftfe::utils::MemorySpace::DEVICE,
-              dftfe::utils::MemorySpace::HOST>::copy(d_xLocalDof,
-                                                     d_rvec.begin(),
-                                                     tempX.begin());
-
-            pcout
-              << "\nInit res: " << res
-
-              << "\nx norm: "
-              << dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
-                                                             d_xLocalDof,
-                                                             mpi_communicator,
-                                                             deviceBlasHandle)
-
-              << "\nAx norm: "
-              << dftfe::utils::deviceKernelsGeneric::l2_norm(x.begin(),
-                                                             d_xLocalDof,
-                                                             mpi_communicator,
-                                                             deviceBlasHandle);
-
-            problem.computeAX(x, d_rvec);
-
-            pcout
-              << "\nx norm: "
-              << dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
-                                                             d_xLocalDof,
-                                                             mpi_communicator,
-                                                             deviceBlasHandle)
-
-              << "\nAx norm: "
-              << dftfe::utils::deviceKernelsGeneric::l2_norm(x.begin(),
-                                                             d_xLocalDof,
-                                                             mpi_communicator,
-                                                             deviceBlasHandle)
-              << "\n";
 
             if (res < absTolerance)
               conv = true;
