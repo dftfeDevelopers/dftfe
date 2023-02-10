@@ -244,10 +244,11 @@ namespace dftfe
             computing_timer.enter_subsection(
               "Copy from full to block flattened array");
             for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-              for (unsigned int iWave = 0; iWave < BVec; ++iWave)
-                eigenVectorsFlattenedArrayBlock.data()[iNode * BVec + iWave] =
-                  eigenVectorsFlattened[iNode * totalNumberWaveFunctions +
-                                        jvec + iWave];
+              std::copy(eigenVectorsFlattened.data() +
+                          iNode * totalNumberWaveFunctions + jvec,
+                        eigenVectorsFlattened.data() +
+                          iNode * totalNumberWaveFunctions + jvec + BVec,
+                        eigenVectorsFlattenedArrayBlock.data() + iNode * BVec);
             computing_timer.leave_subsection(
               "Copy from full to block flattened array");
 
@@ -317,10 +318,11 @@ namespace dftfe
             computing_timer.enter_subsection(
               "Copy from block to full flattened array");
             for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-              for (unsigned int iWave = 0; iWave < BVec; ++iWave)
-                eigenVectorsFlattened[iNode * totalNumberWaveFunctions + jvec +
-                                      iWave] =
-                  eigenVectorsFlattenedArrayBlock.data()[iNode * BVec + iWave];
+              std::copy(eigenVectorsFlattenedArrayBlock.data() + iNode * BVec,
+                        eigenVectorsFlattenedArrayBlock.data() +
+                          (iNode + 1) * BVec,
+                        eigenVectorsFlattened.data() +
+                          iNode * totalNumberWaveFunctions + jvec);
 
             computing_timer.leave_subsection(
               "Copy from block to full flattened array");

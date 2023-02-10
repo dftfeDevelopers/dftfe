@@ -651,19 +651,19 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] L2-Norm evaluation not implemented for DEVICE");
-      for (auto ib = 0; ib < d_numVectors; ++ib)
-        {
-          normVec[ib] = dftfe::utils::realPart(
-            dftfe::utils::complexConj((*d_storage)[ib]) * ((*d_storage)[ib]));
-        }
+      std::transform(begin(), begin() + d_numVectors, normVec, [](auto &a) {
+        return dftfe::utils::realPart(dftfe::utils::complexConj(a) * (a));
+      });
       for (auto k = 1; k < d_locallyOwnedSize; ++k)
         {
-          for (auto ib = 0; ib < d_numVectors; ++ib)
-            {
-              normVec[ib] += dftfe::utils::realPart(
-                dftfe::utils::complexConj((*d_storage)[k * d_numVectors + ib]) *
-                ((*d_storage)[k * d_numVectors + ib]));
-            }
+          std::transform(begin() + k * d_numVectors,
+                         begin() + (k + 1) * d_numVectors,
+                         normVec,
+                         normVec,
+                         [](auto &a, auto &b) {
+                           return b + dftfe::utils::realPart(
+                                        dftfe::utils::complexConj(a) * (a));
+                         });
         }
       MPI_Allreduce(MPI_IN_PLACE,
                     normVec,
@@ -671,10 +671,9 @@ namespace dftfe
                     dataTypes::mpi_type_id(normVec),
                     MPI_SUM,
                     d_mpiPatternP2P->mpiCommunicator());
-      for (auto ib = 0; ib < d_numVectors; ++ib)
-        {
-          normVec[ib] = std::sqrt(normVec[ib]);
-        }
+      std::transform(normVec, normVec + d_numVectors, normVec, [](auto &a) {
+        return std::sqrt(a);
+      });
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -699,10 +698,11 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
-      for (auto k = 0; k < d_localSize; ++k)
-        for (auto ib = 0; ib < d_numVectors; ++ib)
-          (*d_storage)[k * d_numVectors + ib] +=
-            val * u.data()[k * d_numVectors + ib];
+      std::transform(begin(),
+                     end(),
+                     u.begin(),
+                     begin(),
+                     [&val](auto &a, auto &b) { return (a + val * b); });
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -714,12 +714,13 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
-      for (auto k = 0; k < d_localSize; ++k)
-        for (auto ib = 0; ib < d_numVectors; ++ib)
-          (*d_storage)[k * d_numVectors + ib] =
-            ((*d_storage)[k * d_numVectors + ib] +
-             valAdd * (u.data()[k * d_numVectors + ib])) *
-            valScale;
+      std::transform(begin(),
+                     end(),
+                     u.begin(),
+                     begin(),
+                     [&valScale, &valAdd](auto &a, auto &b) {
+                       return valScale * (a + valAdd * b);
+                     });
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -731,11 +732,13 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
-      for (auto k = 0; k < d_localSize; ++k)
-        for (auto ib = 0; ib < d_numVectors; ++ib)
-          (*d_storage)[k * d_numVectors + ib] =
-            ((*d_storage)[k * d_numVectors + ib]) * valScale +
-            valAdd * (u.data()[k * d_numVectors + ib]);
+      std::transform(begin(),
+                     end(),
+                     u.begin(),
+                     begin(),
+                     [&valScale, &valAdd](auto &a, auto &b) {
+                       return valScale * a + valAdd * b;
+                     });
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -746,9 +749,9 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
-      for (auto k = 0; k < d_localSize; ++k)
-        for (auto ib = 0; ib < d_numVectors; ++ib)
-          (*d_storage)[k * d_numVectors + ib] *= val;
+      std::transform(begin(), end(), begin(), [&val](auto &a) {
+        return val * a;
+      });
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
