@@ -537,7 +537,7 @@ namespace dftfe
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(operatorDFTClass &operatorMatrix,
                                         const distributedCPUMultiVec<T> &vect,
-                                        const dftParameters &       dftParams);
+                                        const dftParameters &dftParams);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -553,19 +553,19 @@ namespace dftfe
      */
     template <typename T>
     void
-    chebyshevFilter(operatorDFTClass &    operatorMatrix,
+    chebyshevFilter(operatorDFTClass &         operatorMatrix,
                     distributedCPUMultiVec<T> &X,
-                    const unsigned int    numberComponents,
-                    const unsigned int    m,
-                    const double          a,
-                    const double          b,
-                    const double          a0);
+                    const unsigned int         numberComponents,
+                    const unsigned int         m,
+                    const double               a,
+                    const double               b,
+                    const double               a0);
 
 
     template <typename T>
     void
     chebyshevFilterOpt(operatorDFTClass &              operatorMatrix,
-                       distributedCPUMultiVec<T> &          X,
+                       distributedCPUMultiVec<T> &     X,
                        std::vector<dataTypes::number> &cellWaveFunctionMatrix,
                        const unsigned int              numberComponents,
                        const unsigned int              m,

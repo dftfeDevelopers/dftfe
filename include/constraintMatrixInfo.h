@@ -86,10 +86,9 @@ namespace dftfe
        * @param partitioner2 associated with flattened dealii vector storing multi-fields
        */
       void
-      precomputeMaps(
-        const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-          &                partitioner2,
-                  const unsigned int blockSize);
+      precomputeMaps(const std::shared_ptr<const utils::mpi::MPIPatternP2P<
+                       dftfe::utils::MemorySpace::HOST>> &partitioner2,
+                     const unsigned int                   blockSize);
 
       /**
        * @brief overloaded dealii internal function "distribute" which sets the slave node
@@ -114,7 +113,7 @@ namespace dftfe
       template <typename T>
       void
       distribute(distributedCPUMultiVec<T> &fieldVector,
-                 const unsigned int    blockSize) const;
+                 const unsigned int         blockSize) const;
 
       /**
        * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
@@ -134,7 +133,7 @@ namespace dftfe
       template <typename T>
       void
       distribute_slave_to_master(distributedCPUMultiVec<T> &fieldVector,
-                                 const unsigned int    blockSize) const;
+                                 const unsigned int         blockSize) const;
 
 
       /**
@@ -150,7 +149,7 @@ namespace dftfe
       template <typename T>
       void
       set_zero(distributedCPUMultiVec<T> &fieldVector,
-               const unsigned int    blockSize) const;
+               const unsigned int         blockSize) const;
 
       /**
        * clear data members

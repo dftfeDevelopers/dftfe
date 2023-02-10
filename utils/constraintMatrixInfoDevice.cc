@@ -599,14 +599,16 @@ namespace dftfe
 
     void
     constraintMatrixInfoDevice::precomputeMaps(
-      const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                mpiPattern,
       const unsigned int blockSize)
     {
       //
       // Get required sizes
       //
-      const unsigned int totalSize = mpiPattern->localOwnedSize()+mpiPattern->localGhostSize();
+      const unsigned int totalSize =
+        mpiPattern->localOwnedSize() + mpiPattern->localGhostSize();
 
       d_localIndexMapUnflattenedToFlattened.clear();
       d_localIndexMapUnflattenedToFlattened.resize(totalSize);
@@ -618,8 +620,9 @@ namespace dftfe
         {
           // const dealii::types::global_dof_index globalIndex =
           //   unFlattenedPartitioner->local_to_global(ilocalDof);
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] = ilocalDof*blockSize;
-            // flattenedPartitioner->globalToLocal(globalIndex * blockSize);
+          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
+            ilocalDof * blockSize;
+          // flattenedPartitioner->globalToLocal(globalIndex * blockSize);
         }
 
       d_localIndexMapUnflattenedToFlattenedDevice.resize(

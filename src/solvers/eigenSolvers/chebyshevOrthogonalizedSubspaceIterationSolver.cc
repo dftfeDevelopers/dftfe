@@ -245,8 +245,7 @@ namespace dftfe
               "Copy from full to block flattened array");
             for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
               for (unsigned int iWave = 0; iWave < BVec; ++iWave)
-                eigenVectorsFlattenedArrayBlock.data()[iNode * BVec +
-                                                              iWave] =
+                eigenVectorsFlattenedArrayBlock.data()[iNode * BVec + iWave] =
                   eigenVectorsFlattened[iNode * totalNumberWaveFunctions +
                                         jvec + iWave];
             computing_timer.leave_subsection(
@@ -321,8 +320,7 @@ namespace dftfe
               for (unsigned int iWave = 0; iWave < BVec; ++iWave)
                 eigenVectorsFlattened[iNode * totalNumberWaveFunctions + jvec +
                                       iWave] =
-                  eigenVectorsFlattenedArrayBlock.data()[iNode * BVec +
-                                                                iWave];
+                  eigenVectorsFlattenedArrayBlock.data()[iNode * BVec + iWave];
 
             computing_timer.leave_subsection(
               "Copy from block to full flattened array");
@@ -338,9 +336,7 @@ namespace dftfe
           }
       } // block loop
 
-    operatorMatrix.reinit(0,
-                          eigenVectorsFlattenedArrayBlock,
-                          true);
+    operatorMatrix.reinit(0, eigenVectorsFlattenedArrayBlock, true);
 
     if (numberBandGroups > 1)
       {

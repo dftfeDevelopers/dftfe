@@ -29,14 +29,14 @@ void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeHamiltonianTimesXInternal(
     const distributedCPUMultiVec<std::complex<double>> &src,
-    std::vector<std::complex<double>> &            cellSrcWaveFunctionMatrix,
-    const unsigned int                             numberWaveFunctions,
-    distributedCPUMultiVec<std::complex<double>> &      dst,
-    std::vector<std::complex<double>> &            cellDstWaveFunctionMatrix,
-    const double                                   scalar,
-    const double                                   scalarA,
-    const double                                   scalarB,
-    bool                                           scaleFlag)
+    std::vector<std::complex<double>> &           cellSrcWaveFunctionMatrix,
+    const unsigned int                            numberWaveFunctions,
+    distributedCPUMultiVec<std::complex<double>> &dst,
+    std::vector<std::complex<double>> &           cellDstWaveFunctionMatrix,
+    const double                                  scalar,
+    const double                                  scalarA,
+    const double                                  scalarB,
+    bool                                          scaleFlag)
 {
   AssertThrow(false, dftUtils::ExcNotImplementedYet());
 }
@@ -46,14 +46,14 @@ void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeHamiltonianTimesXInternal(
     const distributedCPUMultiVec<double> &src,
-    std::vector<double> &            cellSrcWaveFunctionMatrix,
-    const unsigned int               numberWaveFunctions,
+    std::vector<double> &                 cellSrcWaveFunctionMatrix,
+    const unsigned int                    numberWaveFunctions,
     distributedCPUMultiVec<double> &      dst,
-    std::vector<double> &            cellDstWaveFunctionMatrix,
-    const double                     scalar,
-    const double                     scalarA,
-    const double                     scalarB,
-    bool                             scaleFlag)
+    std::vector<double> &                 cellDstWaveFunctionMatrix,
+    const double                          scalar,
+    const double                          scalarA,
+    const double                          scalarB,
+    bool                                  scaleFlag)
 
 {
   const unsigned int kpointSpinIndex =
@@ -189,8 +189,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                      &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                       iPseudoAtomicWave],
                      &inc,
-                     dftPtr->d_projectorKetTimesVectorParFlattened.data()+
-                        dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions,
+                     dftPtr->d_projectorKetTimesVectorParFlattened.data() +
+                       dftPtr->d_projectorKetTimesVectorParFlattened
+                           .getMPIPatternP2P()
+                           ->globalToLocal(id) *
+                         numberWaveFunctions,
                      &inc);
             }
         }
@@ -223,13 +226,19 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
               dscal_(&numberWaveFunctions,
                      &nonlocalConstantV,
-                     dftPtr->d_projectorKetTimesVectorParFlattened.data()+
-                        dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions,
+                     dftPtr->d_projectorKetTimesVectorParFlattened.data() +
+                       dftPtr->d_projectorKetTimesVectorParFlattened
+                           .getMPIPatternP2P()
+                           ->globalToLocal(id) *
+                         numberWaveFunctions,
                      &inc);
 
               dcopy_(&numberWaveFunctions,
-                     dftPtr->d_projectorKetTimesVectorParFlattened.data()+
-                        dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id) * numberWaveFunctions,
+                     dftPtr->d_projectorKetTimesVectorParFlattened.data() +
+                       dftPtr->d_projectorKetTimesVectorParFlattened
+                           .getMPIPatternP2P()
+                           ->globalToLocal(id) *
+                         numberWaveFunctions,
                      &inc,
                      &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                       iPseudoAtomicWave],

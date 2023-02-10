@@ -41,16 +41,15 @@ namespace dftfe
     MemoryManager<ValueType, MemorySpace::HOST>::allocate(std::size_t size,
                                                           ValueType **ptr)
     {
-      // *ptr = new ValueType[size];
-      *ptr = (ValueType *)malloc(size*sizeof(ValueType));
+      *ptr = new ValueType[size];
     }
 
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST>::deallocate(ValueType *ptr)
     {
-      if(ptr!=nullptr)
-        free(ptr);
+      if (ptr != nullptr)
+        delete[] ptr;
     }
 
     template <typename ValueType>
@@ -59,7 +58,7 @@ namespace dftfe
                                                      ValueType * ptr,
                                                      ValueType   val)
     {
-      if(size!=0)
+      if (size != 0)
         std::fill(ptr, ptr + size, val);
     }
 

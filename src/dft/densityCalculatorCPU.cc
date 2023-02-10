@@ -247,8 +247,8 @@ namespace dftfe
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                       for (unsigned int iWave = 0; iWave < currentBlockSize;
                            ++iWave)
-                        flattenedArrayBlock.data()[
-                          iNode * currentBlockSize + iWave] =
+                        flattenedArrayBlock
+                          .data()[iNode * currentBlockSize + iWave] =
                           XCurrentKPoint[iNode * totalNumWaveFunctions + jvec +
                                          iWave];
 
@@ -459,8 +459,8 @@ namespace dftfe
                            ++iNode)
                         for (unsigned int iWave = 0; iWave < currentBlockSize;
                              ++iWave)
-                          flattenedArrayBlock.data()[
-                            iNode * currentBlockSize + iWave] =
+                          flattenedArrayBlock
+                            .data()[iNode * currentBlockSize + iWave] =
                             XFracCurrentKPoint[iNode * Nfr + jvec + iWave];
 
                       (operatorMatrix.getOverloadedConstraintMatrix())

@@ -24,8 +24,9 @@ void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeNonLocalProjectorKetTimesXTimesV(
     distributedCPUMultiVec<std::complex<double>> &src,
-    distributedCPUMultiVec<std::complex<double>> &projectorKetTimesVectorFlattened,
-    const unsigned int                       numberWaveFunctions)
+    distributedCPUMultiVec<std::complex<double>>
+      &                projectorKetTimesVectorFlattened,
+    const unsigned int numberWaveFunctions)
 {
   std::map<unsigned int, std::vector<std::complex<double>>>
     projectorKetTimesVector;
@@ -138,7 +139,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                   iPseudoAtomicWave],
                  &inc,
-                 &projectorKetTimesVectorFlattened.data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
+                 &projectorKetTimesVectorFlattened
+                    .data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
                  &inc);
         }
     }
@@ -174,7 +178,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
           zscal_(&numberWaveFunctions,
                  &nonlocalConstantV,
-                 &projectorKetTimesVectorFlattened.data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
+                 &projectorKetTimesVectorFlattened
+                    .data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
                  &inc);
         }
     }
@@ -186,7 +193,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeNonLocalProjectorKetTimesXTimesV(
     distributedCPUMultiVec<double> &src,
     distributedCPUMultiVec<double> &projectorKetTimesVectorFlattened,
-    const unsigned int         numberWaveFunctions)
+    const unsigned int              numberWaveFunctions)
 {
   std::map<unsigned int, std::vector<double>> projectorKetTimesVector;
 
@@ -298,7 +305,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                   iPseudoAtomicWave],
                  &inc,
-                 &projectorKetTimesVectorFlattened.data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
+                 &projectorKetTimesVectorFlattened
+                    .data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
                  &inc);
         }
     }
@@ -331,7 +341,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
           dscal_(&numberWaveFunctions,
                  &nonlocalConstantV,
-                 &projectorKetTimesVectorFlattened.data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()->globalToLocal(id)*numberWaveFunctions],
+                 &projectorKetTimesVectorFlattened
+                    .data()[projectorKetTimesVectorFlattened.getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
                  &inc);
         }
     }

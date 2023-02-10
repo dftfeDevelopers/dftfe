@@ -275,13 +275,13 @@ namespace dftfe
     //
     template <typename T>
     void
-    chebyshevFilter(operatorDFTClass &    operatorMatrix,
+    chebyshevFilter(operatorDFTClass &         operatorMatrix,
                     distributedCPUMultiVec<T> &XArray,
-                    const unsigned int    numberWaveFunctions,
-                    const unsigned int    m,
-                    const double          a,
-                    const double          b,
-                    const double          a0)
+                    const unsigned int         numberWaveFunctions,
+                    const unsigned int         m,
+                    const double               a,
+                    const double               b,
+                    const double               a0)
     {
       double e, c, sigma, sigma1, sigma2, gamma;
       e      = (b - a) / 2.0;
@@ -295,8 +295,8 @@ namespace dftfe
       // create YArray
       // initialize to zeros.
       // x
-      const T zeroValue = 0.0;
-      distributedCPUMultiVec<T> YArray(XArray,zeroValue); //,YNewArray;
+      const T                   zeroValue = 0.0;
+      distributedCPUMultiVec<T> YArray(XArray, zeroValue); //,YNewArray;
 
 
       //
@@ -313,7 +313,7 @@ namespace dftfe
       //
       // YArray = alpha1*(YArray + alpha2*XArray) and YArray = alpha1*YArray
       //
-      YArray.addAndScale(alpha1,alpha2, XArray);
+      YArray.addAndScale(alpha1, alpha2, XArray);
 
       //
       // polynomial loop
@@ -326,7 +326,7 @@ namespace dftfe
           //
           // XArray = alpha2 * XArray - c * alpha1 * YArray
           //
-          XArray.scaleAndAdd(alpha2,-c * alpha1, YArray);
+          XArray.scaleAndAdd(alpha2, -c * alpha1, YArray);
 
 
           //
@@ -359,7 +359,7 @@ namespace dftfe
     template <typename T>
     void
     chebyshevFilterOpt(operatorDFTClass &              operatorMatrix,
-                       distributedCPUMultiVec<T> &          XArray,
+                       distributedCPUMultiVec<T> &     XArray,
                        std::vector<dataTypes::number> &cellXWaveFunctionMatrix,
                        const unsigned int              numberWaveFunctions,
                        const unsigned int              m,
@@ -374,7 +374,7 @@ namespace dftfe
       sigma1 = sigma;
       gamma  = 2.0 / sigma1;
 
-      std::vector<T>       cellYWaveFunctionMatrix;
+      std::vector<T> cellYWaveFunctionMatrix;
 
       // init cellYWaveFunctionMatrix to a given scalar
       double scalarValue = 0.0;
@@ -393,8 +393,8 @@ namespace dftfe
       // create YArray
       // initialize to zeros.
       // x
-      const T zeroValue = 0.0;
-      distributedCPUMultiVec<T> YArray(XArray,zeroValue);
+      const T                   zeroValue = 0.0;
+      distributedCPUMultiVec<T> YArray(XArray, zeroValue);
 
 
       //
@@ -432,8 +432,7 @@ namespace dftfe
               for (unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
                 {
                   YArray.data()[iDof * numberWaveFunctions + iWave] =
-                    alpha1 *
-                      YArray.data()[iDof * numberWaveFunctions + iWave] +
+                    alpha1 * YArray.data()[iDof * numberWaveFunctions + iWave] +
                     alpha1 * alpha2 *
                       XArray.data()[iDof * numberWaveFunctions + iWave];
                 }
@@ -476,11 +475,10 @@ namespace dftfe
                       // XArray.local_element(iDof*numberWaveFunctions+iWave) *=
                       // alpha2;
                       XArray.data()[iDof * numberWaveFunctions + iWave] =
-                        alpha2 * XArray.data()[
-                                   iDof * numberWaveFunctions + iWave] -
+                        alpha2 *
+                          XArray.data()[iDof * numberWaveFunctions + iWave] -
                         c * alpha1 *
-                          YArray.data()[iDof * numberWaveFunctions +
-                                               iWave];
+                          YArray.data()[iDof * numberWaveFunctions + iWave];
                     }
                 }
             }
@@ -2878,7 +2876,7 @@ namespace dftfe
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(operatorDFTClass &operatorMatrix,
                                         const distributedCPUMultiVec<T> &vect,
-                                        const dftParameters &       dftParams)
+                                        const dftParameters &dftParams)
     {
       const unsigned int this_mpi_process =
         dealii::Utilities::MPI::this_mpi_process(
@@ -2915,7 +2913,7 @@ namespace dftfe
       //
       double vVecNorm;
       vVector.l2Norm(&vVecNorm);
-      vVector.scale(1/vVecNorm);
+      vVector.scale(1 / vVecNorm);
       vVector.updateGhostValues();
 
       //
@@ -2929,7 +2927,7 @@ namespace dftfe
       fVector.l2Norm(&fVecNorm);
 
       // evaluate fVector^{H}*vVector
-      fVector.dot(vVector,&alpha);
+      fVector.dot(vVector, &alpha);
       fVector.add(-1.0 * alpha, vVector);
       std::vector<T> Tlanczos(lanczosIterations * lanczosIterations, 0.0);
 
@@ -2941,14 +2939,14 @@ namespace dftfe
         {
           fVector.l2Norm(&beta);
           v0Vector = vVector;
-          vVector.scaleAndAdd(0.0,1.0 / beta, fVector);
+          vVector.scaleAndAdd(0.0, 1.0 / beta, fVector);
 
           fVector.setValue(T(0));
           operatorMatrix.HX(vVector, 1, scaleFlag, scalar, fVector);
 
           fVector.add(-1.0 * beta, v0Vector); // beta is real
 
-          fVector.dot(vVector,&alpha);
+          fVector.dot(vVector, &alpha);
           fVector.add(-1.0 * alpha, vVector);
 
           index += 1;
@@ -3245,7 +3243,7 @@ namespace dftfe
                     const double);
 
     template void
-    chebyshevFilterOpt(operatorDFTClass &                    operatorMatrix,
+    chebyshevFilterOpt(operatorDFTClass &operatorMatrix,
                        distributedCPUMultiVec<dataTypes::number> &X,
                        std::vector<dataTypes::number> &cellWaveFunctionMatrix,
                        const unsigned int              numberComponents,

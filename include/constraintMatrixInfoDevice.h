@@ -69,10 +69,9 @@ namespace dftfe
        * @param partitioner2 associated with flattened dealii vector storing multi-fields
        */
       void
-      precomputeMaps(
-        const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-          &                partitioner2,
-        const unsigned int blockSize);
+      precomputeMaps(const std::shared_ptr<const utils::mpi::MPIPatternP2P<
+                       dftfe::utils::MemorySpace::HOST>> &partitioner2,
+                     const unsigned int                   blockSize);
 
       void
       precomputeMaps(

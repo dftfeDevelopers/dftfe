@@ -85,7 +85,8 @@ namespace dftfe
      */
     void
     computeCellLocalIndexSetMap(
-      const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                                  partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
@@ -107,7 +108,8 @@ namespace dftfe
      */
     void
     computeCellLocalIndexSetMap(
-      const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                                  partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
@@ -130,7 +132,8 @@ namespace dftfe
      */
     void
     computeCellLocalIndexSetMap(
-      const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                                  partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,

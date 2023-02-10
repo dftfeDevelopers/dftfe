@@ -642,8 +642,7 @@ namespace dftfe
 
 
     getOverloadedConstraintMatrix()->precomputeMaps(
-      flattenedArray.getMPIPatternP2P(),
-      numberWaveFunctions);
+      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
 
     getOverloadedConstraintMatrixHost()->precomputeMaps(
       dftPtr->matrix_free_data.get_vector_partitioner(),

@@ -204,14 +204,16 @@ namespace dftfe
 
     void
     constraintMatrixInfo::precomputeMaps(
-      const std::shared_ptr<const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                mpiPattern,
-        const unsigned int blockSize)
+      const unsigned int blockSize)
     {
       //
       // Get required sizes
       //
-      const unsigned int totalSize = mpiPattern->localOwnedSize()+mpiPattern->localGhostSize();
+      const unsigned int totalSize =
+        mpiPattern->localOwnedSize() + mpiPattern->localGhostSize();
 
       d_localIndexMapUnflattenedToFlattened.clear();
       d_localIndexMapUnflattenedToFlattened.resize(totalSize);
@@ -221,7 +223,9 @@ namespace dftfe
       //
       for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
         {
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] = (dealii::types::global_dof_index)ilocalDof*(dealii::types::global_dof_index)blockSize;
+          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
+            (dealii::types::global_dof_index)ilocalDof *
+            (dealii::types::global_dof_index)blockSize;
         }
     }
 
@@ -304,7 +308,7 @@ namespace dftfe
     template <typename T>
     void
     constraintMatrixInfo::distribute(distributedCPUMultiVec<T> &fieldVector,
-                                     const unsigned int    blockSize) const
+                                     const unsigned int         blockSize) const
     {
       fieldVector.updateGhostValues();
 
@@ -400,7 +404,7 @@ namespace dftfe
     void
     constraintMatrixInfo::distribute_slave_to_master(
       distributedCPUMultiVec<T> &fieldVector,
-      const unsigned int    blockSize) const
+      const unsigned int         blockSize) const
     {
       unsigned int       count = 0;
       const unsigned int inc   = 1;
@@ -456,7 +460,7 @@ namespace dftfe
     template <typename T>
     void
     constraintMatrixInfo::set_zero(distributedCPUMultiVec<T> &fieldVector,
-                                   const unsigned int    blockSize) const
+                                   const unsigned int         blockSize) const
     {
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
         {
@@ -506,17 +510,17 @@ namespace dftfe
     template void
     constraintMatrixInfo::distribute(
       distributedCPUMultiVec<dataTypes::number> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const unsigned int                         blockSize) const;
 
     template void
     constraintMatrixInfo::distribute_slave_to_master(
       distributedCPUMultiVec<dataTypes::number> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const unsigned int                         blockSize) const;
 
     template void
     constraintMatrixInfo::set_zero(
       distributedCPUMultiVec<dataTypes::number> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const unsigned int                         blockSize) const;
 
   } // namespace dftUtils
 

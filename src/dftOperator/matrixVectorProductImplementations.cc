@@ -29,9 +29,9 @@ void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(
     const distributedCPUMultiVec<std::complex<double>> &src,
-    const unsigned int                             numberWaveFunctions,
+    const unsigned int                                  numberWaveFunctions,
     distributedCPUMultiVec<std::complex<double>> &      dst,
-    const double                                   scalar)
+    const double                                        scalar)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
@@ -98,9 +98,9 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(const distributedCPUMultiVec<double> &src,
-                                const unsigned int         numberWaveFunctions,
+                                const unsigned int numberWaveFunctions,
                                 distributedCPUMultiVec<double> &dst,
-                                const double               scalar)
+                                const double                    scalar)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;

@@ -503,11 +503,12 @@ namespace dftfe
       /////////
       std::vector<dealii::types::global_dof_index> cellLocalProcIndexIdMapH;
 
-      vectorTools::computeCellLocalIndexSetMap(flattenedArray.getMPIPatternP2P(),
-                                               matrixFreeData,
-                                               mfDofHandlerIndex,
-                                               blockSize,
-                                               cellLocalProcIndexIdMapH);
+      vectorTools::computeCellLocalIndexSetMap(
+        flattenedArray.getMPIPatternP2P(),
+        matrixFreeData,
+        mfDofHandlerIndex,
+        blockSize,
+        cellLocalProcIndexIdMapH);
 
       dftUtils::constraintMatrixInfoDevice constraintsMatrixDataInfoDevice;
       constraintsMatrixDataInfoDevice.initialize(
@@ -516,8 +517,7 @@ namespace dftfe
 
 
       constraintsMatrixDataInfoDevice.precomputeMaps(
-        flattenedArray.getMPIPatternP2P(),
-        blockSize);
+        flattenedArray.getMPIPatternP2P(), blockSize);
 
       constraintsMatrixDataInfoDevice.set_zero(xD, blockSize);
 
