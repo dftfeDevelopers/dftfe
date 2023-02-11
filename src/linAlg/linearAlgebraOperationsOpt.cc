@@ -295,8 +295,7 @@ namespace dftfe
       // create YArray
       // initialize to zeros.
       // x
-      const T                   zeroValue = 0.0;
-      distributedCPUMultiVec<T> YArray(XArray, zeroValue); //,YNewArray;
+      distributedCPUMultiVec<T> YArray(XArray, T(0.0)); //,YNewArray;
 
 
       //
@@ -367,12 +366,12 @@ namespace dftfe
                        const double                    b,
                        const double                    a0)
     {
-      double e, c, sigma, sigma1, sigma2, gamma;
-      e      = (b - a) / 2.0;
-      c      = (b + a) / 2.0;
+      double sigma, sigma2;
+      const double e      = (b - a) / 2.0;
+      const double c      = (b + a) / 2.0;
       sigma  = e / (a0 - c);
-      sigma1 = sigma;
-      gamma  = 2.0 / sigma1;
+      const double sigma1 = sigma;
+      const double gamma  = 2.0 / sigma1;
 
       std::vector<T> cellYWaveFunctionMatrix;
 
@@ -393,8 +392,7 @@ namespace dftfe
       // create YArray
       // initialize to zeros.
       // x
-      const T                   zeroValue = 0.0;
-      distributedCPUMultiVec<T> YArray(XArray, zeroValue);
+      distributedCPUMultiVec<T> YArray(XArray, T(0.0));
 
 
       //
@@ -429,13 +427,7 @@ namespace dftfe
         {
           if (globalArrayClassificationMap[iDof] == 1)
             {
-              for (unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-                {
-                  YArray.data()[iDof * numberWaveFunctions + iWave] =
-                    alpha1 * YArray.data()[iDof * numberWaveFunctions + iWave] +
-                    alpha1 * alpha2 *
-                      XArray.data()[iDof * numberWaveFunctions + iWave];
-                }
+              std::transform(YArray.begin()+iDof * numberWaveFunctions,YArray.begin()+(iDof + 1)* numberWaveFunctions,XArray.begin()+iDof * numberWaveFunctions,YArray.begin()+iDof * numberWaveFunctions,[&alpha1,&alpha2](auto &a, auto &b){return alpha1*(a+alpha2*b);});
             }
         }
 
@@ -469,17 +461,7 @@ namespace dftfe
             {
               if (globalArrayClassificationMap[iDof] == 1)
                 {
-                  for (unsigned int iWave = 0; iWave < numberWaveFunctions;
-                       ++iWave)
-                    {
-                      // XArray.local_element(iDof*numberWaveFunctions+iWave) *=
-                      // alpha2;
-                      XArray.data()[iDof * numberWaveFunctions + iWave] =
-                        alpha2 *
-                          XArray.data()[iDof * numberWaveFunctions + iWave] -
-                        c * alpha1 *
-                          YArray.data()[iDof * numberWaveFunctions + iWave];
-                    }
+                  std::transform(YArray.begin()+iDof * numberWaveFunctions,YArray.begin()+(iDof + 1)* numberWaveFunctions,XArray.begin()+iDof * numberWaveFunctions,XArray.begin()+iDof * numberWaveFunctions,[&alpha1,&alpha2, &c](auto &a, auto &b){return alpha2*b-c*alpha1*a;});
                 }
             }
 
@@ -2892,12 +2874,8 @@ namespace dftfe
       //
       // generate random vector v
       //
-      distributedCPUMultiVec<T> vVector, fVector, v0Vector;
-      vVector.reinit(vect);
-      fVector.reinit(vect);
+      distributedCPUMultiVec<T> vVector(vect,T(0.0)), fVector(vect,T(0.0)), v0Vector;
 
-      vVector.setValue(T(0.0));
-      fVector.setValue(T(0.0));
       std::srand(this_mpi_process);
       const unsigned int local_size = vVector.locallyOwnedSize();
 
@@ -2905,8 +2883,6 @@ namespace dftfe
         vVector.data()[i] = ((double)std::rand()) / ((double)RAND_MAX);
 
       operatorMatrix.getOverloadedConstraintMatrix()->set_zero(vVector, 1);
-
-      vVector.updateGhostValues();
 
       //
       // evaluate l2 norm
@@ -2919,12 +2895,9 @@ namespace dftfe
       //
       // call matrix times X
       //
-      fVector.setValue(T(0));
       const bool   scaleFlag = false;
       const double scalar    = 1.0;
       operatorMatrix.HX(vVector, 1, scaleFlag, scalar, fVector);
-      double fVecNorm;
-      fVector.l2Norm(&fVecNorm);
 
       // evaluate fVector^{H}*vVector
       fVector.dot(vVector, &alpha);
@@ -2996,10 +2969,6 @@ namespace dftfe
 #endif
 
 
-      for (unsigned int i = 0; i < eigenValuesT.size(); i++)
-        {
-          eigenValuesT[i] = eigenValuesT[i];
-        }
       std::sort(eigenValuesT.begin(), eigenValuesT.end());
       //
       double fvectorNorm;

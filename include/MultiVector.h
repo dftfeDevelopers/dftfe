@@ -426,20 +426,24 @@ namespace dftfe
       void
       scale(const ValueBaseType val);
 
+      template <typename ValueBaseType>
       void
-      add(const ValueType *valVec, const MultiVector &u);
+      add(const ValueBaseType *valVec, const MultiVector &u);
 
+      template <typename ValueBaseType>
       void
-      add(const ValueType val, const MultiVector &u);
+      add(const ValueBaseType val, const MultiVector &u);
 
+      template <typename ValueBaseType1, typename ValueBaseType2>
       void
-      addAndScale(const ValueType    valScale,
-                  const ValueType    valAdd,
+      addAndScale(const ValueBaseType1    valScale,
+                  const ValueBaseType2    valAdd,
                   const MultiVector &u);
 
+      template <typename ValueBaseType1, typename ValueBaseType2>
       void
-      scaleAndAdd(const ValueType    valScale,
-                  const ValueType    valAdd,
+      scaleAndAdd(const ValueBaseType1    valScale,
+                  const ValueBaseType2    valAdd,
                   const MultiVector &u);
 
       void
