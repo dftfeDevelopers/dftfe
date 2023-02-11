@@ -136,15 +136,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           const unsigned int id =
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
-          // std::cout<<"DEBUG d_projectorKetTimesVectorParFlattened
-          // "<<this_mpi_process<<"
-          // "<<dftPtr->d_projectorKetTimesVectorParFlattened.localSize()*dftPtr->d_projectorKetTimesVectorParFlattened.numVectors()<<"
-          // "<<dftPtr->d_projectorKetTimesVectorParFlattened.getMPIPatternP2P()->globalToLocal(id)
-          // * numberWaveFunctions<<numberWaveFunctions<<" "<<id<<"
-          // "<<dftPtr->d_projectorKetTimesVectorParFlattened.numVectors()<<"
-          // "<<dftPtr->d_projectorKetTimesVectorParFlattened.localSize()<<"
-          // "<<dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->locally_owned_size()<<"
-          // "<<dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->n_ghost_indices()<<std::endl;
           zcopy_(&numberWaveFunctions,
                  &projectorKetTimesVector[atomId][numberWaveFunctions *
                                                   iPseudoAtomicWave],
