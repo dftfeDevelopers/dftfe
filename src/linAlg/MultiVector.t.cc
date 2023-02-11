@@ -679,8 +679,8 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     template <typename ValueBaseType>
     void
-    MultiVector<ValueType, memorySpace>::add(const ValueBaseType *  valVec,
-                                             const MultiVector &u)
+    MultiVector<ValueType, memorySpace>::add(const ValueBaseType *valVec,
+                                             const MultiVector &  u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -694,14 +694,14 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     template <typename ValueBaseType>
     void
-    MultiVector<ValueType, memorySpace>::add(const ValueBaseType    val,
-                                             const MultiVector &u)
+    MultiVector<ValueType, memorySpace>::add(const ValueBaseType val,
+                                             const MultiVector & u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
       std::transform(begin(),
-                     begin()+d_locallyOwnedSize*d_numVectors,
+                     begin() + d_locallyOwnedSize * d_numVectors,
                      u.begin(),
                      begin(),
                      [&val](auto &a, auto &b) { return (a + val * b); });
@@ -710,15 +710,16 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     template <typename ValueBaseType1, typename ValueBaseType2>
     void
-    MultiVector<ValueType, memorySpace>::addAndScale(const ValueBaseType1 valScale,
-                                                     const ValueBaseType2 valAdd,
-                                                     const MultiVector &u)
+    MultiVector<ValueType, memorySpace>::addAndScale(
+      const ValueBaseType1 valScale,
+      const ValueBaseType2 valAdd,
+      const MultiVector &  u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
       std::transform(begin(),
-                     begin()+d_locallyOwnedSize*d_numVectors,
+                     begin() + d_locallyOwnedSize * d_numVectors,
                      u.begin(),
                      begin(),
                      [&valScale, &valAdd](auto &a, auto &b) {
@@ -729,15 +730,16 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     template <typename ValueBaseType1, typename ValueBaseType2>
     void
-    MultiVector<ValueType, memorySpace>::scaleAndAdd(const ValueBaseType1 valScale,
-                                                     const ValueBaseType2 valAdd,
-                                                     const MultiVector &u)
+    MultiVector<ValueType, memorySpace>::scaleAndAdd(
+      const ValueBaseType1 valScale,
+      const ValueBaseType2 valAdd,
+      const MultiVector &  u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
       std::transform(begin(),
-                     begin()+d_locallyOwnedSize*d_numVectors,
+                     begin() + d_locallyOwnedSize * d_numVectors,
                      u.begin(),
                      begin(),
                      [&valScale, &valAdd](auto &a, auto &b) {
@@ -753,9 +755,10 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] Add not implemented for DEVICE");
-      std::transform(begin(), begin()+d_locallyOwnedSize*d_numVectors, begin(), [&val](auto &a) {
-        return val * a;
-      });
+      std::transform(begin(),
+                     begin() + d_locallyOwnedSize * d_numVectors,
+                     begin(),
+                     [&val](auto &a) { return val * a; });
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>

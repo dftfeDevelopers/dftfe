@@ -366,10 +366,10 @@ namespace dftfe
                        const double                    b,
                        const double                    a0)
     {
-      double sigma, sigma2;
+      double       sigma, sigma2;
       const double e      = (b - a) / 2.0;
       const double c      = (b + a) / 2.0;
-      sigma  = e / (a0 - c);
+      sigma               = e / (a0 - c);
       const double sigma1 = sigma;
       const double gamma  = 2.0 / sigma1;
 
@@ -427,7 +427,13 @@ namespace dftfe
         {
           if (globalArrayClassificationMap[iDof] == 1)
             {
-              std::transform(YArray.begin()+iDof * numberWaveFunctions,YArray.begin()+(iDof + 1)* numberWaveFunctions,XArray.begin()+iDof * numberWaveFunctions,YArray.begin()+iDof * numberWaveFunctions,[&alpha1,&alpha2](auto &a, auto &b){return alpha1*(a+alpha2*b);});
+              std::transform(YArray.begin() + iDof * numberWaveFunctions,
+                             YArray.begin() + (iDof + 1) * numberWaveFunctions,
+                             XArray.begin() + iDof * numberWaveFunctions,
+                             YArray.begin() + iDof * numberWaveFunctions,
+                             [&alpha1, &alpha2](auto &a, auto &b) {
+                               return alpha1 * (a + alpha2 * b);
+                             });
             }
         }
 
@@ -461,7 +467,14 @@ namespace dftfe
             {
               if (globalArrayClassificationMap[iDof] == 1)
                 {
-                  std::transform(YArray.begin()+iDof * numberWaveFunctions,YArray.begin()+(iDof + 1)* numberWaveFunctions,XArray.begin()+iDof * numberWaveFunctions,XArray.begin()+iDof * numberWaveFunctions,[&alpha1,&alpha2, &c](auto &a, auto &b){return alpha2*b-c*alpha1*a;});
+                  std::transform(YArray.begin() + iDof * numberWaveFunctions,
+                                 YArray.begin() +
+                                   (iDof + 1) * numberWaveFunctions,
+                                 XArray.begin() + iDof * numberWaveFunctions,
+                                 XArray.begin() + iDof * numberWaveFunctions,
+                                 [&alpha1, &alpha2, &c](auto &a, auto &b) {
+                                   return alpha2 * b - c * alpha1 * a;
+                                 });
                 }
             }
 
@@ -2874,7 +2887,8 @@ namespace dftfe
       //
       // generate random vector v
       //
-      distributedCPUMultiVec<T> vVector(vect,T(0.0)), fVector(vect,T(0.0)), v0Vector;
+      distributedCPUMultiVec<T> vVector(vect, T(0.0)), fVector(vect, T(0.0)),
+        v0Vector;
 
       std::srand(this_mpi_process);
       const unsigned int local_size = vVector.locallyOwnedSize();

@@ -436,15 +436,15 @@ namespace dftfe
 
       template <typename ValueBaseType1, typename ValueBaseType2>
       void
-      addAndScale(const ValueBaseType1    valScale,
-                  const ValueBaseType2    valAdd,
-                  const MultiVector &u);
+      addAndScale(const ValueBaseType1 valScale,
+                  const ValueBaseType2 valAdd,
+                  const MultiVector &  u);
 
       template <typename ValueBaseType1, typename ValueBaseType2>
       void
-      scaleAndAdd(const ValueBaseType1    valScale,
-                  const ValueBaseType2    valAdd,
-                  const MultiVector &u);
+      scaleAndAdd(const ValueBaseType1 valScale,
+                  const ValueBaseType2 valAdd,
+                  const MultiVector &  u);
 
       void
       dot(const MultiVector &u, ValueType *dotVec);
