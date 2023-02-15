@@ -54,7 +54,7 @@ namespace dftfe
     , mpi_communicator(mpi_comm_domain)
     , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 6))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , computing_timer(mpi_comm_domain,
                       pcout,
                       TimerOutput::never,
