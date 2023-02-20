@@ -149,6 +149,263 @@ namespace internalLowrankJacInv
           }
       }
   }
+
+  void
+  lowrankJacInvApplySpin(
+    const std::deque<distributedCPUVec<double>> &fvcontainerSpin0,
+    const std::deque<distributedCPUVec<double>> &fvcontainerSpin1,
+    const std::deque<distributedCPUVec<double>> &vcontainerSpin0,
+    const std::deque<distributedCPUVec<double>> &vcontainerSpin1,
+    const distributedCPUVec<double> &            xSpin0,
+    const distributedCPUVec<double> &            xSpin1,
+    distributedCPUVec<double> &                  ySpin0,
+    distributedCPUVec<double> &                  ySpin1)
+  {
+    const unsigned int rank = fvcontainerSpin0.size();
+
+    std::vector<double> mMat(rank * rank, 0.0);
+    for (int j = 0; j < rank; j++)
+      for (int i = 0; i < rank; i++)
+        mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                             fvcontainerSpin1[i] * fvcontainerSpin1[j];
+
+    dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
+
+    for (unsigned int idof = 0; idof < xSpin0.local_size(); idof++)
+      {
+        ySpin0.local_element(idof) = xSpin0.local_element(idof);
+        ySpin1.local_element(idof) = xSpin1.local_element(idof);
+      }
+
+    std::vector<double> innerProducts(rank, 0.0);
+    for (unsigned int i = 0; i < rank; i++)
+      {
+        innerProducts[i] =
+          fvcontainerSpin0[i] * ySpin0 + fvcontainerSpin1[i] * ySpin1;
+      }
+
+    ySpin0 = 0;
+    ySpin1 = 0;
+
+    for (unsigned int i = 0; i < rank; i++)
+      {
+        double temp = 0.0;
+        for (unsigned int j = 0; j < rank; j++)
+          temp += mMat[j * rank + i] * innerProducts[j];
+
+        for (unsigned int idof = 0; idof < ySpin0.local_size(); idof++)
+          {
+            ySpin0.local_element(idof) +=
+              vcontainerSpin0[i].local_element(idof) * temp;
+            ySpin1.local_element(idof) +=
+              vcontainerSpin1[i].local_element(idof) * temp;
+          }
+      }
+  }
+
+
+  void
+  lowrankJacApplySpin(const std::deque<distributedCPUVec<double>> &fvSpin0container,
+                  const std::deque<distributedCPUVec<double>> &fvSpin1container,
+                  const std::deque<distributedCPUVec<double>> &vSpin0container,
+                  const std::deque<distributedCPUVec<double>> &vSpin1container,
+                  const distributedCPUVec<double> &            xSpin0,
+                  const distributedCPUVec<double> &            xSpin1,
+                  distributedCPUVec<double> &                  ySpin0,
+                  distributedCPUVec<double> &                  ySpin1)
+  {
+    const unsigned int rank = fvSpin0container.size();
+
+
+    std::vector<double> innerProducts(rank, 0.0);
+    for (unsigned int i = 0; i < rank; i++)
+      innerProducts[i] = vSpin0container[i] * xSpin0+vSpin1container[i] * xSpin1;
+
+    ySpin0 = 0;
+    ySpin1 = 0;
+    for (unsigned int i = 0; i < rank; i++)
+      for (unsigned int idof = 0; idof < ySpin0.local_size(); idof++)
+      {
+        ySpin0.local_element(idof) +=
+          fvSpin0container[i].local_element(idof) * innerProducts[i];
+        ySpin1.local_element(idof) +=
+          fvSpin1container[i].local_element(idof) * innerProducts[i];          
+      }
+  }
+
+
+  double
+  estimateLargestEigenvalueMagJacLowrankPowerSpin(
+    const std::deque<distributedCPUVec<double>> &lowrankFvSpin0container,
+    const std::deque<distributedCPUVec<double>> &lowrankFvSpin1container,    
+    const std::deque<distributedCPUVec<double>> &lowrankVSpin0container,
+    const std::deque<distributedCPUVec<double>> &lowrankVSpin1container,    
+    const distributedCPUVec<double> &            xSpin0,
+    const distributedCPUVec<double> &            xSpin1,    
+    const dealii::AffineConstraints<double> &    constraintsRhoNodal)
+  {
+    const double tol = 1.0e-6;
+
+    double lambdaOld     = 0.0;
+    double lambdaNew     = 0.0;
+    double diffLambdaAbs = 1e+6;
+    //
+    // generate random vector v
+    //
+    distributedCPUVec<double> vVectorSpin0, vVectorSpin1, fVectorSpin0, fVectorSpin1;
+    vVectorSpin0.reinit(xSpin0);
+    vVectorSpin1.reinit(xSpin1);
+    fVectorSpin0.reinit(xSpin0);
+    fVectorSpin1.reinit(xSpin1);
+
+    vVectorSpin0 = 0.0, fVectorSpin0 = 0.0;
+    vVectorSpin1 = 0.0, fVectorSpin1 = 0.0;    
+    // std::srand(this_mpi_process);
+    const unsigned int local_size = vVectorSpin0.local_size();
+
+    // for (unsigned int i = 0; i < local_size; i++)
+    //  vVector.local_element(i) = x.local_element(i);
+
+    for (unsigned int i = 0; i < local_size; i++)
+    {
+      vVectorSpin0.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+      vVectorSpin1.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);      
+    }
+
+    constraintsRhoNodal.set_zero(vVectorSpin0);
+
+    vVectorSpin0.update_ghost_values();
+
+    constraintsRhoNodal.set_zero(vVectorSpin1);
+
+    vVectorSpin1.update_ghost_values();    
+
+    //
+    // evaluate l2 norm
+    //
+    vVectorSpin0 /=std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
+    vVectorSpin1 /=std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);    
+    vVectorSpin0.update_ghost_values();
+    vVectorSpin1.update_ghost_values();     
+    int iter = 0;
+    while (diffLambdaAbs > tol)
+      {
+        fVectorSpin0 = 0;
+        fVectorSpin1 = 0;
+        lowrankJacApplySpin(lowrankFvSpin0container,
+                        lowrankFvSpin1container,
+                        lowrankVSpin0container,
+                        lowrankVSpin1container,
+                        vVectorSpin0,
+                        vVectorSpin1,
+                        fVectorSpin0,
+                        fVectorSpin1);
+        lambdaOld = lambdaNew;
+        lambdaNew = (vVectorSpin0 * fVectorSpin0+vVectorSpin1 * fVectorSpin1) / (vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
+
+        vVectorSpin0 = fVectorSpin0;
+        vVectorSpin1 = fVectorSpin1;
+        vVectorSpin0 /= std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
+        vVectorSpin1 /= std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1); 
+        vVectorSpin0.update_ghost_values();
+        vVectorSpin1.update_ghost_values();
+
+        diffLambdaAbs = std::abs(lambdaNew - lambdaOld);
+        iter++;
+      }
+
+    // std::cout << " Power iterations iter: "<< iter
+    //            << std::endl;
+
+    return std::abs(lambdaNew);
+  }
+
+  double
+  estimateLargestEigenvalueMagJacInvLowrankPowerSpin(
+    const std::deque<distributedCPUVec<double>> &lowrankFvSpin0container,
+    const std::deque<distributedCPUVec<double>> &lowrankFvSpin1container,    
+    const std::deque<distributedCPUVec<double>> &lowrankVSpin0container,
+    const std::deque<distributedCPUVec<double>> &lowrankVSpin1container,    
+    const distributedCPUVec<double> &            xSpin0,
+    const distributedCPUVec<double> &            xSpin1,    
+    const dealii::AffineConstraints<double> &    constraintsRhoNodal)
+  {
+    const double tol = 1.0e-6;
+
+    double lambdaOld     = 0.0;
+    double lambdaNew     = 0.0;
+    double diffLambdaAbs = 1e+6;
+    //
+    // generate random vector v
+    //
+    distributedCPUVec<double> vVectorSpin0, vVectorSpin1, fVectorSpin0, fVectorSpin1;
+    vVectorSpin0.reinit(xSpin0);
+    vVectorSpin1.reinit(xSpin1);
+    fVectorSpin0.reinit(xSpin0);
+    fVectorSpin1.reinit(xSpin1);
+
+    vVectorSpin0 = 0.0, fVectorSpin0 = 0.0;
+    vVectorSpin1 = 0.0, fVectorSpin1 = 0.0;    
+    // std::srand(this_mpi_process);
+    const unsigned int local_size = vVectorSpin0.local_size();
+
+    // for (unsigned int i = 0; i < local_size; i++)
+    //  vVector.local_element(i) = x.local_element(i);
+
+    for (unsigned int i = 0; i < local_size; i++)
+    {
+      vVectorSpin0.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+      vVectorSpin1.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);      
+    }
+
+    constraintsRhoNodal.set_zero(vVectorSpin0);
+
+    vVectorSpin0.update_ghost_values();
+
+    constraintsRhoNodal.set_zero(vVectorSpin1);
+
+    vVectorSpin1.update_ghost_values();    
+
+    //
+    // evaluate l2 norm
+    //
+    vVectorSpin0 /=std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
+    vVectorSpin1 /=std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);    
+    vVectorSpin0.update_ghost_values();
+    vVectorSpin1.update_ghost_values();    
+    int iter = 0;
+    while (diffLambdaAbs > tol)
+      {
+        fVectorSpin0 = 0;
+        fVectorSpin1 = 0;
+        lowrankJacInvApplySpin(lowrankFvSpin0container,
+                        lowrankFvSpin1container,
+                        lowrankVSpin0container,
+                        lowrankVSpin1container,
+                        vVectorSpin0,
+                        vVectorSpin1,
+                        fVectorSpin0,
+                        fVectorSpin1);
+        lambdaOld = lambdaNew;
+        lambdaNew = (vVectorSpin0 * fVectorSpin0+vVectorSpin1 * fVectorSpin1) / (vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
+
+        vVectorSpin0 = fVectorSpin0;
+        vVectorSpin1 = fVectorSpin1;
+        vVectorSpin0 /= std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
+        vVectorSpin1 /= std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1); 
+        vVectorSpin0.update_ghost_values();
+        vVectorSpin1.update_ghost_values();
+
+        diffLambdaAbs = std::abs(lambdaNew - lambdaOld);
+        iter++;
+      }
+
+    // std::cout << " Power iterations iter: "<< iter
+    //            << std::endl;
+
+    return std::abs(lambdaNew);
+  }
+
 } // namespace internalLowrankJacInv
 
 
@@ -402,10 +659,30 @@ dftClass<FEOrder, FEOrderElectro>::
             pcout << " Relative approx error:  " << relativeApproxError
                   << " for kernel rank: " << d_rankCurrentLRD << std::endl;
 
+          if ((normValue < d_dftParamsPtr->selfConsistentSolverTolerance) &&
+              (d_dftParamsPtr->estimateJacCondNoFinalSCFIter))
+            {
+              if (relativeApproxError < 1.0e-5)
+                {
+                  break;
+                }
+            }
+          else
+            {
+              if (relativeApproxError <
+                  d_dftParamsPtr->adaptiveRankRelTolLRD)
+                {
+                  d_tolReached = true;
+                  break;
+                }
+            }
+
+          /*
           if (relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD)
             {
               break;
             }
+          */
         }
     }
 
@@ -424,6 +701,35 @@ dftClass<FEOrder, FEOrderElectro>::
                                                 kernelActionSpin0,
                                                 kernelActionSpin1);
 
+  if (normValue < d_dftParamsPtr->selfConsistentSolverTolerance &&
+      d_dftParamsPtr->estimateJacCondNoFinalSCFIter)
+  {
+      const double maxAbsEigenValue =
+        internalLowrankJacInv::estimateLargestEigenvalueMagJacLowrankPowerSpin(
+          d_fvSpin0containerVals,
+          d_fvSpin1containerVals,
+          d_vSpin0containerVals,
+          d_vSpin1containerVals,
+          residualRhoSpin0,
+          residualRhoSpin1,
+          d_constraintsRhoNodal);
+      const double minAbsEigenValue =
+        1.0 /
+        internalLowrankJacInv::estimateLargestEigenvalueMagJacInvLowrankPowerSpin(
+          d_fvSpin0containerVals,
+          d_fvSpin1containerVals,
+          d_vSpin0containerVals,
+          d_vSpin1containerVals,
+          residualRhoSpin0,
+          residualRhoSpin1,
+          d_constraintsRhoNodal);
+      pcout << " Maximum eigenvalue of low rank approx of Jacobian: "
+            << maxAbsEigenValue << std::endl;
+      pcout << " Minimum non-zero eigenvalue of low rank approx of Jacobian: "
+            << minAbsEigenValue << std::endl;
+      pcout << " Condition no of low rank approx of Jacobian: "
+            << maxAbsEigenValue / minAbsEigenValue << std::endl;    
+  }
 
   // pcout << " Preconditioned simple mixing step " << std::endl;
   // preconditioned simple mixing step
