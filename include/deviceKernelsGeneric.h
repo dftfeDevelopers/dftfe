@@ -52,7 +52,8 @@ namespace dftfe
       void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const ValueType1 *     valueType1Arr,
-                                       ValueType2 *           valueType2Arr);
+                                       ValueType2 *           valueType2Arr,
+                                       const deviceStream_t streamId=0);
 
 
       template <typename ValueType1, typename ValueType2>
