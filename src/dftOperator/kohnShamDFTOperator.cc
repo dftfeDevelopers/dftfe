@@ -127,14 +127,21 @@ namespace dftfe
     bool                                  flag)
   {
     if (flag)
-      vectorTools::createDealiiVector<dataTypes::number>(
-        dftPtr->matrix_free_data.get_vector_partitioner(),
-        numberWaveFunctions,
-        flattenedArray);
+      {
+        vectorTools::createDealiiVector<dataTypes::number>(
+          dftPtr->matrix_free_data.get_vector_partitioner(),
+          numberWaveFunctions,
+          flattenedArray);
+      }
+    distributedCPUMultiVec<dataTypes::number> tempFlattenedArray;
+    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+      dftPtr->matrix_free_data.get_vector_partitioner(),
+      numberWaveFunctions,
+      tempFlattenedArray);
 
     if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
-        vectorTools::createDealiiVector<dataTypes::number>(
+        dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
           numberWaveFunctions,
           dftPtr->d_projectorKetTimesVectorParFlattened);
@@ -143,7 +150,7 @@ namespace dftfe
 
 
     vectorTools::computeCellLocalIndexSetMap(
-      flattenedArray.get_partitioner(),
+      tempFlattenedArray.getMPIPatternP2P(),
       dftPtr->matrix_free_data,
       dftPtr->d_densityDofHandlerIndex,
       numberWaveFunctions,
@@ -153,7 +160,7 @@ namespace dftfe
 
 
     vectorTools::computeCellLocalIndexSetMap(
-      flattenedArray.get_partitioner(),
+      tempFlattenedArray.getMPIPatternP2P(),
       dftPtr->matrix_free_data,
       dftPtr->d_densityDofHandlerIndex,
       numberWaveFunctions,
@@ -171,11 +178,56 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::reinit(
+    const unsigned int                         numberWaveFunctions,
+    distributedCPUMultiVec<dataTypes::number> &flattenedArray,
+    bool                                       flag)
+  {
+    if (flag)
+      dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+        dftPtr->matrix_free_data.get_vector_partitioner(),
+        numberWaveFunctions,
+        flattenedArray);
+
+    if (dftPtr->d_dftParamsPtr->isPseudopotential)
+      dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+        dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+        numberWaveFunctions,
+        dftPtr->d_projectorKetTimesVectorParFlattened);
+
+
+
+    vectorTools::computeCellLocalIndexSetMap(
+      flattenedArray.getMPIPatternP2P(),
+      dftPtr->matrix_free_data,
+      dftPtr->d_densityDofHandlerIndex,
+      numberWaveFunctions,
+      d_flattenedArrayMacroCellLocalProcIndexIdMap,
+      d_flattenedArrayCellLocalProcIndexIdMap);
+
+
+
+    vectorTools::computeCellLocalIndexSetMap(
+      flattenedArray.getMPIPatternP2P(),
+      dftPtr->matrix_free_data,
+      dftPtr->d_densityDofHandlerIndex,
+      numberWaveFunctions,
+      d_FullflattenedArrayMacroCellLocalProcIndexIdMap,
+      d_normalCellIdToMacroCellIdMap,
+      d_macroCellIdToNormalCellIdMap,
+      d_FullflattenedArrayCellLocalProcIndexIdMap);
+
+    getOverloadedConstraintMatrix()->precomputeMaps(
+      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::reinit(
     const unsigned int numberWaveFunctions)
   {
     if (dftPtr->d_dftParamsPtr->isPseudopotential)
       {
-        vectorTools::createDealiiVector<dataTypes::number>(
+        dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
           numberWaveFunctions,
           dftPtr->d_projectorKetTimesVectorParFlattened);
@@ -187,9 +239,9 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::initCellWaveFunctionMatrix(
-    const unsigned int                    numberWaveFunctions,
-    distributedCPUVec<dataTypes::number> &src,
-    std::vector<dataTypes::number> &      cellWaveFunctionMatrix)
+    const unsigned int                         numberWaveFunctions,
+    distributedCPUMultiVec<dataTypes::number> &src,
+    std::vector<dataTypes::number> &           cellWaveFunctionMatrix)
   {
     cellWaveFunctionMatrix.resize(d_numberCellsLocallyOwned *
                                     d_numberNodesPerElement *
@@ -205,7 +257,7 @@ namespace dftfe
               d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 #ifdef USE_COMPLEX
             zcopy_(&numberWaveFunctions,
-                   src.begin() + localNodeId,
+                   src.data() + localNodeId,
                    &inc,
                    &cellWaveFunctionMatrix[d_numberNodesPerElement *
                                              numberWaveFunctions * iElem +
@@ -214,7 +266,7 @@ namespace dftfe
 
 #else
             dcopy_(&numberWaveFunctions,
-                   src.begin() + localNodeId,
+                   src.data() + localNodeId,
                    &inc,
                    &cellWaveFunctionMatrix[d_numberNodesPerElement *
                                              numberWaveFunctions * iElem +
@@ -231,9 +283,9 @@ namespace dftfe
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     fillGlobalArrayFromCellWaveFunctionMatrix(
-      const unsigned int                    numberWaveFunctions,
-      const std::vector<dataTypes::number> &cellWaveFunctionMatrix,
-      distributedCPUVec<dataTypes::number> &glbArray)
+      const unsigned int                         numberWaveFunctions,
+      const std::vector<dataTypes::number> &     cellWaveFunctionMatrix,
+      distributedCPUMultiVec<dataTypes::number> &glbArray)
 
   {
     const unsigned int inc = 1;
@@ -251,7 +303,7 @@ namespace dftfe
                                                  numberWaveFunctions * iElem +
                                                numberWaveFunctions * iNode],
                        &inc,
-                       glbArray.begin() + localNodeId,
+                       glbArray.data() + localNodeId,
                        &inc);
 #else
                 dcopy_(&numberWaveFunctions,
@@ -259,7 +311,7 @@ namespace dftfe
                                                  numberWaveFunctions * iElem +
                                                numberWaveFunctions * iNode],
                        &inc,
-                       glbArray.begin() + localNodeId,
+                       glbArray.data() + localNodeId,
                        &inc);
 #endif
               }
@@ -339,7 +391,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  distributedCPUVec<dataTypes::number> &
+  distributedCPUMultiVec<dataTypes::number> &
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     getParallelProjectorKetTimesBlockVector()
   {
@@ -772,16 +824,16 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::HX(
-    distributedCPUVec<std::complex<double>> &src,
-    const unsigned int                       numberWaveFunctions,
-    const bool                               scaleFlag,
-    const double                             scalar,
-    distributedCPUVec<std::complex<double>> &dst,
+    distributedCPUMultiVec<std::complex<double>> &src,
+    const unsigned int                            numberWaveFunctions,
+    const bool                                    scaleFlag,
+    const double                                  scalar,
+    distributedCPUMultiVec<std::complex<double>> &dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
 
 
   {
-    const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
+    const unsigned int numberDofs = src.locallyOwnedSize();
     const unsigned int inc        = 1;
 
     //
@@ -793,7 +845,7 @@ namespace dftfe
           d_invSqrtMassVector.local_element(i) * scalar;
         zdscal_(&numberWaveFunctions,
                 &scalingCoeff,
-                src.begin() + i * numberWaveFunctions,
+                src.data() + i * numberWaveFunctions,
                 &inc);
       }
 
@@ -805,7 +857,7 @@ namespace dftfe
             const double scalingCoeff = d_sqrtMassVector.local_element(i);
             zdscal_(&numberWaveFunctions,
                     &scalingCoeff,
-                    dst.begin() + i * numberWaveFunctions,
+                    dst.data() + i * numberWaveFunctions,
                     &inc);
           }
       }
@@ -841,8 +893,9 @@ namespace dftfe
 
 
 
-    src.zero_out_ghosts();
-    dst.compress(VectorOperation::add);
+    src.zeroOutGhosts();
+    dst.accumulateAddLocallyOwned();
+    dst.zeroOutGhosts();
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
@@ -852,7 +905,7 @@ namespace dftfe
         const double scalingCoeff = d_invSqrtMassVector.local_element(i);
         zdscal_(&numberWaveFunctions,
                 &scalingCoeff,
-                dst.begin() + i * numberWaveFunctions,
+                dst.data() + i * numberWaveFunctions,
                 &inc);
       }
 
@@ -866,7 +919,7 @@ namespace dftfe
           d_sqrtMassVector.local_element(i) * (1.0 / scalar);
         zdscal_(&numberWaveFunctions,
                 &scalingCoeff,
-                src.begin() + i * numberWaveFunctions,
+                src.data() + i * numberWaveFunctions,
                 &inc);
       }
   }
@@ -874,15 +927,15 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::HX(
-    distributedCPUVec<std::complex<double>> &src,
-    std::vector<std::complex<double>> &      cellSrcWaveFunctionMatrix,
-    const unsigned int                       numberWaveFunctions,
-    const bool                               scaleFlag,
-    const double                             scalar,
-    const double                             scalarA,
-    const double                             scalarB,
-    distributedCPUVec<std::complex<double>> &dst,
-    std::vector<std::complex<double>> &      cellDstWaveFunctionMatrix)
+    distributedCPUMultiVec<std::complex<double>> &src,
+    std::vector<std::complex<double>> &           cellSrcWaveFunctionMatrix,
+    const unsigned int                            numberWaveFunctions,
+    const bool                                    scaleFlag,
+    const double                                  scalar,
+    const double                                  scalarA,
+    const double                                  scalarB,
+    distributedCPUMultiVec<std::complex<double>> &dst,
+    std::vector<std::complex<double>> &           cellDstWaveFunctionMatrix)
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
@@ -891,14 +944,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::HX(
-    distributedCPUVec<double> &src,
+    distributedCPUMultiVec<double> &src,
     const unsigned int numberWaveFunctions,
     const bool scaleFlag,
     const double scalar,
-    distributedCPUVec<double> &dst,
+    distributedCPUMultiVec<double> &dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
-    const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
+    const unsigned int numberDofs = src.locallyOwnedSize();
     const unsigned int inc = 1;
 
 
@@ -910,7 +963,7 @@ namespace dftfe
         const double scalingCoeff = d_invSqrtMassVector.local_element(i);
         dscal_(&numberWaveFunctions,
                &scalingCoeff,
-               src.begin() + i * numberWaveFunctions,
+               src.data() + i * numberWaveFunctions,
                &inc);
       }
 
@@ -922,7 +975,7 @@ namespace dftfe
             const double scalingCoeff = d_sqrtMassVector.local_element(i);
             dscal_(&numberWaveFunctions,
                    &scalingCoeff,
-                   dst.begin() + i * numberWaveFunctions,
+                   dst.data() + i * numberWaveFunctions,
                    &inc);
           }
       }
@@ -956,9 +1009,9 @@ namespace dftfe
     dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(
       dst, numberWaveFunctions);
 
-
-    src.zero_out_ghosts();
-    dst.compress(VectorOperation::add);
+    src.zeroOutGhosts();
+    dst.accumulateAddLocallyOwned();
+    dst.zeroOutGhosts();
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
@@ -967,7 +1020,7 @@ namespace dftfe
       {
         dscal_(&numberWaveFunctions,
                &d_invSqrtMassVector.local_element(i),
-               dst.begin() + i * numberWaveFunctions,
+               dst.data() + i * numberWaveFunctions,
                &inc);
       }
 
@@ -979,7 +1032,7 @@ namespace dftfe
         double scalingCoeff = d_sqrtMassVector.local_element(i);
         dscal_(&numberWaveFunctions,
                &scalingCoeff,
-               src.begin() + i * numberWaveFunctions,
+               src.data() + i * numberWaveFunctions,
                &inc);
       }
   }
@@ -987,17 +1040,17 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::HX(
-    distributedCPUVec<double> &src,
+    distributedCPUMultiVec<double> &src,
     std::vector<double> &cellSrcWaveFunctionMatrix,
     const unsigned int numberWaveFunctions,
     const bool scaleFlag,
     const double scalar,
     const double scalarA,
     const double scalarB,
-    distributedCPUVec<double> &dst,
+    distributedCPUMultiVec<double> &dst,
     std::vector<double> &cellDstWaveFunctionMatrix)
   {
-    const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
+    const unsigned int numberDofs = src.locallyOwnedSize();
     const unsigned int inc = 1;
 
 
@@ -1008,8 +1061,7 @@ namespace dftfe
             const double scalingCoeff = d_invSqrtMassVector.local_element(iDof);
             for (unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
               {
-                src.local_element(iDof * numberWaveFunctions + iWave) *=
-                  scalingCoeff;
+                src.data()[iDof * numberWaveFunctions + iWave] *= scalingCoeff;
               }
           }
       }
@@ -1069,7 +1121,7 @@ namespace dftfe
                 const double scalingCoeff = d_sqrtMassVector.local_element(i);
                 dscal_(&numberWaveFunctions,
                        &scalingCoeff,
-                       dst.begin() + i * numberWaveFunctions,
+                       dst.data() + i * numberWaveFunctions,
                        &inc);
               }
           }
@@ -1102,8 +1154,9 @@ namespace dftfe
       dst, numberWaveFunctions);
 
 
-    src.zero_out_ghosts();
-    dst.compress(VectorOperation::add);
+    src.zeroOutGhosts();
+    dst.accumulateAddLocallyOwned();
+    dst.zeroOutGhosts();
 
     // unscale cell level src vector
     for (unsigned int iDof = 0; iDof < numberDofs; ++iDof)
@@ -1113,8 +1166,7 @@ namespace dftfe
           {
             for (unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
               {
-                src.local_element(iDof * numberWaveFunctions + iWave) *=
-                  scalingCoeff;
+                src.data()[iDof * numberWaveFunctions + iWave] *= scalingCoeff;
               }
           }
       }
@@ -1168,7 +1220,7 @@ namespace dftfe
           {
             dscal_(&numberWaveFunctions,
                    &d_invSqrtMassVector.local_element(i),
-                   dst.begin() + i * numberWaveFunctions,
+                   dst.data() + i * numberWaveFunctions,
                    &inc);
           }
       }
@@ -1200,20 +1252,20 @@ namespace dftfe
     //
     // create temporary array XTemp
     //
-    distributedCPUVec<dataTypes::number> XTemp;
+    distributedCPUMultiVec<dataTypes::number> XTemp;
     reinit(numberWaveFunctions, XTemp, true);
     for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
       for (unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-        XTemp.local_element(iNode * numberWaveFunctions + iWave) =
+        XTemp.data()[iNode * numberWaveFunctions + iWave] =
           X[iNode * numberWaveFunctions + iWave];
 
     //
     // create temporary array Y
     //
-    distributedCPUVec<dataTypes::number> Y;
+    distributedCPUMultiVec<dataTypes::number> Y;
     reinit(numberWaveFunctions, Y, true);
 
-    Y = dataTypes::number(0);
+    Y.setValue(dataTypes::number(0));
     //
     // evaluate H times XTemp and store in Y
     //
@@ -1222,8 +1274,8 @@ namespace dftfe
     HX(XTemp, numberWaveFunctions, scaleFlag, scalar, Y);
 
 #ifdef USE_COMPLEX
-    for (unsigned int i = 0; i < Y.local_size(); ++i)
-      Y.local_element(i) = std::conj(Y.local_element(i));
+    for (unsigned int i = 0; i < Y.locallyOwnedSize(); ++i)
+      Y.data()[i] = std::conj(Y.data()[i]);
 
     char                       transA = 'N';
     char                       transB = 'T';
@@ -1261,7 +1313,7 @@ namespace dftfe
            &numberWaveFunctions);
 #endif
 
-    Y.reinit(0);
+    reinit(0, Y, true);
 
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
   }
@@ -1281,7 +1333,7 @@ namespace dftfe
     const unsigned int numberDofs = X.size() / numberWaveFunctions;
 
     // create temporary arrays XBlock,Hx
-    distributedCPUVec<dataTypes::number> XBlock, HXBlock;
+    distributedCPUMultiVec<dataTypes::number> XBlock, HXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1346,17 +1398,17 @@ namespace dftfe
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
-            XBlock = dataTypes::number(0);
+            XBlock.setValue(dataTypes::number(0));
             // fill XBlock^{T} from X:
             for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
               for (unsigned int iWave = 0; iWave < B; ++iWave)
-                XBlock.local_element(iNode * B + iWave) =
+                XBlock.data()[iNode * B + iWave] =
                   X[iNode * numberWaveFunctions + jvec + iWave];
 
 
             MPI_Barrier(getMPICommunicator());
             // evaluate H times XBlock and store in HXBlock^{T}
-            HXBlock                = dataTypes::number(0);
+            HXBlock.setValue(dataTypes::number(0));
             const bool   scaleFlag = false;
             const double scalar    = 1.0;
 
@@ -1392,7 +1444,7 @@ namespace dftfe
                   &alpha,
                   &X[0] + jvec,
                   &numberWaveFunctions,
-                  HXBlock.begin(),
+                  HXBlock.data(),
                   &B,
                   &beta,
                   &projHamBlock[0],
@@ -1456,7 +1508,7 @@ namespace dftfe
     const unsigned int numberDofs = X.size() / N;
 
     // create temporary arrays XBlock,Hx
-    distributedCPUVec<dataTypes::number> XBlock, HXBlock;
+    distributedCPUMultiVec<dataTypes::number> XBlock, HXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1523,17 +1575,16 @@ namespace dftfe
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
-            XBlock = dataTypes::number(0);
+            XBlock.setValue(dataTypes::number(0));
             // fill XBlock^{T} from X:
             for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
               for (unsigned int iWave = 0; iWave < B; ++iWave)
-                XBlock.local_element(iNode * B + iWave) =
-                  X[iNode * N + jvec + iWave];
+                XBlock.data()[iNode * B + iWave] = X[iNode * N + jvec + iWave];
 
 
             MPI_Barrier(getMPICommunicator());
             // evaluate H times XBlock and store in HXBlock^{T}
-            HXBlock                = dataTypes::number(0);
+            HXBlock.setValue(dataTypes::number(0));
             const bool   scaleFlag = false;
             const double scalar    = 1.0;
 
@@ -1570,7 +1621,7 @@ namespace dftfe
                       &alpha,
                       &X[0] + jvec,
                       &N,
-                      HXBlock.begin(),
+                      HXBlock.data(),
                       &B,
                       &beta,
                       &projHamBlock[0],
@@ -1614,7 +1665,7 @@ namespace dftfe
                                               dataTypes::numberFP32(0.0);
 
                 for (unsigned int i = 0; i < numberDofs * B; ++i)
-                  HXBlockSinglePrec[i] = HXBlock.local_element(i);
+                  HXBlockSinglePrec[i] = HXBlock.data()[i];
 
                 const unsigned int D = N - jvec;
 

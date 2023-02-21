@@ -100,13 +100,13 @@ namespace dftfe
     inline MPI_Datatype
     mpi_type_id(const std::complex<float> *)
     {
-      return MPI_COMPLEX;
+      return MPI_CXX_FLOAT_COMPLEX;
     }
 
     inline MPI_Datatype
     mpi_type_id(const std::complex<double> *)
     {
-      return MPI_DOUBLE_COMPLEX;
+      return MPI_CXX_DOUBLE_COMPLEX;
     }
   } // namespace dataTypes
 } // namespace dftfe

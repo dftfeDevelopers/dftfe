@@ -97,12 +97,17 @@ namespace dftfe
   using distributedCPUVec =
     dealii::LinearAlgebra::distributed::Vector<elem_type,
                                                dealii::MemorySpace::Host>;
+
+  template <typename NumberType>
+  using distributedCPUMultiVec =
+    dftfe::linearAlgebra::MultiVector<NumberType,
+                                      dftfe::utils::MemorySpace::HOST>;
+
 #ifdef DFTFE_WITH_DEVICE
   template <typename NumberType>
   using distributedDeviceVec =
     dftfe::linearAlgebra::MultiVector<NumberType,
                                       dftfe::utils::MemorySpace::DEVICE>;
-
 #endif
 } // namespace dftfe
 

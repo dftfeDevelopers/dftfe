@@ -23,10 +23,10 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeNonLocalHamiltonianTimesX(
-    const distributedCPUVec<std::complex<double>> &src,
-    const unsigned int                             numberWaveFunctions,
-    distributedCPUVec<std::complex<double>> &      dst,
-    const double                                   scalar) const
+    const distributedCPUMultiVec<std::complex<double>> &src,
+    const unsigned int                                  numberWaveFunctions,
+    distributedCPUMultiVec<std::complex<double>> &      dst,
+    const double                                        scalar) const
 {
   std::map<unsigned int, std::vector<std::complex<double>>>
     projectorKetTimesVector;
@@ -77,7 +77,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   dealii::types::global_dof_index localNodeId =
                     d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
                   zcopy_(&numberWaveFunctions,
-                         src.begin() + localNodeId,
+                         src.data() + localNodeId,
                          &inc,
                          &cellWaveFunctionMatrix[numberWaveFunctions * iNode],
                          &inc);
@@ -116,8 +116,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell loop
 
-  dftPtr->d_projectorKetTimesVectorParFlattened =
-    std::complex<double>(0.0, 0.0);
+  dftPtr->d_projectorKetTimesVectorParFlattened.setValue(
+    std::complex<double>(0.0, 0.0));
 
 
   for (unsigned int iAtom = 0;
@@ -136,20 +136,22 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           const unsigned int id =
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
-          zcopy_(
-            &numberWaveFunctions,
-            &projectorKetTimesVector[atomId]
-                                    [numberWaveFunctions * iPseudoAtomicWave],
-            &inc,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
+          zcopy_(&numberWaveFunctions,
+                 &projectorKetTimesVector[atomId][numberWaveFunctions *
+                                                  iPseudoAtomicWave],
+                 &inc,
+                 &dftPtr->d_projectorKetTimesVectorParFlattened
+                    .data()[dftPtr->d_projectorKetTimesVectorParFlattened
+                              .getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
+                 &inc);
         }
     }
 
 
-  dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
-  dftPtr->d_projectorKetTimesVectorParFlattened.update_ghost_values();
+  dftPtr->d_projectorKetTimesVectorParFlattened.accumulateAddLocallyOwned();
+  dftPtr->d_projectorKetTimesVectorParFlattened.updateGhostValues();
 
   //
   // compute V*C^{T}*X
@@ -176,21 +178,25 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
 
-          zscal_(
-            &numberWaveFunctions,
-            &nonlocalConstantV,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
+          zscal_(&numberWaveFunctions,
+                 &nonlocalConstantV,
+                 &dftPtr->d_projectorKetTimesVectorParFlattened
+                    .data()[dftPtr->d_projectorKetTimesVectorParFlattened
+                              .getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
+                 &inc);
 
-          zcopy_(
-            &numberWaveFunctions,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
-            &inc,
-            &projectorKetTimesVector[atomId]
-                                    [numberWaveFunctions * iPseudoAtomicWave],
-            &inc);
+          zcopy_(&numberWaveFunctions,
+                 &dftPtr->d_projectorKetTimesVectorParFlattened
+                    .data()[dftPtr->d_projectorKetTimesVectorParFlattened
+                              .getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
+                 &inc,
+                 &projectorKetTimesVector[atomId][numberWaveFunctions *
+                                                  iPseudoAtomicWave],
+                 &inc);
         }
     }
 
@@ -250,7 +256,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                 &alpha1,
                 &cellNonLocalHamTimesWaveMatrix[numberWaveFunctions * iNode],
                 &inc1,
-                dst.begin() + localNodeId,
+                dst.data() + localNodeId,
                 &inc1);
             }
         }
@@ -260,10 +266,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-  computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> &src,
+  computeNonLocalHamiltonianTimesX(const distributedCPUMultiVec<double> &src,
                                    const unsigned int numberWaveFunctions,
-                                   distributedCPUVec<double> &dst,
-                                   const double               scalar) const
+                                   distributedCPUMultiVec<double> &dst,
+                                   const double                    scalar) const
 {
   std::map<unsigned int, std::vector<double>> projectorKetTimesVector;
 
@@ -315,7 +321,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   dealii::types::global_dof_index localNodeId =
                     d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
                   dcopy_(&numberWaveFunctions,
-                         src.begin() + localNodeId,
+                         src.data() + localNodeId,
                          &inc,
                          &cellWaveFunctionMatrix[numberWaveFunctions * iNode],
                          &inc);
@@ -352,7 +358,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // cell loop
 
-  dftPtr->d_projectorKetTimesVectorParFlattened = 0.0;
+  dftPtr->d_projectorKetTimesVectorParFlattened.setValue(0.0);
 
   for (unsigned int iAtom = 0;
        iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -371,19 +377,21 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
 
-          dcopy_(
-            &numberWaveFunctions,
-            &projectorKetTimesVector[atomId]
-                                    [numberWaveFunctions * iPseudoAtomicWave],
-            &inc,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
+          dcopy_(&numberWaveFunctions,
+                 &projectorKetTimesVector[atomId][numberWaveFunctions *
+                                                  iPseudoAtomicWave],
+                 &inc,
+                 &dftPtr->d_projectorKetTimesVectorParFlattened
+                    .data()[dftPtr->d_projectorKetTimesVectorParFlattened
+                              .getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
+                 &inc);
         }
     }
 
-  dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
-  dftPtr->d_projectorKetTimesVectorParFlattened.update_ghost_values();
+  dftPtr->d_projectorKetTimesVectorParFlattened.accumulateAddLocallyOwned();
+  dftPtr->d_projectorKetTimesVectorParFlattened.updateGhostValues();
 
   //
   // compute V*C^{T}*X
@@ -408,21 +416,25 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(
               atomId, iPseudoAtomicWave)];
 
-          dscal_(
-            &numberWaveFunctions,
-            &nonlocalConstantV,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
-            &inc);
+          dscal_(&numberWaveFunctions,
+                 &nonlocalConstantV,
+                 &dftPtr->d_projectorKetTimesVectorParFlattened
+                    .data()[dftPtr->d_projectorKetTimesVectorParFlattened
+                              .getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
+                 &inc);
 
-          dcopy_(
-            &numberWaveFunctions,
-            &dftPtr->d_projectorKetTimesVectorParFlattened[id *
-                                                           numberWaveFunctions],
-            &inc,
-            &projectorKetTimesVector[atomId]
-                                    [numberWaveFunctions * iPseudoAtomicWave],
-            &inc);
+          dcopy_(&numberWaveFunctions,
+                 &dftPtr->d_projectorKetTimesVectorParFlattened
+                    .data()[dftPtr->d_projectorKetTimesVectorParFlattened
+                              .getMPIPatternP2P()
+                              ->globalToLocal(id) *
+                            numberWaveFunctions],
+                 &inc,
+                 &projectorKetTimesVector[atomId][numberWaveFunctions *
+                                                  iPseudoAtomicWave],
+                 &inc);
         }
     }
 
@@ -483,7 +495,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                 &alpha1,
                 &cellNonLocalHamTimesWaveMatrix[numberWaveFunctions * iNode],
                 &inc1,
-                dst.begin() + localNodeId,
+                dst.data() + localNodeId,
                 &inc1);
             }
         }

@@ -48,7 +48,8 @@ namespace dftfe
     void
     MemoryManager<ValueType, MemorySpace::HOST>::deallocate(ValueType *ptr)
     {
-      delete[] ptr;
+      if (ptr != nullptr)
+        delete[] ptr;
     }
 
     template <typename ValueType>
@@ -57,7 +58,8 @@ namespace dftfe
                                                      ValueType * ptr,
                                                      ValueType   val)
     {
-      std::fill(ptr, ptr + size, val);
+      if (size != 0)
+        std::fill(ptr, ptr + size, val);
     }
 
 #ifdef DFTFE_WITH_DEVICE

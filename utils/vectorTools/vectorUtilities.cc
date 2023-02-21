@@ -323,7 +323,8 @@ namespace dftfe
 
     void
     computeCellLocalIndexSetMap(
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                                  partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
@@ -371,10 +372,11 @@ namespace dftfe
                     cell_dof_indices[iNode];
 
                   // Think about variable blockSize
-                  dealii::types::global_dof_index globalIndexFlattenedArray =
-                    (dealii::types::global_dof_index)blockSize * globalIndex;
+                  // dealii::types::global_dof_index globalIndexFlattenedArray =
+                  //   (dealii::types::global_dof_index)blockSize * globalIndex;
                   dealii::types::global_dof_index localIndexFlattenedArray =
-                    partitioner->global_to_local(globalIndexFlattenedArray);
+                    (partitioner->globalToLocal(globalIndex)) *
+                    (dealii::types::global_dof_index)blockSize;
                   flattenedArrayCellLocalProcIndexIdMap
                     [iElemCount * numberNodesPerElement + iNode] =
                       localIndexFlattenedArray;
@@ -387,7 +389,8 @@ namespace dftfe
 
     void
     computeCellLocalIndexSetMap(
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                                  partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
@@ -441,10 +444,11 @@ namespace dftfe
                     cell_dof_indicesGlobal[iNode];
 
                   // Think about variable blockSize
-                  dealii::types::global_dof_index globalIndexFlattenedArray =
-                    (dealii::types::global_dof_index)blockSize * globalIndex;
+                  // dealii::types::global_dof_index globalIndexFlattenedArray =
+                  //   (dealii::types::global_dof_index)blockSize * globalIndex;
                   dealii::types::global_dof_index localIndexFlattenedArray =
-                    partitioner->global_to_local(globalIndexFlattenedArray);
+                    (partitioner->globalToLocal(globalIndex)) *
+                    (dealii::types::global_dof_index)blockSize;
                   flattenedArrayMacroCellLocalProcIndexIdMap
                     [iElem * numberNodesPerElement + iNode] =
                       localIndexFlattenedArray;
@@ -480,10 +484,11 @@ namespace dftfe
                     cell_dof_indices[iNode];
 
                   // Think about variable blockSize
-                  dealii::types::global_dof_index globalIndexFlattenedArray =
-                    (dealii::types::global_dof_index)blockSize * globalIndex;
+                  // dealii::types::global_dof_index globalIndexFlattenedArray =
+                  //   (dealii::types::global_dof_index)blockSize * globalIndex;
                   dealii::types::global_dof_index localIndexFlattenedArray =
-                    partitioner->global_to_local(globalIndexFlattenedArray);
+                    (partitioner->globalToLocal(globalIndex)) *
+                    (dealii::types::global_dof_index)blockSize;
                   flattenedArrayCellLocalProcIndexIdMap
                     [iElemCount * numberNodesPerElement + iNode] =
                       localIndexFlattenedArray;
@@ -542,7 +547,8 @@ namespace dftfe
 
     void
     computeCellLocalIndexSetMap(
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
         &                                  partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
@@ -553,6 +559,12 @@ namespace dftfe
         &flattenedArrayCellLocalProcIndexIdMap)
 
     {
+      dealii::ConditionalOStream pcout(
+        std::cout,
+        (dealii::Utilities::MPI::this_mpi_process(
+           matrix_free_data.get_vector_partitioner()->get_mpi_communicator()) ==
+         0));
+
       //
       // get FE cell data
       //
@@ -606,10 +618,11 @@ namespace dftfe
                     cell_dof_indicesGlobal[iNode];
 
                   // Think about variable blockSize
-                  dealii::types::global_dof_index globalIndexFlattenedArray =
-                    (dealii::types::global_dof_index)blockSize * globalIndex;
+                  // dealii::types::global_dof_index globalIndexFlattenedArray =
+                  //   (dealii::types::global_dof_index)blockSize * globalIndex;
                   dealii::types::global_dof_index localIndexFlattenedArray =
-                    partitioner->global_to_local(globalIndexFlattenedArray);
+                    (partitioner->globalToLocal(globalIndex)) *
+                    (dealii::types::global_dof_index)blockSize;
                   flattenedArrayMacroCellLocalProcIndexIdMap[iElem].push_back(
                     localIndexFlattenedArray);
                 } // idof loop
@@ -644,10 +657,11 @@ namespace dftfe
                     cell_dof_indices[iNode];
 
                   // Think about variable blockSize
-                  dealii::types::global_dof_index globalIndexFlattenedArray =
-                    (dealii::types::global_dof_index)blockSize * globalIndex;
+                  // dealii::types::global_dof_index globalIndexFlattenedArray =
+                  //   (dealii::types::global_dof_index)blockSize * globalIndex;
                   dealii::types::global_dof_index localIndexFlattenedArray =
-                    partitioner->global_to_local(globalIndexFlattenedArray);
+                    (partitioner->globalToLocal(globalIndex)) *
+                    (dealii::types::global_dof_index)blockSize;
                   flattenedArrayCellLocalProcIndexIdMap[iElemCount].push_back(
                     localIndexFlattenedArray);
                 }

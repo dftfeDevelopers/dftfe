@@ -597,6 +597,40 @@ namespace dftfe
         d_localIndexMapUnflattenedToFlattened);
     }
 
+    void
+    constraintMatrixInfoDevice::precomputeMaps(
+      const std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
+        &                mpiPattern,
+      const unsigned int blockSize)
+    {
+      //
+      // Get required sizes
+      //
+      const unsigned int totalSize =
+        mpiPattern->localOwnedSize() + mpiPattern->localGhostSize();
+
+      d_localIndexMapUnflattenedToFlattened.clear();
+      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
+
+      //
+      // fill the data array
+      //
+      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
+        {
+          // const dealii::types::global_dof_index globalIndex =
+          //   unFlattenedPartitioner->local_to_global(ilocalDof);
+          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
+            ilocalDof * blockSize;
+          // flattenedPartitioner->globalToLocal(globalIndex * blockSize);
+        }
+
+      d_localIndexMapUnflattenedToFlattenedDevice.resize(
+        d_localIndexMapUnflattenedToFlattened.size());
+      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(
+        d_localIndexMapUnflattenedToFlattened);
+    }
+
 
     template <typename NumberType>
     void

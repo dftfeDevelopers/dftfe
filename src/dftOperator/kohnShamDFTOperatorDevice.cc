@@ -543,11 +543,10 @@ namespace dftfe
     d_kSquareTimesHalfVecDevice.resize(kpointSquareTimesHalfTemp.size());
     d_kSquareTimesHalfVecDevice.copyFrom(kpointSquareTimesHalfTemp);
 
-    distributedCPUVec<dataTypes::number> flattenedArray;
+    distributedCPUMultiVec<dataTypes::number> flattenedArray;
     if (flag)
-      vectorTools::createDealiiVector<dataTypes::number>(
-        dftPtr->matrix_free_data.get_vector_partitioner(
-          dftPtr->d_densityDofHandlerIndex),
+      dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
+        dftPtr->matrix_free_data.get_vector_partitioner(),
         numberWaveFunctions,
         flattenedArray);
 
@@ -626,7 +625,7 @@ namespace dftfe
       locallyOwnedProcBoundaryNodesVector);
 
     vectorTools::computeCellLocalIndexSetMap(
-      flattenedArray.get_partitioner(),
+      flattenedArray.getMPIPatternP2P(),
       dftPtr->matrix_free_data,
       dftPtr->d_densityDofHandlerIndex,
       numberWaveFunctions,
@@ -643,10 +642,7 @@ namespace dftfe
 
 
     getOverloadedConstraintMatrix()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(
-        dftPtr->d_densityDofHandlerIndex),
-      flattenedArray.get_partitioner(),
-      numberWaveFunctions);
+      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
 
     getOverloadedConstraintMatrixHost()->precomputeMaps(
       dftPtr->matrix_free_data.get_vector_partitioner(),
