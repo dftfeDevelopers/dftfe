@@ -340,7 +340,7 @@ namespace dftfe
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
-    
+
 
     /**
      * @brief Get constraint matrix eigen

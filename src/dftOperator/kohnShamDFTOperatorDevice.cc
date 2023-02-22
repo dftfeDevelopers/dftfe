@@ -3604,8 +3604,8 @@ namespace dftfe
                       globalToLocalColumnIdMap[j + jvec];
                     for (unsigned int i = j + jvec; i < N; ++i)
                       {
-                        std::unordered_map<unsigned int, unsigned int>::iterator it =
-                          globalToLocalRowIdMap.find(i);
+                        std::unordered_map<unsigned int, unsigned int>::iterator
+                          it = globalToLocalRowIdMap.find(i);
                         if (it != globalToLocalRowIdMap.end())
                           projHamPar.local_el(it->second, localColumnId) =
                             projHamBlockHost[j * D + i - jvec];
@@ -3952,7 +3952,8 @@ namespace dftfe
                           globalToLocalColumnIdMap[j + jvec];
                         for (unsigned int i = j + jvec; i < N; ++i)
                           {
-                            std::unordered_map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int,
+                                               unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(i);
                             if (it != globalToLocalRowIdMap.end())
                               projHamPar.local_el(it->second, localColumnId) =
@@ -4473,8 +4474,9 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::unordered_map<unsigned int, unsigned int>::iterator
-                                  it = globalToLocalRowIdMap.find(i);
+                                std::unordered_map<unsigned int,
+                                                   unsigned int>::iterator it =
+                                  globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
                                                       localColumnId) =
@@ -4506,8 +4508,9 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::unordered_map<unsigned int, unsigned int>::iterator
-                                  it = globalToLocalRowIdMap.find(i);
+                                std::unordered_map<unsigned int,
+                                                   unsigned int>::iterator it =
+                                  globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
                                                       localColumnId) =
@@ -4658,7 +4661,7 @@ namespace dftfe
                                 dftfe::utils::MemorySpace::DEVICE>
       projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
 
-   dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+    dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                 dftfe::utils::MemorySpace::DEVICE>
       projHamBlockFP32(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
 
@@ -4833,13 +4836,13 @@ namespace dftfe
               }
 
             if (!(jvec + B > Noc))
-            {
+              {
                 dftfe::utils::deviceKernelsGeneric::
-                  copyValueType1ArrToValueType2Arr(D*B,
+                  copyValueType1ArrToValueType2Arr(D * B,
                                                    projHamBlock.begin(),
                                                    projHamBlockFP32.begin(),
-                                                   streamDataMove);              
-            }
+                                                   streamDataMove);
+              }
 
             if (dftPtr->d_dftParamsPtr->useDeviceDirectAllReduce)
               {
@@ -4930,8 +4933,9 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::unordered_map<unsigned int, unsigned int>::iterator
-                                  it = globalToLocalRowIdMap.find(i);
+                                std::unordered_map<unsigned int,
+                                                   unsigned int>::iterator it =
+                                  globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
                                                       localColumnId) =
@@ -4963,8 +4967,9 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::unordered_map<unsigned int, unsigned int>::iterator
-                                  it = globalToLocalRowIdMap.find(i);
+                                std::unordered_map<unsigned int,
+                                                   unsigned int>::iterator it =
+                                  globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
                                                       localColumnId) =

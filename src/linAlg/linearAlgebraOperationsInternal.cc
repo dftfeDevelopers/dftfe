@@ -315,8 +315,9 @@ namespace dftfe
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftfe::ScaLAPACKMatrix<T> &                mat,
-        std::unordered_map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
-        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap)
+        std::unordered_map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+        std::unordered_map<unsigned int, unsigned int>
+          &globalToLocalColumnIdMap)
       {
         globalToLocalRowIdMap.clear();
         globalToLocalColumnIdMap.clear();
@@ -560,7 +561,8 @@ namespace dftfe
                           globalToLocalColumnIdMap[i + ivec];
                         for (unsigned int j = ivec + i; j < N; ++j)
                           {
-                            std::unordered_map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int,
+                                               unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(j);
                             if (it != globalToLocalRowIdMap.end())
                               overlapMatPar.local_el(it->second,
@@ -697,7 +699,8 @@ namespace dftfe
                           globalToLocalColumnIdMap[i + ivec];
                         for (unsigned int j = ivec + i; j < N; ++j)
                           {
-                            std::unordered_map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int,
+                                               unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(j);
                             if (it != globalToLocalRowIdMap.end())
                               overlapMatPar.local_el(it->second,
@@ -844,8 +847,9 @@ namespace dftfe
 
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it =
+                                        globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
                                       rotationMatBlock[i * BVec + j] =
                                         rotationMatPar.local_el(localRowId,
@@ -865,8 +869,8 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
                                       rotationMatBlock[i * BVec + j] =
                                         rotationMatPar.local_el(it->second,
@@ -1097,8 +1101,9 @@ namespace dftfe
 
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it =
+                                        globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
                                       rotationMatBlock[i * BVec + j] =
                                         QMat.local_el(localRowId, it->second);
@@ -1117,8 +1122,8 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
                                       rotationMatBlock[i * BVec + j] =
                                         QMat.local_el(it->second,
@@ -1297,8 +1302,9 @@ namespace dftfe
 
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it =
+                                        globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         const T val =
@@ -1326,8 +1332,8 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
                                       {
                                         const T val =
@@ -1568,8 +1574,9 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it =
+                                        globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + j] =
@@ -1581,8 +1588,8 @@ namespace dftfe
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(i);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalColumnIdMap.find(i);
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + i - jvec] =
@@ -1606,8 +1613,8 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + j] =
@@ -1619,8 +1626,8 @@ namespace dftfe
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(i);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(i);
                                     if (globalToLocalRowIdMap.find(i) !=
                                         globalToLocalRowIdMap.end())
                                       {
@@ -1905,8 +1912,9 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it =
+                                        globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + j] =
@@ -1918,8 +1926,8 @@ namespace dftfe
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalColumnIdMap.find(i);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalColumnIdMap.find(i);
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + i - jvec] =
@@ -1943,8 +1951,8 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(j + jvec);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + j] =
@@ -1956,8 +1964,8 @@ namespace dftfe
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
                                     std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                                      globalToLocalRowIdMap.find(i);
+                                                       unsigned int>::iterator
+                                      it = globalToLocalRowIdMap.find(i);
                                     if (globalToLocalRowIdMap.find(i) !=
                                         globalToLocalRowIdMap.end())
                                       {
@@ -2113,15 +2121,17 @@ namespace dftfe
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftfe::ScaLAPACKMatrix<double> &           mat,
-        std::unordered_map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
-        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
+        std::unordered_map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+        std::unordered_map<unsigned int, unsigned int>
+          &globalToLocalColumnIdMap);
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &mat,
         std::unordered_map<unsigned int, unsigned int> &globalToLocalRowIdMap,
-        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
+        std::unordered_map<unsigned int, unsigned int>
+          &globalToLocalColumnIdMap);
 
       template void
       fillParallelOverlapMatrix(

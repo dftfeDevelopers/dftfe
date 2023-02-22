@@ -2138,7 +2138,10 @@ namespace dftfe
     //
     computing_timer.enter_subsection("scf solve");
 
-    double firstScfChebyTol =d_dftParamsPtr->restrictToOnePass?1e+4:(d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2);
+    double firstScfChebyTol =
+      d_dftParamsPtr->restrictToOnePass ?
+        1e+4 :
+        (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2);
 
 
     if (d_dftParamsPtr->solverMode == "MD")

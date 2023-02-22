@@ -97,7 +97,7 @@ namespace dftfe
     bool writeDensitySolutionFields;
 
     std::string  startingWFCType;
-    bool         restrictToOnePass;    
+    bool         restrictToOnePass;
     unsigned int numCoreWfcRR;
     unsigned int numCoreWfcXtHX;
     unsigned int wfcBlockSize;

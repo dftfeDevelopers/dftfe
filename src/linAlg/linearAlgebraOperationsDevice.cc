@@ -153,10 +153,10 @@ namespace dftfe
 
       __global__ void
       copyFromOverlapMatBlockToDPSPBlocks(const unsigned int B,
-                                       const unsigned int D,
-                                       const double * overlapMatrixBlock,
-				       double *       overlapMatrixBlockDP,
-                                       float *       overlapMatrixBlockSP)
+                                          const unsigned int D,
+                                          const double *     overlapMatrixBlock,
+                                          double *overlapMatrixBlockDP,
+                                          float * overlapMatrixBlockSP)
       {
         const unsigned int numEntries = B * D;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
@@ -165,22 +165,22 @@ namespace dftfe
             const unsigned int ibdof = i / D;
             const unsigned int ivec  = i % D;
 
-	    if (ivec<B)
-              overlapMatrixBlockDP[ibdof*B + ivec] =
-              overlapMatrixBlock[i];
-	    else
-              overlapMatrixBlockSP[ibdof*(D-B) + (ivec-B)] =
-              overlapMatrixBlock[i];
+            if (ivec < B)
+              overlapMatrixBlockDP[ibdof * B + ivec] = overlapMatrixBlock[i];
+            else
+              overlapMatrixBlockSP[ibdof * (D - B) + (ivec - B)] =
+                overlapMatrixBlock[i];
           }
       }
 
 
       __global__ void
-      copyFromOverlapMatBlockToDPSPBlocks(const unsigned int B,
-                                       const unsigned int D,
-                                       const dftfe::utils::deviceDoubleComplex * overlapMatrixBlock,
-				       dftfe::utils::deviceDoubleComplex *       overlapMatrixBlockDP,
-                                       dftfe::utils::deviceFloatComplex *       overlapMatrixBlockSP)
+      copyFromOverlapMatBlockToDPSPBlocks(
+        const unsigned int                       B,
+        const unsigned int                       D,
+        const dftfe::utils::deviceDoubleComplex *overlapMatrixBlock,
+        dftfe::utils::deviceDoubleComplex *      overlapMatrixBlockDP,
+        dftfe::utils::deviceFloatComplex *       overlapMatrixBlockSP)
       {
         const unsigned int numEntries = B * D;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
@@ -189,12 +189,13 @@ namespace dftfe
             const unsigned int ibdof = i / D;
             const unsigned int ivec  = i % D;
 
-            if (ivec<B)
-              dftfe::utils::copyValue(overlapMatrixBlockDP+ibdof*B + ivec,
-              overlapMatrixBlock[i]);
+            if (ivec < B)
+              dftfe::utils::copyValue(overlapMatrixBlockDP + ibdof * B + ivec,
+                                      overlapMatrixBlock[i]);
             else
-              dftfe::utils::copyValue(overlapMatrixBlockSP+ibdof*(D-B) + (ivec-B),
-              overlapMatrixBlock[i]);
+              dftfe::utils::copyValue(overlapMatrixBlockSP + ibdof * (D - B) +
+                                        (ivec - B),
+                                      overlapMatrixBlock[i]);
           }
       }
 
@@ -1563,8 +1564,9 @@ namespace dftfe
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
                                       std::unordered_map<unsigned int,
-                                               unsigned int>::iterator it =
-                                        globalToLocalColumnIdMap.find(j + jvec);
+                                                         unsigned int>::iterator
+                                        it = globalToLocalColumnIdMap.find(
+                                          j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
                                         *(rotationMatBlockHost.begin() +
                                           jvec * N + i * BVec + j) =
@@ -1585,8 +1587,9 @@ namespace dftfe
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
                                       std::unordered_map<unsigned int,
-                                               unsigned int>::iterator it =
-                                        globalToLocalRowIdMap.find(j + jvec);
+                                                         unsigned int>::iterator
+                                        it =
+                                          globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
                                         *(rotationMatBlockHost.begin() +
                                           jvec * N + i * BVec + j) =
@@ -1615,7 +1618,8 @@ namespace dftfe
                                 globalToLocalRowIdMap[i];
                               for (unsigned int j = 0; j < BVec; ++j)
                                 {
-                                  std::unordered_map<unsigned int, unsigned int>::iterator
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
                                     it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                   if (it != globalToLocalColumnIdMap.end())
@@ -1636,7 +1640,8 @@ namespace dftfe
                                 globalToLocalColumnIdMap[i];
                               for (unsigned int j = 0; j < BVec; ++j)
                                 {
-                                  std::unordered_map<unsigned int, unsigned int>::iterator
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
                                     it = globalToLocalRowIdMap.find(j + jvec);
                                   if (it != globalToLocalRowIdMap.end())
                                     *(rotationMatBlockHost.begin() + i * BVec +
@@ -1962,8 +1967,9 @@ namespace dftfe
                                         globalToLocalRowIdMap[i];
                                       for (unsigned int j = 0; j < BVec; ++j)
                                         {
-                                          std::unordered_map<unsigned int,
-                                                   unsigned int>::iterator it =
+                                          std::unordered_map<
+                                            unsigned int,
+                                            unsigned int>::iterator it =
                                             globalToLocalColumnIdMap.find(j +
                                                                           jvec);
                                           if (it !=
@@ -1986,8 +1992,9 @@ namespace dftfe
                                         globalToLocalColumnIdMap[i];
                                       for (unsigned int j = 0; j < BVec; ++j)
                                         {
-                                          std::unordered_map<unsigned int,
-                                                   unsigned int>::iterator it =
+                                          std::unordered_map<
+                                            unsigned int,
+                                            unsigned int>::iterator it =
                                             globalToLocalRowIdMap.find(j +
                                                                        jvec);
                                           if (it != globalToLocalRowIdMap.end())
@@ -2019,8 +2026,9 @@ namespace dftfe
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
                                       std::unordered_map<unsigned int,
-                                               unsigned int>::iterator it =
-                                        globalToLocalColumnIdMap.find(j + jvec);
+                                                         unsigned int>::iterator
+                                        it = globalToLocalColumnIdMap.find(
+                                          j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
                                         *(rotationMatBlockHost.begin() +
                                           i * BVec + j) =
@@ -2041,8 +2049,9 @@ namespace dftfe
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
                                       std::unordered_map<unsigned int,
-                                               unsigned int>::iterator it =
-                                        globalToLocalRowIdMap.find(j + jvec);
+                                                         unsigned int>::iterator
+                                        it =
+                                          globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
                                         *(rotationMatBlockHost.begin() +
                                           i * BVec + j) =
@@ -2443,8 +2452,9 @@ namespace dftfe
                             globalToLocalRowIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalColumnIdMap.find(j + jvec);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
@@ -2455,8 +2465,9 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalColumnIdMap.find(i);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
@@ -2476,8 +2487,9 @@ namespace dftfe
                             globalToLocalColumnIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j + jvec);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
@@ -2488,8 +2500,9 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(i);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(i);
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
@@ -2855,8 +2868,9 @@ namespace dftfe
                             globalToLocalRowIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalColumnIdMap.find(j + jvec);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
@@ -2867,8 +2881,9 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalColumnIdMap.find(i);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
@@ -2888,8 +2903,9 @@ namespace dftfe
                             globalToLocalColumnIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j + jvec);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
@@ -2900,8 +2916,9 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(i);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(i);
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
@@ -3202,7 +3219,8 @@ namespace dftfe
                         globalToLocalColumnIdMap[i + ivec];
                       for (unsigned int j = ivec + i; j < N; ++j)
                         {
-                          std::unordered_map<unsigned int, unsigned int>::iterator it =
+                          std::unordered_map<unsigned int,
+                                             unsigned int>::iterator it =
                             globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
@@ -3484,8 +3502,9 @@ namespace dftfe
                             globalToLocalColumnIdMap[i + ivec];
                           for (unsigned int j = ivec + i; j < N; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
                                                        localColumnId) =
@@ -3749,7 +3768,8 @@ namespace dftfe
                         globalToLocalColumnIdMap[i + ivec];
                       for (unsigned int j = ivec + i; j < ivec + B; ++j)
                         {
-                          std::unordered_map<unsigned int, unsigned int>::iterator it =
+                          std::unordered_map<unsigned int,
+                                             unsigned int>::iterator it =
                             globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
@@ -3758,7 +3778,8 @@ namespace dftfe
 
                       for (unsigned int j = ivec + B; j < N; ++j)
                         {
-                          std::unordered_map<unsigned int, unsigned int>::iterator it =
+                          std::unordered_map<unsigned int,
+                                             unsigned int>::iterator it =
                             globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
@@ -4157,8 +4178,9 @@ namespace dftfe
                             globalToLocalColumnIdMap[i + ivec];
                           for (unsigned int j = ivec + i; j < ivec + B; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
                                                        localColumnId) =
@@ -4167,8 +4189,9 @@ namespace dftfe
 
                           for (unsigned int j = ivec + B; j < N; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
                                                        localColumnId) =
@@ -4268,7 +4291,8 @@ namespace dftfe
       overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
-                  vectorsBlockSize * vectorsBlockSize * sizeof(dataTypes::number));
+                  vectorsBlockSize * vectorsBlockSize *
+                    sizeof(dataTypes::number));
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -4277,7 +4301,7 @@ namespace dftfe
       std::memset(overlapMatrixBlockHostSP.begin(),
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
-      
+
       // allocate device vectors to be used later
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -4289,7 +4313,8 @@ namespace dftfe
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize, dataTypes::number(0));
+        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize,
+                             dataTypes::number(0));
 
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -4406,39 +4431,38 @@ namespace dftfe
                 }
 
 
-                const unsigned int DRem = D - B;
+              const unsigned int DRem = D - B;
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                  copyFromOverlapMatBlockToDPSPBlocks<<<
-                    (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                    0,
-                    streamDataMove>>>(
-                    B,
-                    D,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlock.begin()),
-		    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlockDP.begin()), 
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlockSP.begin()));
+              copyFromOverlapMatBlockToDPSPBlocks<<<
+                (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                  dftfe::utils::DEVICE_BLOCK_SIZE,
+                dftfe::utils::DEVICE_BLOCK_SIZE,
+                0,
+                streamDataMove>>>(B,
+                                  D,
+                                  dftfe::utils::makeDataTypeDeviceCompatible(
+                                    overlapMatrixBlock.begin()),
+                                  dftfe::utils::makeDataTypeDeviceCompatible(
+                                    overlapMatrixBlockDP.begin()),
+                                  dftfe::utils::makeDataTypeDeviceCompatible(
+                                    overlapMatrixBlockSP.begin()));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-                  hipLaunchKernelGGL(
-                    copyFromOverlapMatBlockToDPSPBlocks,
-                    (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                    0,
-                    streamDataMove,
-                    B,
-                    D,
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlock.begin()),
-		    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlockDP.begin()),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      overlapMatrixBlockSP.begin()));
+              hipLaunchKernelGGL(copyFromOverlapMatBlockToDPSPBlocks,
+                                 (D * B +
+                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                   dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 0,
+                                 streamDataMove,
+                                 B,
+                                 D,
+                                 dftfe::utils::makeDataTypeDeviceCompatible(
+                                   overlapMatrixBlock.begin()),
+                                 dftfe::utils::makeDataTypeDeviceCompatible(
+                                   overlapMatrixBlockDP.begin()),
+                                 dftfe::utils::makeDataTypeDeviceCompatible(
+                                   overlapMatrixBlockSP.begin()));
 #endif
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -4499,7 +4523,6 @@ namespace dftfe
               if (dftfe::utils::deviceEventSynchronize(
                     copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
                 {
-
                   if (!dftParams.useDeviceDirectAllReduce)
                     {
                       // Sum local XTrunc^{T}*XcBlock for double precision
@@ -4534,8 +4557,9 @@ namespace dftfe
                             globalToLocalColumnIdMap[i + ivec];
                           for (unsigned int j = ivec + i; j < ivec + B; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
                                                        localColumnId) =
@@ -4544,8 +4568,9 @@ namespace dftfe
 
                           for (unsigned int j = ivec + B; j < N; ++j)
                             {
-                              std::unordered_map<unsigned int, unsigned int>::iterator
-                                it = globalToLocalRowIdMap.find(j);
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
                                                        localColumnId) =

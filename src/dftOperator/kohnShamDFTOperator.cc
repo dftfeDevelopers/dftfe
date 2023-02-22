@@ -1472,8 +1472,8 @@ namespace dftfe
                     for (unsigned int i = j + jvec; i < numberWaveFunctions;
                          ++i)
                       {
-                        std::unordered_map<unsigned int, unsigned int>::iterator it =
-                          globalToLocalRowIdMap.find(i);
+                        std::unordered_map<unsigned int, unsigned int>::iterator
+                          it = globalToLocalRowIdMap.find(i);
                         if (it != globalToLocalRowIdMap.end())
                           projHamPar.local_el(it->second, localColumnId) =
                             projHamBlock[j * D + i - jvec];
@@ -1649,7 +1649,8 @@ namespace dftfe
                           globalToLocalColumnIdMap[j + jvec];
                         for (unsigned int i = jvec + j; i < N; ++i)
                           {
-                            std::unordered_map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int,
+                                               unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(i);
                             if (it != globalToLocalRowIdMap.end())
                               projHamPar.local_el(it->second, localColumnId) =
@@ -1703,7 +1704,8 @@ namespace dftfe
                           globalToLocalColumnIdMap[j + jvec];
                         for (unsigned int i = jvec + j; i < N; ++i)
                           {
-                            std::unordered_map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int,
+                                               unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(i);
                             if (it != globalToLocalRowIdMap.end())
                               projHamPar.local_el(it->second, localColumnId) =

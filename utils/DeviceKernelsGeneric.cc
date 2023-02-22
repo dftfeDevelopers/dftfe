@@ -451,15 +451,17 @@ namespace dftfe
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr,
-                                       const deviceStream_t streamId)
+                                       const deviceStream_t   streamId)
       {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyValueType1ArrToValueType2ArrDeviceKernel<<<
           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE,0,streamId>>>(
-          size,
-          dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-          dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          0,
+          streamId>>>(size,
+                      dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        valueType2Arr));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
         hipLaunchKernelGGL(
           copyValueType1ArrToValueType2ArrDeviceKernel,
@@ -977,75 +979,75 @@ namespace dftfe
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const double *         valueType1Arr,
                                        double *               valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const float *          valueType1Arr,
                                        float *                valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(
         const dftfe::size_type      size,
         const std::complex<double> *valueType1Arr,
         std::complex<double> *      valueType2Arr,
-        const deviceStream_t streamId);
+        const deviceStream_t        streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type     size,
                                        const std::complex<float> *valueType1Arr,
-                                       std::complex<float> *valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       std::complex<float> *      valueType2Arr,
+                                       const deviceStream_t       streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const double *         valueType1Arr,
                                        float *                valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const float *          valueType1Arr,
                                        double *               valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(
         const dftfe::size_type      size,
         const std::complex<double> *valueType1Arr,
         std::complex<float> *       valueType2Arr,
-        const deviceStream_t streamId);
+        const deviceStream_t        streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type     size,
                                        const std::complex<float> *valueType1Arr,
-                                       std::complex<double> *valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       std::complex<double> *     valueType2Arr,
+                                       const deviceStream_t       streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const double *         valueType1Arr,
                                        std::complex<float> *  valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const float *          valueType1Arr,
                                        std::complex<float> *  valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const double *         valueType1Arr,
                                        std::complex<double> * valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
       template void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const float *          valueType1Arr,
                                        std::complex<double> * valueType2Arr,
-                                       const deviceStream_t streamId);
+                                       const deviceStream_t   streamId);
 
 
       // strided copy to block

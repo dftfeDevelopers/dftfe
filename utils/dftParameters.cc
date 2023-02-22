@@ -1004,7 +1004,6 @@ namespace dftfe
             "false",
             Patterns::Bool(),
             "[Advanced] Restrict to single chebyshev filter pass in each SCF. This setting is only used for timing measurements of stable single SCF iteration.");
-
         }
         prm.leave_subsection();
       }
@@ -1547,8 +1546,9 @@ namespace dftfe
         useMixedPrecXTHXSpectrumSplit =
           prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
-        useMixedPrecCommunOnlyXTHXCGSO = prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
-        useMixedPrecCheby         = prm.get_bool("USE MIXED PREC CHEBY");
+        useMixedPrecCommunOnlyXTHXCGSO =
+          prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
+        useMixedPrecCheby = prm.get_bool("USE MIXED PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
