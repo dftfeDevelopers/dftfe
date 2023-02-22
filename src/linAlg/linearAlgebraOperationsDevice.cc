@@ -4445,23 +4445,6 @@ namespace dftfe
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
-                  /*
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      overlapMatrixBlock.begin(),
-                      overlapMatrixBlock.begin(),
-                      D * B,
-                      tempReal.begin(),
-                      tempImag.begin(),
-                      streamDataMove);
-                  else
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      overlapMatrixBlock.begin(),
-                      overlapMatrixBlock.begin(),
-                      D * B,
-                      streamDataMove);
-                  */
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
@@ -4489,15 +4472,6 @@ namespace dftfe
                         streamDataMove);
                 }
 
-              /*
-              dftfe::utils::deviceMemcpyAsyncD2H(
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHost.begin()),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlock.begin()),
-                D * B * sizeof(dataTypes::number),
-                streamDataMove);
-              */
               dftfe::utils::deviceMemcpyAsyncD2H(
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   overlapMatrixBlockHostDP.begin()),
