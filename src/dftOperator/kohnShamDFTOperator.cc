@@ -1335,8 +1335,8 @@ namespace dftfe
     // create temporary arrays XBlock,Hx
     distributedCPUMultiVec<dataTypes::number> XBlock, HXBlock;
 
-    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
       processGrid, projHamPar, globalToLocalRowIdMap, globalToLocalColumnIdMap);
     // band group parallelization data structures
@@ -1472,7 +1472,7 @@ namespace dftfe
                     for (unsigned int i = j + jvec; i < numberWaveFunctions;
                          ++i)
                       {
-                        std::map<unsigned int, unsigned int>::iterator it =
+                        std::unordered_map<unsigned int, unsigned int>::iterator it =
                           globalToLocalRowIdMap.find(i);
                         if (it != globalToLocalRowIdMap.end())
                           projHamPar.local_el(it->second, localColumnId) =
@@ -1510,8 +1510,8 @@ namespace dftfe
     // create temporary arrays XBlock,Hx
     distributedCPUMultiVec<dataTypes::number> XBlock, HXBlock;
 
-    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
       processGrid, projHamPar, globalToLocalRowIdMap, globalToLocalColumnIdMap);
     // band group parallelization data structures
@@ -1649,7 +1649,7 @@ namespace dftfe
                           globalToLocalColumnIdMap[j + jvec];
                         for (unsigned int i = jvec + j; i < N; ++i)
                           {
-                            std::map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int, unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(i);
                             if (it != globalToLocalRowIdMap.end())
                               projHamPar.local_el(it->second, localColumnId) =
@@ -1703,7 +1703,7 @@ namespace dftfe
                           globalToLocalColumnIdMap[j + jvec];
                         for (unsigned int i = jvec + j; i < N; ++i)
                           {
-                            std::map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int, unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(i);
                             if (it != globalToLocalRowIdMap.end())
                               projHamPar.local_el(it->second, localColumnId) =

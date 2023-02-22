@@ -3481,8 +3481,8 @@ namespace dftfe
     utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
-    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
       processGrid, projHamPar, globalToLocalRowIdMap, globalToLocalColumnIdMap);
 
@@ -3604,7 +3604,7 @@ namespace dftfe
                       globalToLocalColumnIdMap[j + jvec];
                     for (unsigned int i = j + jvec; i < N; ++i)
                       {
-                        std::map<unsigned int, unsigned int>::iterator it =
+                        std::unordered_map<unsigned int, unsigned int>::iterator it =
                           globalToLocalRowIdMap.find(i);
                         if (it != globalToLocalRowIdMap.end())
                           projHamPar.local_el(it->second, localColumnId) =
@@ -3672,8 +3672,8 @@ namespace dftfe
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
       processGrid, projHamPar, globalToLocalRowIdMap, globalToLocalColumnIdMap);
 
@@ -3952,7 +3952,7 @@ namespace dftfe
                           globalToLocalColumnIdMap[j + jvec];
                         for (unsigned int i = j + jvec; i < N; ++i)
                           {
-                            std::map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int, unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(i);
                             if (it != globalToLocalRowIdMap.end())
                               projHamPar.local_el(it->second, localColumnId) =
@@ -4032,8 +4032,8 @@ namespace dftfe
       utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
-    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
       processGrid, projHamPar, globalToLocalRowIdMap, globalToLocalColumnIdMap);
 
@@ -4473,7 +4473,7 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::map<unsigned int, unsigned int>::iterator
+                                std::unordered_map<unsigned int, unsigned int>::iterator
                                   it = globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
@@ -4506,7 +4506,7 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::map<unsigned int, unsigned int>::iterator
+                                std::unordered_map<unsigned int, unsigned int>::iterator
                                   it = globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
@@ -4589,8 +4589,8 @@ namespace dftfe
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
       processGrid, projHamPar, globalToLocalRowIdMap, globalToLocalColumnIdMap);
 
@@ -4930,7 +4930,7 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::map<unsigned int, unsigned int>::iterator
+                                std::unordered_map<unsigned int, unsigned int>::iterator
                                   it = globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
@@ -4963,7 +4963,7 @@ namespace dftfe
                               globalToLocalColumnIdMap[j + jvec];
                             for (unsigned int i = j + jvec; i < N; ++i)
                               {
-                                std::map<unsigned int, unsigned int>::iterator
+                                std::unordered_map<unsigned int, unsigned int>::iterator
                                   it = globalToLocalRowIdMap.find(i);
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,

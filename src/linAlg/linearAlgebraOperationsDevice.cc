@@ -1460,8 +1460,8 @@ namespace dftfe
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
@@ -1562,7 +1562,7 @@ namespace dftfe
                                     globalToLocalRowIdMap[i];
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
-                                      std::map<unsigned int,
+                                      std::unordered_map<unsigned int,
                                                unsigned int>::iterator it =
                                         globalToLocalColumnIdMap.find(j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
@@ -1584,7 +1584,7 @@ namespace dftfe
                                     globalToLocalColumnIdMap[i];
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
-                                      std::map<unsigned int,
+                                      std::unordered_map<unsigned int,
                                                unsigned int>::iterator it =
                                         globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
@@ -1615,7 +1615,7 @@ namespace dftfe
                                 globalToLocalRowIdMap[i];
                               for (unsigned int j = 0; j < BVec; ++j)
                                 {
-                                  std::map<unsigned int, unsigned int>::iterator
+                                  std::unordered_map<unsigned int, unsigned int>::iterator
                                     it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                   if (it != globalToLocalColumnIdMap.end())
@@ -1636,7 +1636,7 @@ namespace dftfe
                                 globalToLocalColumnIdMap[i];
                               for (unsigned int j = 0; j < BVec; ++j)
                                 {
-                                  std::map<unsigned int, unsigned int>::iterator
+                                  std::unordered_map<unsigned int, unsigned int>::iterator
                                     it = globalToLocalRowIdMap.find(j + jvec);
                                   if (it != globalToLocalRowIdMap.end())
                                     *(rotationMatBlockHost.begin() + i * BVec +
@@ -1842,8 +1842,8 @@ namespace dftfe
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
@@ -1962,7 +1962,7 @@ namespace dftfe
                                         globalToLocalRowIdMap[i];
                                       for (unsigned int j = 0; j < BVec; ++j)
                                         {
-                                          std::map<unsigned int,
+                                          std::unordered_map<unsigned int,
                                                    unsigned int>::iterator it =
                                             globalToLocalColumnIdMap.find(j +
                                                                           jvec);
@@ -1986,7 +1986,7 @@ namespace dftfe
                                         globalToLocalColumnIdMap[i];
                                       for (unsigned int j = 0; j < BVec; ++j)
                                         {
-                                          std::map<unsigned int,
+                                          std::unordered_map<unsigned int,
                                                    unsigned int>::iterator it =
                                             globalToLocalRowIdMap.find(j +
                                                                        jvec);
@@ -2018,7 +2018,7 @@ namespace dftfe
                                     globalToLocalRowIdMap[i];
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
-                                      std::map<unsigned int,
+                                      std::unordered_map<unsigned int,
                                                unsigned int>::iterator it =
                                         globalToLocalColumnIdMap.find(j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
@@ -2040,7 +2040,7 @@ namespace dftfe
                                     globalToLocalColumnIdMap[i];
                                   for (unsigned int j = 0; j < BVec; ++j)
                                     {
-                                      std::map<unsigned int,
+                                      std::unordered_map<unsigned int,
                                                unsigned int>::iterator it =
                                         globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
@@ -2248,8 +2248,8 @@ namespace dftfe
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
@@ -2338,7 +2338,7 @@ namespace dftfe
               if (globalToLocalRowIdMap.find(i) != globalToLocalRowIdMap.end())
                 {
                   const unsigned int localRowId = globalToLocalRowIdMap[i];
-                  std::map<unsigned int, unsigned int>::iterator it =
+                  std::unordered_map<unsigned int, unsigned int>::iterator it =
                     globalToLocalColumnIdMap.find(i);
                   if (it != globalToLocalColumnIdMap.end())
                     {
@@ -2356,7 +2356,7 @@ namespace dftfe
                 {
                   const unsigned int localColumnId =
                     globalToLocalColumnIdMap[i];
-                  std::map<unsigned int, unsigned int>::iterator it =
+                  std::unordered_map<unsigned int, unsigned int>::iterator it =
                     globalToLocalRowIdMap.find(i);
                   if (globalToLocalRowIdMap.find(i) !=
                       globalToLocalRowIdMap.end())
@@ -2443,7 +2443,7 @@ namespace dftfe
                             globalToLocalRowIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -2455,7 +2455,7 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -2476,7 +2476,7 @@ namespace dftfe
                             globalToLocalColumnIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
@@ -2488,7 +2488,7 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(i);
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
@@ -2661,8 +2661,8 @@ namespace dftfe
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
@@ -2750,7 +2750,7 @@ namespace dftfe
               if (globalToLocalRowIdMap.find(i) != globalToLocalRowIdMap.end())
                 {
                   const unsigned int localRowId = globalToLocalRowIdMap[i];
-                  std::map<unsigned int, unsigned int>::iterator it =
+                  std::unordered_map<unsigned int, unsigned int>::iterator it =
                     globalToLocalColumnIdMap.find(i);
                   if (it != globalToLocalColumnIdMap.end())
                     {
@@ -2768,7 +2768,7 @@ namespace dftfe
                 {
                   const unsigned int localColumnId =
                     globalToLocalColumnIdMap[i];
-                  std::map<unsigned int, unsigned int>::iterator it =
+                  std::unordered_map<unsigned int, unsigned int>::iterator it =
                     globalToLocalRowIdMap.find(i);
                   if (globalToLocalRowIdMap.find(i) !=
                       globalToLocalRowIdMap.end())
@@ -2855,7 +2855,7 @@ namespace dftfe
                             globalToLocalRowIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -2867,7 +2867,7 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -2888,7 +2888,7 @@ namespace dftfe
                             globalToLocalColumnIdMap[i];
                           for (unsigned int j = 0; j < BVec; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
@@ -2900,7 +2900,7 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(i);
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
@@ -3072,8 +3072,8 @@ namespace dftfe
       const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -3202,7 +3202,7 @@ namespace dftfe
                         globalToLocalColumnIdMap[i + ivec];
                       for (unsigned int j = ivec + i; j < N; ++j)
                         {
-                          std::map<unsigned int, unsigned int>::iterator it =
+                          std::unordered_map<unsigned int, unsigned int>::iterator it =
                             globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
@@ -3265,8 +3265,8 @@ namespace dftfe
       const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -3484,7 +3484,7 @@ namespace dftfe
                             globalToLocalColumnIdMap[i + ivec];
                           for (unsigned int j = ivec + i; j < N; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -3535,8 +3535,8 @@ namespace dftfe
       const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -3749,7 +3749,7 @@ namespace dftfe
                         globalToLocalColumnIdMap[i + ivec];
                       for (unsigned int j = ivec + i; j < ivec + B; ++j)
                         {
-                          std::map<unsigned int, unsigned int>::iterator it =
+                          std::unordered_map<unsigned int, unsigned int>::iterator it =
                             globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
@@ -3758,7 +3758,7 @@ namespace dftfe
 
                       for (unsigned int j = ivec + B; j < N; ++j)
                         {
-                          std::map<unsigned int, unsigned int>::iterator it =
+                          std::unordered_map<unsigned int, unsigned int>::iterator it =
                             globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
@@ -3821,8 +3821,8 @@ namespace dftfe
       const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -4157,7 +4157,7 @@ namespace dftfe
                             globalToLocalColumnIdMap[i + ivec];
                           for (unsigned int j = ivec + i; j < ivec + B; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -4167,7 +4167,7 @@ namespace dftfe
 
                           for (unsigned int j = ivec + B; j < N; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -4220,8 +4220,8 @@ namespace dftfe
       const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -4534,7 +4534,7 @@ namespace dftfe
                             globalToLocalColumnIdMap[i + ivec];
                           for (unsigned int j = ivec + i; j < ivec + B; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -4544,7 +4544,7 @@ namespace dftfe
 
                           for (unsigned int j = ivec + B; j < N; ++j)
                             {
-                              std::map<unsigned int, unsigned int>::iterator
+                              std::unordered_map<unsigned int, unsigned int>::iterator
                                 it = globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,

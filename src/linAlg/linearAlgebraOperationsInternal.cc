@@ -315,8 +315,8 @@ namespace dftfe
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftfe::ScaLAPACKMatrix<T> &                mat,
-        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
-        std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap)
+        std::unordered_map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
+        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap)
       {
         globalToLocalRowIdMap.clear();
         globalToLocalColumnIdMap.clear();
@@ -412,8 +412,8 @@ namespace dftfe
           interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
         // get global to local index maps for Scalapack matrix
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           overlapMatPar,
@@ -560,7 +560,7 @@ namespace dftfe
                           globalToLocalColumnIdMap[i + ivec];
                         for (unsigned int j = ivec + i; j < N; ++j)
                           {
-                            std::map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int, unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(j);
                             if (it != globalToLocalRowIdMap.end())
                               overlapMatPar.local_el(it->second,
@@ -602,8 +602,8 @@ namespace dftfe
           interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
         // get global to local index maps for Scalapack matrix
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           overlapMatPar,
@@ -697,7 +697,7 @@ namespace dftfe
                           globalToLocalColumnIdMap[i + ivec];
                         for (unsigned int j = ivec + i; j < N; ++j)
                           {
-                            std::map<unsigned int, unsigned int>::iterator it =
+                            std::unordered_map<unsigned int, unsigned int>::iterator it =
                               globalToLocalRowIdMap.find(j);
                             if (it != globalToLocalRowIdMap.end())
                               overlapMatPar.local_el(it->second,
@@ -744,8 +744,8 @@ namespace dftfe
         dftUtils::createBandParallelizationIndices(
           interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           rotationMatPar,
@@ -843,7 +843,7 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
 
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -864,7 +864,7 @@ namespace dftfe
                                   globalToLocalColumnIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
@@ -1029,8 +1029,8 @@ namespace dftfe
         dftUtils::createBandParallelizationIndices(
           interBandGroupComm, numberTopVectors, bandGroupLowHighPlusOneIndices);
 
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid, QMat, globalToLocalRowIdMap, globalToLocalColumnIdMap);
 
@@ -1096,7 +1096,7 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
 
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -1116,7 +1116,7 @@ namespace dftfe
                                   globalToLocalColumnIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
@@ -1215,8 +1215,8 @@ namespace dftfe
         dftUtils::createBandParallelizationIndices(
           interBandGroupComm, numberTopVectors, bandGroupLowHighPlusOneIndices);
 
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid, QMat, globalToLocalRowIdMap, globalToLocalColumnIdMap);
 
@@ -1296,7 +1296,7 @@ namespace dftfe
                                 for (unsigned int j = 0; j < BVec; ++j)
 
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -1325,7 +1325,7 @@ namespace dftfe
                                   globalToLocalColumnIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
@@ -1463,8 +1463,8 @@ namespace dftfe
         dftUtils::createBandParallelizationIndices(
           interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           rotationMatPar,
@@ -1567,7 +1567,7 @@ namespace dftfe
                                   globalToLocalRowIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -1580,7 +1580,7 @@ namespace dftfe
 
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(i);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -1605,7 +1605,7 @@ namespace dftfe
                                   globalToLocalColumnIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
@@ -1618,7 +1618,7 @@ namespace dftfe
 
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(i);
                                     if (globalToLocalRowIdMap.find(i) !=
@@ -1800,8 +1800,8 @@ namespace dftfe
         dftUtils::createBandParallelizationIndices(
           interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-        std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-        std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+        std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           rotationMatPar,
@@ -1904,7 +1904,7 @@ namespace dftfe
                                   globalToLocalRowIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -1917,7 +1917,7 @@ namespace dftfe
 
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalColumnIdMap.find(i);
                                     if (it != globalToLocalColumnIdMap.end())
@@ -1942,7 +1942,7 @@ namespace dftfe
                                   globalToLocalColumnIdMap[i];
                                 for (unsigned int j = 0; j < BVec; ++j)
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
@@ -1955,7 +1955,7 @@ namespace dftfe
 
                                 if (i >= jvec && i < (jvec + BVec))
                                   {
-                                    std::map<unsigned int,
+                                    std::unordered_map<unsigned int,
                                              unsigned int>::iterator it =
                                       globalToLocalRowIdMap.find(i);
                                     if (globalToLocalRowIdMap.find(i) !=
@@ -2113,15 +2113,15 @@ namespace dftfe
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftfe::ScaLAPACKMatrix<double> &           mat,
-        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
-        std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
+        std::unordered_map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
+        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &mat,
-        std::map<unsigned int, unsigned int> &globalToLocalRowIdMap,
-        std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
+        std::unordered_map<unsigned int, unsigned int> &globalToLocalRowIdMap,
+        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
       template void
       fillParallelOverlapMatrix(

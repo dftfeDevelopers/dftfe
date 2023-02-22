@@ -24,7 +24,7 @@
 #include "dftParameters.h"
 
 #include <elpa/elpa.h>
-
+#include <unordered_map>
 namespace dftfe
 {
   namespace linearAlgebraOperations
@@ -83,8 +83,8 @@ namespace dftfe
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftfe::ScaLAPACKMatrix<T> &                mat,
-        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
-        std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
+        std::unordered_map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
+        std::unordered_map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
 
       /** @brief Mpi all reduce of ScaLAPACKMat across a given inter communicator.
