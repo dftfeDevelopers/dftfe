@@ -159,18 +159,17 @@ namespace dftfe
                                        float *       overlapMatrixBlockSP)
       {
         const unsigned int numEntries = B * D;
-	const unsigned int DRem=D-B;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
              i += blockDim.x * gridDim.x)
           {
             const unsigned int ibdof = i / D;
             const unsigned int ivec  = i % D;
 
-	    if (ibdof<B)
+	    if (ivec<B)
               overlapMatrixBlockDP[ibdof*B + ivec] =
               overlapMatrixBlock[i];
 	    else
-              overlapMatrixBlockSP[ibdof*DRem + ivec] =
+              overlapMatrixBlockSP[ibdof*(D-B) + (ivec-B)] =
               overlapMatrixBlock[i];
           }
       }
@@ -184,18 +183,17 @@ namespace dftfe
                                        dftfe::utils::deviceFloatComplex *       overlapMatrixBlockSP)
       {
         const unsigned int numEntries = B * D;
-	const unsigned int DRem=D-B;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
              i += blockDim.x * gridDim.x)
           {
             const unsigned int ibdof = i / D;
             const unsigned int ivec  = i % D;
 
-            if (ibdof<B)
+            if (ivec<B)
               dftfe::utils::copyValue(overlapMatrixBlockDP+ibdof*B + ivec,
               overlapMatrixBlock[i]);
             else
-              dftfe::utils::copyValue(overlapMatrixBlockSP+ibdof*DRem + ivec,
+              dftfe::utils::copyValue(overlapMatrixBlockSP+ibdof*(D-B) + (ivec-B),
               overlapMatrixBlock[i]);
           }
       }
