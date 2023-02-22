@@ -134,9 +134,9 @@ namespace dftfe
         {
           if (dftParams.overlapComputeCommunOrthoRR)
 	  {
-	    /* 
+	    if (dftParams.useMixedPrecCommunOnlyXTHXCGSO) 
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
+              fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
                 X,
                 M,
                 N,
@@ -147,10 +147,9 @@ namespace dftfe
                 processGrid,
                 overlapMatPar,
                 dftParams);
-	    */
-            
+	    else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
+              fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
                 X,
                 M,
                 N,
