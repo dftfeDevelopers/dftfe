@@ -280,7 +280,6 @@ namespace dftfe
     XtHXMixedPrecCommunOverlapComputeCommun(
       const dataTypes::number *                        X,
       distributedDeviceVec<dataTypes::number> &        Xb,
-      distributedDeviceVec<dataTypes::numberFP32> &    floatXb,
       distributedDeviceVec<dataTypes::number> &        HXb,
       distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
       const unsigned int                               M,

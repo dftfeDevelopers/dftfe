@@ -152,39 +152,51 @@ namespace dftfe
 
 
       __global__ void
-      copyFromOverlapMatBlockToSPBlock(const unsigned int B,
-                                       const unsigned int DRem,
+      copyFromOverlapMatBlockToDPSPBlocks(const unsigned int B,
+                                       const unsigned int D,
                                        const double * overlapMatrixBlock,
+				       double *       overlapMatrixBlockDP,
                                        float *       overlapMatrixBlockSP)
       {
-        const unsigned int numEntries = B * DRem;
+        const unsigned int numEntries = B * D;
+	const unsigned int DRem=D-B;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
              i += blockDim.x * gridDim.x)
           {
-            const unsigned int ibdof = i / B;
-            const unsigned int ivec  = i % B;
+            const unsigned int ibdof = i / D;
+            const unsigned int ivec  = i % D;
 
-            overlapMatrixBlockSP[ibdof*B + ivec] =
-              overlapMatrixBlock[(ibdof +B)* B + ivec];
+	    if (ibdof<B)
+              overlapMatrixBlockDP[ibdof*B + ivec] =
+              overlapMatrixBlock[i];
+	    else
+              overlapMatrixBlockSP[ibdof*DRem + ivec] =
+              overlapMatrixBlock[i];
           }
       }
 
 
       __global__ void
-      copyFromOverlapMatBlockToSPBlock(const unsigned int B,
-                                       const unsigned int DRem,
+      copyFromOverlapMatBlockToDPSPBlocks(const unsigned int B,
+                                       const unsigned int D,
                                        const dftfe::utils::deviceDoubleComplex * overlapMatrixBlock,
+				       dftfe::utils::deviceDoubleComplex *       overlapMatrixBlockDP,
                                        dftfe::utils::deviceFloatComplex *       overlapMatrixBlockSP)
       {
-        const unsigned int numEntries = B * DRem;
+        const unsigned int numEntries = B * D;
+	const unsigned int DRem=D-B;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
              i += blockDim.x * gridDim.x)
           {
-            const unsigned int ibdof = i / B;
-            const unsigned int ivec  = i % B;
+            const unsigned int ibdof = i / D;
+            const unsigned int ivec  = i % D;
 
-            dftfe::utils::copyValue(overlapMatrixBlockSP+ibdof*B + ivec,
-              overlapMatrixBlock[(ibdof +B)* B + ivec]);
+            if (ibdof<B)
+              dftfe::utils::copyValue(overlapMatrixBlockDP+ibdof*B + ivec,
+              overlapMatrixBlock[i]);
+            else
+              dftfe::utils::copyValue(overlapMatrixBlockSP+ibdof*DRem + ivec,
+              overlapMatrixBlock[i]);
           }
       }
 
@@ -4277,6 +4289,11 @@ namespace dftfe
         overlapMatrixBlockNext(N * vectorsBlockSize, dataTypes::number(0));
 
 
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize, dataTypes::number(0));
+
+
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
@@ -4393,37 +4410,38 @@ namespace dftfe
 
                 const unsigned int DRem = D - B;
 
-                if (DRem!=0)
-                {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                  copyFromOverlapMatBlockToSPBlock<<<
-                    (DRem * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                  copyFromOverlapMatBlockToDPSPBlocks<<<
+                    (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE,
                     dftfe::utils::DEVICE_BLOCK_SIZE,
                     0,
                     streamDataMove>>>(
                     B,
-                    DRem,
+                    D,
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       overlapMatrixBlock.begin()),
+		    dftfe::utils::makeDataTypeDeviceCompatible(
+                      overlapMatrixBlockDP.begin()), 
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       overlapMatrixBlockSP.begin()));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
                   hipLaunchKernelGGL(
-                    copyFromOverlapMatBlockToSPBlock,
-                    (DRem * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                    copyFromOverlapMatBlockToDPSPBlocks,
+                    (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                       dftfe::utils::DEVICE_BLOCK_SIZE,
                     dftfe::utils::DEVICE_BLOCK_SIZE,
                     0,
                     streamDataMove,
                     B,
-                    DRem,
+                    D,
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       overlapMatrixBlock.begin()),
+		    dftfe::utils::makeDataTypeDeviceCompatible(
+                      overlapMatrixBlockDP.begin()),
                     dftfe::utils::makeDataTypeDeviceCompatible(
                       overlapMatrixBlockSP.begin()));
 #endif
-                }
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
@@ -4450,9 +4468,9 @@ namespace dftfe
                                    std::complex<double>>::value)
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlockDP.begin(),
                         overlapMatrixBlockSP.begin(),
-                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlockDP.begin(),
                         overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
@@ -4464,9 +4482,9 @@ namespace dftfe
                   else
                     devicecclMpiCommDomain
                       .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlockDP.begin(),
                         overlapMatrixBlockSP.begin(),
-                        overlapMatrixBlock.begin(),
+                        overlapMatrixBlockDP.begin(),
                         overlapMatrixBlockSP.begin(),
                         B * B,
                         DRem * B,
@@ -4486,7 +4504,7 @@ namespace dftfe
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   overlapMatrixBlockHostDP.begin()),
                 dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlock.begin()),
+                  overlapMatrixBlockDP.begin()),
                 B * B * sizeof(dataTypes::number),
                 streamDataMove);
 
