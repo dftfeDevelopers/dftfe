@@ -1222,7 +1222,7 @@ namespace dftfe
     useMixedPrecCGS_O                              = false;
     useMixedPrecXTHXSpectrumSplit                  = false;
     useMixedPrecSubspaceRotRR                      = false;
-    useMixedPrecCommunOnlyXTHXCGSO                 = true;
+    useMixedPrecCommunOnlyXTHXCGSO                 = false;
     spectrumSplitStartingScfIter                   = 1;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
