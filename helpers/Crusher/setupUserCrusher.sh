@@ -23,11 +23,12 @@ libxcDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/libxc/install"
 spglibDir="/ccs/proj/mat187/dsambit/softwareDFTFEGcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/elpa/installgpu"
+ELPA_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/elpa/installgpunostreams"
 
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries
-DCCL_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/rccl/build" 
+#DCCL_PATH="/ccs/proj/mat187/dsambit/softwareDFTFEGccMpichLatest/rccl/build"
+DCCL_PATH="$ROCM_PATH/rccl" 
 mdiPath=""
 
 #Toggle GPU compilation
@@ -62,7 +63,7 @@ withHigherQuadPSP=OFF
 build_type=Release
 
 testing=OFF
-minimal_compile=ON
+minimal_compile=OFF
 ###########################################################################
 #Usually, no changes are needed below this line
 #
