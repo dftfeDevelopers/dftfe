@@ -326,6 +326,21 @@ namespace dftfe
       utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
+    virtual void
+    XtHXMixedPrecCommunOverlapComputeCommun(
+      const dataTypes::number *                        X,
+      distributedDeviceVec<dataTypes::number> &        Xb,
+      distributedDeviceVec<dataTypes::number> &        HXb,
+      distributedDeviceVec<dataTypes::number> &        projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      dftfe::utils::deviceBlasHandle_t &               handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
+
 
     /**
      * @brief Get constraint matrix eigen
