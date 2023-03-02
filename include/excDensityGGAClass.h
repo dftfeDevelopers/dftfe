@@ -24,11 +24,11 @@ namespace dftfe
   class excDensityGGAClass : public excDensityBaseClass
   {
   public:
-    excDensityGGAClass(xc_func_type funcX,
-                       xc_func_type funcC,
-                       bool         scaleExchange,
-                       bool         computeCorrelation,
-                       double       scaleExchangeFactor);
+    excDensityGGAClass(xc_func_type *funcXPtr,
+                       xc_func_type *funcCPtr,
+                       bool          scaleExchange,
+                       bool          computeCorrelation,
+                       double        scaleExchangeFactor);
     void
     computeDensityBasedEnergyDensity(
       unsigned int                                                    sizeInput,
