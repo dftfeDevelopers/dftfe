@@ -21,13 +21,13 @@
 
 namespace dftfe
 {
-  excDensityGGAClass::excDensityGGAClass(xc_func_type funcX,
-                                         xc_func_type funcC,
-                                         bool         scaleExchange,
-                                         bool         computeCorrelation,
-                                         double       scaleExchangeFactor)
-    : excDensityBaseClass(funcX,
-                          funcC,
+  excDensityGGAClass::excDensityGGAClass(xc_func_type *funcXPtr,
+                                         xc_func_type *funcCPtr,
+                                         bool          scaleExchange,
+                                         bool          computeCorrelation,
+                                         double        scaleExchangeFactor)
+    : excDensityBaseClass(funcXPtr,
+                          funcCPtr,
                           scaleExchange,
                           computeCorrelation,
                           scaleExchangeFactor)
@@ -48,12 +48,12 @@ namespace dftfe
 
 
     // This * is not neccessary, unnessary referencing and de-referencing
-    xc_gga_exc(&d_funcX,
+    xc_gga_exc(d_funcXPtr,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
                &outputExchangeEnergyDensity[0]);
-    xc_gga_exc(&d_funcC,
+    xc_gga_exc(d_funcCPtr,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
@@ -92,13 +92,13 @@ namespace dftfe
         ->second;
 
 
-    xc_gga_vxc(&d_funcX,
+    xc_gga_vxc(d_funcXPtr,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
                &(*derExchangeEnergyWithDensity)[0],
                &(*derExchangeEnergyWithSigmaGradDensity)[0]);
-    xc_gga_vxc(&d_funcC,
+    xc_gga_vxc(d_funcCPtr,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
@@ -149,7 +149,7 @@ namespace dftfe
 
 
 
-    xc_gga_fxc(&d_funcX,
+    xc_gga_fxc(d_funcXPtr,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
@@ -157,7 +157,7 @@ namespace dftfe
                &(*der2ExchangeEnergyWithDensitySigma)[0],
                &(*der2ExchangeEnergyWithSigmaGradDensity)[0]);
 
-    xc_gga_fxc(&d_funcC,
+    xc_gga_fxc(d_funcCPtr,
                sizeInput,
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
