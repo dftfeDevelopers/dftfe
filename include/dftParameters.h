@@ -97,6 +97,7 @@ namespace dftfe
     bool writeDensitySolutionFields;
 
     std::string  startingWFCType;
+    bool         restrictToOnePass;
     unsigned int numCoreWfcRR;
     unsigned int numCoreWfcXtHX;
     unsigned int wfcBlockSize;
@@ -116,6 +117,7 @@ namespace dftfe
     bool         useMixedPrecCGS_O;
     bool         useMixedPrecXTHXSpectrumSplit;
     bool         useMixedPrecSubspaceRotRR;
+    bool         useMixedPrecCommunOnlyXTHXCGSO;
     unsigned int spectrumSplitStartingScfIter;
     bool         useELPA;
     bool         constraintsParallelCheck;
@@ -157,6 +159,7 @@ namespace dftfe
     bool         allowMultipleFilteringPassesAfterFirstScf;
     bool         useELPADeviceKernel;
     bool         deviceMemOptMode;
+
 
     unsigned int dc_dispersioncorrectiontype;
     unsigned int dc_d3dampingtype;

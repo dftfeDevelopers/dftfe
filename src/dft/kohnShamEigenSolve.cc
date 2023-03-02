@@ -404,7 +404,6 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
         pcout << "spin: " << spinType + 1 << std::endl;
     }
 
-
   //
   // scale the eigenVectors (initial guess of single atom wavefunctions or
   // previous guess) to convert into Lowden Orthonormalized FE basis multiply by
@@ -424,7 +423,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
   if (d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
                              spinType])
     {
-      distributedCPUVec<dataTypes::number> vecForLanczos;
+      distributedCPUMultiVec<dataTypes::number> vecForLanczos;
       kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
 
       computing_timer.enter_subsection("Lanczos k-step Upper Bound");
@@ -447,7 +446,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
         lowerBoundWantedSpectrum,
         lowerBoundWantedSpectrum +
           (upperBoundUnwantedSpectrum - lowerBoundWantedSpectrum) /
-            vecForLanczos.size() * d_numEigenValues *
+            vecForLanczos.globalSize() * d_numEigenValues *
             (d_dftParamsPtr->reproducible_output ? 10.0 : 200.0),
         upperBoundUnwantedSpectrum);
     }
@@ -456,7 +455,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
       if (!d_dftParamsPtr->reuseLanczosUpperBoundFromFirstCall)
         {
           computing_timer.enter_subsection("Lanczos k-step Upper Bound");
-          distributedCPUVec<dataTypes::number> vecForLanczos;
+          distributedCPUMultiVec<dataTypes::number> vecForLanczos;
           kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
           std::pair<double, double> bounds =
             linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(
@@ -877,7 +876,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
   if (d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
                              spinType])
     {
-      distributedCPUVec<dataTypes::number> vecForLanczos;
+      distributedCPUMultiVec<dataTypes::number> vecForLanczos;
       kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
 
       computing_timer.enter_subsection("Lanczos k-step Upper Bound");
@@ -894,14 +893,14 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
         lowerBoundWantedSpectrum,
         lowerBoundWantedSpectrum +
           (upperBoundUnwantedSpectrum - lowerBoundWantedSpectrum) /
-            vecForLanczos.size() * d_numEigenValues *
+            vecForLanczos.globalSize() * d_numEigenValues *
             (d_dftParamsPtr->reproducible_output ? 10.0 : 200.0),
         upperBoundUnwantedSpectrum);
     }
   else
     {
       computing_timer.enter_subsection("Lanczos k-step Upper Bound");
-      distributedCPUVec<dataTypes::number> vecForLanczos;
+      distributedCPUMultiVec<dataTypes::number> vecForLanczos;
       kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
       std::pair<double, double> bounds =
         linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(

@@ -422,6 +422,33 @@ namespace dftfe
       void
       setValue(const ValueType val);
 
+      template <typename ValueBaseType>
+      void
+      scale(const ValueBaseType val);
+
+      template <typename ValueBaseType>
+      void
+      add(const ValueBaseType *valVec, const MultiVector &u);
+
+      template <typename ValueBaseType>
+      void
+      add(const ValueBaseType val, const MultiVector &u);
+
+      template <typename ValueBaseType1, typename ValueBaseType2>
+      void
+      addAndScale(const ValueBaseType1 valScale,
+                  const ValueBaseType2 valAdd,
+                  const MultiVector &  u);
+
+      template <typename ValueBaseType1, typename ValueBaseType2>
+      void
+      scaleAndAdd(const ValueBaseType1 valScale,
+                  const ValueBaseType2 valAdd,
+                  const MultiVector &  u);
+
+      void
+      dot(const MultiVector &u, ValueType *dotVec);
+
       void
       zeroOutGhosts();
 
@@ -448,6 +475,10 @@ namespace dftfe
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
+
+      template <typename ValueBaseType>
+      void
+      l2Norm(ValueBaseType *normVec) const;
 
 
       global_size_type

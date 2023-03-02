@@ -79,6 +79,18 @@ namespace dftfe
         const unsigned int blockSize);
 
       /**
+       * @brief precompute map between local processor index of unflattened deallii array to the local processor index of
+       * the first field associated with the multi-field flattened dealii array
+       *
+       * @param partitioner1 associated with unflattened dealii vector
+       * @param partitioner2 associated with flattened dealii vector storing multi-fields
+       */
+      void
+      precomputeMaps(const std::shared_ptr<const utils::mpi::MPIPatternP2P<
+                       dftfe::utils::MemorySpace::HOST>> &partitioner2,
+                     const unsigned int                   blockSize);
+
+      /**
        * @brief overloaded dealii internal function "distribute" which sets the slave node
        * field values from master nodes
        *
@@ -98,6 +110,11 @@ namespace dftfe
       distribute(distributedCPUVec<T> &fieldVector,
                  const unsigned int    blockSize) const;
 
+      template <typename T>
+      void
+      distribute(distributedCPUMultiVec<T> &fieldVector,
+                 const unsigned int         blockSize) const;
+
       /**
        * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
        * slave nodes are the nodes which are to the right of the constraint
@@ -113,6 +130,11 @@ namespace dftfe
       distribute_slave_to_master(distributedCPUVec<T> &fieldVector,
                                  const unsigned int    blockSize) const;
 
+      template <typename T>
+      void
+      distribute_slave_to_master(distributedCPUMultiVec<T> &fieldVector,
+                                 const unsigned int         blockSize) const;
+
 
       /**
        * @brief sets field values at constrained nodes to be zero
@@ -124,6 +146,10 @@ namespace dftfe
       void
       set_zero(distributedCPUVec<T> &fieldVector,
                const unsigned int    blockSize) const;
+      template <typename T>
+      void
+      set_zero(distributedCPUMultiVec<T> &fieldVector,
+               const unsigned int         blockSize) const;
 
       /**
        * clear data members

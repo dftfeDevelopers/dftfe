@@ -122,7 +122,22 @@ namespace dftfe
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
       const dftParameters &                            dftParams);
 
-
+    /** @brief Computes Sc=X^{T}*Xc.
+     *
+     *
+     */
+    void
+    fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
+      const dataTypes::number *                        X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      dftfe::utils::deviceBlasHandle_t &               handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams);
 
     /** @brief Computes Sc=X^{T}*Xc.
      *

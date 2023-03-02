@@ -963,6 +963,12 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
 
           prm.declare_entry(
+            "USE MIXED PREC COMMUN ONLY XTX XTHX",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
+
+          prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
             "true",
             Patterns::Bool(),
@@ -992,6 +998,12 @@ namespace dftfe
             "true",
             Patterns::Bool(),
             "[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");
+
+          prm.declare_entry(
+            "RESTRICT TO SINGLE FILTER PASS",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Restrict to single chebyshev filter pass in each SCF. This setting is only used for timing measurements of stable single SCF iteration.");
         }
         prm.leave_subsection();
       }
@@ -1187,6 +1199,7 @@ namespace dftfe
     HXOptimFlag               = false;
 
     startingWFCType                                = "";
+    restrictToOnePass                              = false;
     writeWfcSolutionFields                         = false;
     writeDensitySolutionFields                     = false;
     wfcBlockSize                                   = 400;
@@ -1208,6 +1221,7 @@ namespace dftfe
     useMixedPrecCGS_O                              = false;
     useMixedPrecXTHXSpectrumSplit                  = false;
     useMixedPrecSubspaceRotRR                      = false;
+    useMixedPrecCommunOnlyXTHXCGSO                 = false;
     spectrumSplitStartingScfIter                   = 1;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
@@ -1532,7 +1546,9 @@ namespace dftfe
         useMixedPrecXTHXSpectrumSplit =
           prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
-        useMixedPrecCheby         = prm.get_bool("USE MIXED PREC CHEBY");
+        useMixedPrecCommunOnlyXTHXCGSO =
+          prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
+        useMixedPrecCheby = prm.get_bool("USE MIXED PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1546,6 +1562,7 @@ namespace dftfe
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
         useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
+        restrictToOnePass = prm.get_bool("RESTRICT TO SINGLE FILTER PASS");
       }
       prm.leave_subsection();
     }
@@ -1883,7 +1900,9 @@ namespace dftfe
 
     if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
       {
-        if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        if (restrictToOnePass)
+          chebyshevTolerance = 1.0e+4;
+        else if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER")
           chebyshevTolerance = 1.0e-2;
