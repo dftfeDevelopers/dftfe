@@ -26,13 +26,15 @@ namespace dftfe
   {
   public:
     static void
-    createExcClassObj(unsigned int               xc_id,
-                      int                        isSpinPolarized,
-                      unsigned int               exxFactor,
-                      bool                       scaleExchange,
-                      unsigned int               scaleExchangeFactor,
-                      bool                       computeCorrelation,
-                      excWavefunctionBaseClass *&excClassPtr);
+    createExcClassObj(unsigned int              xc_id,
+                      bool                      isSpinPolarized,
+                      unsigned int              exxFactor,
+                      bool                      scaleExchange,
+                      unsigned int              scaleExchangeFactor,
+                      bool                      computeCorrelation,
+                      xc_func_type *            funcXPtr,
+                      xc_func_type *            funcCPtr,
+                      excWavefunctionBaseClass *excClassPtr);
   };
 } // namespace dftfe
 
