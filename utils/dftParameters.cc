@@ -650,7 +650,7 @@ namespace dftfe
           "",
           Patterns::Anything(),
           "[Developer] Parameter specifying the filename that contains the data for an externally supplied XC model. This is an experimental feature to test out any new XC functional developed using machine learning. Currently, it assumes an LDA type functional.");
-        
+
 
         prm.declare_entry(
           "SPIN POLARIZATION",
@@ -1125,7 +1125,7 @@ namespace dftfe
     numberEigenValues                          = 1;
     xc_id                                      = 1;
     spinPolarized                              = 0;
-    modelXCInputFile       = "";       
+    modelXCInputFile                           = "";
     nkx                                        = 1;
     nky                                        = 1;
     nkz                                        = 1;
@@ -1497,7 +1497,7 @@ namespace dftfe
       pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
       xc_id                 = prm.get_integer("EXCHANGE CORRELATION TYPE");
       spinPolarized         = prm.get_integer("SPIN POLARIZATION");
-      modelXCInputFile       = prm.get("MODEL XC INPUT FILE");      
+      modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
       start_magnetization   = prm.get_double("START MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       TotalImages           = prm.get_integer("NUMBER OF IMAGES");

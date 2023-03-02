@@ -33,6 +33,7 @@ namespace dftfe
     , d_scaleExchangeFactor(scaleExchangeFactor)
   {}
 
+
   densityFamilyType
   excDensityBaseClass::getDensityBasedFamilyType() const
   {

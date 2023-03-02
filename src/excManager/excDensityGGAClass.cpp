@@ -19,20 +19,49 @@
 
 #include <excDensityGGAClass.h>
 
+
 namespace dftfe
 {
   excDensityGGAClass::excDensityGGAClass(xc_func_type *funcXPtr,
                                          xc_func_type *funcCPtr,
+                                         bool          isSpinPolarized,
                                          bool          scaleExchange,
                                          bool          computeCorrelation,
                                          double        scaleExchangeFactor)
     : excDensityBaseClass(funcXPtr,
                           funcCPtr,
+                          isSpinPolarized,
                           scaleExchange,
                           computeCorrelation,
                           scaleExchangeFactor)
   {
     d_familyType = densityFamilyType::GGA;
+    d_NNGGAPtr   = nullptr;
+  }
+
+
+  excDensityGGAClass::excDensityGGAClass(xc_func_type *funcXPtr,
+                                         xc_func_type *funcCPtr,
+                                         bool          isSpinPolarized,
+                                         std::string   modelXCInputFile,
+                                         bool          scaleExchange,
+                                         bool          computeCorrelation,
+                                         double        scaleExchangeFactor)
+    : excDensityBaseClass(funcXPtr,
+                          funcCPtr,
+                          isSpinPolarized,
+                          scaleExchange,
+                          computeCorrelation,
+                          scaleExchangeFactor)
+  {
+    d_familyType = densityFamilyType::GGA;
+    d_NNGGAPtr   = new NNGGA(modelXCInputFile, true);
+  }
+
+  excDensityGGAClass::excDensityGGAClass()
+  {
+    if (d_NNGGAPtr != nullptr)
+      delete d_NNGGAPtr;
   }
 
   void
@@ -58,6 +87,43 @@ namespace dftfe
                &(*rhoValues)[0],
                &(*rhoSigmaGradValues)[0],
                &outputCorrEnergyDensity[0]);
+
+    if (d_NNGGAPtr != nullptr)
+      {
+        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
+        std::vector<double> sigmaValuesForNN(3 * sizeInput, 0);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              rhoValuesForNN[i] = (*rhoValues)[i];
+
+            for (unsigned int i = 0; i < 3 * sizeInput; i++)
+              sigmaValuesForNN[i] = (*rhoSigmaGradValues)[i];
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
+                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
+              }
+
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                sigmaValuesForNN[3 * i]     = (*rhoSigmaGradValues)[i] / 4.0;
+                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 2.0;
+                sigmaValuesForNN[3 * i + 2] = (*rhoSigmaGradValues)[i] / 4.0;
+              }
+          }
+
+        std::vector<double> excValuesFromNN(sizeInput, 0);
+        d_NNGGAPtr->evaluateexc(&(rhoValuesForNN[0]),
+                                &(sigmaValuesForNN[0]),
+                                sizeInput,
+                                &excValuesFromNN[0]);
+        for (unsigned int i = 0; i < sizeInput; i++)
+          outputExchangeEnergyDensity[i] += excValuesFromNN[i];
+      }
   }
 
   void
@@ -104,6 +170,69 @@ namespace dftfe
                &(*rhoSigmaGradValues)[0],
                &(*derCorrEnergyWithDensity)[0],
                &(*derCorrEnergyWithSigmaGradDensity)[0]);
+
+    if (d_NNGGAPtr != nullptr)
+      {
+        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
+        std::vector<double> sigmaValuesForNN(3 * sizeInput, 0);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              rhoValuesForNN[i] = (*rhoValues)[i];
+
+            for (unsigned int i = 0; i < 3 * sizeInput; i++)
+              sigmaValuesForNN[i] = (*rhoSigmaGradValues)[i];
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
+                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
+              }
+
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                sigmaValuesForNN[3 * i]     = (*rhoSigmaGradValues)[i] / 4.0;
+                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 2.0;
+                sigmaValuesForNN[3 * i + 2] = (*rhoSigmaGradValues)[i] / 4.0;
+              }
+          }
+
+        std::vector<double> excValuesFromNN(sizeInput, 0);
+        std::vector<double> vxcValuesFromNN(5 * sizeInput, 0);
+        d_NNGGAPtr->evaluatevxc(&(rhoValuesForNN[0]),
+                                &(sigmaValuesForNN[0]),
+                                sizeInput,
+                                &excValuesFromNN[0],
+                                &vxcValuesFromNN[0]);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                (*derExchangeEnergyWithDensity)[2 * i] +=
+                  vxcValuesFromNN[5 * i];
+                (*derExchangeEnergyWithDensity)[2 * i + 1] +=
+                  vxcValuesFromNN[5 * i + 1];
+                (*derExchangeEnergyWithSigmaGradDensity)[3 * i] +=
+                  vxcValuesFromNN[5 * i + 2];
+                (*derExchangeEnergyWithSigmaGradDensity)[3 * i + 1] +=
+                  vxcValuesFromNN[5 * i + 3];
+                (*derExchangeEnergyWithSigmaGradDensity)[3 * i + 2] +=
+                  vxcValuesFromNN[5 * i + 4];
+              }
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                (*derExchangeEnergyWithDensity)[i] +=
+                  vxcValuesFromNN[3 * i] + vxcValuesFromNN[3 * i + 1];
+                (*derExchangeEnergyWithSigmaGradDensity)[i] +=
+                  vxcValuesFromNN[3 * i + 2];
+              }
+          }
+      }
   }
 
 

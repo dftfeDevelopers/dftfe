@@ -56,6 +56,7 @@ namespace dftfe
   public:
     excDensityBaseClass(xc_func_type *funcXPtr,
                         xc_func_type *funcCPtr,
+                        bool          isSpinPolarized,
                         bool          scaleExchange,
                         bool          computeCorrelation,
                         double        scaleExchangeFactor);
@@ -93,7 +94,7 @@ namespace dftfe
     xc_func_type *    d_funcXPtr;
     xc_func_type *    d_funcCPtr;
     bool              d_scaleExchange, d_computeCorrelation;
-    double            d_scaleExchangeFactor;
+    bool d_isSpinPolarized, double d_scaleExchangeFactor;
   };
 
 } // namespace dftfe

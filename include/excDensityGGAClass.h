@@ -18,6 +18,7 @@
 #define DFTFE_EXCDENSITYGGACLASS_H
 
 #include <excDensityBaseClass.h>
+#include <NNGGA.h>
 
 namespace dftfe
 {
@@ -26,9 +27,19 @@ namespace dftfe
   public:
     excDensityGGAClass(xc_func_type *funcXPtr,
                        xc_func_type *funcCPtr,
+                       bool          isSpinPolarized,
                        bool          scaleExchange,
                        bool          computeCorrelation,
                        double        scaleExchangeFactor);
+
+    excDensityGGAClass(xc_func_type *funcXPtr,
+                       xc_func_type *funcCPtr,
+                       bool          isSpinPolarized,
+                       std::string   modelXCInputFile,
+                       bool          scaleExchange,
+                       bool          computeCorrelation,
+                       double        scaleExchangeFactor);
+
     void
     computeDensityBasedEnergyDensity(
       unsigned int                                                    sizeInput,
@@ -56,6 +67,7 @@ namespace dftfe
 
 
   private:
+    NNGGA *d_NNGGAPtr;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYGGACLASS_H

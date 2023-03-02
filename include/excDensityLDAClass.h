@@ -19,6 +19,7 @@
 #define DFTFE_EXCDENSIYLDACLASS_H
 
 #include <excDensityBaseClass.h>
+#include <NNLDA.h>
 
 namespace dftfe
 {
@@ -27,9 +28,19 @@ namespace dftfe
   public:
     excDensityLDAClass(xc_func_type *funcXPtr,
                        xc_func_type *funcCPtr,
+                       bool          isSpinPolarized,
                        bool          scaleExchange,
                        bool          computeCorrelation,
                        double        scaleExchangeFactor);
+
+    excDensityLDAClass(xc_func_type *funcXPtr,
+                       xc_func_type *funcCPtr,
+                       bool          isSpinPolarized,
+                       std::string   modelXCInputFile,
+                       bool          scaleExchange,
+                       bool          computeCorrelation,
+                       double        scaleExchangeFactor);
+
     void
     computeDensityBasedEnergyDensity(
       unsigned int                                                    sizeInput,
@@ -57,6 +68,7 @@ namespace dftfe
 
 
   private:
+    NNGGA *d_NNGGAPtr;
   };
 } // namespace dftfe
 

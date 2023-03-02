@@ -43,7 +43,7 @@ namespace dftfe
       numberWaveFunctionsForEstimate, numLevels,
       maxLinearSolverIterationsHelmholtz;
 
-    std::string modelXCInputFile;   
+    std::string modelXCInputFile;
 
     double radiusAtomBall, mixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
