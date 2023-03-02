@@ -35,7 +35,7 @@ namespace dftfe
   {
     int exceptParamX = -1, exceptParamC = -1;
     int isSpinPolarizedXC;
-    if (isSpinPolarized == 1)
+    if (isSpinPolarized)
       {
         isSpinPolarizedXC = XC_POLARIZED;
       }
