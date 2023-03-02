@@ -642,8 +642,15 @@ namespace dftfe
         prm.declare_entry(
           "EXCHANGE CORRELATION TYPE",
           "1",
-          Patterns::Integer(1, 5),
-          "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)).");
+          Patterns::Integer(1, 8),
+          "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), 6(ML-XC NNLDA: LDA-PW + NN), 7(ML-XC NNGGA: GGA-PBE + NN).");
+
+        prm.declare_entry(
+          "MODEL XC INPUT FILE",
+          "",
+          Patterns::Anything(),
+          "[Developer] Parameter specifying the filename that contains the data for an externally supplied XC model. This is an experimental feature to test out any new XC functional developed using machine learning. Currently, it assumes an LDA type functional.");
+        
 
         prm.declare_entry(
           "SPIN POLARIZATION",
@@ -1118,6 +1125,7 @@ namespace dftfe
     numberEigenValues                          = 1;
     xc_id                                      = 1;
     spinPolarized                              = 0;
+    modelXCInputFile       = "";       
     nkx                                        = 1;
     nky                                        = 1;
     nkz                                        = 1;
@@ -1489,6 +1497,7 @@ namespace dftfe
       pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
       xc_id                 = prm.get_integer("EXCHANGE CORRELATION TYPE");
       spinPolarized         = prm.get_integer("SPIN POLARIZATION");
+      modelXCInputFile       = prm.get("MODEL XC INPUT FILE");      
       start_magnetization   = prm.get_double("START MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       TotalImages           = prm.get_integer("NUMBER OF IMAGES");
