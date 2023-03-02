@@ -23,15 +23,15 @@
 namespace dftfe
 {
   void
-  excManager::createExcClassObj(unsigned int              xc_id,
-                                bool                      isSpinPolarized,
-                                unsigned int              exxFactor,
-                                bool                      scaleExchange,
-                                unsigned int              scaleExchangeFactor,
-                                bool                      computeCorrelation,
-                                xc_func_type *            funcXPtr,
-                                xc_func_type *            funcCPtr,
-                                excWavefunctionBaseClass *excClassPtr)
+  excManager::createExcClassObj(unsigned int               xc_id,
+                                bool                       isSpinPolarized,
+                                unsigned int               exxFactor,
+                                bool                       scaleExchange,
+                                unsigned int               scaleExchangeFactor,
+                                bool                       computeCorrelation,
+                                xc_func_type *             funcXPtr,
+                                xc_func_type *             funcCPtr,
+                                excWavefunctionBaseClass *&excClassPtr)
   {
     int exceptParamX = -1, exceptParamC = -1;
     int isSpinPolarizedXC;
