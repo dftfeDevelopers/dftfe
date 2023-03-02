@@ -292,27 +292,17 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
 
   if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "Force initUnmoved");
-  //
-  // Initialize libxc (exchange-correlation)
-  //
-  int exceptParamX, exceptParamC;
-  int isSpinPolarized;
-  if (d_dftParamsPtr->spinPolarized == 1)
-    {
-      isSpinPolarized = XC_POLARIZED;
-    }
-  else
-    {
-      isSpinPolarized = XC_UNPOLARIZED;
-    }
 
 
   excManager::createExcClassObj(d_dftParamsPtr->xc_id,
-                                isSpinPolarized,
+                                (d_dftParamsPtr->spinPolarized == 1) ? true :
+                                                                       false,
                                 0.0,   // exx factor
                                 false, // scale exchange
                                 1.0,   // scale exchange factor
                                 true,  // computeCorrelation
+                                &funcX,
+                                &funcC,
                                 excFunctionalPtr);
   /*
   exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);

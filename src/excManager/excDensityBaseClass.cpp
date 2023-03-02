@@ -21,13 +21,13 @@
 
 namespace dftfe
 {
-  excDensityBaseClass::excDensityBaseClass(xc_func_type funcX,
-                                           xc_func_type funcC,
-                                           bool         scaleExchange,
-                                           bool         computeCorrelation,
-                                           double       scaleExchangeFactor)
-    : d_funcX(funcX)
-    , d_funcC(funcC)
+  excDensityBaseClass::excDensityBaseClass(xc_func_type *funcXPtr,
+                                           xc_func_type *funcCPtr,
+                                           bool          scaleExchange,
+                                           bool          computeCorrelation,
+                                           double        scaleExchangeFactor)
+    : d_funcXPtr(funcXPtr)
+    , d_funcCPtr(funcCPtr)
     , d_scaleExchange(scaleExchange)
     , d_computeCorrelation(computeCorrelation)
     , d_scaleExchangeFactor(scaleExchangeFactor)

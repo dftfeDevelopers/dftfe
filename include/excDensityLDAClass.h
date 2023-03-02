@@ -25,11 +25,11 @@ namespace dftfe
   class excDensityLDAClass : public excDensityBaseClass
   {
   public:
-    excDensityLDAClass(xc_func_type funcX,
-                       xc_func_type funcC,
-                       bool         scaleExchange,
-                       bool         computeCorrelation,
-                       double       scaleExchangeFactor);
+    excDensityLDAClass(xc_func_type *funcXPtr,
+                       xc_func_type *funcCPtr,
+                       bool          scaleExchange,
+                       bool          computeCorrelation,
+                       double        scaleExchangeFactor);
     void
     computeDensityBasedEnergyDensity(
       unsigned int                                                    sizeInput,

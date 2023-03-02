@@ -23,8 +23,8 @@ namespace dftfe
 {
   excWavefunctionBaseClass::excWavefunctionBaseClass(
     densityFamilyType densityFamilyTypeObj,
-    xc_func_type      funcX,
-    xc_func_type      funcC,
+    xc_func_type *    funcXPtr,
+    xc_func_type *    funcCPtr,
     double            factorForWavefunctionDependent,
     bool              scaleExchange,
     bool              computeCorrelation,
@@ -34,16 +34,16 @@ namespace dftfe
       {
         case densityFamilyType::LDA:
           d_excDensityBaseClassPtr =
-            new excDensityLDAClass(funcX,
-                                   funcC,
+            new excDensityLDAClass(funcXPtr,
+                                   funcCPtr,
                                    scaleExchange,
                                    computeCorrelation,
                                    scaleExchangeFactor);
           break;
         case densityFamilyType::GGA:
           d_excDensityBaseClassPtr =
-            new excDensityGGAClass(funcX,
-                                   funcC,
+            new excDensityGGAClass(funcXPtr,
+                                   funcCPtr,
                                    scaleExchange,
                                    computeCorrelation,
                                    scaleExchangeFactor);

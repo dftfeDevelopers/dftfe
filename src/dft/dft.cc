@@ -224,6 +224,8 @@ namespace dftfe
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
 
+    xc_func_end(&funcX);
+    xc_func_end(&funcC);
     delete excFunctionalPtr;
   }
 
