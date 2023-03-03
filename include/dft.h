@@ -1024,7 +1024,7 @@ namespace dftfe
 
 
     /// objects for various exchange-correlations (from libxc package)
-    // xc_func_type funcX, funcC;
+    xc_func_type funcX, funcC;
 
     excWavefunctionBaseClass *excFunctionalPtr;
     dispersionCorrection      d_dispersionCorr;

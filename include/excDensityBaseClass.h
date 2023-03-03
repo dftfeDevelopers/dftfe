@@ -54,11 +54,11 @@ namespace dftfe
   class excDensityBaseClass
   {
   public:
-    excDensityBaseClass(xc_func_type funcX,
-                        xc_func_type funcC,
-                        bool         scaleExchange,
-                        bool         computeCorrelation,
-                        double       scaleExchangeFactor);
+    excDensityBaseClass(xc_func_type *funcXPtr,
+                        xc_func_type *funcCPtr,
+                        bool          scaleExchange,
+                        bool          computeCorrelation,
+                        double        scaleExchangeFactor);
 
     virtual void
     computeDensityBasedEnergyDensity(
@@ -90,7 +90,8 @@ namespace dftfe
 
   protected:
     densityFamilyType d_familyType;
-    xc_func_type      d_funcX, d_funcC;
+    xc_func_type *    d_funcXPtr;
+    xc_func_type *    d_funcCPtr;
     bool              d_scaleExchange, d_computeCorrelation;
     double            d_scaleExchangeFactor;
   };
