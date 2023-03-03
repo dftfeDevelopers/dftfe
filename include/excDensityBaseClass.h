@@ -94,7 +94,8 @@ namespace dftfe
     xc_func_type *    d_funcXPtr;
     xc_func_type *    d_funcCPtr;
     bool              d_scaleExchange, d_computeCorrelation;
-    bool d_isSpinPolarized, double d_scaleExchangeFactor;
+    bool              d_isSpinPolarized;
+    double            d_scaleExchangeFactor;
   };
 
 } // namespace dftfe

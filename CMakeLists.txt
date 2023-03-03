@@ -55,6 +55,8 @@ SET(TARGET_SRC
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excManager.cpp
   ./src/excManager/excWavefunctionNoneClass.cpp
+  ./src/excManager/NNGGA.cc
+  ./src/excManager/NNLDA.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
