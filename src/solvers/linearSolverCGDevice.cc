@@ -292,10 +292,8 @@ namespace dftfe
 
     d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
 
-    const double rhsL2Norm = dftfe::utils::deviceKernelsGeneric::l2_norm(rhsDevice.begin(),
-                                                              d_xLocalDof,
-                                                              mpi_communicator,
-                                                              deviceBlasHandle);
+    const double rhsL2Norm = dftfe::utils::deviceKernelsGeneric::l2_norm(
+      rhsDevice.begin(), d_xLocalDof, mpi_communicator, deviceBlasHandle);
 
 
     MPI_Barrier(mpi_communicator);
@@ -310,7 +308,7 @@ namespace dftfe
 
     d_devSum.resize(1);
     d_devSumPtr = d_devSum.data();
-    //d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
+    // d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
 
     double res = 0.0, initial_res = 0.0;
     bool   conv = false;
@@ -354,16 +352,16 @@ namespace dftfe
 
             initial_res = res;
 
-                if (useAbsoluteTolerance)
-                {
-                  if (res < tolerance)
-                    conv = true;
-                }
-                else
-                {
-                  if((res/rhsL2Norm)<tolerance)
-                    conv=true;
-                }
+            if (useAbsoluteTolerance)
+              {
+                if (res < tolerance)
+                  conv = true;
+              }
+            else
+              {
+                if ((res / rhsL2Norm) < tolerance)
+                  conv = true;
+              }
 
             if (conv)
               return;
@@ -417,16 +415,16 @@ namespace dftfe
                 // x += alpha * q
                 res = scaleXRandComputeNorm(x.begin(), alpha);
 
-		if (useAbsoluteTolerance)
-		{
-                  if (res < tolerance)
-                    conv = true;
-		}
-		else
-		{
-		  if((res/rhsL2Norm)<tolerance)
-	            conv=true;
-		}
+                if (useAbsoluteTolerance)
+                  {
+                    if (res < tolerance)
+                      conv = true;
+                  }
+                else
+                  {
+                    if ((res / rhsL2Norm) < tolerance)
+                      conv = true;
+                  }
               }
 
             if (!conv)
@@ -466,10 +464,9 @@ namespace dftfe
         pcout << std::endl;
         pcout << "initial abs. residual in Device: " << initial_res
               << " , current abs. residual in Device: " << res
-	      << " , current rel. residual in Device: " << res/rhsL2Norm
+              << " , current rel. residual in Device: " << res / rhsL2Norm
               << " , nsteps: " << it
-              << " , tolerance criterion in Device:  " << tolerance
-              << "\n\n";
+              << " , tolerance criterion in Device:  " << tolerance << "\n\n";
       }
 
     MPI_Barrier(mpi_communicator);

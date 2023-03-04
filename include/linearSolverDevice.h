@@ -51,9 +51,9 @@ namespace dftfe
           const double                      tolerance,
           const unsigned int                maxNumberIterations,
           dftfe::utils::deviceBlasHandle_t &handle,
-          const int                         debugLevel     = 0,
-	  bool                              useAbsoluteTolerance=false,
-          bool                              distributeFlag = true) = 0;
+          const int                         debugLevel           = 0,
+          bool                              useAbsoluteTolerance = false,
+          bool                              distributeFlag       = true) = 0;
 
   private:
   };

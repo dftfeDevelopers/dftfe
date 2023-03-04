@@ -427,7 +427,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
         d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
         d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
         d_dftParamsPtr->verbosity,
-	true,
+        true,
         false);
 #endif
     }
@@ -436,7 +436,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
                    d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                    d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                    d_dftParamsPtr->verbosity,
-		   true,
+                   true,
                    false);
 
   // rhoIn += mixingScalar*residual for Kerker

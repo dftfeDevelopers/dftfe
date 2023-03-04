@@ -63,9 +63,9 @@ namespace dftfe
     solve(dealiiLinearSolverProblem &problem,
           const double               tolerance,
           const unsigned int         maxNumberIterations,
-          const int                  debugLevel     = 0,
-	  bool                       useAbsoluteTolerance=false,
-          bool                       distributeFlag = true);
+          const int                  debugLevel           = 0,
+          bool                       useAbsoluteTolerance = false,
+          bool                       distributeFlag       = true);
 
   private:
     /// enum denoting the choice of the dealii solver

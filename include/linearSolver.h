@@ -49,9 +49,9 @@ namespace dftfe
     solve(dealiiLinearSolverProblem &problem,
           const double               relTolerance,
           const unsigned int         maxNumberIterations,
-          const int                  debugLevel     = 0,
-	  bool                       useAbsoluteTolerance=false,
-          bool                       distributeFlag = true) = 0;
+          const int                  debugLevel           = 0,
+          bool                       useAbsoluteTolerance = false,
+          bool                       distributeFlag       = true) = 0;
 
   private:
   };
