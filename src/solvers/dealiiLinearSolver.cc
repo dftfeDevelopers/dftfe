@@ -39,9 +39,10 @@ namespace dftfe
   // solve
   void
   dealiiLinearSolver::solve(dealiiLinearSolverProblem &problem,
-                            const double               absTolerance,
+                            const double               tolerance,
                             const unsigned int         maxNumberIterations,
                             const int                  debugLevel,
+			    bool                       useAbsoluteTolerance,
                             bool                       distributeFlag)
   {
     int this_process;
@@ -53,7 +54,7 @@ namespace dftfe
     // compute RHS
     distributedCPUVec<double> rhs;
     problem.computeRhs(rhs);
-
+const double rhsL2Norm = rhs.l2_norm();
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
 
@@ -104,10 +105,21 @@ namespace dftfe
               }
 
             res         = gvec.l2_norm();
+
             initial_res = res;
-            if (res < absTolerance)
-              conv = true;
-            if (conv)
+                if (useAbsoluteTolerance)
+                {
+                  if (res < tolerance)
+                    conv = true;
+                }
+                else
+                {
+                  if((res/rhsL2Norm)<tolerance)
+                    conv=true;
+                }
+            
+	    
+	    if (conv)
               return;
 
             while ((!conv) && (it < maxNumberIterations))
@@ -144,8 +156,18 @@ namespace dftfe
 
                 res = std::sqrt(std::abs(gvec.add_and_dot(alpha, hvec, gvec)));
 
-                if (res < absTolerance)
-                  conv = true;
+                if (useAbsoluteTolerance)
+                {
+                  if (res < tolerance)
+                    conv = true;
+                }
+                else
+                {
+                  if((res/rhsL2Norm)<tolerance)
+                    conv=true;
+                }
+
+
               }
             if (!conv)
               {
@@ -180,8 +202,9 @@ namespace dftfe
       {
         pcout << std::endl;
         pcout << "initial abs. residual: " << initial_res
-              << " , current abs. residual: " << res << " , nsteps: " << it
-              << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
+              << " , current abs. residual: " << res 
+	     << " , current rel. residual: " << res/rhsL2Norm << " "<<" , nsteps: " << it
+              << " , tolerance criterion:  " << tolerance << "\n\n";
       }
 
     MPI_Barrier(mpi_communicator);

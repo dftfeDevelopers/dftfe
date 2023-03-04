@@ -67,6 +67,7 @@ namespace dftfe
           const unsigned int                maxNumberIterations,
           dftfe::utils::deviceBlasHandle_t &handle,
           const int                         debugLevel     = 0,
+	  bool                              useAbsoluteTolerance=false,
           bool                              distributeFlag = true);
 
   private:

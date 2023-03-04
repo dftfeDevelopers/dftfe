@@ -2400,7 +2400,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             CGSolverDevice.solve(
               d_phiTotalSolverProblemDevice,
-              d_dftParamsPtr->absLinearSolverTolerance,
+              d_dftParamsPtr->relLinearSolverTolerance,
               d_dftParamsPtr->maxLinearSolverIterations,
               kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               d_dftParamsPtr->verbosity);
@@ -2409,7 +2409,7 @@ namespace dftfe
         else
           {
             CGSolver.solve(d_phiTotalSolverProblem,
-                           d_dftParamsPtr->absLinearSolverTolerance,
+                           d_dftParamsPtr->relLinearSolverTolerance,
                            d_dftParamsPtr->maxLinearSolverIterations,
                            d_dftParamsPtr->verbosity);
           }
@@ -3184,7 +3184,7 @@ namespace dftfe
 
                 CGSolverDevice.solve(
                   d_phiTotalSolverProblemDevice,
-                  d_dftParamsPtr->absLinearSolverTolerance,
+                  d_dftParamsPtr->relLinearSolverTolerance,
                   d_dftParamsPtr->maxLinearSolverIterations,
                   kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
                   d_dftParamsPtr->verbosity);
@@ -3213,7 +3213,7 @@ namespace dftfe
                   true);
 
                 CGSolver.solve(d_phiTotalSolverProblem,
-                               d_dftParamsPtr->absLinearSolverTolerance,
+                               d_dftParamsPtr->relLinearSolverTolerance,
                                d_dftParamsPtr->maxLinearSolverIterations,
                                d_dftParamsPtr->verbosity);
               }
@@ -3440,7 +3440,7 @@ namespace dftfe
 
             CGSolverDevice.solve(
               d_phiTotalSolverProblemDevice,
-              d_dftParamsPtr->absLinearSolverTolerance,
+              d_dftParamsPtr->relLinearSolverTolerance,
               d_dftParamsPtr->maxLinearSolverIterations,
               kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
               d_dftParamsPtr->verbosity);
@@ -3469,7 +3469,7 @@ namespace dftfe
               true);
 
             CGSolver.solve(d_phiTotalSolverProblem,
-                           d_dftParamsPtr->absLinearSolverTolerance,
+                           d_dftParamsPtr->relLinearSolverTolerance,
                            d_dftParamsPtr->maxLinearSolverIterations,
                            d_dftParamsPtr->verbosity);
           }

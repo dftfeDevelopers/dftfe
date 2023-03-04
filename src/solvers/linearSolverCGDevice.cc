@@ -262,10 +262,11 @@ namespace dftfe
   void
   linearSolverCGDevice::solve(
     linearSolverProblemDevice &       problem,
-    const double                      absTolerance,
+    const double                      tolerance,
     const unsigned int                maxNumberIterations,
     dftfe::utils::deviceBlasHandle_t &deviceBlasHandle,
     const int                         debugLevel,
+    bool                              useAbsoluteTolerance,
     bool                              distributeFlag)
   {
     int this_process;
@@ -289,6 +290,13 @@ namespace dftfe
                                              rhsDevice.begin(),
                                              rhsHost.begin());
 
+    d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
+
+    const double rhsL2Norm = dftfe::utils::deviceKernelsGeneric::l2_norm(rhsDevice.begin(),
+                                                              d_xLocalDof,
+                                                              mpi_communicator,
+                                                              deviceBlasHandle);
+
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime();
@@ -302,7 +310,7 @@ namespace dftfe
 
     d_devSum.resize(1);
     d_devSumPtr = d_devSum.data();
-    d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
+    //d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
 
     double res = 0.0, initial_res = 0.0;
     bool   conv = false;
@@ -346,8 +354,17 @@ namespace dftfe
 
             initial_res = res;
 
-            if (res < absTolerance)
-              conv = true;
+                if (useAbsoluteTolerance)
+                {
+                  if (res < tolerance)
+                    conv = true;
+                }
+                else
+                {
+                  if((res/rhsL2Norm)<tolerance)
+                    conv=true;
+                }
+
             if (conv)
               return;
 
@@ -400,8 +417,16 @@ namespace dftfe
                 // x += alpha * q
                 res = scaleXRandComputeNorm(x.begin(), alpha);
 
-                if (res < absTolerance)
-                  conv = true;
+		if (useAbsoluteTolerance)
+		{
+                  if (res < tolerance)
+                    conv = true;
+		}
+		else
+		{
+		  if((res/rhsL2Norm)<tolerance)
+	            conv=true;
+		}
               }
 
             if (!conv)
@@ -441,8 +466,9 @@ namespace dftfe
         pcout << std::endl;
         pcout << "initial abs. residual in Device: " << initial_res
               << " , current abs. residual in Device: " << res
+	      << " , current rel. residual in Device: " << res/rhsL2Norm
               << " , nsteps: " << it
-              << " , abs. tolerance criterion in Device:  " << absTolerance
+              << " , tolerance criterion in Device:  " << tolerance
               << "\n\n";
       }
 

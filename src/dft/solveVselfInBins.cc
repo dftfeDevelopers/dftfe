@@ -630,7 +630,7 @@ namespace dftfe
                 << vselfinit_time << std::endl;
 
         CGSolver.solve(vselfSolverProblem,
-                       d_dftParams.absLinearSolverTolerance,
+                       d_dftParams.relLinearSolverTolerance,
                        d_dftParams.maxLinearSolverIterations,
                        d_dftParams.verbosity);
 
@@ -672,7 +672,7 @@ namespace dftfe
                   << vselfinit_time << std::endl;
 
               CGSolver.solve(vselfSolverProblem,
-                             d_dftParams.absLinearSolverTolerance,
+                             d_dftParams.relLinearSolverTolerance,
                              d_dftParams.maxLinearSolverIterations,
                              d_dftParams.verbosity);
             }
@@ -1406,7 +1406,7 @@ namespace dftfe
                                     &vselfBinsFieldsFlattened[0],
                                     d_dftParams.verbosity,
                                     d_dftParams.maxLinearSolverIterations,
-                                    d_dftParams.absLinearSolverTolerance,
+                                    d_dftParams.relLinearSolverTolerance,
                                     FEOrderElectro != FEOrder ? true : false);
 
     MPI_Barrier(d_mpiCommParent);
