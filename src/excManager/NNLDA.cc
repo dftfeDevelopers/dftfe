@@ -1,5 +1,5 @@
 #ifdef DFTFE_WITH_TORCH
-
+#include <torch/script.h>
 #include <NNLDA.h>
 #include <iostream>
 #include <vector>
