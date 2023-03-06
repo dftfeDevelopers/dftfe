@@ -28,6 +28,7 @@ namespace dftfe
     excWavefunctionNoneClass(densityFamilyType densityFamilyTypeObj,
                              xc_func_type *    funcXPtr,
                              xc_func_type *    funcCPtr,
+                             bool isSpinPolarized,
                              double            factorForWavefunctionDependent,
                              bool              scaleExchange,
                              bool              computeCorrelation,

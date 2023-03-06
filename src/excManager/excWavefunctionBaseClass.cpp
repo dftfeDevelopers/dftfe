@@ -25,6 +25,7 @@ namespace dftfe
     densityFamilyType densityFamilyTypeObj,
     xc_func_type *    funcXPtr,
     xc_func_type *    funcCPtr,
+    bool          isSpinPolarized,
     double            factorForWavefunctionDependent,
     bool              scaleExchange,
     bool              computeCorrelation,
@@ -36,6 +37,7 @@ namespace dftfe
           d_excDensityBaseClassPtr =
             new excDensityLDAClass(funcXPtr,
                                    funcCPtr,
+                                   isSpinPolarized,
                                    scaleExchange,
                                    computeCorrelation,
                                    scaleExchangeFactor);
@@ -44,6 +46,7 @@ namespace dftfe
           d_excDensityBaseClassPtr =
             new excDensityGGAClass(funcXPtr,
                                    funcCPtr,
+                                   isSpinPolarized,
                                    scaleExchange,
                                    computeCorrelation,
                                    scaleExchangeFactor);
