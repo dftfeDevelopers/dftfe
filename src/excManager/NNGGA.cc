@@ -1,4 +1,4 @@
-
+#ifdef DFTFE_WITH_TORCH
 #include <torch/torch.h>
 
 #include <NNGGA.h>
@@ -273,3 +273,4 @@ namespace dftfe
   }
 
 } // namespace dftfe
+#endif

@@ -55,7 +55,9 @@ namespace dftfe
                           scaleExchangeFactor)
   {
     d_familyType = densityFamilyType::GGA;
+#ifdef DFTFE_WITH_TORCH    
     d_NNGGAPtr   = new NNGGA(modelXCInputFile, true);
+#endif
   }
 
   excDensityGGAClass::~excDensityGGAClass()
@@ -88,6 +90,7 @@ namespace dftfe
                &(*rhoSigmaGradValues)[0],
                &outputCorrEnergyDensity[0]);
 
+#ifdef DFTFE_WITH_TORCH
     if (d_NNGGAPtr != nullptr)
       {
         std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
@@ -124,6 +127,7 @@ namespace dftfe
         for (unsigned int i = 0; i < sizeInput; i++)
           outputExchangeEnergyDensity[i] += excValuesFromNN[i];
       }
+#endif      
   }
 
   void
@@ -171,6 +175,7 @@ namespace dftfe
                &(*derCorrEnergyWithDensity)[0],
                &(*derCorrEnergyWithSigmaGradDensity)[0]);
 
+#ifdef DFTFE_WITH_TORCH
     if (d_NNGGAPtr != nullptr)
       {
         std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
@@ -233,6 +238,7 @@ namespace dftfe
               }
           }
       }
+#endif      
   }
 
 

@@ -381,6 +381,8 @@ ENDIF (DEFINED LIBXC_DIR)
 FIND_PACKAGE(Torch PATHS "/home/dsambit/libtorch/libtorch/share/cmake/Torch/" Required) 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
+ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
+
 
 #
 # XML. Set with -DXML_LIB_DIR and -DXML_INCLUDE_DIR

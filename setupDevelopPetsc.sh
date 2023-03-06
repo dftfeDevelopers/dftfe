@@ -47,8 +47,8 @@ withMDI=OFF
 
 #Compiler options and flags
 cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.4/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-std=c++14 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
-cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
+cxx_flags="-g -std=c++14 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
+cxx_flagsRelease="-O1" #sets DCMAKE_CXX_FLAGS_RELEASE
 device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 
                            #(only applicable for withGPU=ON)
 device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
