@@ -2,12 +2,11 @@
 #define NNLDA_H
 #ifdef DFTFE_WITH_TORCH
 #include <string>
-
+#include <torch/torch.h>
 namespace dftfe
 {
   class NNLDA
   {
-    class torch::jit::script::Module;
   public:
     NNLDA(std::string modelFileName, const bool isSpinPolarized = false);
     ~NNLDA();

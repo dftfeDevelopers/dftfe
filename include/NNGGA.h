@@ -2,12 +2,11 @@
 #define NNGGA_H
 #ifdef DFTFE_WITH_TORCH
 #include <string>
-
+#include <torch/torch.h>
 namespace dftfe
 {
   class NNGGA
   {
-    class torch::jit::script::Module;
   public:
     NNGGA(std::string modelFileName, const bool isSpinPolarized = false);
     ~NNGGA();

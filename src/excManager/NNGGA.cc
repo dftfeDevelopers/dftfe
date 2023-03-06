@@ -1,12 +1,10 @@
 #ifdef DFTFE_WITH_TORCH
-#include <torch/torch.h>
 
 #include <NNGGA.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <iterator>
-
 #define RHO_NN_TOL 1e-8
 namespace dftfe
 {
