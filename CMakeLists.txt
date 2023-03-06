@@ -31,7 +31,7 @@ set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-#set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(ENABLE_MPI)
@@ -376,9 +376,9 @@ ENDIF (DEFINED LIBXC_DIR)
 #
 # TORCH. Set with -DTORCH_DIR=/path/to/prefix
 #
-FIND_PACKAGE(Torch PATHS "/home/bikash/softwares/conda_envs/pytorch_cpu/lib/python3.9/site-packages/torch/share/cmake/Torch/" Required) 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-target_link_libraries(${TARGETLIB} ${TORCH_LIBRARIES}) 
+FIND_PACKAGE(Torch PATHS "/home/dsambit/libtorch/libtorch/share/cmake/Torch/" Required) 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
 
 #
 # XML. Set with -DXML_LIB_DIR and -DXML_INCLUDE_DIR

@@ -18,11 +18,12 @@
 #ifndef DFTFE_EXCDENSIYLDACLASS_H
 #define DFTFE_EXCDENSIYLDACLASS_H
 
+//#include <NNLDA.h>
 #include <excDensityBaseClass.h>
-#include <NNLDA.h>
 
 namespace dftfe
 {
+  class NNLDA;
   class excDensityLDAClass : public excDensityBaseClass
   {
   public:

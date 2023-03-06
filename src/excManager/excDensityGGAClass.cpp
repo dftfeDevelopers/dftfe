@@ -18,7 +18,7 @@
 //
 
 #include <excDensityGGAClass.h>
-
+#include <NNGGA.h>
 
 namespace dftfe
 {

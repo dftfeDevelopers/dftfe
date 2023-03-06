@@ -18,6 +18,7 @@
 //
 
 #include <excDensityLDAClass.h>
+#include <NNLDA.h>
 
 namespace dftfe
 {

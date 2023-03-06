@@ -17,11 +17,12 @@
 #ifndef DFTFE_EXCDENSITYGGACLASS_H
 #define DFTFE_EXCDENSITYGGACLASS_H
 
+//#include <NNGGA.h>
 #include <excDensityBaseClass.h>
-#include <NNGGA.h>
 
 namespace dftfe
 {
+  class NNGGA;
   class excDensityGGAClass : public excDensityBaseClass
   {
   public:
