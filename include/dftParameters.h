@@ -44,7 +44,7 @@ namespace dftfe
       maxLinearSolverIterationsHelmholtz;
 
     double radiusAtomBall, mixingParameter;
-    double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
+    double relLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       start_magnetization, absLinearSolverToleranceHelmholtz;
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
@@ -58,7 +58,7 @@ namespace dftfe
     std::string methodSubTypeLRD;
     double      adaptiveRankRelTolLRD;
     double      betaTol;
-    double      absPoissonSolverToleranceLRD;
+    double      relPoissonSolverToleranceLRD;
     bool        singlePrecLRD;
     bool        estimateJacCondNoFinalSCFIter;
 

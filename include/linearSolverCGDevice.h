@@ -66,8 +66,9 @@ namespace dftfe
           const double                      absTolerance,
           const unsigned int                maxNumberIterations,
           dftfe::utils::deviceBlasHandle_t &handle,
-          const int                         debugLevel     = 0,
-          bool                              distributeFlag = true);
+          const int                         debugLevel           = 0,
+          bool                              useAbsoluteTolerance = false,
+          bool                              distributeFlag       = true);
 
   private:
     /// enum denoting the choice of the linear solver

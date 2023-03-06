@@ -126,7 +126,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
 #ifdef DFTFE_WITH_DEVICE
       CGSolverDevice.solve(
         d_phiTotalSolverProblemDevice,
-        d_dftParamsPtr->absPoissonSolverToleranceLRD,
+        d_dftParamsPtr->relPoissonSolverToleranceLRD,
         d_dftParamsPtr->maxLinearSolverIterations,
         d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
         d_dftParamsPtr->verbosity);
@@ -135,7 +135,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
   else
     {
       CGSolver.solve(d_phiTotalSolverProblem,
-                     d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                     d_dftParamsPtr->relPoissonSolverToleranceLRD,
                      d_dftParamsPtr->maxLinearSolverIterations,
                      d_dftParamsPtr->verbosity);
     }

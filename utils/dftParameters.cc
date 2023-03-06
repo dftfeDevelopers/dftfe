@@ -811,10 +811,10 @@ namespace dftfe
             "[Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
 
           prm.declare_entry(
-            "POISSON SOLVER ABS TOL",
-            "1e-6",
+            "POISSON SOLVER REL TOL",
+            "1e-8",
             Patterns::Double(0.0),
-            "[Advanced] Absolute poisson solver tolerance for electrostatic potential response computation.");
+            "[Advanced] Relative poisson solver tolerance for electrostatic potential response computation.");
 
           prm.declare_entry(
             "USE SINGLE PREC DENSITY RESPONSE",
@@ -1021,7 +1021,7 @@ namespace dftfe
           "TOLERANCE",
           "1e-10",
           Patterns::Double(0, 1.0),
-          "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
+          "[Advanced] Relative tolerance on the residual as stopping criterion for Poisson problem convergence.");
       }
       prm.leave_subsection();
 
@@ -1036,7 +1036,7 @@ namespace dftfe
 
         prm.declare_entry(
           "ABSOLUTE TOLERANCE HELMHOLTZ",
-          "1e-10",
+          "1e-8",
           Patterns::Double(0, 1.0),
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Helmholtz problem convergence.");
       }
@@ -1134,7 +1134,7 @@ namespace dftfe
 
     radiusAtomBall                    = 0.0;
     mixingParameter                   = 0.5;
-    absLinearSolverTolerance          = 1e-10;
+    relLinearSolverTolerance          = 1e-10;
     selfConsistentSolverTolerance     = 1e-10;
     TVal                              = 500;
     start_magnetization               = 0.0;
@@ -1286,7 +1286,7 @@ namespace dftfe
     adaptiveRankRelTolLRD         = 0.3;
     methodSubTypeLRD              = "";
     betaTol                       = 0.1;
-    absPoissonSolverToleranceLRD  = 1.0e-6;
+    relPoissonSolverToleranceLRD  = 1.0e-6;
     singlePrecLRD                 = false;
     estimateJacCondNoFinalSCFIter = false;
     /*****************************************/
@@ -1515,7 +1515,7 @@ namespace dftfe
           prm.get_double("STARTING NORM LARGE DAMPING");
         adaptiveRankRelTolLRD        = prm.get_double("ADAPTIVE RANK REL TOL");
         betaTol                      = prm.get_double("BETA TOL");
-        absPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER ABS TOL");
+        relPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER REL TOL");
         singlePrecLRD = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
         estimateJacCondNoFinalSCFIter =
           prm.get_bool("ESTIMATE JAC CONDITION NO");
@@ -1572,7 +1572,7 @@ namespace dftfe
     prm.enter_subsection("Poisson problem parameters");
     {
       maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
-      absLinearSolverTolerance  = prm.get_double("TOLERANCE");
+      relLinearSolverTolerance  = prm.get_double("TOLERANCE");
     }
     prm.leave_subsection();
 

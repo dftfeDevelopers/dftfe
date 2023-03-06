@@ -115,7 +115,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   std::map<dealii::CellId, std::vector<double>> phiInValues;
 
   CGSolver.solve(phiTotalSolverProblem,
-                 d_dftParamsPtr->absLinearSolverTolerance,
+                 d_dftParamsPtr->relLinearSolverTolerance,
                  d_dftParamsPtr->maxLinearSolverIterations,
                  d_dftParamsPtr->verbosity);
 

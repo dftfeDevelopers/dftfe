@@ -61,10 +61,11 @@ namespace dftfe
      */
     void
     solve(dealiiLinearSolverProblem &problem,
-          const double               absTolerance,
+          const double               tolerance,
           const unsigned int         maxNumberIterations,
-          const int                  debugLevel     = 0,
-          bool                       distributeFlag = true);
+          const int                  debugLevel           = 0,
+          bool                       useAbsoluteTolerance = false,
+          bool                       distributeFlag       = true);
 
   private:
     /// enum denoting the choice of the dealii solver

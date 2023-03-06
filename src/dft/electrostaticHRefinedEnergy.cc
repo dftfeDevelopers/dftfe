@@ -540,7 +540,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
       << std::endl
       << "Solving for total electrostatic potential (rhoIn+b) on h refined mesh: ";
   CGSolver.solve(phiTotalSolverProblem,
-                 d_dftParamsPtr->absLinearSolverTolerance,
+                 d_dftParamsPtr->relLinearSolverTolerance,
                  d_dftParamsPtr->maxLinearSolverIterations,
                  d_dftParamsPtr->verbosity);
 
