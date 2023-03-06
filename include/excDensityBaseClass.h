@@ -19,9 +19,13 @@
 #ifndef DFTFE_EXCDENSITYBASECLASS_H
 #define DFTFE_EXCDENSITYBASECLASS_H
 
-#include <headers.h>
+//#include <headers.h>
 #include <xc.h>
-#include <linearAlgebraOperations.h>
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <map>
+//#include <linearAlgebraOperations.h>
 
 namespace dftfe
 {

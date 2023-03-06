@@ -41,6 +41,8 @@ namespace dftfe
                        bool          computeCorrelation,
                        double        scaleExchangeFactor);
 
+    ~excDensityGGAClass();
+
     void
     computeDensityBasedEnergyDensity(
       unsigned int                                                    sizeInput,

@@ -25,7 +25,7 @@ namespace dftfe
     densityFamilyType densityFamilyTypeObj,
     xc_func_type *    funcXPtr,
     xc_func_type *    funcCPtr,
-    bool isSpinPolarized,
+    bool              isSpinPolarized,
     double            factorForWavefunctionDependent,
     bool              scaleExchange,
     bool              computeCorrelation,
@@ -41,6 +41,30 @@ namespace dftfe
   {
     d_wavefunctionFamilyType = wavefunctionFamilyType::NONE;
   }
+
+  excWavefunctionNoneClass::excWavefunctionNoneClass(
+    densityFamilyType densityFamilyTypeObj,
+    xc_func_type *    funcXPtr,
+    xc_func_type *    funcCPtr,
+    bool              isSpinPolarized,
+    std::string       modelXCInputFile,
+    double            factorForWavefunctionDependent,
+    bool              scaleExchange,
+    bool              computeCorrelation,
+    double            scaleExchangeFactor)
+    : excWavefunctionBaseClass(densityFamilyTypeObj,
+                               funcXPtr,
+                               funcCPtr,
+                               isSpinPolarized,
+                               modelXCInputFile,
+                               factorForWavefunctionDependent,
+                               scaleExchange,
+                               computeCorrelation,
+                               scaleExchangeFactor)
+  {
+    d_wavefunctionFamilyType = wavefunctionFamilyType::NONE;
+  }
+
   void
   excWavefunctionNoneClass::applyWaveFunctionDependentVxc() const
   {

@@ -42,6 +42,8 @@ namespace dftfe
                        bool          computeCorrelation,
                        double        scaleExchangeFactor);
 
+    ~excDensityLDAClass();
+
     void
     computeDensityBasedEnergyDensity(
       unsigned int                                                    sizeInput,
@@ -69,7 +71,7 @@ namespace dftfe
 
 
   private:
-    NNGGA *d_NNGGAPtr;
+    NNLDA *d_NNLDAPtr;
   };
 } // namespace dftfe
 

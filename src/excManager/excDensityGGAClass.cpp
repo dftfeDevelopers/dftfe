@@ -58,7 +58,7 @@ namespace dftfe
     d_NNGGAPtr   = new NNGGA(modelXCInputFile, true);
   }
 
-  excDensityGGAClass::excDensityGGAClass()
+  excDensityGGAClass::~excDensityGGAClass()
   {
     if (d_NNGGAPtr != nullptr)
       delete d_NNGGAPtr;
@@ -294,7 +294,4 @@ namespace dftfe
                &(*der2CorrEnergyWithDensitySigma)[0],
                &(*der2CorrEnergyWithSigmaGradDensity)[0]);
   }
-
-
-
 } // namespace dftfe

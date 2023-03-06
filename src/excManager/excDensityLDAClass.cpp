@@ -57,7 +57,7 @@ namespace dftfe
     d_NNLDAPtr   = new NNLDA(modelXCInputFile, true);
   }
 
-  excDensityLDAClass::excDensityLDAClass()
+  excDensityLDAClass::~excDensityLDAClass()
   {
     if (d_NNLDAPtr != nullptr)
       delete d_NNLDAPtr;
@@ -108,105 +108,107 @@ namespace dftfe
           outputExchangeEnergyDensity[i] += excValuesFromNN[i];
       }
   }
-} // namespace dftfe
 
-void
-excDensityLDAClass::computeDensityBasedVxc(
-  unsigned int                                                    sizeInput,
-  const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-  std::map<VeffOutputDataAttributes, std::vector<double> *>
-    &outputDerExchangeEnergy,
-  std::map<VeffOutputDataAttributes, std::vector<double> *>
-    &outputDerCorrEnergy) const
-{
-  auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+  void
+  excDensityLDAClass::computeDensityBasedVxc(
+    unsigned int                                                    sizeInput,
+    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+    std::map<VeffOutputDataAttributes, std::vector<double> *>
+      &outputDerExchangeEnergy,
+    std::map<VeffOutputDataAttributes, std::vector<double> *>
+      &outputDerCorrEnergy) const
+  {
+    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
 
-  auto exchangePotentialVal =
-    outputDerExchangeEnergy
-      .find(VeffOutputDataAttributes::derEnergyWithDensity)
-      ->second;
+    auto exchangePotentialVal =
+      outputDerExchangeEnergy
+        .find(VeffOutputDataAttributes::derEnergyWithDensity)
+        ->second;
 
-  auto corrPotentialVal =
-    outputDerCorrEnergy.find(VeffOutputDataAttributes::derEnergyWithDensity)
-      ->second;
+    auto corrPotentialVal =
+      outputDerCorrEnergy.find(VeffOutputDataAttributes::derEnergyWithDensity)
+        ->second;
 
-  xc_lda_vxc(d_funcXPtr,
-             sizeInput,
-             &(*rhoValues)[0],
-             &(*exchangePotentialVal)[0]);
-  xc_lda_vxc(d_funcCPtr, sizeInput, &(*rhoValues)[0], &(*corrPotentialVal)[0]);
+    xc_lda_vxc(d_funcXPtr,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*exchangePotentialVal)[0]);
+    xc_lda_vxc(d_funcCPtr,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*corrPotentialVal)[0]);
 
-  if (d_NNLDAPtr != nullptr)
-    {
-      std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
-      if (d_isSpinPolarized)
-        {
-          for (unsigned int i = 0; i < 2 * sizeInput; i++)
-            {
-              rhoValuesForNN[i] = (*rhoValues)[i];
-            }
-        }
-      else
-        {
-          for (unsigned int i = 0; i < sizeInput; i++)
-            {
-              rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
-              rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
-            }
-        }
+    if (d_NNLDAPtr != nullptr)
+      {
+        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              {
+                rhoValuesForNN[i] = (*rhoValues)[i];
+              }
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
+                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
+              }
+          }
 
-      std::vector<double> excValuesFromNN(2 * sizeInput, 0);
-      std::vector<double> vxcValuesFromNN(2 * sizeInput, 0);
-      d_NNLDAPtr->evaluatevxc(&(rhoValuesForNN[0]),
-                              sizeInput,
-                              &excValuesFromNN[0],
-                              &vxcValuesFromNN[0]);
-      if (d_isSpinPolarized)
-        {
-          for (unsigned int i = 0; i < 2 * sizeInput; i++)
-            exchangePotentialVal[i] += vxcValuesFromNN[i];
-        }
-      else
-        {
-          for (unsigned int i = 0; i < sizeInput; i++)
-            exchangePotentialVal[i] +=
-              vxcValuesFromNN[2 * i] + vxcValuesFromNN[2 * i + 1];
-        }
-    }
-}
+        std::vector<double> excValuesFromNN(2 * sizeInput, 0);
+        std::vector<double> vxcValuesFromNN(2 * sizeInput, 0);
+        d_NNLDAPtr->evaluatevxc(&(rhoValuesForNN[0]),
+                                sizeInput,
+                                &excValuesFromNN[0],
+                                &vxcValuesFromNN[0]);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              exchangePotentialVal[i] += vxcValuesFromNN[i];
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              exchangePotentialVal[i] +=
+                vxcValuesFromNN[2 * i] + vxcValuesFromNN[2 * i + 1];
+          }
+      }
+  }
 
-void
-excDensityLDAClass::computeDensityBasedFxc(
-  unsigned int                                                    sizeInput,
-  const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-  std::map<fxcOutputDataAttributes, std::vector<double> *>
-    &outputDer2ExchangeEnergy,
-  std::map<fxcOutputDataAttributes, std::vector<double> *>
-    &outputDer2CorrEnergy) const
-{
-  auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+  void
+  excDensityLDAClass::computeDensityBasedFxc(
+    unsigned int                                                    sizeInput,
+    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
+    std::map<fxcOutputDataAttributes, std::vector<double> *>
+      &outputDer2ExchangeEnergy,
+    std::map<fxcOutputDataAttributes, std::vector<double> *>
+      &outputDer2CorrEnergy) const
+  {
+    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
 
-  auto der2ExchangeEnergyWithDensity =
-    outputDer2ExchangeEnergy
-      .find(fxcOutputDataAttributes::der2EnergyWithDensity)
-      ->second;
+    auto der2ExchangeEnergyWithDensity =
+      outputDer2ExchangeEnergy
+        .find(fxcOutputDataAttributes::der2EnergyWithDensity)
+        ->second;
 
-  auto der2CorrEnergyWithDensity =
-    outputDer2CorrEnergy.find(fxcOutputDataAttributes::der2EnergyWithDensity)
-      ->second;
+    auto der2CorrEnergyWithDensity =
+      outputDer2CorrEnergy.find(fxcOutputDataAttributes::der2EnergyWithDensity)
+        ->second;
 
 
 
-  xc_lda_fxc(d_funcXPtr,
-             sizeInput,
-             &(*rhoValues)[0],
-             &(*der2ExchangeEnergyWithDensity)[0]);
+    xc_lda_fxc(d_funcXPtr,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*der2ExchangeEnergyWithDensity)[0]);
 
-  xc_lda_fxc(d_funcCPtr,
-             sizeInput,
-             &(*rhoValues)[0],
-             &(*der2CorrEnergyWithDensity)[0]);
-}
+    xc_lda_fxc(d_funcCPtr,
+               sizeInput,
+               &(*rhoValues)[0],
+               &(*der2CorrEnergyWithDensity)[0]);
+  }
 
 
 
