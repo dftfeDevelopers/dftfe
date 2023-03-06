@@ -88,7 +88,7 @@ namespace dftfe
       interleave(rho,
                  rho + numPoints,
                  &(modGradRhoTotal[0]),
-                 &(modGradRhoTotal + numPoints[0]),
+                 &(modGradRhoTotal[0]) + numPoints,
                  1,
                  1,
                  &rhoFloat[0]);
@@ -120,7 +120,7 @@ namespace dftfe
       interleave(rho,
                  rho + 2 * numPoints,
                  &(modGradRhoTotal[0]),
-                 &(modGradRhoTotal + numPoints[0]),
+                 &(modGradRhoTotal[0]) + numPoints,
                  2,
                  1,
                  &rhoFloat[0]);
@@ -153,7 +153,7 @@ namespace dftfe
       interleave(rho,
                  rho + numPoints,
                  &(modGradRhoTotal[0]),
-                 &(modGradRhoTotal + numPoints[0]),
+                 &(modGradRhoTotal[0]) + numPoints,
                  1,
                  1,
                  &rhoFloat[0]);
@@ -197,7 +197,7 @@ namespace dftfe
       interleave(rho,
                  rho + 2 * numPoints,
                  &(modGradRhoTotal[0]),
-                 &(modGradRhoTotal + numPoints[0]),
+                 &(modGradRhoTotal[0]) + numPoints,
                  2,
                  1,
                  &rhoFloat[0]);

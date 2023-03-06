@@ -166,12 +166,12 @@ namespace dftfe
         if (d_isSpinPolarized)
           {
             for (unsigned int i = 0; i < 2 * sizeInput; i++)
-              exchangePotentialVal[i] += vxcValuesFromNN[i];
+              (*exchangePotentialVal)[i] += vxcValuesFromNN[i];
           }
         else
           {
             for (unsigned int i = 0; i < sizeInput; i++)
-              exchangePotentialVal[i] +=
+              (*exchangePotentialVal)[i] +=
                 vxcValuesFromNN[2 * i] + vxcValuesFromNN[2 * i + 1];
           }
       }
