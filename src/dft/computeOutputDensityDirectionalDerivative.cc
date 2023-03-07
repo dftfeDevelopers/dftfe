@@ -129,7 +129,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
         d_dftParamsPtr->relPoissonSolverToleranceLRD,
         d_dftParamsPtr->maxLinearSolverIterations,
         d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-        d_dftParamsPtr->verbosity);
+        d_dftParamsPtr->verbosity,
+	false);
 #endif
     }
   else
@@ -137,7 +138,8 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
       CGSolver.solve(d_phiTotalSolverProblem,
                      d_dftParamsPtr->relPoissonSolverToleranceLRD,
                      d_dftParamsPtr->maxLinearSolverIterations,
-                     d_dftParamsPtr->verbosity);
+                     d_dftParamsPtr->verbosity,
+		     false);
     }
 
   std::map<dealii::CellId, std::vector<double>> electrostaticPotPrimeValues;

@@ -812,9 +812,9 @@ namespace dftfe
 
           prm.declare_entry(
             "POISSON SOLVER REL TOL",
-            "1e-8",
+            "1e-6",
             Patterns::Double(0.0),
-            "[Advanced] Relative poisson solver tolerance for electrostatic potential response computation.");
+            "[Advanced] Absolute poisson solver tolerance for electrostatic potential response computation.");
 
           prm.declare_entry(
             "USE SINGLE PREC DENSITY RESPONSE",
