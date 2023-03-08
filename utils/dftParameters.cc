@@ -811,7 +811,7 @@ namespace dftfe
             "[Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
 
           prm.declare_entry(
-            "POISSON SOLVER REL TOL",
+            "POISSON SOLVER ABS TOL",
             "1e-6",
             Patterns::Double(0.0),
             "[Advanced] Absolute poisson solver tolerance for electrostatic potential response computation.");
@@ -1522,7 +1522,7 @@ namespace dftfe
           prm.get_double("STARTING NORM LARGE DAMPING");
         adaptiveRankRelTolLRD        = prm.get_double("ADAPTIVE RANK REL TOL");
         betaTol                      = prm.get_double("BETA TOL");
-        relPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER REL TOL");
+        relPoissonSolverToleranceLRD = prm.get_double("POISSON SOLVER ABS TOL");
         singlePrecLRD = prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
         estimateJacCondNoFinalSCFIter =
           prm.get_bool("ESTIMATE JAC CONDITION NO");
