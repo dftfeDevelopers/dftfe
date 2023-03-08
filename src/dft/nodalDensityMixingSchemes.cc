@@ -122,7 +122,8 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
         d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
         d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
         d_dftParamsPtr->verbosity,
-        false);
+        true,
+	false);
 #endif
     }
   else
@@ -130,7 +131,8 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
                    d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
                    d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                    d_dftParamsPtr->verbosity,
-                   false);
+                   true,
+		   false);
 
   // compute rhoIn to being the current SCF iteration using the preconditioned
   // residual
