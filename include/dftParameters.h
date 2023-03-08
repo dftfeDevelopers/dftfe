@@ -159,7 +159,7 @@ namespace dftfe
     bool         allowMultipleFilteringPassesAfterFirstScf;
     bool         useELPADeviceKernel;
     bool         deviceMemOptMode;
-
+    bool         poissonGPU;
 
     unsigned int dc_dispersioncorrectiontype;
     unsigned int dc_d3dampingtype;

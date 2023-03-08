@@ -2282,7 +2282,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
+            not d_dftParamsPtr->pinnedNodeForPBC and d_dftParamsPtr->poissonGPU)
           {
 #ifdef DFTFE_WITH_DEVICE
             if (scfIter > 0)
@@ -2383,7 +2383,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
+            not d_dftParamsPtr->pinnedNodeForPBC and d_dftParamsPtr->poissonGPU)
           {
 #ifdef DFTFE_WITH_DEVICE
             CGSolverDevice.solve(
@@ -3142,7 +3142,7 @@ namespace dftfe
 
             if (d_dftParamsPtr->useDevice and
                 d_dftParamsPtr->floatingNuclearCharges and
-                not d_dftParamsPtr->pinnedNodeForPBC)
+                not d_dftParamsPtr->pinnedNodeForPBC and d_dftParamsPtr->poissonGPU)
               {
 #ifdef DFTFE_WITH_DEVICE
                 d_phiTotalSolverProblemDevice.reinit(
@@ -3394,7 +3394,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
+            not d_dftParamsPtr->pinnedNodeForPBC and  d_dftParamsPtr->poissonGPU)
           {
 #ifdef DFTFE_WITH_DEVICE
             d_phiTotalSolverProblemDevice.reinit(

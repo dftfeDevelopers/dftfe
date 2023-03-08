@@ -1022,6 +1022,12 @@ namespace dftfe
           "1e-10",
           Patterns::Double(0, 1.0),
           "[Advanced] Relative tolerance on the residual as stopping criterion for Poisson problem convergence.");
+
+        prm.declare_entry(
+          "GPU MODE",
+          "true",
+          Patterns::Bool(),
+          "[Advanced] Use GPU mode if available.");
       }
       prm.leave_subsection();
 
@@ -1260,6 +1266,7 @@ namespace dftfe
     allowMultipleFilteringPassesAfterFirstScf      = true;
     useELPADeviceKernel                            = false;
     deviceMemOptMode                               = false;
+    poissonGPU                                     = true;
     // New Paramters for moleculardyynamics class
     startingTempBOMD           = 300;
     thermostatTimeConstantBOMD = 100;
@@ -1573,6 +1580,7 @@ namespace dftfe
     {
       maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
       relLinearSolverTolerance  = prm.get_double("TOLERANCE");
+      poissonGPU  = prm.get_bool("GPU MODE");
     }
     prm.leave_subsection();
 
