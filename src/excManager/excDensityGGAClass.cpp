@@ -231,8 +231,7 @@ namespace dftfe
           {
             for (unsigned int i = 0; i < sizeInput; i++)
               {
-                (*derExchangeEnergyWithDensity)[i] +=
-                  0.5 * vxcValuesFromNN[5 * i];
+                (*derExchangeEnergyWithDensity)[i] += vxcValuesFromNN[5 * i];
                 (*derExchangeEnergyWithSigmaGradDensity)[i] +=
                   vxcValuesFromNN[5 * i + 2];
               }

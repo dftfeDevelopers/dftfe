@@ -178,7 +178,7 @@ namespace dftfe
         else
           {
             for (unsigned int i = 0; i < sizeInput; i++)
-              (*exchangePotentialVal)[i] += 0.5 * vxcValuesFromNN[2 * i];
+              (*exchangePotentialVal)[i] += vxcValuesFromNN[2 * i];
           }
       }
 #endif
