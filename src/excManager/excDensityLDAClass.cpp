@@ -36,9 +36,9 @@ namespace dftfe
                           scaleExchangeFactor)
   {
     d_familyType = densityFamilyType::LDA;
-#ifdef DFTFE_WITH_TORCH    
-    d_NNLDAPtr   = nullptr;
-#endif    
+#ifdef DFTFE_WITH_TORCH
+    d_NNLDAPtr = nullptr;
+#endif
   }
 
   excDensityLDAClass::excDensityLDAClass(xc_func_type *funcXPtr,
@@ -56,8 +56,8 @@ namespace dftfe
                           scaleExchangeFactor)
   {
     d_familyType = densityFamilyType::LDA;
-#ifdef DFTFE_WITH_TORCH    
-    d_NNLDAPtr   = new NNLDA(modelXCInputFile, true);
+#ifdef DFTFE_WITH_TORCH
+    d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif
   }
 
@@ -112,7 +112,7 @@ namespace dftfe
         for (unsigned int i = 0; i < sizeInput; i++)
           outputExchangeEnergyDensity[i] += excValuesFromNN[i];
       }
-#endif      
+#endif
   }
 
   void
@@ -178,11 +178,10 @@ namespace dftfe
         else
           {
             for (unsigned int i = 0; i < sizeInput; i++)
-              (*exchangePotentialVal)[i] +=
-                vxcValuesFromNN[2 * i] + vxcValuesFromNN[2 * i + 1];
+              (*exchangePotentialVal)[i] += 0.5 * vxcValuesFromNN[2 * i];
           }
       }
-#endif      
+#endif
   }
 
   void

@@ -55,8 +55,8 @@ namespace dftfe
                           scaleExchangeFactor)
   {
     d_familyType = densityFamilyType::GGA;
-#ifdef DFTFE_WITH_TORCH    
-    d_NNGGAPtr   = new NNGGA(modelXCInputFile, true);
+#ifdef DFTFE_WITH_TORCH
+    d_NNGGAPtr = new NNGGA(modelXCInputFile, true);
 #endif
   }
 
@@ -114,7 +114,7 @@ namespace dftfe
             for (unsigned int i = 0; i < sizeInput; i++)
               {
                 sigmaValuesForNN[3 * i]     = (*rhoSigmaGradValues)[i] / 4.0;
-                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 2.0;
+                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 4.0;
                 sigmaValuesForNN[3 * i + 2] = (*rhoSigmaGradValues)[i] / 4.0;
               }
           }
@@ -127,7 +127,7 @@ namespace dftfe
         for (unsigned int i = 0; i < sizeInput; i++)
           outputExchangeEnergyDensity[i] += excValuesFromNN[i];
       }
-#endif      
+#endif
   }
 
   void
@@ -199,7 +199,7 @@ namespace dftfe
             for (unsigned int i = 0; i < sizeInput; i++)
               {
                 sigmaValuesForNN[3 * i]     = (*rhoSigmaGradValues)[i] / 4.0;
-                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 2.0;
+                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 4.0;
                 sigmaValuesForNN[3 * i + 2] = (*rhoSigmaGradValues)[i] / 4.0;
               }
           }
@@ -232,13 +232,13 @@ namespace dftfe
             for (unsigned int i = 0; i < sizeInput; i++)
               {
                 (*derExchangeEnergyWithDensity)[i] +=
-                  vxcValuesFromNN[3 * i] + vxcValuesFromNN[3 * i + 1];
+                  0.5 * vxcValuesFromNN[5 * i];
                 (*derExchangeEnergyWithSigmaGradDensity)[i] +=
-                  vxcValuesFromNN[3 * i + 2];
+                  vxcValuesFromNN[5 * i + 2];
               }
           }
       }
-#endif      
+#endif
   }
 
 

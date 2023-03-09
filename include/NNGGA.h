@@ -1,8 +1,8 @@
 #ifndef NNGGA_H
 #define NNGGA_H
 #ifdef DFTFE_WITH_TORCH
-#include <string>
-#include <torch/torch.h>
+#  include <string>
+#  include <torch/torch.h>
 namespace dftfe
 {
   class NNGGA

@@ -1,11 +1,11 @@
 #ifdef DFTFE_WITH_TORCH
-#include <torch/script.h>
-#include <NNGGA.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <iterator>
-#define RHO_NN_TOL 1e-8
+#  include <torch/script.h>
+#  include <NNGGA.h>
+#  include <iostream>
+#  include <vector>
+#  include <algorithm>
+#  include <iterator>
+#  define RHO_NN_TOL 1e-8
 namespace dftfe
 {
   namespace
@@ -99,7 +99,8 @@ namespace dftfe
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
       for (unsigned int i = 0; i < numPoints; ++i)
-        exc[i] = static_cast<double>(excTensor[i][0].item<float>());
+        exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
+                 (rho[i] + RHO_NN_TOL);
     }
 
     void
@@ -132,7 +133,8 @@ namespace dftfe
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
       for (unsigned int i = 0; i < numPoints; ++i)
-        exc[i] = static_cast<double>(excTensor[i][0].item<float>());
+        exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
+                 (rho[2 * i] + rho[2 * i + 1] + RHO_NN_TOL);
     }
 
     void
@@ -171,7 +173,8 @@ namespace dftfe
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
         {
-          exc[i]          = static_cast<double>(excTensor[i][0].item<float>());
+          exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
+                   (rho[i] + RHO_NN_TOL);
           dexc[2 * i + 0] = static_cast<double>(vxcTensor[i][0].item<float>());
           dexc[2 * i + 1] = static_cast<double>(vxcTensor[i][1].item<float>()) /
                             (2.0 * (modGradRhoTotal[i] + RHO_NN_TOL));
@@ -215,7 +218,8 @@ namespace dftfe
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
         {
-          exc[i]          = static_cast<double>(excTensor[i][0].item<float>());
+          exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
+                   (rho[2 * i] + rho[2 * i + 1] + RHO_NN_TOL);
           dexc[5 * i + 0] = static_cast<double>(vxcTensor[i][0].item<float>());
           dexc[5 * i + 1] = static_cast<double>(vxcTensor[i][1].item<float>());
           dexc[5 * i + 2] = static_cast<double>(vxcTensor[i][2].item<float>()) /
