@@ -378,7 +378,7 @@ ENDIF (DEFINED LIBXC_DIR)
 #
 # TORCH. Set with -DTORCH_DIR=/path/to/prefix
 #
-FIND_PACKAGE(Torch PATHS "/home/dsambit/libtorch/libtorch/share/cmake/Torch/" Required) 
+FIND_PACKAGE(Torch PATHS "/scratch/vikramg_root/vikramg/shared_data/conda_envs/pytorch_cpu/lib/python3.9/site-packages/torch/share/cmake/Torch/" Required) 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
 ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
