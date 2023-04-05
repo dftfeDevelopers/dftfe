@@ -19,14 +19,13 @@
 
 
   //
-  // dft solve
+  // dft NSCF solve (non-selfconsistent solution of DFT eigenvalue problem to compute 
+  //eigenvalues, eigenfunctions and ground-state energy 
+  //using the self-consistent Hamiltonian)
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::tuple<bool, double>
-  dftClass<FEOrder, FEOrderElectro>::solve(
-    const bool computeForces,
-    const bool computestress,
-    const bool isRestartGroundStateCalcFromChk)
+  dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
   {
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
@@ -58,49 +57,7 @@
                                         linearSolverCGDevice::CG);
 #endif
 
-    //
-    // set up solver functions for Helmholtz to be used only when Kerker mixing
-    // is on use higher polynomial order dofHandler
-    //
-    kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-      kerkerPreconditionedResidualSolverProblem(d_mpiCommParent,
-                                                mpi_communicator);
-
-    // set up solver functions for Helmholtz Device
-#ifdef DFTFE_WITH_DEVICE
-    kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-      kerkerPreconditionedResidualSolverProblemDevice(d_mpiCommParent,
-                                                      mpi_communicator);
-#endif
-
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
-      {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        if (d_dftParamsPtr->useDevice and
-            d_dftParamsPtr->floatingNuclearCharges)
-#else
-        if (false)
-#endif
-          {
-#ifdef DFTFE_WITH_DEVICE
-            kerkerPreconditionedResidualSolverProblemDevice.init(
-              d_matrixFreeDataPRefined,
-              d_constraintsForHelmholtzRhoNodal,
-              d_preCondResidualVector,
-              d_dftParamsPtr->kerkerParameter,
-              d_helmholtzDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro);
-#endif
-          }
-        else
-          kerkerPreconditionedResidualSolverProblem.init(
-            d_matrixFreeDataPRefined,
-            d_constraintsForHelmholtzRhoNodal,
-            d_preCondResidualVector,
-            d_dftParamsPtr->kerkerParameter,
-            d_helmholtzDofHandlerIndexElectro,
-            d_densityQuadratureIdElectro);
-      }
+   
 
     // FIXME: Check if this call can be removed
     d_phiTotalSolverProblem.clear();
@@ -198,149 +155,23 @@
       }
 
 
-    computingTimerStandard.enter_subsection("Total scf solve");
+    computingTimerStandard.enter_subsection("Total nscf solve");
 
     //
     // solve
     //
-    computing_timer.enter_subsection("scf solve");
+    computing_timer.enter_subsection("nscf solve");
 
-    double firstScfChebyTol =
-      d_dftParamsPtr->restrictToOnePass ?
-        1e+4 :
-        (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2);
+    double chebyTol 1e-08;
 
-
-    if (d_dftParamsPtr->solverMode == "MD")
-      firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-4 ?
-                           1e-4 :
-                           d_dftParamsPtr->chebyshevTolerance;
-    else if (d_dftParamsPtr->solverMode == "GEOOPT")
-      firstScfChebyTol = d_dftParamsPtr->chebyshevTolerance > 1e-3 ?
-                           1e-3 :
-                           d_dftParamsPtr->chebyshevTolerance;
-
-    //
-    // Begin SCF iteration
-    //
-    unsigned int scfIter                  = 0;
-    double       norm                     = 1.0;
-    d_rankCurrentLRD                      = 0;
-    d_relativeErrorJacInvApproxPrevScfLRD = 100.0;
-    // CAUTION: Choosing a looser tolerance might lead to failed tests
-    const double adaptiveChebysevFilterPassesTol =
-      d_dftParamsPtr->chebyshevTolerance;
-    bool scfConverged = false;
-    pcout << std::endl;
+    
+   
     if (d_dftParamsPtr->verbosity == 0)
-      pcout << "Starting SCF iterations...." << std::endl;
-    while ((norm > d_dftParamsPtr->selfConsistentSolverTolerance) &&
-           (scfIter < d_dftParamsPtr->numSCFIterations))
-      {
+      pcout << "Starting NSCF iteration...." << std::endl;
+    
         dealii::Timer local_timer(d_mpiCommParent, true);
-        if (d_dftParamsPtr->verbosity >= 1)
-          pcout
-            << "************************Begin Self-Consistent-Field Iteration: "
-            << std::setw(2) << scfIter + 1 << " ***********************"
-            << std::endl;
-        //
-        // Mixing scheme
-        //
-        computing_timer.enter_subsection("density mixing");
-        if (scfIter > 0)
-          {
-            if (scfIter == 1)
-              {
-                if (d_dftParamsPtr->spinPolarized == 1)
-                  {
-                    if (d_dftParamsPtr->mixingMethod ==
-                        "LOW_RANK_DIELECM_PRECOND")
-                      norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
-                        scfIter);
-                    else
-                      norm = mixing_simple_spinPolarized();
-                  }
-                else
-                  {
-                    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
-                      {
-                        norm = nodalDensity_mixing_simple_kerker(
-#ifdef DFTFE_WITH_DEVICE
-                          kerkerPreconditionedResidualSolverProblemDevice,
-                          CGSolverDevice,
-#endif
-                          kerkerPreconditionedResidualSolverProblem,
-                          CGSolver);
-                      }
-                    else if (d_dftParamsPtr->mixingMethod ==
-                             "LOW_RANK_DIELECM_PRECOND")
-                      norm = lowrankApproxScfDielectricMatrixInv(scfIter);
-                    else
-                      norm = mixing_simple();
-                  }
+       
 
-                if (d_dftParamsPtr->verbosity >= 1)
-                  {
-                    pcout << d_dftParamsPtr->mixingMethod
-                          << " mixing, L2 norm of electron-density difference: "
-                          << norm << std::endl;
-                  }
-              }
-            else
-              {
-                if (d_dftParamsPtr->spinPolarized == 1)
-                  {
-                    if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      norm = mixing_anderson_spinPolarized();
-                    else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-                      norm = mixing_broyden_spinPolarized();
-                    else if (d_dftParamsPtr->mixingMethod ==
-                             "LOW_RANK_DIELECM_PRECOND")
-                      norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
-                        scfIter);
-                    else if (d_dftParamsPtr->mixingMethod ==
-                             "ANDERSON_WITH_KERKER")
-                      AssertThrow(
-                        false,
-                        ExcMessage(
-                          "Kerker is not implemented for spin-polarized problems yet"));
-                  }
-                else
-                  {
-                    if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      norm = mixing_anderson();
-                    else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-                      norm = mixing_broyden();
-                    else if (d_dftParamsPtr->mixingMethod ==
-                             "ANDERSON_WITH_KERKER")
-                      {
-                        norm = nodalDensity_mixing_anderson_kerker(
-#ifdef DFTFE_WITH_DEVICE
-                          kerkerPreconditionedResidualSolverProblemDevice,
-                          CGSolverDevice,
-#endif
-                          kerkerPreconditionedResidualSolverProblem,
-                          CGSolver);
-                      }
-                    else if (d_dftParamsPtr->mixingMethod ==
-                             "LOW_RANK_DIELECM_PRECOND")
-                      norm = lowrankApproxScfDielectricMatrixInv(scfIter);
-                  }
-
-                if (d_dftParamsPtr->verbosity >= 1)
-                  pcout << d_dftParamsPtr->mixingMethod
-                        << " mixing, L2 norm of electron-density difference: "
-                        << norm << std::endl;
-              }
-
-            if (d_dftParamsPtr->computeEnergyEverySCF &&
-                d_numEigenValuesRR == d_numEigenValues)
-              d_phiTotRhoIn = d_phiTotRhoOut;
-          }
-        computing_timer.leave_subsection("density mixing");
-
-        if (!(norm > d_dftParamsPtr->selfConsistentSolverTolerance))
-          scfConverged = true;
         //
         // phiTot with rhoIn
         //
@@ -358,29 +189,6 @@
 #endif
           {
 #ifdef DFTFE_WITH_DEVICE
-            if (scfIter > 0)
-              d_phiTotalSolverProblemDevice.reinit(
-                d_matrixFreeDataPRefined,
-                d_phiTotRhoIn,
-                *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-                d_phiTotDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro,
-                d_phiTotAXQuadratureIdElectro,
-                d_atomNodeIdToChargeMap,
-                d_bQuadValuesAllAtoms,
-                d_smearedChargeQuadratureIdElectro,
-                *rhoInValues,
-                kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-                false,
-                false,
-                d_dftParamsPtr->smearedNuclearCharges,
-                true,
-                false,
-                0,
-                false,
-                true);
-            else
-              {
                 d_phiTotalSolverProblemDevice.reinit(
                   d_matrixFreeDataPRefined,
                   d_phiTotRhoIn,
@@ -403,33 +211,12 @@
                   0,
                   true,
                   false);
-              }
+              
 #endif
           }
         else
           {
-            if (scfIter > 0)
-              d_phiTotalSolverProblem.reinit(
-                d_matrixFreeDataPRefined,
-                d_phiTotRhoIn,
-                *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-                d_phiTotDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro,
-                d_phiTotAXQuadratureIdElectro,
-                d_atomNodeIdToChargeMap,
-                d_bQuadValuesAllAtoms,
-                d_smearedChargeQuadratureIdElectro,
-                *rhoInValues,
-                false,
-                false,
-                d_dftParamsPtr->smearedNuclearCharges,
-                true,
-                false,
-                0,
-                false,
-                true);
-            else
-              d_phiTotalSolverProblem.reinit(
+            d_phiTotalSolverProblem.reinit(
                 d_matrixFreeDataPRefined,
                 d_phiTotRhoIn,
                 *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -641,19 +428,11 @@
                             *d_elpaScala,
                             d_subspaceIterationSolverDevice,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            (scfIter == 0 ||
-                             d_dftParamsPtr
-                               ->allowMultipleFilteringPassesAfterFirstScf) ?
-                              true :
-                              false,
+                            true,
                             0,
-                            (scfIter <
-                               d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                             scfConverged) ?
-                              false :
-                              true,
-                            scfConverged ? false : true,
-                            scfIter == 0);
+                            false,
+                            false,
+                            true);
 #endif
                         if (!d_dftParamsPtr->useDevice)
                           kohnShamEigenSpaceCompute(
@@ -663,18 +442,10 @@
                             *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            (scfIter == 0 ||
-                             d_dftParamsPtr
-                               ->allowMultipleFilteringPassesAfterFirstScf) ?
-                              true :
-                              false,
-                            (scfIter <
-                               d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                             scfConverged) ?
-                              false :
-                              true,
-                            scfConverged ? false : true,
-                            scfIter == 0);
+                            true,
+                            false,  
+                            false,
+                            true);
                       }
                   }
               }
@@ -684,15 +455,9 @@
               for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                    ++kPoint)
                 {
-                  if (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                      scfConverged)
-                    for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                   for (unsigned int i = 0; i < d_numEigenValues; ++i)
                       eigenValuesSpins[s][kPoint][i] =
                         eigenValues[kPoint][d_numEigenValues * s + i];
-                  else
-                    for (unsigned int i = 0; i < d_numEigenValuesRR; ++i)
-                      eigenValuesSpins[s][kPoint][i] =
-                        eigenValuesRRSplit[kPoint][d_numEigenValuesRR * s + i];
                 }
             //
             // fermi energy
@@ -1414,7 +1179,7 @@
         if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
             d_dftParamsPtr->solverMode == "GS")
           saveTriaInfoAndRhoNodalData();
-      }
+      
 
     if (d_dftParamsPtr->saveRhoData &&
         !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
