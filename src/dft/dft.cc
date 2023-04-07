@@ -732,6 +732,18 @@ namespace dftfe
 
 
 #ifdef USE_COMPLEX
+  if(d_dftParamsPtr->solverMode == "NSCF")
+    {
+      if(!(d_dftParamsPtr->kPointDataFile == ""))
+      {
+        readkPointData();
+      }
+      else
+      {
+        //Put an assert statement here
+      }
+    }
+  else
     generateMPGrid();
 #else
     d_kPointCoordinates.resize(3, 0.0);
@@ -1738,7 +1750,15 @@ namespace dftfe
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
       }
 
-    solve(true, true, d_isRestartGroundStateCalcFromChk);
+    if (d_dftParamsPtr->solverMode == "GS" )
+      {
+        solve(true, true, d_isRestartGroundStateCalcFromChk);
+      }
+    else if( d_dftParamsPtr->solverMode == "NSCF" )
+      {
+        solveNoSCF();
+        writeBands();
+      }
 
     if (d_dftParamsPtr->writeWfcSolutionFields)
       outputWfc();
@@ -3689,15 +3709,7 @@ namespace dftfe
 #endif
       );
 
-#ifdef USE_COMPLEX
-    if (!(d_dftParamsPtr->kPointDataFile == ""))
-      {
-        readkPointData();
-        initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem, CGSolver);
-        nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
-        writeBands();
-      }
-#endif
+
     return std::make_tuple(scfConverged, norm);
   }
 
