@@ -61,8 +61,8 @@ namespace dftfe
       prm.declare_entry(
         "SOLVER MODE",
         "GS",
-        Patterns::Selection("GS|MD|NEB|GEOOPT|NONE"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.");
+        Patterns::Selection("GS|NSCF|MD|NEB|GEOOPT|NONE"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If NSCF: performs a non-scf calculation. MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.");
 
       prm.declare_entry(
         "RESTART",
@@ -999,6 +999,12 @@ namespace dftfe
             Patterns::Bool(),
             "[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");
 
+            prm.declare_entry(
+            "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
+            "0",
+            Patterns::Integer(0),
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy .");
+
           prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
             "false",
@@ -1561,6 +1567,8 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
+        highestStateOfInterestForChebFiltering =
+          prm.get_integer("HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING");  
         useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
         restrictToOnePass = prm.get_bool("RESTRICT TO SINGLE FILTER PASS");
       }
@@ -1683,6 +1691,9 @@ namespace dftfe
 
     AssertThrow(!domainBoundingVectorsFile.empty(),
                 ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
+
+    AssertThrow (solverMode == "NSCF"  && loadRhoData==true),
+      ExcMessage("DFT-FE Error: Cant run NSCF without load rho data set to true")  ;            
 
     if (isPseudopotential)
       AssertThrow(

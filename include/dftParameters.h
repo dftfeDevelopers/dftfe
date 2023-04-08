@@ -157,6 +157,7 @@ namespace dftfe
     double       pspCutoffImageCharges;
     bool         reuseLanczosUpperBoundFromFirstCall;
     bool         allowMultipleFilteringPassesAfterFirstScf;
+    unsigned int highestStateOfInterestForChebFiltering;
     bool         useELPADeviceKernel;
     bool         deviceMemOptMode;
 

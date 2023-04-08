@@ -1016,3 +1016,29 @@ dftClass<FEOrder, FEOrderElectro>::
     Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
   return maxHighestOccupiedStateResNorm;
 }
+
+// compute the maximum of the residual norm of the highest state of interest
+// across all K points
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+double
+dftClass<FEOrder, FEOrderElectro>::
+  computeMaximumHighestOccupiedStateResidualNorm(
+    const std::vector<std::vector<double>> &residualNormWaveFunctionsAllkPoints,
+    const std::vector<std::vector<double>> &eigenValuesAllkPoints,
+    const unsigned int highestState)
+{
+  double maxHighestOccupiedStateResNorm = -1e+6;
+  for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+    {
+
+      if (residualNormWaveFunctionsAllkPoints[kPoint][highestState] >
+          maxHighestOccupiedStateResNorm)
+        {
+          maxHighestOccupiedStateResNorm =
+            residualNormWaveFunctionsAllkPoints[kPoint][highestState];
+        }
+    }
+  maxHighestOccupiedStateResNorm =
+    Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
+  return maxHighestOccupiedStateResNorm;
+}
