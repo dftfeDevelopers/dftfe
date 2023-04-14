@@ -5,7 +5,7 @@
 #  include <vector>
 #  include <algorithm>
 #  include <iterator>
-#  define RHO_NN_TOL 1e-8
+#  include <Exceptions.h>
 namespace dftfe
 {
   namespace
@@ -72,19 +72,44 @@ namespace dftfe
     }
 
     void
-    excSpinUnpolarized(const double *              rho,
-                       const double *              sigma,
-                       const unsigned int          numPoints,
-                       double *                    exc,
-                       torch::jit::script::Module *model)
+    excSpinUnpolarized(
+      const double *                       rho,
+      const double *                       sigma,
+      const unsigned int                   numPoints,
+      double *                             exc,
+      torch::jit::script::Module *         model,
+      const excDensityPositivityCheckTypes densityPositivityCheckType,
+      const double                         rhoTol)
     {
+      std::vector<double> rhoModified(numPoints, 0.0);
+      if (densityPositivityCheckType ==
+          excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
+        for (unsigned int i = 0; i < numPoints; ++i)
+          {
+            std::string errMsg =
+              "Negative electron-density encountered during xc evaluations";
+            dftfe::utils::throwException(rho[i] > 0, errMsg);
+          }
+      else if (densityPositivityCheckType ==
+               excDensityPositivityCheckTypes::MAKE_POSITIVE)
+        for (unsigned int i = 0; i < numPoints; ++i)
+          {
+            rhoModified[i] =
+              std::max(rho[i], 0.0); // rhoTol will be added subsequently
+          }
+      else
+        for (unsigned int i = 0; i < numPoints; ++i)
+          {
+            rhoModified[i] = rho[i];
+          }
+
       std::vector<double> modGradRhoTotal(numPoints, 0.0);
       for (unsigned int i = 0; i < numPoints; ++i)
         modGradRhoTotal[i] = std::sqrt(sigma[i]);
 
       std::vector<float> rhoFloat(2 * numPoints);
-      interleave(rho,
-                 rho + numPoints,
+      interleave(&rhoModified[0],
+                 &rhoModified[0] + numPoints,
                  &(modGradRhoTotal[0]),
                  &(modGradRhoTotal[0]) + numPoints,
                  1,
@@ -94,30 +119,55 @@ namespace dftfe
         torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
       torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 2}, options).clone();
-      rhoTensor += RHO_NN_TOL;
+      rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
       for (unsigned int i = 0; i < numPoints; ++i)
         exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
-                 (rho[i] + RHO_NN_TOL);
+                 (rhoModified[i] + rhoTol);
     }
 
     void
-    excSpinPolarized(const double *              rho,
-                     const double *              sigma,
-                     const unsigned int          numPoints,
-                     double *                    exc,
-                     torch::jit::script::Module *model)
+    excSpinPolarized(
+      const double *                       rho,
+      const double *                       sigma,
+      const unsigned int                   numPoints,
+      double *                             exc,
+      torch::jit::script::Module *         model,
+      const excDensityPositivityCheckTypes densityPositivityCheckType,
+      const double                         rhoTol)
     {
+      std::vector<double> rhoModified(2 * numPoints, 0.0);
+      if (densityPositivityCheckType ==
+          excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
+        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+          {
+            std::string errMsg =
+              "Negative electron-density encountered during xc evaluations";
+            dftfe::utils::throwException(rho[i] > 0, errMsg);
+          }
+      else if (densityPositivityCheckType ==
+               excDensityPositivityCheckTypes::MAKE_POSITIVE)
+        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+          {
+            rhoModified[i] =
+              std::max(rho[i], 0.0); // rhoTol will be added subsequently
+          }
+      else
+        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+          {
+            rhoModified[i] = rho[i];
+          }
+
       std::vector<double> modGradRhoTotal(numPoints, 0.0);
       for (unsigned int i = 0; i < numPoints; ++i)
         modGradRhoTotal[i] =
           std::sqrt(sigma[3 * i] + 2.0 * sigma[3 * i + 1] + sigma[3 * i + 2]);
 
       std::vector<float> rhoFloat(3 * numPoints);
-      interleave(rho,
-                 rho + 2 * numPoints,
+      interleave(&rhoModified[0],
+                 &rhoModified[0] + 2 * numPoints,
                  &(modGradRhoTotal[0]),
                  &(modGradRhoTotal[0]) + numPoints,
                  2,
@@ -128,30 +178,55 @@ namespace dftfe
         torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
       torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 3}, options).clone();
-      rhoTensor += RHO_NN_TOL;
+      rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
       for (unsigned int i = 0; i < numPoints; ++i)
         exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
-                 (rho[2 * i] + rho[2 * i + 1] + RHO_NN_TOL);
+                 (rhoModified[2 * i] + rhoModified[2 * i + 1] + 2 * rhoTol);
     }
 
     void
-    dexcSpinUnpolarized(const double *              rho,
-                        const double *              sigma,
-                        const unsigned int          numPoints,
-                        double *                    exc,
-                        double *                    dexc,
-                        torch::jit::script::Module *model)
+    dexcSpinUnpolarized(
+      const double *                       rho,
+      const double *                       sigma,
+      const unsigned int                   numPoints,
+      double *                             exc,
+      double *                             dexc,
+      torch::jit::script::Module *         model,
+      const excDensityPositivityCheckTypes densityPositivityCheckType,
+      const double                         rhoTol)
     {
+      std::vector<double> rhoModified(numPoints, 0.0);
+      if (densityPositivityCheckType ==
+          excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
+        for (unsigned int i = 0; i < numPoints; ++i)
+          {
+            std::string errMsg =
+              "Negative electron-density encountered during xc evaluations";
+            dftfe::utils::throwException(rho[i] > 0, errMsg);
+          }
+      else if (densityPositivityCheckType ==
+               excDensityPositivityCheckTypes::MAKE_POSITIVE)
+        for (unsigned int i = 0; i < numPoints; ++i)
+          {
+            rhoModified[i] =
+              std::max(rho[i], 0.0); // rhoTol will be added subsequently
+          }
+      else
+        for (unsigned int i = 0; i < numPoints; ++i)
+          {
+            rhoModified[i] = rho[i];
+          }
+
       std::vector<double> modGradRhoTotal(numPoints, 0.0);
       for (unsigned int i = 0; i < numPoints; ++i)
         modGradRhoTotal[i] = std::sqrt(sigma[i]);
 
       std::vector<float> rhoFloat(2 * numPoints);
-      interleave(rho,
-                 rho + numPoints,
+      interleave(&rhoModified[0],
+                 &rhoModified[0] + numPoints,
                  &(modGradRhoTotal[0]),
                  &(modGradRhoTotal[0]) + numPoints,
                  1,
@@ -162,7 +237,7 @@ namespace dftfe
         torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
       torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 2}, options).clone();
-      rhoTensor += RHO_NN_TOL;
+      rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor   = model->forward(input).toTensor();
@@ -174,29 +249,54 @@ namespace dftfe
       for (unsigned int i = 0; i < numPoints; ++i)
         {
           exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
-                   (rho[i] + RHO_NN_TOL);
+                   (rhoModified[i] + rhoTol);
           dexc[2 * i + 0] = static_cast<double>(vxcTensor[i][0].item<float>());
           dexc[2 * i + 1] = static_cast<double>(vxcTensor[i][1].item<float>()) /
-                            (2.0 * (modGradRhoTotal[i] + RHO_NN_TOL));
+                            (2.0 * (modGradRhoTotal[i] + rhoTol));
         }
     }
 
     void
-    dexcSpinPolarized(const double *              rho,
-                      const double *              sigma,
-                      const unsigned int          numPoints,
-                      double *                    exc,
-                      double *                    dexc,
-                      torch::jit::script::Module *model)
+    dexcSpinPolarized(
+      const double *                       rho,
+      const double *                       sigma,
+      const unsigned int                   numPoints,
+      double *                             exc,
+      double *                             dexc,
+      torch::jit::script::Module *         model,
+      const excDensityPositivityCheckTypes densityPositivityCheckType,
+      const double                         rhoTol)
     {
+      std::vector<double> rhoModified(2 * numPoints, 0.0);
+      if (densityPositivityCheckType ==
+          excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
+        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+          {
+            std::string errMsg =
+              "Negative electron-density encountered during xc evaluations";
+            dftfe::utils::throwException(rho[i] > 0, errMsg);
+          }
+      else if (densityPositivityCheckType ==
+               excDensityPositivityCheckTypes::MAKE_POSITIVE)
+        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+          {
+            rhoModified[i] =
+              std::max(rho[i], 0.0); // rhoTol will be added subsequently
+          }
+      else
+        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+          {
+            rhoModified[i] = rho[i];
+          }
+
       std::vector<double> modGradRhoTotal(numPoints, 0.0);
       for (unsigned int i = 0; i < numPoints; ++i)
         modGradRhoTotal[i] =
           std::sqrt(sigma[3 * i] + 2.0 * sigma[3 * i + 1] + sigma[3 * i + 2]);
 
       std::vector<float> rhoFloat(3 * numPoints);
-      interleave(rho,
-                 rho + 2 * numPoints,
+      interleave(&rhoModified[0],
+                 &rhoModified[0] + 2 * numPoints,
                  &(modGradRhoTotal[0]),
                  &(modGradRhoTotal[0]) + numPoints,
                  2,
@@ -207,7 +307,7 @@ namespace dftfe
         torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
       torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 3}, options).clone();
-      rhoTensor += RHO_NN_TOL;
+      rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor   = model->forward(input).toTensor();
@@ -219,23 +319,28 @@ namespace dftfe
       for (unsigned int i = 0; i < numPoints; ++i)
         {
           exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
-                   (rho[2 * i] + rho[2 * i + 1] + RHO_NN_TOL);
+                   (rhoModified[2 * i] + rhoModified[2 * i + 1] + 2 * rhoTol);
           dexc[5 * i + 0] = static_cast<double>(vxcTensor[i][0].item<float>());
           dexc[5 * i + 1] = static_cast<double>(vxcTensor[i][1].item<float>());
           dexc[5 * i + 2] = static_cast<double>(vxcTensor[i][2].item<float>()) /
-                            (2.0 * (modGradRhoTotal[i] + RHO_NN_TOL));
+                            (2.0 * (modGradRhoTotal[i] + rhoTol));
           dexc[5 * i + 3] = static_cast<double>(vxcTensor[i][2].item<float>()) /
-                            (modGradRhoTotal[i] + RHO_NN_TOL);
+                            (modGradRhoTotal[i] + rhoTol);
           dexc[5 * i + 4] = static_cast<double>(vxcTensor[i][2].item<float>()) /
-                            (2.0 * (modGradRhoTotal[i] + RHO_NN_TOL));
+                            (2.0 * (modGradRhoTotal[i] + rhoTol));
         }
     }
 
   } // namespace
 
-  NNGGA::NNGGA(std::string modelFileName, const bool isSpinPolarized /*=false*/)
+  NNGGA::NNGGA(std::string                          modelFileName,
+               const bool                           isSpinPolarized /*=false*/,
+               const excDensityPositivityCheckTypes densityPositivityCheckType,
+               const double                         rhoTol)
     : d_modelFileName(modelFileName)
     , d_isSpinPolarized(isSpinPolarized)
+    , d_densityPositivityCheckType(densityPositivityCheckType)
+    , d_rhoTol(rhoTol)
   {
     d_model  = new torch::jit::script::Module;
     *d_model = torch::jit::load(d_modelFileName);
@@ -256,9 +361,21 @@ namespace dftfe
                      double *           exc)
   {
     if (!d_isSpinPolarized)
-      excSpinUnpolarized(rho, sigma, numPoints, exc, d_model);
+      excSpinUnpolarized(rho,
+                         sigma,
+                         numPoints,
+                         exc,
+                         d_model,
+                         d_densityPositivityCheckType,
+                         d_rhoTol);
     else
-      excSpinPolarized(rho, sigma, numPoints, exc, d_model);
+      excSpinPolarized(rho,
+                       sigma,
+                       numPoints,
+                       exc,
+                       d_model,
+                       d_densityPositivityCheckType,
+                       d_rhoTol);
   }
 
   void
@@ -269,9 +386,23 @@ namespace dftfe
                      double *           dexc)
   {
     if (!d_isSpinPolarized)
-      dexcSpinUnpolarized(rho, sigma, numPoints, exc, dexc, d_model);
+      dexcSpinUnpolarized(rho,
+                          sigma,
+                          numPoints,
+                          exc,
+                          dexc,
+                          d_model,
+                          d_densityPositivityCheckType,
+                          d_rhoTol);
     else
-      dexcSpinPolarized(rho, sigma, numPoints, exc, dexc, d_model);
+      dexcSpinPolarized(rho,
+                        sigma,
+                        numPoints,
+                        exc,
+                        dexc,
+                        d_model,
+                        d_densityPositivityCheckType,
+                        d_rhoTol);
   }
 
 } // namespace dftfe
