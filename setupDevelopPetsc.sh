@@ -44,6 +44,7 @@ withGPUAwareMPI=OFF #Please use this option with care
 #Option to link to DCCL library (Only for GPU compilation)
 withDCCL=OFF
 withMDI=OFF
+withTorch=OFF
 
 #Compiler options and flags
 cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.4/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
@@ -85,7 +86,7 @@ function cmake_real() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTORCH \
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -98,7 +99,7 @@ function cmake_real() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath  -DWITH_TORCH=$withTORCH  \
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -111,7 +112,7 @@ function cmake_real() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath  -DWITH_TORCH=$withTORCH  \
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=OFF\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -129,7 +130,7 @@ function cmake_cplx() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath  -DWITH_TORCH=$withTORCH  \
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -142,7 +143,7 @@ function cmake_cplx() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath  -DWITH_TORCH=$withTORCH  \
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -155,7 +156,7 @@ function cmake_cplx() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath  -DWITH_TORCH=$withTORCH  \
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
     -DWITH_COMPLEX=ON \
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
