@@ -740,7 +740,7 @@ namespace dftfe
 
         prm.declare_entry(
           "MIXING HISTORY",
-          "50",
+          "10",
           Patterns::Integer(1, 1000),
           "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
