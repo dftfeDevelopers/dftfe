@@ -161,10 +161,12 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   const int                        numberColumnskPointDataFile = 4;
   std::vector<std::vector<double>> kPointData;
   char                             kPointRuleFile[256];
-  sprintf(kPointRuleFile,
-          "%s/data/kPointList/%s",
-          DFTFE_PATH,
-          d_dftParamsPtr->kPointDataFile.c_str());
+  strcpy(kPointRuleFile,
+         d_dftParamsPtr->kPointDataFile.c_str());
+  //sprintf(kPointRuleFile,
+    //      "%s/data/kPointList/%s",
+      //    DFTFE_PATH,
+        //  d_dftParamsPtr->kPointDataFile.c_str());
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
   d_kPointCoordinates.clear();
   d_kPointWeights.clear();
