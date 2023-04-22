@@ -24,6 +24,7 @@
   //using the self-consistent Hamiltonian)
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
   dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
   {
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -302,7 +303,7 @@
               std::vector<std::vector<double>>(
                 d_kPointWeights.size(),
                 std::vector<double>(
-                  (d_numEigenValues)));
+                  (d_numEigenValues))));
 
             std::vector<std::vector<std::vector<double>>>
               residualNormWaveFunctionsAllkPointsSpins(
@@ -1042,8 +1043,8 @@
 
             computing_timer.leave_subsection("phiTot solve");
 
-            const Quadrature<3> &quadrature =
-              matrix_free_data.get_quadrature(d_densityQuadratureId);
+            //const Quadrature<3> &quadrature =
+              //matrix_free_data.get_quadrature(d_densityQuadratureId);
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
             const double totalEnergy =

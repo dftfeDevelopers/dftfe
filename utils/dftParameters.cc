@@ -1691,7 +1691,8 @@ namespace dftfe
     AssertThrow(!domainBoundingVectorsFile.empty(),
                 ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
-    AssertThrow ((solverMode == "NSCF"  && loadRhoData==true),
+    if(solverMode == "NSCF")
+      AssertThrow(loadRhoData==true,
       ExcMessage("DFT-FE Error: Cant run NSCF without load rho data set to true"))  ;            
 
     if (isPseudopotential)
