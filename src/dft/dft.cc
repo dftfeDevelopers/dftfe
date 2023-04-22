@@ -95,7 +95,7 @@ namespace dftfe
 #include "moveAtoms.cc"
 #include "moveMeshToAtoms.cc"
 #include "nodalDensityMixingSchemes.cc"
-#include "nscf.cc"
+#include "solveNSCF.cc"
 #include "pRefinedDoFHandler.cc"
 #include "psiInitialGuess.cc"
 #include "publicMethods.cc"

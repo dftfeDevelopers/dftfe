@@ -45,7 +45,6 @@ namespace dftfe
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
 
-
       prm.declare_entry(
         "VERBOSITY",
         "1",
@@ -1692,7 +1691,7 @@ namespace dftfe
     AssertThrow(!domainBoundingVectorsFile.empty(),
                 ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
-    AssertThrow (!(solverMode == "NSCF"  && loadRhoData==true),
+    AssertThrow ((solverMode == "NSCF"  && loadRhoData==true),
       ExcMessage("DFT-FE Error: Cant run NSCF without load rho data set to true"))  ;            
 
     if (isPseudopotential)

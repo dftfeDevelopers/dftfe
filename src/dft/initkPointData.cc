@@ -167,6 +167,8 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
     //      "%s/data/kPointList/%s",
       //    DFTFE_PATH,
         //  d_dftParamsPtr->kPointDataFile.c_str());
+  if (d_dftParamsPtr->verbosity >= 2)
+        pcout << "Reading data from file: " << kPointRuleFile << std::endl;      
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
   d_kPointCoordinates.clear();
   d_kPointWeights.clear();
