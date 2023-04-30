@@ -297,7 +297,6 @@ namespace dftfe
                   const int * map,
                   const Type  coeffHelmholtz)
   {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     // V = AU
     // gridDim.x = cells;
     // First index is fastest convention used
@@ -319,7 +318,7 @@ namespace dftfe
     const int mapShift = blockIdx.x * M * K;
 
     // Copy Shape Function Values and Gradients to shared memory
-#  pragma unroll
+#pragma unroll
     for (int i = threadIdx.x; i < 2 * N * (K + N); i += blockDim.x)
       sharedP[i] = P[i];
 
@@ -338,7 +337,7 @@ namespace dftfe
       {
         Type x[N], u[K];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -346,12 +345,12 @@ namespace dftfe
           {
             u[k] = U[map[i + k * M + mapShift]];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * u[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[i + j * M] = x[j];
       }
@@ -367,7 +366,7 @@ namespace dftfe
         int a = i % K;
         int b = i / K;
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -375,12 +374,12 @@ namespace dftfe
           {
             x[k] = sharedX[a + k * K + b * M];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               y[j] += sharedP[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedY[a + (j + b * N) * K] = y[j];
       }
@@ -393,7 +392,7 @@ namespace dftfe
       {
         Type x[N], y[K];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -401,12 +400,12 @@ namespace dftfe
           {
             y[k] = sharedY[k + i * K];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[j + i * N] = x[j];
       }
@@ -419,7 +418,7 @@ namespace dftfe
       {
         Type y[N], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -427,12 +426,12 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               y[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedY[i + j * N * N] = y[j];
       }
@@ -446,7 +445,7 @@ namespace dftfe
         int a = i % N;
         int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -454,12 +453,12 @@ namespace dftfe
           {
             x[k] = sharedX[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               z[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedZ[a + (j + b * N) * N] = z[j];
       }
@@ -470,7 +469,7 @@ namespace dftfe
       {
         Type t[N], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           t[j] = 0.0;
 
@@ -478,12 +477,12 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               t[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedT[j + i * N] = t[j];
       }
@@ -495,7 +494,7 @@ namespace dftfe
     const int JShift = blockIdx.x * dim * dim;
 
     // Copy Jacobian Factor to shared memory
-#  pragma unroll
+#pragma unroll
     for (int i = threadIdx.x; i < dim * dim; i += blockDim.x)
       sharedJ[i] = J[i + JShift];
 
@@ -504,7 +503,7 @@ namespace dftfe
     __syncthreads();
 
     // Gemm with Jacobian Factor
-#  pragma unroll
+#pragma unroll
     for (int i = threadIdx.x; i < N * N * N; i += blockDim.x)
       {
         Type v[3];
@@ -537,7 +536,7 @@ namespace dftfe
       {
         Type x[N], y[N], h[N];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -545,12 +544,12 @@ namespace dftfe
           {
             y[k] = sharedY[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               x[j] += sharedDT[j + k * N] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           {
             h[j]                   = sharedX[i + j * N * N];
@@ -569,7 +568,7 @@ namespace dftfe
         int a = i % N;
         int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -577,12 +576,12 @@ namespace dftfe
           {
             z[k] = sharedZ[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               y[j] += sharedDT[j + k * N] * z[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[a + (j + b * N) * N] += y[j];
       }
@@ -595,7 +594,7 @@ namespace dftfe
       {
         Type z[N], t[N];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -603,12 +602,12 @@ namespace dftfe
           {
             t[k] = sharedT[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < N; j++)
               z[j] += sharedDT[j + k * N] * t[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < N; j++)
           sharedX[j + i * N] += z[j];
       }
@@ -621,7 +620,7 @@ namespace dftfe
       {
         Type y[K], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -629,12 +628,12 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < K; j++)
           sharedY[i + j * N * N] = y[j];
       }
@@ -650,7 +649,7 @@ namespace dftfe
         int a = i % N;
         int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < K; j++)
           x[j] = 0.0;
 
@@ -658,12 +657,12 @@ namespace dftfe
           {
             y[k] = sharedY[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < K; j++)
               x[j] += sharedPT[j + k * K] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < K; j++)
           sharedX[a + (j + b * K) * N] = x[j];
       }
@@ -676,7 +675,7 @@ namespace dftfe
       {
         Type y[K], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -684,16 +683,15 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (int j = 0; j < K; j++)
           atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
       }
-#endif
   }
 
 
@@ -808,24 +806,24 @@ namespace dftfe
     distributedDeviceVec<double> &Ax,
     distributedDeviceVec<double> &x)
   {
-    constexpr int dim = 3;
-    constexpr int p   = FEOrderElectro + 1;
-    constexpr int q   = p;
-    constexpr int threads =
-      (FEOrderElectro < 7 ?
-         96 :
-         FEOrderElectro == 7 ? 64 : dftfe::utils::DEVICE_BLOCK_SIZE);
+    constexpr int dim     = 3;
+    constexpr int p       = FEOrderElectro + 1;
+    constexpr int q       = p;
+    constexpr int threads = 64;
+    // constexpr int threads =
+    //  (FEOrderElectro < 7 ? 96 : FEOrderElectro == 7 ? 64 : 256);
     const int             blocks         = d_nLocalCells;
     const double          coeffHelmholtz = 4 * M_PI * d_gamma;
     constexpr std::size_t smem =
       (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
 
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
-    // std::cout<<"HELLO 1"<<std::endl;
+
     x.updateGhostValues();
 
     d_constraintsTotalPotentialInfo.distribute(x, 1);
 
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     computeAXKernel<double, p * p, q, p, dim>
       <<<blocks, threads, smem>>>(Ax.begin(),
                                   x.begin(),
@@ -834,10 +832,25 @@ namespace dftfe
                                   d_mapPtr,
                                   coeffHelmholtz);
 
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(
+                         computeAXKernel<double, p * p, q, p, dim>),
+                       blocks,
+                       threads,
+                       smem,
+                       0,
+                       Ax.begin(),
+                       x.begin(),
+                       d_shapeFunctionPtr,
+                       d_jacobianFactorPtr,
+                       d_mapPtr,
+                       coeffHelmholtz);
+#endif
+
     d_constraintsTotalPotentialInfo.set_zero(x, 1);
 
     d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax, 1);
-    // std::cout<<"HELLO 2"<<std::endl;
+
     Ax.accumulateAddLocallyOwned();
   }
 

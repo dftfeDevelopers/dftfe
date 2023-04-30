@@ -2010,12 +2010,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
@@ -2284,13 +2280,9 @@ namespace dftfe
             << std::endl
             << "Poisson solve for total electrostatic potential (rhoIn+b): ";
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             if (scfIter > 0)
@@ -2389,13 +2381,9 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             CGSolverDevice.solve(
@@ -3152,13 +3140,9 @@ namespace dftfe
 
             computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             if (d_dftParamsPtr->useDevice and
                 d_dftParamsPtr->floatingNuclearCharges and
                 not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-            if (false)
-#endif
               {
 #ifdef DFTFE_WITH_DEVICE
                 d_phiTotalSolverProblemDevice.reinit(
@@ -3408,13 +3392,9 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             d_phiTotalSolverProblemDevice.reinit(
