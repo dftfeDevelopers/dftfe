@@ -303,6 +303,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
                                 true,  // computeCorrelation
                                 &funcX,
                                 &funcC,
+                                d_dftParamsPtr->modelXCInputFile,
                                 excFunctionalPtr);
   /*
   exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);

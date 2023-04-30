@@ -23,15 +23,18 @@ namespace dftfe
 {
   excDensityBaseClass::excDensityBaseClass(xc_func_type *funcXPtr,
                                            xc_func_type *funcCPtr,
+                                           bool          isSpinPolarized,
                                            bool          scaleExchange,
                                            bool          computeCorrelation,
                                            double        scaleExchangeFactor)
     : d_funcXPtr(funcXPtr)
     , d_funcCPtr(funcCPtr)
+    , d_isSpinPolarized(isSpinPolarized)
     , d_scaleExchange(scaleExchange)
     , d_computeCorrelation(computeCorrelation)
     , d_scaleExchangeFactor(scaleExchangeFactor)
   {}
+
 
   densityFamilyType
   excDensityBaseClass::getDensityBasedFamilyType() const

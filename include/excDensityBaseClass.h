@@ -19,9 +19,13 @@
 #ifndef DFTFE_EXCDENSITYBASECLASS_H
 #define DFTFE_EXCDENSITYBASECLASS_H
 
-#include <headers.h>
+//#include <headers.h>
 #include <xc.h>
-#include <linearAlgebraOperations.h>
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <map>
+//#include <linearAlgebraOperations.h>
 
 namespace dftfe
 {
@@ -56,6 +60,7 @@ namespace dftfe
   public:
     excDensityBaseClass(xc_func_type *funcXPtr,
                         xc_func_type *funcCPtr,
+                        bool          isSpinPolarized,
                         bool          scaleExchange,
                         bool          computeCorrelation,
                         double        scaleExchangeFactor);
@@ -93,6 +98,7 @@ namespace dftfe
     xc_func_type *    d_funcXPtr;
     xc_func_type *    d_funcCPtr;
     bool              d_scaleExchange, d_computeCorrelation;
+    bool              d_isSpinPolarized;
     double            d_scaleExchangeFactor;
   };
 

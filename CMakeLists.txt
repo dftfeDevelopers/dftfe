@@ -7,6 +7,8 @@ SET(TARGET "dftfe_exe")
 SET(TARGETLIB "dftfe")
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
+add_definitions(-w)
+
 #FIXME: find a better way to replace O3 with O2 in CMAKE_CXX_FLAGS_RELEASE
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   add_compile_options("-O2")
@@ -31,7 +33,7 @@ set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-#set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(ENABLE_MPI)
@@ -55,6 +57,8 @@ SET(TARGET_SRC
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excManager.cpp
   ./src/excManager/excWavefunctionNoneClass.cpp
+  ./src/excManager/NNGGA.cc
+  ./src/excManager/NNLDA.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
@@ -370,6 +374,15 @@ IF (DEFINED LIBXC_DIR)
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of LibXC: -DLIBXC_DIR=/path/to/prefix")
 ENDIF (DEFINED LIBXC_DIR)
+
+IF (WITH_TORCH)
+#
+# TORCH. Set with -DTORCH_DIR=/path/to/prefix
+#
+FIND_PACKAGE(Torch PATHS "/scratch/vikramg_root/vikramg/shared_data/conda_envs/pytorch_cpu/lib/python3.9/site-packages/torch/share/cmake/Torch/" Required) 
+target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
+ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
+ENDIF()
 
 #
 # XML. Set with -DXML_LIB_DIR and -DXML_INCLUDE_DIR
