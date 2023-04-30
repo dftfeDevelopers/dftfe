@@ -39,11 +39,12 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &sendBuffer)
     {
       for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
-        for (size_type j = 0; j < blockSize; ++j)
-          sendBuffer.data()[i * blockSize + j] =
-            dataArray
-              .data()[ownedLocalIndicesForTargetProcs.data()[i] * blockSize +
-                      j];
+        std::copy(dataArray.data() +
+                    ownedLocalIndicesForTargetProcs.data()[i] * blockSize,
+                  dataArray.data() +
+                    ownedLocalIndicesForTargetProcs.data()[i] * blockSize +
+                    blockSize,
+                  sendBuffer.data() + i * blockSize);
     }
 
 
@@ -63,10 +64,13 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray)
     {
       for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
-        for (size_type j = 0; j < blockSize; ++j)
-          dataArray
-            .data()[ownedLocalIndicesForTargetProcs.data()[i] * blockSize +
-                    j] += recvBuffer.data()[i * blockSize + j];
+        std::transform(recvBuffer.data() + i * blockSize,
+                       recvBuffer.data() + (i + 1) * blockSize,
+                       dataArray.data() +
+                         ownedLocalIndicesForTargetProcs.data()[i] * blockSize,
+                       dataArray.data() +
+                         ownedLocalIndicesForTargetProcs.data()[i] * blockSize,
+                       std::plus<>{});
     }
 
 

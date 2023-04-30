@@ -28,10 +28,10 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   computeLocalHamiltonianTimesX(
-    const distributedCPUVec<std::complex<double>> &src,
-    const unsigned int                             numberWaveFunctions,
-    distributedCPUVec<std::complex<double>> &      dst,
-    const double                                   scalar)
+    const distributedCPUMultiVec<std::complex<double>> &src,
+    const unsigned int                                  numberWaveFunctions,
+    distributedCPUMultiVec<std::complex<double>> &      dst,
+    const double                                        scalar)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
@@ -58,7 +58,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           dealii::types::global_dof_index localNodeId =
             d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
           zcopy_(&numberWaveFunctions,
-                 src.begin() + localNodeId,
+                 src.data() + localNodeId,
                  &inc,
                  &cellWaveFunctionMatrix[numberWaveFunctions * iNode],
                  &inc);
@@ -86,7 +86,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &scalarCoeffAlpha,
                  &cellHamMatrixTimesWaveMatrix[numberWaveFunctions * iNode],
                  &inc,
-                 dst.begin() + localNodeId,
+                 dst.data() + localNodeId,
                  &inc);
         }
 
@@ -97,10 +97,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-  computeLocalHamiltonianTimesX(const distributedCPUVec<double> &src,
-                                const unsigned int         numberWaveFunctions,
-                                distributedCPUVec<double> &dst,
-                                const double               scalar)
+  computeLocalHamiltonianTimesX(const distributedCPUMultiVec<double> &src,
+                                const unsigned int numberWaveFunctions,
+                                distributedCPUMultiVec<double> &dst,
+                                const double                    scalar)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
@@ -131,7 +131,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           dealii::types::global_dof_index localNodeId =
             d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
           dcopy_(&numberWaveFunctions,
-                 src.begin() + localNodeId,
+                 src.data() + localNodeId,
                  &inc,
                  &cellWaveFunctionMatrix[numberWaveFunctions * iNode],
                  &inc);
@@ -160,7 +160,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &scalarCoeffAlpha,
                  &cellHamMatrixTimesWaveMatrix[numberWaveFunctions * iNode],
                  &inc,
-                 dst.begin() + localNodeId,
+                 dst.data() + localNodeId,
                  &inc);
         }
 

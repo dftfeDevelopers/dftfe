@@ -1026,7 +1026,7 @@ namespace dftfe
 
 
     /// objects for various exchange-correlations (from libxc package)
-    // xc_func_type funcX, funcC;
+    xc_func_type funcX, funcC;
 
     excWavefunctionBaseClass *excFunctionalPtr;
     dispersionCorrection      d_dispersionCorr;
@@ -1532,7 +1532,7 @@ namespace dftfe
     /// computation pre-initialization of the parallel layout is more efficient
     /// than creating the parallel layout for every nonLocalHamiltionan times
     /// wavefunction computation
-    distributedCPUVec<std::complex<double>>
+    distributedCPUMultiVec<std::complex<double>>
       d_projectorKetTimesVectorParFlattened;
 #else
     std::vector<std::vector<std::vector<double>>>
@@ -1546,7 +1546,7 @@ namespace dftfe
     /// computation pre-initialization of the parallel layout is more efficient
     /// than creating the parallel layout for every nonLocalHamiltionan times
     /// wavefunction computation
-    distributedCPUVec<double> d_projectorKetTimesVectorParFlattened;
+    distributedCPUMultiVec<double> d_projectorKetTimesVectorParFlattened;
 #endif
 
     //

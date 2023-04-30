@@ -110,7 +110,7 @@ namespace dftfe
     std::vector<double> partialOccupVecTimesKptWeight(BVec, 0.0);
 
 
-    dftfe::distributedCPUVec<T> flattenedArrayBlock;
+    dftfe::distributedCPUMultiVec<T> flattenedArrayBlock;
 
     std::vector<T> cellWaveFunctionMatrix(numNodesPerElement * BVec, T(0.0));
 
@@ -247,8 +247,8 @@ namespace dftfe
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                       for (unsigned int iWave = 0; iWave < currentBlockSize;
                            ++iWave)
-                        flattenedArrayBlock.local_element(
-                          iNode * currentBlockSize + iWave) =
+                        flattenedArrayBlock
+                          .data()[iNode * currentBlockSize + iWave] =
                           XCurrentKPoint[iNode * totalNumWaveFunctions + jvec +
                                          iWave];
 
@@ -264,7 +264,7 @@ namespace dftfe
                           {
                             xcopy(
                               &currentBlockSize,
-                              flattenedArrayBlock.begin() +
+                              flattenedArrayBlock.data() +
                                 operatorMatrix
                                   .getFlattenedArrayCellLocalProcIndexIdMap()
                                     [icell * numNodesPerElement + iNode],
@@ -459,8 +459,8 @@ namespace dftfe
                            ++iNode)
                         for (unsigned int iWave = 0; iWave < currentBlockSize;
                              ++iWave)
-                          flattenedArrayBlock.local_element(
-                            iNode * currentBlockSize + iWave) =
+                          flattenedArrayBlock
+                            .data()[iNode * currentBlockSize + iWave] =
                             XFracCurrentKPoint[iNode * Nfr + jvec + iWave];
 
                       (operatorMatrix.getOverloadedConstraintMatrix())
@@ -476,7 +476,7 @@ namespace dftfe
                             {
                               xcopy(
                                 &currentBlockSize,
-                                flattenedArrayBlock.begin() +
+                                flattenedArrayBlock.data() +
                                   operatorMatrix
                                     .getFlattenedArrayCellLocalProcIndexIdMap()
                                       [icell * numNodesPerElement + iNode],

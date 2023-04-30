@@ -336,15 +336,15 @@ namespace dftfe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size(), initVal);
+      d_localSize          = u.d_localSize;
+      d_locallyOwnedSize   = u.d_locallyOwnedSize;
+      d_ghostSize          = u.d_ghostSize;
+      d_globalSize         = u.d_globalSize;
+      d_numVectors         = u.d_numVectors;
+      d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, u.d_numVectors);
-      d_localSize        = u.d_localSize;
-      d_locallyOwnedSize = u.d_locallyOwnedSize;
-      d_ghostSize        = u.d_ghostSize;
-      d_globalSize       = u.d_globalSize;
-      d_numVectors       = u.d_numVectors;
-      d_mpiPatternP2P    = u.d_mpiPatternP2P;
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
+                                                                d_numVectors);
     }
 
     //
@@ -641,6 +641,154 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::numVectors() const
     {
       return d_numVectors;
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueBaseType>
+    void
+    MultiVector<ValueType, memorySpace>::l2Norm(ValueBaseType *normVec) const
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] L2-Norm evaluation not implemented for DEVICE");
+      std::transform(begin(), begin() + d_numVectors, normVec, [](auto &a) {
+        return dftfe::utils::realPart(dftfe::utils::complexConj(a) * (a));
+      });
+      for (auto k = 1; k < d_locallyOwnedSize; ++k)
+        {
+          std::transform(begin() + k * d_numVectors,
+                         begin() + (k + 1) * d_numVectors,
+                         normVec,
+                         normVec,
+                         [](auto &a, auto &b) {
+                           return b + dftfe::utils::realPart(
+                                        dftfe::utils::complexConj(a) * (a));
+                         });
+        }
+      MPI_Allreduce(MPI_IN_PLACE,
+                    normVec,
+                    d_numVectors,
+                    dataTypes::mpi_type_id(normVec),
+                    MPI_SUM,
+                    d_mpiPatternP2P->mpiCommunicator());
+      std::transform(normVec, normVec + d_numVectors, normVec, [](auto &a) {
+        return std::sqrt(a);
+      });
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueBaseType>
+    void
+    MultiVector<ValueType, memorySpace>::add(const ValueBaseType *valVec,
+                                             const MultiVector &  u)
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] Add not implemented for DEVICE");
+      for (auto k = 0; k < d_locallyOwnedSize; ++k)
+        for (auto ib = 0; ib < d_numVectors; ++ib)
+          (*d_storage)[k * d_numVectors + ib] +=
+            valVec[ib] * u.data()[k * d_numVectors + ib];
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueBaseType>
+    void
+    MultiVector<ValueType, memorySpace>::add(const ValueBaseType val,
+                                             const MultiVector & u)
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] Add not implemented for DEVICE");
+      std::transform(begin(),
+                     begin() + d_locallyOwnedSize * d_numVectors,
+                     u.begin(),
+                     begin(),
+                     [&val](auto &a, auto &b) { return (a + val * b); });
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueBaseType1, typename ValueBaseType2>
+    void
+    MultiVector<ValueType, memorySpace>::addAndScale(
+      const ValueBaseType1 valScale,
+      const ValueBaseType2 valAdd,
+      const MultiVector &  u)
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] Add not implemented for DEVICE");
+      std::transform(begin(),
+                     begin() + d_locallyOwnedSize * d_numVectors,
+                     u.begin(),
+                     begin(),
+                     [&valScale, &valAdd](auto &a, auto &b) {
+                       return valScale * (a + valAdd * b);
+                     });
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueBaseType1, typename ValueBaseType2>
+    void
+    MultiVector<ValueType, memorySpace>::scaleAndAdd(
+      const ValueBaseType1 valScale,
+      const ValueBaseType2 valAdd,
+      const MultiVector &  u)
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] Add not implemented for DEVICE");
+      std::transform(begin(),
+                     begin() + d_locallyOwnedSize * d_numVectors,
+                     u.begin(),
+                     begin(),
+                     [&valScale, &valAdd](auto &a, auto &b) {
+                       return valScale * a + valAdd * b;
+                     });
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueBaseType>
+    void
+    MultiVector<ValueType, memorySpace>::scale(const ValueBaseType val)
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] Add not implemented for DEVICE");
+      std::transform(begin(),
+                     begin() + d_locallyOwnedSize * d_numVectors,
+                     begin(),
+                     [&val](auto &a) { return val * a; });
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::dot(const MultiVector &u,
+                                             ValueType *        dotVec)
+    {
+      dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
+        memorySpace != dftfe::utils::MemorySpace::DEVICE,
+        "[] dot product evaluation not implemented for DEVICE");
+      for (auto ib = 0; ib < d_numVectors; ++ib)
+        {
+          dotVec[ib] =
+            (*d_storage)[ib] * dftfe::utils::complexConj((*(u.d_storage))[ib]);
+        }
+      for (auto k = 1; k < d_locallyOwnedSize; ++k)
+        {
+          for (auto ib = 0; ib < d_numVectors; ++ib)
+            {
+              dotVec[ib] += (*d_storage)[k * d_numVectors + ib] *
+                            dftfe::utils::complexConj(
+                              (*(u.d_storage))[k * d_numVectors + ib]);
+            }
+        }
+      MPI_Allreduce(MPI_IN_PLACE,
+                    dotVec,
+                    d_numVectors,
+                    dataTypes::mpi_type_id(dotVec),
+                    MPI_SUM,
+                    d_mpiPatternP2P->mpiCommunicator());
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>

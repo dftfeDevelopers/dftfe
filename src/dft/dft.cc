@@ -223,6 +223,8 @@ namespace dftfe
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
 
+    xc_func_end(&funcX);
+    xc_func_end(&funcC);
     delete excFunctionalPtr;
   }
 
@@ -2138,7 +2140,9 @@ namespace dftfe
     computing_timer.enter_subsection("scf solve");
 
     double firstScfChebyTol =
-      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2;
+      d_dftParamsPtr->restrictToOnePass ?
+        1e+4 :
+        (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2);
 
 
     if (d_dftParamsPtr->solverMode == "MD")

@@ -140,19 +140,33 @@ namespace dftfe
 
       if (useMixedPrecOverall && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
-          operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
-            X,
-            Xb,
-            floatXb,
-            HXb,
-            projectorKetTimesVector,
-            M,
-            N,
-            dftParams.numCoreWfcXtHX,
-            handle,
-            processGrid,
-            projHamPar,
-            devicecclMpiCommDomain);
+          if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
+            operatorMatrix.XtHXMixedPrecCommunOverlapComputeCommun(
+              X,
+              Xb,
+              HXb,
+              projectorKetTimesVector,
+              M,
+              N,
+              dftParams.numCoreWfcXtHX,
+              handle,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain);
+          else
+            operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
+              X,
+              Xb,
+              floatXb,
+              HXb,
+              projectorKetTimesVector,
+              M,
+              N,
+              dftParams.numCoreWfcXtHX,
+              handle,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain);
         }
       else
         {

@@ -920,6 +920,7 @@ namespace dftfe
               " neither present in its locally owned range nor in its "
               " ghost indices.";
             throwException<InvalidArgument>(found, msg);
+            returnValue += d_numLocallyOwnedIndices;
           }
 
         return returnValue;

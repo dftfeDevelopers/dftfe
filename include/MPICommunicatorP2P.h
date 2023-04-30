@@ -27,6 +27,7 @@
 #include <TypeConfig.h>
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
+#include <dftfeDataTypes.h>
 
 
 namespace dftfe
