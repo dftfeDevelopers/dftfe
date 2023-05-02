@@ -1091,7 +1091,8 @@ namespace dftfe
         prm.declare_entry(
           "TEMPERATURE CONTROLLER TYPE",
           "NO_CONTROL",
-          dealii::Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
+          dealii::Patterns::Selection(
+            "NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
           R"([Standard] Method of controlling temperature in the MD run. NO\_CONTROL is the default option.)");
 
         prm.declare_entry("TIME STEP",
@@ -1619,7 +1620,8 @@ namespace dftfe
     if (printParametersToFile &&
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::OutputStyle::LaTeX);
+        prm.print_parameters(std::cout,
+                             dealii::ParameterHandler::OutputStyle::LaTeX);
         exit(0);
       }
 
@@ -1688,15 +1690,18 @@ namespace dftfe
           "DFT-FE Error: Implementation of this feature is not completed yet."));
 
     AssertThrow(!coordinatesFile.empty(),
-                dealii::ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
+                dealii::ExcMessage(
+                  "DFT-FE Error: ATOMIC COORDINATES FILE not given."));
 
     AssertThrow(!domainBoundingVectorsFile.empty(),
-                dealii::ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
+                dealii::ExcMessage(
+                  "DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
     if (isPseudopotential)
       AssertThrow(
         !pseudoPotentialFile.empty(),
-        dealii::ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
+        dealii::ExcMessage(
+          "DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
 
     if (spinPolarized == 0)
       AssertThrow(

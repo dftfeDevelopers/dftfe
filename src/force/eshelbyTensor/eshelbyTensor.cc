@@ -26,7 +26,7 @@ namespace dftfe
   {
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getPhiExtEshelbyTensor(
-      const dealii::VectorizedArray<double> &              phiExt,
+      const dealii::VectorizedArray<double> &                      phiExt,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiExt)
     {
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> identityTensor;
@@ -84,9 +84,9 @@ namespace dftfe
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getEElectroEshelbyTensor(
-      const dealii::VectorizedArray<double> &              phiTot,
+      const dealii::VectorizedArray<double> &                      phiTot,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiTot,
-      const dealii::VectorizedArray<double> &              rho)
+      const dealii::VectorizedArray<double> &                      rho)
     {
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         dealii::make_vectorized_array(1.0 / (4.0 * M_PI)) *
@@ -104,10 +104,11 @@ namespace dftfe
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const dealii::VectorizedArray<double> &              rho,
+      const dealii::VectorizedArray<double> &                      rho,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
-      const dealii::VectorizedArray<double> &              exc,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRho)
+      const dealii::VectorizedArray<double> &                      exc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRho)
     {
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(gradRho, derExcGradRho);
@@ -126,10 +127,13 @@ namespace dftfe
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         &shadowKSGradRhoMinMinusGradRho,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
-      const dealii::VectorizedArray<double> &              vxc,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derVxcGradRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRho,
-      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>> &der2ExcGradRho)
+      const dealii::VectorizedArray<double> &                      vxc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derVxcGradRho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRho,
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
+        &der2ExcGradRho)
     {
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(derVxcGradRho, gradRho) * shadowKSRhoMinMinusRho -
@@ -153,7 +157,7 @@ namespace dftfe
                             const dealii::VectorizedArray<double> &phiExt)
     {
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor;
-      dealii::VectorizedArray<double>               identityTensorFactor =
+      dealii::VectorizedArray<double> identityTensorFactor =
         (pseudoVLoc - phiExt) * rho;
 
 
@@ -166,9 +170,11 @@ namespace dftfe
 
 
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-    getFPSPLocal(const dealii::VectorizedArray<double>                rho,
-                 const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPseudoVLoc,
-                 const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiExt)
+    getFPSPLocal(
+      const dealii::VectorizedArray<double> rho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &gradPseudoVLoc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiExt)
 
     {
       return rho * (gradPseudoVLoc - gradPhiExt);
@@ -177,7 +183,7 @@ namespace dftfe
 
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const dealii::VectorizedArray<double> &              vxc,
+      const dealii::VectorizedArray<double> &                      vxc,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoCore)
 
     {
@@ -187,8 +193,10 @@ namespace dftfe
 
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRho,
-      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>> &hessianRhoCore)
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRho,
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
+        &hessianRhoCore)
 
     {
       dealii::Tensor<1, 3, dealii::VectorizedArray<double>> temp;

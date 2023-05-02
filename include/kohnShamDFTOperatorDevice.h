@@ -598,7 +598,7 @@ namespace dftfe
     std::vector<unsigned int> d_cellNodeIdMapNonLocalToLocal;
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
                               d_cellNodeIdMapNonLocalToLocalDevice;
-    std::vector<unsigned int>d_normalCellIdToMacroCellIdMap;
+    std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
     std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
 
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>

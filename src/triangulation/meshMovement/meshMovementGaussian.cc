@@ -33,9 +33,9 @@ namespace dftfe
   meshMovementGaussianClass::moveMesh(
     const std::vector<dealii::Point<3>> &            controlPointLocations,
     const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
-    const std::vector<double> &              gaussianWidthParameter,
-    const std::vector<double> &              flatTopWidthParameter,
-    const bool                               moveSubdivided)
+    const std::vector<double> &                      gaussianWidthParameter,
+    const std::vector<double> &                      flatTopWidthParameter,
+    const bool                                       moveSubdivided)
   {
     // writeMesh("meshUnmoved.vtu");
     MPI_Barrier(mpi_communicator);
@@ -122,15 +122,16 @@ namespace dftfe
     const std::vector<double> &controllingParameterCurrentMove,
     const std::vector<double> &flatTopWidthParameter)
   {
-    unsigned int      vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
+    unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool> vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
 
     std::vector<dealii::Point<3>> nodalCoordinatesUpdated(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices());
-    dealii::DoFHandler<3>::active_cell_iterator cell =
-                                          d_dofHandlerMoveMesh.begin_active(),
-                                        endc = d_dofHandlerMoveMesh.end();
+    dealii::DoFHandler<3>::active_cell_iterator cell = d_dofHandlerMoveMesh
+                                                         .begin_active(),
+                                                endc =
+                                                  d_dofHandlerMoveMesh.end();
 
     for (; cell != endc; ++cell)
       if (!cell->is_artificial())
@@ -209,9 +210,10 @@ namespace dftfe
           }
 
 
-    dealii::DoFHandler<3>::active_cell_iterator cellStep2 =
-                                          d_dofHandlerMoveMesh.begin_active(),
-                                        endcStep2 = d_dofHandlerMoveMesh.end();
+    dealii::DoFHandler<3>::active_cell_iterator cellStep2 = d_dofHandlerMoveMesh
+                                                              .begin_active(),
+                                                endcStep2 =
+                                                  d_dofHandlerMoveMesh.end();
     std::vector<bool> vertex_touchedNew(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
 
@@ -287,15 +289,16 @@ namespace dftfe
   meshMovementGaussianClass::computeIncrement(
     const std::vector<dealii::Point<3>> &            controlPointLocations,
     const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
-    const std::vector<double> &              gaussianWidthParameter,
-    const std::vector<double> &              flatTopWidthParameter)
+    const std::vector<double> &                      gaussianWidthParameter,
+    const std::vector<double> &                      flatTopWidthParameter)
   {
-    unsigned int      vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
+    unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool> vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
-    dealii::DoFHandler<3>::active_cell_iterator cell =
-                                          d_dofHandlerMoveMesh.begin_active(),
-                                        endc = d_dofHandlerMoveMesh.end();
+    dealii::DoFHandler<3>::active_cell_iterator cell = d_dofHandlerMoveMesh
+                                                         .begin_active(),
+                                                endc =
+                                                  d_dofHandlerMoveMesh.end();
     for (; cell != endc; ++cell)
       if (!cell->is_artificial())
         for (unsigned int i = 0; i < vertices_per_cell; ++i)
@@ -305,7 +308,7 @@ namespace dftfe
             if (vertex_touched[global_vertex_no])
               continue;
             vertex_touched[global_vertex_no] = true;
-            dealii::Point<3> nodalCoor               = cell->vertex(i);
+            dealii::Point<3> nodalCoor       = cell->vertex(i);
 
             int overlappedControlPointId = -1;
             for (unsigned int jControl = 0;

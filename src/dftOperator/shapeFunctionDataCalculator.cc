@@ -32,10 +32,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     dftPtr->matrix_free_data.n_physical_cells();
   const dealii::Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-  dealii::FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(),
-                        quadrature,
-                        dealii::update_values | dealii::update_gradients | dealii::update_jacobians |
-                          dealii::update_JxW_values | dealii::update_inverse_jacobians);
+  dealii::FEValues<3> fe_values(
+    dftPtr->matrix_free_data.get_dof_handler().get_fe(),
+    quadrature,
+    dealii::update_values | dealii::update_gradients |
+      dealii::update_jacobians | dealii::update_JxW_values |
+      dealii::update_inverse_jacobians);
 
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
@@ -479,13 +481,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
       }
 
 
-  dealii::QGaussLobatto<3> quadratureGl(C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() +
-                                1);
-  dealii::FEValues<3>      fe_valuesGl(dftPtr->matrix_free_data
-                            .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                            .get_fe(),
-                          quadratureGl,
-                          dealii::update_values);
+  dealii::QGaussLobatto<3> quadratureGl(
+    C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
+  dealii::FEValues<3> fe_valuesGl(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadratureGl,
+    dealii::update_values);
   const unsigned int numberQuadraturePointsGl = quadratureGl.size();
 
   //
@@ -513,14 +515,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   // NLP quadrature data
   //
-  dealii::QIterated<3>       quadratureNLP(dealii::QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
-                             C_numCopies1DQuadNLPSP());
-  dealii::FEValues<3>        fe_valuesNLP(dftPtr->matrix_free_data
-                             .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                             .get_fe(),
-                           quadratureNLP,
-                           dealii::update_values | dealii::update_gradients | dealii::update_jacobians |
-                             dealii::update_inverse_jacobians);
+  dealii::QIterated<3> quadratureNLP(
+    dealii::QGauss<1>(C_num1DQuadNLPSP<FEOrder>()), C_numCopies1DQuadNLPSP());
+  dealii::FEValues<3> fe_valuesNLP(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadratureNLP,
+    dealii::update_values | dealii::update_gradients |
+      dealii::update_jacobians | dealii::update_inverse_jacobians);
   const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
 
   // resize data members

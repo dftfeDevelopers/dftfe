@@ -56,8 +56,8 @@ namespace dftfe
   meshMovementAffineTransform::moveMesh(
     const std::vector<dealii::Point<3>> &            controlPointLocations,
     const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
-    const double                             controllingParameter,
-    const bool                               moveSubdivided)
+    const double                                     controllingParameter,
+    const bool                                       moveSubdivided)
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
@@ -67,12 +67,14 @@ namespace dftfe
   void
   meshMovementAffineTransform::computeIncrement()
   {
-    const unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
-    std::vector<bool>  vertex_touched(
+    const unsigned int vertices_per_cell =
+      dealii::GeometryInfo<3>::vertices_per_cell;
+    std::vector<bool> vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
-    dealii::DoFHandler<3>::active_cell_iterator cell =
-                                          d_dofHandlerMoveMesh.begin_active(),
-                                        endc = d_dofHandlerMoveMesh.end();
+    dealii::DoFHandler<3>::active_cell_iterator cell = d_dofHandlerMoveMesh
+                                                         .begin_active(),
+                                                endc =
+                                                  d_dofHandlerMoveMesh.end();
     for (; cell != endc; ++cell)
       if (!cell->is_artificial())
         for (unsigned int i = 0; i < vertices_per_cell; ++i)
@@ -81,7 +83,7 @@ namespace dftfe
 
             if (vertex_touched[global_vertex_no])
               continue;
-            vertex_touched[global_vertex_no]     = true;
+            vertex_touched[global_vertex_no]             = true;
             const dealii::Point<3>             nodalCoor = cell->vertex(i);
             const dealii::Tensor<1, 3, double> increment =
               d_deformationGradient * nodalCoor - nodalCoor;

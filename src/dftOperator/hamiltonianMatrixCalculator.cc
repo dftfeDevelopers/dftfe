@@ -80,10 +80,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 
           dealii::FEEvaluation<3,
-                       FEOrder,
-                       C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                       1,
-                       double>
+                               FEOrder,
+                               C_num1DQuadLPSP<FEOrder>() *
+                                 C_numCopies1DQuadLPSP(),
+                               1,
+                               double>
             fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
 
           const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
@@ -911,17 +912,18 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   //
   const dealii::Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-  dealii::FEEvaluation<3,
-               FEOrder,
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               1,
-               double>
-                     fe_eval(dftPtr->matrix_free_data, 0, 0);
-  dealii::FEValues<3>        fe_values(dftPtr->matrix_free_data
-                          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                          .get_fe(),
-                        quadrature,
-                        dealii::update_gradients);
+  dealii::FEEvaluation<
+    3,
+    FEOrder,
+    C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+    1,
+    double>
+                      fe_eval(dftPtr->matrix_free_data, 0, 0);
+  dealii::FEValues<3> fe_values(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadrature,
+    dealii::update_gradients);
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
       .get_fe()
@@ -935,7 +937,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   unsigned int iElem = 0;
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      dealii::AlignedVector<dealii::VectorizedArray<double>> elementHamiltonianMatrix;
+      dealii::AlignedVector<dealii::VectorizedArray<double>>
+        elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement *
                                       numberDofsPerElement);
       fe_eval.reinit(iMacroCell);

@@ -43,8 +43,8 @@ namespace dftfe
 
     std::vector<double>
     getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                             const dealii::Point<3> &           point,
-                             const dealii::Point<3> &           corner)
+                             const dealii::Point<3> &   point,
+                             const dealii::Point<3> &   corner)
     {
       //
       // recenter vertex about corner
@@ -94,13 +94,15 @@ namespace dftfe
     , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , d_dftParams(dftParams)
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
-    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   void meshMovementClass::init(
-    dealii::Triangulation<3, 3> &                   triangulation,
-    dealii::Triangulation<3, 3> &                   serialTriangulation,
+    dealii::Triangulation<3, 3> &           triangulation,
+    dealii::Triangulation<3, 3> &           serialTriangulation,
     const std::vector<std::vector<double>> &domainBoundingVectors)
   {
     d_domainBoundingVectors = domainBoundingVectors;
@@ -115,8 +117,9 @@ namespace dftfe
     d_dofHandlerMoveMesh.clear();
     if (d_isParallelMesh)
       {
-        d_triaPtr = &(dynamic_cast<dealii::parallel::distributed::Triangulation<3> &>(
-          triangulation));
+        d_triaPtr =
+          &(dynamic_cast<dealii::parallel::distributed::Triangulation<3> &>(
+            triangulation));
         d_dofHandlerMoveMesh.initialize(*d_triaPtr, FEMoveMesh);
       }
     else
@@ -126,12 +129,12 @@ namespace dftfe
     d_locally_relevant_dofs.clear();
     d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
     dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh,
-                                            d_locally_relevant_dofs);
+                                                    d_locally_relevant_dofs);
 
     d_constraintsMoveMesh.clear();
     d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
     dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh,
-                                            d_constraintsMoveMesh);
+                                                    d_constraintsMoveMesh);
     d_periodicity_vector.clear();
 
     // create unitVectorsXYZ
@@ -252,7 +255,8 @@ namespace dftfe
     // Next move vertices on locally owned cells
     dealii::DoFHandler<3>::active_cell_iterator cell =
       d_dofHandlerMoveMesh.begin_active();
-    dealii::DoFHandler<3>::active_cell_iterator endc = d_dofHandlerMoveMesh.end();
+    dealii::DoFHandler<3>::active_cell_iterator endc =
+      d_dofHandlerMoveMesh.end();
     for (; cell != endc; ++cell)
       {
         if (cell->is_locally_owned())
@@ -297,7 +301,8 @@ namespace dftfe
     // create a solution transfer object and prepare for refinement and solution
     // transfer
     //
-    dealii::parallel::distributed::SolutionTransfer<3, distributedCPUVec<double>>
+    dealii::parallel::distributed::SolutionTransfer<3,
+                                                    distributedCPUVec<double>>
       solTrans(d_dofHandlerMoveMesh);
     d_triaPtr->set_all_refine_flags();
     d_triaPtr->prepare_coarsening_and_refinement();
@@ -361,8 +366,8 @@ namespace dftfe
        }
 
        AssertThrow(isPeriodicFace[0]==true || isPeriodicFace[1]==true ||
-       isPeriodicFace[2]==true,dealii::ExcMessage("Previously periodic matched face
-       pairs not matching periodically for any directions after mesh
+       isPeriodicFace[2]==true,dealii::ExcMessage("Previously periodic matched
+       face pairs not matching periodically for any directions after mesh
        movement"));
        }
        MPI_Barrier(mpi_communicator);
@@ -372,8 +377,8 @@ namespace dftfe
      */
     // print out mesh metrics
     typename dealii::Triangulation<3, 3>::active_cell_iterator cell, endc;
-    double                                             minElemLength = 1e+6;
-    double                                             maxElemLength = 0.0;
+    double minElemLength = 1e+6;
+    double maxElemLength = 0.0;
     cell = d_dofHandlerMoveMesh.get_triangulation().begin_active();
     endc = d_dofHandlerMoveMesh.get_triangulation().end();
     for (; cell != endc; ++cell)
@@ -387,17 +392,21 @@ namespace dftfe
               maxElemLength = cell->minimum_vertex_distance();
           }
       }
-    minElemLength = dealii::Utilities::MPI::min(minElemLength, mpi_communicator);
-    maxElemLength = dealii::Utilities::MPI::max(maxElemLength, mpi_communicator);
+    minElemLength =
+      dealii::Utilities::MPI::min(minElemLength, mpi_communicator);
+    maxElemLength =
+      dealii::Utilities::MPI::max(maxElemLength, mpi_communicator);
 
     if (d_dftParams.verbosity >= 4)
       pcout << "Mesh movement quality metric, h_min: " << minElemLength
             << ", h_max: " << maxElemLength << std::endl;
 
     std::pair<bool, double> meshQualityMetrics;
-    dealii::QGauss<3>               quadrature(2);
-    dealii::FEValues<3>        fe_values(FEMoveMesh, quadrature, dealii::update_JxW_values);
-    const unsigned int num_quad_points = quadrature.size();
+    dealii::QGauss<3>       quadrature(2);
+    dealii::FEValues<3>     fe_values(FEMoveMesh,
+                                  quadrature,
+                                  dealii::update_JxW_values);
+    const unsigned int      num_quad_points = quadrature.size();
     cell = d_dofHandlerMoveMesh.get_triangulation().begin_active();
     int    isNegativeJacobianDeterminant = 0;
     double maxJacobianRatio              = 1;
@@ -428,9 +437,11 @@ namespace dftfe
               maxJacobianRatio = maxJacobian / minJacobian;
           }
       }
-    maxJacobianRatio = dealii::Utilities::MPI::max(maxJacobianRatio, mpi_communicator);
+    maxJacobianRatio =
+      dealii::Utilities::MPI::max(maxJacobianRatio, mpi_communicator);
     isNegativeJacobianDeterminant =
-      dealii::Utilities::MPI::max(isNegativeJacobianDeterminant, mpi_communicator);
+      dealii::Utilities::MPI::max(isNegativeJacobianDeterminant,
+                                  mpi_communicator);
     bool isNegativeJacobian = isNegativeJacobianDeterminant == 1 ? true : false;
     meshQualityMetrics = std::make_pair(isNegativeJacobian, maxJacobianRatio);
     return meshQualityMetrics;
@@ -441,13 +452,14 @@ namespace dftfe
 
   void
   meshMovementClass::findClosestVerticesToDestinationPoints(
-    const std::vector<dealii::Point<3>> &      destinationPoints,
-    std::vector<dealii::Point<3>> &            closestTriaVertexToDestPointsLocation,
-    std::vector<dealii::Tensor<1, 3, double>> &dispClosestTriaVerticesToDestPoints)
+    const std::vector<dealii::Point<3>> &destinationPoints,
+    std::vector<dealii::Point<3>> &      closestTriaVertexToDestPointsLocation,
+    std::vector<dealii::Tensor<1, 3, double>>
+      &dispClosestTriaVerticesToDestPoints)
   {
     closestTriaVertexToDestPointsLocation.clear();
     dispClosestTriaVerticesToDestPoints.clear();
-    unsigned int        vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
+    unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<double> latticeVectorsFlattened(9, 0.0);
     for (unsigned int idim = 0; idim < 3; idim++)
       for (unsigned int jdim = 0; jdim < 3; jdim++)
@@ -504,7 +516,7 @@ namespace dftfe
         // "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<"
         // isDestPeriodicSurface:
         // "<<isDestPointOnPeriodicSurface[0]<<isDestPointOnPeriodicSurface[1]<<isDestPointOnPeriodicSurface[2]<<std::endl;
-        double   minDistance = 1e+6;
+        double           minDistance = 1e+6;
         dealii::Point<3> closestTriaVertexLocation;
 
         const double                 sphereRad = 2.0;
@@ -526,9 +538,9 @@ namespace dftfe
 
         std::vector<bool> vertex_touched(
           d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
-        dealii::DoFHandler<3>::active_cell_iterator cell = d_dofHandlerMoveMesh
-                                                     .begin_active(),
-                                            endc = d_dofHandlerMoveMesh.end();
+        dealii::DoFHandler<3>::active_cell_iterator
+          cell = d_dofHandlerMoveMesh.begin_active(),
+          endc = d_dofHandlerMoveMesh.end();
 
         if (isDestPointConsidered)
           for (; cell != endc; ++cell)
@@ -553,7 +565,7 @@ namespace dftfe
                           continue;
                         }
 
-                      dealii::Point<3>          nodalCoor = cell->vertex(i);
+                      dealii::Point<3>  nodalCoor = cell->vertex(i);
                       std::vector<bool> isNodeOnPeriodicSurface(3, false);
 
                       bool isNodeConsidered = true;
@@ -622,7 +634,8 @@ namespace dftfe
           }
 
         minProcIdWithGlobalMinDistance =
-          dealii::Utilities::MPI::min(minProcIdWithGlobalMinDistance, mpi_communicator);
+          dealii::Utilities::MPI::min(minProcIdWithGlobalMinDistance,
+                                      mpi_communicator);
 
         if (this_mpi_process != minProcIdWithGlobalMinDistance)
           {

@@ -75,7 +75,8 @@ namespace dftfe
     if (printParametersToFile &&
         dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::OutputStyle::LaTeX);
+        prm.print_parameters(std::cout,
+                             dealii::ParameterHandler::OutputStyle::LaTeX);
         exit(0);
       }
   }

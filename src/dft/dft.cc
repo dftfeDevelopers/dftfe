@@ -74,35 +74,35 @@
 namespace dftfe
 {
   // Include cc files
-// #include "atomicRho.cc"
-// #include "charge.cc"
-// #include "density.cc"
-// #include "dos.cc"
-// #include "electrostaticHRefinedEnergy.cc"
-// #include "femUtilityFunctions.cc"
-// #include "fermiEnergy.cc"
-// #include "generateImageCharges.cc"
-// #include "initBoundaryConditions.cc"
-// #include "initCoreRho.cc"
-// #include "initElectronicFields.cc"
-// #include "initPseudo-OV.cc"
-// #include "initPseudoLocal.cc"
-// #include "initRho.cc"
-// #include "initUnmovedTriangulation.cc"
-// #include "kohnShamEigenSolve.cc"
-// #include "localizationLength.cc"
-// #include "mixingschemes.cc"
-// #include "moveAtoms.cc"
-// #include "moveMeshToAtoms.cc"
-// #include "nodalDensityMixingSchemes.cc"
-// #include "nscf.cc"
-// #include "pRefinedDoFHandler.cc"
-// #include "psiInitialGuess.cc"
-// #include "publicMethods.cc"
-// #include "restart.cc"
-// #include "lowrankApproxScfDielectricMatrixInv.cc"
-// #include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
-// #include "computeOutputDensityDirectionalDerivative.cc"
+  // #include "atomicRho.cc"
+  // #include "charge.cc"
+  // #include "density.cc"
+  // #include "dos.cc"
+  // #include "electrostaticHRefinedEnergy.cc"
+  // #include "femUtilityFunctions.cc"
+  // #include "fermiEnergy.cc"
+  // #include "generateImageCharges.cc"
+  // #include "initBoundaryConditions.cc"
+  // #include "initCoreRho.cc"
+  // #include "initElectronicFields.cc"
+  // #include "initPseudo-OV.cc"
+  // #include "initPseudoLocal.cc"
+  // #include "initRho.cc"
+  // #include "initUnmovedTriangulation.cc"
+  // #include "kohnShamEigenSolve.cc"
+  // #include "localizationLength.cc"
+  // #include "mixingschemes.cc"
+  // #include "moveAtoms.cc"
+  // #include "moveMeshToAtoms.cc"
+  // #include "nodalDensityMixingSchemes.cc"
+  // #include "nscf.cc"
+  // #include "pRefinedDoFHandler.cc"
+  // #include "psiInitialGuess.cc"
+  // #include "publicMethods.cc"
+  // #include "restart.cc"
+  // #include "lowrankApproxScfDielectricMatrixInv.cc"
+  // #include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
+  // #include "computeOutputDensityDirectionalDerivative.cc"
 
   //
   // dft constructor
@@ -131,7 +131,8 @@ namespace dftfe
     , d_dftfeScratchFolderName(scratchFolderName)
     , d_dftParamsPtr(&dftParams)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , numElectrons(0)
     , numLevels(0)
     , d_autoMesh(1)
@@ -284,14 +285,16 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::computeVolume(
     const dealii::DoFHandler<3> &_dofHandler)
   {
-    double               domainVolume = 0;
+    double                       domainVolume = 0;
     const dealii::Quadrature<3> &quadrature =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-    dealii::FEValues<3> fe_values(_dofHandler.get_fe(), quadrature, dealii::update_JxW_values);
+    dealii::FEValues<3> fe_values(_dofHandler.get_fe(),
+                                  quadrature,
+                                  dealii::update_JxW_values);
 
-    typename dealii::DoFHandler<3>::active_cell_iterator cell =
-                                                   _dofHandler.begin_active(),
-                                                 endc = _dofHandler.end();
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = _dofHandler.begin_active(),
+      endc = _dofHandler.end();
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
@@ -419,8 +422,8 @@ namespace dftfe
     std::vector<std::vector<double>> atomsDisplacementsGaussian;
     d_atomsDisplacementsGaussianRead.resize(atomLocations.size(),
                                             dealii::Tensor<1, 3, double>());
-    d_gaussianMovementAtomsNetDisplacements.resize(atomLocations.size(),
-                                                   dealii::Tensor<1, 3, double>());
+    d_gaussianMovementAtomsNetDisplacements.resize(
+      atomLocations.size(), dealii::Tensor<1, 3, double>());
     if (d_dftParamsPtr->coordinatesGaussianDispFile != "")
       {
         dftUtils::readFile(3,
@@ -877,7 +880,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::initImageChargesUpdateKPoints(bool flag)
   {
     dealii::TimerOutput::Scope scope(computing_timer,
-                             "image charges and k point generation");
+                                     "image charges and k point generation");
     pcout
       << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
       << std::endl;
@@ -1463,9 +1466,9 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
     const dealii::Tensor<2, 3, double> &deformationGradient,
-    const bool                  vselfPerturbationUpdateForStress,
-    const bool                  useSingleAtomSolutionsOverride,
-    const bool                  print)
+    const bool                          vselfPerturbationUpdateForStress,
+    const bool                          useSingleAtomSolutionsOverride,
+    const bool                          print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1503,7 +1506,7 @@ namespace dftfe
 
     for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
       {
-        dealii::Point<3>           imageCoor;
+        dealii::Point<3>   imageCoor;
         const unsigned int imageChargeId = d_imageIds[iImage];
         imageCoor[0]                     = d_imagePositions[iImage][0];
         imageCoor[1]                     = d_imagePositions[iImage][1];
@@ -1519,7 +1522,7 @@ namespace dftfe
 
     for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
       {
-        dealii::Point<3>           imageCoor;
+        dealii::Point<3>   imageCoor;
         const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
         imageCoor[0]                     = d_imagePositionsTrunc[iImage][0];
         imageCoor[1]                     = d_imagePositionsTrunc[iImage][1];
@@ -1789,8 +1792,9 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::initializeKohnShamDFTOperator(
     const bool initializeCublas)
   {
-    dealii::TimerOutput::Scope scope(computing_timer, "kohnShamDFTOperator init");
-    double             init_ksoperator;
+    dealii::TimerOutput::Scope scope(computing_timer,
+                                     "kohnShamDFTOperator init");
+    double                     init_ksoperator;
     MPI_Barrier(d_mpiCommParent);
     init_ksoperator = MPI_Wtime();
 

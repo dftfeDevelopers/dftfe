@@ -50,10 +50,11 @@ namespace dftfe
     /// Not implemented, just present to override the pure virtual from base
     /// class
     std::pair<bool, double>
-    moveMesh(const std::vector<dealii::Point<3>> &            controlPointLocations,
-             const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
-             const double                             controllingParameter,
-             const bool                               moveSubdivided = false);
+    moveMesh(const std::vector<dealii::Point<3>> &controlPointLocations,
+             const std::vector<dealii::Tensor<1, 3, double>>
+               &          controlPointDisplacements,
+             const double controllingParameter,
+             const bool   moveSubdivided = false);
 
   private:
     /** @brief internal function which computes the nodal increment field in the local processor

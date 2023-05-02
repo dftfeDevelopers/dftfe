@@ -55,8 +55,8 @@ namespace dftfe
      *  @param[in] domainBoundingVectors domain vectors of the domain
      * corresponding to the triangulation object.
      */
-    void init(dealii::Triangulation<3, 3> &                   triangulation,
-              dealii::Triangulation<3, 3> &                   serialTriangulation,
+    void init(dealii::Triangulation<3, 3> &           triangulation,
+              dealii::Triangulation<3, 3> &           serialTriangulation,
               const std::vector<std::vector<double>> &domainBoundingVectors);
 
     /** @brief Re-initializes the required data-structures for a given triangulation
@@ -79,9 +79,10 @@ namespace dftfe
      */
     void
     findClosestVerticesToDestinationPoints(
-      const std::vector<dealii::Point<3>> &      destinationPoints,
-      std::vector<dealii::Point<3>> &            closestTriaVertexToDestPointsLocation,
-      std::vector<dealii::Tensor<1, 3, double>> &dispClosestTriaVerticesToDestPoints);
+      const std::vector<dealii::Point<3>> &destinationPoints,
+      std::vector<dealii::Point<3>> &closestTriaVertexToDestPointsLocation,
+      std::vector<dealii::Tensor<1, 3, double>>
+        &dispClosestTriaVerticesToDestPoints);
 
   protected:
     /// Initializes the parallel layout of d_incrementalDisplacementParallel
@@ -122,9 +123,9 @@ namespace dftfe
     dealii::Triangulation<3, 3> *                    d_triaPtrSerial;
     dealii::IndexSet                                 d_locally_owned_dofs;
     dealii::IndexSet                                 d_locally_relevant_dofs;
-    dealii::AffineConstraints<double>        d_constraintsMoveMesh;
-    std::vector<
-      dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator>>
+    dealii::AffineConstraints<double>                d_constraintsMoveMesh;
+    std::vector<dealii::GridTools::PeriodicFacePair<
+      typename dealii::DoFHandler<3>::cell_iterator>>
                                      d_periodicity_vector;
     std::vector<std::vector<double>> d_domainBoundingVectors;
 

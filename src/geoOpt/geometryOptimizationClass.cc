@@ -34,7 +34,8 @@ namespace dftfe
     const bool        restart,
     const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
-    , pcout(std::cout, ( dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
     , d_restartFilesPath(restartFilesPath)
     , d_verbosity(verbosity)
@@ -156,8 +157,9 @@ namespace dftfe
         domainVectorsFile = restartPath + "/domainBoundingVectorsCurrent.chk";
         if (!restartFilesFound)
           {
-            AssertThrow(
-              false, dealii::ExcMessage("DFT-FE Error: Unable to find restart files."));
+            AssertThrow(false,
+                        dealii::ExcMessage(
+                          "DFT-FE Error: Unable to find restart files."));
           }
         d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
                                                         coordinatesFile,

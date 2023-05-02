@@ -16,46 +16,44 @@
 //
 // @author Phani Motamarri
 //
-#include<dft.h>
+#include <dft.h>
 
 namespace dftfe
 {
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<dealii::types::global_dof_index> &
+  dftClass<FEOrder, FEOrderElectro>::getLocalDofIndicesReal() const
+  {
+    return local_dof_indicesReal;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<dealii::types::global_dof_index> &
+  dftClass<FEOrder, FEOrderElectro>::getLocalDofIndicesImag() const
+  {
+    return local_dof_indicesImag;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<dealii::types::global_dof_index> &
+  dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesReal() const
+  {
+    return localProc_dof_indicesReal;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<dealii::types::global_dof_index> &
+  dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesImag() const
+  {
+    return localProc_dof_indicesImag;
+  }
 
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const std::vector<dealii::types::global_dof_index> &
-dftClass<FEOrder, FEOrderElectro>::getLocalDofIndicesReal() const
-{
-  return local_dof_indicesReal;
-}
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const std::vector<dealii::types::global_dof_index> &
-dftClass<FEOrder, FEOrderElectro>::getLocalDofIndicesImag() const
-{
-  return local_dof_indicesImag;
-}
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const std::vector<dealii::types::global_dof_index> &
-dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesReal() const
-{
-  return localProc_dof_indicesReal;
-}
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const std::vector<dealii::types::global_dof_index> &
-dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesImag() const
-{
-  return localProc_dof_indicesImag;
-}
-
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const dealii::MatrixFree<3, double> &
-dftClass<FEOrder, FEOrderElectro>::getMatrixFreeData() const
-{
-  return matrix_free_data;
-}
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const dealii::MatrixFree<3, double> &
+  dftClass<FEOrder, FEOrderElectro>::getMatrixFreeData() const
+  {
+    return matrix_free_data;
+  }
 #include "dft.inst.cc"
-}
+} // namespace dftfe

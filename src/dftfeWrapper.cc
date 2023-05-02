@@ -689,7 +689,8 @@ namespace dftfe
           {
             d_scratchFolderName =
               "dftfeScratch" +
-              std::to_string(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
+              std::to_string(
+                dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
               "t" +
               std::to_string(
                 std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -859,7 +860,8 @@ namespace dftfe
             delete d_dftfeBasePtr;
 
             if (!d_dftfeParamsPtr->keepScratchFolder &&
-                dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+                dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) ==
+                  0)
               {
                 std::string command = "rm -rf " + d_scratchFolderName;
                 system(command.c_str());
@@ -992,7 +994,8 @@ namespace dftfe
         d_dftfeBasePtr->getAtomLocationsCart().size(),
       dealii::ExcMessage(
         "DFT-FE error: Incorrect size of atomsDisplacements vector."));
-    std::vector<dealii::Tensor<1, 3, double>> dispVec(atomsDisplacements.size());
+    std::vector<dealii::Tensor<1, 3, double>> dispVec(
+      atomsDisplacements.size());
     for (unsigned int i = 0; i < dispVec.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
         dispVec[i][j] = atomsDisplacements[i][j];

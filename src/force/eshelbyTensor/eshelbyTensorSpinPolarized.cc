@@ -25,12 +25,14 @@ namespace dftfe
   {
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const dealii::VectorizedArray<double> &              rho,
+      const dealii::VectorizedArray<double> &                      rho,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin0,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin1,
-      const dealii::VectorizedArray<double> &              exc,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRhoSpin0,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRhoSpin1)
+      const dealii::VectorizedArray<double> &                      exc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin1)
     {
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(derExcGradRhoSpin0, gradRhoSpin0) -
@@ -45,13 +47,16 @@ namespace dftfe
 
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const dealii::VectorizedArray<double> &              vxcSpin0,
-      const dealii::VectorizedArray<double> &              vxcSpin1,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRhoSpin0,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRhoSpin1,
+      const dealii::VectorizedArray<double> &vxcSpin0,
+      const dealii::VectorizedArray<double> &vxcSpin1,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin1,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoCore,
-      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>> &hessianRhoCore,
-      const bool                                   isXCGGA)
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
+        &        hessianRhoCore,
+      const bool isXCGGA)
     {
       dealii::Tensor<1, 3, dealii::VectorizedArray<double>> temp;
       for (unsigned int i = 0; i < 3; i++)

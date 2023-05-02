@@ -86,10 +86,10 @@ namespace dftfe
 
     if (poolId == minPoolId && bandGroupId == minBandGroupId)
       {
-        dealii::FESystem<3> FE(dealii::FE_Q<3>(
+        dealii::FESystem<3>   FE(dealii::FE_Q<3>(
                                  dealii::QGaussLobatto<1>(feOrder + 1)),
                                nComponents); // linear shape function
-        dealii::DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
+        dealii::DoFHandler<3> dofHandler(d_parallelTriangulationUnmoved);
         dofHandler.distribute_dofs(FE);
 
         dealii::parallel::distributed::
@@ -137,10 +137,10 @@ namespace dftfe
             "DFT-FE Error: Cannot open checkpoint file- parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
       }
 
-    dealii::FESystem<3> FE(dealii::FE_Q<3>(
+    dealii::FESystem<3>   FE(dealii::FE_Q<3>(
                              dealii::QGaussLobatto<1>(feOrder + 1)),
                            nComponents); // linear shape function
-    dealii::DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
+    dealii::DoFHandler<3> dofHandler(d_parallelTriangulationUnmoved);
     dofHandler.distribute_dofs(FE);
     dealii::parallel::distributed::
       SolutionTransfer<3, typename dftfe::distributedCPUVec<double>>
@@ -282,8 +282,9 @@ namespace dftfe
        }
        catch (...)
        {
-       AssertThrow(false, dealii::ExcMessage("DFT-FE Error: Cannot open checkpoint file-
-    parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
+       AssertThrow(false, dealii::ExcMessage("DFT-FE Error: Cannot open
+    checkpoint file- parallelUnmovedTriaSolData.chk or read the triangulation
+    stored there."));
        }
 
        AssertThrow(cellQuadDataContainerOut.size()!=0,ExcInternalError());

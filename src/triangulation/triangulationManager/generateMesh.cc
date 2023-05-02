@@ -26,19 +26,21 @@ namespace dftfe
   {
     void
     checkTriangulationEqualityAcrossProcessorPools(
-      const dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      const unsigned int                             numLocallyOwnedCells,
-      const MPI_Comm &                               interpool_comm)
+      const dealii::parallel::distributed::Triangulation<3>
+        &                parallelTriangulation,
+      const unsigned int numLocallyOwnedCells,
+      const MPI_Comm &   interpool_comm)
     {
       const unsigned int numberGlobalCellsParallelMinPools =
-        dealii::Utilities::MPI::min(parallelTriangulation.n_global_active_cells(),
-                            interpool_comm);
+        dealii::Utilities::MPI::min(
+          parallelTriangulation.n_global_active_cells(), interpool_comm);
       const unsigned int numberGlobalCellsParallelMaxPools =
-        dealii::Utilities::MPI::max(parallelTriangulation.n_global_active_cells(),
-                            interpool_comm);
-      AssertThrow(
-        numberGlobalCellsParallelMinPools == numberGlobalCellsParallelMaxPools,
-        dealii::ExcMessage("Number of global cells are different across pools."));
+        dealii::Utilities::MPI::max(
+          parallelTriangulation.n_global_active_cells(), interpool_comm);
+      AssertThrow(numberGlobalCellsParallelMinPools ==
+                    numberGlobalCellsParallelMaxPools,
+                  dealii::ExcMessage(
+                    "Number of global cells are different across pools."));
 
       const unsigned int numberLocalCellsMinPools =
         dealii::Utilities::MPI::min(numLocallyOwnedCells, interpool_comm);
@@ -52,14 +54,14 @@ namespace dftfe
 
 
     void
-    computeMeshMetrics(
-      const dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      const std::string &                            printCommand,
-      const dealii::ConditionalOStream &             pcout,
-      const MPI_Comm &                               mpi_comm,
-      const MPI_Comm &                               interpool_comm1,
-      const MPI_Comm &                               interpool_comm2,
-      const dftParameters &                          dftParams)
+    computeMeshMetrics(const dealii::parallel::distributed::Triangulation<3>
+                         &                               parallelTriangulation,
+                       const std::string &               printCommand,
+                       const dealii::ConditionalOStream &pcout,
+                       const MPI_Comm &                  mpi_comm,
+                       const MPI_Comm &                  interpool_comm1,
+                       const MPI_Comm &                  interpool_comm2,
+                       const dftParameters &             dftParams)
 
     {
       //
@@ -67,8 +69,8 @@ namespace dftfe
       //
       double       minElemLength        = dftParams.meshSizeOuterDomain;
       unsigned int numLocallyOwnedCells = 0;
-      typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator
-        cell,
+      typename dealii::parallel::distributed::Triangulation<
+        3>::active_cell_iterator cell,
         endc;
       cell = parallelTriangulation.begin_active();
       endc = parallelTriangulation.end();
@@ -127,7 +129,8 @@ namespace dftfe
                                       dealii::update_3rd_derivatives);
       const unsigned int  num_quad_points = quadrature.size();
 
-      std::vector<dealii::Tensor<3, 3, double>> thirdDerivatives(num_quad_points);
+      std::vector<dealii::Tensor<3, 3, double>> thirdDerivatives(
+        num_quad_points);
 
       for (; cell != endc; ++cell)
         {
@@ -285,14 +288,14 @@ namespace dftfe
       }
 
     dealii::Point<3> vector1(d_domainBoundingVectors[0][0],
-                     d_domainBoundingVectors[0][1],
-                     d_domainBoundingVectors[0][2]);
+                             d_domainBoundingVectors[0][1],
+                             d_domainBoundingVectors[0][2]);
     dealii::Point<3> vector2(d_domainBoundingVectors[1][0],
-                     d_domainBoundingVectors[1][1],
-                     d_domainBoundingVectors[1][2]);
+                             d_domainBoundingVectors[1][1],
+                             d_domainBoundingVectors[1][2]);
     dealii::Point<3> vector3(d_domainBoundingVectors[2][0],
-                     d_domainBoundingVectors[2][1],
-                     d_domainBoundingVectors[2][2]);
+                             d_domainBoundingVectors[2][1],
+                             d_domainBoundingVectors[2][2]);
 
     //
     // Generate coarse mesh
@@ -312,8 +315,8 @@ namespace dftfe
 
 
     dealii::GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
-                                                subdivisions,
-                                                basisVectors);
+                                                        subdivisions,
+                                                        basisVectors);
 
     //
     // Translate the main grid so that midpoint is at center
@@ -338,14 +341,17 @@ namespace dftfe
 
   bool triangulationManager::refinementAlgorithmA(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationRho,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationDisp,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationForce,
-    const bool                               generateElectrostaticsTria,
-    std::vector<unsigned int> &              locallyOwnedCellsRefineFlags,
-    std::map<dealii::CellId, unsigned int> & cellIdToCellRefineFlagMapLocal,
-    const bool                               smoothenCellsOnPeriodicBoundary,
-    const double                             smootheningFactor)
+    dealii::parallel::distributed::Triangulation<3>
+      &electrostaticsTriangulationRho,
+    dealii::parallel::distributed::Triangulation<3>
+      &electrostaticsTriangulationDisp,
+    dealii::parallel::distributed::Triangulation<3>
+      &                                     electrostaticsTriangulationForce,
+    const bool                              generateElectrostaticsTria,
+    std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
+    std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal,
+    const bool                              smoothenCellsOnPeriodicBoundary,
+    const double                            smootheningFactor)
   {
     //
     // compute magnitudes of domainBounding Vectors
@@ -365,7 +371,8 @@ namespace dftfe
 
     locallyOwnedCellsRefineFlags.clear();
     cellIdToCellRefineFlagMapLocal.clear();
-    typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator cell,
+    typename dealii::parallel::distributed::Triangulation<
+      3>::active_cell_iterator cell,
       endc, cellElectroRho, cellElectroDisp, cellElectroForce;
     cell = parallelTriangulation.begin_active();
     endc = parallelTriangulation.end();
@@ -475,14 +482,14 @@ namespace dftfe
 
 
             // loop over all atoms
-            double       distanceToClosestAtom = 1e8;
-            dealii::Point<3>     closestAtom;
-            unsigned int closestId = 0;
+            double           distanceToClosestAtom = 1e8;
+            dealii::Point<3> closestAtom;
+            unsigned int     closestId = 0;
             for (unsigned int n = 0; n < atomPointsLocal.size() / 3; n++)
               {
                 dealii::Point<3> atom(atomPointsLocal[3 * n],
-                              atomPointsLocal[3 * n + 1],
-                              atomPointsLocal[3 * n + 2]);
+                                      atomPointsLocal[3 * n + 1],
+                                      atomPointsLocal[3 * n + 2]);
                 if (center.distance(atom) < distanceToClosestAtom)
                   {
                     distanceToClosestAtom = center.distance(atom);
@@ -554,7 +561,8 @@ namespace dftfe
               {
                 dealii::Point<3> p_cell =
                   mapping.transform_real_to_unit_cell(cell, closestAtom);
-                double dist = dealii::GeometryInfo<3>::distance_to_unit_cell(p_cell);
+                double dist =
+                  dealii::GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
                 if (dist < 1e-08 &&
                     ((currentMeshSize > d_dftParams.meshSizeInnerBall) ||
@@ -566,9 +574,11 @@ namespace dftfe
               {}
 
             cellRefineFlag =
-              dealii::Utilities::MPI::max((unsigned int)cellRefineFlag, interpoolcomm);
-            cellRefineFlag = dealii::Utilities::MPI::max((unsigned int)cellRefineFlag,
-                                                 interBandGroupComm);
+              dealii::Utilities::MPI::max((unsigned int)cellRefineFlag,
+                                          interpoolcomm);
+            cellRefineFlag =
+              dealii::Utilities::MPI::max((unsigned int)cellRefineFlag,
+                                          interBandGroupComm);
 
             //
             // set refine flags
@@ -665,16 +675,20 @@ namespace dftfe
   //
   bool triangulationManager::consistentPeriodicBoundaryRefinement(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationRho,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationDisp,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationForce,
-    const bool                               generateElectrostaticsTria,
-    std::vector<unsigned int> &              locallyOwnedCellsRefineFlags,
-    std::map<dealii::CellId, unsigned int> & cellIdToCellRefineFlagMapLocal)
+    dealii::parallel::distributed::Triangulation<3>
+      &electrostaticsTriangulationRho,
+    dealii::parallel::distributed::Triangulation<3>
+      &electrostaticsTriangulationDisp,
+    dealii::parallel::distributed::Triangulation<3>
+      &                                     electrostaticsTriangulationForce,
+    const bool                              generateElectrostaticsTria,
+    std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
+    std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal)
   {
     locallyOwnedCellsRefineFlags.clear();
     cellIdToCellRefineFlagMapLocal.clear();
-    typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator cell,
+    typename dealii::parallel::distributed::Triangulation<
+      3>::active_cell_iterator cell,
       endc, cellElectroRho, cellElectroDisp, cellElectroForce;
     cell = parallelTriangulation.begin_active();
     endc = parallelTriangulation.end();
@@ -759,7 +773,8 @@ namespace dftfe
   bool triangulationManager::checkPeriodicSurfaceRefinementConsistency(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation)
   {
-    typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator cell,
+    typename dealii::parallel::distributed::Triangulation<
+      3>::active_cell_iterator cell,
       endc;
     cell = parallelTriangulation.begin_active();
     endc = parallelTriangulation.end();
@@ -780,7 +795,8 @@ namespace dftfe
                     periodicCell->has_children())
                   notConsistent = 1;
             }
-    notConsistent = dealii::Utilities::MPI::max(notConsistent, mpi_communicator);
+    notConsistent =
+      dealii::Utilities::MPI::max(notConsistent, mpi_communicator);
     return notConsistent == 1 ? false : true;
   }
 
@@ -792,20 +808,23 @@ namespace dftfe
   bool triangulationManager::checkConstraintsConsistency(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation)
   {
-    dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(d_FEOrder + 1)), 1);
-    // dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(1+1)), 1);
+    dealii::FESystem<3> FE(
+      dealii::FE_Q<3>(dealii::QGaussLobatto<1>(d_FEOrder + 1)), 1);
+    // dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(1+1)),
+    // 1);
     dealii::DoFHandler<3> dofHandler;
     dofHandler.initialize(parallelTriangulation, FE);
     dofHandler.distribute_dofs(FE);
     dealii::IndexSet locally_relevant_dofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
+                                                    locally_relevant_dofs);
 
     dealii::AffineConstraints<double> constraints;
     constraints.clear();
     constraints.reinit(locally_relevant_dofs);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler, constraints);
-    std::vector<
-      dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator>>
+    std::vector<dealii::GridTools::PeriodicFacePair<
+      typename dealii::DoFHandler<3>::cell_iterator>>
       periodicity_vector;
 
     // create unitVectorsXYZ
@@ -856,17 +875,17 @@ namespace dftfe
           offsetVectors[periodicDirectionVector[i]]);
       }
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(periodicity_vector,
-                                                          constraints);
+    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
+      periodicity_vector, constraints);
     constraints.close();
 
     dealii::IndexSet locally_active_dofs_debug;
     dealii::DoFTools::extract_locally_active_dofs(dofHandler,
-                                          locally_active_dofs_debug);
+                                                  locally_active_dofs_debug);
 
     const std::vector<dealii::IndexSet> &locally_owned_dofs_debug =
       dealii::Utilities::MPI::all_gather(mpi_communicator,
-                                 dofHandler.locally_owned_dofs());
+                                         dofHandler.locally_owned_dofs());
 
     return constraints.is_consistent_in_parallel(
       locally_owned_dofs_debug,
@@ -880,11 +899,11 @@ namespace dftfe
   //
   void
   triangulationManager::generateAutomaticMeshApriori(
-    const dealii::DoFHandler<3> &                         dofHandler,
-    dealii::parallel::distributed::Triangulation<3> &     parallelTriangulation,
-    const std::vector<distributedCPUVec<double>> &eigenVectorsArrayIn,
-    const unsigned int                            FEOrder,
-    const bool                                    generateElectrostaticsTria)
+    const dealii::DoFHandler<3> &                    dofHandler,
+    dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
+    const std::vector<distributedCPUVec<double>> &   eigenVectorsArrayIn,
+    const unsigned int                               FEOrder,
+    const bool                                       generateElectrostaticsTria)
   {
     double topfrac    = d_dftParams.topfrac;
     double bottomfrac = 0.0;
@@ -930,7 +949,8 @@ namespace dftfe
           dealii::Utilities::MPI::max(maxErrorIndicator, mpi_communicator);
         double errorSum =
           std::accumulate(errorInEachCell.begin(), errorInEachCell.end(), 0.0);
-        double globalSum = dealii::Utilities::MPI::sum(errorSum, mpi_communicator);
+        double globalSum =
+          dealii::Utilities::MPI::sum(errorSum, mpi_communicator);
         pcout << " Sum Error of all Cells: " << globalSum
               << " Max Error of all Cells:" << globalMaxError << std::endl;
       }
@@ -943,17 +963,20 @@ namespace dftfe
     //
     // prepare all meshes for refinement using estimated errors in each cell
     //
-    dealii::parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-      parallelTriangulation, estimated_error_per_cell, topfrac, bottomfrac);
+    dealii::parallel::distributed::GridRefinement::
+      refine_and_coarsen_fixed_number(parallelTriangulation,
+                                      estimated_error_per_cell,
+                                      topfrac,
+                                      bottomfrac);
 
     parallelTriangulation.prepare_coarsening_and_refinement();
     parallelTriangulation.execute_coarsening_and_refinement();
 
-    dealii::parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-      d_parallelTriangulationUnmoved,
-      estimated_error_per_cell,
-      topfrac,
-      bottomfrac);
+    dealii::parallel::distributed::GridRefinement::
+      refine_and_coarsen_fixed_number(d_parallelTriangulationUnmoved,
+                                      estimated_error_per_cell,
+                                      topfrac,
+                                      bottomfrac);
 
     d_parallelTriangulationUnmoved.prepare_coarsening_and_refinement();
     d_parallelTriangulationUnmoved.execute_coarsening_and_refinement();
@@ -970,31 +993,31 @@ namespace dftfe
 
     if (generateElectrostaticsTria)
       {
-        dealii::parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-          d_triangulationElectrostaticsRho,
-          estimated_error_per_cell,
-          topfrac,
-          bottomfrac);
+        dealii::parallel::distributed::GridRefinement::
+          refine_and_coarsen_fixed_number(d_triangulationElectrostaticsRho,
+                                          estimated_error_per_cell,
+                                          topfrac,
+                                          bottomfrac);
 
         d_triangulationElectrostaticsRho.prepare_coarsening_and_refinement();
         d_triangulationElectrostaticsRho.execute_coarsening_and_refinement();
 
 
-        dealii::parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-          d_triangulationElectrostaticsDisp,
-          estimated_error_per_cell,
-          topfrac,
-          bottomfrac);
+        dealii::parallel::distributed::GridRefinement::
+          refine_and_coarsen_fixed_number(d_triangulationElectrostaticsDisp,
+                                          estimated_error_per_cell,
+                                          topfrac,
+                                          bottomfrac);
 
         d_triangulationElectrostaticsDisp.prepare_coarsening_and_refinement();
         d_triangulationElectrostaticsDisp.execute_coarsening_and_refinement();
 
 
-        dealii::parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-          d_triangulationElectrostaticsForce,
-          estimated_error_per_cell,
-          topfrac,
-          bottomfrac);
+        dealii::parallel::distributed::GridRefinement::
+          refine_and_coarsen_fixed_number(d_triangulationElectrostaticsForce,
+                                          estimated_error_per_cell,
+                                          topfrac,
+                                          bottomfrac);
 
         d_triangulationElectrostaticsForce.prepare_coarsening_and_refinement();
         d_triangulationElectrostaticsForce.execute_coarsening_and_refinement();
@@ -1036,12 +1059,16 @@ namespace dftfe
   void triangulationManager::generateMesh(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
     dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
-    dealii::parallel::distributed::Triangulation<3> &serialTriangulationElectrostatics,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationRho,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationDisp,
-    dealii::parallel::distributed::Triangulation<3> &electrostaticsTriangulationForce,
-    const bool                               generateElectrostaticsTria,
-    const bool                               generateSerialTria)
+    dealii::parallel::distributed::Triangulation<3>
+      &serialTriangulationElectrostatics,
+    dealii::parallel::distributed::Triangulation<3>
+      &electrostaticsTriangulationRho,
+    dealii::parallel::distributed::Triangulation<3>
+      &electrostaticsTriangulationDisp,
+    dealii::parallel::distributed::Triangulation<3>
+      &        electrostaticsTriangulationForce,
+    const bool generateElectrostaticsTria,
+    const bool generateSerialTria)
   {
     generateCoarseMesh(parallelTriangulation);
     if (generateSerialTria)
@@ -1119,8 +1146,8 @@ namespace dftfe
                                           cellIdToCellRefineFlagMapLocal);
 
         // This sets the global refinement sweep flag
-        refineFlag =
-          dealii::Utilities::MPI::max((unsigned int)refineFlag, mpi_communicator);
+        refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                 mpi_communicator);
 
         // Refine
         if (refineFlag)
@@ -1211,8 +1238,9 @@ namespace dftfe
                                            cellIdToCellRefineFlagMapLocal);
 
                     // This sets the global refinement sweep flag
-                    refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                                     mpi_communicator);
+                    refineFlag =
+                      dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                  mpi_communicator);
 
                     // try the other type of refinement to prevent while loop
                     // from ending prematurely
@@ -1233,7 +1261,7 @@ namespace dftfe
                         // This sets the global refinement sweep flag
                         refineFlag =
                           dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                              mpi_communicator);
+                                                      mpi_communicator);
                       }
                   }
                 else
@@ -1251,8 +1279,9 @@ namespace dftfe
                       cellIdToCellRefineFlagMapLocal);
 
                     // This sets the global refinement sweep flag
-                    refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                                     mpi_communicator);
+                    refineFlag =
+                      dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                  mpi_communicator);
 
                     // try the other type of refinement to prevent while loop
                     // from ending prematurely
@@ -1270,7 +1299,7 @@ namespace dftfe
                         // This sets the global refinement sweep flag
                         refineFlag =
                           dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                              mpi_communicator);
+                                                      mpi_communicator);
                       }
                   }
 
@@ -1369,8 +1398,9 @@ namespace dftfe
                                            2.0);
 
                     // This sets the global refinement sweep flag
-                    refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                                     mpi_communicator);
+                    refineFlag =
+                      dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                  mpi_communicator);
 
                     // try the other type of refinement to prevent while loop
                     // from ending prematurely
@@ -1391,7 +1421,7 @@ namespace dftfe
                         // This sets the global refinement sweep flag
                         refineFlag =
                           dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                              mpi_communicator);
+                                                      mpi_communicator);
                       }
                   }
                 else
@@ -1409,8 +1439,9 @@ namespace dftfe
                       cellIdToCellRefineFlagMapLocal);
 
                     // This sets the global refinement sweep flag
-                    refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                                     mpi_communicator);
+                    refineFlag =
+                      dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                  mpi_communicator);
 
                     // try the other type of refinement to prevent while loop
                     // from ending prematurely
@@ -1430,7 +1461,7 @@ namespace dftfe
                         // This sets the global refinement sweep flag
                         refineFlag =
                           dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                              mpi_communicator);
+                                                      mpi_communicator);
                       }
                   }
 
@@ -1530,8 +1561,9 @@ namespace dftfe
                                            1.0);
 
                     // This sets the global refinement sweep flag
-                    refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                                     mpi_communicator);
+                    refineFlag =
+                      dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                  mpi_communicator);
 
                     // try the other type of refinement to prevent while loop
                     // from ending prematurely
@@ -1552,7 +1584,7 @@ namespace dftfe
                         // This sets the global refinement sweep flag
                         refineFlag =
                           dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                              mpi_communicator);
+                                                      mpi_communicator);
                       }
                   }
                 else
@@ -1570,8 +1602,9 @@ namespace dftfe
                       cellIdToCellRefineFlagMapLocal);
 
                     // This sets the global refinement sweep flag
-                    refineFlag = dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                                     mpi_communicator);
+                    refineFlag =
+                      dealii::Utilities::MPI::max((unsigned int)refineFlag,
+                                                  mpi_communicator);
 
                     // try the other type of refinement to prevent while loop
                     // from ending prematurely
@@ -1591,7 +1624,7 @@ namespace dftfe
                         // This sets the global refinement sweep flag
                         refineFlag =
                           dealii::Utilities::MPI::max((unsigned int)refineFlag,
-                                              mpi_communicator);
+                                                      mpi_communicator);
                       }
                   }
 
@@ -1681,7 +1714,8 @@ namespace dftfe
     //
     double minElemLength = d_dftParams.meshSizeOuterDomain;
     double maxElemLength = 0.0;
-    typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator cell,
+    typename dealii::parallel::distributed::Triangulation<
+      3>::active_cell_iterator cell,
       endc, cellDisp, cellForce;
     cell                              = parallelTriangulation.begin_active();
     endc                              = parallelTriangulation.end();
@@ -1699,8 +1733,10 @@ namespace dftfe
           }
       }
 
-    minElemLength = dealii::Utilities::MPI::min(minElemLength, mpi_communicator);
-    maxElemLength = dealii::Utilities::MPI::max(maxElemLength, mpi_communicator);
+    minElemLength =
+      dealii::Utilities::MPI::min(minElemLength, mpi_communicator);
+    maxElemLength =
+      dealii::Utilities::MPI::max(maxElemLength, mpi_communicator);
 
     //
     // print out adaptive mesh metrics and check mesh generation synchronization
@@ -1844,11 +1880,12 @@ namespace dftfe
   void
   triangulationManager::refineSerialMesh(
     const std::map<dealii::CellId, unsigned int>
-      &                                      cellIdToCellRefineFlagMapLocal,
-    const MPI_Comm &                         mpi_comm,
+      &             cellIdToCellRefineFlagMapLocal,
+    const MPI_Comm &mpi_comm,
     dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
-    const dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-    std::vector<bool> &                            serialTriaCurrentRefinement)
+    const dealii::parallel::distributed::Triangulation<3>
+      &                parallelTriangulation,
+    std::vector<bool> &serialTriaCurrentRefinement)
 
   {
     const unsigned int numberGlobalCellsSerial =

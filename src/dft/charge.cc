@@ -22,329 +22,344 @@
 //
 // compute total charge using quad point values
 //
-#include<dft.h>
+#include <dft.h>
 
 namespace dftfe
 {
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::totalCharge(
-  const dealii::DoFHandler<3> &                        dofHandlerOfField,
-  const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
-{
-  double               normValue = 0.0;
-  const dealii::Quadrature<3> &quadrature_formula =
-    matrix_free_data.get_quadrature(d_densityQuadratureId);
-  dealii::FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
-                        quadrature_formula,
-                        dealii::update_JxW_values);
-  const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::totalCharge(
+    const dealii::DoFHandler<3> &                        dofHandlerOfField,
+    const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
+  {
+    double                       normValue = 0.0;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
+                                  quadrature_formula,
+                                  dealii::update_JxW_values);
+    const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+    const unsigned int n_q_points    = quadrature_formula.size();
 
-  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
-                                      endc = dofHandlerOfField.end();
-  for (; cell != endc; ++cell)
-    {
-      if (cell->is_locally_owned())
-        {
-          fe_values.reinit(cell);
-          const std::vector<double> &rhoValues =
-            (*rhoQuadValues).find(cell->id())->second;
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-            {
-              normValue += rhoValues[q_point] * fe_values.JxW(q_point);
-            }
-        }
-    }
-  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
-}
-
-
-//
-// compute total charge using nodal point values
-//
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::totalCharge(
-  const dealii::DoFHandler<3> &    dofHandlerOfField,
-  const distributedCPUVec<double> &rhoNodalField)
-{
-  double               normValue = 0.0;
-  const dealii::Quadrature<3> &quadrature_formula =
-    matrix_free_data.get_quadrature(d_densityQuadratureId);
-  dealii::FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
-                        quadrature_formula,
-                        dealii::update_values | dealii::update_JxW_values);
-  const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
-
-  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
-                                      endc = dofHandlerOfField.end();
-  for (; cell != endc; ++cell)
-    {
-      if (cell->is_locally_owned())
-        {
-          fe_values.reinit(cell);
-          std::vector<double> tempRho(n_q_points);
-          fe_values.get_function_values(rhoNodalField, tempRho);
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-            {
-              normValue += tempRho[q_point] * fe_values.JxW(q_point);
-            }
-        }
-    }
-  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
-}
-
-//
-// compute total charge using nodal point values by filling the quadrature point
-// values of the nodal field
-//
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::totalCharge(
-  const dealii::DoFHandler<3> &                  dofHandlerOfField,
-  const distributedCPUVec<double> &              rhoNodalField,
-  std::map<dealii::CellId, std::vector<double>> &rhoQuadValues)
-{
-  double               normValue = 0.0;
-  const dealii::Quadrature<3> &quadrature_formula =
-    matrix_free_data.get_quadrature(d_densityQuadratureId);
-  dealii::FEValues<3>         fe_values(dofHandlerOfField.get_fe(),
-                        quadrature_formula,
-                        dealii::update_values | dealii::update_JxW_values);
-  const unsigned int  dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-  const unsigned int  n_q_points    = quadrature_formula.size();
-  std::vector<double> tempRho(n_q_points);
-
-  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
-                                      endc = dofHandlerOfField.end();
-  for (; cell != endc; ++cell)
-    {
-      if (cell->is_locally_owned())
-        {
-          fe_values.reinit(cell);
-          fe_values.get_function_values(rhoNodalField, tempRho);
-          rhoQuadValues[cell->id()].resize(n_q_points);
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-            {
-              rhoQuadValues[cell->id()][q_point] = tempRho[q_point];
-              normValue += tempRho[q_point] * fe_values.JxW(q_point);
-            }
-        }
-    }
-  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
-}
-
-//
-// compute total charge using nodal point values by using FEEvaluation object
-//
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::totalCharge(
-  const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-  const distributedCPUVec<double> &    nodalField)
-{
-  dealii::FEEvaluation<3,
-               C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               1,
-               double>
-                          fe_evalField(matrixFreeDataObject,
-                 d_densityDofHandlerIndexElectro,
-                 d_densityQuadratureIdElectro);
-  dealii::VectorizedArray<double> normValueVectorized = dealii::make_vectorized_array(0.0);
-  const unsigned int      numQuadPoints       = fe_evalField.n_q_points;
-
-  // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(d_densityDofHandlerIndexElectro)),
-  //        dealii::ExcMessage("DFT-FE Error: mismatch in
-  //        partitioner/dofHandler."));
-
-  AssertThrow(
-    matrixFreeDataObject.get_quadrature(d_densityQuadratureIdElectro).size() ==
-      numQuadPoints,
-    dealii::ExcMessage(
-      "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
-
-  double normValue = 0.0;
-  for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
-       ++cell)
-    {
-      fe_evalField.reinit(cell);
-      fe_evalField.read_dof_values(nodalField);
-      fe_evalField.evaluate(true, false);
-      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-        {
-          dealii::VectorizedArray<double> temp = fe_evalField.get_value(q_point);
-          fe_evalField.submit_value(temp, q_point);
-        }
-
-      normValueVectorized = fe_evalField.integrate_value();
-
-      for (unsigned int iSubCell = 0;
-           iSubCell < matrixFreeDataObject.n_components_filled(cell);
-           ++iSubCell)
-        {
-          normValue += normValueVectorized[iSubCell];
-        }
-    }
-
-  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
-}
-
-//
-// compute total charge
-//
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::totalMagnetization(
-  const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
-{
-  double               normValue = 0.0;
-  const dealii::Quadrature<3> &quadrature_formula =
-    matrix_free_data.get_quadrature(d_densityQuadratureId);
-  dealii::FEValues<3>        fe_values(FE, quadrature_formula, dealii::update_JxW_values);
-  const unsigned int dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
-
-  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
-                                      endc = dofHandler.end();
-  for (; cell != endc; ++cell)
-    {
-      if (cell->is_locally_owned())
-        {
-          fe_values.reinit(cell);
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-            {
-              normValue +=
-                ((*rhoQuadValues).find(cell->id())->second[2 * q_point] -
-                 (*rhoQuadValues).find(cell->id())->second[2 * q_point + 1]) *
-                fe_values.JxW(q_point);
-            }
-        }
-    }
-  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
-}
-
-//
-// compute field l2 norm
-//
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
-  const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-  const distributedCPUVec<double> &    nodalField,
-  const unsigned int                   dofHandlerId,
-  const unsigned int                   quadratureId)
-
-{
-  dealii::FEEvaluation<3,
-               C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               1,
-               double>
-                          fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
-  dealii::VectorizedArray<double> normValueVectorized = dealii::make_vectorized_array(0.0);
-  const unsigned int      numQuadPoints       = fe_evalField.n_q_points;
-
-  AssertThrow(
-    matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
-    dealii::ExcMessage(
-      "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
-
-  double normValue = 0.0;
-  for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
-       ++cell)
-    {
-      fe_evalField.reinit(cell);
-      fe_evalField.read_dof_values(nodalField);
-      fe_evalField.evaluate(true, false);
-      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-        {
-          dealii::VectorizedArray<double> temp =
-            fe_evalField.get_value(q_point) * fe_evalField.get_value(q_point);
-          fe_evalField.submit_value(temp, q_point);
-        }
-
-      normValueVectorized = fe_evalField.integrate_value();
-
-      for (unsigned int iSubCell = 0;
-           iSubCell < matrixFreeDataObject.n_components_filled(cell);
-           ++iSubCell)
-        {
-          normValue += normValueVectorized[iSubCell];
-        }
-    }
-
-  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
-}
+    dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
+                                                         .begin_active(),
+                                                endc = dofHandlerOfField.end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            const std::vector<double> &rhoValues =
+              (*rhoQuadValues).find(cell->id())->second;
+            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                normValue += rhoValues[q_point] * fe_values.JxW(q_point);
+              }
+          }
+      }
+    return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+  }
 
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
-  const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-  const distributedCPUVec<double> &    nodalField1,
-  const distributedCPUVec<double> &    nodalField2,
-  const unsigned int                   dofHandlerId,
-  const unsigned int                   quadratureId)
+  //
+  // compute total charge using nodal point values
+  //
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::totalCharge(
+    const dealii::DoFHandler<3> &    dofHandlerOfField,
+    const distributedCPUVec<double> &rhoNodalField)
+  {
+    double                       normValue = 0.0;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
+                                  quadrature_formula,
+                                  dealii::update_values |
+                                    dealii::update_JxW_values);
+    const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+    const unsigned int n_q_points    = quadrature_formula.size();
 
-{
-  dealii::FEEvaluation<3,
-               C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               1,
-               double>
-                          fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
-  dealii::VectorizedArray<double> valueVectorized = dealii::make_vectorized_array(0.0);
-  const unsigned int      numQuadPoints   = fe_evalField.n_q_points;
+    dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
+                                                         .begin_active(),
+                                                endc = dofHandlerOfField.end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            std::vector<double> tempRho(n_q_points);
+            fe_values.get_function_values(rhoNodalField, tempRho);
+            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                normValue += tempRho[q_point] * fe_values.JxW(q_point);
+              }
+          }
+      }
+    return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+  }
 
-  AssertThrow(
-    matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
-    dealii::ExcMessage(
-      "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+  //
+  // compute total charge using nodal point values by filling the quadrature
+  // point values of the nodal field
+  //
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::totalCharge(
+    const dealii::DoFHandler<3> &                  dofHandlerOfField,
+    const distributedCPUVec<double> &              rhoNodalField,
+    std::map<dealii::CellId, std::vector<double>> &rhoQuadValues)
+  {
+    double                       normValue = 0.0;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
+                                  quadrature_formula,
+                                  dealii::update_values |
+                                    dealii::update_JxW_values);
+    const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+    const unsigned int n_q_points    = quadrature_formula.size();
+    std::vector<double> tempRho(n_q_points);
 
-  double value = 0.0;
-  for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
-       ++cell)
-    {
-      fe_evalField.reinit(cell);
-      fe_evalField.read_dof_values(nodalField1);
-      fe_evalField.evaluate(true, false);
-      dealii::AlignedVector<dealii::VectorizedArray<double>> temp1(
-        numQuadPoints, dealii::make_vectorized_array(0.0));
-      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-        {
-          temp1[q_point] = fe_evalField.get_value(q_point);
-        }
+    dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
+                                                         .begin_active(),
+                                                endc = dofHandlerOfField.end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            fe_values.get_function_values(rhoNodalField, tempRho);
+            rhoQuadValues[cell->id()].resize(n_q_points);
+            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                rhoQuadValues[cell->id()][q_point] = tempRho[q_point];
+                normValue += tempRho[q_point] * fe_values.JxW(q_point);
+              }
+          }
+      }
+    return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+  }
 
-      fe_evalField.read_dof_values(nodalField2);
-      fe_evalField.evaluate(true, false);
-      dealii::AlignedVector<dealii::VectorizedArray<double>> temp2(
-        numQuadPoints, dealii::make_vectorized_array(0.0));
-      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-        {
-          temp2[q_point] = fe_evalField.get_value(q_point);
-        }
+  //
+  // compute total charge using nodal point values by using FEEvaluation object
+  //
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::totalCharge(
+    const dealii::MatrixFree<3, double> &matrixFreeDataObject,
+    const distributedCPUVec<double> &    nodalField)
+  {
+    dealii::FEEvaluation<
+      3,
+      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+      1,
+      double>
+                                    fe_evalField(matrixFreeDataObject,
+                   d_densityDofHandlerIndexElectro,
+                   d_densityQuadratureIdElectro);
+    dealii::VectorizedArray<double> normValueVectorized =
+      dealii::make_vectorized_array(0.0);
+    const unsigned int numQuadPoints = fe_evalField.n_q_points;
 
-      for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-        {
-          fe_evalField.submit_value(temp1[q_point] * temp2[q_point], q_point);
-        }
+    // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(d_densityDofHandlerIndexElectro)),
+    //        dealii::ExcMessage("DFT-FE Error: mismatch in
+    //        partitioner/dofHandler."));
+
+    AssertThrow(
+      matrixFreeDataObject.get_quadrature(d_densityQuadratureIdElectro)
+          .size() == numQuadPoints,
+      dealii::ExcMessage(
+        "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+    double normValue = 0.0;
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+         ++cell)
+      {
+        fe_evalField.reinit(cell);
+        fe_evalField.read_dof_values(nodalField);
+        fe_evalField.evaluate(true, false);
+        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+          {
+            dealii::VectorizedArray<double> temp =
+              fe_evalField.get_value(q_point);
+            fe_evalField.submit_value(temp, q_point);
+          }
+
+        normValueVectorized = fe_evalField.integrate_value();
+
+        for (unsigned int iSubCell = 0;
+             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             ++iSubCell)
+          {
+            normValue += normValueVectorized[iSubCell];
+          }
+      }
+
+    return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+  }
+
+  //
+  // compute total charge
+  //
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::totalMagnetization(
+    const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
+  {
+    double                       normValue = 0.0;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values);
+    const unsigned int  dofs_per_cell = FE.dofs_per_cell;
+    const unsigned int  n_q_points    = quadrature_formula.size();
+
+    dealii::DoFHandler<3>::active_cell_iterator cell =
+                                                  dofHandler.begin_active(),
+                                                endc = dofHandler.end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                normValue +=
+                  ((*rhoQuadValues).find(cell->id())->second[2 * q_point] -
+                   (*rhoQuadValues).find(cell->id())->second[2 * q_point + 1]) *
+                  fe_values.JxW(q_point);
+              }
+          }
+      }
+    return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+  }
+
+  //
+  // compute field l2 norm
+  //
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
+    const dealii::MatrixFree<3, double> &matrixFreeDataObject,
+    const distributedCPUVec<double> &    nodalField,
+    const unsigned int                   dofHandlerId,
+    const unsigned int                   quadratureId)
+
+  {
+    dealii::FEEvaluation<
+      3,
+      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+      1,
+      double>
+                                    fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+    dealii::VectorizedArray<double> normValueVectorized =
+      dealii::make_vectorized_array(0.0);
+    const unsigned int numQuadPoints = fe_evalField.n_q_points;
+
+    AssertThrow(
+      matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
+      dealii::ExcMessage(
+        "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+    double normValue = 0.0;
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+         ++cell)
+      {
+        fe_evalField.reinit(cell);
+        fe_evalField.read_dof_values(nodalField);
+        fe_evalField.evaluate(true, false);
+        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+          {
+            dealii::VectorizedArray<double> temp =
+              fe_evalField.get_value(q_point) * fe_evalField.get_value(q_point);
+            fe_evalField.submit_value(temp, q_point);
+          }
+
+        normValueVectorized = fe_evalField.integrate_value();
+
+        for (unsigned int iSubCell = 0;
+             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             ++iSubCell)
+          {
+            normValue += normValueVectorized[iSubCell];
+          }
+      }
+
+    return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
+  }
 
 
-      valueVectorized = fe_evalField.integrate_value();
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
+    const dealii::MatrixFree<3, double> &matrixFreeDataObject,
+    const distributedCPUVec<double> &    nodalField1,
+    const distributedCPUVec<double> &    nodalField2,
+    const unsigned int                   dofHandlerId,
+    const unsigned int                   quadratureId)
 
-      for (unsigned int iSubCell = 0;
-           iSubCell < matrixFreeDataObject.n_components_filled(cell);
-           ++iSubCell)
-        {
-          value += valueVectorized[iSubCell];
-        }
-    }
+  {
+    dealii::FEEvaluation<
+      3,
+      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+      1,
+      double>
+                                    fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+    dealii::VectorizedArray<double> valueVectorized =
+      dealii::make_vectorized_array(0.0);
+    const unsigned int numQuadPoints = fe_evalField.n_q_points;
 
-  return dealii::Utilities::MPI::sum(value, mpi_communicator);
-}
+    AssertThrow(
+      matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
+      dealii::ExcMessage(
+        "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+    double value = 0.0;
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+         ++cell)
+      {
+        fe_evalField.reinit(cell);
+        fe_evalField.read_dof_values(nodalField1);
+        fe_evalField.evaluate(true, false);
+        dealii::AlignedVector<dealii::VectorizedArray<double>> temp1(
+          numQuadPoints, dealii::make_vectorized_array(0.0));
+        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+          {
+            temp1[q_point] = fe_evalField.get_value(q_point);
+          }
+
+        fe_evalField.read_dof_values(nodalField2);
+        fe_evalField.evaluate(true, false);
+        dealii::AlignedVector<dealii::VectorizedArray<double>> temp2(
+          numQuadPoints, dealii::make_vectorized_array(0.0));
+        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+          {
+            temp2[q_point] = fe_evalField.get_value(q_point);
+          }
+
+        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+          {
+            fe_evalField.submit_value(temp1[q_point] * temp2[q_point], q_point);
+          }
+
+
+        valueVectorized = fe_evalField.integrate_value();
+
+        for (unsigned int iSubCell = 0;
+             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             ++iSubCell)
+          {
+            value += valueVectorized[iSubCell];
+          }
+      }
+
+    return dealii::Utilities::MPI::sum(value, mpi_communicator);
+  }
 
 
 /*template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -365,9 +380,9 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
   const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
   pcout << "Setting of qpoints and ndofs" << std::endl;
-  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
-                                      endc = dofHandlerOfField.end();
-  if (!centerofCharge)
+  dealii::DoFHandler<3>::active_cell_iterator cell =
+dofHandlerOfField.begin_active(), endc = dofHandlerOfField.end(); if
+(!centerofCharge)
 
     {
       for (; cell != endc; ++cell)
@@ -483,4 +498,4 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
 } */
 #include "dft.inst.cc"
 
-}
+} // namespace dftfe

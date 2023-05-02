@@ -45,8 +45,10 @@ namespace dftfe
     const bool        restart,
     const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
-    , d_this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_restartFilesPath(restartFilesPath)
     , d_verbosity(verbosity)
   {

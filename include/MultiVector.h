@@ -22,7 +22,7 @@
 
 
 #ifndef dftfeMultiVector.h
-#define dftfeMultiVector.h
+#define dftfeMultiVector .h
 
 #include <TypeConfig.h>
 #include <MemoryStorage.h>

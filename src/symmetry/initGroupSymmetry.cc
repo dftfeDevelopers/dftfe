@@ -46,9 +46,13 @@ namespace dftfe
     , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(_interpoolcomm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
-    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
-    , computing_timer(pcout, dealii::TimerOutput::never, dealii::TimerOutput::wall_times)
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , computing_timer(pcout,
+                      dealii::TimerOutput::never,
+                      dealii::TimerOutput::wall_times)
   {}
   //================================================================================================================================================
   //					Wiping out mapping tables; needed between relaxation steps
@@ -85,22 +89,24 @@ namespace dftfe
     //
     dealii::QGauss<3> quadrature(
       C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
-    dealii::FEValues<3>        fe_values(dftPtr->FEEigen,
-                          quadrature,
-                          dealii::update_values | dealii::update_gradients | dealii::update_JxW_values |
-                            dealii::update_quadrature_points);
-    const unsigned int num_quad_points = quadrature.size();
-    dealii::Point<3>           p, ptemp, p0;
-    dealii::MappingQ1<3>       mapping;
-    char               buffer[100];
+    dealii::FEValues<3>  fe_values(dftPtr->FEEigen,
+                                  quadrature,
+                                  dealii::update_values |
+                                    dealii::update_gradients |
+                                    dealii::update_JxW_values |
+                                    dealii::update_quadrature_points);
+    const unsigned int   num_quad_points = quadrature.size();
+    dealii::Point<3>     p, ptemp, p0;
+    dealii::MappingQ1<3> mapping;
+    char                 buffer[100];
     //
-    std::pair<
-      typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator,
-      dealii::Point<3>>
+    std::pair<typename dealii::parallel::distributed::Triangulation<
+                3>::active_cell_iterator,
+              dealii::Point<3>>
                                               mapped_cell;
     std::tuple<int, std::vector<double>, int> tupleTemp;
     std::tuple<int, int, int>                 tupleTemp2;
-    std::map<dealii::CellId, int>                     groupId;
+    std::map<dealii::CellId, int>             groupId;
     std::vector<double>                       mappedPoint(3);
     std::vector<int> countGroupPerProc(dftPtr->n_mpi_processes),
       countPointPerProc(dftPtr->n_mpi_processes);
@@ -108,8 +114,8 @@ namespace dftfe
       dftPtr->n_mpi_processes);
     std::vector<std::vector<int>> tailofGroup(dftPtr->n_mpi_processes);
     //
-    unsigned int          count = 0, cell_id = 0, ownerProcId;
-    unsigned int          mappedPointId;
+    unsigned int                  count = 0, cell_id = 0, ownerProcId;
+    unsigned int                  mappedPointId;
     std::map<dealii::CellId, int> globalCellId_parallel;
     //
     clearMaps();
@@ -133,9 +139,9 @@ namespace dftfe
     //
     const dealii::parallel::distributed::Triangulation<3> &triangulationSer =
       (dftPtr->d_mesh).getSerialMeshUnmoved();
-    typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator
-      cellTemp = triangulationSer.begin_active(),
-      endcTemp = triangulationSer.end();
+    typename dealii::parallel::distributed::Triangulation<
+      3>::active_cell_iterator cellTemp = triangulationSer.begin_active(),
+                               endcTemp = triangulationSer.end();
     for (; cellTemp != endcTemp; ++cellTemp)
       {
         globalCellId[cellTemp->id()] = cell_id;
@@ -304,8 +310,9 @@ namespace dftfe
                     p = crys2cart(ptemp, 1);
                     //
                     if (q_point == 0)
-                      mapped_cell = dealii::GridTools::find_active_cell_around_point(
-                        mapping, triangulationSer, p);
+                      mapped_cell =
+                        dealii::GridTools::find_active_cell_around_point(
+                          mapping, triangulationSer, p);
                     else
                       {
                         double dist = 1.0E+06;
@@ -315,7 +322,8 @@ namespace dftfe
                               mapping.transform_real_to_unit_cell(
                                 mapped_cell.first, p);
                             dist =
-                              dealii::GeometryInfo<3>::distance_to_unit_cell(p_cell);
+                              dealii::GeometryInfo<3>::distance_to_unit_cell(
+                                p_cell);
                             if (dist < 1.0E-10)
                               mapped_cell.second = p_cell;
                           }
@@ -363,9 +371,9 @@ namespace dftfe
                      ++iter)
                   {
                     std::vector<std::tuple<int, std::vector<double>, int>>
-                           value = iter->second;
+                                   value = iter->second;
                     dealii::CellId key   = iter->first;
-                    ownerProcId  = ownerProcGlobal[globalCellId[key]];
+                    ownerProcId          = ownerProcGlobal[globalCellId[key]];
                     mappedGroupSend0[iSymm][globalCellId_parallel[cell->id()]]
                                     [ownerProcId]
                                       .push_back(globalCellId[key]);
@@ -695,8 +703,9 @@ namespace dftfe
   //================================================================================================================================================
   //================================================================================================================================================
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dealii::Point<3> symmetryClass<FEOrder, FEOrderElectro>::crys2cart(dealii::Point<3> p,
-                                                             int      flag)
+  dealii::Point<3>
+    symmetryClass<FEOrder, FEOrderElectro>::crys2cart(dealii::Point<3> p,
+                                                      int              flag)
   {
     dealii::Point<3> ptemp;
     if (flag == 1)

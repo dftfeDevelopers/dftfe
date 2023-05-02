@@ -56,10 +56,14 @@ namespace dftfe
     , d_serialTriangulationUnmoved(MPI_COMM_SELF)
     , d_serialTriangulationElectrostatics(MPI_COMM_SELF)
     , d_FEOrder(FEOrder)
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0))
-    , computing_timer(pcout, dealii::TimerOutput::never, dealii::TimerOutput::wall_times)
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0))
+    , computing_timer(pcout,
+                      dealii::TimerOutput::never,
+                      dealii::TimerOutput::wall_times)
   {}
 
   //
@@ -322,7 +326,8 @@ namespace dftfe
                 dftUtils::ExcInternalError());
 
     std::vector<bool> vertexTouched(parallelTriangulationB.n_vertices(), false);
-    typename dealii::parallel::distributed::Triangulation<3>::cell_iterator cellA,
+    typename dealii::parallel::distributed::Triangulation<3>::cell_iterator
+      cellA,
       endcA, cellB;
     cellA = parallelTriangulationA.begin();
     endcA = parallelTriangulationA.end();

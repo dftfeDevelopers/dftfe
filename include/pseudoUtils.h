@@ -31,8 +31,6 @@ namespace dftfe
 {
   namespace pseudoUtils
   {
-    
-
     // some inline functions
     inline void
     exchangeLocalList(const std::vector<unsigned int> &masterNodeIdList,
@@ -184,7 +182,7 @@ namespace dftfe
                                 double &phi)
     {
       double tolerance = 1e-12;
-      r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+      r                = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
 
       if (std::fabs(r - 0.0) <= tolerance)
         {

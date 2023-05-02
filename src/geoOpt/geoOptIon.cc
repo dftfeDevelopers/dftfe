@@ -40,8 +40,10 @@ namespace dftfe
     : d_dftPtr(dftPtr)
     , mpi_communicator(mpi_comm_parent)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_parent))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
   {
     d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
@@ -485,9 +487,10 @@ namespace dftfe
         dftUtils::readFile(1,
                            preconData,
                            d_restartPath + "/preconditioner.dat");
-        AssertThrow(
-          preconData.size() == getNumberUnknowns() * getNumberUnknowns(),
-          dealii::ExcMessage("Incorrect preconditioner size in preconditioner.dat"));
+        AssertThrow(preconData.size() ==
+                      getNumberUnknowns() * getNumberUnknowns(),
+                    dealii::ExcMessage(
+                      "Incorrect preconditioner size in preconditioner.dat"));
         s.clear();
         s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
         for (int i = 0; i < preconData.size(); ++i)

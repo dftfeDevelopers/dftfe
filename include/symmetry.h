@@ -109,13 +109,15 @@ namespace dftfe
     /**
      * Data members required for storing mapping tables locally
      */
-    std::map<dealii::CellId, std::vector<std::tuple<int, std::vector<double>, int>>>
+    std::map<dealii::CellId,
+             std::vector<std::tuple<int, std::vector<double>, int>>>
       cellMapTable;
     std::vector<std::vector<std::vector<std::tuple<int, int, int>>>>
-                                                                mappedGroup;
-    std::map<int, typename dealii::DoFHandler<3>::active_cell_iterator> dealIICellId;
-    std::map<dealii::CellId, int>                                       globalCellId;
-    std::vector<int>                                            ownerProcGlobal;
+      mappedGroup;
+    std::map<int, typename dealii::DoFHandler<3>::active_cell_iterator>
+                                  dealIICellId;
+    std::map<dealii::CellId, int> globalCellId;
+    std::vector<int>              ownerProcGlobal;
     /**
      * Data members required for communicating mapping tables
      */

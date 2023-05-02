@@ -314,12 +314,12 @@ namespace dftfe
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
     const unsigned int num_quad_points = quadrature.size();
     totPoints                          = recvdData1[0].size();
-    double                                         px, py, pz;
-    std::vector<dealii::Vector<double>>                    tempPsiAlpha, tempPsiBeta;
+    double                              px, py, pz;
+    std::vector<dealii::Vector<double>> tempPsiAlpha, tempPsiBeta;
     std::vector<std::vector<dealii::Tensor<1, 3, double>>> tempGradPsi,
       tempGradPsiTempAlpha, tempGradPsiTempBeta;
     std::vector<dealii::Point<3>> quadPointList;
-    std::vector<double>   sendData, recvdData;
+    std::vector<double>           sendData, recvdData;
     //
     std::vector<double> rhoLocal, gradRhoLocal, rhoLocalSpinPolarized,
       gradRhoLocalSpinPolarized;
@@ -390,10 +390,11 @@ namespace dftfe
             //
             dealii::Quadrature<3> quadRule(quadPointList);
             dealii::FEValues<3>   fe_values(dftPtr->FEEigen,
-                                  quadRule,
-                                  dealii::update_values | dealii::update_gradients |
-                                    dealii::update_JxW_values |
-                                    dealii::update_quadrature_points);
+                                          quadRule,
+                                          dealii::update_values |
+                                            dealii::update_gradients |
+                                            dealii::update_JxW_values |
+                                            dealii::update_quadrature_points);
             fe_values.reinit(dealIICellId[cellId]);
             const unsigned int iSymm = recvdData3[numGroupsDone + iGroup];
             //
