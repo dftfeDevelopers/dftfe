@@ -16,19 +16,24 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 // compute EPSP contribution stress (local pseudopotential)
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
-  FEValues<3> &    feValues,
-  FEFaceValues<3> &feFaceValues,
-  FEEvaluation<3, 1, C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(), 3>
+  dealii::FEValues<3> &    feValues,
+  dealii::FEFaceValues<3> &feFaceValues,
+  dealii::FEEvaluation<3, 1, C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(), 3>
     &                          forceEval,
-  const MatrixFree<3, double> &matrixFreeData,
+  const dealii::MatrixFree<3, double> &matrixFreeData,
   const unsigned int           phiTotDofHandlerIndexElectro,
   const unsigned int           cell,
-  const dealii::AlignedVector<VectorizedArray<double>> &rhoQuads,
-  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
+  const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
     &gradRhoQuads,
   const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     &                                              pseudoVLocAtoms,
@@ -36,16 +41,16 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
   const std::vector<std::map<dealii::CellId, unsigned int>>
     &cellsVselfBallsClosestAtomIdDofHandler)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
-      zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+      zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, double> zeroTensor2Nonvect;
+  dealii::Tensor<2, 3, double> zeroTensor2Nonvect;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
       zeroTensor2Nonvect[idim][jdim] = 0.0;
@@ -58,26 +63,26 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
   const unsigned int dofs_per_cell =
     matrixFreeData.get_dof_handler(0).get_fe().dofs_per_cell;
 
-  const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
+  const unsigned int faces_per_cell    = dealii::GeometryInfo<3>::faces_per_cell;
   const unsigned int numFaceQuadPoints = feFaceValues.get_quadrature().size();
 
-  dealii::AlignedVector<Tensor<2, 3, double>> surfaceIntegralSubcells(
+  dealii::AlignedVector<dealii::Tensor<2, 3, double>> surfaceIntegralSubcells(
     numSubCells);
   std::vector<double> rhoFaceQuads(numFaceQuadPoints);
-  dealii::AlignedVector<VectorizedArray<double>> vselfQuads(
-    numQuadPoints, make_vectorized_array(0.0));
-  dealii::AlignedVector<VectorizedArray<double>> pseudoVLocAtomsQuads(
-    numQuadPoints, make_vectorized_array(0.0));
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> gradVselfQuads(
+  dealii::AlignedVector<dealii::VectorizedArray<double>> vselfQuads(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> pseudoVLocAtomsQuads(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> gradVselfQuads(
     numQuadPoints, zeroTensor1);
-  dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+  dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
     totalContribution(numQuadPoints, zeroTensor2);
-  dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+  dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
                                              vselfFDStrainQuads(numQuadPoints, zeroTensor2);
   std::vector<std::vector<dealii::Point<3>>> quadPointsSubCells(
     numSubCells, std::vector<dealii::Point<3>>(numQuadPoints));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
     {
@@ -102,7 +107,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
 
       double       atomCharge;
       unsigned int atomId = iAtom;
-      Point<3>     atomLocation;
+      dealii::Point<3>     atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -140,10 +145,10 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
                 zeroTensor2Nonvect);
       std::fill(vselfQuads.begin(),
                 vselfQuads.end(),
-                make_vectorized_array(0.0));
+                dealii::make_vectorized_array(0.0));
       std::fill(pseudoVLocAtomsQuads.begin(),
                 pseudoVLocAtomsQuads.end(),
-                make_vectorized_array(0.0));
+                dealii::make_vectorized_array(0.0));
       std::fill(gradVselfQuads.begin(), gradVselfQuads.end(), zeroTensor1);
       std::fill(totalContribution.begin(),
                 totalContribution.end(),
@@ -172,7 +177,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
               if (it2 !=
                   cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].end())
                 {
-                  Point<3>           closestAtomLocation;
+                  dealii::Point<3>           closestAtomLocation;
                   const unsigned int closestAtomId = it2->second;
                   if (it2->second >= numberGlobalAtoms)
                     {
@@ -228,7 +233,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         vselfQuads[q][iSubCell] = vselfQuadsSubCell[q];
 
-                      std::vector<Tensor<1, 3, double>> gradVselfQuadsSubCell(
+                      std::vector<dealii::Tensor<1, 3, double>> gradVselfQuadsSubCell(
                         numQuadPoints);
                       feValues.get_function_gradients(
                         vselfBinsManager.getVselfFieldBins()[binIdiAtom],
@@ -265,7 +270,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
                 quadPointsSubCells[iSubCell];
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  Tensor<1, 3, double> dispAtom     = temp[q] - atomLocation;
+                  dealii::Tensor<1, 3, double> dispAtom     = temp[q] - atomLocation;
                   const double         dist         = dispAtom.norm();
                   pseudoVLocAtomsQuads[q][iSubCell] = -atomCharge / dist;
                 }
@@ -277,7 +282,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
                 quadPointsSubCells[iSubCell];
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  Tensor<1, 3, double> dispAtom = temp[q] - atomLocation;
+                  dealii::Tensor<1, 3, double> dispAtom = temp[q] - atomLocation;
                   const double         dist     = dispAtom.norm();
                   vselfQuads[q][iSubCell]       = -atomCharge / dist;
                 }
@@ -285,10 +290,10 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
 
           if (!isCellOutsideVselfBall)
             {
-              Tensor<2, 3, double> &surfaceIntegral =
+              dealii::Tensor<2, 3, double> &surfaceIntegral =
                 surfaceIntegralSubcells[iSubCell];
 
-              const std::map<DoFHandler<3>::active_cell_iterator,
+              const std::map<dealii::DoFHandler<3>::active_cell_iterator,
                              std::vector<unsigned int>>
                 &cellsVselfBallSurfacesDofHandler =
                   d_cellFacesVselfBallSurfacesDofHandlerElectro[binIdiAtom];
@@ -313,9 +318,9 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
                       for (unsigned int qPoint = 0; qPoint < numFaceQuadPoints;
                            ++qPoint)
                         {
-                          const Point<3> quadPoint =
+                          const dealii::Point<3> quadPoint =
                             feFaceValues.quadrature_point(qPoint);
-                          const Tensor<1, 3, double> dispClosestAtom =
+                          const dealii::Tensor<1, 3, double> dispClosestAtom =
                             quadPoint - atomLocation;
                           const double dist = dispClosestAtom.norm();
                           const double vselfFaceQuadExact = -atomCharge / dist;
@@ -343,7 +348,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
 
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  const Tensor<1, 3, double> dispAtom =
+                  const dealii::Tensor<1, 3, double> dispAtom =
                     quadPointsSubCell[q] - atomLocation;
 
                   for (unsigned int idim = 0; idim < 3; idim++)
@@ -365,7 +370,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
 
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  const Tensor<1, 3, double> dispAtom =
+                  const dealii::Tensor<1, 3, double> dispAtom =
                     quadPointsSubCell[q] - atomLocation;
 
                   for (unsigned int idim = 0; idim < 3; idim++)
@@ -390,10 +395,10 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
       if (isTrivial)
         continue;
 
-      Tensor<2, 3, VectorizedArray<double>> EPSPStressContribution;
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EPSPStressContribution;
       for (unsigned int idim = 0; idim < 3; idim++)
         for (unsigned int jdim = 0; jdim < 3; jdim++)
-          EPSPStressContribution[idim][jdim] = make_vectorized_array(0.0);
+          EPSPStressContribution[idim][jdim] = dealii::make_vectorized_array(0.0);
 
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         {
@@ -408,3 +413,5 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
               surfaceIntegralSubcells[iSubCell][idim][jdim];
     } // iAtom loop
 }
+#include "../force.inst.cc"
+} // namespace dftfe

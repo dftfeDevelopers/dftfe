@@ -25,7 +25,7 @@
 
 namespace dftfe
 {
-  using namespace dealii;
+  // using namespace dealii;
 
   namespace meshGenUtils
   {
@@ -69,7 +69,7 @@ namespace dftfe
 
     inline void
     computeOffsetVectors(std::vector<std::vector<double>> &latticeVectors,
-                         std::vector<Tensor<1, 3>> &       offsetVectors)
+                         std::vector<dealii::Tensor<1, 3>> &       offsetVectors)
     {
       // create unitVectorsXYZ
       std::vector<std::vector<double>> unitVectorsXYZ;
@@ -95,7 +95,7 @@ namespace dftfe
     }
 
 
-    inline double getCosineAngle(Tensor<1, 3> &       Vector1,
+    inline double getCosineAngle(dealii::Tensor<1, 3> &       Vector1,
                                  std::vector<double> &Vector2)
     {
       double dotProduct = Vector1[0] * Vector2[0] + Vector1[1] * Vector2[1] +
@@ -132,15 +132,15 @@ namespace dftfe
 
 
     inline void markPeriodicFacesNonOrthogonal(
-      Triangulation<3, 3> &             triangulation,
+      dealii::Triangulation<3, 3> &             triangulation,
       std::vector<std::vector<double>> &latticeVectors,
       const MPI_Comm &                  mpiCommParent,
       const dftParameters &             dftParams)
     {
       dealii::ConditionalOStream pcout(
-        std::cout, (Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
+        std::cout, (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
       std::vector<std::vector<double>> periodicFaceNormals;
-      std::vector<Tensor<1, 3>>        offsetVectors;
+      std::vector<dealii::Tensor<1, 3>>        offsetVectors;
       // bool periodicX = dftParameters::periodicX, periodicY =
       // dftParameters::periodicY, periodicZ=dftParameters::periodicZ;
 
@@ -164,13 +164,13 @@ namespace dftfe
                 << periodicFaceNormals[2][2] << std::endl;
         }
 
-      QGauss<2>       quadratureFace_formula(2);
-      FESystem<3>     FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
-      FEFaceValues<3> feFace_values(FE,
+      dealii::QGauss<2>       quadratureFace_formula(2);
+      dealii::FESystem<3>     FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)), 1);
+      dealii::FEFaceValues<3> feFace_values(FE,
                                     quadratureFace_formula,
-                                    update_normal_vectors);
+                                    dealii::update_normal_vectors);
 
-      typename Triangulation<3, 3>::active_cell_iterator cell, endc;
+      typename dealii::Triangulation<3, 3>::active_cell_iterator cell, endc;
       //
       // mark faces
       //
@@ -183,13 +183,13 @@ namespace dftfe
                                            dftParams.periodicZ};
       for (; cell != endc; ++cell)
         {
-          for (unsigned int f = 0; f < GeometryInfo<3>::faces_per_cell; ++f)
+          for (unsigned int f = 0; f < dealii::GeometryInfo<3>::faces_per_cell; ++f)
             {
-              const Point<3> face_center = cell->face(f)->center();
+              const dealii::Point<3> face_center = cell->face(f)->center();
               if (cell->face(f)->at_boundary())
                 {
                   feFace_values.reinit(cell, f);
-                  Tensor<1, 3> faceNormalVector =
+                  dealii::Tensor<1, 3> faceNormalVector =
                     feFace_values.normal_vector(0);
 
                   // std::cout<<"Face normal vector: "<<faceNormalVector[0]<<"
@@ -232,20 +232,20 @@ namespace dftfe
         }
 
       // pcout << "Done with Boundary Flags\n";
-      std::vector<GridTools::PeriodicFacePair<
-        typename Triangulation<3, 3>::cell_iterator>>
+      std::vector<dealii::GridTools::PeriodicFacePair<
+        typename dealii::Triangulation<3, 3>::cell_iterator>>
         periodicity_vector;
       for (int i = 0; i < std::accumulate(periodic.begin(), periodic.end(), 0);
            ++i)
         {
-          GridTools::collect_periodic_faces(
+          dealii::GridTools::collect_periodic_faces(
             triangulation,
             /*b_id1*/ 2 * i + 1,
             /*b_id2*/ 2 * i + 2,
             /*direction*/ periodicDirectionVector[i],
             periodicity_vector,
             offsetVectors[periodicDirectionVector[i]]);
-          // GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1,
+          // dealii::GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1,
           // /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
         }
       triangulation.add_periodicity(periodicity_vector);

@@ -26,11 +26,17 @@
 //
 // source file for dft class initializations
 //
+#include<dft.h>
+#include <dftUtils.h>
+#include <vectorUtilities.h>
+
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
-  parallel::distributed::Triangulation<3> &triangulation)
+  dealii::parallel::distributed::Triangulation<3> &triangulation)
 {
   computing_timer.enter_subsection("unmoved setup");
 
@@ -68,16 +74,16 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   // extract locally owned dofs
   //
   locally_owned_dofs = dofHandler.locally_owned_dofs();
-  DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
-  DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
+  dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
                                        dofHandler,
                                        d_supportPoints);
 
 
   locally_owned_dofsEigen = dofHandlerEigen.locally_owned_dofs();
-  DoFTools::extract_locally_relevant_dofs(dofHandlerEigen,
+  dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerEigen,
                                           locally_relevant_dofsEigen);
-  DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
                                        dofHandlerEigen,
                                        d_supportPointsEigen);
 
@@ -87,11 +93,11 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   // needed in XHX operation, etc.
   //
 #ifdef USE_COMPLEX
-  FEValuesExtractors::Scalar real(0); // For Eigen
-  ComponentMask    componentMaskForRealDOF = FEEigen.component_mask(real);
+  dealii::FEValuesExtractors::Scalar real(0); // For Eigen
+  dealii::ComponentMask    componentMaskForRealDOF = FEEigen.component_mask(real);
   dealii::IndexSet selectedDofsReal =
-    DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF);
-  std::vector<IndexSet::size_type> local_dof_indices(
+    dealii::DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF);
+  std::vector<dealii::IndexSet::size_type> local_dof_indices(
     locally_owned_dofsEigen.n_elements());
   locally_owned_dofsEigen.fill_index_vector(local_dof_indices);
   local_dof_indicesReal.clear();
@@ -131,8 +137,8 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   constraintsNoneEigen.clear();
   constraintsNone.reinit(locally_relevant_dofs);
   constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
-  DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
-  DoFTools::make_hanging_node_constraints(dofHandlerEigen,
+  dealii::DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
+  dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen,
                                           constraintsNoneEigen);
 
   // create unitVectorsXYZ
@@ -145,7 +151,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
       unitVectorsXYZ[i][i] = 0.0;
     }
 
-  std::vector<Tensor<1, 3>> offsetVectors;
+  std::vector<dealii::Tensor<1, 3>> offsetVectors;
   // resize offset vectors
   offsetVectors.resize(3);
 
@@ -159,7 +165,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     }
 
   std::vector<
-    GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
+    dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator>>
     periodicity_vector2, periodicity_vector2Eigen;
 
   std::vector<int>         periodicDirectionVector;
@@ -177,14 +183,14 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
 
   for (int i = 0; i < std::accumulate(periodic.begin(), periodic.end(), 0); ++i)
     {
-      GridTools::collect_periodic_faces(
+      dealii::GridTools::collect_periodic_faces(
         dofHandler,
         /*b_id1*/ 2 * i + 1,
         /*b_id2*/ 2 * i + 2,
         /*direction*/ periodicDirectionVector[i],
         periodicity_vector2,
         offsetVectors[periodicDirectionVector[i]]);
-      GridTools::collect_periodic_faces(
+      dealii::GridTools::collect_periodic_faces(
         dofHandlerEigen,
         /*b_id1*/ 2 * i + 1,
         /*b_id2*/ 2 * i + 2,
@@ -193,9 +199,9 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
         offsetVectors[periodicDirectionVector[i]]);
     }
 
-  DoFTools::make_periodicity_constraints<DoFHandler<3>>(periodicity_vector2,
+  dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(periodicity_vector2,
                                                         constraintsNone);
-  DoFTools::make_periodicity_constraints<DoFHandler<3>>(
+  dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
     periodicity_vector2Eigen, constraintsNoneEigen);
 
 
@@ -210,8 +216,8 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   dealii::AffineConstraints<double> noConstraintsEigen;
   d_noConstraints.reinit(locally_relevant_dofs);
   noConstraintsEigen.reinit(locally_relevant_dofsEigen);
-  DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
-  DoFTools::make_hanging_node_constraints(dofHandlerEigen, noConstraintsEigen);
+  dealii::DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
+  dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen, noConstraintsEigen);
   d_noConstraints.close();
   noConstraintsEigen.close();
 
@@ -318,4 +324,6 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
                  */
 
   computing_timer.leave_subsection("unmoved setup");
+}
+#include "dft.inst.cc"
 }

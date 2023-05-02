@@ -2643,7 +2643,7 @@ namespace dftfe
       // of blas
       //
       const char transA2 = 'T', transB2 = 'N';
-      // dealii::parallel::distributed::Vector<std::complex<double> >
+      // dealii::parallel::distributed::dealii::Vector<std::complex<double> >
       // orthoNormalizedBasis;
       std::vector<std::complex<double>> orthoNormalizedBasis(X.size(), 0.0);
 
@@ -2837,7 +2837,7 @@ namespace dftfe
       // implemented as Yt = S^{-1/2}*Xt using the column major format of blas
       //
       const char transA2 = 'N', transB2 = 'N';
-      // dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
+      // dealii::parallel::distributed::dealii::Vector<double> orthoNormalizedBasis;
       // orthoNormalizedBasis.reinit(X);
       std::vector<double> orthoNormalizedBasis(X.size(), 0.0);
 

@@ -16,55 +16,62 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
+#include <eshelbyTensor.h>
+#include <eshelbyTensorSpinPolarized.h>
+
+namespace dftfe
+{
 
 // compute nonlinear core correction contribution to stress
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::
   addENonlinearCoreCorrectionStressContribution(
-    FEEvaluation<3,
+    dealii::FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &                                     forceEval,
-    const MatrixFree<3, double> &                         matrixFreeData,
+    const dealii::MatrixFree<3, double> &                         matrixFreeData,
     const unsigned int                                    cell,
-    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
+    const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       &derExcGradRho,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &hessianRhoCoreAtoms)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
-      zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+      zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> xMinusAtomLoc(
     numQuadPoints, zeroTensor1);
 
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
         gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
-      dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       double       atomCharge;
       unsigned int atomId = iAtom;
-      Point<3>     atomLocation;
+      dealii::Point<3>     atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -136,13 +143,13 @@ void forceClass<FEOrder, FEOrderElectro>::
           if (!isCellOutsideCoreRhoTail)
             for (unsigned int q = 0; q < numQuadPoints; ++q)
               {
-                const Point<3, VectorizedArray<double>> &quadPointVectorized =
+                const dealii::Point<3, dealii::VectorizedArray<double>> &quadPointVectorized =
                   forceEval.quadrature_point(q);
-                Point<3> quadPoint;
+                dealii::Point<3> quadPoint;
                 quadPoint[0] = quadPointVectorized[0][iSubCell];
                 quadPoint[1] = quadPointVectorized[1][iSubCell];
                 quadPoint[2] = quadPointVectorized[2][iSubCell];
-                const Tensor<1, 3, double> dispAtom = quadPoint - atomLocation;
+                const dealii::Tensor<1, 3, double> dispAtom = quadPoint - atomLocation;
                 for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     xMinusAtomLoc[q][idim][iSubCell] = dispAtom[idim];
@@ -154,7 +161,7 @@ void forceClass<FEOrder, FEOrderElectro>::
         continue;
 
 
-      Tensor<2, 3, VectorizedArray<double>> stressContribution = zeroTensor2;
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> stressContribution = zeroTensor2;
 
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         {
@@ -178,17 +185,17 @@ void forceClass<FEOrder, FEOrderElectro>::
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::
   addENonlinearCoreCorrectionStressContributionSpinPolarized(
-    FEEvaluation<3,
+    dealii::FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &                                     forceEval,
-    const MatrixFree<3, double> &                         matrixFreeData,
+    const dealii::MatrixFree<3, double> &                         matrixFreeData,
     const unsigned int                                    cell,
-    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
-    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuadsSpin0,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuadsSpin1,
+    const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       &derExcGradRhoSpin0,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       &derExcGradRhoSpin1,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
@@ -196,36 +203,36 @@ void forceClass<FEOrder, FEOrderElectro>::
       &        hessianRhoCoreAtoms,
     const bool isXCGGA)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
-      zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+      zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> xMinusAtomLoc(
     numQuadPoints, zeroTensor1);
 
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
         gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
-      dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       double       atomCharge;
       unsigned int atomId = iAtom;
-      Point<3>     atomLocation;
+      dealii::Point<3>     atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -297,13 +304,13 @@ void forceClass<FEOrder, FEOrderElectro>::
           if (!isCellOutsideCoreRhoTail)
             for (unsigned int q = 0; q < numQuadPoints; ++q)
               {
-                const Point<3, VectorizedArray<double>> &quadPointVectorized =
+                const dealii::Point<3, dealii::VectorizedArray<double>> &quadPointVectorized =
                   forceEval.quadrature_point(q);
-                Point<3> quadPoint;
+                dealii::Point<3> quadPoint;
                 quadPoint[0] = quadPointVectorized[0][iSubCell];
                 quadPoint[1] = quadPointVectorized[1][iSubCell];
                 quadPoint[2] = quadPointVectorized[2][iSubCell];
-                const Tensor<1, 3, double> dispAtom = quadPoint - atomLocation;
+                const dealii::Tensor<1, 3, double> dispAtom = quadPoint - atomLocation;
                 for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     xMinusAtomLoc[q][idim][iSubCell] = dispAtom[idim];
@@ -315,7 +322,7 @@ void forceClass<FEOrder, FEOrderElectro>::
         continue;
 
 
-      Tensor<2, 3, VectorizedArray<double>> stressContribution = zeroTensor2;
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> stressContribution = zeroTensor2;
 
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         stressContribution +=
@@ -336,3 +343,5 @@ void forceClass<FEOrder, FEOrderElectro>::
             d_stress[idim][jdim] += stressContribution[idim][jdim][iSubCell];
     } // iAtom loop
 }
+#include "../force.inst.cc"
+} // namespace dftfe

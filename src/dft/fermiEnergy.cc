@@ -17,6 +17,10 @@
 // @author Shiva Rudraraju, Phani Motamarri
 //
 
+#include<dft.h>
+
+namespace dftfe
+{
 
 namespace internal
 {
@@ -129,9 +133,9 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
   // compute Fermi-energy first by bisection method
   //
   // double initialGuessLeft =
-  // Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm); double
+  // dealii::Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm); double
   // initialGuessRight =
-  // Utilities::MPI::max(eigenValuesAllkPoints[eigenValuesAllkPoints.size() -
+  // dealii::Utilities::MPI::max(eigenValuesAllkPoints[eigenValuesAllkPoints.size() -
   // 1],interpoolcomm);
 
   double initialGuessLeft = eigenValuesAllkPoints[0];
@@ -141,8 +145,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
 
   double xLeft, xRight;
 
-  xRight = Utilities::MPI::max(initialGuessRight, interpoolcomm);
-  xLeft  = Utilities::MPI::min(initialGuessLeft, interpoolcomm);
+  xRight = dealii::Utilities::MPI::max(initialGuessRight, interpoolcomm);
+  xLeft  = dealii::Utilities::MPI::min(initialGuessLeft, interpoolcomm);
 
 
   for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
@@ -150,14 +154,14 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
       double yRightLocal = internal::FermiDiracFunctionValue(
         xRight, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
 
-      double yRight = Utilities::MPI::sum(yRightLocal, interpoolcomm);
+      double yRight = dealii::Utilities::MPI::sum(yRightLocal, interpoolcomm);
 
       yRight -= (double)numElectrons;
 
       double yLeftLocal = internal::FermiDiracFunctionValue(
         xLeft, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
 
-      double yLeft = Utilities::MPI::sum(yLeftLocal, interpoolcomm);
+      double yLeft = dealii::Utilities::MPI::sum(yLeftLocal, interpoolcomm);
 
       yLeft -= (double)numElectrons;
 
@@ -171,7 +175,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
 
       double yBisectedLocal = internal::FermiDiracFunctionValue(
         xBisected, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
-      double yBisected = Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
+      double yBisected = dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
       yBisected -= (double)numElectrons;
 
       if ((yBisected * yLeft) > 0.0)
@@ -205,14 +209,14 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
     {
       double functionValueLocal = internal::FermiDiracFunctionValue(
         fe, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
-      functionValue = Utilities::MPI::sum(functionValueLocal, interpoolcomm);
+      functionValue = dealii::Utilities::MPI::sum(functionValueLocal, interpoolcomm);
 
       double functionDerivativeValueLocal =
         internal::FermiDiracFunctionDerivativeValue(
           fe, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
 
       functionDerivativeValue =
-        Utilities::MPI::sum(functionDerivativeValueLocal, interpoolcomm);
+        dealii::Utilities::MPI::sum(functionDerivativeValueLocal, interpoolcomm);
 
 
       R = functionValue - numElectrons;
@@ -224,7 +228,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy(
     {
       AssertThrow(
         false,
-        ExcMessage(
+        dealii::ExcMessage(
           "DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));
     }
 
@@ -274,8 +278,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy_constraintMagnetization(
   double fermiEnergyDownLocal =
     countDown > 0 ? eigenValuesAllkPointsDown[countDown - 1] : -1.0e+15;
   //
-  fermiEnergyUp   = Utilities::MPI::max(fermiEnergyUpLocal, interpoolcomm);
-  fermiEnergyDown = Utilities::MPI::max(fermiEnergyDownLocal, interpoolcomm);
+  fermiEnergyUp   = dealii::Utilities::MPI::max(fermiEnergyUpLocal, interpoolcomm);
+  fermiEnergyDown = dealii::Utilities::MPI::max(fermiEnergyDownLocal, interpoolcomm);
   //
   fermiEnergy = std::max(fermiEnergyUp, fermiEnergyDown);
   //
@@ -288,4 +292,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy_constraintMagnetization(
         << "Fermi energy for spin down                                    : "
         << fermiEnergyDown << std::endl;
     }
+}
+#include "dft.inst.cc"
+
 }

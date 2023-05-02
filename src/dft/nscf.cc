@@ -22,6 +22,10 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <fstream>
+#include<dft.h>
+
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -32,8 +36,8 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   dealiiLinearSolver &                               CGSolver)
 {
   //
-  const IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
-  std::vector<IndexSet::size_type> locallyOwnedDOFs;
+  const dealii::IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
+  std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
   unsigned int numberDofs = locallyOwnedDOFs.size();
   //
@@ -203,4 +207,6 @@ dftClass<FEOrder, FEOrderElectro>::nscf(
     }
 
   // writeBands() ;
+}
+#include "dft.inst.cc"
 }

@@ -18,7 +18,11 @@
 //
 #include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
+#include <dft.h>
+#include <dftUtils.h>
 
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -27,7 +31,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   const bool meshOnlyDeformed,
   const bool vselfPerturbationUpdateForStress)
 {
-  TimerOutput::Scope scope(computing_timer, "moved setup");
+  dealii::TimerOutput::Scope scope(computing_timer, "moved setup");
 
   double init_dofhandlerobjs;
   MPI_Barrier(d_mpiCommParent);
@@ -62,7 +66,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
       if (cell->minimum_vertex_distance() < minElemLength)
         minElemLength = cell->minimum_vertex_distance();
 
-  minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
+  minElemLength = dealii::Utilities::MPI::min(minElemLength, mpi_communicator);
 
   if (d_dftParamsPtr->verbosity >= 1 && !vselfPerturbationUpdateForStress)
     pcout << "Minimum mesh size: " << minElemLength << std::endl;
@@ -84,7 +88,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
                    std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues) /
                    d_numEigenValues) *
           8 / 1e+9 +
-        0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator);
+        0.5 * dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 #else
       const double totalMem =
         (d_dftParamsPtr->useMixedPrecCGS_O == true ||
@@ -96,17 +100,17 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
                3.0 * std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues) /
                  d_numEigenValues) *
               8 / 1e+9 +
-            0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator) :
+            0.5 * dealii::Utilities::MPI::n_mpi_processes(mpi_communicator) :
           dofHandler.n_dofs() * (d_dftParamsPtr->spinPolarized + 1) *
               d_numEigenValues *
               (1.0 +
                3.0 * std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues) /
                  d_numEigenValues) *
               8 / 1e+9 +
-            0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator);
+            0.5 * dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 #endif
       const double perProcMem =
-        totalMem / Utilities::MPI::n_mpi_processes(mpi_communicator);
+        totalMem / dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
       pcout << "Rough estimate of peak memory requirement (RAM) total: "
             << totalMem << " GB." << std::endl;
       pcout << "Rough estimate of peak memory requirement (RAM) per MPI task: "
@@ -134,12 +138,12 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Dofs distributed again");
   d_supportPoints.clear();
-  DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
                                        dofHandler,
                                        d_supportPoints);
 
   d_supportPointsEigen.clear();
-  DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
                                        dofHandlerEigen,
                                        d_supportPointsEigen);
 
@@ -156,15 +160,15 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   //
   // matrix free data structure
   //
-  typename MatrixFree<3>::AdditionalData additional_data;
+  typename dealii::MatrixFree<3>::AdditionalData additional_data;
   // comment this if using deal ii version 9
   // additional_data.mpi_communicator = d_mpiCommParent;
   additional_data.tasks_parallel_scheme =
-    MatrixFree<3>::AdditionalData::partition_partition;
+    dealii::MatrixFree<3>::AdditionalData::partition_partition;
   if (d_dftParamsPtr->isCellStress)
-    additional_data.mapping_update_flags = update_values | update_gradients |
-                                           update_JxW_values |
-                                           update_quadrature_points;
+    additional_data.mapping_update_flags = dealii::update_values | dealii::update_gradients |
+                                           dealii::update_JxW_values |
+                                           dealii::update_quadrature_points;
 
   // clear existing constraints matrix vector
   d_constraintsVector.clear();
@@ -174,26 +178,26 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   if (d_dftParamsPtr->constraintsParallelCheck)
     {
-      IndexSet locally_active_dofs_debug;
-      DoFTools::extract_locally_active_dofs(dofHandler,
+      dealii::IndexSet locally_active_dofs_debug;
+      dealii::DoFTools::extract_locally_active_dofs(dofHandler,
                                             locally_active_dofs_debug);
 
-      const std::vector<IndexSet> &locally_owned_dofs_debug =
-        Utilities::MPI::all_gather(mpi_communicator,
+      const std::vector<dealii::IndexSet> &locally_owned_dofs_debug =
+        dealii::Utilities::MPI::all_gather(mpi_communicator,
                                    dofHandler.locally_owned_dofs());
 
       AssertThrow(
         constraintsNone.is_consistent_in_parallel(locally_owned_dofs_debug,
                                                   locally_active_dofs_debug,
                                                   mpi_communicator),
-        ExcMessage(
+        dealii::ExcMessage(
           "DFT-FE Error: Constraints are not consistent in parallel."));
     }
 
   //
   // create matrix free structure
   //
-  std::vector<const DoFHandler<3> *> dofHandlerVector;
+  std::vector<const dealii::DoFHandler<3> *> dofHandlerVector;
 
   dofHandlerVector.push_back(&dofHandler);
 
@@ -204,15 +208,15 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   d_eigenDofHandlerIndex = dofHandlerVector.size() - 1; // For Eigen
   d_constraintsVector.push_back(&constraintsNoneEigen); // For Eigen;
 
-  std::vector<Quadrature<1>> quadratureVector;
+  std::vector<dealii::Quadrature<1>> quadratureVector;
   quadratureVector.push_back(
-    QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
+    dealii::QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
   quadratureVector.push_back(
-    QIterated<1>(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
+    dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
                  C_numCopies1DQuadNLPSP()));
   quadratureVector.push_back(
-    QGaussLobatto<1>(C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
+    dealii::QGaussLobatto<1>(C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1));
+  quadratureVector.push_back(dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                           C_numCopies1DQuadLPSP()));
 
   d_densityQuadratureId = 0;
@@ -295,4 +299,6 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
                                         d_imagePositionsTrunc,
                                         d_globalChargeIdToImageIdMapTrunc);
     }
+}
+#include "dft.inst.cc"
 }

@@ -17,12 +17,17 @@
 // @author Sambit Das
 //
 
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeFloatingAtomsForces()
 {
-  unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+  unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
   const std::vector<std::vector<double>> &atomLocations = dftPtr->atomLocations;
   const int numberGlobalAtoms                           = atomLocations.size();
   d_globalAtomsForces.clear();
@@ -74,3 +79,5 @@ forceClass<FEOrder, FEOrderElectro>::computeFloatingAtomsForces()
         d_forceAtomsFloating[iAtom * 3 + idim];
 #endif
 }
+#include "../force.inst.cc"
+} // namespace dftfe

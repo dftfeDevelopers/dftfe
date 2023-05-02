@@ -17,11 +17,16 @@
 // @author Sambit Das
 //
 
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
-  Tensor<2, 3, double> &                        stressContribution,
-  const MatrixFree<3, double> &                 matrixFreeData,
+  dealii::Tensor<2, 3, double> &                        stressContribution,
+  const dealii::MatrixFree<3, double> &                 matrixFreeData,
   const unsigned int                            numQuadPoints,
   const std::vector<double> &                   jxwQuadsSubCells,
   const unsigned int                            cell,
@@ -42,12 +47,12 @@ void forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
 
   const unsigned int numNonLocalAtomsCurrentProcess =
     dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor3;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor3;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
-      zeroTensor3[idim] = make_vectorized_array(0.0);
+      zeroTensor3[idim] = dealii::make_vectorized_array(0.0);
     }
 
   for (int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
@@ -177,3 +182,5 @@ void forceClass<FEOrder, FEOrderElectro>::stressEnlElementalContribution(
         }             // subcell loop
     }                 // iAtom loop
 }
+#include "../force.inst.cc"
+} // namespace dftfe

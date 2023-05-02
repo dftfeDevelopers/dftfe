@@ -22,6 +22,10 @@
 //
 // compute total charge using quad point values
 //
+#include<dft.h>
+
+namespace dftfe
+{
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
 dftClass<FEOrder, FEOrderElectro>::totalCharge(
@@ -29,15 +33,15 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
   const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
+  dealii::FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
                         quadrature_formula,
-                        update_JxW_values);
+                        dealii::update_JxW_values);
   const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
                                       endc = dofHandlerOfField.end();
   for (; cell != endc; ++cell)
     {
@@ -52,7 +56,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
             }
         }
     }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 
@@ -66,15 +70,15 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
   const distributedCPUVec<double> &rhoNodalField)
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
+  dealii::FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
                         quadrature_formula,
-                        update_values | update_JxW_values);
+                        dealii::update_values | dealii::update_JxW_values);
   const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
                                       endc = dofHandlerOfField.end();
   for (; cell != endc; ++cell)
     {
@@ -89,7 +93,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
             }
         }
     }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
@@ -104,16 +108,16 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
   std::map<dealii::CellId, std::vector<double>> &rhoQuadValues)
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>         fe_values(dofHandlerOfField.get_fe(),
+  dealii::FEValues<3>         fe_values(dofHandlerOfField.get_fe(),
                         quadrature_formula,
-                        update_values | update_JxW_values);
+                        dealii::update_values | dealii::update_JxW_values);
   const unsigned int  dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
   const unsigned int  n_q_points    = quadrature_formula.size();
   std::vector<double> tempRho(n_q_points);
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
                                       endc = dofHandlerOfField.end();
   for (; cell != endc; ++cell)
     {
@@ -129,7 +133,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
             }
         }
     }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
@@ -141,7 +145,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
   const dealii::MatrixFree<3, double> &matrixFreeDataObject,
   const distributedCPUVec<double> &    nodalField)
 {
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -149,7 +153,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
                           fe_evalField(matrixFreeDataObject,
                  d_densityDofHandlerIndexElectro,
                  d_densityQuadratureIdElectro);
-  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+  dealii::VectorizedArray<double> normValueVectorized = dealii::make_vectorized_array(0.0);
   const unsigned int      numQuadPoints       = fe_evalField.n_q_points;
 
   // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(d_densityDofHandlerIndexElectro)),
@@ -171,7 +175,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
       fe_evalField.evaluate(true, false);
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
-          VectorizedArray<double> temp = fe_evalField.get_value(q_point);
+          dealii::VectorizedArray<double> temp = fe_evalField.get_value(q_point);
           fe_evalField.submit_value(temp, q_point);
         }
 
@@ -185,7 +189,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
         }
     }
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
@@ -197,13 +201,13 @@ dftClass<FEOrder, FEOrderElectro>::totalMagnetization(
   const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature_formula, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature_formula, dealii::update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                       endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -219,7 +223,7 @@ dftClass<FEOrder, FEOrderElectro>::totalMagnetization(
             }
         }
     }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
@@ -234,13 +238,13 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
   const unsigned int                   quadratureId)
 
 {
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
                           fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
-  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+  dealii::VectorizedArray<double> normValueVectorized = dealii::make_vectorized_array(0.0);
   const unsigned int      numQuadPoints       = fe_evalField.n_q_points;
 
   AssertThrow(
@@ -257,7 +261,7 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
       fe_evalField.evaluate(true, false);
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
-          VectorizedArray<double> temp =
+          dealii::VectorizedArray<double> temp =
             fe_evalField.get_value(q_point) * fe_evalField.get_value(q_point);
           fe_evalField.submit_value(temp, q_point);
         }
@@ -272,7 +276,7 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
         }
     }
 
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -286,13 +290,13 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
   const unsigned int                   quadratureId)
 
 {
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
                           fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
-  VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
+  dealii::VectorizedArray<double> valueVectorized = dealii::make_vectorized_array(0.0);
   const unsigned int      numQuadPoints   = fe_evalField.n_q_points;
 
   AssertThrow(
@@ -307,8 +311,8 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
       fe_evalField.reinit(cell);
       fe_evalField.read_dof_values(nodalField1);
       fe_evalField.evaluate(true, false);
-      dealii::AlignedVector<VectorizedArray<double>> temp1(
-        numQuadPoints, make_vectorized_array(0.0));
+      dealii::AlignedVector<dealii::VectorizedArray<double>> temp1(
+        numQuadPoints, dealii::make_vectorized_array(0.0));
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
           temp1[q_point] = fe_evalField.get_value(q_point);
@@ -316,8 +320,8 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
 
       fe_evalField.read_dof_values(nodalField2);
       fe_evalField.evaluate(true, false);
-      dealii::AlignedVector<VectorizedArray<double>> temp2(
-        numQuadPoints, make_vectorized_array(0.0));
+      dealii::AlignedVector<dealii::VectorizedArray<double>> temp2(
+        numQuadPoints, dealii::make_vectorized_array(0.0));
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
           temp2[q_point] = fe_evalField.get_value(q_point);
@@ -339,7 +343,7 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldInnerProduct(
         }
     }
 
-  return Utilities::MPI::sum(value, mpi_communicator);
+  return dealii::Utilities::MPI::sum(value, mpi_communicator);
 }
 
 
@@ -352,16 +356,16 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
 {
   std::vector<double> dipolevector(3, 0.0);
   pcout << " Here!! " << dipolevector.size() << std::endl;
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
+  dealii::FEValues<3>        fe_values(dofHandlerOfField.get_fe(),
                         quadrature_formula,
-                        update_values | update_JxW_values |
-                          update_quadrature_points);
+                        dealii::update_values | dealii::update_JxW_values |
+                          dealii::update_quadrature_points);
   const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
   pcout << "Setting of qpoints and ndofs" << std::endl;
-  DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField.begin_active(),
                                       endc = dofHandlerOfField.end();
   if (!centerofCharge)
 
@@ -477,3 +481,6 @@ dftClass<FEOrder, FEOrderElectro>::dipole(
             << dipolevector[1] << " " << dipolevector[2] << std::endl;
     }
 } */
+#include "dft.inst.cc"
+
+}

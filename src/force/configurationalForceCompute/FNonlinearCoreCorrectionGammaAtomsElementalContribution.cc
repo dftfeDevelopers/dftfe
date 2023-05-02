@@ -16,6 +16,13 @@
 //
 // @author Phani Motamarri, Sambit Das (2020)
 //
+#include <force.h>
+#include <eshelbyTensor.h>
+#include <eshelbyTensorSpinPolarized.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 //(locally used function) compute FNonlinearCoreCorrection contibution due to
 // Gamma(Rj) for given set of cells
@@ -25,29 +32,29 @@ forceClass<FEOrder, FEOrderElectro>::
   FNonlinearCoreCorrectionGammaAtomsElementalContribution(
     std::map<unsigned int, std::vector<double>>
       &              forceContributionFNonlinearCoreCorrectionGammaAtoms,
-    FEEvaluation<3,
+    dealii::FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &forceEval,
-    const MatrixFree<3, double> &                         matrixFreeData,
+    const dealii::MatrixFree<3, double> &                         matrixFreeData,
     const unsigned int                                    cell,
-    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
         gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
 
       unsigned int atomId = iAtom;
@@ -98,7 +105,7 @@ forceClass<FEOrder, FEOrderElectro>::
                                    vxcQuads[q], gradRhoCoreAtomsQuads[q]),
                                  q);
         }
-      Tensor<1, 3, VectorizedArray<double>>
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         forceContributionFNonlinearCoreCorrectionGammaiAtomCells =
           forceEval.integrate_value();
 
@@ -125,23 +132,23 @@ forceClass<FEOrder, FEOrderElectro>::
   FNonlinearCoreCorrectionGammaAtomsElementalContribution(
     std::map<unsigned int, std::vector<double>>
       &              forceContributionFNonlinearCoreCorrectionGammaAtoms,
-    FEEvaluation<3,
+    dealii::FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &forceEval,
-    const MatrixFree<3, double> &matrixFreeData,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       &derExcGradRho,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &hessianRhoCoreAtoms)
 {
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
       for (unsigned int jdim = 0; jdim < 3; jdim++)
         {
-          zeroTensor1[idim][jdim] = make_vectorized_array(0.0);
+          zeroTensor1[idim][jdim] = dealii::make_vectorized_array(0.0);
         }
     }
 
@@ -150,11 +157,11 @@ forceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
 
       unsigned int atomId = iAtom;
@@ -209,7 +216,7 @@ forceClass<FEOrder, FEOrderElectro>::
                                    hessianRhoCoreAtomsQuads[q]),
                                  q);
         }
-      Tensor<1, 3, VectorizedArray<double>>
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         forceContributionFNonlinearCoreCorrectionGammaiAtomCells =
           forceEval.integrate_value();
 
@@ -236,17 +243,17 @@ forceClass<FEOrder, FEOrderElectro>::
   FNonlinearCoreCorrectionGammaAtomsElementalContributionSpinPolarized(
     std::map<unsigned int, std::vector<double>>
       &              forceContributionFNonlinearCoreCorrectionGammaAtoms,
-    FEEvaluation<3,
+    dealii::FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &forceEval,
-    const MatrixFree<3, double> &                         matrixFreeData,
+    const dealii::MatrixFree<3, double> &                         matrixFreeData,
     const unsigned int                                    cell,
-    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
-    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuadsSpin0,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuadsSpin1,
+    const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       &derExcGradRhoSpin0,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       &derExcGradRhoSpin1,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
@@ -254,27 +261,27 @@ forceClass<FEOrder, FEOrderElectro>::
       &        hessianRhoCoreAtoms,
     const bool isXCGGA)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
-      zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+      zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
         gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
-      dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       unsigned int atomId = iAtom;
@@ -354,7 +361,7 @@ forceClass<FEOrder, FEOrderElectro>::
                                  isXCGGA),
                                q);
 
-      Tensor<1, 3, VectorizedArray<double>>
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         forceContributionFNonlinearCoreCorrectionGammaiAtomCells =
           forceEval.integrate_value();
 
@@ -371,3 +378,5 @@ forceClass<FEOrder, FEOrderElectro>::
           }
     } // iAtom loop
 }
+#include "../force.inst.cc"
+} // namespace dftfe

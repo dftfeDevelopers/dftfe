@@ -17,6 +17,11 @@
 // @author Phani Motamarri
 //
 
+#include<dft.h>
+#include <vectorUtilities.h>
+
+namespace dftfe
+{
 
 // compute localization lengths currently implemented for spin unpolarized case
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -24,11 +29,11 @@ void
 dftClass<FEOrder, FEOrderElectro>::compute_localizationLength(
   const std::string &locLengthFileName)
 {
-  QGauss<3>           quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3>         fe_values(dofHandler.get_fe(),
+  dealii::QGauss<3>           quadrature_formula(C_num1DQuad<FEOrder>());
+  dealii::FEValues<3>         fe_values(dofHandler.get_fe(),
                         quadrature_formula,
-                        update_values | update_JxW_values |
-                          update_quadrature_points);
+                        dealii::update_values | dealii::update_JxW_values |
+                          dealii::update_quadrature_points);
   const unsigned int  dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
   const unsigned int  n_q_points    = quadrature_formula.size();
   std::vector<double> tempQuadPointValues(n_q_points);
@@ -58,7 +63,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_localizationLength(
 
       constraintsNoneEigenDataInfo.distribute(tempVec[0]);
 
-      typename DoFHandler<3>::active_cell_iterator cellN =
+      typename dealii::DoFHandler<3>::active_cell_iterator cellN =
                                                      dofHandler.begin_active(),
                                                    endcN = dofHandler.end();
 
@@ -71,7 +76,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_localizationLength(
 
               for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
                 {
-                  Point<3> quadPointCoor = fe_values.quadrature_point(q_point);
+                  dealii::Point<3> quadPointCoor = fe_values.quadrature_point(q_point);
                   double   distanceFromOriginSquare =
                     quadPointCoor[0] * quadPointCoor[0] +
                     quadPointCoor[1] * quadPointCoor[1] +
@@ -136,4 +141,6 @@ dftClass<FEOrder, FEOrderElectro>::compute_localizationLength(
             }
         }
     }
+}
+#include "dft.inst.cc"
 }

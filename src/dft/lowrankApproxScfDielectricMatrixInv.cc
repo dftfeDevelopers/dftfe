@@ -16,6 +16,11 @@
 //
 // @author Sambit Das
 //
+#include<dft.h>
+#include <linearAlgebraOperations.h>
+
+namespace dftfe
+{
 
 namespace internalLowrankJacInv
 {
@@ -701,4 +706,6 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfDielectricMatrixInv(
     std::cout << "Time for low rank jac inv: " << total_time << std::endl;
 
   return normValue;
+}
+#include "dft.inst.cc"
 }

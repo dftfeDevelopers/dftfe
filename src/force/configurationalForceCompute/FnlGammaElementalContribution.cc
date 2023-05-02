@@ -16,14 +16,20 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
+
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set
 // of cells
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   std::map<unsigned int, std::vector<double>> &forceContributionFnlGammaAtoms,
-  const MatrixFree<3, double> &                matrixFreeData,
-  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
+  const dealii::MatrixFree<3, double> &                matrixFreeData,
+  dealii::FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     &                                           forceEvalNLP,
   const unsigned int                            cell,
   const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
@@ -41,15 +47,15 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
 
   const unsigned int numNonLocalAtomsCurrentProcess =
     dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor3;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor3;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
-      zeroTensor3[idim] = make_vectorized_array(0.0);
+      zeroTensor3[idim] = dealii::make_vectorized_array(0.0);
     }
 
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> FVectQuads(
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> FVectQuads(
     numQuadPoints, zeroTensor3);
 
   for (int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
@@ -194,7 +200,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             forceEvalNLP.submit_value(FVectQuads[q], q);
 
-          const Tensor<1, 3, VectorizedArray<double>>
+          const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
             forceContributionFnlGammaiAtomCells =
               forceEvalNLP.integrate_value();
 
@@ -210,8 +216,8 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::FnlGammaxElementalContribution(
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> &FVectQuads,
-  const MatrixFree<3, double> &                                 matrixFreeData,
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &FVectQuads,
+  const dealii::MatrixFree<3, double> &                                 matrixFreeData,
   const unsigned int                                            numQuadPoints,
   const unsigned int                                            cell,
   const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
@@ -224,12 +230,12 @@ void forceClass<FEOrder, FEOrderElectro>::FnlGammaxElementalContribution(
 
   const unsigned int numNonLocalAtomsCurrentProcess =
     dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor3;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor3;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
-      zeroTensor3[idim] = make_vectorized_array(0.0);
+      zeroTensor3[idim] = dealii::make_vectorized_array(0.0);
     }
   std::fill(FVectQuads.begin(), FVectQuads.end(), zeroTensor3);
 
@@ -385,3 +391,5 @@ forceClass<FEOrder, FEOrderElectro>::distributeForceContributionFnlGammaAtoms(
         }
     }
 }
+#include "../force.inst.cc"
+} // namespace dftfe

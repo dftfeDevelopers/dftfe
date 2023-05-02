@@ -33,7 +33,7 @@ set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(ENABLE_MPI)
@@ -109,6 +109,54 @@ SET(TARGET_SRC
   ./src/dft/dftd.cc
   ./src/mdi/MDIEngine.cpp
   ./src/mdi/libraryMDI.cpp
+  ./src/dft/atomicRho.cc
+  ./src/dft/charge.cc
+  ./src/dft/density.cc
+  ./src/dft/dos.cc
+  ./src/dft/electrostaticHRefinedEnergy.cc
+  ./src/dft/femUtilityFunctions.cc
+  ./src/dft/fermiEnergy.cc
+  ./src/dft/generateImageCharges.cc
+  ./src/dft/initBoundaryConditions.cc
+  ./src/dft/initCoreRho.cc
+  ./src/dft/initElectronicFields.cc
+  ./src/dft/initPseudo-OV.cc
+  ./src/dft/initPseudoLocal.cc
+  ./src/dft/initRho.cc
+  ./src/dft/initUnmovedTriangulation.cc
+  ./src/dft/kohnShamEigenSolve.cc
+  ./src/dft/localizationLength.cc
+  ./src/dft/mixingschemes.cc
+  ./src/dft/moveAtoms.cc
+  ./src/dft/moveMeshToAtoms.cc
+  ./src/dft/nodalDensityMixingSchemes.cc
+  ./src/dft/nscf.cc
+  ./src/dft/pRefinedDoFHandler.cc
+  ./src/dft/psiInitialGuess.cc
+  ./src/dft/publicMethods.cc
+  ./src/dft/restart.cc
+  ./src/dft/lowrankApproxScfDielectricMatrixInv.cc
+  ./src/dft/lowrankApproxScfDielectricMatrixInvSpinPolarized.cc
+  ./src/dft/computeOutputDensityDirectionalDerivative.cc
+  ./src/force/configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc
+  ./src/force/configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc
+  ./src/force/configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc
+  ./src/force/configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc
+  ./src/force/configurationalForceCompute/FnlGammaElementalContribution.cc
+  ./src/force/configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc
+  ./src/force/configurationalForceCompute/computeFloatingAtomsForces.cc
+  ./src/force/configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc
+  ./src/force/configurationalForceCompute/configurationalForceEselfLinFE.cc
+  ./src/force/configurationalForceCompute/gaussianGeneratorConfForceOpt.cc
+  ./src/force/configurationalStressCompute/ENonlinearCoreCorrectionContribution.cc
+  ./src/force/configurationalStressCompute/EnlStressContribution.cc
+  ./src/force/configurationalStressCompute/EPSPStressContribution.cc
+  ./src/force/configurationalStressCompute/ESmearedStressContribution.cc
+  ./src/force/configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc
+  ./src/force/configurationalStressCompute/computeStressEself.cc
+  ./src/force/configurationalStressCompute/stress.cc
+  ./src/force/createBinObjectsForce.cc
+  ./src/force/locateAtomCoreNodesForce.cc
   )
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
@@ -169,16 +217,16 @@ ENDIF()
 
 
 IF (WITH_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+       set_source_files_properties(${DEVICE_SRC} PROPERTIES LANGUAGE CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+       set_source_files_properties(${DEVICE_SRC} PROPERTIES LANGUAGE HIP)
+    ENDIF()
+ENDIF()
+IF (WITH_GPU)
   LIST(APPEND TARGET_SRC ${DEVICE_SRC})
 ENDIF()
 
-IF (WITH_GPU)
-    IF ("${GPU_LANG}" STREQUAL "cuda")
-       set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
-    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
-       set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE HIP)
-    ENDIF()
-ENDIF()
 
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 

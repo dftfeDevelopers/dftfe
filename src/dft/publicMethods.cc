@@ -16,6 +16,10 @@
 //
 // @author Phani Motamarri
 //
+#include<dft.h>
+
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -48,8 +52,10 @@ dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesImag() const
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const MatrixFree<3, double> &
+const dealii::MatrixFree<3, double> &
 dftClass<FEOrder, FEOrderElectro>::getMatrixFreeData() const
 {
   return matrix_free_data;
+}
+#include "dft.inst.cc"
 }

@@ -31,8 +31,8 @@ namespace dftfe
 
   std::pair<bool, double>
   meshMovementGaussianClass::moveMesh(
-    const std::vector<Point<3>> &            controlPointLocations,
-    const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+    const std::vector<dealii::Point<3>> &            controlPointLocations,
+    const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
     const std::vector<double> &              gaussianWidthParameter,
     const std::vector<double> &              flatTopWidthParameter,
     const bool                               moveSubdivided)
@@ -64,11 +64,11 @@ namespace dftfe
 
   std::pair<bool, double>
   meshMovementGaussianClass::moveMeshTwoStep(
-    const std::vector<Point<3>> &controlPointLocationsInitialMove,
-    const std::vector<Point<3>> &controlPointLocationsCurrentMove,
-    const std::vector<Tensor<1, 3, double>>
+    const std::vector<dealii::Point<3>> &controlPointLocationsInitialMove,
+    const std::vector<dealii::Point<3>> &controlPointLocationsCurrentMove,
+    const std::vector<dealii::Tensor<1, 3, double>>
       &controlPointDisplacementsInitialMove,
-    const std::vector<Tensor<1, 3, double>>
+    const std::vector<dealii::Tensor<1, 3, double>>
       &                        controlPointDisplacementsCurrentMove,
     const std::vector<double> &controllingParameterInitialMove,
     const std::vector<double> &controllingParameterCurrentMove,
@@ -112,23 +112,23 @@ namespace dftfe
 
   void
   meshMovementGaussianClass::computeIncrementTwoStep(
-    const std::vector<Point<3>> &controlPointLocationsInitialMove,
-    const std::vector<Point<3>> &controlPointLocationsCurrentMove,
-    const std::vector<Tensor<1, 3, double>>
+    const std::vector<dealii::Point<3>> &controlPointLocationsInitialMove,
+    const std::vector<dealii::Point<3>> &controlPointLocationsCurrentMove,
+    const std::vector<dealii::Tensor<1, 3, double>>
       &controlPointDisplacementsInitialMove,
-    const std::vector<Tensor<1, 3, double>>
+    const std::vector<dealii::Tensor<1, 3, double>>
       &                        controlPointDisplacementsCurrentMove,
     const std::vector<double> &controllingParameterInitialMove,
     const std::vector<double> &controllingParameterCurrentMove,
     const std::vector<double> &flatTopWidthParameter)
   {
-    unsigned int      vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+    unsigned int      vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool> vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
 
-    std::vector<Point<3>> nodalCoordinatesUpdated(
+    std::vector<dealii::Point<3>> nodalCoordinatesUpdated(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices());
-    DoFHandler<3>::active_cell_iterator cell =
+    dealii::DoFHandler<3>::active_cell_iterator cell =
                                           d_dofHandlerMoveMesh.begin_active(),
                                         endc = d_dofHandlerMoveMesh.end();
 
@@ -141,7 +141,7 @@ namespace dftfe
             if (vertex_touched[global_vertex_no])
               continue;
 
-            Point<3> nodalCoor = cell->vertex(i);
+            dealii::Point<3> nodalCoor = cell->vertex(i);
 
             if (!vertex_touched[global_vertex_no])
               nodalCoordinatesUpdated[global_vertex_no] = nodalCoor;
@@ -209,7 +209,7 @@ namespace dftfe
           }
 
 
-    DoFHandler<3>::active_cell_iterator cellStep2 =
+    dealii::DoFHandler<3>::active_cell_iterator cellStep2 =
                                           d_dofHandlerMoveMesh.begin_active(),
                                         endcStep2 = d_dofHandlerMoveMesh.end();
     std::vector<bool> vertex_touchedNew(
@@ -285,15 +285,15 @@ namespace dftfe
   // words for those nodes we don't consider overlapping Gaussians
   void
   meshMovementGaussianClass::computeIncrement(
-    const std::vector<Point<3>> &            controlPointLocations,
-    const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+    const std::vector<dealii::Point<3>> &            controlPointLocations,
+    const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
     const std::vector<double> &              gaussianWidthParameter,
     const std::vector<double> &              flatTopWidthParameter)
   {
-    unsigned int      vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+    unsigned int      vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool> vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
-    DoFHandler<3>::active_cell_iterator cell =
+    dealii::DoFHandler<3>::active_cell_iterator cell =
                                           d_dofHandlerMoveMesh.begin_active(),
                                         endc = d_dofHandlerMoveMesh.end();
     for (; cell != endc; ++cell)
@@ -305,7 +305,7 @@ namespace dftfe
             if (vertex_touched[global_vertex_no])
               continue;
             vertex_touched[global_vertex_no] = true;
-            Point<3> nodalCoor               = cell->vertex(i);
+            dealii::Point<3> nodalCoor               = cell->vertex(i);
 
             int overlappedControlPointId = -1;
             for (unsigned int jControl = 0;

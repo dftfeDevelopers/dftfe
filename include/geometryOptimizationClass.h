@@ -28,7 +28,7 @@
 
 namespace dftfe
 {
-  using namespace dealii;
+  // using namespace dealii;
   class geometryOptimizationClass
   {
   public:

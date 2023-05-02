@@ -679,7 +679,7 @@ namespace dftfe
     dftfe::LAPACKSupport::Property property;
 
     /**
-     * A shared pointer to a Utilities::MPI::ProcessGrid object which contains a
+     * A shared pointer to a dealii::Utilities::MPI::ProcessGrid object which contains a
      * BLACS context and a MPI communicator, as well as other necessary data
      * structures.
      */

@@ -17,6 +17,11 @@
 // @author Phani Motamarri
 //
 
+#include<dft.h>
+#include <energyCalculator.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -114,7 +119,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   // create a solution transfer object and prepare for refinement and solution
   // transfer
   //
-  parallel::distributed::SolutionTransfer<3, distributedCPUVec<double>>
+  dealii::parallel::distributed::SolutionTransfer<3, distributedCPUVec<double>>
     solTrans(dofHandlerHRefined);
   electrostaticsTriaRho.set_all_refine_flags();
   electrostaticsTriaRho.prepare_coarsening_and_refinement();
@@ -150,7 +155,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerHRefined,
                                                   locallyRelevantDofs);
 
-  IndexSet ghost_indices = locallyRelevantDofs;
+  dealii::IndexSet ghost_indices = locallyRelevantDofs;
   ghost_indices.subtract_set(dofHandlerHRefined.locally_owned_dofs());
 
 
@@ -173,7 +178,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
       unitVectorsXYZ[i][i] = 0.0;
     }
 
-  std::vector<Tensor<1, 3>> offsetVectors;
+  std::vector<dealii::Tensor<1, 3>> offsetVectors;
   // resize offset vectors
   offsetVectors.resize(3);
 
@@ -201,7 +206,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   for (unsigned int i = 0;
        i < std::accumulate(periodic.begin(), periodic.end(), 0);
        ++i)
-    GridTools::collect_periodic_faces(
+    dealii::GridTools::collect_periodic_faces(
       dofHandlerHRefined,
       /*b_id1*/ 2 * i + 1,
       /*b_id2*/ 2 * i + 2,
@@ -286,12 +291,12 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   std::map<dealii::CellId, std::vector<double>>
     gradRhoOutValuesLpspQuadHRefined;
 
-  FEValues<3>                       fe_values(dofHandlerHRefined.get_fe(),
+  dealii::FEValues<3>                       fe_values(dofHandlerHRefined.get_fe(),
                         quadrature,
-                        update_values | update_gradients);
-  std::vector<Tensor<1, 3, double>> tempGradRho(n_q_points);
+                        dealii::update_values | dealii::update_gradients);
+  std::vector<dealii::Tensor<1, 3, double>> tempGradRho(n_q_points);
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandlerHRefined.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerHRefined.begin_active(),
                                       endc = dofHandlerHRefined.end();
   for (; cell != endc; ++cell)
     if (cell->is_locally_owned())
@@ -309,14 +314,14 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
           }
       }
 
-  dealii::QIterated<3> quadraturelpsp(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
+  dealii::QIterated<3> quadraturelpsp(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                       C_numCopies1DQuadLPSP());
   const unsigned int   n_q_points_lpsp = quadraturelpsp.size();
-  FEValues<3>          fe_values_lpspquad(dofHandlerHRefined.get_fe(),
+  dealii::FEValues<3>          fe_values_lpspquad(dofHandlerHRefined.get_fe(),
                                  quadraturelpsp,
-                                 update_values | update_gradients);
+                                 dealii::update_values | dealii::update_gradients);
   std::vector<double>  rholpsp(n_q_points_lpsp);
-  std::vector<Tensor<1, 3, double>> tempGradRhoPsp(n_q_points_lpsp);
+  std::vector<dealii::Tensor<1, 3, double>> tempGradRhoPsp(n_q_points_lpsp);
 
   cell = dofHandlerHRefined.begin_active();
   for (; cell != endc; ++cell)
@@ -376,7 +381,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   constraintsForTotalPotential.merge(
     constraintsHRefined,
-    AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
+    dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
   constraintsForTotalPotential.close();
 
   // clear existing constraints matrix vector
@@ -406,19 +411,19 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   if (d_dftParamsPtr->constraintsParallelCheck)
     {
-      IndexSet locally_active_dofs_debug;
-      DoFTools::extract_locally_active_dofs(dofHandlerHRefined,
+      dealii::IndexSet locally_active_dofs_debug;
+      dealii::DoFTools::extract_locally_active_dofs(dofHandlerHRefined,
                                             locally_active_dofs_debug);
 
-      const std::vector<IndexSet> &locally_owned_dofs_debug =
-        Utilities::MPI::all_gather(mpi_communicator,
+      const std::vector<dealii::IndexSet> &locally_owned_dofs_debug =
+        dealii::Utilities::MPI::all_gather(mpi_communicator,
                                    dofHandlerHRefined.locally_owned_dofs());
 
       AssertThrow(
         constraintsHRefined.is_consistent_in_parallel(locally_owned_dofs_debug,
                                                       locally_active_dofs_debug,
                                                       mpi_communicator),
-        ExcMessage(
+        dealii::ExcMessage(
           "DFT-FE Error: Constraints are not consistent in parallel. This is because of a known issue in the deal.ii library, which will be fixed soon. Currently, please set H REFINED ELECTROSTATICS to false."));
 
       AssertThrow(
@@ -426,7 +431,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
           locally_owned_dofs_debug,
           locally_active_dofs_debug,
           mpi_communicator),
-        ExcMessage(
+        dealii::ExcMessage(
           "DFT-FE Error: Constraints are not consistent in parallel. This is because of a known issue in the deal.ii library, which will be fixed soon. Currently, please set H REFINED ELECTROSTATICS to false."));
 
       for (unsigned int i = 2; i < matrixFreeConstraintsInputVector.size(); i++)
@@ -435,7 +440,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
             locally_owned_dofs_debug,
             locally_active_dofs_debug,
             mpi_communicator),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: Constraints are not consistent in parallel. This is because of a known issue in the deal.ii library, which will be fixed soon. Currently, please set H REFINED ELECTROSTATICS to false."));
     }
 
@@ -452,14 +457,14 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
 
 
-  std::vector<Quadrature<1>> quadratureVector;
+  std::vector<dealii::Quadrature<1>> quadratureVector;
   quadratureVector.push_back(
-    QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),
+    dealii::QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
+  quadratureVector.push_back(dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedCharge()),
                                           C_numCopies1DQuadSmearedCharge()));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
+  quadratureVector.push_back(dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                           C_numCopies1DQuadLPSP()));
-  quadratureVector.push_back(QGauss<1>(FEOrderElectro + 1));
+  quadratureVector.push_back(dealii::QGauss<1>(FEOrderElectro + 1));
 
   dealii::MatrixFree<3, double> matrixFreeDataHRefined;
 
@@ -548,8 +553,8 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     pseudoVLocAtomsHRefined;
 
-  std::map<dealii::types::global_dof_index, Point<3>> supportPointsHRef;
-  DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
+  std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPointsHRef;
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
                                        dofHandlerHRefined,
                                        supportPointsHRef);
   if (d_dftParamsPtr->isPseudopotential)
@@ -660,4 +665,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   computing_timer.leave_subsection("h refinement electrostatics");
   computingTimerStandard.leave_subsection("h refinement electrostatics");
+}
+#include "dft.inst.cc"
+
 }

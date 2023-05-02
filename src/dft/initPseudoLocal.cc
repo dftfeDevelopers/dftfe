@@ -16,6 +16,13 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
+#include<dft.h>
+#include <dftUtils.h>
+#include <fileReaders.h>
+#include <vectorUtilities.h>
+
+namespace dftfe
+{
 
 //
 // Initialize rho by reading in single-atom electron-density and fit a spline
@@ -23,12 +30,12 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
-  const DoFHandler<3> &                    _dofHandler,
+  const dealii::DoFHandler<3> &                    _dofHandler,
   const unsigned int                       lpspQuadratureId,
   const dealii::MatrixFree<3, double> &    _matrix_free_data,
   const unsigned int                       _phiExtDofHandlerIndex,
   const dealii::AffineConstraints<double> &_phiExtConstraintMatrix,
-  const std::map<dealii::types::global_dof_index, Point<3>> &_supportPoints,
+  const std::map<dealii::types::global_dof_index, dealii::Point<3>> &_supportPoints,
   const vselfBinsManager<FEOrder, FEOrderElectro> &          vselfBinManager,
   distributedCPUVec<double> &                                phiExt,
   std::map<dealii::CellId, std::vector<double>> &            _pseudoValues,
@@ -126,9 +133,9 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   //
   // Initialize pseudopotential
   //
-  FEValues<3>        fe_values(_dofHandler.get_fe(),
+  dealii::FEValues<3>        fe_values(_dofHandler.get_fe(),
                         _matrix_free_data.get_quadrature(lpspQuadratureId),
-                        update_quadrature_points);
+                        dealii::update_quadrature_points);
   const unsigned int n_q_points =
     _matrix_free_data.get_quadrature(lpspQuadratureId).size();
 
@@ -163,7 +170,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
     vselfBinManager.getAtomIdBinIdMapLocalAllImages();
 
   const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   dealii::BoundingBox<3> boundingBoxTria(
     vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
@@ -208,7 +215,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         }
     }
 
-  typename DoFHandler<3>::active_cell_iterator cell =
+  typename dealii::DoFHandler<3>::active_cell_iterator cell =
                                                  _dofHandler.begin_active(),
                                                endc     = _dofHandler.end();
   int                                    numberElements = 0;
@@ -247,10 +254,10 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         {
           const dealii::types::global_dof_index dofId =
             partitioner->local_to_global(localDofId);
-          const Point<3> &nodalCoor = _supportPoints.find(dofId)->second;
+          const dealii::Point<3> &nodalCoor = _supportPoints.find(dofId)->second;
           if (!_phiExtConstraintMatrix.is_constrained(dofId))
             {
-              Point<3> atom;
+              dealii::Point<3> atom;
               double   atomCharge;
               int      atomicNumber;
               int      chargeId;
@@ -349,7 +356,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   MPI_Barrier(d_mpiCommParent);
   init_2 = MPI_Wtime();
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuadLPSP<FEOrderElectro>() * C_numCopies1DQuadLPSP()>
     feEvalObj(_matrix_free_data, _phiExtDofHandlerIndex, lpspQuadratureId);
@@ -379,7 +386,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
           feEvalObj.read_dof_values(phiExt);
           feEvalObj.evaluate(true, false);
 
-          Point<3> atom;
+          dealii::Point<3> atom;
           int      atomicNumber;
           double   atomCharge;
 
@@ -396,7 +403,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
 
               std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
 
-              Point<3> quadPoint;
+              dealii::Point<3> quadPoint;
               double   value, distanceToAtom, distanceToAtomInv;
 
               fe_values.reinit(subCellPtr);
@@ -405,7 +412,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
               // loop over quad points
               for (unsigned int q = 0; q < n_q_points; ++q)
                 {
-                  const Point<3> &quadPoint = fe_values.quadrature_point(q);
+                  const dealii::Point<3> &quadPoint = fe_values.quadrature_point(q);
 
                   double temp;
                   double tempVal = 0.0;
@@ -558,7 +565,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
               // compute values for the current elements
               fe_values.reinit(cell);
 
-              Point<3> atom;
+              dealii::Point<3> atom;
               int      atomicNumber;
               double   atomCharge;
 
@@ -601,17 +608,17 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                   dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
                   if (boundingBoxTria.get_neighbor_type(
-                        boundingBoxAroundAtom) == NeighborType::not_neighbors)
+                        boundingBoxAroundAtom) == dealii::NeighborType::not_neighbors)
                     continue;
 
                   bool         isPseudoDataInCell = false;
-                  Point<3>     quadPoint;
+                  dealii::Point<3>     quadPoint;
                   double       value, distanceToAtom;
                   const double cutoff = outerMostDataPoint[atomicNumber];
                   // loop over quad points
                   for (unsigned int q = 0; q < n_q_points; ++q)
                     {
-                      const Point<3> &quadPoint = fe_values.quadrature_point(q);
+                      const dealii::Point<3> &quadPoint = fe_values.quadrature_point(q);
                       distanceToAtom            = quadPoint.distance(atom);
                       if (distanceToAtom <= cutoff)
                         {
@@ -753,4 +760,6 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   init_3 = MPI_Wtime() - init_3;
   if (d_dftParamsPtr->verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init3: " << init_3 << std::endl;
+}
+#include "dft.inst.cc"
 }

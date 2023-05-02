@@ -32,7 +32,7 @@ namespace dftfe
 
   std::pair<bool, double>
   meshMovementAffineTransform::transform(
-    const Tensor<2, 3, double> &deformationGradient)
+    const dealii::Tensor<2, 3, double> &deformationGradient)
   {
     d_deformationGradient = deformationGradient;
     if (d_dftParams.verbosity == 2)
@@ -54,8 +54,8 @@ namespace dftfe
 
   std::pair<bool, double>
   meshMovementAffineTransform::moveMesh(
-    const std::vector<Point<3>> &            controlPointLocations,
-    const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+    const std::vector<dealii::Point<3>> &            controlPointLocations,
+    const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
     const double                             controllingParameter,
     const bool                               moveSubdivided)
   {
@@ -67,10 +67,10 @@ namespace dftfe
   void
   meshMovementAffineTransform::computeIncrement()
   {
-    const unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+    const unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool>  vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
-    DoFHandler<3>::active_cell_iterator cell =
+    dealii::DoFHandler<3>::active_cell_iterator cell =
                                           d_dofHandlerMoveMesh.begin_active(),
                                         endc = d_dofHandlerMoveMesh.end();
     for (; cell != endc; ++cell)
@@ -82,8 +82,8 @@ namespace dftfe
             if (vertex_touched[global_vertex_no])
               continue;
             vertex_touched[global_vertex_no]     = true;
-            const Point<3>             nodalCoor = cell->vertex(i);
-            const Tensor<1, 3, double> increment =
+            const dealii::Point<3>             nodalCoor = cell->vertex(i);
+            const dealii::Tensor<1, 3, double> increment =
               d_deformationGradient * nodalCoor - nodalCoor;
 
             for (unsigned int idim = 0; idim < 3; idim++)

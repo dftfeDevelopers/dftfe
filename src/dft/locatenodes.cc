@@ -16,6 +16,10 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
+#include<dft.h>
+
+namespace dftfe
+{
 
 // source file for locating core atom nodes
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -24,13 +28,13 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
   const dealii::DoFHandler<3> &                      _dofHandler,
   std::map<dealii::types::global_dof_index, double> &atomNodeIdToChargeValueMap)
 {
-  TimerOutput::Scope scope(computing_timer, "locate atom nodes");
+  dealii::TimerOutput::Scope scope(computing_timer, "locate atom nodes");
   atomNodeIdToChargeValueMap.clear();
-  const unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+  const unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
 
   const bool isPseudopotential = d_dftParamsPtr->isPseudopotential;
 
-  DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),
                                       endc = _dofHandler.end();
 
   dealii::IndexSet locallyOwnedDofs = _dofHandler.locally_owned_dofs();
@@ -52,7 +56,7 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
         {
           const dealii::types::global_dof_index nodeID =
             cell->vertex_dof_index(i, 0);
-          Point<3> feNodeGlobalCoord = cell->vertex(i);
+          dealii::Point<3> feNodeGlobalCoord = cell->vertex(i);
           //
           // loop over all atoms to locate the corresponding nodes
           //
@@ -60,7 +64,7 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
                it != atomsTolocate.end();
                ++it)
             {
-              Point<3> atomCoord(atomLocations[*it][2],
+              dealii::Point<3> atomCoord(atomLocations[*it][2],
                                  atomLocations[*it][3],
                                  atomLocations[*it][4]);
               if (feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
@@ -123,9 +127,9 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
   MPI_Barrier(mpi_communicator);
 
   const unsigned int totalAtomNodesFound =
-    Utilities::MPI::sum(atomNodeIdToChargeValueMap.size(), mpi_communicator);
+    dealii::Utilities::MPI::sum(atomNodeIdToChargeValueMap.size(), mpi_communicator);
   AssertThrow(totalAtomNodesFound == numAtoms,
-              ExcMessage(
+              dealii::ExcMessage(
                 "Atleast one atom doesn't lie on a triangulation vertex"));
 }
 
@@ -142,7 +146,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
         d_dftParamsPtr->periodicZ))
     return;
 
-  TimerOutput::Scope scope(computing_timer, "locate periodic pinned node");
+  dealii::TimerOutput::Scope scope(computing_timer, "locate periodic pinned node");
   const int          numberImageCharges = d_imageIds.size();
   const int          numberGlobalAtoms  = atomLocations.size();
   const int          totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -163,7 +167,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
   double                          maxDistance = -1.0;
   dealii::types::global_dof_index maxNode, minNode;
 
-  std::map<dealii::types::global_dof_index, Point<3>>::iterator iterMap;
+  std::map<dealii::types::global_dof_index, dealii::Point<3>>::iterator iterMap;
   for (iterMap = supportPoints.begin(); iterMap != supportPoints.end();
        ++iterMap)
     if (locallyOwnedDofs.is_element(iterMap->first) &&
@@ -172,10 +176,10 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
       {
         double minDistance             = 1e10;
         minNode                        = -1;
-        Point<3> nodalPointCoordinates = iterMap->second;
+        dealii::Point<3> nodalPointCoordinates = iterMap->second;
         for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
           {
-            Point<3> atomCoor;
+            dealii::Point<3> atomCoor;
 
             if (iAtom < numberGlobalAtoms)
               {
@@ -223,18 +227,18 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
   unsigned int                     taskId = 0;
 
   if (std::abs(maxDistance - globalMaxDistance) < 1e-07)
-    taskId = Utilities::MPI::this_mpi_process(mpi_communicator);
+    taskId = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
   unsigned int maxTaskId;
 
   MPI_Allreduce(&taskId, &maxTaskId, 1, MPI_INT, MPI_MAX, mpi_communicator);
 
-  if (Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
+  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
     {
 #ifdef DEBUG
       if (d_dftParamsPtr->verbosity >= 4)
         std::cout << "Found Node locally on processor Id: "
-                  << Utilities::MPI::this_mpi_process(mpi_communicator)
+                  << dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
                   << std::endl;
 #endif
       if (locallyOwnedDofs.is_element(maxNode))
@@ -243,7 +247,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
             {
               const dealii::types::global_dof_index masterNode =
                 (*constraintsBase.get_constraint_entries(maxNode))[0].first;
-              Point<3> nodalPointCoordinates =
+              dealii::Point<3> nodalPointCoordinates =
                 supportPoints.find(masterNode)->second;
               tempLocal[0] = nodalPointCoordinates[0];
               tempLocal[1] = nodalPointCoordinates[1];
@@ -251,7 +255,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
             }
           else
             {
-              Point<3> nodalPointCoordinates =
+              dealii::Point<3> nodalPointCoordinates =
                 supportPoints.find(maxNode)->second;
               tempLocal[0] = nodalPointCoordinates[0];
               tempLocal[1] = nodalPointCoordinates[1];
@@ -269,7 +273,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
 
 
   const unsigned int dofs_per_cell         = _dofHandler.get_fe().dofs_per_cell;
-  DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),
                                       endc = _dofHandler.end();
 
   const unsigned int     numberNodes = pinnedLocations.size();
@@ -286,7 +290,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           {
             const dealii::types::global_dof_index nodeID = cell_dof_indices[i];
-            Point<3> feNodeGlobalCoord = supportPoints[cell_dof_indices[i]];
+            dealii::Point<3> feNodeGlobalCoord = supportPoints[cell_dof_indices[i]];
 
             //
             // loop over all atoms to locate the corresponding nodes
@@ -295,7 +299,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
                  it != nodesTolocate.end();
                  ++it)
               {
-                Point<3> pinnedNodeCoord(pinnedLocations[*it][0],
+                dealii::Point<3> pinnedNodeCoord(pinnedLocations[*it][0],
                                          pinnedLocations[*it][1],
                                          pinnedLocations[*it][2]);
                 if (feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
@@ -324,4 +328,5 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
       } // locally owned cell if loop
 
   MPI_Barrier(mpi_communicator);
+}
 }

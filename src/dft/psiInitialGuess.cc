@@ -16,6 +16,14 @@
 //
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
+#include<dft.h>
+#include <fileReaders.h>
+#include <vectorUtilities.h>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/random/normal_distribution.hpp>
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -333,8 +341,8 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
 {
-  const IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
-  std::vector<IndexSet::size_type> locallyOwnedDOFs;
+  const dealii::IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
+  std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
   unsigned int numberDofs = locallyOwnedDOFs.size();
 
@@ -370,7 +378,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
        it++)
     {
       const unsigned int chargeId = it->atomID;
-      Point<3>           atomCoord;
+      dealii::Point<3>           atomCoord;
 
       if (chargeId < atomLocations.size())
         {
@@ -393,7 +401,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
       dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
       if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-          NeighborType::not_neighbors)
+          dealii::NeighborType::not_neighbors)
         ;
       waveFunctionsVectorTruncated.push_back(*it);
     }
@@ -404,7 +412,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
   for (unsigned int dof = 0; dof < numberDofs; dof++)
     {
       const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-      Point<3>                              node  = d_supportPoints[dofID];
+      dealii::Point<3>                              node  = d_supportPoints[dofID];
       if (!constraintsNone.is_constrained(dofID))
         {
           //
@@ -449,7 +457,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
                       // function and imageAtom
                       //
                       int      chargeId = imageIdsList[iImageAtomCount];
-                      Point<3> atomCoord;
+                      dealii::Point<3> atomCoord;
 
                       if (chargeId < numberGlobalAtoms)
                         {
@@ -592,4 +600,6 @@ dftClass<FEOrder, FEOrderElectro>::readPSI()
   computing_timer.enter_subsection("initialize wave functions");
   readPSIRadialValues();
   computing_timer.leave_subsection("initialize wave functions");
+}
+#include "dft.inst.cc"
 }

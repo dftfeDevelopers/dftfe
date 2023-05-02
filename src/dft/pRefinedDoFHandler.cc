@@ -16,6 +16,11 @@
 //
 // @author Phani Motamarri
 //
+#include<dft.h>
+#include <vectorUtilities.h>
+
+namespace dftfe
+{
 
 // source file for all charge calculations
 
@@ -58,7 +63,7 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
       unitVectorsXYZ[i][i] = 0.0;
     }
 
-  std::vector<Tensor<1, 3>> offsetVectors;
+  std::vector<dealii::Tensor<1, 3>> offsetVectors;
   // resize offset vectors
   offsetVectors.resize(3);
 
@@ -86,7 +91,7 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
   for (unsigned int i = 0;
        i < std::accumulate(periodic.begin(), periodic.end(), 0);
        ++i)
-    GridTools::collect_periodic_faces(
+    dealii::GridTools::collect_periodic_faces(
       d_dofHandlerPRefined,
       /*b_id1*/ 2 * i + 1,
       /*b_id2*/ 2 * i + 2,
@@ -130,7 +135,7 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
   for (unsigned int i = 0;
        i < std::accumulate(periodic.begin(), periodic.end(), 0);
        ++i)
-    GridTools::collect_periodic_faces(
+    dealii::GridTools::collect_periodic_faces(
       d_dofHandlerRhoNodal,
       /*b_id1*/ 2 * i + 1,
       /*b_id2*/ 2 * i + 2,
@@ -184,7 +189,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_dofHandlerRhoNodal.distribute_dofs(d_dofHandlerRhoNodal.get_fe());
 
   d_supportPointsPRefined.clear();
-  DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
                                        d_dofHandlerPRefined,
                                        d_supportPointsPRefined);
 
@@ -193,12 +198,12 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   additional_data.tasks_parallel_scheme =
     dealii::MatrixFree<3>::AdditionalData::partition_partition;
   if (d_dftParamsPtr->isCellStress)
-    additional_data.mapping_update_flags = update_values | update_gradients |
-                                           update_JxW_values |
-                                           update_quadrature_points;
+    additional_data.mapping_update_flags = dealii::update_values | dealii::update_gradients |
+                                           dealii::update_JxW_values |
+                                           dealii::update_quadrature_points;
   else
     additional_data.mapping_update_flags =
-      update_values | update_gradients | update_JxW_values;
+      dealii::update_values | dealii::update_gradients | dealii::update_JxW_values;
 
   // clear existing constraints matrix vector
   d_constraintsVectorElectro.clear();
@@ -309,12 +314,12 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
 
   if (d_dftParamsPtr->constraintsParallelCheck)
     {
-      IndexSet locally_active_dofs_debug;
-      DoFTools::extract_locally_active_dofs(d_dofHandlerPRefined,
+      dealii::IndexSet locally_active_dofs_debug;
+      dealii::DoFTools::extract_locally_active_dofs(d_dofHandlerPRefined,
                                             locally_active_dofs_debug);
 
-      const std::vector<IndexSet> &locally_owned_dofs_debug =
-        Utilities::MPI::all_gather(mpi_communicator,
+      const std::vector<dealii::IndexSet> &locally_owned_dofs_debug =
+        dealii::Utilities::MPI::all_gather(mpi_communicator,
                                    d_dofHandlerPRefined.locally_owned_dofs());
 
       AssertThrow(
@@ -322,7 +327,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
           locally_owned_dofs_debug,
           locally_active_dofs_debug,
           mpi_communicator),
-        ExcMessage(
+        dealii::ExcMessage(
           "DFT-FE Error: Constraints are not consistent in parallel."));
     }
 
@@ -341,24 +346,24 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_forceDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
 
-  std::vector<Quadrature<1>> quadratureVector;
+  std::vector<dealii::Quadrature<1>> quadratureVector;
   quadratureVector.push_back(
-    QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
+    dealii::QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
+  quadratureVector.push_back(dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                           C_numCopies1DQuadLPSP()));
   if (d_dftParamsPtr->isCellStress)
     quadratureVector.push_back(
-      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeStress()),
+      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedChargeStress()),
                    C_numCopies1DQuadSmearedChargeStress()));
   else if (d_dftParamsPtr->meshSizeOuterBall > 2.2)
     quadratureVector.push_back(
-      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeHigh()),
+      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedChargeHigh()),
                    C_numCopies1DQuadSmearedChargeHigh()));
   else
     quadratureVector.push_back(
-      QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),
+      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedCharge()),
                    C_numCopies1DQuadSmearedCharge()));
-  quadratureVector.push_back(QGauss<1>(FEOrderElectro + 1));
+  quadratureVector.push_back(dealii::QGauss<1>(FEOrderElectro + 1));
 
 
   d_densityQuadratureIdElectro       = 0;
@@ -384,4 +389,6 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
     d_matrixFreeDataPRefined.get_vector_partitioner(
       d_densityDofHandlerIndexElectro),
     d_constraintsRhoNodal);
+}
+#include "dft.inst.cc"
 }

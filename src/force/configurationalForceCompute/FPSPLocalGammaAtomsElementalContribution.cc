@@ -16,6 +16,12 @@
 //
 // @author Sambit Das (2017)
 //
+#include <force.h>
+#include <dft.h>
+#include <dftUtils.h>
+
+namespace dftfe
+{
 
 //(locally used function) compute FPSPLocal contibution due to Gamma(Rj) for
 // given set of cells
@@ -24,15 +30,15 @@ void
 forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
   std::map<unsigned int, std::vector<double>>
     &              forceContributionFPSPLocalGammaAtoms,
-  FEValues<3> &    feValues,
-  FEFaceValues<3> &feFaceValues,
-  FEEvaluation<3, 1, C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(), 3>
+  dealii::FEValues<3> &    feValues,
+  dealii::FEFaceValues<3> &feFaceValues,
+  dealii::FEEvaluation<3, 1, C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(), 3>
     &                          forceEval,
-  const MatrixFree<3, double> &matrixFreeData,
+  const dealii::MatrixFree<3, double> &matrixFreeData,
   const unsigned int           phiTotDofHandlerIndexElectro,
   const unsigned int           cell,
-  const dealii::AlignedVector<VectorizedArray<double>> &rhoQuads,
-  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
+  const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
     &gradRhoQuads,
   const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     &                                              pseudoVLocAtoms,
@@ -40,11 +46,11 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
   const std::vector<std::map<dealii::CellId, unsigned int>>
     &cellsVselfBallsClosestAtomIdDofHandler)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<1, 3, double> zeroTensorNonvect;
+  dealii::Tensor<1, 3, double> zeroTensorNonvect;
   for (unsigned int idim = 0; idim < 3; idim++)
     zeroTensorNonvect[idim] = 0.0;
 
@@ -56,24 +62,24 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
   const unsigned int dofs_per_cell =
     matrixFreeData.get_dof_handler(0).get_fe().dofs_per_cell;
 
-  const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
+  const unsigned int faces_per_cell    = dealii::GeometryInfo<3>::faces_per_cell;
   const unsigned int numFaceQuadPoints = feFaceValues.get_quadrature().size();
 
-  dealii::AlignedVector<Tensor<1, 3, double>> surfaceIntegralSubcells(
+  dealii::AlignedVector<dealii::Tensor<1, 3, double>> surfaceIntegralSubcells(
     numSubCells);
   std::vector<double> rhoFaceQuads(numFaceQuadPoints);
-  dealii::AlignedVector<VectorizedArray<double>> vselfQuads(
-    numQuadPoints, make_vectorized_array(0.0));
-  dealii::AlignedVector<VectorizedArray<double>> pseudoVLocAtomsQuads(
-    numQuadPoints, make_vectorized_array(0.0));
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> vselfDerRQuads(
+  dealii::AlignedVector<dealii::VectorizedArray<double>> vselfQuads(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> pseudoVLocAtomsQuads(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> vselfDerRQuads(
     numQuadPoints, zeroTensor1);
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
                                              totalContribution(numQuadPoints, zeroTensor1);
   std::vector<std::vector<dealii::Point<3>>> quadPointsSubCells(
     numSubCells, std::vector<dealii::Point<3>>(numQuadPoints));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
     {
@@ -97,7 +103,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
 
       double       atomCharge;
       unsigned int atomId = iAtom;
-      Point<3>     atomLocation;
+      dealii::Point<3>     atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -135,10 +141,10 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                 zeroTensorNonvect);
       std::fill(vselfQuads.begin(),
                 vselfQuads.end(),
-                make_vectorized_array(0.0));
+                dealii::make_vectorized_array(0.0));
       std::fill(pseudoVLocAtomsQuads.begin(),
                 pseudoVLocAtomsQuads.end(),
-                make_vectorized_array(0.0));
+                dealii::make_vectorized_array(0.0));
       std::fill(vselfDerRQuads.begin(), vselfDerRQuads.end(), zeroTensor1);
       std::fill(totalContribution.begin(),
                 totalContribution.end(),
@@ -163,7 +169,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
               if (it2 !=
                   cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].end())
                 {
-                  Point<3>           closestAtomLocation;
+                  dealii::Point<3>           closestAtomLocation;
                   const unsigned int closestAtomId = it2->second;
                   if (it2->second >= numberGlobalAtoms)
                     {
@@ -213,11 +219,11 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                         {
                           for (unsigned int q = 0; q < numQuadPoints; ++q)
                             {
-                              Point<3> quadPoint = feValues.quadrature_point(q);
-                              Tensor<1, 3, double> dispAtom =
+                              dealii::Point<3> quadPoint = feValues.quadrature_point(q);
+                              dealii::Tensor<1, 3, double> dispAtom =
                                 quadPoint - atomLocation;
                               const double         dist = dispAtom.norm();
-                              Tensor<1, 3, double> temp =
+                              dealii::Tensor<1, 3, double> temp =
                                 atomCharge *
                                 dftUtils::smearedPotDr(
                                   dist, dftPtr->d_smearedChargeWidths[atomId]) *
@@ -230,7 +236,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                         }
                       else
                         {
-                          std::vector<Tensor<1, 3, double>>
+                          std::vector<dealii::Tensor<1, 3, double>>
                             gradVselfQuadsSubCell(numQuadPoints);
                           feValues.get_function_gradients(
                             vselfBinsManager.getVselfFieldBins()[binIdiAtom],
@@ -268,7 +274,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                 quadPointsSubCells[iSubCell];
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  Tensor<1, 3, double> dispAtom     = temp[q] - atomLocation;
+                  dealii::Tensor<1, 3, double> dispAtom     = temp[q] - atomLocation;
                   const double         dist         = dispAtom.norm();
                   pseudoVLocAtomsQuads[q][iSubCell] = -atomCharge / dist;
                 }
@@ -280,7 +286,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                 quadPointsSubCells[iSubCell];
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  Tensor<1, 3, double> dispAtom = temp[q] - atomLocation;
+                  dealii::Tensor<1, 3, double> dispAtom = temp[q] - atomLocation;
                   const double         dist     = dispAtom.norm();
                   vselfQuads[q][iSubCell]       = -atomCharge / dist;
                 }
@@ -288,10 +294,10 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
 
           if (!isCellOutsideVselfBall)
             {
-              Tensor<1, 3, double> &surfaceIntegral =
+              dealii::Tensor<1, 3, double> &surfaceIntegral =
                 surfaceIntegralSubcells[iSubCell];
 
-              const std::map<DoFHandler<3>::active_cell_iterator,
+              const std::map<dealii::DoFHandler<3>::active_cell_iterator,
                              std::vector<unsigned int>>
                 &cellsVselfBallSurfacesDofHandler =
                   d_cellFacesVselfBallSurfacesDofHandlerElectro[binIdiAtom];
@@ -316,9 +322,9 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                       for (unsigned int qPoint = 0; qPoint < numFaceQuadPoints;
                            ++qPoint)
                         {
-                          const Point<3> quadPoint =
+                          const dealii::Point<3> quadPoint =
                             feFaceValues.quadrature_point(qPoint);
-                          const Tensor<1, 3, double> dispClosestAtom =
+                          const dealii::Tensor<1, 3, double> dispClosestAtom =
                             quadPoint - atomLocation;
                           const double dist = dispClosestAtom.norm();
                           const double vselfFaceQuadExact = -atomCharge / dist;
@@ -360,7 +366,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         forceEval.submit_value(totalContribution[q], q);
 
-      Tensor<1, 3, VectorizedArray<double>>
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         forceContributionFPSPLocalGammaiAtomCells = forceEval.integrate_value();
 
       if (forceContributionFPSPLocalGammaAtoms.find(atomId) ==
@@ -431,3 +437,5 @@ forceClass<FEOrder, FEOrderElectro>::
         }
     }
 }
+#include "../force.inst.cc"
+} // namespace dftfe

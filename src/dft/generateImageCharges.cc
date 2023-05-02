@@ -24,6 +24,13 @@
 //
 // round a given fractional coordinate to zero or 1
 //
+#include<dft.h>
+#include <linearAlgebraOperations.h>
+#include <dftUtils.h>
+#include <vectorUtilities.h>
+
+namespace dftfe
+{
 
 namespace internaldft
 {
@@ -647,7 +654,7 @@ dftClass<FEOrder, FEOrderElectro>::createMasterChargeIdToImageIdMaps(
   tempDisp[2] = pspCutOff;
   for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
     {
-      Point<3> atomCoord;
+      dealii::Point<3> atomCoord;
       atomCoord[0] = atomLocations[iCharge][2];
       atomCoord[1] = atomLocations[iCharge][3];
       atomCoord[2] = atomLocations[iCharge][4];
@@ -660,13 +667,13 @@ dftClass<FEOrder, FEOrderElectro>::createMasterChargeIdToImageIdMaps(
       dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
       if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-          NeighborType::not_neighbors)
+          dealii::NeighborType::not_neighbors)
         globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
     }
 
   for (int iImage = 0; iImage < numImageCharges; ++iImage)
     {
-      Point<3> atomCoord;
+      dealii::Point<3> atomCoord;
       atomCoord[0] = imagePositions[iImage][0];
       atomCoord[1] = imagePositions[iImage][1];
       atomCoord[2] = imagePositions[iImage][2];
@@ -679,7 +686,7 @@ dftClass<FEOrder, FEOrderElectro>::createMasterChargeIdToImageIdMaps(
       dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
       if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-          NeighborType::not_neighbors)
+          dealii::NeighborType::not_neighbors)
         ;
       {
         //
@@ -694,4 +701,6 @@ dftClass<FEOrder, FEOrderElectro>::createMasterChargeIdToImageIdMaps(
           iImage + numberGlobalCharges);
       }
     }
+}
+#include "dft.inst.cc"
 }

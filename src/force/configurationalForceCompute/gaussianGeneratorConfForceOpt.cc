@@ -16,6 +16,15 @@
 //
 // @author Sambit Das(2017)
 //
+#include <force.h>
+#include <dftUtils.h>
+#include <vectorUtilities.h>
+#include <fileReaders.h>
+#include <dft.h>
+
+namespace dftfe
+{
+
 namespace atomsForcesUtils
 {
   extern "C"
@@ -37,8 +46,8 @@ namespace atomsForcesUtils
 
   std::vector<double>
   getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                           const Point<3> &           point,
-                           const Point<3> &           corner)
+                           const dealii::Point<3> &           point,
+                           const dealii::Point<3> &           corner)
   {
     //
     // recenter vertex about corner
@@ -72,7 +81,7 @@ namespace atomsForcesUtils
       {
         const std::string message(
           "LU solve in finding fractional coordinates failed.");
-        Assert(false, ExcMessage(message));
+        Assert(false, dealii::ExcMessage(message));
       }
     return recenteredPoint;
   }
@@ -388,7 +397,7 @@ void
 forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   bool allowGaussianOverlapOnAtoms)
 {
-  unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+  unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
   const std::vector<std::vector<double>> &atomLocations = dftPtr->atomLocations;
   const std::vector<std::vector<double>> &imagePositions =
     dftPtr->d_imagePositionsTrunc;
@@ -414,7 +423,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   std::vector<unsigned int>     nontrivialAtomChargeIds;
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      Point<3> atomCoor;
+      dealii::Point<3> atomCoor;
       int      atomId = iAtom;
       if (iAtom < numberGlobalAtoms)
         {
@@ -437,7 +446,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
       dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
       if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-          NeighborType::not_neighbors)
+          dealii::NeighborType::not_neighbors)
         {
           nontrivialAtomCoords.push_back(atomCoor);
           nontrivialAtomIds.push_back(iAtom);
@@ -453,7 +462,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
 #endif
   std::vector<bool> vertex_touched(
     d_dofHandlerForce.get_triangulation().n_vertices(), false);
-  DoFHandler<3>::active_cell_iterator cell = d_dofHandlerForce.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = d_dofHandlerForce.begin_active(),
                                       endc = d_dofHandlerForce.end();
   for (; cell != endc; ++cell)
     {
@@ -466,13 +475,13 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
               if (vertex_touched[global_vertex_no])
                 continue;
               vertex_touched[global_vertex_no] = true;
-              Point<3> nodalCoor               = cell->vertex(i);
+              dealii::Point<3> nodalCoor               = cell->vertex(i);
 
               int overlappedAtomId = -1;
               for (unsigned int jAtom = 0; jAtom < nontrivialAtomCoords.size();
                    jAtom++)
                 {
-                  const Point<3> &jAtomCoor = nontrivialAtomCoords[jAtom];
+                  const dealii::Point<3> &jAtomCoor = nontrivialAtomCoords[jAtom];
                   const double    distance  = (nodalCoor - jAtomCoor).norm();
                   if (distance < 1e-5)
                     {
@@ -487,7 +496,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                   if (overlappedAtomId != iAtom && overlappedAtomId != -1 &&
                       !allowGaussianOverlapOnAtoms)
                     continue;
-                  const Point<3> &atomCoor     = nontrivialAtomCoords[iAtom];
+                  const dealii::Point<3> &atomCoor     = nontrivialAtomCoords[iAtom];
                   const int       atomId       = nontrivialAtomIds[iAtom];
                   const int       atomChargeId = nontrivialAtomChargeIds[iAtom];
 
@@ -545,13 +554,13 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
             if (vertex_touched[global_vertex_no])
               continue;
             vertex_touched[global_vertex_no] = true;
-            Point<3> nodalCoor               = cell->vertex(i);
+            dealii::Point<3> nodalCoor               = cell->vertex(i);
 
             int overlappedAtomId = -1;
             for (unsigned int jAtom = 0; jAtom < nontrivialAtomCoords.size();
                  jAtom++)
               {
-                const Point<3> &jAtomCoor = nontrivialAtomCoords[jAtom];
+                const dealii::Point<3> &jAtomCoor = nontrivialAtomCoords[jAtom];
                 const double    distance  = (nodalCoor - jAtomCoor).norm();
                 if (distance < 1e-5)
                   {
@@ -567,7 +576,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                     !allowGaussianOverlapOnAtoms)
                   continue;
 
-                const Point<3> &atomCoor     = nontrivialAtomCoords[iAtom];
+                const dealii::Point<3> &atomCoor     = nontrivialAtomCoords[iAtom];
                 const int       atomId       = nontrivialAtomIds[iAtom];
                 const int       atomChargeId = nontrivialAtomChargeIds[iAtom];
 
@@ -745,3 +754,5 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
   if (d_dftParams.verbosity >= 1 && !d_dftParams.reproducible_output)
     dftUtils::writeDataIntoFile(forceData, "forces.txt", d_mpiCommParent);
 }
+#include "../force.inst.cc"
+} // namespace dftfe

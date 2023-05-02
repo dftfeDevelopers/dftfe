@@ -19,8 +19,13 @@
 
 #include <dftParameters.h>
 #include <linalg.h>
+#include <linearAlgebraOperations.h>
+#include <dft.h>
+#include <fileReaders.h>
+#include <pseudoUtils.h>
 
-#include "stdafx.h"
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -41,28 +46,28 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
   //
   // get FE data structures
   //
-  QIterated<3> quadrature(
-    QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()),
+  dealii::QIterated<3> quadrature(
+    dealii::QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()),
     1);
-  QIterated<3> quadratureHigh(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
+  dealii::QIterated<3> quadratureHigh(dealii::QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
                               C_numCopies1DQuadNLPSP());
 
-  //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3>        fe_values(FE,
+  //dealii::FEValues<3> fe_values(FE, quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE,
                         quadratureHigh,
-                        update_values | update_JxW_values |
-                          update_quadrature_points);
+                        dealii::update_values | dealii::update_JxW_values |
+                          dealii::update_quadrature_points);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadratureHigh.size();
 
-  std::map<DoFHandler<3>::active_cell_iterator, std::vector<double>>
+  std::map<dealii::DoFHandler<3>::active_cell_iterator, std::vector<double>>
                       cellIteratorQuadPointsMap;
   std::vector<double> shapeValQuads(numberQuadraturePoints *
                                     numberNodesPerElement);
-  std::map<DoFHandler<3>::active_cell_iterator, std::vector<double>>
+  std::map<dealii::DoFHandler<3>::active_cell_iterator, std::vector<double>>
     cellIteratorJxWQuadsMap;
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                       endc = dofHandler.end();
   int iElem                                = 0;
   for (; cell != endc; ++cell)
@@ -158,7 +163,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
 
       AssertThrow(
         numberElementsInAtomCompactSupport > 0,
-        ExcMessage(
+        dealii::ExcMessage(
           "DFT-FE Error: number of elements in psp atom compact support must be greater than 0 for non-trivial marked atoms in the local partition"));
 
       d_atomIdToNonTrivialPseudoWfcsCellStartIndexZetaDeltaVQuads[iAtom] =
@@ -275,7 +280,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
         d_nonLocalAtomGlobalChargeIds[iAtom];
 
 
-      Point<3> nuclearCoordinates(atomLocations[globalChargeIdNonLocalAtom][2],
+      dealii::Point<3> nuclearCoordinates(atomLocations[globalChargeIdNonLocalAtom][2],
                                   atomLocations[globalChargeIdNonLocalAtom][3],
                                   atomLocations[globalChargeIdNonLocalAtom][4]);
 
@@ -398,7 +403,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
                   // d_nuclearContainer.getGlobalPoint(chargeId,meshId):
                   // d_nuclearContainer.getImagePoint(chargeId-numberGlobalCharges,meshId);
 
-                  Point<3> chargePoint(0.0, 0.0, 0.0);
+                  dealii::Point<3> chargePoint(0.0, 0.0, 0.0);
 
                   if (chargeId < numberGlobalCharges)
                     {
@@ -1240,18 +1245,18 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
   //
   // dealii::FESystem<3> FETemp(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)),
   // 1);
-  QGauss<3> quadrature(8);
-  //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3>        fe_values(dofHandler.get_fe(),
+  dealii::QGauss<3> quadrature(8);
+  //dealii::FEValues<3> fe_values(FE, quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
+  dealii::FEValues<3>        fe_values(dofHandler.get_fe(),
                         quadrature,
-                        update_quadrature_points);
+                        dealii::update_quadrature_points);
   const unsigned int numberQuadraturePoints = quadrature.size();
   // const unsigned int numberElements         =
   // triangulation.n_locally_owned_active_cells();
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
 
-  std::map<DoFHandler<3>::active_cell_iterator, std::vector<double>>
+  std::map<dealii::DoFHandler<3>::active_cell_iterator, std::vector<double>>
     cellIteratorQuadPointsMap;
 
   int iElemCount = 0;
@@ -1315,7 +1320,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
           //
           cell = dofHandler.begin_active();
           endc = dofHandler.end();
-          typename DoFHandler<3>::active_cell_iterator cellEigen =
+          typename dealii::DoFHandler<3>::active_cell_iterator cellEigen =
             dofHandlerEigen.begin_active();
 
           int iElem = -1;
@@ -1338,7 +1343,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
                   {
                     const int chargeId = imageIdsList[iImageAtomCount];
                     std::vector<double> x(3, 0.0);
-                    Point<3>            chargePoint(0.0, 0.0, 0.0);
+                    dealii::Point<3>            chargePoint(0.0, 0.0, 0.0);
 
                     if (chargeId < numberGlobalCharges)
                       {
@@ -1499,18 +1504,18 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
     }
   nonLocalAtomIdsAllProcessFlattened.clear();
 
-  IndexSet nonLocalOwnedAtomIdsInCurrentProcess;
+  dealii::IndexSet nonLocalOwnedAtomIdsInCurrentProcess;
   nonLocalOwnedAtomIdsInCurrentProcess.set_size(numberNonLocalAtoms);
   nonLocalOwnedAtomIdsInCurrentProcess.add_indices(
     d_nonLocalAtomIdsInCurrentProcess.begin(),
     d_nonLocalAtomIdsInCurrentProcess.end());
-  IndexSet nonLocalGhostAtomIdsInCurrentProcess(
+  dealii::IndexSet nonLocalGhostAtomIdsInCurrentProcess(
     nonLocalOwnedAtomIdsInCurrentProcess);
   for (unsigned int iProc = 0; iProc < n_mpi_processes; iProc++)
     {
       if (iProc < this_mpi_process)
         {
-          IndexSet temp;
+          dealii::IndexSet temp;
           temp.set_size(numberNonLocalAtoms);
           temp.add_indices(nonLocalAtomIdsInAllProcess[iProc].begin(),
                            nonLocalAtomIdsInAllProcess[iProc].end());
@@ -1541,11 +1546,11 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
         }
     }
 
-  IndexSet nonLocalOwnedAtomIdsInCurrentProcessRenum,
+  dealii::IndexSet nonLocalOwnedAtomIdsInCurrentProcessRenum,
     nonLocalGhostAtomIdsInCurrentProcessRenum;
   nonLocalOwnedAtomIdsInCurrentProcessRenum.set_size(numberNonLocalAtoms);
   nonLocalGhostAtomIdsInCurrentProcessRenum.set_size(numberNonLocalAtoms);
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalOwnedAtomIdsInCurrentProcess.begin();
        it != nonLocalOwnedAtomIdsInCurrentProcess.end();
        it++)
@@ -1563,7 +1568,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
                                     n_mpi_processes,
                                     mpi_communicator);
 
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalGhostAtomIdsInCurrentProcess.begin();
        it != nonLocalGhostAtomIdsInCurrentProcess.end();
        it++)
@@ -1613,13 +1618,13 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
   AssertThrow(
     nonLocalOwnedAtomIdsInCurrentProcessRenum.is_ascending_and_one_to_one(
       mpi_communicator),
-    ExcMessage(
+    dealii::ExcMessage(
       "Incorrect renumbering and/or partitioning of non local atom ids"));
 
   int                       numberLocallyOwnedProjectors = 0;
   int                       numberGhostProjectors        = 0;
   std::vector<unsigned int> coarseNodeIdsCurrentProcess;
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalOwnedAtomIdsInCurrentProcessRenum.begin();
        it != nonLocalOwnedAtomIdsInCurrentProcessRenum.end();
        it++)
@@ -1630,7 +1635,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
     }
 
   std::vector<unsigned int> ghostAtomIdNumberPseudoWaveFunctions;
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalGhostAtomIdsInCurrentProcessRenum.begin();
        it != nonLocalGhostAtomIdsInCurrentProcessRenum.end();
        it++)
@@ -1681,7 +1686,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
                     numberLocallyOwnedProjectorsAllProcess.end(),
                     0));
   unsigned int localGhostCount = 0;
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalGhostAtomIdsInCurrentProcessRenum.begin();
        it != nonLocalGhostAtomIdsInCurrentProcessRenum.end();
        it++)
@@ -1708,12 +1713,12 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
   AssertThrow(
     d_locallyOwnedProjectorIdsCurrentProcess.is_ascending_and_one_to_one(
       mpi_communicator),
-    ExcMessage(
+    dealii::ExcMessage(
       "Incorrect numbering and/or partitioning of non local projectors"));
 
   d_projectorIdsNumberingMapCurrentProcess.clear();
 
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalOwnedAtomIdsInCurrentProcess.begin();
        it != nonLocalOwnedAtomIdsInCurrentProcess.end();
        it++)
@@ -1728,7 +1733,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
         }
     }
 
-  for (IndexSet::ElementIterator it =
+  for (dealii::IndexSet::ElementIterator it =
          nonLocalGhostAtomIdsInCurrentProcess.begin();
        it != nonLocalGhostAtomIdsInCurrentProcess.end();
        it++)
@@ -1770,4 +1775,6 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
   vec.update_ghost_values();
   d_projectorKetTimesVectorPar.resize(1);
   d_projectorKetTimesVectorPar[0].reinit(vec);
+}
+#include "dft.inst.cc"
 }

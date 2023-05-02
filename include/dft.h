@@ -58,6 +58,7 @@
 #include <excWavefunctionBaseClass.h>
 #include <excManager.h>
 #include <dftd.h>
+#include <force.h>
 #include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
@@ -72,7 +73,7 @@ namespace dftfe
   //
   // Initialize Namespace
   //
-  using namespace dealii;
+  // using namespace dealii;
 
 
 
@@ -298,7 +299,7 @@ namespace dftfe
     /**
      *@brief Get matrix free data object
      */
-    const MatrixFree<3, double> &
+    const dealii::MatrixFree<3, double> &
     getMatrixFreeData() const;
 
 
@@ -319,7 +320,7 @@ namespace dftfe
      */
     void
     updateAtomPositionsAndMoveMesh(
-      const std::vector<Tensor<1, 3, double>> &globalAtomsDisplacements,
+      const std::vector<dealii::Tensor<1, 3, double>> &globalAtomsDisplacements,
       const double                             maxJacobianRatioFactor = 1.25,
       const bool useSingleAtomSolutionsOverride                       = false);
 
@@ -387,7 +388,7 @@ namespace dftfe
     /**
      * @brief Gets the current cell stress from dftClass
      */
-    Tensor<2, 3, double>
+    dealii::Tensor<2, 3, double>
     getCellStress() const;
 
     /**
@@ -472,8 +473,8 @@ namespace dftfe
     /**
      *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
      */
-    void moveMeshToAtoms(Triangulation<3, 3> &triangulationMove,
-                         Triangulation<3, 3> &triangulationSerial,
+    void moveMeshToAtoms(dealii::Triangulation<3, 3> &triangulationMove,
+                         dealii::Triangulation<3, 3> &triangulationSerial,
                          bool                 reuseFlag      = false,
                          bool                 moveSubdivided = false);
 
@@ -498,7 +499,7 @@ namespace dftfe
      * Poisson problem electro-static potential is set here
      */
     void initUnmovedTriangulation(
-      parallel::distributed::Triangulation<3> &triangulation);
+      dealii::parallel::distributed::Triangulation<3> &triangulation);
     void
     initBoundaryConditions(const bool meshOnlyDeformed                 = false,
                            const bool vselfPerturbationUpdateForStress = false);
@@ -513,7 +514,7 @@ namespace dftfe
      * initialize various objects related to this refined dofHandler
      */
     void createpRefinedDofHandler(
-      parallel::distributed::Triangulation<3> &triangulation);
+      dealii::parallel::distributed::Triangulation<3> &triangulation);
     void
     initpRefinedObjects(const bool meshOnlyDeformed,
                         const bool vselfPerturbationUpdateForStress = false);
@@ -717,12 +718,12 @@ namespace dftfe
                  unsigned int &flag);
     void
     initLocalPseudoPotential(
-      const DoFHandler<3> &                    _dofHandler,
+      const dealii::DoFHandler<3> &                    _dofHandler,
       const unsigned int                       lpspQuadratureId,
       const dealii::MatrixFree<3, double> &    _matrix_free_data,
       const unsigned int                       _phiExtDofHandlerIndex,
       const dealii::AffineConstraints<double> &phiExtConstraintMatrix,
-      const std::map<dealii::types::global_dof_index, Point<3>> &supportPoints,
+      const std::map<dealii::types::global_dof_index, dealii::Point<3>> &supportPoints,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinManager,
       distributedCPUVec<double> &                      phiExt,
       std::map<dealii::CellId, std::vector<double>> &  _pseudoValues,
@@ -994,7 +995,7 @@ namespace dftfe
      * dftClass datastructures.
      */
     void
-    deformDomain(const Tensor<2, 3, double> &deformationGradient,
+    deformDomain(const dealii::Tensor<2, 3, double> &deformationGradient,
                  const bool vselfPerturbationUpdateForStress = false,
                  const bool useSingleAtomSolutionsOverride   = false,
                  const bool print                            = true);
@@ -1046,7 +1047,7 @@ namespace dftfe
     std::vector<std::vector<double>> d_imagePositionsAutoMesh;
 
     /// Gaussian displacements of atoms read from file
-    std::vector<Tensor<1, 3, double>> d_atomsDisplacementsGaussianRead;
+    std::vector<dealii::Tensor<1, 3, double>> d_atomsDisplacementsGaussianRead;
 
     ///
     std::vector<double> d_netFloatingDispSinceLastBinsUpdate;
@@ -1189,8 +1190,8 @@ namespace dftfe
     /// meshMovementGaussianClass object
     meshMovementGaussianClass d_gaussianMovePar;
 
-    std::vector<Tensor<1, 3, double>> d_gaussianMovementAtomsNetDisplacements;
-    std::vector<Point<3>>             d_controlPointLocationsCurrentMove;
+    std::vector<dealii::Tensor<1, 3, double>> d_gaussianMovementAtomsNetDisplacements;
+    std::vector<dealii::Point<3>>             d_controlPointLocationsCurrentMove;
 
     /// volume of the domain
     double d_domainVolume;
@@ -1201,8 +1202,8 @@ namespace dftfe
     /**
      * dealii based FE data structres
      */
-    FESystem<3>   FE, FEEigen;
-    DoFHandler<3> dofHandler, dofHandlerEigen, d_dofHandlerPRefined,
+    dealii::FESystem<3>   FE, FEEigen;
+    dealii::DoFHandler<3> dofHandler, dofHandlerEigen, d_dofHandlerPRefined,
       d_dofHandlerRhoNodal;
     unsigned int d_eigenDofHandlerIndex, d_phiExtDofHandlerIndexElectro,
       d_forceDofHandlerIndex;
@@ -1222,8 +1223,8 @@ namespace dftfe
     unsigned int          d_binsStartDofHandlerIndexElectro;
     unsigned int          d_densityQuadratureId;
     unsigned int          d_densityQuadratureIdElectro;
-    MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
-    std::map<dealii::types::global_dof_index, Point<3>> d_supportPoints,
+    dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
+    std::map<dealii::types::global_dof_index, dealii::Point<3>> d_supportPoints,
       d_supportPointsPRefined, d_supportPointsEigen;
     std::vector<const dealii::AffineConstraints<double> *> d_constraintsVector;
     std::vector<const dealii::AffineConstraints<double> *>
@@ -1241,8 +1242,8 @@ namespace dftfe
     const MPI_Comm     interBandGroupComm;
     const unsigned int n_mpi_processes;
     const unsigned int this_mpi_process;
-    IndexSet           locally_owned_dofs, locally_owned_dofsEigen;
-    IndexSet           locally_relevant_dofs, locally_relevant_dofsEigen,
+    dealii::IndexSet           locally_owned_dofs, locally_owned_dofsEigen;
+    dealii::IndexSet           locally_relevant_dofs, locally_relevant_dofsEigen,
       d_locallyRelevantDofsPRefined, d_locallyRelevantDofsRhoNodal;
     std::vector<dealii::types::global_dof_index> local_dof_indicesReal,
       local_dof_indicesImag;
@@ -1356,11 +1357,11 @@ namespace dftfe
 #endif
 
     /// parallel message stream
-    ConditionalOStream pcout;
+    dealii::ConditionalOStream pcout;
 
     /// compute-time logger
-    TimerOutput computing_timer;
-    TimerOutput computingTimerStandard;
+    dealii::TimerOutput computing_timer;
+    dealii::TimerOutput computingTimerStandard;
 
     /// A plain global timer to track only the total elapsed time after every
     /// ground-state solve
@@ -1506,15 +1507,15 @@ namespace dftfe
     // projector matrices
     //
     std::map<unsigned int, std::vector<int>> d_sparsityPattern;
-    std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
+    std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
                                            d_elementIteratorsInAtomCompactSupport;
     std::vector<std::vector<unsigned int>> d_elementIdsInAtomCompactSupport;
-    std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
+    std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
                                   d_elementOneFieldIteratorsInAtomCompactSupport;
     std::vector<std::vector<int>> d_nonLocalAtomIdsInElement;
     std::vector<unsigned int>     d_nonLocalAtomIdsInCurrentProcess;
-    IndexSet                      d_locallyOwnedProjectorIdsCurrentProcess;
-    IndexSet                      d_ghostProjectorIdsCurrentProcess;
+    dealii::IndexSet                      d_locallyOwnedProjectorIdsCurrentProcess;
+    dealii::IndexSet                      d_ghostProjectorIdsCurrentProcess;
     std::map<std::pair<unsigned int, unsigned int>, unsigned int>
       d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
@@ -1656,8 +1657,8 @@ namespace dftfe
     std::vector<double> d_kPointWeights;
 
     /// closest tria vertex
-    std::vector<Point<3>>             d_closestTriaVertexToAtomsLocation;
-    std::vector<Tensor<1, 3, double>> d_dispClosestTriaVerticesToAtoms;
+    std::vector<dealii::Point<3>>             d_closestTriaVertexToAtomsLocation;
+    std::vector<dealii::Tensor<1, 3, double>> d_dispClosestTriaVerticesToAtoms;
 
     /// global k index of lower bound of the local k point set
     unsigned int lowerBoundKindex = 0;

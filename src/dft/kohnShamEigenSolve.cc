@@ -18,6 +18,12 @@
 //
 #include <complex>
 #include <vector>
+#include <dft.h>
+#include <linearAlgebraOperations.h>
+#include <densityCalculatorCPU.h>
+
+namespace dftfe
+{
 
 namespace internal
 {
@@ -1013,6 +1019,8 @@ dftClass<FEOrder, FEOrderElectro>::
         }
     }
   maxHighestOccupiedStateResNorm =
-    Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
+    dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
   return maxHighestOccupiedStateResNorm;
+}
+#include "dft.inst.cc"
 }

@@ -24,54 +24,54 @@ namespace dftfe
 {
   namespace eshelbyTensor
   {
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getPhiExtEshelbyTensor(
-      const VectorizedArray<double> &              phiExt,
-      const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt)
+      const dealii::VectorizedArray<double> &              phiExt,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiExt)
     {
-      Tensor<2, 3, VectorizedArray<double>> identityTensor;
-      identityTensor[0][0] = make_vectorized_array(1.0);
-      identityTensor[1][1] = make_vectorized_array(1.0);
-      identityTensor[2][2] = make_vectorized_array(1.0);
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> identityTensor;
+      identityTensor[0][0] = dealii::make_vectorized_array(1.0);
+      identityTensor[1][1] = dealii::make_vectorized_array(1.0);
+      identityTensor[2][2] = dealii::make_vectorized_array(1.0);
 
 
 
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
-        make_vectorized_array(1.0 / (4.0 * M_PI)) *
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
+        dealii::make_vectorized_array(1.0 / (4.0 * M_PI)) *
           outer_product(gradPhiExt, gradPhiExt) -
-        make_vectorized_array(1.0 / (8.0 * M_PI)) *
+        dealii::make_vectorized_array(1.0 / (8.0 * M_PI)) *
           scalar_product(gradPhiExt, gradPhiExt) * identityTensor;
 
       return eshelbyTensor;
     }
 
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getVselfBallEshelbyTensor(
-      const Tensor<1, 3, VectorizedArray<double>> &gradVself)
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradVself)
     {
-      Tensor<2, 3, VectorizedArray<double>> identityTensor;
-      identityTensor[0][0] = make_vectorized_array(1.0);
-      identityTensor[1][1] = make_vectorized_array(1.0);
-      identityTensor[2][2] = make_vectorized_array(1.0);
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> identityTensor;
+      identityTensor[0][0] = dealii::make_vectorized_array(1.0);
+      identityTensor[1][1] = dealii::make_vectorized_array(1.0);
+      identityTensor[2][2] = dealii::make_vectorized_array(1.0);
 
 
 
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
-        make_vectorized_array(1.0 / (8.0 * M_PI)) *
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
+        dealii::make_vectorized_array(1.0 / (8.0 * M_PI)) *
           scalar_product(gradVself, gradVself) * identityTensor -
-        make_vectorized_array(1.0 / (4.0 * M_PI)) *
+        dealii::make_vectorized_array(1.0 / (4.0 * M_PI)) *
           outer_product(gradVself, gradVself);
 
       return eshelbyTensor;
     }
 
 
-    Tensor<2, 3, double>
-    getVselfBallEshelbyTensor(const Tensor<1, 3, double> &gradVself)
+    dealii::Tensor<2, 3, double>
+    getVselfBallEshelbyTensor(const dealii::Tensor<1, 3, double> &gradVself)
     {
       double identityTensorFactor =
         1.0 / (8.0 * M_PI) * scalar_product(gradVself, gradVself);
-      Tensor<2, 3, double> eshelbyTensor =
+      dealii::Tensor<2, 3, double> eshelbyTensor =
         -1.0 / (4.0 * M_PI) * outer_product(gradVself, gradVself);
 
       eshelbyTensor[0][0] += identityTensorFactor;
@@ -82,17 +82,17 @@ namespace dftfe
     }
 
 
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getEElectroEshelbyTensor(
-      const VectorizedArray<double> &              phiTot,
-      const Tensor<1, 3, VectorizedArray<double>> &gradPhiTot,
-      const VectorizedArray<double> &              rho)
+      const dealii::VectorizedArray<double> &              phiTot,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiTot,
+      const dealii::VectorizedArray<double> &              rho)
     {
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
-        make_vectorized_array(1.0 / (4.0 * M_PI)) *
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
+        dealii::make_vectorized_array(1.0 / (4.0 * M_PI)) *
         outer_product(gradPhiTot, gradPhiTot);
-      VectorizedArray<double> identityTensorFactor =
-        make_vectorized_array(-1.0 / (8.0 * M_PI)) *
+      dealii::VectorizedArray<double> identityTensorFactor =
+        dealii::make_vectorized_array(-1.0 / (8.0 * M_PI)) *
           scalar_product(gradPhiTot, gradPhiTot) +
         rho * phiTot;
 
@@ -102,16 +102,16 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const VectorizedArray<double> &              rho,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRho,
-      const VectorizedArray<double> &              exc,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho)
+      const dealii::VectorizedArray<double> &              rho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
+      const dealii::VectorizedArray<double> &              exc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRho)
     {
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(gradRho, derExcGradRho);
-      VectorizedArray<double> identityTensorFactor = exc * rho;
+      dealii::VectorizedArray<double> identityTensorFactor = exc * rho;
 
 
       eshelbyTensor[0][0] += identityTensorFactor;
@@ -120,23 +120,23 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getShadowPotentialForceRhoDiffXcEshelbyTensor(
-      const VectorizedArray<double> &shadowKSRhoMinMinusRho,
-      const Tensor<1, 3, VectorizedArray<double>>
+      const dealii::VectorizedArray<double> &shadowKSRhoMinMinusRho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         &shadowKSGradRhoMinMinusGradRho,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRho,
-      const VectorizedArray<double> &              vxc,
-      const Tensor<1, 3, VectorizedArray<double>> &derVxcGradRho,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho,
-      const Tensor<2, 3, VectorizedArray<double>> &der2ExcGradRho)
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
+      const dealii::VectorizedArray<double> &              vxc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derVxcGradRho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRho,
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>> &der2ExcGradRho)
     {
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(derVxcGradRho, gradRho) * shadowKSRhoMinMinusRho -
         outer_product(shadowKSGradRhoMinMinusGradRho * der2ExcGradRho,
                       gradRho) -
         outer_product(derExcGradRho, shadowKSGradRhoMinMinusGradRho);
-      VectorizedArray<double> identityTensorFactor =
+      dealii::VectorizedArray<double> identityTensorFactor =
         vxc * shadowKSRhoMinMinusRho +
         scalar_product(derExcGradRho, shadowKSGradRhoMinMinusGradRho);
 
@@ -147,13 +147,13 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, 3, VectorizedArray<double>>
-    getELocPspEshelbyTensor(const VectorizedArray<double> &rho,
-                            const VectorizedArray<double> &pseudoVLoc,
-                            const VectorizedArray<double> &phiExt)
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
+    getELocPspEshelbyTensor(const dealii::VectorizedArray<double> &rho,
+                            const dealii::VectorizedArray<double> &pseudoVLoc,
+                            const dealii::VectorizedArray<double> &phiExt)
     {
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
-      VectorizedArray<double>               identityTensorFactor =
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor;
+      dealii::VectorizedArray<double>               identityTensorFactor =
         (pseudoVLoc - phiExt) * rho;
 
 
@@ -165,36 +165,36 @@ namespace dftfe
 
 
 
-    Tensor<1, 3, VectorizedArray<double>>
-    getFPSPLocal(const VectorizedArray<double>                rho,
-                 const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
-                 const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt)
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+    getFPSPLocal(const dealii::VectorizedArray<double>                rho,
+                 const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPseudoVLoc,
+                 const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradPhiExt)
 
     {
       return rho * (gradPseudoVLoc - gradPhiExt);
     }
 
 
-    Tensor<1, 3, VectorizedArray<double>>
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const VectorizedArray<double> &              vxc,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoCore)
+      const dealii::VectorizedArray<double> &              vxc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoCore)
 
     {
       return vxc * gradRhoCore;
     }
 
 
-    Tensor<1, 3, VectorizedArray<double>>
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho,
-      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoCore)
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &derExcGradRho,
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>> &hessianRhoCore)
 
     {
-      Tensor<1, 3, VectorizedArray<double>> temp;
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>> temp;
       for (unsigned int i = 0; i < 3; i++)
         {
-          temp[i] = make_vectorized_array(0.0);
+          temp[i] = dealii::make_vectorized_array(0.0);
           for (unsigned int j = 0; j < 3; j++)
             temp[i] += derExcGradRho[j] * hessianRhoCore[j][i];
         }

@@ -59,7 +59,7 @@ namespace dftfe
           {
             AssertThrow(
               false,
-              ExcMessage(
+              dealii::ExcMessage(
                 "DFT-FE Error: Cannot open checkpoint file- serialUnmovedTria.chk or read the triangulation stored there."));
           }
       }
@@ -89,7 +89,7 @@ namespace dftfe
         dealii::FESystem<3> FE(dealii::FE_Q<3>(
                                  dealii::QGaussLobatto<1>(feOrder + 1)),
                                nComponents); // linear shape function
-        DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
+        dealii::DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
         dofHandler.distribute_dofs(FE);
 
         dealii::parallel::distributed::
@@ -133,14 +133,14 @@ namespace dftfe
       {
         AssertThrow(
           false,
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: Cannot open checkpoint file- parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
       }
 
     dealii::FESystem<3> FE(dealii::FE_Q<3>(
                              dealii::QGaussLobatto<1>(feOrder + 1)),
                            nComponents); // linear shape function
-    DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
+    dealii::DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
     dofHandler.distribute_dofs(FE);
     dealii::parallel::distributed::
       SolutionTransfer<3, typename dftfe::distributedCPUVec<double>>
@@ -282,7 +282,7 @@ namespace dftfe
        }
        catch (...)
        {
-       AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file-
+       AssertThrow(false, dealii::ExcMessage("DFT-FE Error: Cannot open checkpoint file-
     parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
        }
 

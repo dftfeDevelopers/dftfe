@@ -16,6 +16,10 @@
 //
 // @author  Sambit Das
 //
+#include<dft.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -70,4 +74,5 @@ dftClass<FEOrder, FEOrderElectro>::applyHomogeneousDirichletBC(
               }         // non-periodic boundary id
           }             // Face loop
       }                 // cell locally owned
+}
 }

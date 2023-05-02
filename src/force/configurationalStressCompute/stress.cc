@@ -16,11 +16,16 @@
 //
 // @author Sambit Das(2018)
 //
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeStress(
-  const MatrixFree<3, double> &matrixFreeData,
+  const dealii::MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperatorDevice,
@@ -30,7 +35,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   const unsigned int                                 eigenDofHandlerIndex,
   const unsigned int                                 smearedChargeQuadratureId,
   const unsigned int                                 lpspQuadratureIdElectro,
-  const MatrixFree<3, double> &                      matrixFreeDataElectro,
+  const dealii::MatrixFree<3, double> &                      matrixFreeDataElectro,
   const unsigned int               phiTotDofHandlerIndexElectro,
   const distributedCPUVec<double> &phiTotRhoOutElectro,
   const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -116,16 +121,16 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
                        smearedChargeQuadratureId);
 
   // Sum all processor contributions and distribute to all processors
-  d_stress = Utilities::MPI::sum(d_stress, mpi_communicator);
-  d_stress = Utilities::MPI::sum(d_stress, dftPtr->interBandGroupComm);
-  d_stress = Utilities::MPI::sum(d_stress, dftPtr->interpoolcomm);
+  d_stress = dealii::Utilities::MPI::sum(d_stress, mpi_communicator);
+  d_stress = dealii::Utilities::MPI::sum(d_stress, dftPtr->interBandGroupComm);
+  d_stress = dealii::Utilities::MPI::sum(d_stress, dftPtr->interpoolcomm);
 
   // Sum k point stress contribution over all processors
   // and k point pools and add to total stress
-  d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, mpi_communicator);
+  d_stressKPoints = dealii::Utilities::MPI::sum(d_stressKPoints, mpi_communicator);
   d_stressKPoints =
-    Utilities::MPI::sum(d_stressKPoints, dftPtr->interBandGroupComm);
-  d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
+    dealii::Utilities::MPI::sum(d_stressKPoints, dftPtr->interBandGroupComm);
+  d_stressKPoints = dealii::Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
   d_stress += d_stressKPoints;
 
   if (d_dftParams.dc_dispersioncorrectiontype != 0)
@@ -184,3 +189,5 @@ forceClass<FEOrder, FEOrderElectro>::printStress()
         << std::endl;
     }
 }
+#include "../force.inst.cc"
+} // namespace dftfe

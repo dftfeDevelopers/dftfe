@@ -26,7 +26,14 @@
 //============================================================================================================================================
 //
 #include <dftParameters.h>
+#include <dft.h>
+#include <fileReaders.h>
+#include <symmetry.h>
+#include <spglib.h>
+
 //
+namespace dftfe
+{
 namespace internaldft
 {
   //============================================================================================================================================
@@ -216,10 +223,10 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   //
   AssertThrow(
     maxkPoints >= d_dftParamsPtr->npool,
-    ExcMessage(
+    dealii::ExcMessage(
       "Number of k-points should be higher than or equal to number of pools"));
   const unsigned int this_mpi_pool(
-    Utilities::MPI::this_mpi_process(interpoolcomm));
+    dealii::Utilities::MPI::this_mpi_process(interpoolcomm));
   std::vector<double> d_kPointCoordinatesGlobal(3 * maxkPoints, 0.0);
   std::vector<double> d_kPointWeightsGlobal(maxkPoints, 0.0);
   std::vector<double> kPointReducedCoordinatesGlobal(3 * maxkPoints, 0.0);
@@ -720,10 +727,10 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
   //=============================================================================================================================================
   AssertThrow(
     maxkPoints >= d_dftParamsPtr->npool,
-    ExcMessage(
+    dealii::ExcMessage(
       "Number of k-points should be higher than or equal to number of pools"));
   const unsigned int this_mpi_pool(
-    Utilities::MPI::this_mpi_process(interpoolcomm));
+    dealii::Utilities::MPI::this_mpi_process(interpoolcomm));
   std::vector<double> d_kPointCoordinatesGlobal(3 * maxkPoints, 0.0);
   std::vector<double> d_kPointWeightsGlobal(maxkPoints, 0.0);
   std::vector<double> kPointReducedCoordinatesGlobal(3 * maxkPoints, 0.0);
@@ -819,4 +826,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                0,
                interpoolcomm);
   //
+}
+// #include "dft.inst.cc"
+
 }

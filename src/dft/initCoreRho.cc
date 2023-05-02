@@ -21,6 +21,11 @@
 // Initialize rho by reading in single-atom electron-density and fit a spline
 //
 #include <dftParameters.h>
+#include<dft.h>
+#include <fileReaders.h>
+
+namespace dftfe
+{
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -126,9 +131,9 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
   //
   // Initialize rho
   //
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3> fe_values(FE, quadrature_formula, update_quadrature_points);
+  dealii::FEValues<3> fe_values(FE, quadrature_formula, dealii::update_quadrature_points);
   const unsigned int n_q_points = quadrature_formula.size();
 
   //
@@ -144,13 +149,13 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
   //
   // loop over elements
   //
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
-  Tensor<1, 3, double> zeroTensor1;
+  dealii::Tensor<1, 3, double> zeroTensor1;
   for (unsigned int i = 0; i < 3; i++)
     zeroTensor1[i] = 0.0;
 
-  Tensor<2, 3, double> zeroTensor2;
+  dealii::Tensor<2, 3, double> zeroTensor2;
 
   for (unsigned int i = 0; i < 3; i++)
     for (unsigned int j = 0; j < 3; j++)
@@ -178,16 +183,16 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
               densityFamilyType::GGA)
             hessianRhoCoreQuadValues.resize(n_q_points * 9, 0.0);
 
-          std::vector<Tensor<1, 3, double>> gradRhoCoreAtom(n_q_points,
+          std::vector<dealii::Tensor<1, 3, double>> gradRhoCoreAtom(n_q_points,
                                                             zeroTensor1);
-          std::vector<Tensor<2, 3, double>> hessianRhoCoreAtom(n_q_points,
+          std::vector<dealii::Tensor<2, 3, double>> hessianRhoCoreAtom(n_q_points,
                                                                zeroTensor2);
 
 
           // loop over atoms
           for (unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
             {
-              Point<3> atom(atomLocations[iAtom][2],
+              dealii::Point<3> atom(atomLocations[iAtom][2],
                             atomLocations[iAtom][3],
                             atomLocations[iAtom][4]);
               bool     isCoreRhoDataInCell = false;
@@ -201,8 +206,8 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
               // loop over quad points
               for (unsigned int q = 0; q < n_q_points; ++q)
                 {
-                  Point<3> quadPoint        = fe_values.quadrature_point(q);
-                  Tensor<1, 3, double> diff = quadPoint - atom;
+                  dealii::Point<3> quadPoint        = fe_values.quadrature_point(q);
+                  dealii::Tensor<1, 3, double> diff = quadPoint - atom;
                   double distanceToAtom     = quadPoint.distance(atom);
 
                   if (d_dftParamsPtr->floatingNuclearCharges &&
@@ -315,7 +320,7 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
               if (atomTypeNLCCFlagMap[atomLocations[masterAtomId][0]] == 0)
                 continue;
 
-              Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+              dealii::Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
                                  d_imagePositionsTrunc[iImageCharge][1],
                                  d_imagePositionsTrunc[iImageCharge][2]);
 
@@ -327,8 +332,8 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
               // loop over quad points
               for (unsigned int q = 0; q < n_q_points; ++q)
                 {
-                  Point<3> quadPoint        = fe_values.quadrature_point(q);
-                  Tensor<1, 3, double> diff = quadPoint - imageAtom;
+                  dealii::Point<3> quadPoint        = fe_values.quadrature_point(q);
+                  dealii::Tensor<1, 3, double> diff = quadPoint - imageAtom;
                   double distanceToAtom     = quadPoint.distance(imageAtom);
 
                   if (d_dftParamsPtr->floatingNuclearCharges &&
@@ -433,4 +438,6 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
         } // cell locally owned check
 
     } // cell loop
+}
+#include "dft.inst.cc"
 }

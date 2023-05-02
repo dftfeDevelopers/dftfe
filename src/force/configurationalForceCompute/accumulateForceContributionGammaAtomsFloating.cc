@@ -16,6 +16,11 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -47,3 +52,5 @@ forceClass<FEOrder, FEOrderElectro>::
           forceContributionLocalGammaiAtomGlobal[idim];
     }
 }
+#include "../force.inst.cc"
+} // namespace dftfe

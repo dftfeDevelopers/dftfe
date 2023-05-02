@@ -16,6 +16,16 @@
 //
 // @author Phani Motamarri
 //
+#include<dft.h>
+#include <fileReaders.h>
+#include <vectorUtilities.h>
+#include <sys/stat.h>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/random/normal_distribution.hpp>
+
+namespace dftfe
+{
 
 void
 loadSingleAtomPSIFiles(
@@ -88,7 +98,7 @@ loadSingleAtomPSIFiles(
       unsigned int truncRowId          = 0;
       if (!dftParams.reproducible_output)
         {
-          if (Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
+          if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
             std::cout << "reading data from file: " << psiFile << std::endl;
         }
 
@@ -283,7 +293,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
   unsigned int numberGlobalAtoms = atomLocations.size();
 
   // map each cell to an atom based on closest atom to the centroid of each cell
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   std::map<dealii::CellId, unsigned int> cellToAtomIdMap;
   for (; cell != endc; ++cell)
@@ -294,11 +304,11 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
 
           // loop over all atoms
           double       distanceToClosestAtom = 1e8;
-          Point<3>     closestAtom;
+          dealii::Point<3>     closestAtom;
           unsigned int closestAtomId;
           for (unsigned int n = 0; n < atomLocations.size(); n++)
             {
-              Point<3> atom(atomLocations[n][2],
+              dealii::Point<3> atom(atomLocations[n][2],
                             atomLocations[n][3],
                             atomLocations[n][4]);
               if (center.distance(atom) < distanceToClosestAtom)
@@ -322,10 +332,10 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
     }
 
   // access finite-element data
-  QGauss<3>          quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3>        fe_values(dofHandler.get_fe(),
+  dealii::QGauss<3>          quadrature_formula(C_num1DQuad<FEOrder>());
+  dealii::FEValues<3>        fe_values(dofHandler.get_fe(),
                         quadrature_formula,
-                        update_values | update_JxW_values);
+                        dealii::update_values | dealii::update_JxW_values);
   const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
 
@@ -439,7 +449,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
         {
           for (unsigned int spinType = 0; spinType < 2; ++spinType)
             {
-              typename DoFHandler<3>::active_cell_iterator
+              typename dealii::DoFHandler<3>::active_cell_iterator
                 cellN = dofHandler.begin_active(),
                 endcN = dofHandler.end();
 
@@ -505,7 +515,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
         }
       else
         {
-          typename DoFHandler<3>::active_cell_iterator cellN =
+          typename dealii::DoFHandler<3>::active_cell_iterator cellN =
                                                          dofHandler
                                                            .begin_active(),
                                                        endcN = dofHandler.end();
@@ -850,11 +860,11 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
   partialDensityOfStates.resize(totalAtomicData * numberIntervals, 0.0);
 
   // access finite-element data
-  QGauss<3>          quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3>        fe_values(dofHandler.get_fe(),
+  dealii::QGauss<3>          quadrature_formula(C_num1DQuad<FEOrder>());
+  dealii::FEValues<3>        fe_values(dofHandler.get_fe(),
                         quadrature_formula,
-                        update_values | update_JxW_values |
-                          update_quadrature_points);
+                        dealii::update_values | dealii::update_JxW_values |
+                          dealii::update_quadrature_points);
   const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
 
@@ -974,12 +984,12 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
       if (d_dftParamsPtr->spinPolarized == 1)
         {
           AssertThrow(false,
-                      ExcMessage(
+                      dealii::ExcMessage(
                         "PDOS is not implemented for spin-polarized problems"));
         }
       else
         {
-          typename DoFHandler<3>::active_cell_iterator cellN =
+          typename dealii::DoFHandler<3>::active_cell_iterator cellN =
                                                          dofHandler
                                                            .begin_active(),
                                                        endcN = dofHandler.end();
@@ -1011,7 +1021,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
                         {
                           for (unsigned int q = 0; q < n_q_points; ++q)
                             {
-                              const Point<3> &quadPoint =
+                              const dealii::Point<3> &quadPoint =
                                 fe_values.quadrature_point(q);
                               double x = quadPoint[0] - atomLocations[iAtom][2];
                               double y = quadPoint[1] - atomLocations[iAtom][3];
@@ -1155,7 +1165,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
                 {
                   AssertThrow(
                     false,
-                    ExcMessage(
+                    dealii::ExcMessage(
                       "PDOS is not implemented for spin-polarized problems"));
                 }
               else
@@ -1186,4 +1196,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
         }
     }
   computing_timer.leave_subsection("PDOS computation");
+}
+#include "dft.inst.cc"
+
 }

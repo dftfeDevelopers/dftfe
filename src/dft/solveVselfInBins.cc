@@ -1164,7 +1164,7 @@ namespace dftfe
             }
 
         // MPI operation to sync data
-        rhs.compress(dealii::VectorOperation::add);
+        rhs.compress(::dealii::VectorOperation::add);
 
         // FIXME: check if this is really required
         d_vselfBinConstraintMatrices[4 * iBin].set_zero(rhs);
@@ -1273,7 +1273,7 @@ namespace dftfe
                 }
 
               // MPI operation to sync data
-              rhs.compress(dealii::VectorOperation::add);
+              rhs.compress(::dealii::VectorOperation::add);
 
               // FIXME: check if this is really required
               d_vselfBinConstraintMatrices[4 * iBin + idim + 1].set_zero(rhs);
@@ -1319,14 +1319,14 @@ namespace dftfe
             elementalDiagonalA, local_dof_indices, diagonalA);
         }
 
-    diagonalA.compress(dealii::VectorOperation::add);
+    diagonalA.compress(::dealii::VectorOperation::add);
 
     for (dealii::types::global_dof_index i = 0; i < diagonalA.size(); ++i)
       if (diagonalA.in_local_range(i))
         if (!hangingPeriodicConstraintMatrix.is_constrained(i))
           diagonalA(i) = 1.0 / diagonalA(i);
 
-    diagonalA.compress(dealii::VectorOperation::insert);
+    diagonalA.compress(::dealii::VectorOperation::insert);
 
     const unsigned int ghostSize =
       matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)

@@ -16,6 +16,10 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
+#include<dft.h>
+
+namespace dftfe
+{
 
 
 //
@@ -40,7 +44,7 @@ void dftClass<FEOrder, FEOrderElectro>::
   if (isEvaluateHessianData)
     quadratureHessianValueData.clear();
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -57,7 +61,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
@@ -93,7 +97,7 @@ void dftClass<FEOrder, FEOrderElectro>::
 
               for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
                 {
-                  const Tensor<1, 3, VectorizedArray<double>> &gradVals =
+                  const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradVals =
                     feEvalObj.get_gradient(q_point);
                   tempVec2[3 * q_point + 0] = gradVals[0][iSubCell];
                   tempVec2[3 * q_point + 1] = gradVals[1][iSubCell];
@@ -111,7 +115,7 @@ void dftClass<FEOrder, FEOrderElectro>::
 
               for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
                 {
-                  const Tensor<2, 3, VectorizedArray<double>> &hessianVals =
+                  const dealii::Tensor<2, 3, dealii::VectorizedArray<double>> &hessianVals =
                     feEvalObj.get_hessian(q_point);
                   for (unsigned int i = 0; i < 3; i++)
                     for (unsigned int j = 0; j < 3; j++)
@@ -146,13 +150,13 @@ void dftClass<FEOrder, FEOrderElectro>::
   if (isEvaluateHessianData)
     quadratureHessianValueData.clear();
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
     feEvalObjSpin0(matrixFreeData, dofHandlerId, quadratureId);
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -169,7 +173,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObjSpin0.reinit(cell);
@@ -215,9 +219,9 @@ void dftClass<FEOrder, FEOrderElectro>::
 
               for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
                 {
-                  const Tensor<1, 3, VectorizedArray<double>> &gradValsSpin0 =
+                  const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradValsSpin0 =
                     feEvalObjSpin0.get_gradient(q_point);
-                  const Tensor<1, 3, VectorizedArray<double>> &gradValsSpin1 =
+                  const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradValsSpin1 =
                     feEvalObjSpin1.get_gradient(q_point);
                   tempVec2[6 * q_point + 0] = gradValsSpin0[0][iSubCell];
                   tempVec2[6 * q_point + 1] = gradValsSpin0[1][iSubCell];
@@ -238,9 +242,9 @@ void dftClass<FEOrder, FEOrderElectro>::
 
               for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
                 {
-                  const Tensor<2, 3, VectorizedArray<double>>
+                  const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
                     &hessianValsSpin0 = feEvalObjSpin0.get_hessian(q_point);
-                  const Tensor<2, 3, VectorizedArray<double>>
+                  const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
                     &hessianValsSpin1 = feEvalObjSpin1.get_hessian(q_point);
                   for (unsigned int i = 0; i < 3; i++)
                     for (unsigned int j = 0; j < 3; j++)
@@ -274,7 +278,7 @@ void dftClass<FEOrder, FEOrderElectro>::
   if (isEvaluateGradData)
     quadratureGradValueData.clear();
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -291,7 +295,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
@@ -325,7 +329,7 @@ void dftClass<FEOrder, FEOrderElectro>::
 
               for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
                 {
-                  const Tensor<1, 3, VectorizedArray<double>> &gradVals =
+                  const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradVals =
                     feEvalObj.get_gradient(q_point);
                   tempVec2[3 * q_point + 0] = gradVals[0][iSubCell];
                   tempVec2[3 * q_point + 1] = gradVals[1][iSubCell];
@@ -350,7 +354,7 @@ void dftClass<FEOrder, FEOrderElectro>::
 {
   quadratureValueData.clear();
   quadratureGradValueData.clear();
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                1,
@@ -367,7 +371,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
@@ -428,7 +432,7 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
   const distributedCPUVec<double> &    nodalField)
 
 {
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -445,7 +449,7 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
+  dealii::VectorizedArray<double> valueVectorized = dealii::make_vectorized_array(0.0);
   double                  value           = 0.0;
   for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
        ++cell)
@@ -455,7 +459,7 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
       fe_evalField.evaluate(false, true);
       for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
         {
-          VectorizedArray<double> temp =
+          dealii::VectorizedArray<double> temp =
             scalar_product(fe_evalField.get_gradient(q_point),
                            fe_evalField.get_gradient(q_point));
           fe_evalField.submit_value(temp, q_point);
@@ -468,7 +472,7 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
         value += valueVectorized[iSubCell];
     }
 
-  return Utilities::MPI::sum(value, mpi_communicator);
+  return dealii::Utilities::MPI::sum(value, mpi_communicator);
 }
 
 //
@@ -500,4 +504,7 @@ dftClass<FEOrder, FEOrderElectro>::l2ProjectionQuadToNodal(
     funcRho,
     nodalField);
   constraintMatrix.set_zero(nodalField);
+}
+#include "dft.inst.cc"
+
 }

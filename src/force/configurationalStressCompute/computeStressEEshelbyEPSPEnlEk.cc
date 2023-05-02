@@ -16,12 +16,25 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
+#include <dftUtils.h>
+#include <eshelbyTensor.h>
+#include <eshelbyTensorSpinPolarized.h>
+#include <forceWfcContractions.h>
+#ifdef DFTFE_WITH_DEVICE
+#  include <forceWfcContractionsDevice.h>
+#endif
+
+namespace dftfe
+{
+
 // compute configurational stress contribution from all terms except the nuclear
 // self energy
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
-  const MatrixFree<3, double> &matrixFreeData,
+  const dealii::MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperatorDevice,
@@ -30,7 +43,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
   const unsigned int                                 eigenDofHandlerIndex,
   const unsigned int                                 smearedChargeQuadratureId,
   const unsigned int                                 lpspQuadratureIdElectro,
-  const MatrixFree<3, double> &                      matrixFreeDataElectro,
+  const dealii::MatrixFree<3, double> &                      matrixFreeDataElectro,
   const unsigned int               phiTotDofHandlerIndexElectro,
   const distributedCPUVec<double> &phiTotRhoOutElectro,
   const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -65,14 +78,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   const bool isPseudopotential = d_dftParams.isPseudopotential;
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                3>
     forceEval(matrixFreeData,
               d_forceDofHandlerIndex,
               dftPtr->d_densityQuadratureId);
-  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
+  dealii::FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     forceEvalNLP(matrixFreeData,
                  d_forceDofHandlerIndex,
                  dftPtr->d_nlpspQuadratureId);
@@ -80,34 +93,34 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   const double spinPolarizedFactor =
     (d_dftParams.spinPolarized == 1) ? 0.5 : 1.0;
-  const VectorizedArray<double> spinPolarizedFactorVect =
-    (d_dftParams.spinPolarized == 1) ? make_vectorized_array(0.5) :
-                                       make_vectorized_array(1.0);
+  const dealii::VectorizedArray<double> spinPolarizedFactorVect =
+    (d_dftParams.spinPolarized == 1) ? dealii::make_vectorized_array(0.5) :
+                                       dealii::make_vectorized_array(1.0);
 
   const unsigned int numQuadPoints    = forceEval.n_q_points;
   const unsigned int numQuadPointsNLP = forceEvalNLP.n_q_points;
   const unsigned int numEigenVectors  = dftPtr->d_numEigenValues;
   const unsigned int numKPoints       = dftPtr->d_kPointWeights.size();
 
-  DoFHandler<3>::active_cell_iterator   subCellPtr;
-  Tensor<1, 2, VectorizedArray<double>> zeroTensor1;
-  zeroTensor1[0] = make_vectorized_array(0.0);
-  zeroTensor1[1] = make_vectorized_array(0.0);
-  Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> zeroTensor2;
-  Tensor<1, 3, VectorizedArray<double>>               zeroTensor3;
-  Tensor<2, 3, VectorizedArray<double>>               zeroTensor4;
-  Tensor<1, 2, Tensor<2, 3, VectorizedArray<double>>> zeroTensor5;
+  dealii::DoFHandler<3>::active_cell_iterator   subCellPtr;
+  dealii::Tensor<1, 2, dealii::VectorizedArray<double>> zeroTensor1;
+  zeroTensor1[0] = dealii::make_vectorized_array(0.0);
+  zeroTensor1[1] = dealii::make_vectorized_array(0.0);
+  dealii::Tensor<1, 2, dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> zeroTensor2;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>>               zeroTensor3;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>>               zeroTensor4;
+  dealii::Tensor<1, 2, dealii::Tensor<2, 3, dealii::VectorizedArray<double>>> zeroTensor5;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
-      zeroTensor2[0][idim] = make_vectorized_array(0.0);
-      zeroTensor2[1][idim] = make_vectorized_array(0.0);
-      zeroTensor3[idim]    = make_vectorized_array(0.0);
+      zeroTensor2[0][idim] = dealii::make_vectorized_array(0.0);
+      zeroTensor2[1][idim] = dealii::make_vectorized_array(0.0);
+      zeroTensor3[idim]    = dealii::make_vectorized_array(0.0);
     }
   for (unsigned int idim = 0; idim < 3; idim++)
     {
       for (unsigned int jdim = 0; jdim < 3; jdim++)
         {
-          zeroTensor4[idim][jdim] = make_vectorized_array(0.0);
+          zeroTensor4[idim][jdim] = dealii::make_vectorized_array(0.0);
         }
     }
   zeroTensor5[0] = zeroTensor4;
@@ -118,7 +131,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
   std::map<dealii::CellId, unsigned int> cellIdToCellNumberMap;
 
-  DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(),
                                       endc = dftPtr->dofHandler.end();
   unsigned int iElem                       = 0;
   for (; cell != endc; ++cell)
@@ -319,7 +332,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
           std::vector<double>     jxwQuadsSubCells(numSubCells * numQuadPoints,
                                                0.0);
-          VectorizedArray<double> jxwQuadsVect = make_vectorized_array(0.0);
+          dealii::VectorizedArray<double> jxwQuadsVect = dealii::make_vectorized_array(0.0);
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             {
               jxwQuadsVect = forceEval.JxW(q);
@@ -369,7 +382,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
               std::vector<double>     jxwQuadsSubCells(numSubCells *
                                                      numQuadPointsNLP,
                                                    0.0);
-              VectorizedArray<double> jxwQuadsVect = make_vectorized_array(0.0);
+              dealii::VectorizedArray<double> jxwQuadsVect = dealii::make_vectorized_array(0.0);
               for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
                 {
                   jxwQuadsVect = forceEvalNLP.JxW(q);
@@ -418,27 +431,27 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
       if (d_dftParams.spinPolarized == 1)
         {
-          dealii::AlignedVector<VectorizedArray<double>> rhoXCQuadsVect(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::VectorizedArray<double>> rhoXCQuadsVect(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             gradRhoSpin0QuadsVect(numQuadPoints, zeroTensor3);
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
                                                          gradRhoSpin1QuadsVect(numQuadPoints, zeroTensor3);
-          dealii::AlignedVector<VectorizedArray<double>> excQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<VectorizedArray<double>> vxcRhoOutSpin0Quads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<VectorizedArray<double>> vxcRhoOutSpin1Quads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::VectorizedArray<double>> excQuads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::VectorizedArray<double>> vxcRhoOutSpin0Quads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::VectorizedArray<double>> vxcRhoOutSpin1Quads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,
                                                       zeroTensor3);
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             derExchCorrEnergyWithGradRhoOutSpin1Quads(numQuadPoints,
                                                       zeroTensor3);
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             gradRhoCoreQuads(numQuadPoints, zeroTensor3);
-          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
             hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
 
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
@@ -452,7 +465,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                   std::fill(rhoXCQuadsVect.begin(),
                             rhoXCQuadsVect.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(gradRhoSpin0QuadsVect.begin(),
                             gradRhoSpin0QuadsVect.end(),
                             zeroTensor3);
@@ -461,13 +474,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             zeroTensor3);
                   std::fill(excQuads.begin(),
                             excQuads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(vxcRhoOutSpin0Quads.begin(),
                             vxcRhoOutSpin0Quads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(vxcRhoOutSpin1Quads.begin(),
                             vxcRhoOutSpin1Quads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),
                             derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),
                             zeroTensor3);
@@ -498,9 +511,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                     derCorrEnergyWithDensityValRhoOut(2 * numQuadPoints),
                     derExchEnergyWithSigmaRhoOut(3 * numQuadPoints),
                     derCorrEnergyWithSigmaRhoOut(3 * numQuadPoints);
-                  std::vector<Tensor<1, 3, double>> gradRhoOutQuadsXCSpin0(
+                  std::vector<dealii::Tensor<1, 3, double>> gradRhoOutQuadsXCSpin0(
                     numQuadPoints);
-                  std::vector<Tensor<1, 3, double>> gradRhoOutQuadsXCSpin1(
+                  std::vector<dealii::Tensor<1, 3, double>> gradRhoOutQuadsXCSpin1(
                     numQuadPoints);
 
                   //
@@ -756,10 +769,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                     } // subcell loop
 
-                  Tensor<2, 3, VectorizedArray<double>> EQuadSum = zeroTensor4;
+                  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EQuadSum = zeroTensor4;
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      Tensor<2, 3, VectorizedArray<double>> E =
+                      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> E =
                         eshelbyTensorSP::getELocXcEshelbyTensor(
                           rhoXCQuadsVect[q],
                           gradRhoSpin0QuadsVect[q],
@@ -802,23 +815,23 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
         }
       else
         {
-          dealii::AlignedVector<VectorizedArray<double>> rhoQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<VectorizedArray<double>> rhoXCQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<VectorizedArray<double>> phiTotRhoOutQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::VectorizedArray<double>> rhoXCQuads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::VectorizedArray<double>> phiTotRhoOutQuads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             gradRhoQuads(numQuadPoints, zeroTensor3);
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             gradRhoCoreQuads(numQuadPoints, zeroTensor3);
-          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
                                                          hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
-          dealii::AlignedVector<VectorizedArray<double>> excQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<VectorizedArray<double>> vxcRhoOutQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          dealii::AlignedVector<dealii::VectorizedArray<double>> excQuads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::VectorizedArray<double>> vxcRhoOutQuads(
+            numQuadPoints, dealii::make_vectorized_array(0.0));
+          dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
             derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints, zeroTensor3);
 
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
@@ -832,13 +845,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
                   std::fill(rhoQuads.begin(),
                             rhoQuads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(rhoXCQuads.begin(),
                             rhoXCQuads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(phiTotRhoOutQuads.begin(),
                             phiTotRhoOutQuads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(gradRhoQuads.begin(),
                             gradRhoQuads.end(),
                             zeroTensor3);
@@ -850,10 +863,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                             zeroTensor4);
                   std::fill(excQuads.begin(),
                             excQuads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(vxcRhoOutQuads.begin(),
                             vxcRhoOutQuads.end(),
-                            make_vectorized_array(0.0));
+                            dealii::make_vectorized_array(0.0));
                   std::fill(derExchCorrEnergyWithGradRhoOutQuads.begin(),
                             derExchCorrEnergyWithGradRhoOutQuads.end(),
                             zeroTensor3);
@@ -875,7 +888,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                     derCorrEnergyWithDensityValRhoOut(numQuadPoints),
                     derExchEnergyWithSigmaRhoOut(numQuadPoints),
                     derCorrEnergyWithSigmaRhoOut(numQuadPoints);
-                  std::vector<Tensor<1, 3, double>> gradRhoOutQuadsXC(
+                  std::vector<dealii::Tensor<1, 3, double>> gradRhoOutQuadsXC(
                     numQuadPoints);
 
                   //
@@ -1085,10 +1098,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                         }
                     } // subcell loop
 
-                  Tensor<2, 3, VectorizedArray<double>> EQuadSum = zeroTensor4;
+                  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EQuadSum = zeroTensor4;
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
-                      Tensor<2, 3, VectorizedArray<double>> E =
+                      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> E =
                         eshelbyTensor::getELocXcEshelbyTensor(
                           rhoXCQuads[q],
                           gradRhoQuads[q],
@@ -1161,7 +1174,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
-  const MatrixFree<3, double> &    matrixFreeDataElectro,
+  const dealii::MatrixFree<3, double> &    matrixFreeDataElectro,
   const unsigned int               phiTotDofHandlerIndexElectro,
   const unsigned int               smearedChargeQuadratureId,
   const unsigned int               lpspQuadratureIdElectro,
@@ -1176,7 +1189,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
     &                                              pseudoVLocAtomsElectro,
   const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
 {
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                3>
@@ -1184,7 +1197,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                      d_forceDofHandlerIndexElectro,
                      dftPtr->d_densityQuadratureId);
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1>
@@ -1192,16 +1205,16 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                       phiTotDofHandlerIndexElectro,
                       dftPtr->d_densityQuadratureId);
 
-  FEEvaluation<3, -1> phiTotEvalSmearedCharge(matrixFreeDataElectro,
+  dealii::FEEvaluation<3, -1> phiTotEvalSmearedCharge(matrixFreeDataElectro,
                                               phiTotDofHandlerIndexElectro,
                                               smearedChargeQuadratureId);
 
-  FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+  dealii::FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
     matrixFreeDataElectro,
     d_forceDofHandlerIndexElectro,
     smearedChargeQuadratureId);
 
-  FEEvaluation<3,
+  dealii::FEEvaluation<3,
                1,
                C_num1DQuadLPSP<FEOrderElectro>() * C_numCopies1DQuadLPSP(),
                3>
@@ -1209,19 +1222,19 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                          d_forceDofHandlerIndexElectro,
                          lpspQuadratureIdElectro);
 
-  FEValues<3> feVselfValuesElectro(
+  dealii::FEValues<3> feVselfValuesElectro(
     matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro)
       .get_fe(),
     matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
-    update_values | update_quadrature_points);
+    dealii::update_values | dealii::update_quadrature_points);
 
-  QIterated<3 - 1> faceQuadrature(QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),
+  dealii::QIterated<3 - 1> faceQuadrature(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),
                                   C_numCopies1DQuadLPSP());
-  FEFaceValues<3>  feFaceValuesElectro(dftPtr->d_dofHandlerRhoNodal.get_fe(),
+  dealii::FEFaceValues<3>  feFaceValuesElectro(dftPtr->d_dofHandlerRhoNodal.get_fe(),
                                       faceQuadrature,
-                                      update_values | update_JxW_values |
-                                        update_normal_vectors |
-                                        update_quadrature_points);
+                                      dealii::update_values | dealii::update_JxW_values |
+                                        dealii::update_normal_vectors |
+                                        dealii::update_quadrature_points);
 
   const unsigned int numQuadPoints         = forceEvalElectro.n_q_points;
   const unsigned int numQuadPointsSmearedb = forceEvalSmearedCharge.n_q_points;
@@ -1234,34 +1247,34 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
       dealii::ExcMessage(
         "DFT-FE Error: mismatch in quadrature rule usage in force computation."));
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
 
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
-      zeroTensor[idim] = make_vectorized_array(0.0);
+      zeroTensor[idim] = dealii::make_vectorized_array(0.0);
     }
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
-      zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+      zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
-  dealii::AlignedVector<VectorizedArray<double>> rhoQuadsElectro(
-    numQuadPoints, make_vectorized_array(0.0));
-  dealii::AlignedVector<VectorizedArray<double>> rhoQuadsElectroLpsp(
-    numQuadPointsLpsp, make_vectorized_array(0.0));
-  dealii::AlignedVector<VectorizedArray<double>> smearedbQuads(
-    numQuadPointsSmearedb, make_vectorized_array(0.0));
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuadsElectro(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuadsElectroLpsp(
+    numQuadPointsLpsp, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuads(
+    numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
     gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
     gradRhoQuadsElectro(numQuadPoints, zeroTensor);
-  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
                                                  gradRhoQuadsElectroLpsp(numQuadPointsLpsp, zeroTensor);
-  dealii::AlignedVector<VectorizedArray<double>> pseudoVLocQuadsElectro(
-    numQuadPointsLpsp, make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> pseudoVLocQuadsElectro(
+    numQuadPointsLpsp, dealii::make_vectorized_array(0.0));
 
 
   // kpoint group parallelization data structures
@@ -1320,10 +1333,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
 
           std::fill(rhoQuadsElectro.begin(),
                     rhoQuadsElectro.end(),
-                    make_vectorized_array(0.0));
+                    dealii::make_vectorized_array(0.0));
           std::fill(rhoQuadsElectroLpsp.begin(),
                     rhoQuadsElectroLpsp.end(),
-                    make_vectorized_array(0.0));
+                    dealii::make_vectorized_array(0.0));
           std::fill(gradRhoQuadsElectro.begin(),
                     gradRhoQuadsElectro.end(),
                     zeroTensor);
@@ -1332,10 +1345,10 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                     zeroTensor);
           std::fill(pseudoVLocQuadsElectro.begin(),
                     pseudoVLocQuadsElectro.end(),
-                    make_vectorized_array(0.0));
+                    dealii::make_vectorized_array(0.0));
           std::fill(smearedbQuads.begin(),
                     smearedbQuads.end(),
-                    make_vectorized_array(0.0));
+                    dealii::make_vectorized_array(0.0));
           std::fill(gradPhiTotSmearedChargeQuads.begin(),
                     gradPhiTotSmearedChargeQuads.end(),
                     zeroTensor);
@@ -1401,17 +1414,17 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                 d_cellsVselfBallsClosestAtomIdDofHandlerElectro);
             }
 
-          Tensor<2, 3, VectorizedArray<double>> EQuadSum = zeroTensor2;
+          dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EQuadSum = zeroTensor2;
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             {
-              VectorizedArray<double> phiTotElectro_q =
+              dealii::VectorizedArray<double> phiTotElectro_q =
                 phiTotEvalElectro.get_value(q);
-              VectorizedArray<double> phiExtElectro_q =
-                make_vectorized_array(0.0);
-              Tensor<1, 3, VectorizedArray<double>> gradPhiTotElectro_q =
+              dealii::VectorizedArray<double> phiExtElectro_q =
+                dealii::make_vectorized_array(0.0);
+              dealii::Tensor<1, 3, dealii::VectorizedArray<double>> gradPhiTotElectro_q =
                 phiTotEvalElectro.get_gradient(q);
 
-              Tensor<2, 3, VectorizedArray<double>> E =
+              dealii::Tensor<2, 3, dealii::VectorizedArray<double>> E =
                 eshelbyTensor::getEElectroEshelbyTensor(phiTotElectro_q,
                                                         gradPhiTotElectro_q,
                                                         rhoQuadsElectro[q]);
@@ -1423,9 +1436,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
               d_dftParams.smearedNuclearCharges)
             for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
               {
-                VectorizedArray<double> phiExtElectro_q =
-                  make_vectorized_array(0.0);
-                Tensor<2, 3, VectorizedArray<double>> E = zeroTensor2;
+                dealii::VectorizedArray<double> phiExtElectro_q =
+                  dealii::make_vectorized_array(0.0);
+                dealii::Tensor<2, 3, dealii::VectorizedArray<double>> E = zeroTensor2;
 
                 EQuadSum += E * forceEvalElectroLpsp.JxW(q);
               }
@@ -1458,3 +1471,5 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
         } // kpt paral
     }     // cell loop
 }
+#include "../force.inst.cc"
+} // namespace dftfe

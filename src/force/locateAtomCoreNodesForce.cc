@@ -16,18 +16,23 @@
 //
 // @author Sambit Das (2017)
 //
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 // source file for locating core atom nodes
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::locateAtomCoreNodesForce(
-  const DoFHandler<3> &dofHandlerForce,
-  const IndexSet &     locally_owned_dofsForce,
+  const dealii::DoFHandler<3> &dofHandlerForce,
+  const dealii::IndexSet &     locally_owned_dofsForce,
   std::map<std::pair<unsigned int, unsigned int>, unsigned int> &atomsForceDofs)
 {
   atomsForceDofs.clear();
   const std::vector<std::vector<double>> &atomLocations = dftPtr->atomLocations;
-  unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+  unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
   //
   // locating atom nodes
   unsigned int           numAtoms = atomLocations.size();
@@ -42,7 +47,7 @@ forceClass<FEOrder, FEOrderElectro>::locateAtomCoreNodesForce(
         {
           const dealii::types::global_dof_index nodeID =
             cell->vertex_dof_index(i, 0);
-          Point<3> feNodeGlobalCoord = cell->vertex(i);
+          dealii::Point<3> feNodeGlobalCoord = cell->vertex(i);
           //
           // loop over all atoms to locate the corresponding nodes
           //
@@ -50,7 +55,7 @@ forceClass<FEOrder, FEOrderElectro>::locateAtomCoreNodesForce(
                it != atomsTolocate.end();
                ++it)
             {
-              Point<3> atomCoord(atomLocations[*it][2],
+              dealii::Point<3> atomCoord(atomLocations[*it][2],
                                  atomLocations[*it][3],
                                  atomLocations[*it][4]);
               if (feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
@@ -79,8 +84,10 @@ forceClass<FEOrder, FEOrderElectro>::locateAtomCoreNodesForce(
   MPI_Barrier(mpi_communicator);
 
   const unsigned int totalForceNodesFound =
-    Utilities::MPI::sum(atomsForceDofs.size(), mpi_communicator);
+    dealii::Utilities::MPI::sum(atomsForceDofs.size(), mpi_communicator);
   AssertThrow(totalForceNodesFound == numAtoms * 3,
-              ExcMessage(
+              dealii::ExcMessage(
                 "Atleast one atom doesn't lie on force dof handler dof"));
 }
+#include "force.inst.cc"
+} // namespace dftfe

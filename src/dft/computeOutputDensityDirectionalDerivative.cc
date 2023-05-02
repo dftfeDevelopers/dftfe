@@ -17,6 +17,11 @@
 // @author Sambit Das
 //
 
+#include<dft.h>
+#include <densityFirstOrderResponseCalculator.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -37,7 +42,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
     &kohnShamDFTEigenOperatorDevice = *d_kohnShamDFTOperatorDevicePtr;
 #endif
 
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
 
 #ifdef DFTFE_WITH_DEVICE
@@ -387,20 +392,20 @@ dftClass<FEOrder, FEOrderElectro>::
   // initialize variables to be used later
   const unsigned int dofs_per_cell =
     d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
-  typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerRhoNodal
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = d_dofHandlerRhoNodal
                                                         .begin_active(),
                                                endc =
                                                  d_dofHandlerRhoNodal.end();
   const dealii::IndexSet &locallyOwnedDofs =
     d_dofHandlerRhoNodal.locally_owned_dofs();
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_gllQuadratureId);
   const unsigned int numQuadPoints = quadrature_formula.size();
 
   // get access to quadrature point coordinates and 2p DoFHandler nodal points
-  const std::vector<Point<3>> &quadraturePointCoor =
+  const std::vector<dealii::Point<3>> &quadraturePointCoor =
     quadrature_formula.get_points();
-  const std::vector<Point<3>> &supportPointNaturalCoor =
+  const std::vector<dealii::Point<3>> &supportPointNaturalCoor =
     d_dofHandlerRhoNodal.get_fe().get_unit_support_points();
   std::vector<unsigned int> renumberingMap(numQuadPoints);
 
@@ -408,10 +413,10 @@ dftClass<FEOrder, FEOrderElectro>::
   // lobatto support points
   for (unsigned int i = 0; i < numQuadPoints; ++i)
     {
-      const Point<3> &nodalCoor = supportPointNaturalCoor[i];
+      const dealii::Point<3> &nodalCoor = supportPointNaturalCoor[i];
       for (unsigned int j = 0; j < numQuadPoints; ++j)
         {
-          const Point<3> &quadCoor = quadraturePointCoor[j];
+          const dealii::Point<3> &quadCoor = quadraturePointCoor[j];
           double          dist     = quadCoor.distance(nodalCoor);
           if (dist <= 1e-08)
             {
@@ -547,7 +552,7 @@ dftClass<FEOrder, FEOrderElectro>::
     }
 
   // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
-  DoFHandler<3>::active_cell_iterator cellP =
+  dealii::DoFHandler<3>::active_cell_iterator cellP =
                                         d_dofHandlerRhoNodal.begin_active(),
                                       endcP = d_dofHandlerRhoNodal.end();
 
@@ -565,7 +570,7 @@ dftClass<FEOrder, FEOrderElectro>::
 
         Assert(
           nodalValuesResponseHam.size() == dofs_per_cell,
-          ExcMessage(
+          dealii::ExcMessage(
             "Number of nodes in 2p DoFHandler does not match with data stored in rhoNodal Values variable"));
 
         for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
@@ -621,7 +626,7 @@ dftClass<FEOrder, FEOrderElectro>::
 
             Assert(
               nodalValuesResponseHam.size() == 2 * dofs_per_cell,
-              ExcMessage(
+              dealii::ExcMessage(
                 "Number of nodes in 2p DoFHandler does not match with data stored in rhoNodal Values variable"));
 
             for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
@@ -657,4 +662,6 @@ dftClass<FEOrder, FEOrderElectro>::
             firstOrderResponseFermiEnergy * fvFermiEnergySpin1.local_element(i);
         }
     }
+}
+#include "dft.inst.cc"
 }

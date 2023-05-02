@@ -16,28 +16,33 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
+
+namespace dftfe
+{
 
 // compute ESmeared contribution stress
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
-  FEEvaluation<3, -1, 1, 3> &  forceEval,
-  const MatrixFree<3, double> &matrixFreeData,
+  dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+  const dealii::MatrixFree<3, double> &matrixFreeData,
   const unsigned int           cell,
-  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
     &                              gradPhiTotQuads,
   const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
   const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtomsImages,
-  const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
+  const dealii::AlignedVector<dealii::VectorizedArray<double>> &smearedbQuads)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
       {
-        zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+        zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
       }
 
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
@@ -46,17 +51,17 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
-    numQuadPoints, make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuadsiAtom(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
 
   for (int iAtomNonTrivial = 0;
        iAtomNonTrivial < nonTrivialAtomImageIdsMacroCell.size();
        iAtomNonTrivial++)
     {
       const int        iAtom = nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
-      Point<3, double> atomLocation;
+      dealii::Point<3, double> atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -71,14 +76,14 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
           atomLocation[2]   = dftPtr->d_imagePositionsTrunc[imageId][2];
         }
 
-      Point<3, VectorizedArray<double>> atomLocationVect;
-      atomLocationVect[0] = make_vectorized_array(atomLocation[0]);
-      atomLocationVect[1] = make_vectorized_array(atomLocation[1]);
-      atomLocationVect[2] = make_vectorized_array(atomLocation[2]);
+      dealii::Point<3, dealii::VectorizedArray<double>> atomLocationVect;
+      atomLocationVect[0] = dealii::make_vectorized_array(atomLocation[0]);
+      atomLocationVect[1] = dealii::make_vectorized_array(atomLocation[1]);
+      atomLocationVect[2] = dealii::make_vectorized_array(atomLocation[2]);
 
       std::fill(smearedbQuadsiAtom.begin(),
                 smearedbQuadsiAtom.end(),
-                make_vectorized_array(0.0));
+                dealii::make_vectorized_array(0.0));
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
         {
@@ -92,7 +97,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
         }
 
 
-      Tensor<2, 3, VectorizedArray<double>> EPSPStressContribution =
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EPSPStressContribution =
         zeroTensor2;
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         EPSPStressContribution -=
@@ -111,35 +116,35 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
-  FEEvaluation<3, -1, 1, 3> &  forceEval,
-  const MatrixFree<3, double> &matrixFreeData,
+  dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+  const dealii::MatrixFree<3, double> &matrixFreeData,
   const unsigned int           cell,
-  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+  const dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
     &                              gradVselfQuads,
   const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
   const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtomsImages,
-  const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
+  const dealii::AlignedVector<dealii::VectorizedArray<double>> &smearedbQuads)
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
+    zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
-  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
   for (unsigned int idim = 0; idim < 3; idim++)
     for (unsigned int jdim = 0; jdim < 3; jdim++)
       {
-        zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
+        zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
       }
 
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
 
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 
-  dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
-    numQuadPoints, make_vectorized_array(0.0));
+  dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuadsiAtom(
+    numQuadPoints, dealii::make_vectorized_array(0.0));
 
   for (int iAtomNonTrivial = 0;
        iAtomNonTrivial < nonTrivialAtomImageIdsMacroCell.size();
@@ -147,7 +152,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
     {
       const int atomId = nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
 
-      Point<3, double> atomLocation;
+      dealii::Point<3, double> atomLocation;
       if (atomId < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[atomId][2];
@@ -162,14 +167,14 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
           atomLocation[2]   = dftPtr->d_imagePositionsTrunc[imageId][2];
         }
 
-      Point<3, VectorizedArray<double>> atomLocationVect;
-      atomLocationVect[0] = make_vectorized_array(atomLocation[0]);
-      atomLocationVect[1] = make_vectorized_array(atomLocation[1]);
-      atomLocationVect[2] = make_vectorized_array(atomLocation[2]);
+      dealii::Point<3, dealii::VectorizedArray<double>> atomLocationVect;
+      atomLocationVect[0] = dealii::make_vectorized_array(atomLocation[0]);
+      atomLocationVect[1] = dealii::make_vectorized_array(atomLocation[1]);
+      atomLocationVect[2] = dealii::make_vectorized_array(atomLocation[2]);
 
       std::fill(smearedbQuadsiAtom.begin(),
                 smearedbQuadsiAtom.end(),
-                make_vectorized_array(0.0));
+                dealii::make_vectorized_array(0.0));
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
         {
@@ -182,7 +187,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
               smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
         }
 
-      Tensor<2, 3, VectorizedArray<double>> EPSPStressContribution =
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EPSPStressContribution =
         zeroTensor2;
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         EPSPStressContribution +=
@@ -197,3 +202,5 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
               EPSPStressContribution[idim][jdim][iSubCell];
     } // iAtom loop
 }
+#include "../force.inst.cc"
+} // namespace dftfe

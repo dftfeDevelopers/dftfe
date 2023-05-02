@@ -18,6 +18,11 @@
 //
 
 // source file for all the mixing schemes
+#include<dft.h>
+#include <linearAlgebraOperations.h>
+
+namespace dftfe
+{
 
 
 void
@@ -46,9 +51,9 @@ double
 dftClass<FEOrder, FEOrderElectro>::mixing_simple()
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature, dealii::update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
 
@@ -69,7 +74,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
     }
 
   // parallel loop over all elements
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -124,7 +129,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple()
         }
     }
 
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 // implement anderson mixing scheme
@@ -133,9 +138,9 @@ double
 dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature, dealii::update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
   // initialize data structures
@@ -164,7 +169,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
 
 
   // parallel loop over all elements
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -419,7 +424,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson()
 
 
 
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -429,9 +434,9 @@ double
 dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature, dealii::update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
   //
   int N = dFBroyden.size() + 1;
@@ -454,7 +459,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
   double wtTemp = 0.0, wtTempLoc = 0.0;
   double w0Loc = 0.0;
   //
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -538,11 +543,11 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
         }
     }
   //
-  wtTemp = Utilities::MPI::sum(wtTempLoc, mpi_communicator);
-  dfMag  = Utilities::MPI::sum(dfMagLoc, mpi_communicator);
+  wtTemp = dealii::Utilities::MPI::sum(wtTempLoc, mpi_communicator);
+  dfMag  = dealii::Utilities::MPI::sum(dfMagLoc, mpi_communicator);
   if (N == 1)
     {
-      w0Broyden = Utilities::MPI::sum(w0Loc, mpi_communicator);
+      w0Broyden = dealii::Utilities::MPI::sum(w0Loc, mpi_communicator);
       w0Broyden = std::pow(w0Broyden, -0.5);
     }
   // Comment out following line, for using w0 computed from simply mixed rho
@@ -619,14 +624,14 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
       for (unsigned int l = 0; l < N; ++l)
         {
           invBeta[N * k + l] =
-            Utilities::MPI::sum(invBetaLoc[N * k + l], mpi_communicator);
+            dealii::Utilities::MPI::sum(invBetaLoc[N * k + l], mpi_communicator);
           if (l == k)
             {
               invBeta[N * l + l] = w0Broyden * w0Broyden + invBeta[N * l + l];
               beta[N * l + l]    = 1.0;
             }
         }
-      c[k] = Utilities::MPI::sum(cLoc[k], mpi_communicator);
+      c[k] = dealii::Utilities::MPI::sum(cLoc[k], mpi_communicator);
     }
 
   //
@@ -700,7 +705,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden()
 
 
 
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -711,9 +716,9 @@ double
 dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature, dealii::update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
   //
   int N = dFBroyden.size() + 1;
@@ -735,7 +740,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
   double wtTemp = 0.0, wtTempLoc = 0.0;
   double w0Loc = 0.0;
   //
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -845,11 +850,11 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
         }
     }
   //
-  wtTemp = Utilities::MPI::sum(wtTempLoc, mpi_communicator);
-  dfMag  = Utilities::MPI::sum(dfMagLoc, mpi_communicator);
+  wtTemp = dealii::Utilities::MPI::sum(wtTempLoc, mpi_communicator);
+  dfMag  = dealii::Utilities::MPI::sum(dfMagLoc, mpi_communicator);
   if (N == 1)
     {
-      w0Broyden = Utilities::MPI::sum(w0Loc, mpi_communicator);
+      w0Broyden = dealii::Utilities::MPI::sum(w0Loc, mpi_communicator);
       w0Broyden = std::pow(w0Broyden, -0.5);
     }
   // Comment out following line, for using w0 computed from simply mixed rho
@@ -945,7 +950,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
       for (unsigned int l = 0; l < N; ++l)
         {
           invBeta[N * k + l] =
-            Utilities::MPI::sum(invBetaLoc[N * k + l], mpi_communicator);
+            dealii::Utilities::MPI::sum(invBetaLoc[N * k + l], mpi_communicator);
           //
           if (l == k)
             {
@@ -953,7 +958,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
               beta[N * l + l]    = 1.0;
             }
         }
-      c[k] = Utilities::MPI::sum(cLoc[k], mpi_communicator);
+      c[k] = dealii::Utilities::MPI::sum(cLoc[k], mpi_communicator);
     }
 
   //
@@ -1080,7 +1085,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_broyden_spinPolarized()
 
 
 
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 
@@ -1090,9 +1095,9 @@ double
 dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature, dealii::update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
   // create new rhoValue tables
@@ -1124,7 +1129,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
     }
 
   // parallel loop over all elements
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -1211,7 +1216,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_simple_spinPolarized()
         }
     }
 
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
 }
 
 // implement anderson mixing scheme
@@ -1220,9 +1225,9 @@ double
 dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
 {
   double               normValue = 0.0;
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3>        fe_values(FE, quadrature, update_JxW_values);
+  dealii::FEValues<3>        fe_values(FE, quadrature, dealii::update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
 
@@ -1263,7 +1268,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
     N + 1, std::vector<double>(6 * num_quad_points, 0.0));
 
   // parallel loop over all elements
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -1598,5 +1603,7 @@ dftClass<FEOrder, FEOrderElectro>::mixing_anderson_spinPolarized()
             }
         }
     }
-  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
+  return std::sqrt(dealii::Utilities::MPI::sum(normValue, mpi_communicator));
+}
+#include "dft.inst.cc"
 }

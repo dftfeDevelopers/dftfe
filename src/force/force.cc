@@ -43,40 +43,40 @@
 
 namespace dftfe
 {
-#include "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
-#include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
-#include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
-#include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
-#include "configurationalForceCompute/FnlGammaElementalContribution.cc"
-#include "configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc"
-#include "configurationalForceCompute/computeFloatingAtomsForces.cc"
-#include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
-#include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
-#include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
-#include "configurationalStressCompute/ENonlinearCoreCorrectionContribution.cc"
-#include "configurationalStressCompute/EnlStressContribution.cc"
-#include "configurationalStressCompute/EPSPStressContribution.cc"
-#include "configurationalStressCompute/ESmearedStressContribution.cc"
-#include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
-#include "configurationalStressCompute/computeStressEself.cc"
-#include "configurationalStressCompute/stress.cc"
-#include "createBinObjectsForce.cc"
-#include "locateAtomCoreNodesForce.cc"
+// #include "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
+// #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
+// #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
+// #include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
+// #include "configurationalForceCompute/FnlGammaElementalContribution.cc"
+// #include "configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc"
+// #include "configurationalForceCompute/computeFloatingAtomsForces.cc"
+// #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
+// #include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
+// #include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
+// #include "configurationalStressCompute/ENonlinearCoreCorrectionContribution.cc"
+// #include "configurationalStressCompute/EnlStressContribution.cc"
+// #include "configurationalStressCompute/EPSPStressContribution.cc"
+// #include "configurationalStressCompute/ESmearedStressContribution.cc"
+// #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
+// #include "configurationalStressCompute/computeStressEself.cc"
+// #include "configurationalStressCompute/stress.cc"
+// #include "createBinObjectsForce.cc"
+// #include "locateAtomCoreNodesForce.cc"
 
   namespace internalForce
   {
     void
-    initUnmoved(const Triangulation<3, 3> &             triangulation,
-                const Triangulation<3, 3> &             serialTriangulation,
+    initUnmoved(const dealii::Triangulation<3, 3> &             triangulation,
+                const dealii::Triangulation<3, 3> &             serialTriangulation,
                 const std::vector<std::vector<double>> &domainBoundingVectors,
                 const MPI_Comm &                        mpi_comm_parent,
                 const MPI_Comm &                        mpi_comm,
                 const dftParameters &                   dftParams,
-                DoFHandler<3> &                         dofHandlerForce,
-                FESystem<3> &                           FEForce,
+                dealii::DoFHandler<3> &                         dofHandlerForce,
+                dealii::FESystem<3> &                           FEForce,
                 dealii::AffineConstraints<double> &     constraintsForce,
-                IndexSet &                              locally_owned_dofsForce,
-                IndexSet &locally_relevant_dofsForce)
+                dealii::IndexSet &                              locally_owned_dofsForce,
+                dealii::IndexSet &locally_relevant_dofsForce)
     {
       dofHandlerForce.clear();
       dofHandlerForce.initialize(triangulation, FEForce);
@@ -84,13 +84,13 @@ namespace dftfe
       locally_owned_dofsForce.clear();
       locally_relevant_dofsForce.clear();
       locally_owned_dofsForce = dofHandlerForce.locally_owned_dofs();
-      DoFTools::extract_locally_relevant_dofs(dofHandlerForce,
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerForce,
                                               locally_relevant_dofsForce);
 
       ///
       constraintsForce.clear();
       constraintsForce.reinit(locally_relevant_dofsForce);
-      DoFTools::make_hanging_node_constraints(dofHandlerForce,
+      dealii::DoFTools::make_hanging_node_constraints(dofHandlerForce,
                                               constraintsForce);
 
       // create unitVectorsXYZ
@@ -103,7 +103,7 @@ namespace dftfe
           unitVectorsXYZ[i][i] = 0.0;
         }
 
-      std::vector<Tensor<1, 3>> offsetVectors;
+      std::vector<dealii::Tensor<1, 3>> offsetVectors;
       // resize offset vectors
       offsetVectors.resize(3);
 
@@ -117,7 +117,7 @@ namespace dftfe
         }
 
       std::vector<
-        GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
+        dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator>>
         periodicity_vectorForce;
 
       const std::array<int, 3> periodic = {dftParams.periodicX,
@@ -138,7 +138,7 @@ namespace dftfe
       for (int i = 0; i < std::accumulate(periodic.begin(), periodic.end(), 0);
            ++i)
         {
-          GridTools::collect_periodic_faces(
+          dealii::GridTools::collect_periodic_faces(
             dofHandlerForce,
             /*b_id1*/ 2 * i + 1,
             /*b_id2*/ 2 * i + 2,
@@ -147,7 +147,7 @@ namespace dftfe
             offsetVectors[periodicDirectionVector[i]]);
         }
 
-      DoFTools::make_periodicity_constraints<DoFHandler<3>>(
+      dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
         periodicity_vectorForce, constraintsForce);
       constraintsForce.close();
 
@@ -180,13 +180,13 @@ namespace dftfe
     const MPI_Comm &                   mpi_comm_domain,
     const dftParameters &              dftParams)
     : dftPtr(_dftPtr)
-    , FEForce(FE_Q<3>(QGaussLobatto<1>(2)), 3)
+    , FEForce(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)), 3)
     , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , d_dftParams(dftParams)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   //
@@ -195,8 +195,8 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   forceClass<FEOrder, FEOrderElectro>::initUnmoved(
-    const Triangulation<3, 3> &             triangulation,
-    const Triangulation<3, 3> &             serialTriangulation,
+    const dealii::Triangulation<3, 3> &             triangulation,
+    const dealii::Triangulation<3, 3> &             serialTriangulation,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              isElectrostaticsMesh)
   {
@@ -232,7 +232,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   forceClass<FEOrder, FEOrderElectro>::initMoved(
-    std::vector<const DoFHandler<3> *> &dofHandlerVectorMatrixFree,
+    std::vector<const dealii::DoFHandler<3> *> &dofHandlerVectorMatrixFree,
     std::vector<const dealii::AffineConstraints<double> *>
       &        constraintsVectorMatrixFree,
     const bool isElectrostaticsMesh)
@@ -264,10 +264,10 @@ namespace dftfe
                                    d_atomsForceDofs);
 
         const unsigned int    numberGlobalAtoms = dftPtr->atomLocations.size();
-        std::vector<Point<3>> atomPoints;
+        std::vector<dealii::Point<3>> atomPoints;
         for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
-            Point<3> atomCoor;
+            dealii::Point<3> atomCoor;
             atomCoor[0] = dftPtr->atomLocations[iAtom][2];
             atomCoor[1] = dftPtr->atomLocations[iAtom][3];
             atomCoor[2] = dftPtr->atomLocations[iAtom][4];
@@ -291,7 +291,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   forceClass<FEOrder, FEOrderElectro>::computeAtomsForces(
-    const MatrixFree<3, double> &matrixFreeData,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
     kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperatorDevice,
@@ -301,7 +301,7 @@ namespace dftfe
     const unsigned int                                 eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
-    const MatrixFree<3, double> &    matrixFreeDataElectro,
+    const dealii::MatrixFree<3, double> &    matrixFreeDataElectro,
     const unsigned int               phiTotDofHandlerIndexElectro,
     const distributedCPUVec<double> &phiTotRhoOutElectro,
     const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -409,8 +409,8 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   forceClass<FEOrder, FEOrderElectro>::configForceLinFEInit(
-    const MatrixFree<3, double> &matrixFreeData,
-    const MatrixFree<3, double> &matrixFreeDataElectro)
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dealii::MatrixFree<3, double> &matrixFreeDataElectro)
   {
     matrixFreeData.initialize_dof_vector(d_configForceVectorLinFE,
                                          d_forceDofHandlerIndex);
@@ -443,7 +443,7 @@ namespace dftfe
   forceClass<FEOrder, FEOrderElectro>::configForceLinFEFinalize()
   {
     d_configForceVectorLinFE.compress(
-      VectorOperation::add); // copies the ghost element cache to the owning
+      dealii::VectorOperation::add); // copies the ghost element cache to the owning
                              // element
     // d_configForceVectorLinFE.update_ghost_values();
     d_constraintsNoneForce.distribute(
@@ -453,7 +453,7 @@ namespace dftfe
 
 
     d_configForceVectorLinFEElectro.compress(
-      VectorOperation::add); // copies the ghost element cache to the owning
+      dealii::VectorOperation::add); // copies the ghost element cache to the owning
                              // element
     // d_configForceVectorLinFE.update_ghost_values();
     d_constraintsNoneForceElectro.distribute(
@@ -463,7 +463,7 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
     d_configForceVectorLinFEKPoints.compress(
-      VectorOperation::add); // copies the ghost element cache to the owning
+      dealii::VectorOperation::add); // copies the ghost element cache to the owning
                              // element
     // d_configForceVectorLinFEKPoints.update_ghost_values();
     d_constraintsNoneForce.distribute(
@@ -483,7 +483,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceTotalLinFE(
-    const MatrixFree<3, double> &matrixFreeData,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
 #ifdef DFTFE_WITH_DEVICE
     kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperatorDevice,
@@ -492,7 +492,7 @@ namespace dftfe
     const unsigned int                                 eigenDofHandlerIndex,
     const unsigned int               smearedChargeQuadratureId,
     const unsigned int               lpspQuadratureIdElectro,
-    const MatrixFree<3, double> &    matrixFreeDataElectro,
+    const dealii::MatrixFree<3, double> &    matrixFreeDataElectro,
     const unsigned int               phiTotDofHandlerIndexElectro,
     const distributedCPUVec<double> &phiTotRhoOutElectro,
     const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
@@ -617,7 +617,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  Tensor<2, 3, double>
+  dealii::Tensor<2, 3, double>
   forceClass<FEOrder, FEOrderElectro>::getStress()
   {
     return d_stress;

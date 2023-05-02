@@ -16,6 +16,10 @@
 //
 // @author Sambit Das
 //
+#include<dft.h>
+
+namespace dftfe
+{
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
@@ -29,8 +33,8 @@ dftClass<FEOrder, FEOrderElectro>::calculateNearestAtomDistances()
   d_nearestAtomIds.resize(numberGlobalAtoms);
   for (unsigned int i = 0; i < numberGlobalAtoms; i++)
     {
-      Point<3> atomCoori;
-      Point<3> atomCoorj;
+      dealii::Point<3> atomCoori;
+      dealii::Point<3> atomCoorj;
       atomCoori[0] = atomLocations[i][2];
       atomCoori[1] = atomLocations[i][3];
       atomCoori[2] = atomLocations[i][4];
@@ -68,15 +72,15 @@ dftClass<FEOrder, FEOrderElectro>::calculateNearestAtomDistances()
 
   AssertThrow(
     d_minDist >= 0.1,
-    ExcMessage(
+    dealii::ExcMessage(
       "DFT-FE Error: Minimum distance between atoms is less than 0.1 Bohr."));
 }
 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
-  Triangulation<3, 3> &triangulationMove,
-  Triangulation<3, 3> &triangulationSerial,
+  dealii::Triangulation<3, 3> &triangulationMove,
+  dealii::Triangulation<3, 3> &triangulationSerial,
   bool                 reuseClosestTriaVertices,
   bool                 moveSubdivided)
 {
@@ -101,12 +105,12 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   const unsigned int numberGlobalAtoms = atomLocations.size();
   const unsigned int numberImageAtoms  = d_imageIdsTrunc.size();
 
-  std::vector<Point<3>> atomPoints;
+  std::vector<dealii::Point<3>> atomPoints;
   d_atomLocationsAutoMesh.resize(numberGlobalAtoms,
                                  std::vector<double>(3, 0.0));
   for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
     {
-      Point<3> atomCoor;
+      dealii::Point<3> atomCoor;
       atomCoor[0] = atomLocations[iAtom][2];
       atomCoor[1] = atomLocations[iAtom][3];
       atomCoor[2] = atomLocations[iAtom][4];
@@ -115,8 +119,8 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
         d_atomLocationsAutoMesh[iAtom][j] = atomCoor[j];
     }
 
-  std::vector<Point<3>>             closestTriaVertexToAtomsLocation;
-  std::vector<Tensor<1, 3, double>> dispClosestTriaVerticesToAtoms;
+  std::vector<dealii::Point<3>>             closestTriaVertexToAtomsLocation;
+  std::vector<dealii::Tensor<1, 3, double>> dispClosestTriaVerticesToAtoms;
 
   timer_movemesh.enter_subsection("move mesh to atoms: find closest vertices");
   if (reuseClosestTriaVertices)
@@ -139,8 +143,8 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   if (!reuseClosestTriaVertices)
     for (unsigned int iImage = 0; iImage < numberImageAtoms; iImage++)
       {
-        Point<3> imageCoor;
-        Point<3> correspondingAtomCoor;
+        dealii::Point<3> imageCoor;
+        dealii::Point<3> correspondingAtomCoor;
 
         imageCoor[0]             = d_imagePositionsTrunc[iImage][0];
         imageCoor[1]             = d_imagePositionsTrunc[iImage][1];
@@ -189,7 +193,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms + numberImageAtoms;
        iAtom++)
     {
-      Point<3> atomCoor;
+      dealii::Point<3> atomCoor;
       if (iAtom < numberGlobalAtoms)
         {
           atomCoor[0] = atomLocations[iAtom][2];
@@ -229,7 +233,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
 
   AssertThrow(
     !meshQualityMetrics.first,
-    ExcMessage(
+    dealii::ExcMessage(
       "Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 
   if (!reuseClosestTriaVertices)
@@ -285,4 +289,6 @@ dftClass<FEOrder, FEOrderElectro>::calculateSmearedChargeWidths()
                 << ", Smeared charge width: " << d_smearedChargeWidths[iAtom]
                 << std::endl;
     }
+}
+#include "dft.inst.cc"
 }

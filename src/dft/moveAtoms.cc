@@ -16,6 +16,10 @@
 //
 // @author Sambit Das and Phani Motamarri
 //
+#include<dft.h>
+
+namespace dftfe
+{
 
 namespace internal
 {
@@ -38,8 +42,8 @@ namespace internal
 
   std::vector<double>
   getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                           const Point<3> &           point,
-                           const Point<3> &           corner)
+                           const dealii::Point<3> &           point,
+                           const dealii::Point<3> &           corner)
   {
     //
     // recenter vertex about corner
@@ -69,14 +73,14 @@ namespace internal
            &LDA,
            &info);
     AssertThrow(info == 0,
-                ExcMessage(
+                dealii::ExcMessage(
                   "LU solve in finding fractional coordinates failed."));
     return recenteredPoint;
   }
 
   std::vector<double>
-  wrapAtomsAcrossPeriodicBc(const Point<3> &           cellCenteredCoord,
-                            const Point<3> &           corner,
+  wrapAtomsAcrossPeriodicBc(const dealii::Point<3> &           cellCenteredCoord,
+                            const dealii::Point<3> &           corner,
                             const std::vector<double> &latticeVectors,
                             const std::vector<bool> &  periodicBc)
   {
@@ -85,7 +89,7 @@ namespace internal
       getFractionalCoordinates(latticeVectors, cellCenteredCoord, corner);
 
 
-    // if(Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    // if(dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     // std::cout<<"Fractional Coordinates before wrapping: "<<fracCoord[0]<<"
     // "<<fracCoord[1]<<" "<<fracCoord[2]<<std::endl;
 
@@ -100,17 +104,17 @@ namespace internal
             else if (fracCoord[i] > 1.0 + tol)
               fracCoord[i] -= 1.0;
 
-            // if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+            // if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
             //  std::cout << fracCoord[i] << " ";
 
             AssertThrow(
               fracCoord[i] > -2.0 * tol && fracCoord[i] < 1.0 + 2.0 * tol,
-              ExcMessage(
+              dealii::ExcMessage(
                 "Moved atom position doesnt't lie inside the cell after wrapping across periodic boundary"));
           }
       }
 
-    // if(Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    // if(dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     // std::cout<<std::endl;
 
     return fracCoord;
@@ -125,7 +129,7 @@ namespace internal
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
-  const std::vector<Tensor<1, 3, double>> &globalAtomsDisplacements,
+  const std::vector<dealii::Tensor<1, 3, double>> &globalAtomsDisplacements,
   const double                             maxJacobianRatioFactor,
   const bool                               useSingleAtomSolutionsOverride)
 {
@@ -139,7 +143,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     for (unsigned int jdim = 0; jdim < 3; jdim++)
       latticeVectorsFlattened[3 * idim + jdim] =
         d_domainBoundingVectors[idim][jdim];
-  Point<3> corner;
+  dealii::Point<3> corner;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
       corner[idim] = 0;
@@ -151,18 +155,18 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   periodicBc[1] = d_dftParamsPtr->periodicY;
   periodicBc[2] = d_dftParamsPtr->periodicZ;
 
-  std::vector<Point<3>>             controlPointLocationsInitialMove;
-  std::vector<Tensor<1, 3, double>> controlPointDisplacementsInitialMove;
+  std::vector<dealii::Point<3>>             controlPointLocationsInitialMove;
+  std::vector<dealii::Tensor<1, 3, double>> controlPointDisplacementsInitialMove;
 
-  std::vector<Point<3>>             controlPointLocationsCurrentMove;
-  std::vector<Tensor<1, 3, double>> controlPointDisplacementsCurrentMove;
+  std::vector<dealii::Point<3>>             controlPointLocationsCurrentMove;
+  std::vector<dealii::Tensor<1, 3, double>> controlPointDisplacementsCurrentMove;
 
   std::vector<double> gaussianConstantsInitialMove;
   std::vector<double> gaussianConstantsCurrentMove;
   std::vector<double> flatTopWidths;
 
   d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
-  std::vector<Tensor<1, 3, double>> tempGaussianMovementAtomsNetDisplacements;
+  std::vector<dealii::Tensor<1, 3, double>> tempGaussianMovementAtomsNetDisplacements;
 
   double maxDispAtom = -1;
   if (!d_dftParamsPtr->floatingNuclearCharges)
@@ -255,13 +259,13 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<3> atomCoor;
+          dealii::Point<3> atomCoor;
           int      atomId = iAtom;
           atomCoor[0]     = atomLocations[iAtom][2];
           atomCoor[1]     = atomLocations[iAtom][3];
           atomCoor[2]     = atomLocations[iAtom][4];
 
-          Point<3> newCoord;
+          dealii::Point<3> newCoord;
           for (unsigned int idim = 0; idim < 3; ++idim)
             newCoord[idim] =
               atomCoor[idim] + globalAtomsDisplacements[atomId][idim];
@@ -285,7 +289,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<3> atomCoor;
+          dealii::Point<3> atomCoor;
           int      atomId = iAtom;
 
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
@@ -299,7 +303,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           << std::endl;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
         {
-          Point<3> atomCoor;
+          dealii::Point<3> atomCoor;
           int      atomId = iAtom;
 
           atomCoor[0] = atomLocations[iAtom][2];
@@ -359,7 +363,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           << std::endl;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<3> atomCoor;
+          dealii::Point<3> atomCoor;
           int      atomId = iAtom;
 
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
@@ -383,10 +387,10 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
       MPI_Barrier(d_mpiCommParent);
       atomsloop_time = MPI_Wtime();
 
-      std::vector<Point<3>> atomPoints;
+      std::vector<dealii::Point<3>> atomPoints;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<3> atomCoor;
+          dealii::Point<3> atomCoor;
           atomCoor[0] = atomLocations[iAtom][2];
           atomCoor[1] = atomLocations[iAtom][3];
           atomCoor[2] = atomLocations[iAtom][4];
@@ -401,7 +405,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
         {
           dealii::Point<3> temp;
           int              atomId;
-          Point<3>         atomCoor;
+          dealii::Point<3>         atomCoor;
           if (iAtom < numberGlobalAtoms)
             {
               atomId = iAtom;
@@ -620,13 +624,13 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
                            iAtom++)
                         {
-                          Point<3> atomCoor;
+                          dealii::Point<3> atomCoor;
                           int      atomId = iAtom;
                           atomCoor[0]     = atomLocations[iAtom][2];
                           atomCoor[1]     = atomLocations[iAtom][3];
                           atomCoor[2]     = atomLocations[iAtom][4];
 
-                          Point<3> newCoord;
+                          dealii::Point<3> newCoord;
                           for (unsigned int idim = 0; idim < 3; ++idim)
                             newCoord[idim] =
                               atomCoor[idim] +
@@ -731,4 +735,6 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
         pcout << "updateAtomPositionsAndMoveMesh: Time taken for initNoRemesh: "
               << init_time << std::endl;
     }
+}
+#include "dft.inst.cc"
 }

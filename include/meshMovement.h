@@ -24,7 +24,7 @@
 
 namespace dftfe
 {
-  using namespace dealii;
+  // using namespace dealii;
 
   /**
    * @brief Base class to move triangulation vertices
@@ -55,8 +55,8 @@ namespace dftfe
      *  @param[in] domainBoundingVectors domain vectors of the domain
      * corresponding to the triangulation object.
      */
-    void init(Triangulation<3, 3> &                   triangulation,
-              Triangulation<3, 3> &                   serialTriangulation,
+    void init(dealii::Triangulation<3, 3> &                   triangulation,
+              dealii::Triangulation<3, 3> &                   serialTriangulation,
               const std::vector<std::vector<double>> &domainBoundingVectors);
 
     /** @brief Re-initializes the required data-structures for a given triangulation
@@ -79,9 +79,9 @@ namespace dftfe
      */
     void
     findClosestVerticesToDestinationPoints(
-      const std::vector<Point<3>> &      destinationPoints,
-      std::vector<Point<3>> &            closestTriaVertexToDestPointsLocation,
-      std::vector<Tensor<1, 3, double>> &dispClosestTriaVerticesToDestPoints);
+      const std::vector<dealii::Point<3>> &      destinationPoints,
+      std::vector<dealii::Point<3>> &            closestTriaVertexToDestPointsLocation,
+      std::vector<dealii::Tensor<1, 3, double>> &dispClosestTriaVerticesToDestPoints);
 
   protected:
     /// Initializes the parallel layout of d_incrementalDisplacementParallel
@@ -110,21 +110,21 @@ namespace dftfe
     // virtual void computeIncrement()=0;
 
     /// vector of displacements of the triangulation vertices
-    // Vector<double> d_incrementalDisplacement;
+    // dealii::Vector<double> d_incrementalDisplacement;
     distributedCPUVec<double> d_incrementalDisplacement;
 
     bool d_isParallelMesh;
 
     // dealii based FE data structres
-    FESystem<3>                              FEMoveMesh;
-    DoFHandler<3>                            d_dofHandlerMoveMesh;
-    parallel::distributed::Triangulation<3> *d_triaPtr;
-    Triangulation<3, 3> *                    d_triaPtrSerial;
-    IndexSet                                 d_locally_owned_dofs;
-    IndexSet                                 d_locally_relevant_dofs;
+    dealii::FESystem<3>                              FEMoveMesh;
+    dealii::DoFHandler<3>                            d_dofHandlerMoveMesh;
+    dealii::parallel::distributed::Triangulation<3> *d_triaPtr;
+    dealii::Triangulation<3, 3> *                    d_triaPtrSerial;
+    dealii::IndexSet                                 d_locally_owned_dofs;
+    dealii::IndexSet                                 d_locally_relevant_dofs;
     dealii::AffineConstraints<double>        d_constraintsMoveMesh;
     std::vector<
-      GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
+      dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator>>
                                      d_periodicity_vector;
     std::vector<std::vector<double>> d_domainBoundingVectors;
 

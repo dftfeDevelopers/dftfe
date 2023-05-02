@@ -601,7 +601,7 @@ node is stored
     std::vector<dealii::types::global_dof_index>
       d_FullflattenedArrayMacroCellLocalProcIndexIdMap;
 
-    std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
+    std::vector<unsigned int>d_normalCellIdToMacroCellIdMap;
     std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
 
     /// flag for precomputing stiffness matrix contribution from

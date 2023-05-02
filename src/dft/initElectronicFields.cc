@@ -16,13 +16,18 @@
 //
 // @author  Phani Motamarri, Sambit Das
 //
+#include<dft.h>
+#include <dftUtils.h>
+
+namespace dftfe
+{
 
 // init
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
 {
-  TimerOutput::Scope scope(computing_timer, "init electronic fields");
+  dealii::TimerOutput::Scope scope(computing_timer, "init electronic fields");
 
   // reading data from pseudopotential files and fitting splines
   if (d_dftParamsPtr->isPseudopotential)
@@ -180,4 +185,6 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     pcout << std::endl
           << "net magnetization: "
           << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;
+}
+#include "dft.inst.cc"
 }

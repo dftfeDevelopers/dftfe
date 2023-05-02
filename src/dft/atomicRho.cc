@@ -16,6 +16,11 @@
 //
 // @author Sambit Das
 //
+#include<dft.h>
+#include <fileReaders.h>
+
+namespace dftfe
+{
 
 //
 // Initialize rho by reading in single-atom electron-density and fit a spline
@@ -107,9 +112,9 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
   //
   // Initialize rho
   //
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
-  FEValues<3> fe_values(FE, quadrature_formula, update_quadrature_points);
+  dealii::FEValues<3> fe_values(FE, quadrature_formula, dealii::update_quadrature_points);
   const unsigned int n_q_points = quadrature_formula.size();
 
   //
@@ -122,18 +127,18 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
   //
   const int numberImageCharges = d_imageIdsTrunc.size();
 
-  Tensor<1, 3, double> zeroTensor1;
+  dealii::Tensor<1, 3, double> zeroTensor1;
   for (unsigned int i = 0; i < 3; i++)
     zeroTensor1[i] = 0.0;
 
-  Tensor<2, 3, double> zeroTensor2;
+  dealii::Tensor<2, 3, double> zeroTensor2;
 
   for (unsigned int i = 0; i < 3; i++)
     for (unsigned int j = 0; j < 3; j++)
       zeroTensor2[i][j] = 0.0;
 
   // loop over elements
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
   for (; cell != endc; ++cell)
     {
@@ -156,16 +161,16 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
             hessianRhoAtomsQuadValues.resize(n_q_points * 9, 0.0);
 
           std::vector<double>               rhoAtom(n_q_points, 0.0);
-          std::vector<Tensor<1, 3, double>> gradRhoAtom(n_q_points,
+          std::vector<dealii::Tensor<1, 3, double>> gradRhoAtom(n_q_points,
                                                         zeroTensor1);
-          std::vector<Tensor<2, 3, double>> hessianRhoAtom(n_q_points,
+          std::vector<dealii::Tensor<2, 3, double>> hessianRhoAtom(n_q_points,
                                                            zeroTensor2);
 
 
           // loop over atoms
           for (unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
             {
-              Point<3> atom(atomLocations[iAtom][2],
+              dealii::Point<3> atom(atomLocations[iAtom][2],
                             atomLocations[iAtom][3],
                             atomLocations[iAtom][4]);
               bool     isRhoDataInCell = false;
@@ -176,8 +181,8 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
               // loop over quad points
               for (unsigned int q = 0; q < n_q_points; ++q)
                 {
-                  Point<3> quadPoint        = fe_values.quadrature_point(q);
-                  Tensor<1, 3, double> diff = quadPoint - atom;
+                  dealii::Point<3> quadPoint        = fe_values.quadrature_point(q);
+                  dealii::Tensor<1, 3, double> diff = quadPoint - atom;
                   double distanceToAtom     = quadPoint.distance(atom);
 
                   if (d_dftParamsPtr->floatingNuclearCharges &&
@@ -290,7 +295,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
             {
               const int masterAtomId = d_imageIdsTrunc[iImageCharge];
 
-              Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+              dealii::Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
                                  d_imagePositionsTrunc[iImageCharge][1],
                                  d_imagePositionsTrunc[iImageCharge][2]);
 
@@ -302,8 +307,8 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
               // loop over quad points
               for (unsigned int q = 0; q < n_q_points; ++q)
                 {
-                  Point<3> quadPoint        = fe_values.quadrature_point(q);
-                  Tensor<1, 3, double> diff = quadPoint - imageAtom;
+                  dealii::Point<3> quadPoint        = fe_values.quadrature_point(q);
+                  dealii::Tensor<1, 3, double> diff = quadPoint - imageAtom;
                   double distanceToAtom     = quadPoint.distance(imageAtom);
 
                   if (d_dftParamsPtr->floatingNuclearCharges &&
@@ -490,11 +495,11 @@ dftClass<FEOrder, FEOrderElectro>::addAtomicRhoQuadValuesGradients(
   std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
   const bool                                     isConsiderGradData)
 {
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
   const unsigned int n_q_points = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                       endc = dofHandler.end();
   for (; cell != endc; ++cell)
     if (cell->is_locally_owned())
@@ -534,11 +539,11 @@ dftClass<FEOrder, FEOrderElectro>::subtractAtomicRhoQuadValuesGradients(
   std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
   const bool                                     isConsiderGradData)
 {
-  const Quadrature<3> &quadrature_formula =
+  const dealii::Quadrature<3> &quadrature_formula =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
   const unsigned int n_q_points = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                       endc = dofHandler.end();
   for (; cell != endc; ++cell)
     if (cell->is_locally_owned())
@@ -598,4 +603,7 @@ dftClass<FEOrder, FEOrderElectro>::l2ProjectionQuadDensityMinusAtomicDensity(
     matrixFreeDataObject.get_quadrature(quadratureId),
     funcRho,
     nodalField);
+}
+#include "dft.inst.cc"
+
 }

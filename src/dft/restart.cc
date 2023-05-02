@@ -21,6 +21,26 @@
 
 //
 //
+#include<dft.h>
+#include <fileReaders.h>
+#include <dftUtils.h>
+#include <linearAlgebraOperations.h>
+
+namespace dftfe
+{
+
+namespace internal
+{
+    std::vector<double>
+  getFractionalCoordinates(const std::vector<double> &latticeVectors,
+                           const dealii::Point<3> &           point,
+                           const dealii::Point<3> &           corner);
+    std::vector<double>
+  wrapAtomsAcrossPeriodicBc(const dealii::Point<3> &           cellCenteredCoord,
+                            const dealii::Point<3> &           corner,
+                            const std::vector<double> &latticeVectors,
+                            const std::vector<bool> &  periodicBc);
+}
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
@@ -79,7 +99,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
   // write size of current mixing history into an additional .txt file
   const std::string extraInfoFileName = "rhoDataExtraInfo.chk";
   if (std::ifstream(extraInfoFileName) &&
-      Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+      dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     dftUtils::moveFile(extraInfoFileName, extraInfoFileName + ".old");
   std::ofstream extraInfoFile(extraInfoFileName);
   if (extraInfoFile.is_open())
@@ -243,11 +263,11 @@ dftClass<FEOrder, FEOrderElectro>::loadTriaInfoAndRhoData()
       extraInfoFile.close();
     }
   else
-    AssertThrow(false, ExcMessage("Unable to find rhoDataExtraInfo.txt"));
+    AssertThrow(false, dealii::ExcMessage("Unable to find rhoDataExtraInfo.txt"));
 
   Assert(mixingHistorySize > 1, ExcInternalError());
 
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     matrix_free_data.get_quadrature(d_densityQuadratureId);
   const unsigned int num_quad_points = quadrature.size();
 
@@ -459,7 +479,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         for (unsigned int jdim = 0; jdim < 3; jdim++)
           latticeVectorsFlattened[3 * idim + jdim] =
             d_domainBoundingVectors[idim][jdim];
-      Point<3> corner;
+      dealii::Point<3> corner;
       for (unsigned int idim = 0; idim < 3; idim++)
         {
           corner[idim] = 0;
@@ -476,14 +496,14 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         {
           for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
             {
-              Point<3> atomCoor;
+              dealii::Point<3> atomCoor;
               int      atomId = iAtom;
               atomCoor[0]     = d_atomLocationsAutoMesh[iAtom][0];
               atomCoor[1]     = d_atomLocationsAutoMesh[iAtom][1];
               atomCoor[2]     = d_atomLocationsAutoMesh[iAtom][2];
 
               std::vector<double> newFracCoord =
-                internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+                dftfe::internal::wrapAtomsAcrossPeriodicBc(atomCoor,
                                                     corner,
                                                     latticeVectorsFlattened,
                                                     periodicBc);
@@ -499,7 +519,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         {
           for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
             {
-              Point<3> atomCoor;
+              dealii::Point<3> atomCoor;
               int      atomId = iAtom;
               atomCoor[0]     = atomLocations[iAtom][2];
               atomCoor[1]     = atomLocations[iAtom][3];
@@ -609,7 +629,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinatesFloatingCharges(
         for (unsigned int jdim = 0; jdim < 3; jdim++)
           latticeVectorsFlattened[3 * idim + jdim] =
             d_domainBoundingVectors[idim][jdim];
-      Point<3> corner;
+      dealii::Point<3> corner;
       for (unsigned int idim = 0; idim < 3; idim++)
         {
           corner[idim] = 0;
@@ -626,7 +646,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinatesFloatingCharges(
 
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<3> atomCoor;
+          dealii::Point<3> atomCoor;
           int      atomId = iAtom;
           atomCoor[0]     = atomLocations[iAtom][2];
           atomCoor[1]     = atomLocations[iAtom][3];
@@ -660,4 +680,6 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinatesFloatingCharges(
                                   Path + "atomsCartCoordCurrent.chk",
                                   d_mpiCommParent);
     }
+}
+#include "dft.inst.cc"
 }

@@ -16,6 +16,11 @@
 //
 // @author Sambit Das
 //
+#include<dft.h>
+#include <linearAlgebraOperations.h>
+
+namespace dftfe
+{
 
 namespace internalLowrankJacInv
 {
@@ -822,4 +827,6 @@ dftClass<FEOrder, FEOrderElectro>::
           << std::endl;
 
   return normValue;
+}
+#include "dft.inst.cc"
 }

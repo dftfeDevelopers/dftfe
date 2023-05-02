@@ -22,13 +22,16 @@
 
 #include <headers.h>
 #include <mpi.h>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/random/normal_distribution.hpp>
 
 
 namespace dftfe
 {
   namespace pseudoUtils
   {
-    double tolerance = 1e-12;
+    
 
     // some inline functions
     inline void
@@ -180,6 +183,7 @@ namespace dftfe
                                 double &theta,
                                 double &phi)
     {
+      double tolerance = 1e-12;
       r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
 
       if (std::fabs(r - 0.0) <= tolerance)

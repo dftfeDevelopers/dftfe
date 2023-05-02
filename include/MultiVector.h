@@ -21,8 +21,8 @@
  */
 
 
-#ifndef dftfeMultiVector_h
-#define dftfeMultiVector_h
+#ifndef dftfeMultiVector.h
+#define dftfeMultiVector.h
 
 #include <TypeConfig.h>
 #include <MemoryStorage.h>
@@ -415,7 +415,7 @@ namespace dftfe
 
 
       /**
-       * @brief Set all entries of the MultiVector to a given value
+       * @brief Set all entries of the MultiVector.to a given value
        *
        * @param[in] val The value to which the entries are to be set
        */
@@ -519,4 +519,4 @@ namespace dftfe
   } // end of namespace linearAlgebra
 } // end of namespace dftfe
 #include "../src/linAlg/MultiVector.t.cc"
-#endif // dftfeMultiVector_h
+#endif // dftfeMultiVector.h

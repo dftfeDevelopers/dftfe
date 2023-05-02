@@ -24,7 +24,7 @@
 
 namespace dftfe
 {
-  using namespace dealii;
+  // using namespace dealii;
 
   /**
    * @brief problem class for cell stress relaxation solver.
@@ -148,7 +148,7 @@ namespace dftfe
     int    d_totalUpdateCalls;
     double d_domainVolumeInitial;
     /// current strain tensor applied on the domain
-    Tensor<2, 3, double> d_strainEpsilon;
+    dealii::Tensor<2, 3, double> d_strainEpsilon;
 
     /// pointer to dft class
     dftBase *                        d_dftPtr;
