@@ -23,7 +23,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
   /**
    * @brief The functions in this namespace contain the expressions for the various terms of the configurational force (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
    * for both periodic (see Eq. 38) and non-periodic (see Eqs. 28-29) case.

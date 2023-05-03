@@ -24,8 +24,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
-
   /**
    * @brief problem class for cell stress relaxation solver.
    *

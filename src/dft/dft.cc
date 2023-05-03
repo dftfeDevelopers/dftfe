@@ -73,37 +73,6 @@
 
 namespace dftfe
 {
-  // Include cc files
-  // #include "atomicRho.cc"
-  // #include "charge.cc"
-  // #include "density.cc"
-  // #include "dos.cc"
-  // #include "electrostaticHRefinedEnergy.cc"
-  // #include "femUtilityFunctions.cc"
-  // #include "fermiEnergy.cc"
-  // #include "generateImageCharges.cc"
-  // #include "initBoundaryConditions.cc"
-  // #include "initCoreRho.cc"
-  // #include "initElectronicFields.cc"
-  // #include "initPseudo-OV.cc"
-  // #include "initPseudoLocal.cc"
-  // #include "initRho.cc"
-  // #include "initUnmovedTriangulation.cc"
-  // #include "kohnShamEigenSolve.cc"
-  // #include "localizationLength.cc"
-  // #include "mixingschemes.cc"
-  // #include "moveAtoms.cc"
-  // #include "moveMeshToAtoms.cc"
-  // #include "nodalDensityMixingSchemes.cc"
-  // #include "nscf.cc"
-  // #include "pRefinedDoFHandler.cc"
-  // #include "psiInitialGuess.cc"
-  // #include "publicMethods.cc"
-  // #include "restart.cc"
-  // #include "lowrankApproxScfDielectricMatrixInv.cc"
-  // #include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
-  // #include "computeOutputDensityDirectionalDerivative.cc"
-
   //
   // dft constructor
   //

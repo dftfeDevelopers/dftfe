@@ -25,8 +25,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
-
   namespace meshGenUtils
   {
     inline void

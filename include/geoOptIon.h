@@ -24,9 +24,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
-
-
   /**
    * @brief problem class for atomic force relaxation solver.
    *

@@ -24,8 +24,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
-
   /**
    * @brief Base class to move triangulation vertices
    *

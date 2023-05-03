@@ -22,8 +22,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
-
   /**
    * @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
    *

@@ -28,8 +28,6 @@
 
 namespace dftfe
 {
-  // using namespace dealii;
-
   /**
    * @brief density symmetrization based on irreducible Brillouin zone calculation, only relevant for calculations using point group symmetries
    *

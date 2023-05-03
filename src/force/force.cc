@@ -43,33 +43,6 @@
 
 namespace dftfe
 {
-  // #include
-  // "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
-  // #include
-  // "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
-  // #include
-  // "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
-  // #include
-  // "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
-  // #include "configurationalForceCompute/FnlGammaElementalContribution.cc"
-  // #include
-  // "configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc"
-  // #include "configurationalForceCompute/computeFloatingAtomsForces.cc"
-  // #include
-  // "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
-  // #include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
-  // #include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
-  // #include
-  // "configurationalStressCompute/ENonlinearCoreCorrectionContribution.cc"
-  // #include "configurationalStressCompute/EnlStressContribution.cc"
-  // #include "configurationalStressCompute/EPSPStressContribution.cc"
-  // #include "configurationalStressCompute/ESmearedStressContribution.cc"
-  // #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
-  // #include "configurationalStressCompute/computeStressEself.cc"
-  // #include "configurationalStressCompute/stress.cc"
-  // #include "createBinObjectsForce.cc"
-  // #include "locateAtomCoreNodesForce.cc"
-
   namespace internalForce
   {
     void

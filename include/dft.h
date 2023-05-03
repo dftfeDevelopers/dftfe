@@ -73,7 +73,6 @@ namespace dftfe
   //
   // Initialize Namespace
   //
-  // using namespace dealii;
 
 
 
