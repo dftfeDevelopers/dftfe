@@ -21,8 +21,8 @@
  */
 
 
-#ifndef dftfeMultiVector.h
-#define dftfeMultiVector .h
+#ifndef dftfeMultiVector_h
+#define dftfeMultiVector_h
 
 #include <TypeConfig.h>
 #include <MemoryStorage.h>
@@ -519,4 +519,4 @@ namespace dftfe
   } // end of namespace linearAlgebra
 } // end of namespace dftfe
 #include "../src/linAlg/MultiVector.t.cc"
-#endif // dftfeMultiVector.h
+#endif // dftfeMultiVector_h
