@@ -475,7 +475,7 @@ namespace dftfe
       for (unsigned int i=0;i<xD.localSize()*xD.numVectors();i++)
         *(flattenedArray.begin()+i)=1.0;
 
-      flattenedArray.compressdealii::VectorOperation::add);
+      flattenedArray.compress(dealii::VectorOperation::add);
 
 
       //for (unsigned int i=0;i<xD.locallyOwnedSize()*xD.numVectors();i++)
