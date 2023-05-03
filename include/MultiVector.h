@@ -415,7 +415,7 @@ namespace dftfe
 
 
       /**
-       * @brief Set all entries of the MultiVector.to a given value
+       * @brief Set all entries of the MultiVector to a given value
        *
        * @param[in] val The value to which the entries are to be set
        */
