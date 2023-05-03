@@ -110,10 +110,9 @@ namespace dftfe
       d_mesh.getElectrostaticsMeshRho();
 
     dealii::DoFHandler<3> dofHandlerHRefined;
-    dofHandlerHRefined.initialize(electrostaticsTriaRho,
-                                  dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-                                    FEOrderElectro + 1)));
-    dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
+    dofHandlerHRefined.reinit(electrostaticsTriaRho);
+    dofHandlerHRefined.distribute_dofs(
+      dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
 
     //
     // create a solution transfer object and prepare for refinement and solution
@@ -216,8 +215,8 @@ namespace dftfe
         periodicity_vector2,
         offsetVectors[periodicDirectionVector[i]]);
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
-      periodicity_vector2, constraintsHRefined);
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(periodicity_vector2,
+                                                         constraintsHRefined);
     constraintsHRefined.close();
 
 
@@ -479,7 +478,8 @@ namespace dftfe
 
     dealii::MatrixFree<3, double> matrixFreeDataHRefined;
 
-    matrixFreeDataHRefined.reinit(matrixFreeDofHandlerVectorInput,
+    matrixFreeDataHRefined.reinit(dealii::MappingQ1<3, 3>(),
+                                  matrixFreeDofHandlerVectorInput,
                                   matrixFreeConstraintsInputVector,
                                   quadratureVector,
                                   additional_data);

@@ -174,7 +174,7 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     double normValue = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
@@ -190,7 +190,8 @@ namespace dftfe
         normValueVectorized = fe_evalField.integrate_value();
 
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             iSubCell <
+             matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             normValue += normValueVectorized[iSubCell];
@@ -266,7 +267,7 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     double normValue = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
@@ -282,7 +283,8 @@ namespace dftfe
         normValueVectorized = fe_evalField.integrate_value();
 
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             iSubCell <
+             matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             normValue += normValueVectorized[iSubCell];
@@ -320,7 +322,7 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     double value = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
@@ -351,7 +353,8 @@ namespace dftfe
         valueVectorized = fe_evalField.integrate_value();
 
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             iSubCell <
+             matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             value += valueVectorized[iSubCell];

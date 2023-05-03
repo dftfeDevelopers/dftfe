@@ -377,7 +377,7 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
 
-    const int numMacroCells = _matrix_free_data.n_macro_cells();
+    const int numMacroCells = _matrix_free_data.n_cell_batches();
 
     std::vector<int> kptGroupLowHighPlusOneIndicesStep2;
 
@@ -386,7 +386,7 @@ namespace dftfe
         interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndicesStep2);
 
     for (unsigned int macrocell = 0;
-         macrocell < _matrix_free_data.n_macro_cells();
+         macrocell < _matrix_free_data.n_cell_batches();
          ++macrocell)
       {
         if (macrocell <
@@ -403,7 +403,8 @@ namespace dftfe
 
 
             for (unsigned int iSubCell = 0;
-                 iSubCell < _matrix_free_data.n_components_filled(macrocell);
+                 iSubCell <
+                 _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                  ++iSubCell)
               {
                 subCellPtr =
@@ -494,7 +495,8 @@ namespace dftfe
               }     // subcell loop
 
             for (unsigned int iSubCell = 0;
-                 iSubCell < _matrix_free_data.n_components_filled(macrocell);
+                 iSubCell <
+                 _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                  ++iSubCell)
               {
                 subCellPtr =

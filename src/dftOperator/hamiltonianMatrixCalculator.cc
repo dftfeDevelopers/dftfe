@@ -41,7 +41,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   // Get the number of locally owned cells
   //
   const unsigned int numberMacroCells =
-    dftPtr->matrix_free_data.n_macro_cells();
+    dftPtr->matrix_free_data.n_cell_batches();
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
   if (totalLocallyOwnedCells > 0)
@@ -897,7 +897,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   // Get the number of locally owned cells
   //
   const unsigned int numberMacroCells =
-    dftPtr->matrix_free_data.n_macro_cells();
+    dftPtr->matrix_free_data.n_cell_batches();
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
@@ -943,7 +943,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
                                       numberDofsPerElement);
       fe_eval.reinit(iMacroCell);
       const unsigned int n_sub_cells =
-        dftPtr->matrix_free_data.n_components_filled(iMacroCell);
+        dftPtr->matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
 
       for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
         {

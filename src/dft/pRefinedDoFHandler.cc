@@ -34,10 +34,9 @@ namespace dftfe
     // initialize electrostatics dofHandler and constraint matrices
     //
 
-    d_dofHandlerPRefined.initialize(triaObject,
-                                    dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-                                      FEOrderElectro + 1)));
-    d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
+    d_dofHandlerPRefined.reinit(triaObject);
+    d_dofHandlerPRefined.distribute_dofs(
+      dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
 
     d_locallyRelevantDofsPRefined.clear();
     dealii::DoFTools::extract_locally_relevant_dofs(
@@ -99,8 +98,8 @@ namespace dftfe
         periodicity_vector2,
         offsetVectors[periodicDirectionVector[i]]);
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
-      periodicity_vector2, d_constraintsPRefined);
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(periodicity_vector2,
+                                                         d_constraintsPRefined);
 
     d_constraintsPRefined.close();
 
@@ -108,11 +107,10 @@ namespace dftfe
     // initialize rho nodal dofHandler and constraint matrices
     //
 
-    d_dofHandlerRhoNodal.initialize(
-      triaObject,
+    d_dofHandlerRhoNodal.reinit(triaObject);
+    d_dofHandlerRhoNodal.distribute_dofs(
       dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
         C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1)));
-    d_dofHandlerRhoNodal.distribute_dofs(d_dofHandlerRhoNodal.get_fe());
 
     d_locallyRelevantDofsRhoNodal.clear();
     dealii::DoFTools::extract_locally_relevant_dofs(
@@ -143,7 +141,7 @@ namespace dftfe
         periodicity_vector_rhonodal,
         offsetVectors[periodicDirectionVector[i]]);
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(
       periodicity_vector_rhonodal, d_constraintsRhoNodal);
 
     d_constraintsRhoNodal.close();
@@ -374,7 +372,8 @@ namespace dftfe
     d_smearedChargeQuadratureIdElectro = 2;
     d_phiTotAXQuadratureIdElectro      = 3;
 
-    d_matrixFreeDataPRefined.reinit(matrixFreeDofHandlerVectorInput,
+    d_matrixFreeDataPRefined.reinit(dealii::MappingQ1<3, 3>(),
+                                    matrixFreeDofHandlerVectorInput,
                                     d_constraintsVectorElectro,
                                     quadratureVector,
                                     additional_data);

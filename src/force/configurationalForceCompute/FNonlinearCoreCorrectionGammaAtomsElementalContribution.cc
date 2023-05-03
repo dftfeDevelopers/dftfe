@@ -50,7 +50,8 @@ namespace dftfe
     const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
     const unsigned int totalNumberAtoms =
       numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
@@ -162,7 +163,8 @@ namespace dftfe
     const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
     const unsigned int totalNumberAtoms =
       numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
@@ -290,7 +292,8 @@ namespace dftfe
     const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
     const unsigned int totalNumberAtoms =
       numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 

@@ -61,8 +61,8 @@ namespace dftfe
     //
     dofHandler.clear();
     dofHandlerEigen.clear();
-    dofHandler.initialize(triangulation, FE);
-    dofHandlerEigen.initialize(triangulation, FEEigen);
+    dofHandler.reinit(triangulation);
+    dofHandlerEigen.reinit(triangulation);
     dofHandler.distribute_dofs(FE);
     dofHandlerEigen.distribute_dofs(FEEigen);
 
@@ -201,9 +201,9 @@ namespace dftfe
           offsetVectors[periodicDirectionVector[i]]);
       }
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
-      periodicity_vector2, constraintsNone);
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(periodicity_vector2,
+                                                         constraintsNone);
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(
       periodicity_vector2Eigen, constraintsNoneEigen);
 
 

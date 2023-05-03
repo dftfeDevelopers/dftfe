@@ -175,7 +175,7 @@ namespace dftfe
     const unsigned int localVectorSize =
       dftPtr->d_eigenVectorsFlattenedSTL[0].size() / numEigenVectors;
 
-    const unsigned int numMacroCells = matrixFreeData.n_macro_cells();
+    const unsigned int numMacroCells = matrixFreeData.n_cell_batches();
 
 
     std::vector<std::vector<double>> partialOccupancies(
@@ -362,7 +362,7 @@ namespace dftfe
             dealii::AlignedVector<
               dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
               EQuad(numQuadPoints, zeroTensor4);
-            for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
+            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
               {
                 forceEval.reinit(cell);
@@ -370,7 +370,7 @@ namespace dftfe
                 std::fill(EQuad.begin(), EQuad.end(), zeroTensor4);
 
                 const unsigned int numSubCells =
-                  matrixFreeData.n_components_filled(cell);
+                  matrixFreeData.n_active_entries_per_cell_batch(cell);
 
                 for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                      ++iSubCell)
@@ -437,7 +437,7 @@ namespace dftfe
             dealii::AlignedVector<
               dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               FVectQuads(numQuadPointsNLP, zeroTensor3);
-            for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
+            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
               {
                 forceEvalNLP.reinit(cell);
@@ -579,7 +579,7 @@ namespace dftfe
             std::map<unsigned int, std::vector<double>>
               forceContributionNonlinearCoreCorrectionGammaAtoms;
 
-            for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
+            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
               {
                 if (cell <
@@ -629,7 +629,7 @@ namespace dftfe
                               zeroTensor4);
 
                     const unsigned int numSubCells =
-                      matrixFreeData.n_components_filled(cell);
+                      matrixFreeData.n_active_entries_per_cell_batch(cell);
                     // For LDA
                     std::vector<double> exchValRhoOut(numQuadPoints);
                     std::vector<double> corrValRhoOut(numQuadPoints);
@@ -1032,7 +1032,7 @@ namespace dftfe
             std::map<unsigned int, std::vector<double>>
               forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms;
 
-            for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
+            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
               {
                 if (cell <
@@ -1087,7 +1087,7 @@ namespace dftfe
                               zeroTensor4);
 
                     const unsigned int numSubCells =
-                      matrixFreeData.n_components_filled(cell);
+                      matrixFreeData.n_active_entries_per_cell_batch(cell);
                     // For LDA
                     std::vector<double> exchValRhoOut(numQuadPoints);
                     std::vector<double> corrValRhoOut(numQuadPoints);
@@ -1625,13 +1625,13 @@ namespace dftfe
       dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
     std::vector<int> kptGroupLowHighPlusOneIndices;
 
-    if (matrixFreeDataElectro.n_macro_cells() > 0)
+    if (matrixFreeDataElectro.n_cell_batches() > 0)
       dftUtils::createKpointParallelizationIndices(
         dftPtr->interpoolcomm,
-        matrixFreeDataElectro.n_macro_cells(),
+        matrixFreeDataElectro.n_cell_batches(),
         kptGroupLowHighPlusOneIndices);
 
-    for (unsigned int cell = 0; cell < matrixFreeDataElectro.n_macro_cells();
+    for (unsigned int cell = 0; cell < matrixFreeDataElectro.n_cell_batches();
          ++cell)
       {
         if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
@@ -1640,7 +1640,7 @@ namespace dftfe
             std::set<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
 
             const unsigned int numSubCells =
-              matrixFreeDataElectro.n_components_filled(cell);
+              matrixFreeDataElectro.n_active_entries_per_cell_batch(cell);
             if (d_dftParams.smearedNuclearCharges)
               for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                    ++iSubCell)

@@ -496,27 +496,21 @@ namespace dftfe
 
                 dofHandler.clear();
                 dofHandlerEigen.clear();
-                dofHandler.initialize(d_mesh.getParallelMeshMoved(), FE);
-                dofHandlerEigen.initialize(d_mesh.getParallelMeshMoved(),
-                                           FEEigen);
+                dofHandler.reinit(d_mesh.getParallelMeshMoved());
+                dofHandlerEigen.reinit(d_mesh.getParallelMeshMoved());
                 dofHandler.distribute_dofs(FE);
                 dofHandlerEigen.distribute_dofs(FEEigen);
 
                 d_dofHandlerPRefined.clear();
-                d_dofHandlerPRefined.initialize(d_mesh.getParallelMeshMoved(),
-                                                dealii::FE_Q<3>(
-                                                  dealii::QGaussLobatto<1>(
-                                                    FEOrderElectro + 1)));
-                d_dofHandlerPRefined.distribute_dofs(
-                  d_dofHandlerPRefined.get_fe());
+                d_dofHandlerPRefined.reinit(d_mesh.getParallelMeshMoved());
+                d_dofHandlerPRefined.distribute_dofs(dealii::FE_Q<3>(
+                  dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
 
                 d_dofHandlerRhoNodal.clear();
-                d_dofHandlerRhoNodal.initialize(
-                  d_mesh.getParallelMeshMoved(),
+                d_dofHandlerRhoNodal.reinit(d_mesh.getParallelMeshMoved());
+                d_dofHandlerRhoNodal.distribute_dofs(
                   dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
                     C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1)));
-                d_dofHandlerRhoNodal.distribute_dofs(
-                  d_dofHandlerRhoNodal.get_fe());
 
                 forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
                                       d_mesh.getSerialMeshUnmoved(),

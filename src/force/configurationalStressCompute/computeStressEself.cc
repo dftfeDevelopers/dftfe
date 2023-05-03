@@ -257,13 +257,14 @@ namespace dftfe
                 const std::set<int> &atomImageIdsInBin =
                   atomImageIdsBins.find(iBin)->second;
                 for (unsigned int cell = 0;
-                     cell < matrixFreeDataElectro.n_macro_cells();
+                     cell < matrixFreeDataElectro.n_cell_batches();
                      ++cell)
                   {
                     std::set<unsigned int>
                                        nonTrivialSmearedChargeAtomImageIdsMacroCell;
                     const unsigned int numSubCells =
-                      matrixFreeDataElectro.n_components_filled(cell);
+                      matrixFreeDataElectro.n_active_entries_per_cell_batch(
+                        cell);
                     for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                          ++iSubCell)
                       {

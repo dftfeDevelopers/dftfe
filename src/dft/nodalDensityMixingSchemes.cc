@@ -72,7 +72,8 @@ namespace dftfe
     // preparation for rhs of Helmholtz solve by computing gradients of (rhoIn -
     // rhoOut)
     std::map<dealii::CellId, std::vector<double>> gradDensityResidualValuesMap;
-    for (unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells();
+    for (unsigned int cell = 0;
+         cell < d_matrixFreeDataPRefined.n_cell_batches();
          ++cell)
       {
         fe_evalHelm.reinit(cell);
@@ -80,7 +81,8 @@ namespace dftfe
         fe_evalHelm.evaluate(false, true);
 
         for (unsigned int iSubCell = 0;
-             iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell);
+             iSubCell <
+             d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(
@@ -152,14 +154,14 @@ namespace dftfe
     fe_evalRho(d_matrixFreeDataPRefined,0,1); numQuadPoints =
     fe_evalRho.n_q_points;
     //compute rho and grad rho for computing Veff using the rhoIn computed above
-    for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells();
+    for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_cell_batches();
     ++cell)
     {
     fe_evalRho.reinit(cell);
     fe_evalRho.read_dof_values(d_rhoInNodalValues);
     fe_evalRho.evaluate(true,true);
     for(unsigned int iSubCell = 0; iSubCell <
-    d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+    d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell); ++iSubCell)
     {
     subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
     dealii::CellId subCellId=subCellPtr->id();
@@ -174,7 +176,7 @@ namespace dftfe
     if(excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
     for(unsigned int iSubCell = 0; iSubCell <
-    d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+    d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell); ++iSubCell)
     {
     subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
     dealii::CellId subCellId=subCellPtr->id();
@@ -357,7 +359,8 @@ namespace dftfe
     // (rhoInBar
     // - rhoOutBar)
     std::map<dealii::CellId, std::vector<double>> gradDensityResidualValuesMap;
-    for (unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells();
+    for (unsigned int cell = 0;
+         cell < d_matrixFreeDataPRefined.n_cell_batches();
          ++cell)
       {
         fe_evalHelm.reinit(cell);
@@ -365,7 +368,8 @@ namespace dftfe
         fe_evalHelm.evaluate(false, true);
 
         for (unsigned int iSubCell = 0;
-             iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell);
+             iSubCell <
+             d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(
@@ -444,13 +448,14 @@ namespace dftfe
     /*dealii::FEEvaluation<3,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double>
       fe_evalRho(d_matrixFreeDataPRefined,0,1); numQuadPoints =
       fe_evalRho.n_q_points; for(unsigned int cell = 0; cell <
-      d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
+      d_matrixFreeDataPRefined.n_cell_batches(); ++cell)
       {
       fe_evalRho.reinit(cell);
       fe_evalRho.read_dof_values(d_rhoInNodalValues);
       fe_evalRho.evaluate(true,true);
       for(unsigned int iSubCell = 0; iSubCell <
-      d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+      d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell);
+      ++iSubCell)
       {
       subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
       dealii::CellId subCellId=subCellPtr->id();
@@ -466,7 +471,8 @@ namespace dftfe
       densityFamilyType::GGA)
       {
       for(unsigned int iSubCell = 0; iSubCell <
-      d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+      d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell);
+      ++iSubCell)
       {
       subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
       dealii::CellId subCellId=subCellPtr->id();

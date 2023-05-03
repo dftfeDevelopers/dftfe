@@ -86,7 +86,7 @@ namespace dftfe
                 dealii::IndexSet &locally_relevant_dofsForce)
     {
       dofHandlerForce.clear();
-      dofHandlerForce.initialize(triangulation, FEForce);
+      dofHandlerForce.reinit(triangulation);
       dofHandlerForce.distribute_dofs(FEForce);
       locally_owned_dofsForce.clear();
       locally_relevant_dofsForce.clear();
@@ -154,7 +154,7 @@ namespace dftfe
             offsetVectors[periodicDirectionVector[i]]);
         }
 
-      dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
+      dealii::DoFTools::make_periodicity_constraints<3, 3>(
         periodicity_vectorForce, constraintsForce);
       constraintsForce.close();
 

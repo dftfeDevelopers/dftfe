@@ -61,7 +61,7 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-    for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+    for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches(); ++cell)
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values(nodalField);
@@ -70,7 +70,7 @@ namespace dftfe
                            isEvaluateHessianData ? true : false);
 
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeData.n_components_filled(cell);
+             iSubCell < matrixFreeData.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             subCellPtr =
@@ -177,7 +177,7 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-    for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+    for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches(); ++cell)
       {
         feEvalObjSpin0.reinit(cell);
         feEvalObjSpin0.read_dof_values(nodalFieldSpin0);
@@ -192,7 +192,7 @@ namespace dftfe
                                 isEvaluateHessianData ? true : false);
 
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeData.n_components_filled(cell);
+             iSubCell < matrixFreeData.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             subCellPtr =
@@ -302,14 +302,14 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-    for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+    for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches(); ++cell)
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values(nodalField);
         feEvalObj.evaluate(true, isEvaluateGradData ? true : false);
 
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeData.n_components_filled(cell);
+             iSubCell < matrixFreeData.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             subCellPtr =
@@ -379,13 +379,13 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-    for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+    for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches(); ++cell)
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values(nodalField);
         feEvalObj.evaluate(true, true);
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeData.n_components_filled(cell);
+             iSubCell < matrixFreeData.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           {
             subCellPtr =
@@ -403,7 +403,8 @@ namespace dftfe
         if (isEvaluateGradData)
           {
             for (unsigned int iSubCell = 0;
-                 iSubCell < matrixFreeData.n_components_filled(cell);
+                 iSubCell <
+                 matrixFreeData.n_active_entries_per_cell_batch(cell);
                  ++iSubCell)
               {
                 subCellPtr = matrixFreeData.get_cell_iterator(cell,
@@ -462,7 +463,7 @@ namespace dftfe
     dealii::VectorizedArray<double> valueVectorized =
       dealii::make_vectorized_array(0.0);
     double value = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
+    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
@@ -478,7 +479,8 @@ namespace dftfe
 
         valueVectorized += fe_evalField.integrate_value();
         for (unsigned int iSubCell = 0;
-             iSubCell < matrixFreeDataObject.n_components_filled(cell);
+             iSubCell <
+             matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
           value += valueVectorized[iSubCell];
       }

@@ -60,7 +60,8 @@ namespace dftfe
     const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
     const unsigned int totalNumberAtoms =
       numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEval.n_q_points;
     const unsigned int dofs_per_cell =
       matrixFreeData.get_dof_handler(0).get_fe().dofs_per_cell;

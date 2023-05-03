@@ -813,7 +813,7 @@ namespace dftfe
     // dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(1+1)),
     // 1);
     dealii::DoFHandler<3> dofHandler;
-    dofHandler.initialize(parallelTriangulation, FE);
+    dofHandler.reinit(parallelTriangulation);
     dofHandler.distribute_dofs(FE);
     dealii::IndexSet locally_relevant_dofs;
     dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
@@ -875,8 +875,8 @@ namespace dftfe
           offsetVectors[periodicDirectionVector[i]]);
       }
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
-      periodicity_vector, constraints);
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(periodicity_vector,
+                                                         constraints);
     constraints.close();
 
     dealii::IndexSet locally_active_dofs_debug;

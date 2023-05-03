@@ -40,7 +40,8 @@ namespace dftfe
     const bool isSpinPolarized)
   {
     const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-    const unsigned int numSubCells = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
 
     const double spinPolarizedFactor = isSpinPolarized ? 0.5 : 1.0;
 

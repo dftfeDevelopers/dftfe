@@ -257,7 +257,8 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_mf = MPI_Wtime();
 
-    matrix_free_data.reinit(dofHandlerVector,
+    matrix_free_data.reinit(dealii::MappingQ1<3, 3>(),
+                            dofHandlerVector,
                             d_constraintsVector,
                             quadratureVector,
                             additional_data);

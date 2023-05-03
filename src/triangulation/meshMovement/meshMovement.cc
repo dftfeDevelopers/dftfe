@@ -120,10 +120,10 @@ namespace dftfe
         d_triaPtr =
           &(dynamic_cast<dealii::parallel::distributed::Triangulation<3> &>(
             triangulation));
-        d_dofHandlerMoveMesh.initialize(*d_triaPtr, FEMoveMesh);
+        d_dofHandlerMoveMesh.reinit(*d_triaPtr);
       }
     else
-      d_dofHandlerMoveMesh.initialize(triangulation, FEMoveMesh);
+      d_dofHandlerMoveMesh.reinit(triangulation);
     d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
     d_locally_owned_dofs.clear();
     d_locally_relevant_dofs.clear();
@@ -185,8 +185,8 @@ namespace dftfe
           offsetVectors[periodicDirectionVector[i]]);
       }
 
-    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
-      d_periodicity_vector, d_constraintsMoveMesh);
+    dealii::DoFTools::make_periodicity_constraints<3, 3>(d_periodicity_vector,
+                                                         d_constraintsMoveMesh);
     d_constraintsMoveMesh.close();
 
     if (d_dftParams.createConstraintsFromSerialDofhandler)

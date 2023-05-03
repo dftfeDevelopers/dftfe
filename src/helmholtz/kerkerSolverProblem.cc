@@ -106,14 +106,15 @@ namespace dftfe
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       residualGradQuads(fe_eval.n_q_points, zeroTensor);
     for (unsigned int macrocell = 0;
-         macrocell < d_matrixFreeDataPRefinedPtr->n_macro_cells();
+         macrocell < d_matrixFreeDataPRefinedPtr->n_cell_batches();
          ++macrocell)
       {
         std::fill(residualGradQuads.begin(),
                   residualGradQuads.end(),
                   zeroTensor);
         const unsigned int numSubCells =
-          d_matrixFreeDataPRefinedPtr->n_components_filled(macrocell);
+          d_matrixFreeDataPRefinedPtr->n_active_entries_per_cell_batch(
+            macrocell);
         for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = d_matrixFreeDataPRefinedPtr->get_cell_iterator(
@@ -264,7 +265,7 @@ namespace dftfe
     AX(*d_matrixFreeDataPRefinedPtr,
        Ax,
        x,
-       std::make_pair(0, d_matrixFreeDataPRefinedPtr->n_macro_cells()));
+       std::make_pair(0, d_matrixFreeDataPRefinedPtr->n_cell_batches()));
     Ax.compress(::dealii::VectorOperation::add);
     // d_matrixFreeDataPRefinedPtr->cell_loop(
     //  &kerkerSolverProblem<FEOrderElectro>::AX, this, Ax, x);

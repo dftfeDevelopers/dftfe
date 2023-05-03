@@ -22,7 +22,7 @@
 namespace dftfe
 {
   //(locally used function) compute Fnl contibution due to Gamma(Rj) for given
-  //set
+  // set
   // of cells
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -44,7 +44,8 @@ namespace dftfe
       &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
   {
     const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEvalNLP.n_q_points;
 
     const unsigned int numNonLocalAtomsCurrentProcess =
@@ -231,7 +232,8 @@ namespace dftfe
       &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
   {
     const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-    const unsigned int numSubCells = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
 
     const unsigned int numNonLocalAtomsCurrentProcess =
       dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();

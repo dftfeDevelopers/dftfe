@@ -43,7 +43,8 @@ namespace dftfe
     for (unsigned int idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
     const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
@@ -112,7 +113,8 @@ namespace dftfe
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
     for (unsigned int idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
-    const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
     const unsigned int numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 

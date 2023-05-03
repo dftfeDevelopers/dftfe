@@ -247,7 +247,7 @@ namespace dftfe
     : dftPtr(_dftPtr)
     , d_kPointIndex(0)
     , d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell())
-    , d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells())
+    , d_numberMacroCells(_dftPtr->matrix_free_data.n_cell_batches())
     , d_numLocallyOwnedCells(dftPtr->matrix_free_data.n_physical_cells())
     , d_numQuadPoints(
         dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId)

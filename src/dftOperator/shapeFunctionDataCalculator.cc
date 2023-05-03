@@ -27,7 +27,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   // get FE data
   //
   const unsigned int numberMacroCells =
-    dftPtr->matrix_free_data.n_macro_cells();
+    dftPtr->matrix_free_data.n_cell_batches();
   const unsigned int numberPhysicalCells =
     dftPtr->matrix_free_data.n_physical_cells();
   const dealii::Quadrature<3> &quadrature =
