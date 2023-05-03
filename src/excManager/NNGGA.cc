@@ -116,8 +116,8 @@ namespace dftfe
                  1,
                  &rhoFloat[0]);
       auto options =
-        torch::Tensor < Options().dtype(torch::kFloat32).requires_grad(true);
-      torch::Tensor < rhoTensor =
+        torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
+      torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 2}, options).clone();
       rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
@@ -175,8 +175,8 @@ namespace dftfe
                  &rhoFloat[0]);
 
       auto options =
-        torch::Tensor < Options().dtype(torch::kFloat32).requires_grad(true);
-      torch::Tensor < rhoTensor =
+        torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
+      torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 3}, options).clone();
       rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
@@ -234,8 +234,8 @@ namespace dftfe
                  &rhoFloat[0]);
 
       auto options =
-        torch::Tensor < Options().dtype(torch::kFloat32).requires_grad(true);
-      torch::Tensor < rhoTensor =
+        torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
+      torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 2}, options).clone();
       rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
@@ -304,8 +304,8 @@ namespace dftfe
                  &rhoFloat[0]);
 
       auto options =
-        torch::Tensor < Options().dtype(torch::kFloat32).requires_grad(true);
-      torch::Tensor < rhoTensor =
+        torch::TensorOptions().dtype(torch::kFloat32).requires_grad(true);
+      torch::Tensor rhoTensor =
         torch::from_blob(&rhoFloat[0], {numPoints, 3}, options).clone();
       rhoTensor += rhoTol;
       std::vector<torch::jit::IValue> input(0);
