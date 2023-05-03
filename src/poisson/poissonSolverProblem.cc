@@ -384,13 +384,13 @@ namespace dftfe
       }
 
     // MPI operation to sync data
-    rhs.compress(::dealii::VectorOperation::add);
+    rhs.compressdealii::VectorOperation::add);
 
     if (d_isReuseSmearedChargeRhs)
       rhs += d_rhsSmearedCharge;
 
     if (d_isStoreSmearedChargeRhs)
-      d_rhsSmearedCharge.compress(::dealii::VectorOperation::add);
+      d_rhsSmearedCharge.compressdealii::VectorOperation::add);
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistributeSlaveToMaster(rhs);
@@ -516,7 +516,7 @@ namespace dftfe
         }
 
     // MPI operation to sync data
-    d_meanValueConstraintVec.compress(::dealii::VectorOperation::add);
+    d_meanValueConstraintVec.compressdealii::VectorOperation::add);
 
     dealii::IndexSet locallyOwnedElements =
       d_meanValueConstraintVec.locally_owned_elements();
@@ -655,14 +655,14 @@ namespace dftfe
         }
 
     // MPI operation to sync data
-    d_diagonalA.compress(::dealii::VectorOperation::add);
+    d_diagonalA.compressdealii::VectorOperation::add);
 
     for (dealii::types::global_dof_index i = 0; i < d_diagonalA.size(); ++i)
       if (d_diagonalA.in_local_range(i))
         if (!d_constraintMatrixPtr->is_constrained(i))
           d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
-    d_diagonalA.compress(::dealii::VectorOperation::insert);
+    d_diagonalA.compressdealii::VectorOperation::insert);
   }
 
   // Ax
@@ -716,7 +716,7 @@ namespace dftfe
            Ax,
            x,
            std::make_pair(0, d_matrixFreeDataPtr->n_cell_batches()));
-        Ax.compress(::dealii::VectorOperation::add);
+        Ax.compressdealii::VectorOperation::add);
 
 
         meanValueConstraintDistributeSlaveToMaster(Ax);
@@ -728,7 +728,7 @@ namespace dftfe
            Ax,
            x,
            std::make_pair(0, d_matrixFreeDataPtr->n_cell_batches()));
-        Ax.compress(::dealii::VectorOperation::add);
+        Ax.compressdealii::VectorOperation::add);
       }
   }
 
