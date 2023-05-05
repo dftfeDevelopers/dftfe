@@ -56,7 +56,11 @@ namespace dftfe
     // further for production runs where more accurate meshes are used
     const double truncationTol =
       d_dftParamsPtr->reproducible_output ? 1.0e-8 : 1.0e-7;
-    const double maxAllowedTail = 8.0001;
+    // Larger max allowed Tail is important for pseudo-dojo database ONCV
+    // pseudopotential local potentials which have a larger data range
+    // with slow convergence to -Z/r
+    // Same value used as rcut in QUANTUM ESPRESSO (Modules/read_pseudo.f90)
+    const double maxAllowedTail = 10.0001;
     double       maxTail        = 0.0;
     if (d_dftParamsPtr->isPseudopotential)
       {
@@ -128,9 +132,12 @@ namespace dftfe
              it++)
           outerMostDataPoint[*it] = maxAllowedTail;
       }
-
+    if (d_dftParamsPtr->verbosity >= 4)
+      pcout << "initLocalPSP, max psp tail considered: " << maxTail
+            << std::endl;
     const double cutOffForPsp =
-      std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0, maxTail);
+      std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0,
+               maxTail + 2.0);
 
     //
     // Initialize pseudopotential
