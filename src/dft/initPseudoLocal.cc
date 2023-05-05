@@ -59,9 +59,11 @@ namespace dftfe
     // Larger max allowed Tail is important for pseudo-dojo database ONCV
     // pseudopotential local potentials which have a larger data range
     // with slow convergence to -Z/r
-    // Same value used as rcut in QUANTUM ESPRESSO (Modules/read_pseudo.f90)
-    const double maxAllowedTail = 10.0001;
-    double       maxTail        = 0.0;
+    // Same value of 10.0 used as rcut in QUANTUM ESPRESSO
+    // (cf. Modules/read_pseudo.f90)
+    const double maxAllowedTail =
+      d_dftParamsPtr->reproducible_output ? 8.0001 : 10.0001;
+    double maxTail = 0.0;
     if (d_dftParamsPtr->isPseudopotential)
       {
         //
