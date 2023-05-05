@@ -28,8 +28,6 @@
 
 namespace dftfe
 {
-  using namespace dealii;
-
   /**
    * @brief density symmetrization based on irreducible Brillouin zone calculation, only relevant for calculations using point group symmetries
    *
@@ -78,7 +76,7 @@ namespace dftfe
      * @param [in] p  point that is to be transformed
      * @param [in] flag type of coordinate transformation, 1 takes crys. to cart. -1 takes cart. to crys.
      */
-    Point<3> crys2cart(Point<3> p, int flag);
+    dealii::Point<3> crys2cart(dealii::Point<3> p, int flag);
 
 
   private:
@@ -109,13 +107,15 @@ namespace dftfe
     /**
      * Data members required for storing mapping tables locally
      */
-    std::map<CellId, std::vector<std::tuple<int, std::vector<double>, int>>>
+    std::map<dealii::CellId,
+             std::vector<std::tuple<int, std::vector<double>, int>>>
       cellMapTable;
     std::vector<std::vector<std::vector<std::tuple<int, int, int>>>>
-                                                                mappedGroup;
-    std::map<int, typename DoFHandler<3>::active_cell_iterator> dealIICellId;
-    std::map<CellId, int>                                       globalCellId;
-    std::vector<int>                                            ownerProcGlobal;
+      mappedGroup;
+    std::map<int, typename dealii::DoFHandler<3>::active_cell_iterator>
+                                  dealIICellId;
+    std::map<dealii::CellId, int> globalCellId;
+    std::vector<int>              ownerProcGlobal;
     /**
      * Data members required for communicating mapping tables
      */

@@ -21,7 +21,6 @@
 
 namespace dftfe
 {
-  using namespace dealii;
   /**
    * @brief The functions in this namespace contain the expressions for the various terms of the configurational force (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
    * for both periodic and non-periodic case.
@@ -36,46 +35,50 @@ namespace dftfe
    * exc with gradient of rho g) psiBegin- begin iterator to vector eigenvectors
    * stored as a flattened array over k points and number of eigenvectors for
    * each k point (periodic case has complex valued eigenvectors which is why
-   * Tensor<1,2,VectorizedArray<double> is used in functions for periodic case)
-   * h) gradPsiBegin- gradient of eigenvectors
-   * i) eigenValues- Kohn sham grounstate eigenvalues stored in a vector. For
-   * periodic problems with multiple k points the outer vector should be over k
-   * points j) tVal- smearing temperature in K k) pseudoVLoc- local part of the
-   * pseuodopotential l) gradPseudoVLoc- gradient of local part of
-   * pseudopotential m) ZetaDeltaV- nonlocal pseudowavefunctions times deltaV
-   * (see Eq. 11 in https://link.aps.org/doi/10.1103/PhysRevB.97.165132) n)
-   * gradZetaDeltaV- gradient of ZetaDeltaV o) projectorKetTimesPsiTimesV-
-   * nonlocal pseudopotential projector ket times eigenvectors which are
-   * precomputed. The nonlocal pseudopotential constants are also multiplied to
-   * this quantity. (see Eq. 11 in
-   * https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
+   * dealii::Tensor<1,2,dealii::VectorizedArray<double> is used in functions for
+   * periodic case) h) gradPsiBegin- gradient of eigenvectors i) eigenValues-
+   * Kohn sham grounstate eigenvalues stored in a vector. For periodic problems
+   * with multiple k points the outer vector should be over k points j) tVal-
+   * smearing temperature in K k) pseudoVLoc- local part of the pseuodopotential
+   * l) gradPseudoVLoc- gradient of local part of pseudopotential m) ZetaDeltaV-
+   * nonlocal pseudowavefunctions times deltaV (see Eq. 11 in
+   * https://link.aps.org/doi/10.1103/PhysRevB.97.165132) n) gradZetaDeltaV-
+   * gradient of ZetaDeltaV o) projectorKetTimesPsiTimesV- nonlocal
+   * pseudopotential projector ket times eigenvectors which are precomputed. The
+   * nonlocal pseudopotential constants are also multiplied to this quantity.
+   * (see Eq. 11 in https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
    *
    * @author Sambit Das
    */
   namespace eshelbyTensorSP
   {
     /// exchange-correlation and psp part of the ELoc Eshelby tensor
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const VectorizedArray<double> &              rho,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoSpin0,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoSpin1,
-      const VectorizedArray<double> &              exc,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin0,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin1);
+      const dealii::VectorizedArray<double> &                      rho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin1,
+      const dealii::VectorizedArray<double> &                      exc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin1);
 
 
 
     /// Nonlocal core correction pseudopotential force contribution
-    Tensor<1, 3, VectorizedArray<double>>
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const VectorizedArray<double> &              vxcSpin0,
-      const VectorizedArray<double> &              vxcSpin1,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin0,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin1,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoCore,
-      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoCore,
-      const bool                                   isXCGGA);
+      const dealii::VectorizedArray<double> &vxcSpin0,
+      const dealii::VectorizedArray<double> &vxcSpin1,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin1,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoCore,
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
+        &        hessianRhoCore,
+      const bool isXCGGA);
   }; // namespace eshelbyTensorSP
 
 } // namespace dftfe

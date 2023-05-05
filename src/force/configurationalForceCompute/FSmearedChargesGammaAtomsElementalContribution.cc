@@ -16,139 +16,150 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
 
-//(locally used function) compute FPhiTotSmearedCharges contibution due to
-// Gamma(Rj) for given set of cells
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-forceClass<FEOrder, FEOrderElectro>::
-  FPhiTotSmearedChargesGammaAtomsElementalContribution(
-    std::map<unsigned int, std::vector<double>>
-      &                          forceContributionSmearedChargesGammaAtoms,
-    FEEvaluation<3, -1, 1, 3> &  forceEval,
-    const MatrixFree<3, double> &matrixFreeData,
-    const unsigned int           cell,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
-      &                              gradPhiTotQuads,
-    const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
-    const std::map<dealii::CellId, std::vector<int>> &    bQuadAtomIdsAllAtoms,
-    const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
+namespace dftfe
 {
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
-  for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
-  const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
-  const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+  //(locally used function) compute FPhiTotSmearedCharges contibution due to
+  // Gamma(Rj) for given set of cells
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  forceClass<FEOrder, FEOrderElectro>::
+    FPhiTotSmearedChargesGammaAtomsElementalContribution(
+      std::map<unsigned int, std::vector<double>>
+        &forceContributionSmearedChargesGammaAtoms,
+      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      const dealii::MatrixFree<3, double> &matrixFreeData,
+      const unsigned int                   cell,
+      const dealii::AlignedVector<
+        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradPhiTotQuads,
+      const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
+      const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
+      const dealii::AlignedVector<dealii::VectorizedArray<double>>
+        &smearedbQuads)
+  {
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
+    for (unsigned int idim = 0; idim < 3; idim++)
+      zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
+    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
+    const unsigned int numQuadPoints = forceEval.n_q_points;
+    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
 
-  for (int iAtomNonTrivial = 0;
-       iAtomNonTrivial < nonTrivialAtomIdsMacroCell.size();
-       iAtomNonTrivial++)
-    {
-      const int iAtom = nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
-      dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
-        numQuadPoints, make_vectorized_array(0.0));
+    for (int iAtomNonTrivial = 0;
+         iAtomNonTrivial < nonTrivialAtomIdsMacroCell.size();
+         iAtomNonTrivial++)
+      {
+        const int iAtom = nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
+        dealii::AlignedVector<dealii::VectorizedArray<double>>
+          smearedbQuadsiAtom(numQuadPoints, dealii::make_vectorized_array(0.0));
 
-      for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        {
-          subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-          dealii::CellId          subCellId = subCellPtr->id();
-          const std::vector<int> &bQuadAtomIdsCell =
-            bQuadAtomIdsAllAtoms.find(subCellId)->second;
-          for (unsigned int q = 0; q < numQuadPoints; ++q)
-            {
-              if (bQuadAtomIdsCell[q] == iAtom)
-                smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
-            }
-        }
-
-      for (unsigned int q = 0; q < numQuadPoints; ++q)
-        forceEval.submit_value(gradPhiTotQuads[q] * smearedbQuadsiAtom[q], q);
-
-
-      Tensor<1, 3, VectorizedArray<double>>
-        forceContributionSmearedChargesGammaiAtomCells =
-          forceEval.integrate_value();
-
-      if (forceContributionSmearedChargesGammaAtoms.find(iAtom) ==
-          forceContributionSmearedChargesGammaAtoms.end())
-        forceContributionSmearedChargesGammaAtoms[iAtom] =
-          std::vector<double>(3, 0.0);
-      for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
-            forceContributionSmearedChargesGammaAtoms[iAtom][idim] +=
-              forceContributionSmearedChargesGammaiAtomCells[idim][iSubCell];
+            subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
+            dealii::CellId          subCellId = subCellPtr->id();
+            const std::vector<int> &bQuadAtomIdsCell =
+              bQuadAtomIdsAllAtoms.find(subCellId)->second;
+            for (unsigned int q = 0; q < numQuadPoints; ++q)
+              {
+                if (bQuadAtomIdsCell[q] == iAtom)
+                  smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
+              }
           }
-    } // iAtom loop
-}
 
-//(locally used function) compute FVselfSmearedCharges contibution due to
-// Gamma(Rj) for given set of cells
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-forceClass<FEOrder, FEOrderElectro>::
-  FVselfSmearedChargesGammaAtomsElementalContribution(
-    std::map<unsigned int, std::vector<double>>
-      &                          forceContributionSmearedChargesGammaAtoms,
-    FEEvaluation<3, -1, 1, 3> &  forceEval,
-    const MatrixFree<3, double> &matrixFreeData,
-    const unsigned int           cell,
-    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
-      &                              gradVselfBinQuads,
-    const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
-    const std::map<dealii::CellId, std::vector<int>> &    bQuadAtomIdsAllAtoms,
-    const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
-{
-  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
-  for (unsigned int idim = 0; idim < 3; idim++)
-    zeroTensor1[idim] = make_vectorized_array(0.0);
-  const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
-  const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<3>::active_cell_iterator subCellPtr;
+        for (unsigned int q = 0; q < numQuadPoints; ++q)
+          forceEval.submit_value(gradPhiTotQuads[q] * smearedbQuadsiAtom[q], q);
 
 
-  for (int iAtomNonTrivial = 0;
-       iAtomNonTrivial < nonTrivialAtomIdsMacroCell.size();
-       iAtomNonTrivial++)
-    {
-      const int atomId = nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
+        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+          forceContributionSmearedChargesGammaiAtomCells =
+            forceEval.integrate_value();
 
-      dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
-        numQuadPoints, make_vectorized_array(0.0));
-
-      for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        {
-          subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-          dealii::CellId          subCellId = subCellPtr->id();
-          const std::vector<int> &bQuadAtomIdsCell =
-            bQuadAtomIdsAllAtoms.find(subCellId)->second;
-          for (unsigned int q = 0; q < numQuadPoints; ++q)
+        if (forceContributionSmearedChargesGammaAtoms.find(iAtom) ==
+            forceContributionSmearedChargesGammaAtoms.end())
+          forceContributionSmearedChargesGammaAtoms[iAtom] =
+            std::vector<double>(3, 0.0);
+        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (unsigned int idim = 0; idim < 3; idim++)
             {
-              if (bQuadAtomIdsCell[q] == atomId)
-                smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
+              forceContributionSmearedChargesGammaAtoms[iAtom][idim] +=
+                forceContributionSmearedChargesGammaiAtomCells[idim][iSubCell];
             }
-        }
+      } // iAtom loop
+  }
 
-      for (unsigned int q = 0; q < numQuadPoints; ++q)
-        forceEval.submit_value(-gradVselfBinQuads[q] * smearedbQuadsiAtom[q],
-                               q);
+  //(locally used function) compute FVselfSmearedCharges contibution due to
+  // Gamma(Rj) for given set of cells
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  forceClass<FEOrder, FEOrderElectro>::
+    FVselfSmearedChargesGammaAtomsElementalContribution(
+      std::map<unsigned int, std::vector<double>>
+        &forceContributionSmearedChargesGammaAtoms,
+      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      const dealii::MatrixFree<3, double> &matrixFreeData,
+      const unsigned int                   cell,
+      const dealii::AlignedVector<
+        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+        &                              gradVselfBinQuads,
+      const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
+      const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
+      const dealii::AlignedVector<dealii::VectorizedArray<double>>
+        &smearedbQuads)
+  {
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
+    for (unsigned int idim = 0; idim < 3; idim++)
+      zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
+    const unsigned int numSubCells =
+      matrixFreeData.n_active_entries_per_cell_batch(cell);
+    const unsigned int numQuadPoints = forceEval.n_q_points;
+    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-      Tensor<1, 3, VectorizedArray<double>>
-        forceContributionSmearedChargesGammaiAtomCells =
-          forceEval.integrate_value();
 
-      if (forceContributionSmearedChargesGammaAtoms.find(atomId) ==
-          forceContributionSmearedChargesGammaAtoms.end())
-        forceContributionSmearedChargesGammaAtoms[atomId] =
-          std::vector<double>(3, 0.0);
-      for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < 3; idim++)
+    for (int iAtomNonTrivial = 0;
+         iAtomNonTrivial < nonTrivialAtomIdsMacroCell.size();
+         iAtomNonTrivial++)
+      {
+        const int atomId = nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
+
+        dealii::AlignedVector<dealii::VectorizedArray<double>>
+          smearedbQuadsiAtom(numQuadPoints, dealii::make_vectorized_array(0.0));
+
+        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
-            forceContributionSmearedChargesGammaAtoms[atomId][idim] +=
-              forceContributionSmearedChargesGammaiAtomCells[idim][iSubCell];
+            subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
+            dealii::CellId          subCellId = subCellPtr->id();
+            const std::vector<int> &bQuadAtomIdsCell =
+              bQuadAtomIdsAllAtoms.find(subCellId)->second;
+            for (unsigned int q = 0; q < numQuadPoints; ++q)
+              {
+                if (bQuadAtomIdsCell[q] == atomId)
+                  smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
+              }
           }
-    } // iAtom loop
-}
+
+        for (unsigned int q = 0; q < numQuadPoints; ++q)
+          forceEval.submit_value(-gradVselfBinQuads[q] * smearedbQuadsiAtom[q],
+                                 q);
+
+        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+          forceContributionSmearedChargesGammaiAtomCells =
+            forceEval.integrate_value();
+
+        if (forceContributionSmearedChargesGammaAtoms.find(atomId) ==
+            forceContributionSmearedChargesGammaAtoms.end())
+          forceContributionSmearedChargesGammaAtoms[atomId] =
+            std::vector<double>(3, 0.0);
+        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (unsigned int idim = 0; idim < 3; idim++)
+            {
+              forceContributionSmearedChargesGammaAtoms[atomId][idim] +=
+                forceContributionSmearedChargesGammaiAtomCells[idim][iSubCell];
+            }
+      } // iAtom loop
+  }
+#include "../force.inst.cc"
+} // namespace dftfe
