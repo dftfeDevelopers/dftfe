@@ -56,7 +56,7 @@ namespace dftfe
     d_gamma                         = kerkerMixingParameter;
     d_matrixFreeVectorComponent     = matrixFreeVectorComponent;
     d_matrixFreeQuadratureComponent = matrixFreeQuadratureComponent;
-    d_nLocalCells = d_matrixFreeDataPRefinedPtr->n_macro_cells();
+    d_nLocalCells = d_matrixFreeDataPRefinedPtr->n_cell_batches();
 
     matrixFreeDataPRefined.initialize_dof_vector(x,
                                                  d_matrixFreeVectorComponent);
@@ -161,22 +161,23 @@ namespace dftfe
               d_matrixFreeVectorComponent,
               d_matrixFreeQuadratureComponent);
 
-    Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor;
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor;
     for (unsigned int idim = 0; idim < 3; idim++)
-      zeroTensor[idim] = make_vectorized_array(0.0);
+      zeroTensor[idim] = dealii::make_vectorized_array(0.0);
 
 
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       residualGradQuads(fe_eval.n_q_points, zeroTensor);
     for (unsigned int macrocell = 0;
-         macrocell < d_matrixFreeDataPRefinedPtr->n_macro_cells();
+         macrocell < d_matrixFreeDataPRefinedPtr->n_cell_batches();
          ++macrocell)
       {
         std::fill(residualGradQuads.begin(),
                   residualGradQuads.end(),
                   zeroTensor);
         const unsigned int numSubCells =
-          d_matrixFreeDataPRefinedPtr->n_components_filled(macrocell);
+          d_matrixFreeDataPRefinedPtr->n_active_entries_per_cell_batch(
+            macrocell);
         for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = d_matrixFreeDataPRefinedPtr->get_cell_iterator(

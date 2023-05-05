@@ -168,7 +168,7 @@ namespace dftfe
           periodicity_vector2,
           offsetVectors[periodicDirectionVector[i]]);
 
-      dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
+      dealii::DoFTools::make_periodicity_constraints<3, 3>(
         periodicity_vector2, constraintsPeriodicHangingSer);
 
       constraintsPeriodicHangingSer.close();
@@ -336,7 +336,7 @@ namespace dftfe
       //
       // get FE cell data
       //
-      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberMacroCells = matrix_free_data.n_cell_batches();
       const unsigned int numberNodesPerElement =
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
       const unsigned int totalLocallyOwnedCells =
@@ -406,7 +406,7 @@ namespace dftfe
       //
       // get FE cell data
       //
-      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberMacroCells = matrix_free_data.n_cell_batches();
       const unsigned int numberNodesPerElement =
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
       const unsigned int totalLocallyOwnedCells =
@@ -430,7 +430,7 @@ namespace dftfe
            ++iMacroCell)
         {
           const unsigned int n_sub_cells =
-            matrix_free_data.n_components_filled(iMacroCell);
+            matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
           for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
             {
               cellPtr = matrix_free_data.get_cell_iterator(iMacroCell,
@@ -516,7 +516,8 @@ namespace dftfe
                    ++iMacroCell)
                 {
                   const unsigned int n_sub_cells =
-                    matrix_free_data.n_components_filled(iMacroCell);
+                    matrix_free_data.n_active_entries_per_cell_batch(
+                      iMacroCell);
                   for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
                     {
                       cellPtr =
@@ -568,7 +569,7 @@ namespace dftfe
       //
       // get FE cell data
       //
-      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberMacroCells = matrix_free_data.n_cell_batches();
       const unsigned int numberNodesPerElement =
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
 
@@ -584,7 +585,7 @@ namespace dftfe
            ++iMacroCell)
         {
           const unsigned int n_sub_cells =
-            matrix_free_data.n_components_filled(iMacroCell);
+            matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
           for (unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
             {
               totalLocallyOwnedCells++;
@@ -604,7 +605,7 @@ namespace dftfe
            ++iMacroCell)
         {
           const unsigned int n_sub_cells =
-            matrix_free_data.n_components_filled(iMacroCell);
+            matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
           for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
             {
               cellPtr = matrix_free_data.get_cell_iterator(iMacroCell,

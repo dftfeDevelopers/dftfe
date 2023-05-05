@@ -41,7 +41,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   // Get the number of locally owned cells
   //
   const unsigned int numberMacroCells =
-    dftPtr->matrix_free_data.n_macro_cells();
+    dftPtr->matrix_free_data.n_cell_batches();
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
   if (totalLocallyOwnedCells > 0)
@@ -79,11 +79,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               .dofs_per_cell;
 
 
-          FEEvaluation<3,
-                       FEOrder,
-                       C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                       1,
-                       double>
+          dealii::FEEvaluation<3,
+                               FEOrder,
+                               C_num1DQuadLPSP<FEOrder>() *
+                                 C_numCopies1DQuadLPSP(),
+                               1,
+                               double>
             fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
 
           const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
@@ -229,7 +230,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       //
       // Get some FE related Data
       //
-      const Quadrature<3> &quadrature =
+      const dealii::Quadrature<3> &quadrature =
         dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 
       const unsigned int numberDofsPerElement =
@@ -896,7 +897,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   // Get the number of locally owned cells
   //
   const unsigned int numberMacroCells =
-    dftPtr->matrix_free_data.n_macro_cells();
+    dftPtr->matrix_free_data.n_cell_batches();
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
@@ -909,19 +910,20 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   //
   // Get some FE related Data
   //
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-  FEEvaluation<3,
-               FEOrder,
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               1,
-               double>
-                     fe_eval(dftPtr->matrix_free_data, 0, 0);
-  FEValues<3>        fe_values(dftPtr->matrix_free_data
-                          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                          .get_fe(),
-                        quadrature,
-                        update_gradients);
+  dealii::FEEvaluation<
+    3,
+    FEOrder,
+    C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+    1,
+    double>
+                      fe_eval(dftPtr->matrix_free_data, 0, 0);
+  dealii::FEValues<3> fe_values(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadrature,
+    dealii::update_gradients);
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
       .get_fe()
@@ -935,12 +937,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   unsigned int iElem = 0;
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      dealii::AlignedVector<VectorizedArray<double>> elementHamiltonianMatrix;
+      dealii::AlignedVector<dealii::VectorizedArray<double>>
+        elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement *
                                       numberDofsPerElement);
       fe_eval.reinit(iMacroCell);
       const unsigned int n_sub_cells =
-        dftPtr->matrix_free_data.n_components_filled(iMacroCell);
+        dftPtr->matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
 
       for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
         {

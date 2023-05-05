@@ -27,31 +27,33 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   // get FE data
   //
   const unsigned int numberMacroCells =
-    dftPtr->matrix_free_data.n_macro_cells();
+    dftPtr->matrix_free_data.n_cell_batches();
   const unsigned int numberPhysicalCells =
     dftPtr->matrix_free_data.n_physical_cells();
-  const Quadrature<3> &quadrature =
+  const dealii::Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(),
-                        quadrature,
-                        update_values | update_gradients | update_jacobians |
-                          update_JxW_values | update_inverse_jacobians);
+  dealii::FEValues<3> fe_values(
+    dftPtr->matrix_free_data.get_dof_handler().get_fe(),
+    quadrature,
+    dealii::update_values | dealii::update_gradients |
+      dealii::update_jacobians | dealii::update_JxW_values |
+      dealii::update_inverse_jacobians);
 
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
 
-  QGauss<3>   quadraturePlusOne(FEOrder + 1);
-  FEValues<3> fe_values_quadplusone(
+  dealii::QGauss<3>   quadraturePlusOne(FEOrder + 1);
+  dealii::FEValues<3> fe_values_quadplusone(
     dftPtr->matrix_free_data.get_dof_handler().get_fe(),
     quadraturePlusOne,
-    update_gradients | update_JxW_values);
+    dealii::update_gradients | dealii::update_JxW_values);
   const unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();
 
-  FEValues<3> fe_values_lpsp(
+  dealii::FEValues<3> fe_values_lpsp(
     dftPtr->matrix_free_data.get_dof_handler().get_fe(),
     dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId),
-    update_values);
+    dealii::update_values);
   const unsigned int numberQuadraturePointsLpsp =
     dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId).size();
 
@@ -140,7 +142,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 #ifdef USE_COMPLEX
           fe_values.reinit(cellPtr);
-          const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+          const std::vector<dealii::DerivativeForm<1, 3, 3>> &inverseJacobians =
             fe_values.get_inverse_jacobians();
 #endif
 
@@ -479,13 +481,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
       }
 
 
-  QGaussLobatto<3> quadratureGl(C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() +
-                                1);
-  FEValues<3>      fe_valuesGl(dftPtr->matrix_free_data
-                            .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                            .get_fe(),
-                          quadratureGl,
-                          update_values);
+  dealii::QGaussLobatto<3> quadratureGl(
+    C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
+  dealii::FEValues<3> fe_valuesGl(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadratureGl,
+    dealii::update_values);
   const unsigned int numberQuadraturePointsGl = quadratureGl.size();
 
   //
@@ -513,14 +515,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   // NLP quadrature data
   //
-  QIterated<3>       quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
-                             C_numCopies1DQuadNLPSP());
-  FEValues<3>        fe_valuesNLP(dftPtr->matrix_free_data
-                             .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                             .get_fe(),
-                           quadratureNLP,
-                           update_values | update_gradients | update_jacobians |
-                             update_inverse_jacobians);
+  dealii::QIterated<3> quadratureNLP(
+    dealii::QGauss<1>(C_num1DQuadNLPSP<FEOrder>()), C_numCopies1DQuadNLPSP());
+  dealii::FEValues<3> fe_valuesNLP(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadratureNLP,
+    dealii::update_values | dealii::update_gradients |
+      dealii::update_jacobians | dealii::update_inverse_jacobians);
   const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
 
   // resize data members
@@ -547,7 +549,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
       {
         fe_valuesNLP.reinit(cellPtr);
 
-        const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+        const std::vector<dealii::DerivativeForm<1, 3, 3>> &inverseJacobians =
           fe_valuesNLP.get_inverse_jacobians();
 
         // dealii returns inverse jacobian tensor in transposed format
@@ -563,7 +565,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
         if (iElem == 0)
           {
-            const std::vector<DerivativeForm<1, 3, 3>> &jacobians =
+            const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
               fe_valuesNLP.get_jacobians();
             for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
               for (unsigned int q_point = 0;

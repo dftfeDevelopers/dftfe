@@ -38,9 +38,11 @@ namespace dftfe
                          const bool      restart)
     : d_dftPtr(dftPtr)
     , mpi_communicator(mpi_comm_parent)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_parent))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
   {
     d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
@@ -182,7 +184,7 @@ namespace dftfe
       {
         AssertThrow(
           false,
-          ExcMessage(
+          dealii::ExcMessage(
             "The given value for CELL CONSTRAINT TYPE doesn't match with any available options (1-13)."));
       }
     if (d_isRestart)
@@ -215,7 +217,7 @@ namespace dftfe
     else
       {
         d_totalUpdateCalls = 0;
-        if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
           mkdir(d_restartPath.c_str(), ACCESSPERMS);
         std::vector<std::vector<double>> cellOptData(3,
                                                      std::vector<double>(1,
@@ -505,7 +507,7 @@ namespace dftfe
   geoOptCell::gradient(std::vector<double> &gradient)
   {
     gradient.clear();
-    const Tensor<2, 3, double> tempGradient =
+    const dealii::Tensor<2, 3, double> tempGradient =
       d_dftPtr->getCellVolume() *
       (d_dftPtr->getCellStress() * invert(d_strainEpsilon)) /
       d_domainVolumeInitial;
@@ -563,7 +565,7 @@ namespace dftfe
               0,
               mpi_communicator);
 
-    Tensor<2, 3, double> strainEpsilonNew = d_strainEpsilon;
+    dealii::Tensor<2, 3, double> strainEpsilonNew = d_strainEpsilon;
 
     unsigned int count = 0;
     if (d_relaxationFlags[0] == 1)
@@ -610,7 +612,7 @@ namespace dftfe
 
     // To transform the domain under the strain we have to first do a inverse
     // transformation to bring the domain back to the unstrained state.
-    Tensor<2, 3, double> deformationGradient =
+    dealii::Tensor<2, 3, double> deformationGradient =
       strainEpsilonNew * invert(d_strainEpsilon);
     d_strainEpsilon = strainEpsilonNew;
 
@@ -636,9 +638,10 @@ namespace dftfe
                                                  std::vector<double>(1, 0.0));
         std::string                      savePath =
           d_restartPath + "/step" + std::to_string(d_totalUpdateCalls) + "/";
-        if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
           mkdir(savePath.c_str(), ACCESSPERMS);
-        const Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
+        const dealii::Tensor<2, 3, double> tempGradient =
+          d_dftPtr->getCellStress();
         d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
         d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
         tmpData[0][0] = d_totalUpdateCalls;
@@ -651,8 +654,8 @@ namespace dftfe
   bool
   geoOptCell::isConverged() const
   {
-    bool                 converged    = true;
-    Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
+    bool                         converged    = true;
+    dealii::Tensor<2, 3, double> tempGradient = d_dftPtr->getCellStress();
     if (tempGradient.norm() == 0)
       {
         return false;

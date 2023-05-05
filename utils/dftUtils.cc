@@ -176,7 +176,7 @@ namespace dftfe
             partition_int(dofHandler.get_triangulation().n_active_cells());
             dealii::GridTools::get_subdomain_association(dofHandler.get_triangulation(),
             partition_int);
-            const Vector<double> partitioning(partition_int.begin(),
+            const dealii::Vector<double> partitioning(partition_int.begin(),
             partition_int.end());
             dataOut.add_data_vector(partitioning,"partitioning");
             dataOut.build_patches();*/

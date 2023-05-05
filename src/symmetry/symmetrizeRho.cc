@@ -50,7 +50,7 @@ namespace dftfe
   void
   symmetryClass<FEOrder, FEOrderElectro>::computeAndSymmetrize_rhoOut()
   {
-    const Quadrature<3> &quadrature =
+    const dealii::Quadrature<3> &quadrature =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
     const unsigned int num_quad_points = quadrature.size();
     //
@@ -85,7 +85,7 @@ namespace dftfe
     //				Loop over cell and quad point and compute density by summing over
     // all the used symmetries
     //=============================================================================================================================================
-    typename DoFHandler<3>::active_cell_iterator
+    typename dealii::DoFHandler<3>::active_cell_iterator
       cell = (dftPtr->dofHandlerEigen).begin_active(),
       endc = (dftPtr->dofHandlerEigen).end();
     for (; cell != endc; ++cell)
@@ -310,16 +310,16 @@ namespace dftfe
 #endif
       }
     //
-    const Quadrature<3> &quadrature =
+    const dealii::Quadrature<3> &quadrature =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
     const unsigned int num_quad_points = quadrature.size();
     totPoints                          = recvdData1[0].size();
-    double                                         px, py, pz;
-    std::vector<Vector<double>>                    tempPsiAlpha, tempPsiBeta;
-    std::vector<std::vector<Tensor<1, 3, double>>> tempGradPsi,
+    double                              px, py, pz;
+    std::vector<dealii::Vector<double>> tempPsiAlpha, tempPsiBeta;
+    std::vector<std::vector<dealii::Tensor<1, 3, double>>> tempGradPsi,
       tempGradPsiTempAlpha, tempGradPsiTempBeta;
-    std::vector<Point<3>> quadPointList;
-    std::vector<double>   sendData, recvdData;
+    std::vector<dealii::Point<3>> quadPointList;
+    std::vector<double>           sendData, recvdData;
     //
     std::vector<double> rhoLocal, gradRhoLocal, rhoLocalSpinPolarized,
       gradRhoLocalSpinPolarized;
@@ -373,7 +373,7 @@ namespace dftfe
                 py = recvdData1[1][numPointsDone + iList];
                 pz = recvdData1[2][numPointsDone + iList];
                 //
-                const Point<3> pointTemp(px, py, pz);
+                const dealii::Point<3> pointTemp(px, py, pz);
                 quadPointList[iList] = pointTemp;
                 tempPsiAlpha[iList].reinit(2);
                 tempPsiBeta[iList].reinit(2);
@@ -388,12 +388,13 @@ namespace dftfe
               } // loop on points
             //
             //
-            Quadrature<3> quadRule(quadPointList);
-            FEValues<3>   fe_values(dftPtr->FEEigen,
-                                  quadRule,
-                                  update_values | update_gradients |
-                                    update_JxW_values |
-                                    update_quadrature_points);
+            dealii::Quadrature<3> quadRule(quadPointList);
+            dealii::FEValues<3>   fe_values(dftPtr->FEEigen,
+                                          quadRule,
+                                          dealii::update_values |
+                                            dealii::update_gradients |
+                                            dealii::update_JxW_values |
+                                            dealii::update_quadrature_points);
             fe_values.reinit(dealIICellId[cellId]);
             const unsigned int iSymm = recvdData3[numGroupsDone + iGroup];
             //
@@ -699,8 +700,8 @@ namespace dftfe
     else
       sendData = rhoLocal;
     //
-    typename DoFHandler<3>::active_cell_iterator cell;
-    typename DoFHandler<3>::active_cell_iterator endc =
+    typename dealii::DoFHandler<3>::active_cell_iterator cell;
+    typename dealii::DoFHandler<3>::active_cell_iterator endc =
       (dftPtr->dofHandlerEigen).end();
     //
     for (int sendProc = 0; sendProc < n_mpi_processes; ++sendProc)
