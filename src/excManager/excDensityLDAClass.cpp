@@ -18,21 +18,53 @@
 //
 
 #include <excDensityLDAClass.h>
+#include <NNLDA.h>
 
 namespace dftfe
 {
   excDensityLDAClass::excDensityLDAClass(xc_func_type *funcXPtr,
                                          xc_func_type *funcCPtr,
+                                         bool          isSpinPolarized,
                                          bool          scaleExchange,
                                          bool          computeCorrelation,
                                          double        scaleExchangeFactor)
     : excDensityBaseClass(funcXPtr,
                           funcCPtr,
+                          isSpinPolarized,
                           scaleExchange,
                           computeCorrelation,
                           scaleExchangeFactor)
   {
     d_familyType = densityFamilyType::LDA;
+#ifdef DFTFE_WITH_TORCH
+    d_NNLDAPtr = nullptr;
+#endif
+  }
+
+  excDensityLDAClass::excDensityLDAClass(xc_func_type *funcXPtr,
+                                         xc_func_type *funcCPtr,
+                                         bool          isSpinPolarized,
+                                         std::string   modelXCInputFile,
+                                         bool          scaleExchange,
+                                         bool          computeCorrelation,
+                                         double        scaleExchangeFactor)
+    : excDensityBaseClass(funcXPtr,
+                          funcCPtr,
+                          isSpinPolarized,
+                          scaleExchange,
+                          computeCorrelation,
+                          scaleExchangeFactor)
+  {
+    d_familyType = densityFamilyType::LDA;
+#ifdef DFTFE_WITH_TORCH
+    d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
+#endif
+  }
+
+  excDensityLDAClass::~excDensityLDAClass()
+  {
+    if (d_NNLDAPtr != nullptr)
+      delete d_NNLDAPtr;
   }
 
   void
@@ -52,6 +84,35 @@ namespace dftfe
                sizeInput,
                &(*rhoValues)[0],
                &outputCorrEnergyDensity[0]);
+
+#ifdef DFTFE_WITH_TORCH
+    if (d_NNLDAPtr != nullptr)
+      {
+        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              {
+                rhoValuesForNN[i] = (*rhoValues)[i];
+              }
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
+                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
+              }
+          }
+
+        std::vector<double> excValuesFromNN(sizeInput, 0);
+        d_NNLDAPtr->evaluateexc(&(rhoValuesForNN[0]),
+                                sizeInput,
+                                &excValuesFromNN[0]);
+        for (unsigned int i = 0; i < sizeInput; i++)
+          outputExchangeEnergyDensity[i] += excValuesFromNN[i];
+      }
+#endif
   }
 
   void
@@ -82,6 +143,45 @@ namespace dftfe
                sizeInput,
                &(*rhoValues)[0],
                &(*corrPotentialVal)[0]);
+
+#ifdef DFTFE_WITH_TORCH
+    if (d_NNLDAPtr != nullptr)
+      {
+        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              {
+                rhoValuesForNN[i] = (*rhoValues)[i];
+              }
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              {
+                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
+                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
+              }
+          }
+
+        std::vector<double> excValuesFromNN(2 * sizeInput, 0);
+        std::vector<double> vxcValuesFromNN(2 * sizeInput, 0);
+        d_NNLDAPtr->evaluatevxc(&(rhoValuesForNN[0]),
+                                sizeInput,
+                                &excValuesFromNN[0],
+                                &vxcValuesFromNN[0]);
+        if (d_isSpinPolarized)
+          {
+            for (unsigned int i = 0; i < 2 * sizeInput; i++)
+              (*exchangePotentialVal)[i] += vxcValuesFromNN[i];
+          }
+        else
+          {
+            for (unsigned int i = 0; i < sizeInput; i++)
+              (*exchangePotentialVal)[i] += vxcValuesFromNN[2 * i];
+          }
+      }
+#endif
   }
 
   void

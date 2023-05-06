@@ -52,24 +52,26 @@ namespace dftfe
      *  pair(bool for is negative jacobian, maximum jacobian ratio)
      */
     std::pair<bool, double>
-    moveMesh(const std::vector<Point<3>> &            controlPointLocations,
-             const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
-             const std::vector<double> &              gaussianWidthParameter,
-             const std::vector<double> &              flatTopWidthParameter,
-             const bool                               moveSubdivided = false);
+    moveMesh(const std::vector<dealii::Point<3>> &controlPointLocations,
+             const std::vector<dealii::Tensor<1, 3, double>>
+               &                        controlPointDisplacements,
+             const std::vector<double> &gaussianWidthParameter,
+             const std::vector<double> &flatTopWidthParameter,
+             const bool                 moveSubdivided = false);
 
 
 
     std::pair<bool, double>
-    moveMeshTwoStep(
-      const std::vector<Point<3>> &            controlPointLocations1,
-      const std::vector<Point<3>> &            controlPointLocations2,
-      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements1,
-      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements2,
-      const std::vector<double> &              controllingParameter1,
-      const std::vector<double> &              controllingParameter2,
-      const std::vector<double> &              flatTopWidthParameter,
-      const bool                               moveSubdivided = false);
+    moveMeshTwoStep(const std::vector<dealii::Point<3>> &controlPointLocations1,
+                    const std::vector<dealii::Point<3>> &controlPointLocations2,
+                    const std::vector<dealii::Tensor<1, 3, double>>
+                      &controlPointDisplacements1,
+                    const std::vector<dealii::Tensor<1, 3, double>>
+                      &                        controlPointDisplacements2,
+                    const std::vector<double> &controllingParameter1,
+                    const std::vector<double> &controllingParameter2,
+                    const std::vector<double> &flatTopWidthParameter,
+                    const bool                 moveSubdivided = false);
 
 
     void
@@ -81,21 +83,23 @@ namespace dftfe
      *
      */
     void
-    computeIncrement(
-      const std::vector<Point<3>> &            controlPointLocations,
-      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
-      const std::vector<double> &              gaussianWidthParameter,
-      const std::vector<double> &              flatTopWidthParameter);
+    computeIncrement(const std::vector<dealii::Point<3>> &controlPointLocations,
+                     const std::vector<dealii::Tensor<1, 3, double>>
+                       &                        controlPointDisplacements,
+                     const std::vector<double> &gaussianWidthParameter,
+                     const std::vector<double> &flatTopWidthParameter);
 
     void
     computeIncrementTwoStep(
-      const std::vector<Point<3>> &            controlPointLocations1,
-      const std::vector<Point<3>> &            controlPointLocations2,
-      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements1,
-      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements2,
-      const std::vector<double> &              gaussianWidthParameter1,
-      const std::vector<double> &              gaussianWidthParameter2,
-      const std::vector<double> &              flatTopWidthParameter);
+      const std::vector<dealii::Point<3>> &controlPointLocations1,
+      const std::vector<dealii::Point<3>> &controlPointLocations2,
+      const std::vector<dealii::Tensor<1, 3, double>>
+        &controlPointDisplacements1,
+      const std::vector<dealii::Tensor<1, 3, double>>
+        &                        controlPointDisplacements2,
+      const std::vector<double> &gaussianWidthParameter1,
+      const std::vector<double> &gaussianWidthParameter2,
+      const std::vector<double> &flatTopWidthParameter);
   };
 
 } // namespace dftfe

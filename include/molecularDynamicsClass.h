@@ -29,7 +29,6 @@
 
 namespace dftfe
 {
-  using namespace dealii;
   class molecularDynamicsClass
   {
   public:

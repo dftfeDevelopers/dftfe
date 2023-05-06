@@ -2837,8 +2837,8 @@ namespace dftfe
       // implemented as Yt = S^{-1/2}*Xt using the column major format of blas
       //
       const char transA2 = 'N', transB2 = 'N';
-      // dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
-      // orthoNormalizedBasis.reinit(X);
+      // dealii::parallel::distributed::Vector<double>
+      // orthoNormalizedBasis; orthoNormalizedBasis.reinit(X);
       std::vector<double> orthoNormalizedBasis(X.size(), 0.0);
 
       computing_timer.enter_subsection("subspace rotation in lowden");

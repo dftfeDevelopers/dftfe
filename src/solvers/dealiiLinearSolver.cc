@@ -105,6 +105,7 @@ namespace dftfe
 
             res         = gvec.l2_norm();
             initial_res = res;
+
             if (res < absTolerance)
               conv = true;
             if (conv)

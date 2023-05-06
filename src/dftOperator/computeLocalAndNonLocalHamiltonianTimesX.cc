@@ -122,10 +122,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
       const double beta  = 1.0;
 
 
-      typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler
-                                                            .begin_active(),
-                                                   endc =
-                                                     dftPtr->dofHandler.end();
+      typename dealii::DoFHandler<3>::active_cell_iterator
+        cell    = dftPtr->dofHandler.begin_active(),
+        endc    = dftPtr->dofHandler.end();
       int iElem = -1;
       for (; cell != endc; ++cell)
         {
@@ -249,9 +248,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
   // start cell loop for assembling localHX and nonlocalHX simultaneously
 
-  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler
-                                                        .begin_active(),
-                                               endc = dftPtr->dofHandler.end();
+  typename dealii::DoFHandler<3>::active_cell_iterator
+    cell = dftPtr->dofHandler.begin_active(),
+    endc = dftPtr->dofHandler.end();
 
   int iElem = -1;
   // blas required settings

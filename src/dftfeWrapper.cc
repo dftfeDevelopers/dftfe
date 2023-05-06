@@ -370,12 +370,12 @@ namespace dftfe
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
         const int totalMPIProcesses =
-          Utilities::MPI::n_mpi_processes(d_mpi_comm_parent);
+          dealii::Utilities::MPI::n_mpi_processes(d_mpi_comm_parent);
 
         std::string parameter_file_path =
           d_scratchFolderName + "/parameterFile.prm";
 
-        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
           {
             AssertThrow(
               atomicPositionsCart.size() == atomicNumbers.size(),
@@ -684,11 +684,12 @@ namespace dftfe
   {
     if (d_mpi_comm_parent != MPI_COMM_NULL)
       {
-        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
           {
             d_scratchFolderName =
               "dftfeScratch" +
-              std::to_string(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
+              std::to_string(
+                dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
               "t" +
               std::to_string(
                 std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -698,7 +699,7 @@ namespace dftfe
 
         int line_size = d_scratchFolderName.size();
         MPI_Bcast(&line_size, 1, MPI_INT, 0, d_mpi_comm_parent);
-        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) != 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) != 0)
           d_scratchFolderName.resize(line_size);
         MPI_Bcast(const_cast<char *>(d_scratchFolderName.data()),
                   line_size,
@@ -706,7 +707,7 @@ namespace dftfe
                   0,
                   d_mpi_comm_parent);
 
-        if (Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
           mkdir(d_scratchFolderName.c_str(), ACCESSPERMS);
 
         MPI_Barrier(d_mpi_comm_parent);
@@ -748,19 +749,19 @@ namespace dftfe
               << "=================================MPI Parallelization========================================="
               << std::endl;
             pcout << "Total number of MPI tasks: "
-                  << Utilities::MPI::n_mpi_processes(d_mpi_comm_parent)
+                  << dealii::Utilities::MPI::n_mpi_processes(d_mpi_comm_parent)
                   << std::endl;
             pcout << "k-point parallelization processor groups: "
-                  << Utilities::MPI::n_mpi_processes(
+                  << dealii::Utilities::MPI::n_mpi_processes(
                        kPointPool.get_interpool_comm())
                   << std::endl;
             pcout << "Band parallelization processor groups: "
-                  << Utilities::MPI::n_mpi_processes(
+                  << dealii::Utilities::MPI::n_mpi_processes(
                        bandGroupsPool.get_interpool_comm())
                   << std::endl;
             pcout
               << "Number of MPI tasks for finite-element domain decomposition: "
-              << Utilities::MPI::n_mpi_processes(
+              << dealii::Utilities::MPI::n_mpi_processes(
                    bandGroupsPool.get_intrapool_comm())
               << std::endl;
             pcout
@@ -858,7 +859,8 @@ namespace dftfe
             delete d_dftfeBasePtr;
 
             if (!d_dftfeParamsPtr->keepScratchFolder &&
-                Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0)
+                dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) ==
+                  0)
               {
                 std::string command = "rm -rf " + d_scratchFolderName;
                 system(command.c_str());
@@ -990,7 +992,8 @@ namespace dftfe
         d_dftfeBasePtr->getAtomLocationsCart().size(),
       dealii::ExcMessage(
         "DFT-FE error: Incorrect size of atomsDisplacements vector."));
-    std::vector<Tensor<1, 3, double>> dispVec(atomsDisplacements.size());
+    std::vector<dealii::Tensor<1, 3, double>> dispVec(
+      atomsDisplacements.size());
     for (unsigned int i = 0; i < dispVec.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
         dispVec[i][j] = atomsDisplacements[i][j];

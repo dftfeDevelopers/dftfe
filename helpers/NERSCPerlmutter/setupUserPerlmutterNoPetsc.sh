@@ -27,7 +27,7 @@ ELPA_PATH="/global/common/software/m4067/softwareDFTFE/elpa/install_elpa-2022.11
 
 
 #Paths for optional external libraries
-DCCL_PATH="$DCCL_DIR"
+DCCL_PATH="$NCCL_DIR"
 mdiPath=""
 
 #Toggle GPU compilation

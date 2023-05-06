@@ -34,6 +34,7 @@ namespace dftfe
                       bool                       computeCorrelation,
                       xc_func_type *             funcXPtr,
                       xc_func_type *             funcCPtr,
+                      std::string                modelXCInputFile,
                       excWavefunctionBaseClass *&excClassPtr);
   };
 } // namespace dftfe

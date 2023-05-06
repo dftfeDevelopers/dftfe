@@ -60,10 +60,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   const unsigned int         inc    = 1;
 
 
-  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler
-                                                        .begin_active(),
-                                               endc = dftPtr->dofHandler.end();
-  int iElem                                         = -1;
+  typename dealii::DoFHandler<3>::active_cell_iterator
+    cell    = dftPtr->dofHandler.begin_active(),
+    endc    = dftPtr->dofHandler.end();
+  int iElem = -1;
   for (; cell != endc; ++cell)
     {
       if (cell->is_locally_owned())
@@ -304,10 +304,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 
 
-  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler
-                                                        .begin_active(),
-                                               endc = dftPtr->dofHandler.end();
-  int iElem                                         = -1;
+  typename dealii::DoFHandler<3>::active_cell_iterator
+    cell    = dftPtr->dofHandler.begin_active(),
+    endc    = dftPtr->dofHandler.end();
+  int iElem = -1;
   for (; cell != endc; ++cell)
     {
       if (cell->is_locally_owned())

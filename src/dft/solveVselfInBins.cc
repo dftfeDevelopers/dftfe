@@ -701,7 +701,7 @@ namespace dftfe
                   smearedbQuads(numQuadPointsSmearedb,
                                 dealii::make_vectorized_array(0.0));
                 for (unsigned int macrocell = 0;
-                     macrocell < matrix_free_data.n_macro_cells();
+                     macrocell < matrix_free_data.n_cell_batches();
                      ++macrocell)
                   {
                     std::fill(smearedbQuads.begin(),
@@ -709,7 +709,8 @@ namespace dftfe
                               dealii::make_vectorized_array(0.0));
                     bool               isMacroCellTrivial = true;
                     const unsigned int numSubCells =
-                      matrix_free_data.n_components_filled(macrocell);
+                      matrix_free_data.n_active_entries_per_cell_batch(
+                        macrocell);
                     for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                          ++iSubCell)
                       {
@@ -1086,7 +1087,7 @@ namespace dftfe
         dealii::VectorizedArray<double> quarter =
           dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
         for (unsigned int macrocell = 0;
-             macrocell < matrix_free_data.n_macro_cells();
+             macrocell < matrix_free_data.n_cell_batches();
              ++macrocell)
           {
             fe_eval.reinit(macrocell);
@@ -1108,7 +1109,7 @@ namespace dftfe
               smearedbQuads(numQuadPointsSmearedb,
                             dealii::make_vectorized_array(0.0));
             for (unsigned int macrocell = 0;
-                 macrocell < matrix_free_data.n_macro_cells();
+                 macrocell < matrix_free_data.n_cell_batches();
                  ++macrocell)
               {
                 std::fill(smearedbQuads.begin(),
@@ -1116,7 +1117,7 @@ namespace dftfe
                           dealii::make_vectorized_array(0.0));
                 bool               isMacroCellTrivial = true;
                 const unsigned int numSubCells =
-                  matrix_free_data.n_components_filled(macrocell);
+                  matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                 for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                      ++iSubCell)
                   {
@@ -1206,7 +1207,7 @@ namespace dftfe
                 smearedChargeQuadratureId);
 
               for (unsigned int macrocell = 0;
-                   macrocell < matrix_free_data.n_macro_cells();
+                   macrocell < matrix_free_data.n_cell_batches();
                    ++macrocell)
                 {
                   fe_eval2.reinit(macrocell);
@@ -1232,7 +1233,7 @@ namespace dftfe
                 dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
                 smearedbQuads(numQuadPointsSmearedb, zeroTensor);
               for (unsigned int macrocell = 0;
-                   macrocell < matrix_free_data.n_macro_cells();
+                   macrocell < matrix_free_data.n_cell_batches();
                    ++macrocell)
                 {
                   std::fill(smearedbQuads.begin(),
@@ -1240,7 +1241,7 @@ namespace dftfe
                             dealii::make_vectorized_array(0.0));
                   bool               isMacroCellTrivial = true;
                   const unsigned int numSubCells =
-                    matrix_free_data.n_components_filled(macrocell);
+                    matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                   for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                        ++iSubCell)
                     {
@@ -1492,7 +1493,7 @@ namespace dftfe
                   smearedbQuads(numQuadPointsSmearedb,
                                 dealii::make_vectorized_array(0.0));
                 for (unsigned int macrocell = 0;
-                     macrocell < matrix_free_data.n_macro_cells();
+                     macrocell < matrix_free_data.n_cell_batches();
                      ++macrocell)
                   {
                     std::fill(smearedbQuads.begin(),
@@ -1500,7 +1501,8 @@ namespace dftfe
                               dealii::make_vectorized_array(0.0));
                     bool               isMacroCellTrivial = true;
                     const unsigned int numSubCells =
-                      matrix_free_data.n_components_filled(macrocell);
+                      matrix_free_data.n_active_entries_per_cell_batch(
+                        macrocell);
                     for (unsigned int iSubCell = 0; iSubCell < numSubCells;
                          ++iSubCell)
                       {
