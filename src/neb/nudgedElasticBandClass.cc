@@ -45,8 +45,8 @@ namespace dftfe
     const std::string &coordinatesFileNEB,
     const std::string &domainVectorsFileNEB)
     : d_mpiCommParent(mpi_comm_parent)
-    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_restartFilesPath(restartFilesPath)
     , d_isRestart(restart)
     , d_verbosity(verbosity)
@@ -83,7 +83,7 @@ namespace dftfe
 
 
         std::string Folder = d_restartFilesPath + "/Step0";
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir(Folder.c_str(), ACCESSPERMS);
 
 
@@ -196,7 +196,7 @@ namespace dftfe
 
     AssertThrow(
       d_dftPtr->getParametersObject().natoms == d_numberGlobalCharges,
-      ExcMessage(
+      dealii::ExcMessage(
         "DFT-FE Error: The number atoms"
         "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
         "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
@@ -503,7 +503,7 @@ namespace dftfe
 
     AssertThrow(
       norm > 0.000000000001,
-      ExcMessage(
+      dealii::ExcMessage(
         "DFT-FE Error: cordinates have 0 displacement between images"));
     for (i = 0; i < len; i++)
       {
@@ -1285,7 +1285,7 @@ namespace dftfe
           tempForceData,
           d_dftPtr->getParametersObject().ionRelaxFlagsFile);
         AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
-                    ExcMessage(
+                    dealii::ExcMessage(
                       "Incorrect number of entries in relaxationFlags file"));
         d_relaxationFlags.clear();
         d_externalForceOnAtom.clear();
