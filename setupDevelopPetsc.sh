@@ -44,7 +44,7 @@ withGPUAwareMPI=OFF #Please use this option with care
 #Option to link to DCCL library (Only for GPU compilation)
 withDCCL=OFF
 withMDI=OFF
-withTorch=ON
+withTorch=OFF
 
 #Compiler options and flags
 cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.4/bin/mpicxx  #sets DCMAKE_CXX_COMPILER

@@ -101,10 +101,10 @@ namespace dftfe
 
                 // Simple mixing scheme
                 ((*rhoInValues)[cell->id()][q_point]) =
-                  std::abs((1 - d_dftParamsPtr->mixingParameter) *
-                             (rhoInValuesOld)[cell->id()][q_point] +
-                           d_dftParamsPtr->mixingParameter *
-                             (*rhoOutValues)[cell->id()][q_point]);
+                  ((1 - d_dftParamsPtr->mixingParameter) *
+                     (rhoInValuesOld)[cell->id()][q_point] +
+                   d_dftParamsPtr->mixingParameter *
+                     (*rhoOutValues)[cell->id()][q_point]);
 
 
                 if (excFunctionalPtr->getDensityBasedFamilyType() ==
@@ -289,8 +289,8 @@ namespace dftfe
                     rhoInBar += cTotal[i] * rhoInTemp[N - 1 - i][q_point];
                   }
                 (*rhoInValues)[cell->id()][q_point] =
-                  std::abs((1 - d_dftParamsPtr->mixingParameter) * rhoInBar +
-                           d_dftParamsPtr->mixingParameter * rhoOutBar);
+                  ((1 - d_dftParamsPtr->mixingParameter) * rhoInBar +
+                   d_dftParamsPtr->mixingParameter * rhoOutBar);
               }
           }
       }
@@ -1184,18 +1184,17 @@ namespace dftfe
                 // ((*rhoOutValues)[cell->id()][2*q_point+s]),2.0)*fe_values.JxW(q_point);
 
                 // Simple mixing scheme
-                (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] = std::abs(
-                  (1 - d_dftParamsPtr->mixingParameter) *
-                    (rhoInValuesOldSpinPolarized)[cell->id()][2 * q_point] +
-                  d_dftParamsPtr->mixingParameter *
-                    (*rhoOutValuesSpinPolarized)[cell->id()][2 * q_point]);
+                (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
+                  ((1 - d_dftParamsPtr->mixingParameter) *
+                     (rhoInValuesOldSpinPolarized)[cell->id()][2 * q_point] +
+                   d_dftParamsPtr->mixingParameter *
+                     (*rhoOutValuesSpinPolarized)[cell->id()][2 * q_point]);
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] =
-                  std::abs((1 - d_dftParamsPtr->mixingParameter) *
-                             (rhoInValuesOldSpinPolarized)[cell->id()]
-                                                          [2 * q_point + 1] +
-                           d_dftParamsPtr->mixingParameter *
-                             (*rhoOutValuesSpinPolarized)[cell->id()]
-                                                         [2 * q_point + 1]);
+                  ((1 - d_dftParamsPtr->mixingParameter) *
+                     (rhoInValuesOldSpinPolarized)[cell->id()]
+                                                  [2 * q_point + 1] +
+                   d_dftParamsPtr->mixingParameter *
+                     (*rhoOutValuesSpinPolarized)[cell->id()][2 * q_point + 1]);
 
                 (*rhoInValues)[cell->id()][q_point] =
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] +
@@ -1426,8 +1425,8 @@ namespace dftfe
                                  rhoInSpinPolarizedTemp[N - 1 - i][2 * q_point];
                   }
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
-                  std::abs((1 - d_dftParamsPtr->mixingParameter) * rhoInBar1 +
-                           d_dftParamsPtr->mixingParameter * rhoOutBar1);
+                  ((1 - d_dftParamsPtr->mixingParameter) * rhoInBar1 +
+                   d_dftParamsPtr->mixingParameter * rhoOutBar1);
                 //
                 double rhoOutBar2 =
                   cn * rhoOutSpinPolarizedTemp[N][2 * q_point + 1];
@@ -1445,8 +1444,8 @@ namespace dftfe
                       rhoInSpinPolarizedTemp[N - 1 - i][2 * q_point + 1];
                   }
                 (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] =
-                  std::abs((1 - d_dftParamsPtr->mixingParameter) * rhoInBar2 +
-                           d_dftParamsPtr->mixingParameter * rhoOutBar2);
+                  ((1 - d_dftParamsPtr->mixingParameter) * rhoInBar2 +
+                   d_dftParamsPtr->mixingParameter * rhoOutBar2);
                 //
                 // if (s==1)
                 //   {
