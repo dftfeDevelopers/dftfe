@@ -177,7 +177,7 @@ namespace dftfe
      * during restart.
      */
     virtual void
-    writeDomainAndAtomCoordinatesFloatingCharges(
+    writeDomainAndAtomCoordinates(
       const std::string Path) const = 0;
   };
 

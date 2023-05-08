@@ -1108,7 +1108,7 @@ namespace dftfe
                                     d_mpiCommParent);
         for (int i = 0; i < d_numberOfImages; i++)
           {
-            d_dftfeWrapper[i]->writeDomainAndAtomCoordinatesFloatingCharges(
+            d_dftfeWrapper[i]->writeDomainAndAtomCoordinates(
               savePath + "/Image" + std::to_string(i));
           }
         d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");

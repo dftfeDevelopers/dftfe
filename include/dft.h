@@ -340,7 +340,7 @@ namespace dftfe
      * during restart.
      */
     void
-    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+    writeDomainAndAtomCoordinates(const std::string Path) const;
 
     /**
      * @brief Gets the current atom Locations in cartesian form

@@ -406,7 +406,7 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------"
               << std::endl;
 
-            d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges("./");
+            d_dftPtr->writeDomainAndAtomCoordinates("./");
           }
         else if (solverReturn == nonLinearSolver::FAILURE)
           {
@@ -690,7 +690,7 @@ namespace dftfe
         dftUtils::writeDataIntoFile(forceData,
                                     savePath + "/maxForce.chk",
                                     mpi_communicator);
-        d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath + "/");
+        d_dftPtr->writeDomainAndAtomCoordinates(savePath + "/");
         d_nonLinearSolverPtr->save(savePath + "/ionRelax.chk");
         std::vector<std::vector<double>> tmpData(1,
                                                  std::vector<double>(1, 0.0));

@@ -617,7 +617,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::
-    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const
+    writeDomainAndAtomCoordinates(const std::string Path) const
   {
     dftUtils::writeDataIntoFile(d_domainBoundingVectors,
                                 Path + "domainBoundingVectorsCurrent.chk",

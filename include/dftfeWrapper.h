@@ -350,10 +350,14 @@ namespace dftfe
 
 
     /**
-     * @brief Writes the domainVectors data and atom coordinates to files in path provided.
+     * @brief writes the current domain bounding vectors and atom coordinates to files for
+     * structural optimization and dynamics restarts.simplified version for
+     * floating charges case
+     * @param[in] Path The folder path to store the atom coordinates required
+     * during restart.
      */
     void
-    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+    writeDomainAndAtomCoordinates(const std::string Path) const;
 
 
     dftBase *

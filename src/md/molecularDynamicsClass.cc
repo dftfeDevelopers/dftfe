@@ -1577,7 +1577,7 @@ namespace dftfe
         fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
       }
     std::string cordFolder = tempfolder + "/";
-    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
+    d_dftPtr->writeDomainAndAtomCoordinates(cordFolder);
     if (time > 1)
       {
         if (d_dftPtr->getParametersObject().reproducible_output == false)
