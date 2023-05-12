@@ -82,7 +82,7 @@ function cmake_configure() {
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -96,7 +96,7 @@ function cmake_configure() {
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -110,7 +110,7 @@ function cmake_configure() {
     cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+    -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
@@ -136,12 +136,14 @@ fi
 cd $out
 
 withComplex=OFF
+dealiiDir=$dealiiPetscRealDir
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
 mkdir -p real && cd real
 cmake_configure "$SRC" && make -j8
 cd ..
 
 withComplex=ON
+dealiiDir=$dealiiPetscComplexDir
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
 mkdir -p complex && cd complex
 cmake_configure "$SRC" && make -j8
