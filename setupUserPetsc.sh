@@ -46,7 +46,7 @@ withGPUAwareMPI=OFF #Please use this option with care
 withDCCL=OFF
 withMDI=OFF
 withTorch=OFF
-withCustomizedDealii=OFF
+withCustomizedDealii=ON
 
 #Compiler options and flags
 cxx_compiler=mpic++  #sets DCMAKE_CXX_COMPILER
