@@ -14,6 +14,7 @@
 // ---------------------------------------------------------------------
 
 #include "process_grid.h"
+#include "dftfeDataTypes.h"
 #include "scalapack.templates.h"
 #include <deal.II/base/mpi.templates.h>
 
@@ -247,12 +248,11 @@ namespace dftfe
     Assert(count > 0, dealii::ExcInternalError());
     if (mpi_communicator_inactive_with_root != MPI_COMM_NULL)
       {
-        const int ierr =
-          MPI_Bcast(value,
-                    count,
-                    dealii::Utilities::MPI::internal::mpi_type_id(value),
-                    0 /*from root*/,
-                    mpi_communicator_inactive_with_root);
+        const int ierr = MPI_Bcast(value,
+                                   count,
+                                   dataTypes::mpi_type_id(value),
+                                   0 /*from root*/,
+                                   mpi_communicator_inactive_with_root);
         AssertThrowMPI(ierr);
       }
   }

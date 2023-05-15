@@ -1793,6 +1793,7 @@ namespace dftfe
           outerAtomBallRadius = 2.0;
       }
 
+#ifdef DFTFE_WITH_CUSTOMIZED_DEALII
     if (!(periodicX || periodicY || periodicZ) && !reproducible_output)
       {
         constraintsParallelCheck              = false;
@@ -1800,6 +1801,9 @@ namespace dftfe
       }
     else if (reproducible_output)
       createConstraintsFromSerialDofhandler = true;
+#else
+    createConstraintsFromSerialDofhandler = false;
+#endif
 
     if (reproducible_output)
       {
