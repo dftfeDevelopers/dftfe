@@ -25,24 +25,9 @@ namespace dftfe
   class excWavefunctionNoneClass : public excWavefunctionBaseClass
   {
   public:
-    excWavefunctionNoneClass(densityFamilyType densityFamilyTypeObj,
-                             xc_func_type *    funcXPtr,
-                             xc_func_type *    funcCPtr,
-                             bool              isSpinPolarized,
-                             double            factorForWavefunctionDependent,
-                             bool              scaleExchange,
-                             bool              computeCorrelation,
-                             double            scaleExchangeFactor);
+    excWavefunctionNoneClass(excDensityBaseClass * excDensityBaseClassPtr,
+                             bool              isSpinPolarized);
 
-    excWavefunctionNoneClass(densityFamilyType densityFamilyTypeObj,
-                             xc_func_type *    funcXPtr,
-                             xc_func_type *    funcCPtr,
-                             bool              isSpinPolarized,
-                             std::string       modelXCInputFile,
-                             double            factorForWavefunctionDependent,
-                             bool              scaleExchange,
-                             bool              computeCorrelation,
-                             double            scaleExchangeFactor);
 
     void
     applyWaveFunctionDependentVxc() const override;

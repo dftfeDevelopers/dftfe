@@ -28,12 +28,7 @@ namespace dftfe
                                          bool          scaleExchange,
                                          bool          computeCorrelation,
                                          double        scaleExchangeFactor)
-    : excDensityBaseClass(funcXPtr,
-                          funcCPtr,
-                          isSpinPolarized,
-                          scaleExchange,
-                          computeCorrelation,
-                          scaleExchangeFactor)
+    : excDensityBaseClass(isSpinPolarized)
   {
     d_familyType = densityFamilyType::LDA;
 #ifdef DFTFE_WITH_TORCH
@@ -48,12 +43,7 @@ namespace dftfe
                                          bool          scaleExchange,
                                          bool          computeCorrelation,
                                          double        scaleExchangeFactor)
-    : excDensityBaseClass(funcXPtr,
-                          funcCPtr,
-                          isSpinPolarized,
-                          scaleExchange,
-                          computeCorrelation,
-                          scaleExchangeFactor)
+    : excDensityBaseClass(isSpinPolarized)
   {
     d_familyType = densityFamilyType::LDA;
 #ifdef DFTFE_WITH_TORCH

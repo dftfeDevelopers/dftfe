@@ -24,86 +24,15 @@
 namespace dftfe
 {
   excWavefunctionBaseClass::excWavefunctionBaseClass(
-    densityFamilyType densityFamilyTypeObj,
-    xc_func_type *    funcXPtr,
-    xc_func_type *    funcCPtr,
-    bool              isSpinPolarized,
-    double            factorForWavefunctionDependent,
-    bool              scaleExchange,
-    bool              computeCorrelation,
-    double            scaleExchangeFactor)
+    excDensityBaseClass * excDensityBaseClassPtr,
+    bool              isSpinPolarized):
+  d_excDensityBaseClassPtr(excDensityBaseClassPtr),
+  d_isSpinPolarized(isSpinPolarized)
   {
-    switch (densityFamilyTypeObj)
-      {
-        case densityFamilyType::LDA:
-          d_excDensityBaseClassPtr =
-            new excDensityLDAClass(funcXPtr,
-                                   funcCPtr,
-                                   isSpinPolarized,
-                                   scaleExchange,
-                                   computeCorrelation,
-                                   scaleExchangeFactor);
-          break;
-        case densityFamilyType::GGA:
-          d_excDensityBaseClassPtr =
-            new excDensityGGAClass(funcXPtr,
-                                   funcCPtr,
-                                   isSpinPolarized,
-                                   scaleExchange,
-                                   computeCorrelation,
-                                   scaleExchangeFactor);
-          break;
-        default:
-          std::cout << " Error in deciphering "
-                       "family type of density based exc functional\n";
-          break;
-      }
-  }
-
-
-  excWavefunctionBaseClass::excWavefunctionBaseClass(
-    densityFamilyType densityFamilyTypeObj,
-    xc_func_type *    funcXPtr,
-    xc_func_type *    funcCPtr,
-    bool              isSpinPolarized,
-    std::string       modelXCInputFile,
-    double            factorForWavefunctionDependent,
-    bool              scaleExchange,
-    bool              computeCorrelation,
-    double            scaleExchangeFactor)
-  {
-    switch (densityFamilyTypeObj)
-      {
-        case densityFamilyType::LDA:
-          d_excDensityBaseClassPtr =
-            new excDensityLDAClass(funcXPtr,
-                                   funcCPtr,
-                                   isSpinPolarized,
-                                   modelXCInputFile,
-                                   scaleExchange,
-                                   computeCorrelation,
-                                   scaleExchangeFactor);
-          break;
-        case densityFamilyType::GGA:
-          d_excDensityBaseClassPtr =
-            new excDensityGGAClass(funcXPtr,
-                                   funcCPtr,
-                                   isSpinPolarized,
-                                   modelXCInputFile,
-                                   scaleExchange,
-                                   computeCorrelation,
-                                   scaleExchangeFactor);
-          break;
-        default:
-          std::cout << " Error in deciphering "
-                       "family type of density based exc functional\n";
-          break;
-      }
   }
 
   excWavefunctionBaseClass::~excWavefunctionBaseClass()
   {
-    delete d_excDensityBaseClassPtr;
   }
 
   void

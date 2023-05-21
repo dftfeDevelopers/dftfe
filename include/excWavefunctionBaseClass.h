@@ -33,24 +33,8 @@ namespace dftfe
   class excWavefunctionBaseClass
   {
   public:
-    excWavefunctionBaseClass(densityFamilyType densityFamilyTypeObj,
-                             xc_func_type *    funcXPtr,
-                             xc_func_type *    funcCPtr,
-                             bool              isSpinPolarized,
-                             double            factorForWavefunctionDependent,
-                             bool              scaleExchange,
-                             bool              computeCorrelation,
-                             double            scaleExchangeFactor);
-
-    excWavefunctionBaseClass(densityFamilyType densityFamilyTypeObj,
-                             xc_func_type *    funcXPtr,
-                             xc_func_type *    funcCPtr,
-                             bool              isSpinPolarized,
-                             std::string       modelXCInputFile,
-                             double            factorForWavefunctionDependent,
-                             bool              scaleExchange,
-                             bool              computeCorrelation,
-                             double            scaleExchangeFactor);
+    excWavefunctionBaseClass(excDensityBaseClass * excDensityBaseClassPtr,
+                             bool              isSpinPolarized);
 
     virtual ~excWavefunctionBaseClass();
     void
@@ -92,6 +76,7 @@ namespace dftfe
   protected:
     excDensityBaseClass *  d_excDensityBaseClassPtr;
     wavefunctionFamilyType d_wavefunctionFamilyType;
+    bool              d_isSpinPolarized;
   };
 } // namespace dftfe
 
