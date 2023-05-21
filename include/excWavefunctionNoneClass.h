@@ -25,8 +25,7 @@ namespace dftfe
   class excWavefunctionNoneClass : public excWavefunctionBaseClass
   {
   public:
-    excWavefunctionNoneClass(excDensityBaseClass * excDensityBaseClassPtr,
-                             bool              isSpinPolarized);
+    excWavefunctionNoneClass(bool isSpinPolarized);
 
 
     void

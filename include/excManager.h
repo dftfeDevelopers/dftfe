@@ -18,14 +18,14 @@
 #ifndef DFTFE_EXCMANAGER_H
 #define DFTFE_EXCMANAGER_H
 
-#include <excWavefunctionNoneClass.h>
+#include <excDensityBaseClass.h>
 #include <excWavefunctionBaseClass.h>
 namespace dftfe
 {
   class excManager
   {
   public:
-    static void
+    void
     createExcClassObj(unsigned int               xc_id,
                       bool                       isSpinPolarized,
                       unsigned int               exxFactor,
@@ -34,8 +34,18 @@ namespace dftfe
                       bool                       computeCorrelation,
                       xc_func_type *             funcXPtr,
                       xc_func_type *             funcCPtr,
-                      std::string                modelXCInputFile,
-                      excWavefunctionBaseClass *&excClassPtr);
+                      std::string                modelXCInputFile);
+
+    excDensityBaseClass *
+    getExcDensityObj();
+
+    excWavefunctionBaseClass *
+    getExcWavefunctionObj();
+
+
+  private:
+    excDensityBaseClass * d_excDensityObjPtr;
+    excWavefunctionBaseClass * d_excWavefunctionObjPtr;
   };
 } // namespace dftfe
 

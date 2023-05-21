@@ -21,11 +21,8 @@
 
 namespace dftfe
 {
-  excWavefunctionNoneClass::excWavefunctionNoneClass(
-    excDensityBaseClass * excDensityBaseClassPtr,
-    bool              isSpinPolarized)
-    : excWavefunctionBaseClass(excDensityBaseClassPtr,
-                               isSpinPolarized)
+  excWavefunctionNoneClass::excWavefunctionNoneClass(bool isSpinPolarized)
+    : excWavefunctionBaseClass(isSpinPolarized)
   {
     d_wavefunctionFamilyType = wavefunctionFamilyType::NONE;
   }

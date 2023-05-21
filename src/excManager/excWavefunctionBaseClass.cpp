@@ -23,63 +23,13 @@
 
 namespace dftfe
 {
-  excWavefunctionBaseClass::excWavefunctionBaseClass(
-    excDensityBaseClass * excDensityBaseClassPtr,
-    bool              isSpinPolarized):
-  d_excDensityBaseClassPtr(excDensityBaseClassPtr),
+  excWavefunctionBaseClass::excWavefunctionBaseClass(bool isSpinPolarized):
   d_isSpinPolarized(isSpinPolarized)
   {
   }
 
   excWavefunctionBaseClass::~excWavefunctionBaseClass()
   {
-  }
-
-  void
-  excWavefunctionBaseClass::computeDensityBasedEnergyDensity(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::vector<double> &outputExchangeEnergyDensity,
-    std::vector<double> &outputCorrEnergyDensity) const
-  {
-    d_excDensityBaseClassPtr->computeDensityBasedEnergyDensity(
-      sizeInput, rhoData, outputExchangeEnergyDensity, outputCorrEnergyDensity);
-  }
-
-  void
-  excWavefunctionBaseClass::computeDensityBasedVxc(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::map<VeffOutputDataAttributes, std::vector<double> *>
-      &outputDerExchangeEnergy,
-    std::map<VeffOutputDataAttributes, std::vector<double> *>
-      &outputDerCorrEnergy) const
-  {
-    d_excDensityBaseClassPtr->computeDensityBasedVxc(sizeInput,
-                                                     rhoData,
-                                                     outputDerExchangeEnergy,
-                                                     outputDerCorrEnergy);
-  }
-
-  void
-  excWavefunctionBaseClass::computeDensityBasedFxc(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::map<fxcOutputDataAttributes, std::vector<double> *>
-      &outputDer2ExchangeEnergy,
-    std::map<fxcOutputDataAttributes, std::vector<double> *>
-      &outputDer2CorrEnergy) const
-  {
-    d_excDensityBaseClassPtr->computeDensityBasedFxc(sizeInput,
-                                                     rhoData,
-                                                     outputDer2ExchangeEnergy,
-                                                     outputDer2CorrEnergy);
-  }
-
-  densityFamilyType
-  excWavefunctionBaseClass::getDensityBasedFamilyType() const
-  {
-    return d_excDensityBaseClassPtr->getDensityBasedFamilyType();
   }
 
   wavefunctionFamilyType
