@@ -39,9 +39,11 @@ namespace dftfe
                        const bool      restart)
     : d_dftPtr(dftPtr)
     , mpi_communicator(mpi_comm_parent)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_parent))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
   {
     d_isScfRestart = d_dftPtr->getParametersObject().loadRhoData;
@@ -72,7 +74,7 @@ namespace dftfe
           tempForceData,
           d_dftPtr->getParametersObject().ionRelaxFlagsFile);
         AssertThrow(tempRelaxFlagsData.size() == numberGlobalAtoms,
-                    ExcMessage(
+                    dealii::ExcMessage(
                       "Incorrect number of entries in relaxationFlags file"));
         d_relaxationFlags.clear();
         d_externalForceOnAtom.clear();
@@ -145,7 +147,7 @@ namespace dftfe
     else
       {
         d_totalUpdateCalls = 0;
-        if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
           mkdir(d_restartPath.c_str(), ACCESSPERMS);
         std::vector<std::vector<double>> ionOptData(2 + numberGlobalAtoms * 3,
                                                     std::vector<double>(1,
@@ -451,7 +453,7 @@ namespace dftfe
     const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
     const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();
     AssertThrow(tempGradient.size() == numberGlobalAtoms * 3,
-                ExcMessage("Atom forces have wrong size"));
+                dealii::ExcMessage("Atom forces have wrong size"));
     for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
       {
         for (unsigned int j = 0; j < 3; ++j)
@@ -485,9 +487,10 @@ namespace dftfe
         dftUtils::readFile(1,
                            preconData,
                            d_restartPath + "/preconditioner.dat");
-        AssertThrow(
-          preconData.size() == getNumberUnknowns() * getNumberUnknowns(),
-          ExcMessage("Incorrect preconditioner size in preconditioner.dat"));
+        AssertThrow(preconData.size() ==
+                      getNumberUnknowns() * getNumberUnknowns(),
+                    dealii::ExcMessage(
+                      "Incorrect preconditioner size in preconditioner.dat"));
         s.clear();
         s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
         for (int i = 0; i < preconData.size(); ++i)
@@ -611,7 +614,7 @@ namespace dftfe
   {
     const unsigned int numberGlobalAtoms =
       d_dftPtr->getAtomLocationsCart().size();
-    std::vector<Tensor<1, 3, double>> globalAtomsDisplacements(
+    std::vector<dealii::Tensor<1, 3, double>> globalAtomsDisplacements(
       numberGlobalAtoms);
     int count = 0;
     for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
@@ -677,7 +680,7 @@ namespace dftfe
       {
         std::string savePath =
           d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
-        if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
           mkdir(savePath.c_str(), ACCESSPERMS);
         const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
         const std::vector<double> tempGradient = d_dftPtr->getForceonAtoms();

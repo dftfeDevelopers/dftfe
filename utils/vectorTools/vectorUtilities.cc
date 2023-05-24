@@ -116,11 +116,19 @@ namespace dftfe
 
       dealii::AffineConstraints<double> constraintsHangingSer;
 
+#ifdef DFTFE_WITH_CUSTOMIZED_DEALII
       dealii::DoFTools::make_hanging_node_constraints_from_serial(
         dofHandlerSer,
         dofHandlerPar,
         cellIdToCellIterMapSer,
         constraintsHangingSer);
+#else
+      AssertThrow(
+        false,
+        dealii::ExcMessage(
+          "DFT-FE Error: attempted to use dealii::DoFTools::make_hanging_node_constraints_from_serial which can only be used by linking to the customized dealii (https://github.com/dftfeDevelopers/dealii)."));
+
+#endif
       if (verbosity >= 4)
         dftUtils::printCurrentMemoryUsage(
           mpi_comm_domain, "Created hanging node constraints serial");
@@ -168,7 +176,7 @@ namespace dftfe
           periodicity_vector2,
           offsetVectors[periodicDirectionVector[i]]);
 
-      dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(
+      dealii::DoFTools::make_periodicity_constraints<3, 3>(
         periodicity_vector2, constraintsPeriodicHangingSer);
 
       constraintsPeriodicHangingSer.close();
@@ -336,7 +344,7 @@ namespace dftfe
       //
       // get FE cell data
       //
-      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberMacroCells = matrix_free_data.n_cell_batches();
       const unsigned int numberNodesPerElement =
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
       const unsigned int totalLocallyOwnedCells =
@@ -406,7 +414,7 @@ namespace dftfe
       //
       // get FE cell data
       //
-      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberMacroCells = matrix_free_data.n_cell_batches();
       const unsigned int numberNodesPerElement =
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
       const unsigned int totalLocallyOwnedCells =
@@ -430,7 +438,7 @@ namespace dftfe
            ++iMacroCell)
         {
           const unsigned int n_sub_cells =
-            matrix_free_data.n_components_filled(iMacroCell);
+            matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
           for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
             {
               cellPtr = matrix_free_data.get_cell_iterator(iMacroCell,
@@ -516,7 +524,8 @@ namespace dftfe
                    ++iMacroCell)
                 {
                   const unsigned int n_sub_cells =
-                    matrix_free_data.n_components_filled(iMacroCell);
+                    matrix_free_data.n_active_entries_per_cell_batch(
+                      iMacroCell);
                   for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
                     {
                       cellPtr =
@@ -568,7 +577,7 @@ namespace dftfe
       //
       // get FE cell data
       //
-      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberMacroCells = matrix_free_data.n_cell_batches();
       const unsigned int numberNodesPerElement =
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
 
@@ -584,7 +593,7 @@ namespace dftfe
            ++iMacroCell)
         {
           const unsigned int n_sub_cells =
-            matrix_free_data.n_components_filled(iMacroCell);
+            matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
           for (unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
             {
               totalLocallyOwnedCells++;
@@ -604,7 +613,7 @@ namespace dftfe
            ++iMacroCell)
         {
           const unsigned int n_sub_cells =
-            matrix_free_data.n_components_filled(iMacroCell);
+            matrix_free_data.n_active_entries_per_cell_batch(iMacroCell);
           for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
             {
               cellPtr = matrix_free_data.get_cell_iterator(iMacroCell,
@@ -741,10 +750,10 @@ namespace dftfe
 #else
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<double> &                 flattenedArray,
-      const unsigned int                          totalNumberComponents,
+      const std::vector<double> &flattenedArray,
+      const unsigned int totalNumberComponents,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
-      std::vector<distributedCPUVec<double>> &    componentVectors)
+      std::vector<distributedCPUVec<double>> &componentVectors)
     {
       Assert(componentVectors.size() ==
                (componentIndexRange.second - componentIndexRange.first),
@@ -840,10 +849,10 @@ namespace dftfe
 #else
     void
     copyFlattenedDealiiVecToSingleCompVec(
-      const distributedCPUVec<double> &           flattenedArray,
-      const unsigned int                          totalNumberComponents,
+      const distributedCPUVec<double> &flattenedArray,
+      const unsigned int totalNumberComponents,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
-      std::vector<distributedCPUVec<double>> &    componentVectors,
+      std::vector<distributedCPUVec<double>> &componentVectors,
       const bool isFlattenedDealiiGhostValuesUpdated)
     {
       Assert(componentVectors.size() ==
@@ -855,7 +864,7 @@ namespace dftfe
                "componentIndexRange doesn't lie within totalNumberComponents"));
 
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                partitioner = flattenedArray.get_partitioner();
+        &partitioner = flattenedArray.get_partitioner();
       const unsigned int localSize =
         partitioner->local_size() / totalNumberComponents;
       const unsigned int n_ghosts =
@@ -944,9 +953,9 @@ namespace dftfe
 #else
     void
     copySingleCompVecToFlattenedDealiiVec(
-      distributedCPUVec<double> &                   flattenedArray,
-      const unsigned int                            totalNumberComponents,
-      const std::pair<unsigned int, unsigned int>   componentIndexRange,
+      distributedCPUVec<double> &flattenedArray,
+      const unsigned int totalNumberComponents,
+      const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<distributedCPUVec<double>> &componentVectors)
     {
       Assert(componentVectors.size() ==
@@ -1020,9 +1029,9 @@ namespace dftfe
 #else
     void
     copySingleCompVecToFlattenedSTLVec(
-      std::vector<double> &                         flattenedArray,
-      const unsigned int                            totalNumberComponents,
-      const std::pair<unsigned int, unsigned int>   componentIndexRange,
+      std::vector<double> &flattenedArray,
+      const unsigned int totalNumberComponents,
+      const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<distributedCPUVec<double>> &componentVectors)
     {
       Assert(componentVectors.size() ==

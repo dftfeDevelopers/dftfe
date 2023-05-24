@@ -23,19 +23,21 @@ namespace dftfe
 {
   namespace eshelbyTensorSP
   {
-    Tensor<2, 3, VectorizedArray<double>>
+    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const VectorizedArray<double> &              rho,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoSpin0,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoSpin1,
-      const VectorizedArray<double> &              exc,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin0,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin1)
+      const dealii::VectorizedArray<double> &                      rho,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin1,
+      const dealii::VectorizedArray<double> &                      exc,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin1)
     {
-      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
+      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(derExcGradRhoSpin0, gradRhoSpin0) -
         outer_product(derExcGradRhoSpin1, gradRhoSpin1);
-      VectorizedArray<double> identityTensorFactor = exc * rho;
+      dealii::VectorizedArray<double> identityTensorFactor = exc * rho;
       eshelbyTensor[0][0] += identityTensorFactor;
       eshelbyTensor[1][1] += identityTensorFactor;
       eshelbyTensor[2][2] += identityTensorFactor;
@@ -43,19 +45,22 @@ namespace dftfe
     }
 
 
-    Tensor<1, 3, VectorizedArray<double>>
+    dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const VectorizedArray<double> &              vxcSpin0,
-      const VectorizedArray<double> &              vxcSpin1,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin0,
-      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRhoSpin1,
-      const Tensor<1, 3, VectorizedArray<double>> &gradRhoCore,
-      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoCore,
-      const bool                                   isXCGGA)
+      const dealii::VectorizedArray<double> &vxcSpin0,
+      const dealii::VectorizedArray<double> &vxcSpin1,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin0,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+        &derExcGradRhoSpin1,
+      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoCore,
+      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
+        &        hessianRhoCore,
+      const bool isXCGGA)
     {
-      Tensor<1, 3, VectorizedArray<double>> temp;
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>> temp;
       for (unsigned int i = 0; i < 3; i++)
-        temp[i] = make_vectorized_array(0.0);
+        temp[i] = dealii::make_vectorized_array(0.0);
 
       if (isXCGGA)
         {

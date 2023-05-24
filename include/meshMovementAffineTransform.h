@@ -45,15 +45,16 @@ namespace dftfe
      *  pair(bool for is negative jacobian, maximum jacobian ratio)
      */
     std::pair<bool, double>
-    transform(const Tensor<2, 3, double> &deformationGradient);
+    transform(const dealii::Tensor<2, 3, double> &deformationGradient);
 
     /// Not implemented, just present to override the pure virtual from base
     /// class
     std::pair<bool, double>
-    moveMesh(const std::vector<Point<3>> &            controlPointLocations,
-             const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
-             const double                             controllingParameter,
-             const bool                               moveSubdivided = false);
+    moveMesh(const std::vector<dealii::Point<3>> &controlPointLocations,
+             const std::vector<dealii::Tensor<1, 3, double>>
+               &          controlPointDisplacements,
+             const double controllingParameter,
+             const bool   moveSubdivided = false);
 
   private:
     /** @brief internal function which computes the nodal increment field in the local processor
@@ -63,7 +64,7 @@ namespace dftfe
     computeIncrement();
 
     /// storage for the deformation gradient to be applied to the triangulation
-    Tensor<2, 3, double> d_deformationGradient;
+    dealii::Tensor<2, 3, double> d_deformationGradient;
   };
 
 } // namespace dftfe

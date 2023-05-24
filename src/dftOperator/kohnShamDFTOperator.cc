@@ -52,13 +52,15 @@ namespace dftfe
     , d_isStiffnessMatrixExternalPotCorrComputed(false)
     , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , computing_timer(mpi_comm_domain,
                       pcout,
-                      TimerOutput::never,
-                      TimerOutput::wall_times)
+                      dealii::TimerOutput::never,
+                      dealii::TimerOutput::wall_times)
     , operatorDFTClass(mpi_comm_domain,
                        _dftPtr->getMatrixFreeData(),
                        _dftPtr->constraintsNoneDataInfo)
@@ -475,13 +477,14 @@ namespace dftfe
     invSqrtMassVec = 0.0;
     sqrtMassVec    = 0.0;
 
-    QGaussLobatto<3>   quadrature(FEOrder + 1);
-    FEValues<3>        fe_values(dofHandler.get_fe(),
-                          quadrature,
-                          update_values | update_JxW_values);
-    const unsigned int dofs_per_cell   = (dofHandler.get_fe()).dofs_per_cell;
-    const unsigned int num_quad_points = quadrature.size();
-    Vector<double>     massVectorLocal(dofs_per_cell);
+    dealii::QGaussLobatto<3> quadrature(FEOrder + 1);
+    dealii::FEValues<3>      fe_values(dofHandler.get_fe(),
+                                  quadrature,
+                                  dealii::update_values |
+                                    dealii::update_JxW_values);
+    const unsigned int     dofs_per_cell = (dofHandler.get_fe()).dofs_per_cell;
+    const unsigned int     num_quad_points = quadrature.size();
+    dealii::Vector<double> massVectorLocal(dofs_per_cell);
     std::vector<dealii::types::global_dof_index> local_dof_indices(
       dofs_per_cell);
 
@@ -489,9 +492,9 @@ namespace dftfe
     //
     // parallel loop over all elements
     //
-    typename DoFHandler<3>::active_cell_iterator cell =
-                                                   dofHandler.begin_active(),
-                                                 endc = dofHandler.end();
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler.begin_active(),
+      endc = dofHandler.end();
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
@@ -510,7 +513,7 @@ namespace dftfe
                                                       invSqrtMassVec);
         }
 
-    invSqrtMassVec.compress(VectorOperation::add);
+    invSqrtMassVec.compress(dealii::VectorOperation::add);
 
 
     for (dealii::types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
@@ -524,12 +527,12 @@ namespace dftfe
             }
           AssertThrow(
             !std::isnan(invSqrtMassVec(i)),
-            ExcMessage(
+            dealii::ExcMessage(
               "Value of inverse square root of mass matrix on the unconstrained node is undefined"));
         }
 
-    invSqrtMassVec.compress(VectorOperation::insert);
-    sqrtMassVec.compress(VectorOperation::insert);
+    invSqrtMassVec.compress(dealii::VectorOperation::insert);
+    sqrtMassVec.compress(dealii::VectorOperation::insert);
     computing_timer.leave_subsection("kohnShamDFTOperatorClass Mass assembly");
   }
 
@@ -557,10 +560,12 @@ namespace dftfe
   {
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
-    const int   numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values);
+    const int           numberQuadraturePoints = quadrature_formula.size();
 
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
@@ -572,10 +577,9 @@ namespace dftfe
     //
     // loop over cell block
     //
-    typename DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->dofHandler
-                                                             .begin_active(),
-                                                 endcellPtr =
-                                                   dftPtr->dofHandler.end();
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr    = dftPtr->dofHandler.begin_active(),
+      endcellPtr = dftPtr->dofHandler.end();
 
     unsigned int iElemCount = 0;
     for (; cellPtr != endcellPtr; ++cellPtr)
@@ -654,13 +658,14 @@ namespace dftfe
   {
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3>        fe_values(dftPtr->FE,
-                          quadrature_formula,
-                          update_JxW_values | update_inverse_jacobians |
-                            update_jacobians);
-    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_inverse_jacobians |
+                                    dealii::update_jacobians);
+    const unsigned int  numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
     d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
@@ -692,8 +697,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
             std::vector<double> densityValue =
               (*rhoValues).find(cellPtr->id())->second;
@@ -1315,7 +1320,7 @@ namespace dftfe
 
     reinit(0, Y, true);
 
-    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
+    dealii::Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -1741,10 +1746,12 @@ namespace dftfe
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
-    const int   numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values);
+    const int           numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
 
@@ -1849,14 +1856,15 @@ namespace dftfe
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 
-    FEValues<3>        fe_values(dftPtr->FE,
-                          quadrature_formula,
-                          update_JxW_values | update_inverse_jacobians |
-                            update_jacobians);
-    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_inverse_jacobians |
+                                    dealii::update_jacobians);
+    const unsigned int  numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
     d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
@@ -1889,8 +1897,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
             std::vector<double> densityValue =
@@ -2068,10 +2076,10 @@ namespace dftfe
 
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    FEValues<3> feValues(dftPtr->matrix_free_data.get_dof_handler().get_fe(),
-                         dftPtr->matrix_free_data.get_quadrature(
-                           externalPotCorrQuadratureId),
-                         update_JxW_values);
+    dealii::FEValues<3> feValues(
+      dftPtr->matrix_free_data.get_dof_handler().get_fe(),
+      dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId),
+      dealii::update_JxW_values);
     d_vEffExternalPotCorrJxW.resize(totalLocallyOwnedCells *
                                       numberQuadraturePoints,
                                     0.0);
@@ -2115,12 +2123,13 @@ namespace dftfe
   {
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3>        fe_values(dftPtr->FE,
-                          quadrature_formula,
-                          update_JxW_values | update_jacobians);
-    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_jacobians);
+    const unsigned int  numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
 
@@ -2220,12 +2229,13 @@ namespace dftfe
   {
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3>        fe_values(dftPtr->FE,
-                          quadrature_formula,
-                          update_JxW_values | update_jacobians);
-    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_jacobians);
+    const unsigned int  numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
 
@@ -2569,13 +2579,14 @@ namespace dftfe
   {
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3>        fe_values(dftPtr->FE,
-                          quadrature_formula,
-                          update_JxW_values | update_inverse_jacobians |
-                            update_jacobians);
-    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_inverse_jacobians |
+                                    dealii::update_jacobians);
+    const unsigned int  numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
     d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
@@ -2614,8 +2625,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
             std::vector<double> densityValue =
               (rhoValues).find(cellPtr->id())->second;
@@ -2831,13 +2842,14 @@ namespace dftfe
   {
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
-    const Quadrature<3> &quadrature_formula =
+    const dealii::Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3>        fe_values(dftPtr->FE,
-                          quadrature_formula,
-                          update_JxW_values | update_inverse_jacobians |
-                            update_jacobians);
-    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+    dealii::FEValues<3> fe_values(dftPtr->FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values |
+                                    dealii::update_inverse_jacobians |
+                                    dealii::update_jacobians);
+    const unsigned int  numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
     d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
@@ -2869,8 +2881,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
             std::vector<double> densityValue =
@@ -3060,8 +3072,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
             std::vector<double> densityValue =
@@ -3248,8 +3260,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
             std::vector<double> densityValue =
@@ -3441,8 +3453,8 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
-              fe_values.get_inverse_jacobians();
+            const std::vector<dealii::DerivativeForm<1, 3, 3>>
+              &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
             std::vector<double> densityValue =

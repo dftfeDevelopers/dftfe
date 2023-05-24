@@ -45,8 +45,10 @@ namespace dftfe
     const bool        restart,
     const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
-    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_restartFilesPath(restartFilesPath)
     , d_verbosity(verbosity)
   {
@@ -155,7 +157,7 @@ namespace dftfe
     std::set<unsigned int> atomTypes;
     atomTypes = d_dftPtr->getAtomTypes();
     AssertThrow(atomTypes.size() == atomTypesMasses.size(),
-                ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
+                dealii::ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
@@ -171,7 +173,7 @@ namespace dftfe
           }
 
         AssertThrow(isFound,
-                    ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
+                    dealii::ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
       }
 
     std::vector<dealii::Tensor<1, 3, double>> displacements(
@@ -188,7 +190,7 @@ namespace dftfe
     pcout << "RestartFlag: " << d_restartFlag << std::endl;
     if (d_restartFlag == 0)
       {
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir((d_restartFilesPath).c_str(), ACCESSPERMS);
 
         double KineticEnergy = 0.0, TemperatureFromVelocities = 0.0,
@@ -216,7 +218,7 @@ namespace dftfe
 
         double Px = 0.0, Py = 0.0, Pz = 0.0;
         // Initialise Velocity
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             for (int jatomtype = 0; jatomtype < atomTypesMasses.size();
                  ++jatomtype)
@@ -402,7 +404,7 @@ namespace dftfe
 
     else if (d_restartFlag == 1)
       {
-        /*if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        /*if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             int           error;
             std::string   file1 = "TotalDisplacement.chk";
@@ -1137,7 +1139,7 @@ namespace dftfe
     double              COMy = 0.0;
     double              COMz = 0.0;
     std::vector<double> rloc(3 * d_numberGlobalCharges, 0.0);
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         for (i = 0; i < d_numberGlobalCharges; i++)
           {
@@ -1185,7 +1187,7 @@ namespace dftfe
       }
     MPI_Bcast(
       &(v[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpiCommParent);
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         for (i = 0; i < d_numberGlobalCharges; i++)
           {
@@ -1290,7 +1292,7 @@ namespace dftfe
     // Call Force
     totalKE = 0.0;
     /* Second half of velocty verlet */
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         for (i = 0; i < d_numberGlobalCharges; i++)
           {
@@ -1359,7 +1361,7 @@ namespace dftfe
           << " K" << std::endl;
     AssertThrow(
       std::fabs(Temperature - 0.0) > 0.00001,
-      ExcMessage(
+      dealii::ExcMessage(
         "DFT-FE Error: Temperature reached O K")); // Determine Exit sequence ..
     double KE = 0.0;
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -1426,7 +1428,7 @@ namespace dftfe
     double       R1, Rsum;
     R1   = 0.0;
     Rsum = 0.0;
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::time_t            now = std::time(0);
         boost::random::mt19937 gen{
@@ -1539,7 +1541,7 @@ namespace dftfe
     timeIndexData[0][0]    = double(time);
     std::string Folder     = d_restartFilesPath + "/Step";
     std::string tempfolder = Folder + std::to_string(time);
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       mkdir(tempfolder.c_str(), ACCESSPERMS);
     Folder                  = d_restartFilesPath;
     std::string newFolder3  = Folder + "/" + "time.chk";
@@ -1706,7 +1708,7 @@ namespace dftfe
     else if (d_dftPtr->getParametersObject().extrapolateDensity == 2 &&
              d_dftPtr->getParametersObject().spinPolarized != 1)
       DensitySplitExtrapolation(0);
-    /*if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    /*if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string oldFolder1 = d_restartFilesPath + "/Step";
         oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
@@ -1732,7 +1734,7 @@ namespace dftfe
       {
         std::vector<std::vector<double>> NHCData;
         std::string                      tempfolder = "mdRestart";
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldFolder1 = "./mdRestart/Step";
             oldFolder1 = oldFolder1 + std::to_string(d_startingTimeStep) +
@@ -1779,7 +1781,7 @@ namespace dftfe
         std::string newFolder =
           std::string(tempfolder + "/" + "NHCThermostat.chk");
         dftUtils::writeDataIntoFile(fileNHCData, newFolder, d_mpiCommParent);
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldpath = newFolder;
             std::string newpath = "./mdRestart/Step";
@@ -1818,7 +1820,7 @@ namespace dftfe
                                     currPath + "Displacement.chk",
                                     d_mpiCommParent);
 
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::ofstream outfile;
             dftUtils::copyFile(prevPath + "TotalDisplacement.chk",

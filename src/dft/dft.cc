@@ -73,37 +73,6 @@
 
 namespace dftfe
 {
-  // Include cc files
-#include "atomicRho.cc"
-#include "charge.cc"
-#include "density.cc"
-#include "dos.cc"
-#include "electrostaticHRefinedEnergy.cc"
-#include "femUtilityFunctions.cc"
-#include "fermiEnergy.cc"
-#include "generateImageCharges.cc"
-#include "initBoundaryConditions.cc"
-#include "initCoreRho.cc"
-#include "initElectronicFields.cc"
-#include "initPseudo-OV.cc"
-#include "initPseudoLocal.cc"
-#include "initRho.cc"
-#include "initUnmovedTriangulation.cc"
-#include "kohnShamEigenSolve.cc"
-#include "localizationLength.cc"
-#include "mixingschemes.cc"
-#include "moveAtoms.cc"
-#include "moveMeshToAtoms.cc"
-#include "nodalDensityMixingSchemes.cc"
-#include "solveNSCF.cc"
-#include "pRefinedDoFHandler.cc"
-#include "psiInitialGuess.cc"
-#include "publicMethods.cc"
-#include "restart.cc"
-#include "lowrankApproxScfDielectricMatrixInv.cc"
-#include "lowrankApproxScfDielectricMatrixInvSpinPolarized.cc"
-#include "computeOutputDensityDirectionalDerivative.cc"
-
   //
   // dft constructor
   //
@@ -115,13 +84,13 @@ namespace dftfe
     const MPI_Comm &   _interBandGroupComm,
     const std::string &scratchFolderName,
     dftParameters &    dftParams)
-    : FE(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
+    : FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
-    FEEigen(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 2)
+    FEEigen(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder + 1)), 2)
     ,
 #else
-    FEEigen(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
+    FEEigen(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #endif
     mpi_communicator(mpi_comm_domain)
@@ -130,8 +99,9 @@ namespace dftfe
     , interBandGroupComm(_interBandGroupComm)
     , d_dftfeScratchFolderName(scratchFolderName)
     , d_dftParamsPtr(&dftParams)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , numElectrons(0)
     , numLevels(0)
     , d_autoMesh(1)
@@ -153,22 +123,22 @@ namespace dftfe
                        _interBandGroupComm,
                        dftParams)
     , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0) &&
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0) &&
               dftParams.verbosity >= 0)
     , d_kohnShamDFTOperatorsInitialized(false)
     , computing_timer(mpi_comm_domain,
                       pcout,
                       dftParams.reproducible_output || dftParams.verbosity < 4 ?
-                        TimerOutput::never :
-                        TimerOutput::summary,
-                      TimerOutput::wall_times)
+                        dealii::TimerOutput::never :
+                        dealii::TimerOutput::summary,
+                      dealii::TimerOutput::wall_times)
     , computingTimerStandard(mpi_comm_domain,
                              pcout,
                              dftParams.reproducible_output ||
                                  dftParams.verbosity < 1 ?
-                               TimerOutput::never :
-                               TimerOutput::every_call_and_summary,
-                             TimerOutput::wall_times)
+                               dealii::TimerOutput::never :
+                               dealii::TimerOutput::every_call_and_summary,
+                             dealii::TimerOutput::wall_times)
     , d_subspaceIterationSolver(mpi_comm_parent,
                                 mpi_comm_domain,
                                 0.0,
@@ -284,14 +254,16 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::computeVolume(
     const dealii::DoFHandler<3> &_dofHandler)
   {
-    double               domainVolume = 0;
-    const Quadrature<3> &quadrature =
+    double                       domainVolume = 0;
+    const dealii::Quadrature<3> &quadrature =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-    FEValues<3> fe_values(_dofHandler.get_fe(), quadrature, update_JxW_values);
+    dealii::FEValues<3> fe_values(_dofHandler.get_fe(),
+                                  quadrature,
+                                  dealii::update_JxW_values);
 
-    typename DoFHandler<3>::active_cell_iterator cell =
-                                                   _dofHandler.begin_active(),
-                                                 endc = _dofHandler.end();
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = _dofHandler.begin_active(),
+      endc = _dofHandler.end();
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
@@ -300,7 +272,7 @@ namespace dftfe
             domainVolume += fe_values.JxW(q_point);
         }
 
-    domainVolume = Utilities::MPI::sum(domainVolume, mpi_communicator);
+    domainVolume = dealii::Utilities::MPI::sum(domainVolume, mpi_communicator);
     if (d_dftParamsPtr->verbosity >= 2)
       pcout << "Volume of the domain (Bohr^3): " << domainVolume << std::endl;
     return domainVolume;
@@ -334,7 +306,7 @@ namespace dftfe
                            d_dftParamsPtr->coordinatesFile);
         AssertThrow(
           d_dftParamsPtr->natoms == atomLocations.size(),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: The number atoms"
             "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
             "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
@@ -356,7 +328,7 @@ namespace dftfe
             if (!d_dftParamsPtr->isPseudopotential)
               AssertThrow(
                 (*it)[0] <= 50,
-                ExcMessage(
+                dealii::ExcMessage(
                   "DFT-FE Error: One of the atomic numbers exceeds 50."
                   "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
                   "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
@@ -381,7 +353,7 @@ namespace dftfe
 
         AssertThrow(
           d_dftParamsPtr->natoms == atomLocations.size(),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: The number atoms"
             "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
             "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
@@ -403,7 +375,7 @@ namespace dftfe
             if (!d_dftParamsPtr->isPseudopotential)
               AssertThrow(
                 (*it)[0] <= 50,
-                ExcMessage(
+                dealii::ExcMessage(
                   "DFT-FE Error: One of the atomic numbers exceeds 50."
                   "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
                   "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
@@ -418,9 +390,9 @@ namespace dftfe
     //
     std::vector<std::vector<double>> atomsDisplacementsGaussian;
     d_atomsDisplacementsGaussianRead.resize(atomLocations.size(),
-                                            Tensor<1, 3, double>());
-    d_gaussianMovementAtomsNetDisplacements.resize(atomLocations.size(),
-                                                   Tensor<1, 3, double>());
+                                            dealii::Tensor<1, 3, double>());
+    d_gaussianMovementAtomsNetDisplacements.resize(
+      atomLocations.size(), dealii::Tensor<1, 3, double>());
     if (d_dftParamsPtr->coordinatesGaussianDispFile != "")
       {
         dftUtils::readFile(3,
@@ -445,7 +417,7 @@ namespace dftfe
 
     AssertThrow(
       d_domainBoundingVectors.size() == 3,
-      ExcMessage(
+      dealii::ExcMessage(
         "DFT-FE Error: The number of domain bounding"
         "vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check"
         "your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
@@ -463,7 +435,7 @@ namespace dftfe
                          d_domainBoundingVectors[2][2] * cross[2];
     AssertThrow(
       scalarConst > 0,
-      ExcMessage(
+      dealii::ExcMessage(
         "DFT-FE Error: Domain bounding vectors or lattice vectors read from"
         "input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system."
         "Please check your domain vectors file. This is usually fixed by changing the order of the"
@@ -551,7 +523,7 @@ namespace dftfe
         AssertThrow(
           (d_numEigenValues % numberBandGroups == 0 ||
            d_numEigenValues / numberBandGroups == 0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for Device run."));
 
         const unsigned int bandGroupTaskId =
@@ -726,7 +698,7 @@ namespace dftfe
 
     AssertThrow(
       d_dftParamsPtr->numCoreWfcRR <= d_numEigenValues,
-      ExcMessage(
+      dealii::ExcMessage(
         "DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
     d_numEigenValuesRR = d_numEigenValues - d_dftParamsPtr->numCoreWfcRR;
 
@@ -793,7 +765,7 @@ namespace dftfe
       }
 
     int nlccFlag = 0;
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0 &&
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0 &&
         d_dftParamsPtr->isPseudopotential == true)
       nlccFlag = pseudoUtils::convert(d_dftParamsPtr->pseudoPotentialFile,
                                       d_dftfeScratchFolderName,
@@ -801,7 +773,7 @@ namespace dftfe
                                       d_dftParamsPtr->natomTypes,
                                       d_dftParamsPtr->pseudoTestsFlag);
 
-    nlccFlag = Utilities::MPI::sum(nlccFlag, d_mpiCommParent);
+    nlccFlag = dealii::Utilities::MPI::sum(nlccFlag, d_mpiCommParent);
 
     if (nlccFlag > 0 && d_dftParamsPtr->isPseudopotential == true)
       d_dftParamsPtr->nonLinearCoreCorrection = true;
@@ -828,9 +800,9 @@ namespace dftfe
   {
     if (d_dftParamsPtr->isPseudopotential)
       {
-        TimerOutput::Scope scope(computing_timer, "psp init");
+        dealii::TimerOutput::Scope scope(computing_timer, "psp init");
         pcout << std::endl << "Pseudopotential initalization...." << std::endl;
-        const Quadrature<3> &quadrature =
+        const dealii::Quadrature<3> &quadrature =
           matrix_free_data.get_quadrature(d_densityQuadratureId);
 
         double init_core;
@@ -888,8 +860,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::initImageChargesUpdateKPoints(bool flag)
   {
-    TimerOutput::Scope scope(computing_timer,
-                             "image charges and k point generation");
+    dealii::TimerOutput::Scope scope(computing_timer,
+                                     "image charges and k point generation");
     pcout
       << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
       << std::endl;
@@ -934,7 +906,7 @@ namespace dftfe
                       AssertThrow(
                         atomLocationsFractional[i][2 + idim] > -tol &&
                           atomLocationsFractional[i][2 + idim] < 1.0 + tol,
-                        ExcMessage(
+                        dealii::ExcMessage(
                           "DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input"
                           "fractional coordinates, or if this is an ionic relaxation step, please check the corresponding"
                           "algorithm."));
@@ -942,7 +914,7 @@ namespace dftfe
                       AssertThrow(
                         atomLocationsFractional[i][2 + idim] > tol &&
                           atomLocationsFractional[i][2 + idim] < 1.0 - tol,
-                        ExcMessage(
+                        dealii::ExcMessage(
                           "DFT-FE Error: non-periodic direction fractional coordinates doesn't lie in (0,1). Please check"
                           "input fractional coordinates, or if this is an ionic relaxation step, please check the"
                           "corresponding algorithm."));
@@ -1074,7 +1046,7 @@ namespace dftfe
     //
     // get access to triangulation objects from meshGenerator class
     //
-    parallel::distributed::Triangulation<3> &triangulationPar =
+    dealii::parallel::distributed::Triangulation<3> &triangulationPar =
       d_mesh.getParallelMeshMoved();
 
     //
@@ -1474,10 +1446,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
-    const Tensor<2, 3, double> &deformationGradient,
-    const bool                  vselfPerturbationUpdateForStress,
-    const bool                  useSingleAtomSolutionsOverride,
-    const bool                  print)
+    const dealii::Tensor<2, 3, double> &deformationGradient,
+    const bool                          vselfPerturbationUpdateForStress,
+    const bool                          useSingleAtomSolutionsOverride,
+    const bool                          print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1508,20 +1480,20 @@ namespace dftfe
 
     // update atomic and image positions without any wrapping across periodic
     // boundary
-    std::vector<Tensor<1, 3, double>> imageDisplacements(
+    std::vector<dealii::Tensor<1, 3, double>> imageDisplacements(
       d_imagePositions.size());
-    std::vector<Tensor<1, 3, double>> imageDisplacementsTrunc(
+    std::vector<dealii::Tensor<1, 3, double>> imageDisplacementsTrunc(
       d_imagePositionsTrunc.size());
 
     for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
       {
-        Point<3>           imageCoor;
+        dealii::Point<3>   imageCoor;
         const unsigned int imageChargeId = d_imageIds[iImage];
         imageCoor[0]                     = d_imagePositions[iImage][0];
         imageCoor[1]                     = d_imagePositions[iImage][1];
         imageCoor[2]                     = d_imagePositions[iImage][2];
 
-        Point<3> atomCoor;
+        dealii::Point<3> atomCoor;
         atomCoor[0] = atomLocations[imageChargeId][2];
         atomCoor[1] = atomLocations[imageChargeId][3];
         atomCoor[2] = atomLocations[imageChargeId][4];
@@ -1531,13 +1503,13 @@ namespace dftfe
 
     for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
       {
-        Point<3>           imageCoor;
+        dealii::Point<3>   imageCoor;
         const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
         imageCoor[0]                     = d_imagePositionsTrunc[iImage][0];
         imageCoor[1]                     = d_imagePositionsTrunc[iImage][1];
         imageCoor[2]                     = d_imagePositionsTrunc[iImage][2];
 
-        Point<3> atomCoor;
+        dealii::Point<3> atomCoor;
         atomCoor[0] = atomLocations[imageChargeId][2];
         atomCoor[1] = atomLocations[imageChargeId][3];
         atomCoor[2] = atomLocations[imageChargeId][4];
@@ -1570,7 +1542,7 @@ namespace dftfe
       {
         const unsigned int imageChargeId = d_imageIds[iImage];
 
-        Point<3> atomCoor;
+        dealii::Point<3> atomCoor;
         atomCoor[0] = atomLocations[imageChargeId][2];
         atomCoor[1] = atomLocations[imageChargeId][3];
         atomCoor[2] = atomLocations[imageChargeId][4];
@@ -1590,7 +1562,7 @@ namespace dftfe
       {
         const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
 
-        Point<3> atomCoor;
+        dealii::Point<3> atomCoor;
         atomCoor[0] = atomLocations[imageChargeId][2];
         atomCoor[1] = atomLocations[imageChargeId][3];
         atomCoor[2] = atomLocations[imageChargeId][4];
@@ -1645,7 +1617,7 @@ namespace dftfe
     //
     // get access to triangulation objects from meshGenerator class
     //
-    parallel::distributed::Triangulation<3> &triangulationPar =
+    dealii::parallel::distributed::Triangulation<3> &triangulationPar =
       d_mesh.getParallelMeshMoved();
     unsigned int numberLevelRefinements = d_dftParamsPtr->numLevels;
     unsigned int numberWaveFunctionsErrorEstimate =
@@ -1745,7 +1717,7 @@ namespace dftfe
       aposterioriMeshGenerate();
 
     if (d_dftParamsPtr->restartFolder != "." && d_dftParamsPtr->saveRhoData &&
-        Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
       }
@@ -1809,8 +1781,9 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::initializeKohnShamDFTOperator(
     const bool initializeCublas)
   {
-    TimerOutput::Scope scope(computing_timer, "kohnShamDFTOperator init");
-    double             init_ksoperator;
+    dealii::TimerOutput::Scope scope(computing_timer,
+                                     "kohnShamDFTOperator init");
+    double                     init_ksoperator;
     MPI_Barrier(d_mpiCommParent);
     init_ksoperator = MPI_Wtime();
 
@@ -1853,14 +1826,14 @@ namespace dftfe
         AssertThrow(
           (d_numEigenValues % d_dftParamsPtr->chebyWfcBlockSize == 0 ||
            d_numEigenValues / d_dftParamsPtr->chebyWfcBlockSize == 0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: total number wavefunctions must be exactly divisible by cheby wfc block size for Device run."));
 
 
         AssertThrow(
           (d_numEigenValues % d_dftParamsPtr->wfcBlockSize == 0 ||
            d_numEigenValues / d_dftParamsPtr->wfcBlockSize == 0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: total number wavefunctions must be exactly divisible by wfc block size for Device run."));
 
         AssertThrow(
@@ -1868,14 +1841,14 @@ namespace dftfe
              0 &&
            d_dftParamsPtr->wfcBlockSize / d_dftParamsPtr->chebyWfcBlockSize >=
              0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for Device run."));
 
         if (d_numEigenValuesRR != d_numEigenValues)
           AssertThrow(
             (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
              d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
-            ExcMessage(
+            dealii::ExcMessage(
               "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for Device run."));
 
         // band group parallelization data structures
@@ -1885,7 +1858,7 @@ namespace dftfe
         AssertThrow(
           (d_numEigenValues % numberBandGroups == 0 ||
            d_numEigenValues / numberBandGroups == 0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for Device run."));
 
         const unsigned int bandGroupTaskId =
@@ -1898,13 +1871,13 @@ namespace dftfe
           (bandGroupLowHighPlusOneIndices[1] %
              d_dftParamsPtr->chebyWfcBlockSize ==
            0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: band parallelization group size must be exactly divisible by CHEBY WFC BLOCK SIZE for Device run."));
 
         AssertThrow(
           (bandGroupLowHighPlusOneIndices[1] % d_dftParamsPtr->wfcBlockSize ==
            0),
-          ExcMessage(
+          dealii::ExcMessage(
             "DFT-FE Error: band parallelization group size must be exactly divisible by WFC BLOCK SIZE for Device run."));
 
         kohnShamDFTEigenOperatorDevice.reinit(
@@ -1990,7 +1963,7 @@ namespace dftfe
       &kohnShamDFTEigenOperatorDevice = *d_kohnShamDFTOperatorDevicePtr;
 #endif
 
-    const Quadrature<3> &quadrature =
+    const dealii::Quadrature<3> &quadrature =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_subsection("Total scf solve");
@@ -2030,12 +2003,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
@@ -2257,7 +2226,7 @@ namespace dftfe
                              "ANDERSON_WITH_KERKER")
                       AssertThrow(
                         false,
-                        ExcMessage(
+                        dealii::ExcMessage(
                           "Kerker is not implemented for spin-polarized problems yet"));
                   }
                 else
@@ -2304,13 +2273,9 @@ namespace dftfe
             << std::endl
             << "Poisson solve for total electrostatic potential (rhoIn+b): ";
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             if (scfIter > 0)
@@ -2409,13 +2374,9 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             CGSolverDevice.solve(
@@ -3172,13 +3133,9 @@ namespace dftfe
 
             computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             if (d_dftParamsPtr->useDevice and
                 d_dftParamsPtr->floatingNuclearCharges and
                 not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-            if (false)
-#endif
               {
 #ifdef DFTFE_WITH_DEVICE
                 d_phiTotalSolverProblemDevice.reinit(
@@ -3253,7 +3210,7 @@ namespace dftfe
 
             computing_timer.leave_subsection("phiTot solve");
 
-            const Quadrature<3> &quadrature =
+            const dealii::Quadrature<3> &quadrature =
               matrix_free_data.get_quadrature(d_densityQuadratureId);
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
@@ -3378,7 +3335,7 @@ namespace dftfe
 
     if (scfIter == d_dftParamsPtr->numSCFIterations)
       {
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           std::cout
             << "DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "
             << scfIter << " iterations." << std::endl;
@@ -3428,13 +3385,9 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         if (d_dftParamsPtr->useDevice and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-        if (false)
-#endif
           {
 #ifdef DFTFE_WITH_DEVICE
             d_phiTotalSolverProblemDevice.reinit(
@@ -3780,9 +3733,9 @@ namespace dftfe
     d_vselfFieldGateauxDerStrainFDBins.resize(
       (d_vselfBinsManager.getVselfFieldBins()).size() * 6);
 
-    Tensor<2, 3, double> identityTensor;
-    Tensor<2, 3, double> deformationGradientPerturb1;
-    Tensor<2, 3, double> deformationGradientPerturb2;
+    dealii::Tensor<2, 3, double> identityTensor;
+    dealii::Tensor<2, 3, double> deformationGradientPerturb1;
+    dealii::Tensor<2, 3, double> deformationGradientPerturb2;
 
     // initialize to indentity tensors
     for (unsigned int idim = 0; idim < 3; idim++)
@@ -3819,7 +3772,7 @@ namespace dftfe
             }
 
           deformDomain(deformationGradientPerturb1 *
-                         invert(deformationGradientPerturb2),
+                         dealii::invert(deformationGradientPerturb2),
                        true,
                        false,
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
@@ -3871,7 +3824,7 @@ namespace dftfe
             }
 
           deformDomain(deformationGradientPerturb2 *
-                         invert(deformationGradientPerturb1),
+                         dealii::invert(deformationGradientPerturb1),
                        true,
                        false,
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
@@ -3923,7 +3876,7 @@ namespace dftfe
         }
 
     // reset
-    deformDomain(invert(deformationGradientPerturb2),
+    deformDomain(dealii::invert(deformationGradientPerturb2),
                  true,
                  false,
                  d_dftParamsPtr->verbosity >= 4 ? true : false);
@@ -3997,7 +3950,7 @@ namespace dftfe
     int numStatesOutput = (endingRange - startingRange) + 1;
 
 
-    DataOut<3> data_outEigen;
+    dealii::DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler(dofHandlerEigen);
 
     std::vector<distributedCPUVec<double>> tempVec(1);
@@ -4144,7 +4097,7 @@ namespace dftfe
     //
     // only generate output for electron-density
     //
-    DataOut<3> dataOutRho;
+    dealii::DataOut<3> dataOutRho;
     dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
     dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -4183,7 +4136,7 @@ namespace dftfe
     //
     //
     //
-    int totkPoints = Utilities::MPI::sum(numkPoints, interpoolcomm);
+    int totkPoints = dealii::Utilities::MPI::sum(numkPoints, interpoolcomm);
     std::vector<int> numkPointsArray(d_dftParamsPtr->npool),
       mpi_offsets(d_dftParamsPtr->npool, 0);
     std::vector<double> eigenValuesFlattenedGlobal(totkPoints *
@@ -4217,7 +4170,7 @@ namespace dftfe
                 0,
                 interpoolcomm);
     //
-    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         FILE *pFile;
         pFile = fopen("bands.out", "w");
@@ -4297,7 +4250,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  Tensor<2, 3, double>
+  dealii::Tensor<2, 3, double>
   dftClass<FEOrder, FEOrderElectro>::getCellStress() const
   {
     return (forcePtr->getStress());
@@ -4406,7 +4359,7 @@ namespace dftfe
     //
     // only generate output for electron-density
     //
-    DataOut<3> dataOutRho;
+    dealii::DataOut<3> dataOutRho;
     dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
     dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
 

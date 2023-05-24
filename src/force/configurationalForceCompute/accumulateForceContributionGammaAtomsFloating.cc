@@ -16,34 +16,40 @@
 //
 // @author Sambit Das
 //
+#include <force.h>
+#include <dft.h>
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-forceClass<FEOrder, FEOrderElectro>::
-  accumulateForceContributionGammaAtomsFloating(
-    const std::map<unsigned int, std::vector<double>>
-      &                  forceContributionLocalGammaAtoms,
-    std::vector<double> &accumForcesVector)
+namespace dftfe
 {
-  for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
-    {
-      std::vector<double> forceContributionLocalGammaiAtomGlobal(3);
-      std::vector<double> forceContributionLocalGammaiAtomLocal(3, 0.0);
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  forceClass<FEOrder, FEOrderElectro>::
+    accumulateForceContributionGammaAtomsFloating(
+      const std::map<unsigned int, std::vector<double>>
+        &                  forceContributionLocalGammaAtoms,
+      std::vector<double> &accumForcesVector)
+  {
+    for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
+      {
+        std::vector<double> forceContributionLocalGammaiAtomGlobal(3);
+        std::vector<double> forceContributionLocalGammaiAtomLocal(3, 0.0);
 
-      if (forceContributionLocalGammaAtoms.find(iAtom) !=
-          forceContributionLocalGammaAtoms.end())
-        forceContributionLocalGammaiAtomLocal =
-          forceContributionLocalGammaAtoms.find(iAtom)->second;
-      // accumulate value
-      MPI_Allreduce(&(forceContributionLocalGammaiAtomLocal[0]),
-                    &(forceContributionLocalGammaiAtomGlobal[0]),
-                    3,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    mpi_communicator);
+        if (forceContributionLocalGammaAtoms.find(iAtom) !=
+            forceContributionLocalGammaAtoms.end())
+          forceContributionLocalGammaiAtomLocal =
+            forceContributionLocalGammaAtoms.find(iAtom)->second;
+        // accumulate value
+        MPI_Allreduce(&(forceContributionLocalGammaiAtomLocal[0]),
+                      &(forceContributionLocalGammaiAtomGlobal[0]),
+                      3,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      mpi_communicator);
 
-      for (unsigned int idim = 0; idim < 3; idim++)
-        accumForcesVector[iAtom * 3 + idim] +=
-          forceContributionLocalGammaiAtomGlobal[idim];
-    }
-}
+        for (unsigned int idim = 0; idim < 3; idim++)
+          accumForcesVector[iAtom * 3 + idim] +=
+            forceContributionLocalGammaiAtomGlobal[idim];
+      }
+  }
+#include "../force.inst.cc"
+} // namespace dftfe

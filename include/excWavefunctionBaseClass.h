@@ -17,9 +17,8 @@
 
 #ifndef DFTFE_EXCWAVEFUNCTIONBASECLASS_H
 #define DFTFE_EXCWAVEFUNCTIONBASECLASS_H
+#include <excDensityBaseClass.h>
 
-#include <excDensityGGAClass.h>
-#include <excDensityLDAClass.h>
 
 namespace dftfe
 {
@@ -37,10 +36,22 @@ namespace dftfe
     excWavefunctionBaseClass(densityFamilyType densityFamilyTypeObj,
                              xc_func_type *    funcXPtr,
                              xc_func_type *    funcCPtr,
+                             bool              isSpinPolarized,
                              double            factorForWavefunctionDependent,
                              bool              scaleExchange,
                              bool              computeCorrelation,
                              double            scaleExchangeFactor);
+
+    excWavefunctionBaseClass(densityFamilyType densityFamilyTypeObj,
+                             xc_func_type *    funcXPtr,
+                             xc_func_type *    funcCPtr,
+                             bool              isSpinPolarized,
+                             std::string       modelXCInputFile,
+                             double            factorForWavefunctionDependent,
+                             bool              scaleExchange,
+                             bool              computeCorrelation,
+                             double            scaleExchangeFactor);
+
     virtual ~excWavefunctionBaseClass();
     void
     computeDensityBasedEnergyDensity(

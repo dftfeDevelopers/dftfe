@@ -34,14 +34,15 @@ namespace dftfe
     const bool        restart,
     const int         verbosity)
     : d_mpiCommParent(mpi_comm_parent)
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_isRestart(restart)
     , d_restartFilesPath(restartFilesPath)
     , d_verbosity(verbosity)
   {
     init(parameter_file);
     if (d_restartFilesPath != "." &&
-        Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
       }
@@ -72,7 +73,7 @@ namespace dftfe
         int  lastSavedStep;
         bool restartFilesFound = false;
         bool scfRestart        = true;
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             while (d_cycle >= 0)
               {
@@ -132,7 +133,7 @@ namespace dftfe
               }
           }
         std::vector<int> broadcastData(5, 0);
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             broadcastData[0] = restartFilesFound ? 1 : 0;
             broadcastData[1] = lastSavedStep;
@@ -156,8 +157,9 @@ namespace dftfe
         domainVectorsFile = restartPath + "/domainBoundingVectorsCurrent.chk";
         if (!restartFilesFound)
           {
-            AssertThrow(
-              false, ExcMessage("DFT-FE Error: Unable to find restart files."));
+            AssertThrow(false,
+                        dealii::ExcMessage(
+                          "DFT-FE Error: Unable to find restart files."));
           }
         d_dftfeWrapper = std::make_unique<dftfeWrapper>(parameter_file,
                                                         coordinatesFile,
@@ -201,7 +203,7 @@ namespace dftfe
           d_optMode = 1;
         else if (d_dftPtr->getParametersObject().optimizationMode == "IONCELL")
           d_optMode = 2;
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir((d_restartFilesPath + "/optRestart").c_str(), ACCESSPERMS);
         std::vector<std::vector<double>> optData(2,
                                                  std::vector<double>(1, 0.0));
@@ -245,7 +247,7 @@ namespace dftfe
 
         std::string restartPath =
           d_restartFilesPath + "/optRestart/cycle" + std::to_string(d_cycle);
-        if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           mkdir(restartPath.c_str(), ACCESSPERMS);
         tmpData[0][0] = d_status;
         if (!d_dftPtr->getParametersObject().reproducible_output)
