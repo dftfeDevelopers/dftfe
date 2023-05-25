@@ -14,7 +14,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri, Sambit Das
+// @author Phani Motamarri
 //
 
 
@@ -23,6 +23,10 @@
   //eigenvalues, eigenfunctions and ground-state energy 
   //using the self-consistent Hamiltonian)
   //
+#include <dft.h>
+#include <energyCalculator.h>  
+namespace dftfe
+{
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
@@ -34,7 +38,7 @@
       &kohnShamDFTEigenOperatorDevice = *d_kohnShamDFTOperatorDevicePtr;
 #endif
 
-    const Quadrature<3> &quadrature =
+    const dealii::Quadrature<3> &quadrature =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_subsection("Total scf solve");
@@ -1188,4 +1192,5 @@
 //#endif
     
   }
-
+#include "dft.inst.cc"
+}//namespace dftfe

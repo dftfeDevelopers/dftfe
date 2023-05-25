@@ -1008,7 +1008,7 @@ namespace dftfe
             prm.declare_entry(
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
-            Patterns::Integer(0),
+            dealii::Patterns::Integer(0),
             "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy .");
 
           prm.declare_entry(
@@ -1706,7 +1706,7 @@ namespace dftfe
 
     if(solverMode == "NSCF")
       AssertThrow(loadRhoData==true,
-      ExcMessage("DFT-FE Error: Cant run NSCF without load rho data set to true"))  ;            
+      dealii::ExcMessage("DFT-FE Error: Cant run NSCF without load rho data set to true"))  ;            
 
     if (isPseudopotential)
       AssertThrow(

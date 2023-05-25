@@ -156,67 +156,6 @@ namespace dftfe
     }
   } // namespace internaldft
   
-  //============================================================================================================================================
-  //============================================================================================================================================
-  //			           Following routine recomputes the cartesian k-points between
-  // successive relaxation steps
-  //============================================================================================================================================
-  //============================================================================================================================================
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::recomputeKPointCoordinates()
-  {
-    const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
-                                                  d_dftParamsPtr->periodicY,
-                                                  d_dftParamsPtr->periodicZ};
-    d_reciprocalLatticeVectors =
-      internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors,
-                                               periodic);
-    for (unsigned int i = 0; i < d_kPointWeights.size(); ++i)
-      for (unsigned int d = 0; d < 3; ++d)
-        d_kPointCoordinates[3 * i + d] = kPointReducedCoordinates[3 * i + 0] *
-                                           d_reciprocalLatticeVectors[0][d] +
-                                         kPointReducedCoordinates[3 * i + 1] *
-                                           d_reciprocalLatticeVectors[1][d] +
-                                         kPointReducedCoordinates[3 * i + 2] *
-                                           d_reciprocalLatticeVectors[2][d];
-  }
-  //============================================================================================================================================
-  //============================================================================================================================================
-  //			           Main driver routine to generate the MP grid, reduce BZ
-  // using
-  // point group symmetries 				                        and scatter the
-  // k-points across pools
-  //============================================================================================================================================
-  //============================================================================================================================================
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
-  {
-    unsigned int nkx = d_dftParamsPtr->nkx;
-    unsigned int nky = d_dftParamsPtr->nky;
-    unsigned int nkz = d_dftParamsPtr->nkz;
-    //
-    unsigned int offsetFlagX = d_dftParamsPtr->offsetFlagX;
-    unsigned int offsetFlagY = d_dftParamsPtr->offsetFlagY;
-    unsigned int offsetFlagZ = d_dftParamsPtr->offsetFlagZ;
-    //
-    double dkx = 0.0;
-    double dky = 0.0;
-    double dkz = 0.0;
-    //
-    std::vector<double> del(3);
-    unsigned int        maxkPoints = (nkx * nky) * nkz;
-    pcout << "Total number of k-points " << maxkPoints << std::endl;
-    //=============================================================================================================================================
-    //			                                        Generate MP grid
-    //=============================================================================================================================================
-    del[0] = 1.0 / double(nkx);
-    del[1] = 1.0 / double(nky);
-    del[2] = 1.0 / double(nkz);
-    //
-  }
-} // namespace internaldft
 //============================================================================================================================================
 //============================================================================================================================================
 //			           Following routine can read k-points supplied through external
@@ -290,10 +229,10 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   //
   AssertThrow(
     maxkPoints >= d_dftParamsPtr->npool,
-    ExcMessage(
+    dealii::ExcMessage(
       "Number of k-points should be higher than or equal to number of pools"));
   const unsigned int this_mpi_pool(
-    Utilities::MPI::this_mpi_process(interpoolcomm));
+    dealii::Utilities::MPI::this_mpi_process(interpoolcomm));
   std::vector<double> d_kPointCoordinatesGlobal(3 * maxkPoints, 0.0);
   std::vector<double> d_kPointWeightsGlobal(maxkPoints, 0.0);
   std::vector<double> kPointReducedCoordinatesGlobal(3 * maxkPoints, 0.0);
@@ -808,27 +747,6 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
         kPointReducedCoordinates[3 * i + 0] * d_reciprocalLatticeVectors[0][d] +
         kPointReducedCoordinates[3 * i + 1] * d_reciprocalLatticeVectors[1][d] +
         kPointReducedCoordinates[3 * i + 2] * d_reciprocalLatticeVectors[2][d];
-  //=============================================================================================================================================
-  //			Scatter the irreducible k-points across pools
-  //=============================================================================================================================================
-  AssertThrow(
-    maxkPoints >= d_dftParamsPtr->npool,
-    ExcMessage(
-      "Number of k-points should be higher than or equal to number of pools"));
-  const unsigned int this_mpi_pool(
-    Utilities::MPI::this_mpi_process(interpoolcomm));
-  std::vector<double> d_kPointCoordinatesGlobal(3 * maxkPoints, 0.0);
-  std::vector<double> d_kPointWeightsGlobal(maxkPoints, 0.0);
-  std::vector<double> kPointReducedCoordinatesGlobal(3 * maxkPoints, 0.0);
-  for (unsigned int i = 0; i < maxkPoints; ++i)
-    {
-      for (unsigned int d = 0; d < 3; ++d)
-        d_kPointCoordinates[3 * i + d] = kPointReducedCoordinates[3 * i + 0] *
-                                           d_reciprocalLatticeVectors[0][d] +
-                                         kPointReducedCoordinates[3 * i + 1] *
-                                           d_reciprocalLatticeVectors[1][d] +
-                                         kPointReducedCoordinates[3 * i + 2] *
-                                           d_reciprocalLatticeVectors[2][d];
     //=============================================================================================================================================
     //			Scatter the irreducible k-points across pools
     //=============================================================================================================================================
@@ -936,6 +854,6 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                  interpoolcomm);
     //
   }
-  // #include "dft.inst.cc"
+ //#include "dft.inst.cc"
 
 } // namespace dftfe

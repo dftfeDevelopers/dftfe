@@ -920,7 +920,7 @@ dftClass<FEOrder, FEOrderElectro>::
         }
     }
   maxHighestOccupiedStateResNorm =
-    Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
+    dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
   return maxHighestOccupiedStateResNorm;
 }
   // compute the maximum of the residual norm of the highest occupied state
