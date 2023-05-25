@@ -124,7 +124,8 @@ namespace dftfe
           false);
       }
 
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+        d_dftParamsPtr->floatingNuclearCharges and
         not d_dftParamsPtr->pinnedNodeForPBC)
       {
 #ifdef DFTFE_WITH_DEVICE
