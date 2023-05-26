@@ -1983,7 +1983,7 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-        if (d_dftParamsPtr->useDevice and
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges)
           {
 #ifdef DFTFE_WITH_DEVICE
@@ -2354,7 +2354,7 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useDevice and
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
