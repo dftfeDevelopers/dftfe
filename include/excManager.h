@@ -18,6 +18,7 @@
 #ifndef DFTFE_EXCMANAGER_H
 #define DFTFE_EXCMANAGER_H
 
+#include <xc.h>
 #include <excDensityBaseClass.h>
 #include <excWavefunctionBaseClass.h>
 namespace dftfe
@@ -25,16 +26,36 @@ namespace dftfe
   class excManager
   {
   public:
+    /**
+     * @brief Constructor
+     *
+     */
+    excManager();
+
+    /**
+     * @brief  destructor
+     */
+    ~excManager();
+
+
+    clear();
+
+
     void
-    createExcClassObj(unsigned int               xc_id,
-                      bool                       isSpinPolarized,
-                      unsigned int               exxFactor,
-                      bool                       scaleExchange,
-                      unsigned int               scaleExchangeFactor,
-                      bool                       computeCorrelation,
-                      xc_func_type *             funcXPtr,
-                      xc_func_type *             funcCPtr,
-                      std::string                modelXCInputFile);
+    init(unsigned int xc_id,
+         bool         isSpinPolarized,
+         unsigned int exxFactor,
+         bool         scaleExchange,
+         unsigned int scaleExchangeFactor,
+         bool         computeCorrelation,
+         std::string  modelXCInputFile);
+
+    densityFamilyType
+    getDensityBasedFamilyType();
+
+    wavefunctionFamilyType
+    getWavefunctionBasedFamilyType();
+
 
     excDensityBaseClass *
     getExcDensityObj();
@@ -44,8 +65,12 @@ namespace dftfe
 
 
   private:
-    excDensityBaseClass * d_excDensityObjPtr;
-    excWavefunctionBaseClass * d_excWavefunctionObjPtr;
+    /// objects for various exchange-correlations (from libxc package)
+    xc_func_type *d_funcXPtr;
+    xc_func_type *d_funcCPtr;
+
+    excDensityBaseClass *     d_excDensityObjPtr;
+    excWavefunctionBaseClass *d_excWavefunctionObjPtr;
   };
 } // namespace dftfe
 

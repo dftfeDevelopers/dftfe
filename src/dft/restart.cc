@@ -55,7 +55,7 @@ namespace dftfe
     for (auto it = rhoOutVals.cbegin(); it != rhoOutVals.cend(); it++)
       cellQuadDataContainerIn.push_back(&(*it));
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         for (auto it = gradRhoInVals.cbegin(); it != gradRhoInVals.cend(); it++)
           cellQuadDataContainerIn.push_back(&(*it));
@@ -78,7 +78,7 @@ namespace dftfe
           cellQuadDataContainerIn.push_back(&(*it));
       }
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (d_excManagerPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA &&
         d_dftParamsPtr->spinPolarized == 1)
       {
@@ -293,7 +293,7 @@ namespace dftfe
           std::map<dealii::CellId, std::vector<double>>());
       }
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         for (unsigned int i = 0; i < mixingHistorySize; i++)
           {
@@ -325,7 +325,7 @@ namespace dftfe
           }
       }
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (d_excManagerPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA &&
         d_dftParamsPtr->spinPolarized == 1)
       {
@@ -363,7 +363,7 @@ namespace dftfe
       }
     rhoOutValues = &(rhoOutVals.back());
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         for (unsigned int i = 0; i < mixingHistorySize; i++)
           {
@@ -395,7 +395,7 @@ namespace dftfe
         rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
       }
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (d_excManagerPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA &&
         d_dftParamsPtr->spinPolarized == 1)
       {

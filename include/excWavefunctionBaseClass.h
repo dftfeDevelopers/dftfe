@@ -17,15 +17,12 @@
 
 #ifndef DFTFE_EXCWAVEFUNCTIONBASECLASS_H
 #define DFTFE_EXCWAVEFUNCTIONBASECLASS_H
-#include <excDensityBaseClass.h>
-
 
 namespace dftfe
 {
   enum class wavefunctionFamilyType
   {
     NONE,
-    TAU,
     SCALED_FOCK,
     HUBBARD
   };
@@ -44,15 +41,12 @@ namespace dftfe
     virtual double
     computeWaveFunctionDependentExcEnergy() const = 0;
 
-    densityFamilyType
-    getDensityBasedFamilyType() const;
-
     wavefunctionFamilyType
     getWavefunctionBasedFamilyType() const;
 
   protected:
     wavefunctionFamilyType d_wavefunctionFamilyType;
-    bool              d_isSpinPolarized;
+    bool                   d_isSpinPolarized;
   };
 } // namespace dftfe
 

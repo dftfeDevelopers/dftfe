@@ -21,8 +21,8 @@
 
 namespace dftfe
 {
-  excDensityBaseClass::excDensityBaseClass(bool          isSpinPolarized)
-    :  d_isSpinPolarized(isSpinPolarized)
+  excDensityBaseClass::excDensityBaseClass(bool isSpinPolarized)
+    : d_isSpinPolarized(isSpinPolarized)
   {}
 
 

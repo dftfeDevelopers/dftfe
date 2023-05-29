@@ -304,28 +304,13 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "Force initUnmoved");
 
 
-    excManager::createExcClassObj(d_dftParamsPtr->xc_id,
-                                  (d_dftParamsPtr->spinPolarized == 1) ? true :
-                                                                         false,
-                                  0.0,   // exx factor
-                                  false, // scale exchange
-                                  1.0,   // scale exchange factor
-                                  true,  // computeCorrelation
-                                  &funcX,
-                                  &funcC,
-                                  d_dftParamsPtr->modelXCInputFile,
-                                  excFunctionalPtr);
-    /*
-    exceptParamX = xc_func_init(&funcX, XC_LDA_X, isSpinPolarized);
-        exceptParamC = xc_func_init(&funcC, XC_LDA_C_PZ, isSpinPolarized);
-    excFunctionalPtr = new excWavefunctionNoneClass (densityFamilyType::LDA,
-                                                       funcX,
-                                                       funcC,
-                   0.0,
-                                                       false,
-                                                       true,
-                                                       1.0);
-                   */
+    d_excManagerPtr.init(d_dftParamsPtr->xc_id,
+                         (d_dftParamsPtr->spinPolarized == 1) ? true : false,
+                         0.0,   // exx factor
+                         false, // scale exchange
+                         1.0,   // scale exchange factor
+                         true,  // computeCorrelation
+                         d_dftParamsPtr->modelXCInputFile);
 
     computing_timer.leave_subsection("unmoved setup");
   }

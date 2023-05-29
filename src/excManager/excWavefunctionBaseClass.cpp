@@ -18,19 +18,15 @@
 //
 
 #include <excWavefunctionBaseClass.h>
-#include <excDensityGGAClass.h>
-#include <excDensityLDAClass.h>
 
 namespace dftfe
 {
-  excWavefunctionBaseClass::excWavefunctionBaseClass(bool isSpinPolarized):
-  d_isSpinPolarized(isSpinPolarized)
-  {
-  }
+  excWavefunctionBaseClass::excWavefunctionBaseClass(bool isSpinPolarized)
+    : d_isSpinPolarized(isSpinPolarized)
+  {}
 
   excWavefunctionBaseClass::~excWavefunctionBaseClass()
-  {
-  }
+  {}
 
   wavefunctionFamilyType
   excWavefunctionBaseClass::getWavefunctionBasedFamilyType() const

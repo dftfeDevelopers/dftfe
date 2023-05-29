@@ -58,7 +58,7 @@ namespace dftfe
   class excDensityBaseClass
   {
   public:
-    excDensityBaseClass(bool          isSpinPolarized);
+    excDensityBaseClass(bool isSpinPolarized);
 
     virtual void
     computeDensityBasedEnergyDensity(

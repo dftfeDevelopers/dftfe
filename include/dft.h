@@ -54,8 +54,6 @@
 #include <poissonSolverProblem.h>
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
-#include <xc.h>
-#include <excWavefunctionBaseClass.h>
 #include <excManager.h>
 #include <dftd.h>
 #include <force.h>
@@ -1024,11 +1022,9 @@ namespace dftfe
     applyPeriodicBCHigherOrderNodes();
 
 
-    /// objects for various exchange-correlations (from libxc package)
-    xc_func_type funcX, funcC;
 
-    excManager *d_excManagerPtr;
-    dispersionCorrection      d_dispersionCorr;
+    excManager *         d_excManagerPtr;
+    dispersionCorrection d_dispersionCorr;
 
     /**
      * stores required data for Kohn-Sham problem

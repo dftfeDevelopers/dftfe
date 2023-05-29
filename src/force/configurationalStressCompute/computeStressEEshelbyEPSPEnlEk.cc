@@ -572,7 +572,7 @@ namespace dftfe
                               }
                           }
 
-                        if (dftPtr->excFunctionalPtr
+                        if (dftPtr->d_excManagerPtr
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -608,7 +608,7 @@ namespace dftfe
                               }
                           }
 
-                        if (dftPtr->excFunctionalPtr
+                        if (dftPtr->d_excManagerPtr
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -657,13 +657,13 @@ namespace dftfe
                                  derEnergyWithSigmaGradDensity] =
                                 &derCorrEnergyWithSigmaRhoOut;
 
-                            dftPtr->excFunctionalPtr
+                            dftPtr->d_excManagerPtr
                               ->computeDensityBasedEnergyDensity(numQuadPoints,
                                                                  rhoOutData,
                                                                  exchValRhoOut,
                                                                  corrValRhoOut);
 
-                            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+                            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
                               numQuadPoints,
                               rhoOutData,
                               outputDerExchangeEnergy,
@@ -713,7 +713,7 @@ namespace dftfe
                                   }
                               }
                           }
-                        else if (dftPtr->excFunctionalPtr
+                        else if (dftPtr->d_excManagerPtr
                                    ->getDensityBasedFamilyType() ==
                                  densityFamilyType::LDA)
                           {
@@ -739,13 +739,13 @@ namespace dftfe
                               [VeffOutputDataAttributes::derEnergyWithDensity] =
                                 &corrPotValRhoOut;
 
-                            dftPtr->excFunctionalPtr
+                            dftPtr->d_excManagerPtr
                               ->computeDensityBasedEnergyDensity(numQuadPoints,
                                                                  rhoOutData,
                                                                  exchValRhoOut,
                                                                  corrValRhoOut);
 
-                            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+                            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
                               numQuadPoints,
                               rhoOutData,
                               outputDerExchangeEnergy,
@@ -774,7 +774,7 @@ namespace dftfe
                                     gradRhoCoreQuads[q][idim][iSubCell] =
                                       temp1[3 * q + idim] / 2.0;
 
-                                if (dftPtr->excFunctionalPtr
+                                if (dftPtr->d_excManagerPtr
                                       ->getDensityBasedFamilyType() ==
                                     densityFamilyType::GGA)
                                   {
@@ -826,7 +826,7 @@ namespace dftfe
                             derExchCorrEnergyWithGradRhoOutSpin1Quads,
                             gradRhoCoreAtoms,
                             hessianRhoCoreAtoms,
-                            dftPtr->excFunctionalPtr
+                            dftPtr->d_excManagerPtr
                                 ->getDensityBasedFamilyType() ==
                               densityFamilyType::GGA);
                       }
@@ -953,7 +953,7 @@ namespace dftfe
                               }
                           }
 
-                        if (dftPtr->excFunctionalPtr
+                        if (dftPtr->d_excManagerPtr
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -981,7 +981,7 @@ namespace dftfe
                               }
                           }
 
-                        if (dftPtr->excFunctionalPtr
+                        if (dftPtr->d_excManagerPtr
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -1021,13 +1021,13 @@ namespace dftfe
                                  derEnergyWithSigmaGradDensity] =
                                 &derCorrEnergyWithSigmaRhoOut;
 
-                            dftPtr->excFunctionalPtr
+                            dftPtr->d_excManagerPtr
                               ->computeDensityBasedEnergyDensity(numQuadPoints,
                                                                  rhoOutData,
                                                                  exchValRhoOut,
                                                                  corrValRhoOut);
 
-                            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+                            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
                               numQuadPoints,
                               rhoOutData,
                               outputDerExchangeEnergy,
@@ -1053,7 +1053,7 @@ namespace dftfe
                                   }
                               }
                           }
-                        else if (dftPtr->excFunctionalPtr
+                        else if (dftPtr->d_excManagerPtr
                                    ->getDensityBasedFamilyType() ==
                                  densityFamilyType::LDA)
                           {
@@ -1079,13 +1079,13 @@ namespace dftfe
                               [VeffOutputDataAttributes::derEnergyWithDensity] =
                                 &corrPotValRhoOut;
 
-                            dftPtr->excFunctionalPtr
+                            dftPtr->d_excManagerPtr
                               ->computeDensityBasedEnergyDensity(numQuadPoints,
                                                                  rhoOutData,
                                                                  exchValRhoOut,
                                                                  corrValRhoOut);
 
-                            dftPtr->excFunctionalPtr->computeDensityBasedVxc(
+                            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
                               numQuadPoints,
                               rhoOutData,
                               outputDerExchangeEnergy,
@@ -1112,7 +1112,7 @@ namespace dftfe
                                     gradRhoCoreQuads[q][idim][iSubCell] =
                                       temp1[3 * q + idim];
 
-                                if (dftPtr->excFunctionalPtr
+                                if (dftPtr->d_excManagerPtr
                                       ->getDensityBasedFamilyType() ==
                                     densityFamilyType::GGA)
                                   {

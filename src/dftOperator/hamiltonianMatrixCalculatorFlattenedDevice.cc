@@ -801,7 +801,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (onlyHPrimePartForFirstOrderDensityMatResponse)
     {
-      if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+      if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamPrimeMatrixKernelGGAMemOpt<<<
@@ -851,7 +851,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
             spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
               d_numberNodesPerElement));
 #endif
-      else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+      else if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamPrimeMatrixKernelLDA<<<(d_numLocallyOwnedCells *
@@ -902,7 +902,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     }
   else
     {
-      if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+      if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
@@ -966,7 +966,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           dftPtr->d_dftParamsPtr->isPseudopotential ||
             dftPtr->d_dftParamsPtr->smearedNuclearCharges);
 #endif
-      else if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+      else if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                densityFamilyType::LDA)
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
