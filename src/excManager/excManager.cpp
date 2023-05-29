@@ -52,8 +52,11 @@ namespace dftfe
         delete d_funcCPtr;
       }
 
-    delete d_excDensityObjPtr;
-    delete d_excWavefunctionObjPtr;
+    if (d_excDensityObjPtr != nullptr)
+      delete d_excDensityObjPtr;
+
+    if (d_excWavefunctionObjPtr != nullptr)
+      delete d_excWavefunctionObjPtr;
 
     d_funcXPtr              = nullptr;
     d_funcCPtr              = nullptr;
