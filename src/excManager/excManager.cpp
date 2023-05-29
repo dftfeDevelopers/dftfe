@@ -37,7 +37,7 @@ namespace dftfe
     clear();
   }
 
-
+  void
   excManager::clear()
   {
     if (d_funcXPtr != nullptr)
@@ -96,6 +96,13 @@ namespace dftfe
           exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_LDA_C_PZ, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityLDAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
+
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -103,6 +110,13 @@ namespace dftfe
           exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_LDA_C_PW, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityLDAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
+
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -110,6 +124,12 @@ namespace dftfe
           exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_LDA_C_VWN, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityLDAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -118,6 +138,14 @@ namespace dftfe
             xc_func_init(d_funcXPtr, XC_GGA_X_PBE, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_GGA_C_PBE, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityGGAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      modelXCInputFile,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
+
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -126,6 +154,14 @@ namespace dftfe
             xc_func_init(d_funcXPtr, XC_GGA_X_RPBE, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_GGA_C_PBE, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityGGAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      modelXCInputFile,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
+
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -133,6 +169,14 @@ namespace dftfe
           exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_LDA_C_PW, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityLDAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      modelXCInputFile,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
+
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -141,6 +185,14 @@ namespace dftfe
             xc_func_init(d_funcXPtr, XC_GGA_X_PBE, isSpinPolarizedXC);
           exceptParamC =
             xc_func_init(d_funcCPtr, XC_GGA_C_PBE, isSpinPolarizedXC);
+          d_excDensityObjPtr = new excDensityGGAClass(d_funcXPtr,
+                                                      d_funcCPtr,
+                                                      isSpinPolarized,
+                                                      modelXCInputFile,
+                                                      scaleExchange,
+                                                      computeCorrelation,
+                                                      scaleExchangeFactor);
+
           d_excWavefunctionObjPtr =
             new excWavefunctionNoneClass(isSpinPolarized);
           break;
@@ -160,13 +212,13 @@ namespace dftfe
   }
 
   densityFamilyType
-  excManager::getDensityBasedFamilyType()
+  excManager::getDensityBasedFamilyType() const
   {
-    return d_excDensityObjPtr->getWavefunctionBasedFamilyType();
+    return d_excDensityObjPtr->getDensityBasedFamilyType();
   }
 
   wavefunctionFamilyType
-  excManager::getWavefunctionBasedFamilyType()
+  excManager::getWavefunctionBasedFamilyType() const
   {
     return d_excWavefunctionObjPtr->getWavefunctionBasedFamilyType();
   }
@@ -180,6 +232,19 @@ namespace dftfe
 
   excWavefunctionBaseClass *
   excManager::getExcWavefunctionObj()
+  {
+    return d_excWavefunctionObjPtr;
+  }
+
+
+  const excDensityBaseClass *
+  excManager::getExcDensityObj() const
+  {
+    return d_excDensityObjPtr;
+  }
+
+  const excWavefunctionBaseClass *
+  excManager::getExcWavefunctionObj() const
   {
     return d_excWavefunctionObjPtr;
   }

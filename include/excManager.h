@@ -37,7 +37,7 @@ namespace dftfe
      */
     ~excManager();
 
-
+    void
     clear();
 
 
@@ -51,10 +51,10 @@ namespace dftfe
          std::string  modelXCInputFile);
 
     densityFamilyType
-    getDensityBasedFamilyType();
+    getDensityBasedFamilyType() const;
 
     wavefunctionFamilyType
-    getWavefunctionBasedFamilyType();
+    getWavefunctionBasedFamilyType() const;
 
 
     excDensityBaseClass *
@@ -62,6 +62,13 @@ namespace dftfe
 
     excWavefunctionBaseClass *
     getExcWavefunctionObj();
+
+
+    const excDensityBaseClass *
+    getExcDensityObj() const;
+
+    const excWavefunctionBaseClass *
+    getExcWavefunctionObj() const;
 
 
   private:

@@ -304,13 +304,13 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "Force initUnmoved");
 
 
-    d_excManagerPtr.init(d_dftParamsPtr->xc_id,
-                         (d_dftParamsPtr->spinPolarized == 1) ? true : false,
-                         0.0,   // exx factor
-                         false, // scale exchange
-                         1.0,   // scale exchange factor
-                         true,  // computeCorrelation
-                         d_dftParamsPtr->modelXCInputFile);
+    d_excManagerPtr->init(d_dftParamsPtr->xc_id,
+                          (d_dftParamsPtr->spinPolarized == 1) ? true : false,
+                          0.0,   // exx factor
+                          false, // scale exchange
+                          1.0,   // scale exchange factor
+                          true,  // computeCorrelation
+                          d_dftParamsPtr->modelXCInputFile);
 
     computing_timer.leave_subsection("unmoved setup");
   }

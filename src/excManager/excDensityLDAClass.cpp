@@ -31,6 +31,8 @@ namespace dftfe
     : excDensityBaseClass(isSpinPolarized)
   {
     d_familyType = densityFamilyType::LDA;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
 #ifdef DFTFE_WITH_TORCH
     d_NNLDAPtr = nullptr;
 #endif
@@ -46,6 +48,8 @@ namespace dftfe
     : excDensityBaseClass(isSpinPolarized)
   {
     d_familyType = densityFamilyType::LDA;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
 #ifdef DFTFE_WITH_TORCH
     d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif

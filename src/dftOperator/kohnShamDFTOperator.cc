@@ -620,7 +620,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithDensity] =
                 &corrPotentialVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -759,7 +759,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                 &derCorrEnergyWithSigmaVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -1814,7 +1814,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithDensity] =
                 &corrPotentialVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -1978,7 +1978,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                 &derCorrEnergyWithSigma;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -2192,7 +2192,7 @@ namespace dftfe
                 &der2CorrEnergyWithDensityVal;
 
 
-            dftPtr->d_excManagerPtr->computeDensityBasedFxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedFxc(
               numberQuadraturePoints,
               rhoData,
               outputDer2ExchangeEnergy,
@@ -2306,7 +2306,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithDensity] =
                 &derCorrEnergyWithDensityVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -2382,7 +2382,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithDensity] =
                 &derCorrEnergyWithDensityVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -2459,7 +2459,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithDensity] =
                 &derCorrEnergyWithDensityVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -2537,7 +2537,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithDensity] =
                 &derCorrEnergyWithDensityVal;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -2716,13 +2716,13 @@ namespace dftfe
               &der2CorrEnergyWithSigmaVal;
 
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
               outputDerCorrEnergy);
 
-            dftPtr->d_excManagerPtr->computeDensityBasedFxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedFxc(
               numberQuadraturePoints,
               rhoData,
               outputDer2ExchangeEnergy,
@@ -2985,7 +2985,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                 &derCorrEnergyWithSigma;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -3170,7 +3170,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                 &derCorrEnergyWithSigma;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -3364,7 +3364,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                 &derCorrEnergyWithSigma;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
@@ -3550,7 +3550,7 @@ namespace dftfe
               [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                 &derCorrEnergyWithSigma;
 
-            dftPtr->d_excManagerPtr->computeDensityBasedVxc(
+            dftPtr->d_excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
               numberQuadraturePoints,
               rhoData,
               outputDerExchangeEnergy,
