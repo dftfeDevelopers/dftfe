@@ -1710,6 +1710,9 @@ namespace dftfe
 
     solve(true, true, d_isRestartGroundStateCalcFromChk);
 
+    if (d_dftParamsPtr->writeStructreEnergyForcesFileForPostProcess)
+      writeStructureEnergyForcesDataPostProcess("structEnergyForcesData");
+
     if (d_dftParamsPtr->writeWfcSolutionFields)
       outputWfc();
 

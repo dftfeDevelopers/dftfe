@@ -670,6 +670,13 @@ namespace dftfe
     d_dftPtr->solve(computeForces, false, d_isScfRestart);
     d_isScfRestart = false;
     d_totalUpdateCalls += 1;
+
+    if (d_dftPtr->getParametersObject().writeStructreEnergyForcesFileForPostProcess)
+    {
+        std::string fileName =
+           "structEnergyForcesData" + std::to_string(d_totalUpdateCalls);
+        d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+    }
   }
 
 

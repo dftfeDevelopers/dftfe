@@ -187,6 +187,8 @@ namespace dftfe
     std::string tempControllerTypeBOMD;
     int         MDTrack;
 
+    bool writeStructreEnergyForcesFileForPostProcess;
+
     dftParameters();
 
     /**

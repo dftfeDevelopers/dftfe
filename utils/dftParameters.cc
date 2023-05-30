@@ -32,6 +32,12 @@ namespace dftfe
     declare_parameters(dealii::ParameterHandler &prm)
     {
       prm.declare_entry(
+        "WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS",
+        "false",
+        dealii::Patterns::Bool(),
+        "[Developer] Write ground-state atomistics data to a file with the suffix number in the file-name denoting the ionic relaxation or MD step number. Order: lattice vectors (see format for DOMAIN BOUNDING VECTORS), number of atoms, structure, electronic free energy, internal energy, and finally forces. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian with cell centered origin for non-periodic systems. Atomic units used everywhere.");
+
+      prm.declare_entry(
         "REPRODUCIBLE OUTPUT",
         "false",
         dealii::Patterns::Bool(),
@@ -1306,6 +1312,8 @@ namespace dftfe
     maxStaggeredCycles = 100;
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
+
+    writeStructreEnergyForcesFileForPostProcess=false; 
   }
 
 
@@ -1325,6 +1333,7 @@ namespace dftfe
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     restartFolder             = restartFilesPath;
+    writeStructreEnergyForcesFileForPostProcess=prm.get_integer("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
 
     prm.enter_subsection("GPU");
     {

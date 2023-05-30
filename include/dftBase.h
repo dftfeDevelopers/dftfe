@@ -178,6 +178,18 @@ namespace dftfe
     virtual void
     writeDomainAndAtomCoordinatesFloatingCharges(
       const std::string Path) const = 0;
+
+
+    /**
+     * @brief writes atomistics data for subsequent post-processing. Related to
+     * WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS input parameter.
+     * @param[in] Path The folder path to store the atomistics data.
+     */
+    virtual void
+    writeStructureEnergyForcesDataPostProcess(
+      const std::string Path) const = 0;
+
+
   };
 
 } // namespace dftfe
