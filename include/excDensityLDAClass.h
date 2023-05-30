@@ -18,9 +18,9 @@
 #ifndef DFTFE_EXCDENSIYLDACLASS_H
 #define DFTFE_EXCDENSIYLDACLASS_H
 
+#include <xc.h>
 //#include <NNLDA.h>
 #include <excDensityBaseClass.h>
-
 namespace dftfe
 {
   class NNLDA;
@@ -71,7 +71,9 @@ namespace dftfe
 
 
   private:
-    NNLDA *d_NNLDAPtr;
+    NNLDA *       d_NNLDAPtr;
+    xc_func_type *d_funcXPtr;
+    xc_func_type *d_funcCPtr;
   };
 } // namespace dftfe
 

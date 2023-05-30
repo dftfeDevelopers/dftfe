@@ -181,7 +181,7 @@ namespace dftfe
 
             std::vector<double> &hessianRhoCoreQuadValues =
               d_hessianRhoCore[cell->id()];
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               hessianRhoCoreQuadValues.resize(n_q_points * 9, 0.0);
 
@@ -254,7 +254,7 @@ namespace dftfe
                     gradRhoCoreQuadValues[3 * q + 1] += gradRhoCoreAtom[q][1];
                     gradRhoCoreQuadValues[3 * q + 2] += gradRhoCoreAtom[q][2];
 
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       {
                         for (unsigned int iDim = 0; iDim < 3; ++iDim)
@@ -287,7 +287,7 @@ namespace dftfe
 
                     std::vector<double> &hessianRhoCoreAtomCell =
                       d_hessianRhoCoreAtoms[iAtom][cell->id()];
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       hessianRhoCoreAtomCell.resize(n_q_points * 9, 0.0);
 
@@ -297,7 +297,7 @@ namespace dftfe
                         gradRhoCoreAtomCell[3 * q + 1] = gradRhoCoreAtom[q][1];
                         gradRhoCoreAtomCell[3 * q + 2] = gradRhoCoreAtom[q][2];
 
-                        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
                             for (unsigned int iDim = 0; iDim < 3; ++iDim)
@@ -377,7 +377,7 @@ namespace dftfe
                     gradRhoCoreQuadValues[3 * q + 1] += gradRhoCoreAtom[q][1];
                     gradRhoCoreQuadValues[3 * q + 2] += gradRhoCoreAtom[q][2];
 
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       {
                         for (unsigned int iDim = 0; iDim < 3; ++iDim)
@@ -411,7 +411,7 @@ namespace dftfe
                     std::vector<double> &hessianRhoCoreAtomCell =
                       d_hessianRhoCoreAtoms[numberGlobalCharges + iImageCharge]
                                            [cell->id()];
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       hessianRhoCoreAtomCell.resize(n_q_points * 9);
 
@@ -421,7 +421,7 @@ namespace dftfe
                         gradRhoCoreAtomCell[3 * q + 1] = gradRhoCoreAtom[q][1];
                         gradRhoCoreAtomCell[3 * q + 2] = gradRhoCoreAtom[q][2];
 
-                        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
                             for (unsigned int iDim = 0; iDim < 3; ++iDim)

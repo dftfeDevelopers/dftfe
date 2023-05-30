@@ -70,7 +70,9 @@ namespace dftfe
 
 
   private:
-    NNGGA *d_NNGGAPtr;
+    NNGGA *       d_NNGGAPtr;
+    xc_func_type *d_funcXPtr;
+    xc_func_type *d_funcCPtr;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYGGACLASS_H

@@ -164,7 +164,7 @@ namespace dftfe
       rhoPrimeValues,
       gradRhoPrimeValues,
       dummy,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     std::map<dealii::CellId, std::vector<double>> rhoPrimeValuesSpinPolarized;
     std::map<dealii::CellId, std::vector<double>>
@@ -183,13 +183,13 @@ namespace dftfe
           rhoPrimeValuesSpinPolarized,
           gradRhoPrimeValuesSpinPolarized,
           dummy,
-          excFunctionalPtr->getDensityBasedFamilyType() ==
+          d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA);
       }
 
     for (unsigned int s = 0; s < (1 + d_dftParamsPtr->spinPolarized); ++s)
       {
-        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+        if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::LDA)
           {
             computing_timer.enter_subsection("VEffPrime Computation");
@@ -230,7 +230,7 @@ namespace dftfe
 
             computing_timer.leave_subsection("VEffPrime Computation");
           }
-        else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+        else if (d_excManagerPtr->getDensityBasedFamilyType() ==
                  densityFamilyType::GGA)
           {
             computing_timer.enter_subsection("VEffPrime Computation");

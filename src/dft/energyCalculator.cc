@@ -382,7 +382,7 @@ namespace dftfe
     const std::vector<std::vector<double>> &eigenValues,
     const std::vector<double> &             kPointWeights,
     const double                            fermiEnergy,
-    const excWavefunctionBaseClass *        excFunctionalPtr,
+    const excManager *                      excManagerPtr,
     const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
@@ -441,7 +441,7 @@ namespace dftfe
           num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+        if (excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           AssertThrow(
             num_quad_points_electronic * 3 ==
@@ -530,7 +530,7 @@ namespace dftfe
             outputDerCorrEnergy;
 
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          if (excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             {
               // Get exc
@@ -679,7 +679,7 @@ namespace dftfe
                 [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                   &derCorrEnergyWithSigmaGradDenInput;
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          else if (excManagerPtr->getDensityBasedFamilyType() ==
                    densityFamilyType::LDA)
             {
               densityValueInXC.resize(num_quad_points_electronic);
@@ -734,19 +734,20 @@ namespace dftfe
                   &derCorrEnergyWithInputDensity;
             }
 
-          excFunctionalPtr->computeDensityBasedEnergyDensity(
+          excManagerPtr->getExcDensityObj()->computeDensityBasedEnergyDensity(
             num_quad_points_electronic,
             rhoOutData,
             exchangeEnergyDensity,
             corrEnergyDensity);
 
-          excFunctionalPtr->computeDensityBasedVxc(num_quad_points_electronic,
-                                                   rhoInData,
-                                                   outputDerExchangeEnergy,
-                                                   outputDerCorrEnergy);
+          excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
+            num_quad_points_electronic,
+            rhoInData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
 
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          if (excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             {
               for (unsigned int q_point = 0;
@@ -782,7 +783,7 @@ namespace dftfe
                     feValuesElectronic.JxW(q_point);
                 }
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          else if (excManagerPtr->getDensityBasedFamilyType() ==
                    densityFamilyType::LDA)
             {
               for (unsigned int q_point = 0;
@@ -952,7 +953,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    const excWavefunctionBaseClass *        excFunctionalPtr,
+    const excManager *                      excManagerPtr,
     const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
@@ -1020,7 +1021,7 @@ namespace dftfe
           num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (excFunctionalPtr->getDensityBasedFamilyType() ==
+        if (excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           AssertThrow(
             num_quad_points_electronic * 3 ==
@@ -1106,7 +1107,7 @@ namespace dftfe
             outputDerCorrEnergy;
 
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          if (excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             {
               densityValueInXC.resize(2 * num_quad_points_electronic);
@@ -1384,7 +1385,7 @@ namespace dftfe
                 [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
                   &derCorrEnergyWithSigmaGradDenInput;
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          else if (excManagerPtr->getDensityBasedFamilyType() ==
                    densityFamilyType::LDA)
             {
               densityValueInXC.resize(2 * num_quad_points_electronic);
@@ -1459,18 +1460,19 @@ namespace dftfe
 
 
 
-          excFunctionalPtr->computeDensityBasedEnergyDensity(
+          excManagerPtr->getExcDensityObj()->computeDensityBasedEnergyDensity(
             num_quad_points_electronic,
             rhoOutData,
             exchangeEnergyDensity,
             corrEnergyDensity);
 
-          excFunctionalPtr->computeDensityBasedVxc(num_quad_points_electronic,
-                                                   rhoInData,
-                                                   outputDerExchangeEnergy,
-                                                   outputDerCorrEnergy);
+          excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
+            num_quad_points_electronic,
+            rhoInData,
+            outputDerExchangeEnergy,
+            outputDerCorrEnergy);
 
-          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          if (excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             {
               for (unsigned int q_point = 0;
@@ -1531,7 +1533,7 @@ namespace dftfe
                     feValuesElectronic.JxW(q_point);
                 }
             }
-          else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          else if (excManagerPtr->getDensityBasedFamilyType() ==
                    densityFamilyType::LDA)
             {
               for (unsigned int q_point = 0;

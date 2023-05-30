@@ -72,7 +72,7 @@ namespace dftfe
     recv_buf_size.clear();
     rhoRecvd.clear();
     groupOffsets.clear();
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       gradRhoRecvd.clear();
   }
@@ -133,7 +133,7 @@ namespace dftfe
     recv_buf_size.resize(numSymm);
     rhoRecvd.resize(numSymm);
     groupOffsets.resize(numSymm);
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       gradRhoRecvd.resize(numSymm);
     //
@@ -172,7 +172,7 @@ namespace dftfe
           std::vector<std::vector<std::vector<double>>>(cell_id);
         groupOffsets[iSymm] =
           std::vector<std::vector<std::vector<int>>>(cell_id);
-        if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+        if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           gradRhoRecvd[iSymm] =
             std::vector<std::vector<std::vector<double>>>(cell_id);
@@ -646,7 +646,7 @@ namespace dftfe
           (1 + dftPtr->getParametersObject().spinPolarized) * mpi_offsets1[i];
       }
     //
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       {
         cell = (dftPtr->dofHandlerEigen).begin_active();

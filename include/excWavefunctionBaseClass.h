@@ -17,15 +17,12 @@
 
 #ifndef DFTFE_EXCWAVEFUNCTIONBASECLASS_H
 #define DFTFE_EXCWAVEFUNCTIONBASECLASS_H
-#include <excDensityBaseClass.h>
-
 
 namespace dftfe
 {
   enum class wavefunctionFamilyType
   {
     NONE,
-    TAU,
     SCALED_FOCK,
     HUBBARD
   };
@@ -33,48 +30,9 @@ namespace dftfe
   class excWavefunctionBaseClass
   {
   public:
-    excWavefunctionBaseClass(densityFamilyType densityFamilyTypeObj,
-                             xc_func_type *    funcXPtr,
-                             xc_func_type *    funcCPtr,
-                             bool              isSpinPolarized,
-                             double            factorForWavefunctionDependent,
-                             bool              scaleExchange,
-                             bool              computeCorrelation,
-                             double            scaleExchangeFactor);
-
-    excWavefunctionBaseClass(densityFamilyType densityFamilyTypeObj,
-                             xc_func_type *    funcXPtr,
-                             xc_func_type *    funcCPtr,
-                             bool              isSpinPolarized,
-                             std::string       modelXCInputFile,
-                             double            factorForWavefunctionDependent,
-                             bool              scaleExchange,
-                             bool              computeCorrelation,
-                             double            scaleExchangeFactor);
+    excWavefunctionBaseClass(bool isSpinPolarized);
 
     virtual ~excWavefunctionBaseClass();
-    void
-    computeDensityBasedEnergyDensity(
-      unsigned int                                                    sizeInput,
-      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-      std::vector<double> &outputExchangeEnergyDensity,
-      std::vector<double> &outputCorrEnergyDensity) const;
-    void
-    computeDensityBasedVxc(
-      unsigned int                                                    sizeInput,
-      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-      std::map<VeffOutputDataAttributes, std::vector<double> *>
-        &outputDerExchangeEnergy,
-      std::map<VeffOutputDataAttributes, std::vector<double> *>
-        &outputDerCorrEnergy) const;
-    void
-    computeDensityBasedFxc(
-      unsigned int                                                    sizeInput,
-      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-      std::map<fxcOutputDataAttributes, std::vector<double> *>
-        &outputDer2ExchangeEnergy,
-      std::map<fxcOutputDataAttributes, std::vector<double> *>
-        &outputDer2CorrEnergy) const;
 
     virtual void
     applyWaveFunctionDependentVxc() const = 0;
@@ -83,15 +41,12 @@ namespace dftfe
     virtual double
     computeWaveFunctionDependentExcEnergy() const = 0;
 
-    densityFamilyType
-    getDensityBasedFamilyType() const;
-
     wavefunctionFamilyType
     getWavefunctionBasedFamilyType() const;
 
   protected:
-    excDensityBaseClass *  d_excDensityBaseClassPtr;
     wavefunctionFamilyType d_wavefunctionFamilyType;
+    bool                   d_isSpinPolarized;
   };
 } // namespace dftfe
 

@@ -58,12 +58,7 @@ namespace dftfe
   class excDensityBaseClass
   {
   public:
-    excDensityBaseClass(xc_func_type *funcXPtr,
-                        xc_func_type *funcCPtr,
-                        bool          isSpinPolarized,
-                        bool          scaleExchange,
-                        bool          computeCorrelation,
-                        double        scaleExchangeFactor);
+    excDensityBaseClass(bool isSpinPolarized);
 
     virtual void
     computeDensityBasedEnergyDensity(
@@ -95,11 +90,7 @@ namespace dftfe
 
   protected:
     densityFamilyType d_familyType;
-    xc_func_type *    d_funcXPtr;
-    xc_func_type *    d_funcCPtr;
-    bool              d_scaleExchange, d_computeCorrelation;
     bool              d_isSpinPolarized;
-    double            d_scaleExchangeFactor;
   };
 
 } // namespace dftfe
