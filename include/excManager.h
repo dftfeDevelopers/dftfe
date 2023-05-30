@@ -18,24 +18,66 @@
 #ifndef DFTFE_EXCMANAGER_H
 #define DFTFE_EXCMANAGER_H
 
-#include <excWavefunctionNoneClass.h>
+#include <xc.h>
+#include <excDensityBaseClass.h>
 #include <excWavefunctionBaseClass.h>
 namespace dftfe
 {
   class excManager
   {
   public:
-    static void
-    createExcClassObj(unsigned int               xc_id,
-                      bool                       isSpinPolarized,
-                      unsigned int               exxFactor,
-                      bool                       scaleExchange,
-                      unsigned int               scaleExchangeFactor,
-                      bool                       computeCorrelation,
-                      xc_func_type *             funcXPtr,
-                      xc_func_type *             funcCPtr,
-                      std::string                modelXCInputFile,
-                      excWavefunctionBaseClass *&excClassPtr);
+    /**
+     * @brief Constructor
+     *
+     */
+    excManager();
+
+    /**
+     * @brief  destructor
+     */
+    ~excManager();
+
+    void
+    clear();
+
+
+    void
+    init(unsigned int xc_id,
+         bool         isSpinPolarized,
+         unsigned int exxFactor,
+         bool         scaleExchange,
+         unsigned int scaleExchangeFactor,
+         bool         computeCorrelation,
+         std::string  modelXCInputFile);
+
+    densityFamilyType
+    getDensityBasedFamilyType() const;
+
+    wavefunctionFamilyType
+    getWavefunctionBasedFamilyType() const;
+
+
+    excDensityBaseClass *
+    getExcDensityObj();
+
+    excWavefunctionBaseClass *
+    getExcWavefunctionObj();
+
+
+    const excDensityBaseClass *
+    getExcDensityObj() const;
+
+    const excWavefunctionBaseClass *
+    getExcWavefunctionObj() const;
+
+
+  private:
+    /// objects for various exchange-correlations (from libxc package)
+    xc_func_type *d_funcXPtr;
+    xc_func_type *d_funcCPtr;
+
+    excDensityBaseClass *     d_excDensityObjPtr;
+    excWavefunctionBaseClass *d_excWavefunctionObjPtr;
   };
 } // namespace dftfe
 

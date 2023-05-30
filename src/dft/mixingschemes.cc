@@ -65,7 +65,7 @@ namespace dftfe
     // create new gradRhoValue tables
     std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         gradRhoInValuesOld = *gradRhoInValues;
         gradRhoInVals.push_back(
@@ -85,7 +85,7 @@ namespace dftfe
             (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
 
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               (*gradRhoInValues)[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -107,7 +107,7 @@ namespace dftfe
                      (*rhoOutValues)[cell->id()][q_point]);
 
 
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
                     ((*gradRhoInValues)[cell->id()][3 * q_point + 0]) =
@@ -298,7 +298,7 @@ namespace dftfe
     // compute gradRho for GGA using mixing constants from rho mixing
 
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
           *gradRhoInValues;
@@ -450,7 +450,7 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>> delRho, delGradRho;
     dFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
     uBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         graddFBroyden.push_back(
           std::map<dealii::CellId, std::vector<double>>());
@@ -479,7 +479,7 @@ namespace dftfe
             if (N == 1)
               FBroyden[cell->id()] = std::vector<double>(num_quad_points);
             //
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 (graddFBroyden[N - 1])[cell->id()] =
@@ -498,7 +498,7 @@ namespace dftfe
                     FOld = ((rhoOutVals[0])[cell->id()][q_point]) -
                            ((rhoInVals[0])[cell->id()][q_point]);
                     w0Loc += FOld * FOld * fe_values.JxW(q_point);
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       {
                         for (unsigned int dir = 0; dir < 3; ++dir)
@@ -511,7 +511,7 @@ namespace dftfe
                 else
                   {
                     FOld = FBroyden[cell->id()][q_point];
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       for (unsigned int dir = 0; dir < 3; ++dir)
                         gradFOld[dir] =
@@ -527,7 +527,7 @@ namespace dftfe
                 //
                 (dFBroyden[N - 1])[cell->id()][q_point] =
                   FBroyden[cell->id()][q_point] - FOld;
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
                     for (unsigned int dir = 0; dir < 3; ++dir)
@@ -582,7 +582,7 @@ namespace dftfe
       if (cell->is_locally_owned())
         {
           (uBroyden[N - 1])[cell->id()] = std::vector<double>(num_quad_points);
-          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             (gradUBroyden[N - 1])[cell->id()] =
               std::vector<double>(3 * num_quad_points);
@@ -596,7 +596,7 @@ namespace dftfe
                 G * (dFBroyden[N - 1])[cell->id()][q_point] +
                 delRho[cell->id()][q_point];
               //
-              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA)
                 {
                   for (unsigned int dir = 0; dir < 3; ++dir)
@@ -660,7 +660,7 @@ namespace dftfe
     rhoInValues = &(rhoInVals.back());
     //
     std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         gradRhoInValuesOld = *gradRhoInValues;
         gradRhoInVals.push_back(
@@ -674,7 +674,7 @@ namespace dftfe
         if (cell->is_locally_owned())
           {
             (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               (*gradRhoInValues)[cell->id()] =
                 std::vector<double>(3 * num_quad_points);
@@ -690,7 +690,7 @@ namespace dftfe
                 (*rhoInValues)[cell->id()][q_point] =
                   rhoInValuesOld[cell->id()][q_point] +
                   G * FBroyden[cell->id()][q_point];
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     (*gradRhoInValues)[cell->id()][3 * q_point + dir] =
@@ -702,7 +702,7 @@ namespace dftfe
                     (*rhoInValues)[cell->id()][q_point] -=
                       wtBroyden[i] * gamma[i] *
                       (uBroyden[i])[cell->id()][q_point];
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       for (unsigned int dir = 0; dir < 3; ++dir)
                         (*gradRhoInValues)[cell->id()][3 * q_point + dir] -=
@@ -738,7 +738,7 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>> delRho, delGradRho;
     dFBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
     uBroyden.push_back(std::map<dealii::CellId, std::vector<double>>());
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         graddFBroyden.push_back(
           std::map<dealii::CellId, std::vector<double>>());
@@ -767,7 +767,7 @@ namespace dftfe
             if (N == 1)
               FBroyden[cell->id()] = std::vector<double>(2 * num_quad_points);
             //
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 (graddFBroyden[N - 1])[cell->id()] =
@@ -788,7 +788,7 @@ namespace dftfe
                            ((rhoInValsSpinPolarized[0])[cell->id()][q_point]);
                     // w0Loc += FOld * FOld * fe_values.JxW(q_point) ;
                     // F[cell->id()]=std::vector<double>(num_quad_points);
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       {
                         // gradF[cell->id()]=std::vector<double>(6*num_quad_points);
@@ -805,7 +805,7 @@ namespace dftfe
                 else
                   {
                     FOld = FBroyden[cell->id()][q_point];
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       for (unsigned int dir = 0; dir < 3; ++dir)
                         gradFOld[dir] =
@@ -821,7 +821,7 @@ namespace dftfe
                 //
                 (dFBroyden[N - 1])[cell->id()][q_point] =
                   FBroyden[cell->id()][q_point] - FOld;
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
                     for (unsigned int dir = 0; dir < 3; ++dir)
@@ -897,7 +897,7 @@ namespace dftfe
         {
           (uBroyden[N - 1])[cell->id()] =
             std::vector<double>(2 * num_quad_points);
-          if (excFunctionalPtr->getDensityBasedFamilyType() ==
+          if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             (gradUBroyden[N - 1])[cell->id()] =
               std::vector<double>(6 * num_quad_points);
@@ -917,7 +917,7 @@ namespace dftfe
                 G * (dFBroyden[N - 1])[cell->id()][2 * q_point + 1] +
                 delRho[cell->id()][2 * q_point + 1];
               //
-              if (excFunctionalPtr->getDensityBasedFamilyType() ==
+              if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA)
                 {
                   for (unsigned int dir = 0; dir < 3; ++dir)
@@ -1004,7 +1004,7 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
     std::map<dealii::CellId, std::vector<double>>
       gradRhoInValuesOldSpinPolarized;
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         gradRhoInValuesOld = *gradRhoInValues;
         gradRhoInVals.push_back(
@@ -1025,7 +1025,7 @@ namespace dftfe
             (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
             (*rhoInValuesSpinPolarized)[cell->id()] =
               std::vector<double>(2 * num_quad_points);
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 (*gradRhoInValues)[cell->id()] =
@@ -1048,7 +1048,7 @@ namespace dftfe
                   rhoInValuesOldSpinPolarized[cell->id()][2 * q_point + 1] +
                   G * FBroyden[cell->id()][2 * q_point + 1];
                 //
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     {
@@ -1072,7 +1072,7 @@ namespace dftfe
                     (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] -=
                       wtBroyden[i] * gamma[i] *
                       (uBroyden[i])[cell->id()][2 * q_point + 1];
-                    if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       for (unsigned int dir = 0; dir < 3; ++dir)
                         {
@@ -1091,7 +1091,7 @@ namespace dftfe
                 (*rhoInValues)[cell->id()][q_point] =
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] +
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1];
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   for (unsigned int dir = 0; dir < 3; ++dir)
                     (*gradRhoInValues)[cell->id()][3 * q_point + dir] =
@@ -1139,7 +1139,7 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>>
       gradRhoInValuesOldSpinPolarized;
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         gradRhoInValuesOld = *gradRhoInValues;
         gradRhoInVals.push_back(
@@ -1167,7 +1167,7 @@ namespace dftfe
             (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
             // }
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 (*gradRhoInValues)[cell->id()] =
@@ -1205,7 +1205,7 @@ namespace dftfe
                                       2.0) *
                              fe_values.JxW(q_point);
 
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
                     for (unsigned int i = 0; i < 6; ++i)
@@ -1467,7 +1467,7 @@ namespace dftfe
     // compute gradRho for GGA using mixing constants from rho mixing
 
 
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
           *gradRhoInValues;

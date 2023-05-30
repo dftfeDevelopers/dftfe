@@ -28,14 +28,11 @@ namespace dftfe
                                          bool          scaleExchange,
                                          bool          computeCorrelation,
                                          double        scaleExchangeFactor)
-    : excDensityBaseClass(funcXPtr,
-                          funcCPtr,
-                          isSpinPolarized,
-                          scaleExchange,
-                          computeCorrelation,
-                          scaleExchangeFactor)
+    : excDensityBaseClass(isSpinPolarized)
   {
     d_familyType = densityFamilyType::GGA;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
     d_NNGGAPtr   = nullptr;
   }
 
@@ -47,14 +44,11 @@ namespace dftfe
                                          bool          scaleExchange,
                                          bool          computeCorrelation,
                                          double        scaleExchangeFactor)
-    : excDensityBaseClass(funcXPtr,
-                          funcCPtr,
-                          isSpinPolarized,
-                          scaleExchange,
-                          computeCorrelation,
-                          scaleExchangeFactor)
+    : excDensityBaseClass(isSpinPolarized)
   {
     d_familyType = densityFamilyType::GGA;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
 #ifdef DFTFE_WITH_TORCH
     d_NNGGAPtr = new NNGGA(modelXCInputFile, true);
 #endif

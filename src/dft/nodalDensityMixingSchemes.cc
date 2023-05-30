@@ -173,7 +173,7 @@ namespace dftfe
     }
     }
 
-    if(excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if(d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
     for(unsigned int iSubCell = 0; iSubCell <
     d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell); ++iSubCell)
@@ -202,7 +202,7 @@ namespace dftfe
       *rhoInValues,
       *gradRhoInValues,
       *gradRhoInValues,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     return normValue;
   }
@@ -467,7 +467,7 @@ namespace dftfe
       }
       }
 
-      if(excFunctionalPtr->getDensityBasedFamilyType() ==
+      if(d_excManagerPtr->getDensityBasedFamilyType() ==
       densityFamilyType::GGA)
       {
       for(unsigned int iSubCell = 0; iSubCell <
@@ -497,7 +497,7 @@ namespace dftfe
       *rhoInValues,
       *gradRhoInValues,
       *gradRhoInValues,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
 
     return normValue;

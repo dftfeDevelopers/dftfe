@@ -133,7 +133,7 @@ namespace dftfe
 
     computing_timer.leave_subsection("nscf: phiTot solve");
     //
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
       {
         computing_timer.enter_subsection("nscf: VEff Computation");
         kohnShamDFTEigenOperator.computeVEff(rhoInValues,
@@ -143,7 +143,7 @@ namespace dftfe
                                              d_lpspQuadratureId);
         computing_timer.leave_subsection("nscf: VEff Computation");
       }
-    else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+    else if (d_excManagerPtr->getDensityBasedFamilyType() ==
              densityFamilyType::GGA)
       {
         computing_timer.enter_subsection("nscf: VEff Computation");

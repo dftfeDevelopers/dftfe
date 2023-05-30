@@ -698,7 +698,7 @@ namespace dftfe
       *rhoInValues,
       *gradRhoInValues,
       *gradRhoInValues,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     // push the rhoIn to deque storing the history of nodal values
     d_rhoInNodalVals.push_back(d_rhoInNodalValues);

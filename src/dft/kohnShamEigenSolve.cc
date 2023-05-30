@@ -147,7 +147,7 @@ namespace dftfe
     //
     // compute Veff
     //
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
       {
         kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                              phiInValues,
@@ -155,7 +155,7 @@ namespace dftfe
                                              d_rhoCore,
                                              d_lpspQuadratureId);
       }
-    else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+    else if (d_excManagerPtr->getDensityBasedFamilyType() ==
              densityFamilyType::GGA)
       {
         kohnShamDFTEigenOperator.computeVEff(rhoInValues,
@@ -381,7 +381,7 @@ namespace dftfe
       gradRhoOutValues,
       rhoOutValuesSpinPolarized,
       gradRhoOutValuesSpinPolarized,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA,
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA,
       d_mpiCommParent,
       interpoolcomm,
       interBandGroupComm,

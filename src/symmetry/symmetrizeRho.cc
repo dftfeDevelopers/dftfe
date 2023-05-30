@@ -64,7 +64,7 @@ namespace dftfe
         dftPtr->rhoOutValuesSpinPolarized =
           &(dftPtr->rhoOutValsSpinPolarized.back());
       }
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       {
         dftPtr->gradRhoOutVals.push_back(
@@ -104,7 +104,7 @@ namespace dftfe
                           0.0);
               }
             //
-            if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 (*(dftPtr->gradRhoOutValues))[cell->id()] =
@@ -143,7 +143,7 @@ namespace dftfe
                     else
                       rhoOut[q_point] +=
                         rhoRecvd[iSymm][globalCellId[cell->id()]][proc][point];
-                    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                         densityFamilyType::GGA)
                       {
                         if (dftPtr->getParametersObject().spinPolarized == 1)
@@ -180,7 +180,7 @@ namespace dftfe
                   (*(dftPtr->rhoOutValues))[cell->id()][q_point] =
                     rhoOut[q_point];
                 //
-                if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
                     if (dftPtr->getParametersObject().spinPolarized == 1)
@@ -223,7 +223,7 @@ namespace dftfe
             dftPtr->rhoOutValsSpinPolarized.pop_front();
           }
         //
-        if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+        if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
             dftPtr->gradRhoInVals.pop_front();
@@ -240,7 +240,7 @@ namespace dftfe
           {
             dftPtr->dFBroyden.pop_front();
             dftPtr->uBroyden.pop_front();
-            if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA) // GGA
               {
                 dftPtr->graddFBroyden.pop_front();
@@ -334,7 +334,7 @@ namespace dftfe
         rhoTempSpinPolarized.resize(2 * totPoints, 0.0);
       }
     //
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       {
         gradRhoLocal.resize(3 * totPoints, 0.0);
@@ -359,7 +359,7 @@ namespace dftfe
             tempPsiBeta.resize(numPoint);
             quadPointList.resize(numPoint);
             //
-            if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 tempGradPsi.resize(numPoint);
@@ -378,7 +378,7 @@ namespace dftfe
                 tempPsiAlpha[iList].reinit(2);
                 tempPsiBeta[iList].reinit(2);
                 //
-                if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
                     tempGradPsi[iList].resize(2);
@@ -457,7 +457,7 @@ namespace dftfe
                                           1][i]),
                             tempPsiBeta);
                         //
-                        if (dftPtr->excFunctionalPtr
+                        if (dftPtr->d_excManagerPtr
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -511,7 +511,7 @@ namespace dftfe
                                    tempPsiAlpha[iList](0) +
                                  tempPsiAlpha[iList](1) *
                                    tempPsiAlpha[iList](1));
-                            if (dftPtr->excFunctionalPtr
+                            if (dftPtr->d_excManagerPtr
                                   ->getDensityBasedFamilyType() ==
                                 densityFamilyType::GGA)
                               {
@@ -661,7 +661,7 @@ namespace dftfe
     //
     MPI_Allreduce(
       &rhoTemp[0], &rhoLocal[0], totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm);
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       MPI_Allreduce(&gradRhoTemp[0],
                     &gradRhoLocal[0],
@@ -677,7 +677,7 @@ namespace dftfe
                       MPI_DOUBLE,
                       MPI_SUM,
                       interpoolcomm);
-        if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+        if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           MPI_Allreduce(&gradRhoTempSpinPolarized[0],
                         &gradRhoLocalSpinPolarized[0],
@@ -741,7 +741,7 @@ namespace dftfe
         recvdData.clear();
       }
     //
-    if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       {
         sendData.resize(3 * (1 + dftPtr->getParametersObject().spinPolarized) *

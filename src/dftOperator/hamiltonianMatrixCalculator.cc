@@ -349,7 +349,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       std::vector<double>().swap(NiNj_currentBlock);
 
 
-      if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+      if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
           densityFamilyType::GGA)
         {
           std::vector<double> gradNiNjPlusgradNjNi_currentBlock(
