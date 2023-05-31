@@ -186,10 +186,7 @@ namespace dftfe
      * @param[in] Path The folder path to store the atomistics data.
      */
     virtual void
-    writeStructureEnergyForcesDataPostProcess(
-      const std::string Path) const = 0;
-
-
+    writeStructureEnergyForcesDataPostProcess(const std::string Path) const = 0;
   };
 
 } // namespace dftfe

@@ -108,8 +108,8 @@ namespace dftfe
 
     // initialize helmholtz solver function object with the quantity required
     // for computing rhs, solution vector and mixing constant
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges
-      and d_dftParamsPtr->poissonGPU)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         kerkerPreconditionedResidualSolverProblemDevice.reinit(
@@ -121,8 +121,8 @@ namespace dftfe
         d_preCondResidualVector, gradDensityResidualValuesMap);
 
     // solve the Helmholtz system to compute preconditioned residual
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges
-      and d_dftParamsPtr->poissonGPU)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         CGSolverDevice.solve(
@@ -403,8 +403,8 @@ namespace dftfe
         << "Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "
         << std::endl;
 
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges
-      and d_dftParamsPtr->poissonGPU)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         kerkerPreconditionedResidualSolverProblemDevice.reinit(
@@ -416,8 +416,8 @@ namespace dftfe
         d_preCondResidualVector, gradDensityResidualValuesMap);
 
     // solve the Helmholtz system to compute preconditioned residual
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges
-      and d_dftParamsPtr->poissonGPU)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         CGSolverDevice.solve(

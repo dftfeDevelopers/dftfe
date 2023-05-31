@@ -396,12 +396,13 @@ namespace dftfe
                                       d_solverRestart);
 
 
-    if (solverReturn == nonLinearSolver::SUCCESS && d_dftPtr->getParametersObject().writeStructreEnergyForcesFileForPostProcess)
-    {
-        std::string fileName =
-           "structureEnergyForcesGSDataCellRelaxed.txt";
-        d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
-    }
+        if (solverReturn == nonLinearSolver::SUCCESS &&
+            d_dftPtr->getParametersObject()
+              .writeStructreEnergyForcesFileForPostProcess)
+          {
+            std::string fileName = "structureEnergyForcesGSDataCellRelaxed.txt";
+            d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+          }
 
 
         if (solverReturn == nonLinearSolver::SUCCESS &&
@@ -636,13 +637,13 @@ namespace dftfe
     d_isScfRestart = false;
     d_totalUpdateCalls += 1;
 
-    if (d_dftPtr->getParametersObject().writeStructreEnergyForcesFileForPostProcess)
-    {
-        std::string fileName =
-           "structureEnergyForcesGSData_cellRelaxStep" + std::to_string(d_totalUpdateCalls)+".txt";
+    if (d_dftPtr->getParametersObject()
+          .writeStructreEnergyForcesFileForPostProcess)
+      {
+        std::string fileName = "structureEnergyForcesGSData_cellRelaxStep" +
+                               std::to_string(d_totalUpdateCalls) + ".txt";
         d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
-    }
-
+      }
   }
 
 

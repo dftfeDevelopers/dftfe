@@ -43,7 +43,7 @@ namespace dftfe
       numberWaveFunctionsForEstimate, numLevels,
       maxLinearSolverIterationsHelmholtz;
 
-    bool poissonGPU;
+    bool        poissonGPU;
     std::string modelXCInputFile;
 
     double radiusAtomBall, mixingParameter;

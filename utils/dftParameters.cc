@@ -1036,11 +1036,10 @@ namespace dftfe
           dealii::Patterns::Double(0, 1.0),
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
 
-        prm.declare_entry(
-          "GPU MODE",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Advanced] Toggle GPU MODE in Poisson solve.");
+        prm.declare_entry("GPU MODE",
+                          "false",
+                          dealii::Patterns::Bool(),
+                          "[Advanced] Toggle GPU MODE in Poisson solve.");
       }
       prm.leave_subsection();
 
@@ -1320,7 +1319,7 @@ namespace dftfe
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
 
-    writeStructreEnergyForcesFileForPostProcess=false; 
+    writeStructreEnergyForcesFileForPostProcess = false;
   }
 
 
@@ -1340,7 +1339,8 @@ namespace dftfe
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     restartFolder             = restartFilesPath;
-    writeStructreEnergyForcesFileForPostProcess=prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
+    writeStructreEnergyForcesFileForPostProcess =
+      prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
 
     prm.enter_subsection("GPU");
     {
