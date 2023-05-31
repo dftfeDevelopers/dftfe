@@ -1333,7 +1333,7 @@ namespace dftfe
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     restartFolder             = restartFilesPath;
-    writeStructreEnergyForcesFileForPostProcess=prm.get_integer("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
+    writeStructreEnergyForcesFileForPostProcess=prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
 
     prm.enter_subsection("GPU");
     {
