@@ -32,6 +32,12 @@ namespace dftfe
     declare_parameters(dealii::ParameterHandler &prm)
     {
       prm.declare_entry(
+        "WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS",
+        "false",
+        dealii::Patterns::Bool(),
+        "[Standard] Write ground-state atomistics data to a file with the suffix number in the file-name denoting the geometry relaxation step number. Order: lattice vectors (see format for DOMAIN BOUNDING VECTORS), number of atoms, structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian with cell centered origin for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row correspoindng to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Printed as sigma\[i\]\[j\] with i denoting the row index and j denoting the column index. Atomic units used everywhere.");
+
+      prm.declare_entry(
         "REPRODUCIBLE OUTPUT",
         "false",
         dealii::Patterns::Bool(),
@@ -1030,11 +1036,10 @@ namespace dftfe
           dealii::Patterns::Double(0, 1.0),
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
 
-        prm.declare_entry(
-          "GPU MODE",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Advanced] Toggle GPU MODE in Poisson solve.");
+        prm.declare_entry("GPU MODE",
+                          "false",
+                          dealii::Patterns::Bool(),
+                          "[Advanced] Toggle GPU MODE in Poisson solve.");
       }
       prm.leave_subsection();
 
@@ -1313,6 +1318,8 @@ namespace dftfe
     maxStaggeredCycles = 100;
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
+
+    writeStructreEnergyForcesFileForPostProcess = false;
   }
 
 
@@ -1332,6 +1339,8 @@ namespace dftfe
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     restartFolder             = restartFilesPath;
+    writeStructreEnergyForcesFileForPostProcess =
+      prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
 
     prm.enter_subsection("GPU");
     {

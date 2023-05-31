@@ -341,6 +341,15 @@ namespace dftfe
     writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
 
     /**
+     * @brief writes atomistics data for subsequent post-processing. Related to
+     * WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS input parameter.
+     * @param[in] Path The folder path to store the atomistics data.
+     */
+    void
+    writeStructureEnergyForcesDataPostProcess(const std::string Path) const;
+
+
+    /**
      * @brief Gets the current atom Locations in cartesian form
      * (origin at center of domain) from dftClass
      */
