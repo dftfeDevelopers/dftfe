@@ -1029,6 +1029,12 @@ namespace dftfe
           "1e-10",
           dealii::Patterns::Double(0, 1.0),
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
+
+        prm.declare_entry(
+          "GPU MODE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Advanced] Toggle GPU MODE in Poisson solve.");
       }
       prm.leave_subsection();
 
@@ -1137,6 +1143,7 @@ namespace dftfe
     numPass                                    = 1;
     numSCFIterations                           = 1;
     maxLinearSolverIterations                  = 1;
+    poissonGPU                                 = true;
     mixingHistory                              = 1;
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
@@ -1583,6 +1590,7 @@ namespace dftfe
     {
       maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
       absLinearSolverTolerance  = prm.get_double("TOLERANCE");
+      poissonGPU                = prm.get_bool("GPU MODE");
     }
     prm.leave_subsection();
 
