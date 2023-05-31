@@ -1032,7 +1032,7 @@ namespace dftfe
 
         prm.declare_entry(
           "GPU MODE",
-          "true",
+          "false",
           dealii::Patterns::Bool(),
           "[Advanced] Toggle GPU MODE in Poisson solve.");
       }
