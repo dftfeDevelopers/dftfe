@@ -748,8 +748,11 @@ namespace dftfe
     if (d_dftParamsPtr->isCellStress)
       {
         for (unsigned int i = 0; i < 3; ++i)
-          for (unsigned int j = 0; j < 3; ++j)
-            data[6 + 2 * numberGlobalAtoms + i][j] = -getCellStress()[i][j];
+          {
+            data[6 + 2 * numberGlobalAtoms + i]=std::vector<double>(3,0);
+            for (unsigned int j = 0; j < 3; ++j)
+               data[6 + 2 * numberGlobalAtoms + i][j] = -getCellStress()[i][j];
+          }
       }
 
 
