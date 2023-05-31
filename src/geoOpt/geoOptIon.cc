@@ -330,6 +330,14 @@ namespace dftfe
                                       d_solverRestartPath + "/ionRelax.chk",
                                       d_solverRestart);
 
+    if (solverReturn == nonLinearSolver::SUCCESS && d_dftPtr->getParametersObject().writeStructreEnergyForcesFileForPostProcess)
+    {
+        std::string fileName =
+           "structEnergyForcesDataIonRelaxed";
+        d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+    }
+
+
         if (solverReturn == nonLinearSolver::SUCCESS &&
             d_dftPtr->getParametersObject().verbosity >= 1)
           {

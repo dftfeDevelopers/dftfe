@@ -693,7 +693,6 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::writeStructureEnergyForcesDataPostProcess(const std::string Path) const
   {
         const int           numberGlobalAtoms = atomLocations.size();    
-        const std::vector<double> tempGradient = getForceonAtoms();
         std::vector<std::vector<double>> data(4+numberGlobalAtoms+2+numberGlobalAtoms,std::vector<double>(1,0));
         data[0][0] = numberGlobalAtoms;
         data[1]=getCell()[0];
@@ -708,10 +707,10 @@ namespace dftfe
           for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
           {
             data[4+i]=std::vector<double>(4,0);   
-            data[4+i][0]=getAtomLocationsCart()[i][0];
-            data[4+i][1]=getAtomLocationsCart()[i][2];
-            data[4+i][2]=getAtomLocationsCart()[i][3];
-            data[4+i][3]=getAtomLocationsCart()[i][4];            
+            data[4+i][0]=getAtomLocationsFrac()[i][0];
+            data[4+i][1]=getAtomLocationsFrac()[i][2];
+            data[4+i][2]=getAtomLocationsFrac()[i][3];
+            data[4+i][3]=getAtomLocationsFrac()[i][4];            
           }
         }
         else
@@ -720,10 +719,10 @@ namespace dftfe
           for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
           {
             data[4+i]=std::vector<double>(4,0);   
-            data[4+i][0]=getAtomLocationsFrac()[i][0];
-            data[4+i][1]=getAtomLocationsFrac()[i][2];
-            data[4+i][2]=getAtomLocationsFrac()[i][3];
-            data[4+i][3]=getAtomLocationsFrac()[i][4];     
+            data[4+i][0]=getAtomLocationsCart()[i][0];
+            data[4+i][1]=getAtomLocationsCart()[i][2];
+            data[4+i][2]=getAtomLocationsCart()[i][3];
+            data[4+i][3]=getAtomLocationsCart()[i][4];     
           }          
         }
 
@@ -732,10 +731,10 @@ namespace dftfe
 
         for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
         {
-            data[7+i]=std::vector<double>(3,0);   
-            data[7+i][0]=getForceonAtoms()[3*i];  
-            data[7+i][1]=getForceonAtoms()[3*i+1];  
-            data[7+i][2]=getForceonAtoms()[3*i+2];              
+            data[7+numberGlobalAtoms+i]=std::vector<double>(3,0);   
+            data[7+numberGlobalAtoms+i][0]=getForceonAtoms()[3*i];  
+            data[7+numberGlobalAtoms+i][1]=getForceonAtoms()[3*i+1];  
+            data[7+numberGlobalAtoms+i][2]=getForceonAtoms()[3*i+2];              
         }
 
         dftUtils::writeDataIntoFile(data,
