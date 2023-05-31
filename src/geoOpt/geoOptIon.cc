@@ -333,7 +333,7 @@ namespace dftfe
     if (solverReturn == nonLinearSolver::SUCCESS && d_dftPtr->getParametersObject().writeStructreEnergyForcesFileForPostProcess)
     {
         std::string fileName =
-           "structEnergyForcesDataIonRelaxed";
+           "structureEnergyForcesGSDataIonRelaxed.txt";
         d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
     }
 
@@ -682,7 +682,7 @@ namespace dftfe
     if (d_dftPtr->getParametersObject().writeStructreEnergyForcesFileForPostProcess)
     {
         std::string fileName =
-           "structEnergyForcesData" + std::to_string(d_totalUpdateCalls);
+           "structureEnergyForcesGSData_ionRelaxStep" + std::to_string(d_totalUpdateCalls)+".txt";
         d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
     }
   }

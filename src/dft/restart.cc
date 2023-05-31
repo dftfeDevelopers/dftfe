@@ -693,53 +693,65 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::writeStructureEnergyForcesDataPostProcess(const std::string Path) const
   {
         const int           numberGlobalAtoms = atomLocations.size();    
-        std::vector<std::vector<double>> data(4+numberGlobalAtoms+2+numberGlobalAtoms,std::vector<double>(1,0));
+        std::vector<std::vector<double>> data(4+numberGlobalAtoms+2+(d_dftParamsPtr->isIonForce?numberGlobalAtoms:0)+(d_dftParamsPtr->isCellStress?3:0),std::vector<double>(1,0));
+
         data[0][0] = numberGlobalAtoms;
         data[1]=getCell()[0];
         data[2]=getCell()[1];
         data[3]=getCell()[2];   
-
+        
         if (getParametersObject().periodicX ||
                 getParametersObject().periodicY ||
                 getParametersObject().periodicZ)
         {
-
+          std::vector<std::vector<double>> atomsFrac=getAtomLocationsFrac();
           for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
           {
             data[4+i]=std::vector<double>(4,0);   
-            data[4+i][0]=getAtomLocationsFrac()[i][0];
-            data[4+i][1]=getAtomLocationsFrac()[i][2];
-            data[4+i][2]=getAtomLocationsFrac()[i][3];
-            data[4+i][3]=getAtomLocationsFrac()[i][4];            
+            data[4+i][0]=atomsFrac[i][0];
+            data[4+i][1]=atomsFrac[i][2];
+            data[4+i][2]=atomsFrac[i][3];
+            data[4+i][3]=atomsFrac[i][4];            
           }
         }
         else
         {
-
+          std::vector<std::vector<double>> atomsCart=getAtomLocationsCart();
           for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
           {
             data[4+i]=std::vector<double>(4,0);   
-            data[4+i][0]=getAtomLocationsCart()[i][0];
-            data[4+i][1]=getAtomLocationsCart()[i][2];
-            data[4+i][2]=getAtomLocationsCart()[i][3];
-            data[4+i][3]=getAtomLocationsCart()[i][4];     
+            data[4+i][0]=atomsCart[i][0];
+            data[4+i][1]=atomsCart[i][2];
+            data[4+i][2]=atomsCart[i][3];
+            data[4+i][3]=atomsCart[i][4];     
           }          
         }
 
-        data[5+numberGlobalAtoms][0]=getFreeEnergy();
-        data[6+numberGlobalAtoms][0]=getInternalEnergy();
-
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+        data[4+numberGlobalAtoms][0]=getFreeEnergy();
+        data[5+numberGlobalAtoms][0]=getInternalEnergy();
+        if (d_dftParamsPtr->isIonForce)
         {
-            data[7+numberGlobalAtoms+i]=std::vector<double>(3,0);   
-            data[7+numberGlobalAtoms+i][0]=getForceonAtoms()[3*i];  
-            data[7+numberGlobalAtoms+i][1]=getForceonAtoms()[3*i+1];  
-            data[7+numberGlobalAtoms+i][2]=getForceonAtoms()[3*i+2];              
+          for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            data[6+numberGlobalAtoms+i]=std::vector<double>(3,0);   
+            data[6+numberGlobalAtoms+i][0]=-getForceonAtoms()[3*i];  
+            data[6+numberGlobalAtoms+i][1]=-getForceonAtoms()[3*i+1];  
+            data[6+numberGlobalAtoms+i][2]=-getForceonAtoms()[3*i+2];              
+          }
         }
+
+
+        if (d_dftParamsPtr->isCellStress)
+        {
+          for (unsigned int i = 0; i < 3; ++i)
+            for (unsigned int j = 0; j < 3; ++j)
+               data[6+2*numberGlobalAtoms+i][j]=-getCellStress()[i][j];
+        }
+
 
         dftUtils::writeDataIntoFile(data,
                                     Path,
-                                    mpi_communicator);    
+                                    d_mpiCommParent);    
   }
 
 #include "dft.inst.cc"
