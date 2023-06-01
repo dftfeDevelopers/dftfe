@@ -36,26 +36,25 @@ namespace dftfe
      * Third, creates the array of pointers of dftClass for each image.
      */
 
-    nudgedElasticBandClass(
-    const std::string  parameter_file,
-    const std::string  restartFilesPath,
-    const MPI_Comm &   mpi_comm_parent,
-    const bool         restart,
-    const int          verbosity,
-    int                d_numberOfImages,
-    bool               imageFreeze,
-    double             Kmax,
-    double             Kmin,
-    double             pathThreshold,
-    int                maximumNEBIteration,
-    unsigned int        _maxLineSearchIterCGPRP,
-    unsigned int _lbfgsNumPastSteps,
-    std::string &_bfgsStepMethod,
-    double optimizermaxIonUpdateStep,
-    std::string &optimizationSolver,
-    const std::string &coordinatesFileNEB,
-    const std::string &domainVectorsFileNEB,
-    const std::string &ionRelaxFlagsFile);
+    nudgedElasticBandClass(const std::string  parameter_file,
+                           const std::string  restartFilesPath,
+                           const MPI_Comm &   mpi_comm_parent,
+                           const bool         restart,
+                           const int          verbosity,
+                           int                d_numberOfImages,
+                           bool               imageFreeze,
+                           double             Kmax,
+                           double             Kmin,
+                           double             pathThreshold,
+                           int                maximumNEBIteration,
+                           unsigned int       _maxLineSearchIterCGPRP,
+                           unsigned int       _lbfgsNumPastSteps,
+                           std::string &      _bfgsStepMethod,
+                           double             optimizermaxIonUpdateStep,
+                           std::string &      optimizationSolver,
+                           const std::string &coordinatesFileNEB,
+                           const std::string &domainVectorsFileNEB,
+                           const std::string &ionRelaxFlagsFile);
 
     //~nudgedElasticBandClass();
 
@@ -138,27 +137,27 @@ namespace dftfe
     bool        d_imageFreeze;
 
     /// total number of calls to update()
-    int                 d_totalUpdateCalls;
-    int                 d_startStep;
-    int                 d_solver;
-    bool                d_isRestart;
-    bool                d_solverRestart;
-    unsigned int        d_restartFlag;
-    unsigned int        d_numberGlobalCharges;
-    double              d_maximumAtomForceToBeRelaxed;
-    unsigned int        d_numberOfImages;     
-    unsigned int        d_countrelaxationFlags;
-    //Solver Details
-    unsigned int        d_maximumNEBIteration;
-    double              d_optimizertolerance;
-    unsigned int        maxLineSearchIterCGPRP;
-    std::string bfgsStepMethod;
-    double d_optimizermaxIonUpdateStep;
-    unsigned int lbfgsNumPastSteps; 
-    std::string d_optimizationSolver;  
-    std::string d_ionRelaxFlagsFile;  
+    int          d_totalUpdateCalls;
+    int          d_startStep;
+    int          d_solver;
+    bool         d_isRestart;
+    bool         d_solverRestart;
+    unsigned int d_restartFlag;
+    unsigned int d_numberGlobalCharges;
+    double       d_maximumAtomForceToBeRelaxed;
+    unsigned int d_numberOfImages;
+    unsigned int d_countrelaxationFlags;
+    // Solver Details
+    unsigned int d_maximumNEBIteration;
+    double       d_optimizertolerance;
+    unsigned int maxLineSearchIterCGPRP;
+    std::string  bfgsStepMethod;
+    double       d_optimizermaxIonUpdateStep;
+    unsigned int lbfgsNumPastSteps;
+    std::string  d_optimizationSolver;
+    std::string  d_ionRelaxFlagsFile;
 
-    std::vector<double> d_forceOnImages;
+    std::vector<double>                             d_forceOnImages;
     std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;
     std::vector<unsigned int>                       d_relaxationFlags;
     std::vector<double>                             d_externalForceOnAtom;

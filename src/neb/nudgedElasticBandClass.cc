@@ -42,17 +42,19 @@ namespace dftfe
     double             Kmin,
     double             pathThreshold,
     int                maximumNEBIteration,
-    unsigned int        _maxLineSearchIterCGPRP,
-    unsigned int _lbfgsNumPastSteps,
-    std::string &_bfgsStepMethod,
-    double optimizermaxIonUpdateStep,
-    std::string &optimizationSolver,
+    unsigned int       _maxLineSearchIterCGPRP,
+    unsigned int       _lbfgsNumPastSteps,
+    std::string &      _bfgsStepMethod,
+    double             optimizermaxIonUpdateStep,
+    std::string &      optimizationSolver,
     const std::string &coordinatesFileNEB,
     const std::string &domainVectorsFileNEB,
     const std::string &ionRelaxFlagsFile)
     : d_mpiCommParent(mpi_comm_parent)
-    , d_this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_restartFilesPath(restartFilesPath)
     , d_isRestart(restart)
     , d_verbosity(verbosity)
@@ -1223,7 +1225,6 @@ namespace dftfe
 
 
 
-
   void
   nudgedElasticBandClass::ImageError(int image, double &Force)
   {
@@ -1291,11 +1292,10 @@ namespace dftfe
       {
         std::vector<std::vector<int>>    tempRelaxFlagsData;
         std::vector<std::vector<double>> tempForceData;
-        dftUtils::readRelaxationFlagsFile(
-          6,
-          tempRelaxFlagsData,
-          tempForceData,
-          d_ionRelaxFlagsFile);
+        dftUtils::readRelaxationFlagsFile(6,
+                                          tempRelaxFlagsData,
+                                          tempForceData,
+                                          d_ionRelaxFlagsFile);
         AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
                     dealii::ExcMessage(
                       "Incorrect number of entries in relaxationFlags file"));
@@ -1500,16 +1500,12 @@ namespace dftfe
             pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
 
             pcout << "      preconditioner: "
-                  << "false"
-                  << std::endl;
+                  << "false" << std::endl;
 
-            pcout << "      step method: "
-                  << bfgsStepMethod
-                  << std::endl;
+            pcout << "      step method: " << bfgsStepMethod << std::endl;
 
             pcout << "      maxiumum step length: "
-                  << d_optimizermaxIonUpdateStep
-                  << std::endl;
+                  << d_optimizermaxIonUpdateStep << std::endl;
 
 
             pcout << "   -----------------------------------------  "
@@ -1523,14 +1519,10 @@ namespace dftfe
                   << std::endl;
             pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
             pcout << "      preconditioner: "
-                  << "false"
-                  << std::endl;
-            pcout << "      lbfgs history: "
-                  << lbfgsNumPastSteps
-                  << std::endl;
+                  << "false" << std::endl;
+            pcout << "      lbfgs history: " << lbfgsNumPastSteps << std::endl;
             pcout << "      maxiumum step length: "
-                  << d_optimizermaxIonUpdateStep
-                  << std::endl;
+                  << d_optimizermaxIonUpdateStep << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
@@ -1542,13 +1534,11 @@ namespace dftfe
                   << std::endl;
             pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
             pcout << "      lineSearch tol: " << 1e-4 << std::endl;
-            pcout << "      lineSearch maxIter: "
-                  << maxLineSearchIterCGPRP
+            pcout << "      lineSearch maxIter: " << maxLineSearchIterCGPRP
                   << std::endl;
             pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
             pcout << "      maxiumum step length: "
-                  << d_optimizermaxIonUpdateStep
-                  << std::endl;
+                  << d_optimizermaxIonUpdateStep << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
           }
@@ -1628,14 +1618,14 @@ namespace dftfe
     pcout << "Checking for files in Step: " << d_totalUpdateCalls << std::endl;
     std::string path =
       d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
-    bool        flag       = false;
+    bool flag = false;
     pcout << "Looking for files of Step " << d_totalUpdateCalls
           << " at: " << path << std::endl;
     while (!flag && d_totalUpdateCalls > 1)
       {
         path =
           d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
-        flag = true;  
+        flag = true;
         for (int image = 0; image < d_numberOfImages; image++)
           {
             std::string file1;
@@ -1650,9 +1640,9 @@ namespace dftfe
             std::ifstream readFile1(file1.c_str());
             std::ifstream readFile2(file2.c_str());
             flag = flag && !readFile1.fail() && !readFile2.fail();
-            pcout<<!readFile1.fail()<<" "<<file1<<std::endl;
-            pcout<<!readFile2.fail()<<" "<<file2<<std::endl;
-            pcout<<"Image no: "<<image<<" "<<flag<<std::endl;
+            pcout << !readFile1.fail() << " " << file1 << std::endl;
+            pcout << !readFile2.fail() << " " << file2 << std::endl;
+            pcout << "Image no: " << image << " " << flag << std::endl;
           }
 
         if (flag)

@@ -171,13 +171,14 @@ namespace dftfe
 
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files for
-     * structural optimization and dynamics restarts. The coordinates are stored as: 1. fractional for semi-periodic/periodic 2. Cartesian for non-periodic.
+     * structural optimization and dynamics restarts. The coordinates are stored
+     * as: 1. fractional for semi-periodic/periodic 2. Cartesian for
+     * non-periodic.
      * @param[in] Path The folder path to store the atom coordinates required
      * during restart.
      */
     virtual void
-    writeDomainAndAtomCoordinates(
-      const std::string Path) const = 0;
+    writeDomainAndAtomCoordinates(const std::string Path) const = 0;
 
 
     /**

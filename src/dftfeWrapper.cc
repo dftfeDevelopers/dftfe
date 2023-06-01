@@ -1131,8 +1131,7 @@ namespace dftfe
 
 
   void
-  dftfeWrapper::writeDomainAndAtomCoordinates(
-    const std::string Path) const
+  dftfeWrapper::writeDomainAndAtomCoordinates(const std::string Path) const
   {
     AssertThrow(
       d_mpi_comm_parent != MPI_COMM_NULL,

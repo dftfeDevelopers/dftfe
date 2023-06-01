@@ -42,14 +42,14 @@ namespace dftfe
     double      Kmin;
     double      pathThreshold;
     int         maximumNEBiteration;
-    
-    unsigned int        maxLineSearchIterCGPRP;
-    std::string bfgsStepMethod;
-    double optimizermaxIonUpdateStep;
-    unsigned int lbfgsNumPastSteps; 
-    std::string optimizationSolver;   
-    std::string ionRelaxFlagsFile;  
-    
+
+    unsigned int maxLineSearchIterCGPRP;
+    std::string  bfgsStepMethod;
+    double       optimizermaxIonUpdateStep;
+    unsigned int lbfgsNumPastSteps;
+    std::string  optimizationSolver;
+    std::string  ionRelaxFlagsFile;
+
     std::string coordinatesFileNEB, domainVectorsFileNEB;
     runParameters() = default;
 

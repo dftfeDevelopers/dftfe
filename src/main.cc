@@ -171,25 +171,26 @@ main(int argc, char *argv[])
 
   else if (runParams.solvermode == "NEB")
     {
-      dftfe::nudgedElasticBandClass nebClass(parameter_file,
-                                             runParams.restartFilesPath,
-                                             MPI_COMM_WORLD,
-                                             runParams.restart,
-                                             runParams.verbosity,
-                                             runParams.numberOfImages,
-                                             runParams.imageFreeze,
-                                             runParams.Kmax,
-                                             runParams.Kmin,
-                                             runParams.pathThreshold,
-                                             runParams.maximumNEBiteration,
-                                             runParams.maxLineSearchIterCGPRP,
-                                             runParams.lbfgsNumPastSteps,
-                                             runParams.bfgsStepMethod,
-                                             runParams.optimizermaxIonUpdateStep,
-                                             runParams.optimizationSolver,
-                                             runParams.coordinatesFileNEB,
-                                             runParams.domainVectorsFileNEB,
-                                             runParams.ionRelaxFlagsFile);
+      dftfe::nudgedElasticBandClass nebClass(
+        parameter_file,
+        runParams.restartFilesPath,
+        MPI_COMM_WORLD,
+        runParams.restart,
+        runParams.verbosity,
+        runParams.numberOfImages,
+        runParams.imageFreeze,
+        runParams.Kmax,
+        runParams.Kmin,
+        runParams.pathThreshold,
+        runParams.maximumNEBiteration,
+        runParams.maxLineSearchIterCGPRP,
+        runParams.lbfgsNumPastSteps,
+        runParams.bfgsStepMethod,
+        runParams.optimizermaxIonUpdateStep,
+        runParams.optimizationSolver,
+        runParams.coordinatesFileNEB,
+        runParams.domainVectorsFileNEB,
+        runParams.ionRelaxFlagsFile);
 
       int status = nebClass.run();
     }
