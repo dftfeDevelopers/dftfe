@@ -20,6 +20,24 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+
+\item {\it Parameter name:} {\tt WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+\phantomsection\label{parameters:WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+\label{parameters:WRITE_20STRUCTURE_20ENERGY_20FORCES_20DATA_20POST_20PROCESS}
+
+
+\index[prmindex]{WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+\index[prmindexfull]{WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+{\it Description:} [Standard] Write ground-state atomistics data to a file with the suffix number in the file-name denoting the geometry relaxation step number. Order: lattice vectors (see format for DOMAIN BOUNDING VECTORS), number of atoms, structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian with cell centered origin for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row correspoindng to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Printed as sigma\[i\]\[j\] with i denoting the row index and j denoting the column index. Atomic units used everywhere. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+
 \item {\it Parameter name:} {\tt KEEP SCRATCH FOLDER}
 \phantomsection\label{parameters:KEEP SCRATCH FOLDER}
 \label{parameters:KEEP_20SCRATCH_20FOLDER}
@@ -2104,6 +2122,23 @@
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+\item {\it Parameter name:} {\tt GPU MODE}
+\phantomsection\label{parameters:Poisson problem parameters/GPU MODE}
+\label{parameters:Poisson_20problem_20parameters/GPU MODE}
+
+
+\index[prmindex]{GPU MODE}
+\index[prmindexfull]{Poisson problem parameters!GPU_20MODE}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Toggle GPU MODE in Poisson solve.
+
+
+{\it Possible values:}  A boolean value (true or false)
 \end{itemize}
 
 \subsection{Parameters in section \tt SCF Checkpointing and Restart}

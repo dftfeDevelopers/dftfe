@@ -32,6 +32,12 @@ namespace dftfe
     declare_parameters(dealii::ParameterHandler &prm)
     {
       prm.declare_entry(
+        "WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS",
+        "false",
+        dealii::Patterns::Bool(),
+        "[Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.");
+
+      prm.declare_entry(
         "REPRODUCIBLE OUTPUT",
         "false",
         dealii::Patterns::Bool(),
@@ -1025,6 +1031,11 @@ namespace dftfe
           "1e-10",
           dealii::Patterns::Double(0, 1.0),
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
+
+        prm.declare_entry("GPU MODE",
+                          "false",
+                          dealii::Patterns::Bool(),
+                          "[Advanced] Toggle GPU MODE in Poisson solve.");
       }
       prm.leave_subsection();
 
@@ -1184,6 +1195,7 @@ namespace dftfe
     numPass                                    = 1;
     numSCFIterations                           = 1;
     maxLinearSolverIterations                  = 1;
+    poissonGPU                                 = true;
     mixingHistory                              = 1;
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
@@ -1353,6 +1365,8 @@ namespace dftfe
     maxStaggeredCycles = 100;
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
+
+    writeStructreEnergyForcesFileForPostProcess = false;
   }
 
 
@@ -1372,6 +1386,8 @@ namespace dftfe
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     restartFolder             = restartFilesPath;
+    writeStructreEnergyForcesFileForPostProcess =
+      prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
 
     prm.enter_subsection("GPU");
     {
@@ -1632,6 +1648,7 @@ namespace dftfe
     {
       maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
       absLinearSolverTolerance  = prm.get_double("TOLERANCE");
+      poissonGPU                = prm.get_bool("GPU MODE");
     }
     prm.leave_subsection();
 
