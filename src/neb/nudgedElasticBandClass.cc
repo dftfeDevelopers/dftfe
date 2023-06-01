@@ -710,7 +710,7 @@ namespace dftfe
       {
         pcout
           << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
-          << d_dftPtr->getParametersObject().forceRelaxTol
+          << d_optimizertolerance
           << ", total number of ion position updates: " << d_totalUpdateCalls
           << std::endl;
         pcout << "--------------Final Ground State Results-------------"
@@ -1429,7 +1429,7 @@ namespace dftfe
         pcout << "    " << i << "    " << Force << "    " << Energy << "    "
               << std::endl;
         d_forceOnImages.push_back(Force);
-        if (Force > Forcecutoff && i > 0 && i < d_numberOfImages - 1)
+        if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
             flag = false;
           }

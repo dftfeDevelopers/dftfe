@@ -658,11 +658,7 @@ namespace dftfe
           dealii::Patterns::Integer(0, 1),
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
-        prm.declare_entry(
-          "NUMBER OF IMAGES",
-          "1",
-          dealii::Patterns::Integer(1, 50),
-          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");
+ 
 
 
 
@@ -1058,25 +1054,25 @@ namespace dftfe
 
         prm.declare_entry(
           "NUMBER OF IMAGES",
-          "1",
+          "7",
           dealii::Patterns::Integer(1, 50),
-          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");
+          "[Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points");
 
         prm.declare_entry(
           "MAXIMUM SPRING CONSTANT",
-          "1e-1",
+          "5e-3",
           dealii::Patterns::Double(),
           "[Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)");
 
         prm.declare_entry(
           "MINIMUM SPRING CONSTANT",
-          "5e-2",
+          "2e-3",
           dealii::Patterns::Double(),
           "[Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)");
 
         prm.declare_entry(
           "PATH THRESHOLD",
-          "1e-1",
+          "5e-4",
           dealii::Patterns::Double(),
           "[Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD ");
 

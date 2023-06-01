@@ -143,7 +143,6 @@ namespace dftfe
     unsigned int        d_maximumNEBIteration;
     double              d_optimizertolerance;
     unsigned int        optimizermatItr;
-    double              Forcecutoff;
     unsigned int        d_countrelaxationFlags;
     std::vector<double> d_forceOnImages;
     std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;
