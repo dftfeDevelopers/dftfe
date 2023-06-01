@@ -47,7 +47,8 @@ namespace dftfe
     std::string bfgsStepMethod;
     double optimizermaxIonUpdateStep;
     unsigned int lbfgsNumPastSteps; 
-    std::string optimizationSolver;     
+    std::string optimizationSolver;   
+    std::string ionRelaxFlagsFile;  
     
     std::string coordinatesFileNEB, domainVectorsFileNEB;
     runParameters() = default;

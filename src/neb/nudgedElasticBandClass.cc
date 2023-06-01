@@ -48,7 +48,8 @@ namespace dftfe
     double optimizermaxIonUpdateStep,
     std::string &optimizationSolver,
     const std::string &coordinatesFileNEB,
-    const std::string &domainVectorsFileNEB)
+    const std::string &domainVectorsFileNEB,
+    const std::string &ionRelaxFlagsFile)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
@@ -66,6 +67,7 @@ namespace dftfe
     , d_optimizermaxIonUpdateStep(optimizermaxIonUpdateStep)
     , d_optimizationSolver(optimizationSolver)
     , bfgsStepMethod(_bfgsStepMethod)
+    , d_ionRelaxFlagsFile(ionRelaxFlagsFile)
 
   {
     // Read Coordinates file and create coordinates for each image
@@ -1285,7 +1287,7 @@ namespace dftfe
   nudgedElasticBandClass::init()
   {
     double step_time;
-    if (d_dftPtr->getParametersObject().ionRelaxFlagsFile != "")
+    if (d_ionRelaxFlagsFile != "")
       {
         std::vector<std::vector<int>>    tempRelaxFlagsData;
         std::vector<std::vector<double>> tempForceData;
@@ -1293,7 +1295,7 @@ namespace dftfe
           6,
           tempRelaxFlagsData,
           tempForceData,
-          d_dftPtr->getParametersObject().ionRelaxFlagsFile);
+          d_ionRelaxFlagsFile);
         AssertThrow(tempRelaxFlagsData.size() == d_numberGlobalCharges,
                     dealii::ExcMessage(
                       "Incorrect number of entries in relaxationFlags file"));

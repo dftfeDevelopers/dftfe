@@ -168,6 +168,7 @@ namespace dftfe
       optimizermaxIonUpdateStep = prm.get_double("MAXIMUM ION UPDATE STEP");
       lbfgsNumPastSteps = prm.get_integer("LBFGS HISTORY");
       optimizationSolver = prm.get("NEB OPT SOLVER");
+      ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
     }
 
 

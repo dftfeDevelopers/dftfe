@@ -54,7 +54,8 @@ namespace dftfe
     double optimizermaxIonUpdateStep,
     std::string &optimizationSolver,
     const std::string &coordinatesFileNEB,
-    const std::string &domainVectorsFileNEB);
+    const std::string &domainVectorsFileNEB,
+    const std::string &ionRelaxFlagsFile);
 
     //~nudgedElasticBandClass();
 
@@ -154,7 +155,8 @@ namespace dftfe
     std::string bfgsStepMethod;
     double d_optimizermaxIonUpdateStep;
     unsigned int lbfgsNumPastSteps; 
-    std::string d_optimizationSolver;    
+    std::string d_optimizationSolver;  
+    std::string d_ionRelaxFlagsFile;  
 
     std::vector<double> d_forceOnImages;
     std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;

@@ -188,7 +188,8 @@ main(int argc, char *argv[])
                                              runParams.optimizermaxIonUpdateStep,
                                              runParams.optimizationSolver,
                                              runParams.coordinatesFileNEB,
-                                             runParams.domainVectorsFileNEB);
+                                             runParams.domainVectorsFileNEB,
+                                             runParams.ionRelaxFlagsFile);
 
       int status = nebClass.run();
     }

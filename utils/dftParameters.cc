@@ -1489,15 +1489,14 @@ namespace dftfe
           maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
           maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
           maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+          ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
         }
         optimizationMode       = prm.get("OPTIMIZATION MODE");       
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
         isIonForce =
           prm.get_bool("ION FORCE") ||
           ((optimizationMode == "ION" || optimizationMode == "IONCELL") &&
-           solverMode == "GEOOPT");
-        
-        ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
+           solverMode == "GEOOPT");       
         isCellStress =
           prm.get_bool("CELL STRESS") ||
           ((optimizationMode == "CELL" || optimizationMode == "IONCELL") &&
@@ -1526,6 +1525,7 @@ namespace dftfe
           maxOptIter         = prm.get_integer("MAXIMUM NUMBER OF NEB ITERATIONS");
           maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
           maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+          ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
 
       }
       prm.leave_subsection();
@@ -1621,7 +1621,6 @@ namespace dftfe
       modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
       start_magnetization   = prm.get_double("START MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
-      TotalImages           = prm.get_integer("NUMBER OF IMAGES");
     }
     prm.leave_subsection();
 
