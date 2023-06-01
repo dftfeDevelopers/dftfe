@@ -42,6 +42,11 @@ namespace dftfe
     double             Kmin,
     double             pathThreshold,
     int                maximumNEBIteration,
+    unsigned int        _maxLineSearchIterCGPRP,
+    unsigned int _lbfgsNumPastSteps,
+    std::string &_bfgsStepMethod,
+    double optimizermaxIonUpdateStep,
+    std::string &optimizationSolver,
     const std::string &coordinatesFileNEB,
     const std::string &domainVectorsFileNEB)
     : d_mpiCommParent(mpi_comm_parent)
@@ -56,6 +61,11 @@ namespace dftfe
     , d_kmin(Kmin)
     , d_optimizertolerance(pathThreshold)
     , d_maximumNEBIteration(maximumNEBIteration)
+    , lbfgsNumPastSteps(_lbfgsNumPastSteps)
+    , maxLineSearchIterCGPRP(_maxLineSearchIterCGPRP)
+    , d_optimizermaxIonUpdateStep(optimizermaxIonUpdateStep)
+    , d_optimizationSolver(optimizationSolver)
+    , bfgsStepMethod(_bfgsStepMethod)
 
   {
     // Read Coordinates file and create coordinates for each image
@@ -187,11 +197,11 @@ namespace dftfe
           }
       }
     d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
-    if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
+    if (d_optimizationSolver == "BFGS")
       d_solver = 0;
-    else if (d_dftPtr->getParametersObject().ionOptSolver == "LBFGS")
+    else if (d_optimizationSolver == "LBFGS")
       d_solver = 1;
-    else if (d_dftPtr->getParametersObject().ionOptSolver == "CGPRP")
+    else if (d_optimizationSolver == "CGPRP")
       d_solver = 2;
 
     AssertThrow(
@@ -1449,19 +1459,19 @@ namespace dftfe
 
     if (d_solver == 0)
       d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
-        d_dftPtr->getParametersObject().usePreconditioner,
-        d_dftPtr->getParametersObject().bfgsStepMethod == "RFO",
+        false,
+        bfgsStepMethod == "RFO",
         d_maximumNEBIteration,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
-        d_dftPtr->getParametersObject().maxIonUpdateStep,
+        d_optimizermaxIonUpdateStep,
         true);
     else if (d_solver == 1)
       d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
-        d_dftPtr->getParametersObject().usePreconditioner,
-        d_dftPtr->getParametersObject().maxIonUpdateStep,
+        false,
+        d_optimizermaxIonUpdateStep,
         d_maximumNEBIteration,
-        d_dftPtr->getParametersObject().lbfgsNumPastSteps,
+        lbfgsNumPastSteps,
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
         true);
@@ -1471,9 +1481,9 @@ namespace dftfe
         d_dftPtr->getParametersObject().verbosity,
         d_mpiCommParent,
         1e-4,
-        d_dftPtr->getParametersObject().maxLineSearchIterCGPRP,
+        maxLineSearchIterCGPRP,
         0.8,
-        d_dftPtr->getParametersObject().maxIonUpdateStep,
+        d_optimizermaxIonUpdateStep,
         true);
 
     if (d_dftPtr->getParametersObject().verbosity >= 1)
@@ -1488,15 +1498,15 @@ namespace dftfe
             pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
 
             pcout << "      preconditioner: "
-                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << "false"
                   << std::endl;
 
             pcout << "      step method: "
-                  << d_dftPtr->getParametersObject().bfgsStepMethod
+                  << bfgsStepMethod
                   << std::endl;
 
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << d_optimizermaxIonUpdateStep
                   << std::endl;
 
 
@@ -1511,13 +1521,13 @@ namespace dftfe
                   << std::endl;
             pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
             pcout << "      preconditioner: "
-                  << d_dftPtr->getParametersObject().usePreconditioner
+                  << "false"
                   << std::endl;
             pcout << "      lbfgs history: "
-                  << d_dftPtr->getParametersObject().lbfgsNumPastSteps
+                  << lbfgsNumPastSteps
                   << std::endl;
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << d_optimizermaxIonUpdateStep
                   << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;
@@ -1531,11 +1541,11 @@ namespace dftfe
             pcout << "      maxIter: " << d_maximumNEBIteration << std::endl;
             pcout << "      lineSearch tol: " << 1e-4 << std::endl;
             pcout << "      lineSearch maxIter: "
-                  << d_dftPtr->getParametersObject().maxLineSearchIterCGPRP
+                  << maxLineSearchIterCGPRP
                   << std::endl;
             pcout << "      lineSearch damping parameter: " << 0.8 << std::endl;
             pcout << "      maxiumum step length: "
-                  << d_dftPtr->getParametersObject().maxIonUpdateStep
+                  << d_optimizermaxIonUpdateStep
                   << std::endl;
             pcout << "   -----------------------------------------  "
                   << std::endl;

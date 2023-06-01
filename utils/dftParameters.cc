@@ -1095,6 +1095,37 @@ namespace dftfe
           "[Standard] Maximum number of NEB iterations that will be performed in the simulation");
 
         prm.declare_entry(
+            "ION OPT SOLVER",
+            "LBFGS",
+            dealii::Patterns::Selection("BFGS|LBFGS|CGPRP"),
+            "[Standard] Method for Ion relaxation solver. LBFGS is the default");
+        prm.declare_entry(
+            "MAXIMUM ION UPDATE STEP",
+            "0.5",
+            dealii::Patterns::Double(0, 5.0),
+            "[Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.");
+        prm.declare_entry(
+            "MAX LINE SEARCH ITER",
+            "5",
+            dealii::Patterns::Integer(1, 100),
+            "[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
+        prm.declare_entry(
+            "ION RELAX FLAGS FILE",
+            "",
+            dealii::Patterns::Anything(),
+            "[Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.");
+        prm.declare_entry(
+            "BFGS STEP METHOD",
+            "QN",
+            dealii::Patterns::Selection("QN|RFO"),
+            "[Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.");
+        prm.declare_entry(
+            "LBFGS HISTORY",
+            "5",
+            dealii::Patterns::Integer(1, 20),
+            "[Standard] Number of previous steps to considered for the LBFGS update.");
+
+        prm.declare_entry(
           "NEB COORDINATES FILE",
           "",
           dealii::Patterns::Anything(),
@@ -1105,6 +1136,9 @@ namespace dftfe
           "",
           dealii::Patterns::Anything(),
           "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
+
+
+
       }
       prm.leave_subsection();
 
@@ -1444,16 +1478,25 @@ namespace dftfe
       domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
       prm.enter_subsection("Optimization");
       {
-        optimizationMode       = prm.get("OPTIMIZATION MODE");
-        ionOptSolver           = prm.get("ION OPT SOLVER");
-        cellOptSolver          = prm.get("CELL OPT SOLVER");
-        maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+        if(solverMode !="NEB")
+        {
+          ionOptSolver           = prm.get("ION OPT SOLVER");
+          cellOptSolver          = prm.get("CELL OPT SOLVER");          
+          forceRelaxTol     = prm.get_double("FORCE TOL");
+          bfgsStepMethod     = prm.get("BFGS STEP METHOD");
+          usePreconditioner  = prm.get_bool("USE PRECONDITIONER");
+          lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
+          maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+          maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+          maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+        }
+        optimizationMode       = prm.get("OPTIMIZATION MODE");       
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
         isIonForce =
           prm.get_bool("ION FORCE") ||
           ((optimizationMode == "ION" || optimizationMode == "IONCELL") &&
            solverMode == "GEOOPT");
-        forceRelaxTol     = prm.get_double("FORCE TOL");
+        
         ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
         isCellStress =
           prm.get_bool("CELL STRESS") ||
@@ -1463,18 +1506,30 @@ namespace dftfe
         cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
         reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
         reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
-        bfgsStepMethod     = prm.get("BFGS STEP METHOD");
-        usePreconditioner  = prm.get_bool("USE PRECONDITIONER");
-        lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
-        maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+
         maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-        maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+        
         maxCellUpdateStep  = prm.get_double("MAXIMUM CELL UPDATE STEP");
       }
       prm.leave_subsection();
     }
     prm.leave_subsection();
+    if(solverMode == "NEB")
+    {
+      prm.enter_subsection("NEB");
+      {
+          ionOptSolver           = prm.get("NEB OPT SOLVER");
+          cellOptSolver          = prm.get("NEB OPT SOLVER");          
+          forceRelaxTol     = prm.get_double("PATH THRESHOLD");
+          bfgsStepMethod     = prm.get("BFGS STEP METHOD");
+          lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
+          maxOptIter         = prm.get_integer("MAXIMUM NUMBER OF NEB ITERATIONS");
+          maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+          maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
 
+      }
+      prm.leave_subsection();
+    }
     prm.enter_subsection("Boundary conditions");
     {
       radiusAtomBall           = prm.get_double("SELF POTENTIAL RADIUS");

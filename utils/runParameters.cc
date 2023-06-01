@@ -65,7 +65,7 @@ namespace dftfe
         prm.declare_entry(
           "NUMBER OF IMAGES",
           "7",
-          dealii::Patterns::Integer(1, 20),
+          dealii::Patterns::Integer(1, 50),
           "[Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points");
 
         prm.declare_entry(
@@ -92,6 +92,37 @@ namespace dftfe
           "100",
           dealii::Patterns::Integer(1, 250),
           "[Standard] Maximum number of NEB iterations that will be performed in the simulation");
+
+        prm.declare_entry(
+            "ION OPT SOLVER",
+            "LBFGS",
+            dealii::Patterns::Selection("BFGS|LBFGS|CGPRP"),
+            "[Standard] Method for Ion relaxation solver. LBFGS is the default");
+        prm.declare_entry(
+            "MAXIMUM ION UPDATE STEP",
+            "0.5",
+            dealii::Patterns::Double(0, 5.0),
+            "[Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.");
+        prm.declare_entry(
+            "MAX LINE SEARCH ITER",
+            "5",
+            dealii::Patterns::Integer(1, 100),
+            "[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
+        prm.declare_entry(
+            "ION RELAX FLAGS FILE",
+            "",
+            dealii::Patterns::Anything(),
+            "[Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.");
+        prm.declare_entry(
+            "BFGS STEP METHOD",
+            "QN",
+            dealii::Patterns::Selection("QN|RFO"),
+            "[Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.");
+        prm.declare_entry(
+            "LBFGS HISTORY",
+            "5",
+            dealii::Patterns::Integer(1, 20),
+            "[Standard] Number of previous steps to considered for the LBFGS update.");
 
         prm.declare_entry(
           "NEB COORDINATES FILE",
@@ -132,6 +163,11 @@ namespace dftfe
       maximumNEBiteration = prm.get_integer("MAXIMUM NUMBER OF NEB ITERATIONS");
       coordinatesFileNEB  = prm.get("NEB COORDINATES FILE");
       domainVectorsFileNEB = prm.get("NEB DOMAIN VECTORS FILE");
+      maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+      bfgsStepMethod = prm.get("BFGS STEP METHOD");
+      optimizermaxIonUpdateStep = prm.get_double("MAXIMUM ION UPDATE STEP");
+      lbfgsNumPastSteps = prm.get_integer("LBFGS HISTORY");
+      optimizationSolver = prm.get("NEB OPT SOLVER");
     }
 
 

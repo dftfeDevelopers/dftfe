@@ -182,6 +182,11 @@ main(int argc, char *argv[])
                                              runParams.Kmin,
                                              runParams.pathThreshold,
                                              runParams.maximumNEBiteration,
+                                             runParams.maxLineSearchIterCGPRP,
+                                             runParams.lbfgsNumPastSteps,
+                                             runParams.bfgsStepMethod,
+                                             runParams.optimizermaxIonUpdateStep,
+                                             runParams.optimizationSolver,
                                              runParams.coordinatesFileNEB,
                                              runParams.domainVectorsFileNEB);
 

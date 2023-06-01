@@ -36,19 +36,25 @@ namespace dftfe
      * Third, creates the array of pointers of dftClass for each image.
      */
 
-    nudgedElasticBandClass(const std::string  parameter_file,
-                           const std::string  restartFilesPath,
-                           const MPI_Comm &   mpi_comm_parent,
-                           const bool         restart,
-                           const int          verbosity,
-                           int                numberOfImages,
-                           bool               imageFreeze,
-                           double             Kmax,
-                           double             Kmin,
-                           double             pathThreshold,
-                           int                maximumNEBIteration,
-                           const std::string &coordinatesFileNEB,
-                           const std::string &domainVectorsFileNEB);
+    nudgedElasticBandClass(
+    const std::string  parameter_file,
+    const std::string  restartFilesPath,
+    const MPI_Comm &   mpi_comm_parent,
+    const bool         restart,
+    const int          verbosity,
+    int                d_numberOfImages,
+    bool               imageFreeze,
+    double             Kmax,
+    double             Kmin,
+    double             pathThreshold,
+    int                maximumNEBIteration,
+    unsigned int        _maxLineSearchIterCGPRP,
+    unsigned int _lbfgsNumPastSteps,
+    std::string &_bfgsStepMethod,
+    double optimizermaxIonUpdateStep,
+    std::string &optimizationSolver,
+    const std::string &coordinatesFileNEB,
+    const std::string &domainVectorsFileNEB);
 
     //~nudgedElasticBandClass();
 
@@ -139,11 +145,17 @@ namespace dftfe
     unsigned int        d_restartFlag;
     unsigned int        d_numberGlobalCharges;
     double              d_maximumAtomForceToBeRelaxed;
-    unsigned int        d_numberOfImages;
+    unsigned int        d_numberOfImages;     
+    unsigned int        d_countrelaxationFlags;
+    //Solver Details
     unsigned int        d_maximumNEBIteration;
     double              d_optimizertolerance;
-    unsigned int        optimizermatItr;
-    unsigned int        d_countrelaxationFlags;
+    unsigned int        maxLineSearchIterCGPRP;
+    std::string bfgsStepMethod;
+    double d_optimizermaxIonUpdateStep;
+    unsigned int lbfgsNumPastSteps; 
+    std::string d_optimizationSolver;    
+
     std::vector<double> d_forceOnImages;
     std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;
     std::vector<unsigned int>                       d_relaxationFlags;
