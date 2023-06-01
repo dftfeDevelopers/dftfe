@@ -94,7 +94,7 @@ namespace dftfe
           "[Standard] Maximum number of NEB iterations that will be performed in the simulation");
 
         prm.declare_entry(
-            "ION OPT SOLVER",
+            "NEB OPT SOLVER",
             "LBFGS",
             dealii::Patterns::Selection("BFGS|LBFGS|CGPRP"),
             "[Standard] Method for Ion relaxation solver. LBFGS is the default");
