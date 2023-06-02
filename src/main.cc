@@ -192,7 +192,7 @@ main(int argc, char *argv[])
         runParams.domainVectorsFileNEB,
         runParams.ionRelaxFlagsFile);
 
-      int status = nebClass.run();
+      int status = nebClass.findMEP();
     }
   else if (runParams.solvermode == "GEOOPT")
     {

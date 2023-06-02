@@ -36,17 +36,17 @@ namespace dftfe
     const MPI_Comm &   mpi_comm_parent,
     const bool         restart,
     const int          verbosity,
-    int                d_numberOfImages,
-    bool               imageFreeze,
+    const int          d_numberOfImages,
+    const bool         imageFreeze,
     double             Kmax,
     double             Kmin,
-    double             pathThreshold,
-    int                maximumNEBIteration,
-    unsigned int       _maxLineSearchIterCGPRP,
-    unsigned int       _lbfgsNumPastSteps,
-    std::string &      _bfgsStepMethod,
-    double             optimizermaxIonUpdateStep,
-    std::string &      optimizationSolver,
+    const double       pathThreshold,
+    const int          maximumNEBIteration,
+    const unsigned int _maxLineSearchIterCGPRP,
+    const unsigned int _lbfgsNumPastSteps,
+    const std::string &_bfgsStepMethod,
+    const double       optimizermaxIonUpdateStep,
+    const std::string &optimizationSolver,
     const std::string &coordinatesFileNEB,
     const std::string &domainVectorsFileNEB,
     const std::string &ionRelaxFlagsFile)
@@ -712,7 +712,7 @@ namespace dftfe
 
 
   int
-  nudgedElasticBandClass::run()
+  nudgedElasticBandClass::findMEP()
   {
     nonLinearSolver::ReturnValueType solverReturn =
       d_nonLinearSolverPtr->solve(*this,

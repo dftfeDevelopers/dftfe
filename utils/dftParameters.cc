@@ -1473,19 +1473,16 @@ namespace dftfe
       domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
       prm.enter_subsection("Optimization");
       {
-        if (solverMode != "NEB")
-          {
-            ionOptSolver      = prm.get("ION OPT SOLVER");
-            cellOptSolver     = prm.get("CELL OPT SOLVER");
-            forceRelaxTol     = prm.get_double("FORCE TOL");
-            bfgsStepMethod    = prm.get("BFGS STEP METHOD");
-            usePreconditioner = prm.get_bool("USE PRECONDITIONER");
-            lbfgsNumPastSteps = prm.get_integer("LBFGS HISTORY");
-            maxOptIter        = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
-            maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
-            maxIonUpdateStep       = prm.get_double("MAXIMUM ION UPDATE STEP");
-            ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-          }
+        ionOptSolver           = prm.get("ION OPT SOLVER");
+        cellOptSolver          = prm.get("CELL OPT SOLVER");
+        forceRelaxTol          = prm.get_double("FORCE TOL");
+        bfgsStepMethod         = prm.get("BFGS STEP METHOD");
+        usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
+        lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
+        maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
+        maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
+        maxIonUpdateStep       = prm.get_double("MAXIMUM ION UPDATE STEP");
+        ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
         optimizationMode       = prm.get("OPTIMIZATION MODE");
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
         isIonForce =
@@ -1508,22 +1505,7 @@ namespace dftfe
       prm.leave_subsection();
     }
     prm.leave_subsection();
-    if (solverMode == "NEB")
-      {
-        prm.enter_subsection("NEB");
-        {
-          ionOptSolver      = prm.get("NEB OPT SOLVER");
-          cellOptSolver     = prm.get("NEB OPT SOLVER");
-          forceRelaxTol     = prm.get_double("PATH THRESHOLD");
-          bfgsStepMethod    = prm.get("BFGS STEP METHOD");
-          lbfgsNumPastSteps = prm.get_integer("LBFGS HISTORY");
-          maxOptIter = prm.get_integer("MAXIMUM NUMBER OF NEB ITERATIONS");
-          maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
-          maxIonUpdateStep       = prm.get_double("MAXIMUM ION UPDATE STEP");
-          ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-        }
-        prm.leave_subsection();
-      }
+
     prm.enter_subsection("Boundary conditions");
     {
       radiusAtomBall           = prm.get_double("SELF POTENTIAL RADIUS");

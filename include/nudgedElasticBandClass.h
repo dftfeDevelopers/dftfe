@@ -41,17 +41,17 @@ namespace dftfe
                            const MPI_Comm &   mpi_comm_parent,
                            const bool         restart,
                            const int          verbosity,
-                           int                d_numberOfImages,
-                           bool               imageFreeze,
+                           const int          d_numberOfImages,
+                           const bool         imageFreeze,
                            double             Kmax,
                            double             Kmin,
-                           double             pathThreshold,
-                           int                maximumNEBIteration,
-                           unsigned int       _maxLineSearchIterCGPRP,
-                           unsigned int       _lbfgsNumPastSteps,
-                           std::string &      _bfgsStepMethod,
-                           double             optimizermaxIonUpdateStep,
-                           std::string &      optimizationSolver,
+                           const double       pathThreshold,
+                           const int          maximumNEBIteration,
+                           const unsigned int _maxLineSearchIterCGPRP,
+                           const unsigned int _lbfgsNumPastSteps,
+                           const std::string &_bfgsStepMethod,
+                           const double       optimizermaxIonUpdateStep,
+                           const std::string &optimizationSolver,
                            const std::string &coordinatesFileNEB,
                            const std::string &domainVectorsFileNEB,
                            const std::string &ionRelaxFlagsFile);
@@ -63,9 +63,14 @@ namespace dftfe
     int    d_NEBImageno;
     /**
      * @brief Calls optimizer(nonLinearClass) solve. Prints the Final NEB energies and forces.
+     * References:
+     * 1.
+     * https://pubs.aip.org/aip/jcp/article/113/22/9978/184858/Improved-tangent-estimate-in-the-nudged-elastic
+     * 2.
+     * https://pubs.aip.org/aip/jcp/article/128/13/134106/977389/Optimization-methods-for-finding-minimum-energy
      */
     int
-    run();
+    findMEP();
     /**
      * @brief Returns the Normed vetor satistfying ||v||_2 = 1
      */
