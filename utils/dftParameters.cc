@@ -1473,22 +1473,17 @@ namespace dftfe
       domainBoundingVectorsFile   = prm.get("DOMAIN VECTORS FILE");
       prm.enter_subsection("Optimization");
       {
+        optimizationMode       = prm.get("OPTIMIZATION MODE");
         ionOptSolver           = prm.get("ION OPT SOLVER");
         cellOptSolver          = prm.get("CELL OPT SOLVER");
-        forceRelaxTol          = prm.get_double("FORCE TOL");
-        bfgsStepMethod         = prm.get("BFGS STEP METHOD");
-        usePreconditioner      = prm.get_bool("USE PRECONDITIONER");
-        lbfgsNumPastSteps      = prm.get_integer("LBFGS HISTORY");
-        maxOptIter             = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
         maxLineSearchIterCGPRP = prm.get_integer("MAX LINE SEARCH ITER");
-        maxIonUpdateStep       = prm.get_double("MAXIMUM ION UPDATE STEP");
-        ionRelaxFlagsFile      = prm.get("ION RELAX FLAGS FILE");
-        optimizationMode       = prm.get("OPTIMIZATION MODE");
         nonSelfConsistentForce = prm.get_bool("NON SELF CONSISTENT FORCE");
         isIonForce =
           prm.get_bool("ION FORCE") ||
           ((optimizationMode == "ION" || optimizationMode == "IONCELL") &&
            solverMode == "GEOOPT");
+        forceRelaxTol     = prm.get_double("FORCE TOL");
+        ionRelaxFlagsFile = prm.get("ION RELAX FLAGS FILE");
         isCellStress =
           prm.get_bool("CELL STRESS") ||
           ((optimizationMode == "CELL" || optimizationMode == "IONCELL") &&
@@ -1497,10 +1492,13 @@ namespace dftfe
         cellConstraintType = prm.get_integer("CELL CONSTRAINT TYPE");
         reuseWfcGeoOpt     = prm.get_bool("REUSE WFC");
         reuseDensityGeoOpt = prm.get_integer("REUSE DENSITY");
-
+        bfgsStepMethod     = prm.get("BFGS STEP METHOD");
+        usePreconditioner  = prm.get_bool("USE PRECONDITIONER");
+        lbfgsNumPastSteps  = prm.get_integer("LBFGS HISTORY");
+        maxOptIter         = prm.get_integer("MAXIMUM OPTIMIZATION STEPS");
         maxStaggeredCycles = prm.get_integer("MAXIMUM STAGGERED CYCLES");
-
-        maxCellUpdateStep = prm.get_double("MAXIMUM CELL UPDATE STEP");
+        maxIonUpdateStep   = prm.get_double("MAXIMUM ION UPDATE STEP");
+        maxCellUpdateStep  = prm.get_double("MAXIMUM CELL UPDATE STEP");
       }
       prm.leave_subsection();
     }

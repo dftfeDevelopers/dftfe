@@ -76,7 +76,6 @@ namespace dftfe
 
     MPI_Barrier(d_mpiCommParent);
     d_solverRestart = d_isRestart;
-
     if (!d_isRestart)
       {
         d_totalUpdateCalls = 0;
@@ -501,6 +500,7 @@ namespace dftfe
 
         ReturnNormedVector(tangent, d_countrelaxationFlags);
       }
+
   }
 
   void
@@ -720,7 +720,7 @@ namespace dftfe
                                   d_solverRestart);
 
     if (solverReturn == nonLinearSolver::SUCCESS &&
-        d_dftPtr->getParametersObject().verbosity >= 1)
+        d_verbosity >= 1)
       {
         pcout
           << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
@@ -785,7 +785,7 @@ namespace dftfe
       }
 
     if (solverReturn != nonLinearSolver::SUCCESS &&
-        d_dftPtr->getParametersObject().verbosity >= 1)
+        d_verbosity >= 1)
       {
         pcout << "--------------Ground State Results-------------" << std::endl;
         for (int i = 0; i < d_numberOfImages; i++)
@@ -878,10 +878,7 @@ namespace dftfe
         double InternalEnergy =
           (d_dftfeWrapper[image])->getDFTFreeEnergy() +
           (d_dftfeWrapper[image])->getElectronicEntropicEnergy();
-        double ForceError = 0.0;
-        d_NEBImageno      = image;
-        ImageError(image, ForceError);
-        d_ImageError[image] = ForceError;
+        double ForceError = d_ImageError[image];
         if (ForceError < 0.95 * d_optimizertolerance && d_imageFreeze &&
             (image != 0 || image != d_numberOfImages - 1))
           flagmultiplier[image] = 0;
@@ -995,7 +992,7 @@ namespace dftfe
   {
     std::vector<std::vector<double>> globalAtomsDisplacements(
       d_numberGlobalCharges, std::vector<double>(3, 0.0));
-    d_forceOnImages.clear();
+    
     for (int image = 1; image < d_numberOfImages - 1; image++)
       {
         int multiplier = 1;
@@ -1009,7 +1006,7 @@ namespace dftfe
           }
         MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
-        if (d_dftPtr->getParametersObject().verbosity > 4)
+        if (d_verbosity > 4)
           pcout << "--Displacements for image: " << image << std::endl;
         for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
           {
@@ -1033,7 +1030,7 @@ namespace dftfe
                       }
                   }
               }
-            if (d_dftPtr->getParametersObject().verbosity > 4)
+            if (d_verbosity > 4)
               pcout << globalAtomsDisplacements[i][0] << " "
                     << globalAtomsDisplacements[i][1] << " "
                     << globalAtomsDisplacements[i][2] << std::endl;
@@ -1051,7 +1048,7 @@ namespace dftfe
             MPI_Barrier(d_mpiCommParent);
             (d_dftfeWrapper[image])
               ->updateAtomPositions(globalAtomsDisplacements);
-            if (d_dftPtr->getParametersObject().verbosity > 4)
+            if (d_verbosity > 4)
               pcout << "--Positions of image: " << image << " updated--"
                     << std::endl;
             MPI_Barrier(d_mpiCommParent);
@@ -1060,15 +1057,13 @@ namespace dftfe
             if (!std::get<1>(groundStateOutput))
               pcout << " NEB Warning!!: Ground State of Image: " << d_NEBImageno
                     << " did not converge" << std::endl;
+              double ForceError = 0.0;
+              d_NEBImageno      = image;
+              ImageError(image, ForceError);
+              d_ImageError[image] = ForceError;
           }
       }
-    for (int image = 0; image < d_numberOfImages; image++)
-      {
-        double Force = 0.0;
-        d_NEBImageno = image;
-        ImageError(d_NEBImageno, Force);
-        d_forceOnImages.push_back(Force);
-      }
+
     d_totalUpdateCalls += 1;
   }
 
@@ -1262,7 +1257,7 @@ namespace dftfe
 
     for (int i = 0; i < d_numberOfImages; i++)
       {
-        double Force  = d_forceOnImages[i];
+        double Force  = d_ImageError[i];
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
         pcout << "    " << i << "    " << Force << "    " << Energy << "    "
               << std::endl;
@@ -1429,7 +1424,7 @@ namespace dftfe
           << "Internal Energy in Ha"
           << "    " << std::endl;
 
-    d_forceOnImages.clear();
+
 
     int count = 0;
     for (int i = 0; i < d_numberOfImages; i++)
@@ -1440,7 +1435,7 @@ namespace dftfe
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
         pcout << "    " << i << "    " << Force << "    " << Energy << "    "
               << std::endl;
-        d_forceOnImages.push_back(Force);
+        d_ImageError[d_NEBImageno] = (Force);
         if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
             flag = false;
@@ -1464,7 +1459,7 @@ namespace dftfe
         false,
         bfgsStepMethod == "RFO",
         d_maximumNEBIteration,
-        d_dftPtr->getParametersObject().verbosity,
+        d_verbosity,
         d_mpiCommParent,
         d_optimizermaxIonUpdateStep,
         true);
@@ -1474,13 +1469,13 @@ namespace dftfe
         d_optimizermaxIonUpdateStep,
         d_maximumNEBIteration,
         lbfgsNumPastSteps,
-        d_dftPtr->getParametersObject().verbosity,
+        d_verbosity,
         d_mpiCommParent,
         true);
     else
       d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
         d_maximumNEBIteration,
-        d_dftPtr->getParametersObject().verbosity,
+        d_verbosity,
         d_mpiCommParent,
         1e-4,
         maxLineSearchIterCGPRP,
@@ -1488,7 +1483,7 @@ namespace dftfe
         d_optimizermaxIonUpdateStep,
         true);
 
-    if (d_dftPtr->getParametersObject().verbosity >= 1)
+    if (d_verbosity >= 1)
       {
         if (d_solver == 0)
           {
