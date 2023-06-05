@@ -1053,89 +1053,6 @@ namespace dftfe
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Helmholtz problem convergence.");
       }
       prm.leave_subsection();
-      prm.enter_subsection("NEB");
-      {
-        prm.declare_entry(
-          "ALLOW IMAGE FREEZING",
-          "false",
-          dealii::Patterns::Bool(),
-          "If true images less than threshold will freeze for optimization step");
-
-        prm.declare_entry(
-          "NUMBER OF IMAGES",
-          "7",
-          dealii::Patterns::Integer(1, 50),
-          "[Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points");
-
-        prm.declare_entry(
-          "MAXIMUM SPRING CONSTANT",
-          "5e-3",
-          dealii::Patterns::Double(),
-          "[Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)");
-
-        prm.declare_entry(
-          "MINIMUM SPRING CONSTANT",
-          "2e-3",
-          dealii::Patterns::Double(),
-          "[Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)");
-
-        prm.declare_entry(
-          "PATH THRESHOLD",
-          "5e-4",
-          dealii::Patterns::Double(),
-          "[Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD ");
-
-
-        prm.declare_entry(
-          "MAXIMUM NUMBER OF NEB ITERATIONS",
-          "100",
-          dealii::Patterns::Integer(1, 250),
-          "[Standard] Maximum number of NEB iterations that will be performed in the simulation");
-
-        prm.declare_entry(
-          "NEB OPT SOLVER",
-          "LBFGS",
-          dealii::Patterns::Selection("BFGS|LBFGS|CGPRP"),
-          "[Standard] Method for Ion relaxation solver. LBFGS is the default");
-        prm.declare_entry(
-          "MAXIMUM ION UPDATE STEP",
-          "0.5",
-          dealii::Patterns::Double(0, 5.0),
-          "[Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.");
-        prm.declare_entry(
-          "MAX LINE SEARCH ITER",
-          "5",
-          dealii::Patterns::Integer(1, 100),
-          "[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
-        prm.declare_entry(
-          "ION RELAX FLAGS FILE",
-          "",
-          dealii::Patterns::Anything(),
-          "[Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.");
-        prm.declare_entry(
-          "BFGS STEP METHOD",
-          "QN",
-          dealii::Patterns::Selection("QN|RFO"),
-          "[Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.");
-        prm.declare_entry(
-          "LBFGS HISTORY",
-          "5",
-          dealii::Patterns::Integer(1, 20),
-          "[Standard] Number of previous steps to considered for the LBFGS update.");
-
-        prm.declare_entry(
-          "NEB COORDINATES FILE",
-          "",
-          dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
-
-        prm.declare_entry(
-          "NEB DOMAIN VECTORS FILE",
-          "",
-          dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
-      }
-      prm.leave_subsection();
 
       prm.enter_subsection("Molecular Dynamics");
       {
@@ -1408,7 +1325,8 @@ namespace dftfe
   {
     dealii::ParameterHandler prm;
     internalDftParameters::declare_parameters(prm);
-    prm.parse_input(parameter_file);
+    //prm.parse_input(parameter_file);
+    prm.parse_input(parameter_file, "", true);
     solverMode                = mode;
     verbosity                 = prm.get_integer("VERBOSITY");
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
