@@ -1838,10 +1838,7 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
-    AssertThrow(
-      !(solverMode == "NEB" && usePreconditioner == true),
-      dealii::ExcMessage(
-        "DFT-FE Error: the current NEB implementation does not allow Preconditioner to be used for optimization"));
+
   }
 
 
@@ -1854,6 +1851,9 @@ namespace dftfe
 
     if (isBOMD)
       isIonForce = true;
+
+    if (solverMode == "NEB" || solverMode == "MD" ) 
+      isIonForce = true; 
 
     if (!isPseudopotential)
       {
