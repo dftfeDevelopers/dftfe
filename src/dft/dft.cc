@@ -1720,6 +1720,9 @@ namespace dftfe
     if (d_dftParamsPtr->writeDensitySolutionFields)
       outputDensity();
 
+    if (d_dftParamsPtr->writeDensityQuadData)
+      writeGSElectronDensity("densityQuadData.txt");
+
     if (d_dftParamsPtr->writeDosFile)
       compute_tdos(eigenValues, "dosData.out");
 
@@ -4315,6 +4318,15 @@ namespace dftfe
   {
     d_rhoOutNodalValuesSplit = OutDensity;
   }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeGSElectronDensity(
+    const std::string Path) const
+  {
+  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void

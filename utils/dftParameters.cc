@@ -137,16 +137,23 @@ namespace dftfe
       prm.enter_subsection("Ground-state derived computations");
       {
         prm.declare_entry(
-          "WRITE WFC",
+          "WRITE WFC FE MESH",
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
 
         prm.declare_entry(
-          "WRITE DENSITY",
+          "WRITE DENSITY FE MESH",
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
+
+        prm.declare_entry(
+          "WRITE DENSITY QUAD DATA",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns where the first three columns are the quadrature point cartesian coordinates (non-uniform grid), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities. Default: false.");
+
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
@@ -1223,6 +1230,7 @@ namespace dftfe
     restrictToOnePass                              = false;
     writeWfcSolutionFields                         = false;
     writeDensitySolutionFields                     = false;
+    writeDensityQuadData                           = false;
     wfcBlockSize                                   = 400;
     chebyWfcBlockSize                              = 400;
     subspaceRotDofsBlockSize                       = 2000;
@@ -1357,8 +1365,9 @@ namespace dftfe
 
     prm.enter_subsection("Ground-state derived computations");
     {
-      writeWfcSolutionFields     = prm.get_bool("WRITE WFC");
-      writeDensitySolutionFields = prm.get_bool("WRITE DENSITY");
+      writeWfcSolutionFields     = prm.get_bool("WRITE WFC FE MESH");
+      writeDensitySolutionFields = prm.get_bool("WRITE DENSITY FE MESH");
+      writeDensityQuadData = prm.get_bool("WRITE DENSITY QUAD DATA");
       writeDosFile               = prm.get_bool("WRITE DENSITY OF STATES");
       writeLdosFile            = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
