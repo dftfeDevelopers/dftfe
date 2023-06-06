@@ -53,7 +53,7 @@ namespace dftfe
                          const unsigned int lineSearchMaxIterations    = 10,
                          const double       lineSeachDampingParameter  = 1.0,
                          const double       maxIncrementSolLinf        = 1e+6,
-                         const bool         isGradientOnlyOptimization = false);
+                         const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -270,7 +270,7 @@ namespace dftfe
     bool d_useSingleAtomSolutionsInitialGuess;
 
     //
-    bool d_isGradientOnlyOptimization;
+    bool d_isCurvatureOnlyLineSearchStoppingCondition;
 
     // parallel objects
     MPI_Comm                   mpi_communicator;

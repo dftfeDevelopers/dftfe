@@ -34,14 +34,14 @@ namespace dftfe
     const double       trustRadius_maximum,
     const double       trustRadius_initial,
     const double       trustRadius_minimum,
-    const bool         isGradientOnlyOptimization)
+    const bool         isCurvatureOnlyLineSearchStoppingCondition)
     : nonLinearSolver(debugLevel, maxNumberIterations)
     , mpi_communicator(mpi_comm_parent)
     , d_usePreconditioner(usePreconditioner)
     , d_useRFOStep(useRFOStep)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
-    , d_isGradientOnlyOptimization(isGradientOnlyOptimization)
+    , d_isCurvatureOnlyLineSearchStoppingCondition(isCurvatureOnlyLineSearchStoppingCondition)
   {
     d_isReset                            = 0;
     d_useSingleAtomSolutionsInitialGuess = false;
@@ -599,7 +599,7 @@ namespace dftfe
     double gtdx  = internalBFGS::dot(d_deltaXNew, d_gradient);
     double gntdx = internalBFGS::dot(d_deltaXNew, d_gradientNew);
 
-    if (!d_isGradientOnlyOptimization)
+    if (!d_isCurvatureOnlyLineSearchStoppingCondition)
       d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
     else
       d_wolfeSufficientDec = false;
@@ -608,11 +608,11 @@ namespace dftfe
 
     if (d_debugLevel >= 1)
       {
-        if (d_wolfeSatisfied && !d_isGradientOnlyOptimization)
+        if (d_wolfeSatisfied && !d_isCurvatureOnlyLineSearchStoppingCondition)
           pcout << "Wolfe conditions satisfied." << std::endl;
-        else if (d_wolfeSufficientDec && !d_isGradientOnlyOptimization)
+        else if (d_wolfeSufficientDec && !d_isCurvatureOnlyLineSearchStoppingCondition)
           pcout << "Only Armijo condition satisfied." << std::endl;
-        else if (d_isGradientOnlyOptimization && d_wolfeCurvature)
+        else if (d_isCurvatureOnlyLineSearchStoppingCondition && d_wolfeCurvature)
           pcout << "Curvature condition satisfied." << std::endl;
       }
   }
@@ -644,7 +644,7 @@ namespace dftfe
     else
       {
         double gtdx = internalBFGS::dot(d_deltaX, d_gradient);
-        if (!d_isGradientOnlyOptimization)
+        if (!d_isCurvatureOnlyLineSearchStoppingCondition)
           d_trustRadius =
             -0.5 * gtdx * d_trustRadius / ((d_valueNew[0] - d_value[0]) - gtdx);
         else
@@ -887,7 +887,7 @@ namespace dftfe
         // update trust radius and hessian
         //
         checkWolfe();
-        d_stepAccepted = d_isGradientOnlyOptimization ? d_wolfeCurvature :
+        d_stepAccepted = d_isCurvatureOnlyLineSearchStoppingCondition ? d_wolfeCurvature :
                                                         d_wolfeSufficientDec;
         if (d_stepAccepted)
           {
@@ -905,7 +905,7 @@ namespace dftfe
           {
             if (d_debugLevel >= 1)
               {
-                if (!d_isGradientOnlyOptimization)
+                if (!d_isCurvatureOnlyLineSearchStoppingCondition)
                   pcout
                     << "Step rejected as Armijo condition was not satisfied."
                     << std::endl;

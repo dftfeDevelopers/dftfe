@@ -50,7 +50,7 @@ namespace dftfe
                          const int          maxNumPastSteps,
                          const unsigned int debugLevel,
                          const MPI_Comm &   mpi_comm_parent,
-                         const bool         isGradientOnlyOptimization = false);
+                         const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -205,7 +205,7 @@ namespace dftfe
     bool d_useSingleAtomSolutionsInitialGuess, d_noHistory;
 
     //
-    bool d_isGradientOnlyOptimization;
+    bool d_isCurvatureOnlyLineSearchStoppingCondition;
 
 
 
