@@ -16,11 +16,8 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
-#include <deal.II/base/data_out_base.h>
-#include <deal.II/base/parameter_handler.h>
+
 #include <runParameters.h>
-#include <fstream>
-#include <iostream>
 
 
 
@@ -140,12 +137,28 @@ namespace dftfe
     }
   } // namespace internalRunParameters
 
+  void
+  runParameters::print_parameters()
+  {
+    const bool printParametersToFile = false;
+    if (printParametersToFile &&
+        dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      {
+        prm.print_parameters(std::cout,
+                             dealii::ParameterHandler::OutputStyle::LaTeX);
+        exit(0);
+      }
 
+    if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 &&
+        verbosity >= 1 && true)
+      {
+        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortText);
+      }
+  }
 
   void
   runParameters::parse_parameters(const std::string &parameter_file)
   {
-    dealii::ParameterHandler prm;
     internalRunParameters::declare_parameters(prm);
     prm.parse_input(parameter_file, "", true);
 
@@ -170,17 +183,6 @@ namespace dftfe
       optimizationSolver        = prm.get("NEB OPT SOLVER");
       ionRelaxFlagsFile         = prm.get("ION RELAX FLAGS FILE");
     }
-
-
-
-    const bool printParametersToFile = false;
-    if (printParametersToFile &&
-        dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-      {
-        prm.print_parameters(std::cout,
-                             dealii::ParameterHandler::OutputStyle::LaTeX);
-        exit(0);
-      }
   }
 
 } // namespace dftfe

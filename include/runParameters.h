@@ -19,9 +19,11 @@
 
 #ifndef runParameters_H_
 #define runParameters_H_
-
+#include <deal.II/base/data_out_base.h>
+#include <deal.II/base/parameter_handler.h>
 #include <string>
-
+#include <fstream>
+#include <iostream>
 namespace dftfe
 {
   /**
@@ -58,6 +60,13 @@ namespace dftfe
      */
     void
     parse_parameters(const std::string &parameter_file);
+    void
+    print_parameters();
+
+  private:
+    dealii::ParameterHandler prm;
+
+
 
   }; // class runParameters
 

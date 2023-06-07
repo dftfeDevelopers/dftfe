@@ -45,7 +45,8 @@ namespace dftfe
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
-    , d_isCurvatureOnlyLineSearchStoppingCondition(isCurvatureOnlyLineSearchStoppingCondition)
+    , d_isCurvatureOnlyLineSearchStoppingCondition(
+        isCurvatureOnlyLineSearchStoppingCondition)
   {
     d_isCGRestartDueToLargeIncrement     = false;
     d_useSingleAtomSolutionsInitialGuess = false;

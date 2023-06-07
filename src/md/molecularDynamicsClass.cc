@@ -70,7 +70,8 @@ namespace dftfe
                                                 true,
                                                 true,
                                                 "MD",
-                                                d_restartFilesPath);
+                                                d_restartFilesPath,
+                                                d_verbosity);
       }
     else
       {
@@ -88,6 +89,7 @@ namespace dftfe
                                                 true,
                                                 "MD",
                                                 d_restartFilesPath,
+                                                d_verbosity,
                                                 scfRestart);
       }
 

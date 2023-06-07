@@ -144,6 +144,7 @@ namespace dftfe
                                                     Image == 0 ? true : false,
                                                     "NEB",
                                                     d_restartFilesPath,
+                                                    d_verbosity,
                                                     Image == 0 ? false : true));
           }
       }
@@ -196,6 +197,7 @@ namespace dftfe
                                                     Image == 0 ? true : false,
                                                     "NEB",
                                                     d_restartFilesPath,
+                                                    d_verbosity,
                                                     Image == 0 ? false : true));
           }
       }
@@ -500,7 +502,6 @@ namespace dftfe
 
         ReturnNormedVector(tangent, d_countrelaxationFlags);
       }
-
   }
 
   void
@@ -719,8 +720,7 @@ namespace dftfe
                                   d_solverRestartPath + "/ionRelax.chk",
                                   d_solverRestart);
 
-    if (solverReturn == nonLinearSolver::SUCCESS &&
-        d_verbosity >= 1)
+    if (solverReturn == nonLinearSolver::SUCCESS && d_verbosity >= 1)
       {
         pcout
           << " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "
@@ -784,8 +784,7 @@ namespace dftfe
         d_totalUpdateCalls = -2;
       }
 
-    if (solverReturn != nonLinearSolver::SUCCESS &&
-        d_verbosity >= 1)
+    if (solverReturn != nonLinearSolver::SUCCESS && d_verbosity >= 1)
       {
         pcout << "--------------Ground State Results-------------" << std::endl;
         for (int i = 0; i < d_numberOfImages; i++)
@@ -992,7 +991,7 @@ namespace dftfe
   {
     std::vector<std::vector<double>> globalAtomsDisplacements(
       d_numberGlobalCharges, std::vector<double>(3, 0.0));
-    
+
     for (int image = 1; image < d_numberOfImages - 1; image++)
       {
         int multiplier = 1;
@@ -1057,10 +1056,10 @@ namespace dftfe
             if (!std::get<1>(groundStateOutput))
               pcout << " NEB Warning!!: Ground State of Image: " << d_NEBImageno
                     << " did not converge" << std::endl;
-              double ForceError = 0.0;
-              d_NEBImageno      = image;
-              ImageError(image, ForceError);
-              d_ImageError[image] = ForceError;
+            double ForceError = 0.0;
+            d_NEBImageno      = image;
+            ImageError(image, ForceError);
+            d_ImageError[image] = ForceError;
           }
       }
 
@@ -1455,33 +1454,33 @@ namespace dftfe
 
 
     if (d_solver == 0)
-      d_nonLinearSolverPtr = std::make_unique<BFGSNonLinearSolver>(
-        false,
-        bfgsStepMethod == "RFO",
-        d_maximumNEBIteration,
-        d_verbosity,
-        d_mpiCommParent,
-        d_optimizermaxIonUpdateStep,
-        true);
+      d_nonLinearSolverPtr =
+        std::make_unique<BFGSNonLinearSolver>(false,
+                                              bfgsStepMethod == "RFO",
+                                              d_maximumNEBIteration,
+                                              d_verbosity,
+                                              d_mpiCommParent,
+                                              d_optimizermaxIonUpdateStep,
+                                              true);
     else if (d_solver == 1)
-      d_nonLinearSolverPtr = std::make_unique<LBFGSNonLinearSolver>(
-        false,
-        d_optimizermaxIonUpdateStep,
-        d_maximumNEBIteration,
-        lbfgsNumPastSteps,
-        d_verbosity,
-        d_mpiCommParent,
-        true);
+      d_nonLinearSolverPtr =
+        std::make_unique<LBFGSNonLinearSolver>(false,
+                                               d_optimizermaxIonUpdateStep,
+                                               d_maximumNEBIteration,
+                                               lbfgsNumPastSteps,
+                                               d_verbosity,
+                                               d_mpiCommParent,
+                                               true);
     else
-      d_nonLinearSolverPtr = std::make_unique<cgPRPNonLinearSolver>(
-        d_maximumNEBIteration,
-        d_verbosity,
-        d_mpiCommParent,
-        1e-4,
-        maxLineSearchIterCGPRP,
-        0.8,
-        d_optimizermaxIonUpdateStep,
-        true);
+      d_nonLinearSolverPtr =
+        std::make_unique<cgPRPNonLinearSolver>(d_maximumNEBIteration,
+                                               d_verbosity,
+                                               d_mpiCommParent,
+                                               1e-4,
+                                               maxLineSearchIterCGPRP,
+                                               0.8,
+                                               d_optimizermaxIonUpdateStep,
+                                               true);
 
     if (d_verbosity >= 1)
       {

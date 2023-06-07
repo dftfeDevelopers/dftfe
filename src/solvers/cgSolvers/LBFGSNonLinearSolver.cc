@@ -40,7 +40,8 @@ namespace dftfe
     , d_usePreconditioner(usePreconditioner)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
-    , d_isCurvatureOnlyLineSearchStoppingCondition(isCurvatureOnlyLineSearchStoppingCondition)
+    , d_isCurvatureOnlyLineSearchStoppingCondition(
+        isCurvatureOnlyLineSearchStoppingCondition)
   {
     d_useSingleAtomSolutionsInitialGuess = false;
   }
@@ -516,9 +517,11 @@ namespace dftfe
       {
         if (d_wolfeSatisfied && !d_isCurvatureOnlyLineSearchStoppingCondition)
           pcout << "Wolfe conditions satisfied." << std::endl;
-        else if (d_wolfeSufficientDec && !d_isCurvatureOnlyLineSearchStoppingCondition)
+        else if (d_wolfeSufficientDec &&
+                 !d_isCurvatureOnlyLineSearchStoppingCondition)
           pcout << "Only Armijo condition satisfied." << std::endl;
-        else if (d_isCurvatureOnlyLineSearchStoppingCondition && d_wolfeCurvature)
+        else if (d_isCurvatureOnlyLineSearchStoppingCondition &&
+                 d_wolfeCurvature)
           pcout << "Curvature condition satisfied." << std::endl;
       }
   }
@@ -864,8 +867,9 @@ namespace dftfe
         // update trust radius and hessian
         //
         checkWolfe();
-        d_stepAccepted = d_isCurvatureOnlyLineSearchStoppingCondition ? d_wolfeCurvature :
-                                                        d_wolfeSufficientDec;
+        d_stepAccepted = d_isCurvatureOnlyLineSearchStoppingCondition ?
+                           d_wolfeCurvature :
+                           d_wolfeSufficientDec;
         if (d_stepAccepted)
           {
             updateHistory();

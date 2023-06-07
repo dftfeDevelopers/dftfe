@@ -162,7 +162,7 @@ namespace dftfe
     std::string  d_optimizationSolver;
     std::string  d_ionRelaxFlagsFile;
 
-    
+
     std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;
     std::vector<unsigned int>                       d_relaxationFlags;
     std::vector<double>                             d_externalForceOnAtom;

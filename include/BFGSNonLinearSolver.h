@@ -46,15 +46,16 @@ namespace dftfe
      * @param trustRadius_initial Initial trust region radius.
      * @param trustRadius_minimum mimimum trust region radius (will reset BFGS).
      */
-    BFGSNonLinearSolver(const bool         usePreconditioner,
-                        const bool         useRFOStep,
-                        const unsigned int maxNumberIterations,
-                        const unsigned int debugLevel,
-                        const MPI_Comm &   mpi_comm_parent,
-                        const double       trustRadius_maximum        = 0.5,
-                        const double       trustRadius_initial        = 0.02,
-                        const double       trustRadius_minimum        = 1.0e-4,
-                        const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
+    BFGSNonLinearSolver(
+      const bool         usePreconditioner,
+      const bool         useRFOStep,
+      const unsigned int maxNumberIterations,
+      const unsigned int debugLevel,
+      const MPI_Comm &   mpi_comm_parent,
+      const double       trustRadius_maximum                        = 0.5,
+      const double       trustRadius_initial                        = 0.02,
+      const double       trustRadius_minimum                        = 1.0e-4,
+      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.

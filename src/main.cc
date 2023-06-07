@@ -155,6 +155,8 @@ main(int argc, char *argv[])
       std::cout
         << "=========================================================================================================="
         << std::endl;
+
+      runParams.print_parameters();
     }
 
 
@@ -210,7 +212,8 @@ main(int argc, char *argv[])
                                        true,
                                        true,
                                        "NONE",
-                                       runParams.restartFilesPath);
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity);
       dftfeWrapped.writeMesh();
     }
 
@@ -221,7 +224,8 @@ main(int argc, char *argv[])
                                        true,
                                        true,
                                        "GS",
-                                       runParams.restartFilesPath);
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity);
       dftfeWrapped.run();
     }
 
