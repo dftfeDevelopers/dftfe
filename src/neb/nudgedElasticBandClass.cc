@@ -853,7 +853,7 @@ namespace dftfe
     std::vector<int> flagmultiplier(d_numberOfImages, 1);
     flagmultiplier[0]                    = 0;
     flagmultiplier[d_numberOfImages - 1] = 0;
-    bool flag                            = false;
+    std::vector<int> Flag(d_numberOfImages - 2, 0);
     pcout
       << "-----------------------------------------------------------------------"
       << std::endl;
@@ -882,10 +882,10 @@ namespace dftfe
             (image != 0 || image != d_numberOfImages - 1))
           flagmultiplier[image] = 0;
 
-        if (ForceError <= d_optimizertolerance)
-          flag = true;
-        else
-          flag = false;
+        if (ForceError <= d_optimizertolerance &&
+            (image != 0 || image != d_numberOfImages - 1))
+          Flag[image] = 1;
+
         if (flagmultiplier[image] == 0)
           pcout << "    "
                 << "  " << image << "(T)"
@@ -909,46 +909,45 @@ namespace dftfe
                C_haToeV * 1000
           << std::endl;
     pcout << "----------------------------------------------" << std::endl;
+    int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
+    bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
-    else
+
+    for (int image = 1; image < d_numberOfImages - 1; image++)
       {
-        for (int image = 1; image < d_numberOfImages - 1; image++)
+        d_NEBImageno = image;
+        std::vector<double> tangent(d_countrelaxationFlags, 0.0);
+        std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
+        std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
+        std::vector<double> SpringForce(d_countrelaxationFlags, 0.0);
+        std::vector<double> ForceonImage(d_countrelaxationFlags, 0.0);
+        CalculatePathTangent(image, tangent);
+        CalculateForceparallel(image, Forceparallel, tangent);
+        CalculateForceperpendicular(image,
+                                    Forceperpendicular,
+                                    Forceparallel,
+                                    tangent);
+        CalculateSpringForce(image, SpringForce, tangent);
+        CalculateForceonImage(Forceperpendicular, SpringForce, ForceonImage);
+        double F_spring = 0.0;
+        double F_per    = 0.0;
+        LNorm(F_per, Forceperpendicular, 0, d_countrelaxationFlags);
+        LNorm(F_spring, SpringForce, 0, d_countrelaxationFlags);
+        // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
+
+
+
+        for (int i = 0; i < d_countrelaxationFlags; i++)
           {
-            d_NEBImageno = image;
-            std::vector<double> tangent(d_countrelaxationFlags, 0.0);
-            std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
-            std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
-            std::vector<double> SpringForce(d_countrelaxationFlags, 0.0);
-            std::vector<double> ForceonImage(d_countrelaxationFlags, 0.0);
-            CalculatePathTangent(image, tangent);
-            CalculateForceparallel(image, Forceparallel, tangent);
-            CalculateForceperpendicular(image,
-                                        Forceperpendicular,
-                                        Forceparallel,
-                                        tangent);
-            CalculateSpringForce(image, SpringForce, tangent);
-            CalculateForceonImage(Forceperpendicular,
-                                  SpringForce,
-                                  ForceonImage);
-            double F_spring = 0.0;
-            double F_per    = 0.0;
-            LNorm(F_per, Forceperpendicular, 0, d_countrelaxationFlags);
-            LNorm(F_spring, SpringForce, 0, d_countrelaxationFlags);
-            // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
-
-
-
-            for (int i = 0; i < d_countrelaxationFlags; i++)
-              {
-                if (flag == false)
-                  gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
-                else
-                  gradient.push_back(-Forceperpendicular[i] *
-                                     flagmultiplier[image]);
-              }
+            if (flag == false)
+              gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
+            else
+              gradient.push_back(-Forceperpendicular[i] *
+                                 flagmultiplier[image]);
           }
       }
+
 
 
     d_maximumAtomForceToBeRelaxed = -1.0;
@@ -1238,7 +1237,7 @@ namespace dftfe
   bool
   nudgedElasticBandClass::isConverged() const
   {
-    bool flag = true;
+    std::vector<int> Flag(d_numberOfImages - 2, 0);
     pcout
       << std::endl
       << "-------------------------------------------------------------------------------"
@@ -1262,7 +1261,7 @@ namespace dftfe
               << std::endl;
         if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
-            flag = false;
+            Flag[i] = 1;
           }
       }
     MPI_Barrier(d_mpiCommParent);
@@ -1274,6 +1273,10 @@ namespace dftfe
       << "-------------------------------------------------------------------------------"
       << std::endl;
 
+    bool flag =
+      std::accumulate(Flag.begin(), Flag.end(), 0) == (d_numberOfImages - 2) ?
+        true :
+        false;
     return flag;
   }
 
