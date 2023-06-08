@@ -25,7 +25,15 @@
 #include "dftfeWrapper.h"
 #include "headers.h"
 #include "constants.h"
-
+#include <cgPRPNonLinearSolver.h>
+#include <BFGSNonLinearSolver.h>
+#include <LBFGSNonLinearSolver.h>
+#include <dft.h>
+#include <dftUtils.h>
+#include <fileReaders.h>
+#include <force.h>
+#include <iomanip>
+#include <sys/stat.h>
 namespace dftfe
 {
   class nudgedElasticBandClass : public nonlinearSolverProblem

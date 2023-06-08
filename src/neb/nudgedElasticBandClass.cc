@@ -17,15 +17,9 @@
 //
 // @author Kartick Ramakrishnan
 //
-#include <cgPRPNonLinearSolver.h>
-#include <BFGSNonLinearSolver.h>
-#include <LBFGSNonLinearSolver.h>
-#include <dft.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include <force.h>
+
 #include "nudgedElasticBandClass.h"
-#include <sys/stat.h>
+
 
 
 namespace dftfe
@@ -863,14 +857,15 @@ namespace dftfe
       << "-----------------------------------------------------------------------"
       << std::endl;
     pcout << "    "
-          << " Image No. "
+          <<std::setw(12)<< " Image No. "
           << " "
-          << "Internal Energy (Ha)"
+          <<std::setw(27)<< "Internal Energy (Ha)"
           << " "
-          << "Free Energy (Ha)"
+          <<std::setw(27)<< "Free Energy (Ha)"
           << " "
-          << "Max Force Error (Ha/bohr)" << std::endl;
+          <<std::setw(27)<< "Max Force Error (Ha/bohr)" << std::endl;
     double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
+    int count = 0;
     for (int image = 0; image < d_numberOfImages; image++)
       {
         double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
@@ -882,20 +877,24 @@ namespace dftfe
             (image != 0 || image != d_numberOfImages - 1))
           flagmultiplier[image] = 0;
 
-        if (ForceError <= d_optimizertolerance &&
-            (image != 0 || image != d_numberOfImages - 1))
-          Flag[image] = 1;
+        if ((image > 0 && image < d_numberOfImages - 1))
+          {
+            if(ForceError < d_optimizertolerance )
+              Flag[count] = 1;
+            count++;
+
+          }
 
         if (flagmultiplier[image] == 0)
           pcout << "    "
-                << "  " << image << "(T)"
-                << "    " << InternalEnergy << "    " << FreeEnergy << "    "
+                << "  " <<std::setw(12)<< image << "(T)"
+                << "    " <<std::setw(12)<< InternalEnergy << "    "<<std::setw(12) << FreeEnergy << "    "
                 << ForceError << std::endl;
         else
           pcout << "    "
-                << "  " << image << "(F)"
-                << "    " << InternalEnergy << "    " << FreeEnergy << "    "
-                << ForceError << std::endl;
+                << "  " <<std::setw(12)<< image << "(F)"
+                << "    " <<std::setw(12)<< InternalEnergy << "    " <<std::setw(12)<< FreeEnergy << "    "
+                << ForceError <<"  "<<Flag[count-1]<< std::endl;
         maxEnergy =
           std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
@@ -911,6 +910,7 @@ namespace dftfe
     pcout << "----------------------------------------------" << std::endl;
     int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
+    pcout<<"FlagTotal: "<<FlagTotal<<std::endl;
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
 
@@ -937,10 +937,10 @@ namespace dftfe
         // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
 
 
-
+        pcout<<"Flag: "<<Flag[image-1]<<std::endl;
         for (int i = 0; i < d_countrelaxationFlags; i++)
           {
-            if (flag == false)
+            if (Flag[image-1] == 0)
               gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
             else
               gradient.push_back(-Forceperpendicular[i] *
@@ -1238,6 +1238,7 @@ namespace dftfe
   nudgedElasticBandClass::isConverged() const
   {
     std::vector<int> Flag(d_numberOfImages - 2, 0);
+    int count = 0;
     pcout
       << std::endl
       << "-------------------------------------------------------------------------------"
@@ -1245,11 +1246,11 @@ namespace dftfe
     pcout << " --------------------NEB Attempt Completed "
           << "---------------------------------------" << std::endl;
     pcout << "    "
-          << " Image No "
+          <<std::setw(12)<< " Image No "
           << "    "
-          << "Force perpendicular in Ha/bohr"
+          <<std::setw(12)<< "Force perpendicular in Ha/bohr"
           << "    "
-          << "Free Energy in Ha"
+         <<std::setw(12) << "Free Energy in Ha"
           << "    " << std::endl;
 
 
@@ -1257,12 +1258,16 @@ namespace dftfe
       {
         double Force  = d_ImageError[i];
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
-        pcout << "    " << i << "    " << Force << "    " << Energy << "    "
-              << std::endl;
-        if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
+        pcout << "    " <<std::setw(12)<< i << "    " <<std::setw(12)<< Force << "    " <<std::setw(12)<< Energy << "    ";
+        if ((i > 0 && i < d_numberOfImages - 1))
           {
-            Flag[i] = 1;
+            if(Force < d_optimizertolerance )
+              Flag[count] = 1;
+            pcout<<Flag[count];
+            count++;
+
           }
+        pcout<<std::endl;  
       }
     MPI_Barrier(d_mpiCommParent);
     double Length = 0.0;
@@ -1272,11 +1277,13 @@ namespace dftfe
       << std::endl
       << "-------------------------------------------------------------------------------"
       << std::endl;
-
+    int FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);  
     bool flag =
-      std::accumulate(Flag.begin(), Flag.end(), 0) == (d_numberOfImages - 2) ?
+      FlagTotal == (d_numberOfImages - 2) ?
         true :
         false;
+     pcout<<"FlagTotal: "<<FlagTotal<<std::endl;   
+     pcout<<"Is COnverged: "<<flag<<std::endl;   
     return flag;
   }
 
