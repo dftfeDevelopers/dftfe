@@ -727,7 +727,7 @@ namespace dftfe
         for (int i = 0; i < d_numberOfImages; i++)
           {
             pcout << "Free Energy of Image in meV: " << i + 1 << "  = "
-                  << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
+                  << (d_dftfeWrapper[i])->getDFTFreeEnergy()*C_haToeV * 1000 << std::endl;
             maxEnergy =
               std::max(maxEnergy, (d_dftfeWrapper[i])->getDFTFreeEnergy());
           }
