@@ -104,6 +104,8 @@ SET(TARGET_SRC
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
+  ./utils/FEBasisOperations.cc
+  ./utils/FEBasisOperationsHostKernels.cc
   ./src/dft/dftd.cc
   ./src/mdi/MDIEngine.cpp
   ./src/mdi/libraryMDI.cpp

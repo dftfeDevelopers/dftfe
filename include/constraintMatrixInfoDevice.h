@@ -74,6 +74,10 @@ namespace dftfe
                      const unsigned int                   blockSize);
 
       void
+      precomputeMaps(const unsigned int totalSize,
+                     const unsigned int blockSize);
+
+      void
       precomputeMaps(
         const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
           &partitioner1,

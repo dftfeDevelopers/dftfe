@@ -90,6 +90,10 @@ namespace dftfe
                        dftfe::utils::MemorySpace::HOST>> &partitioner2,
                      const unsigned int                   blockSize);
 
+      void
+      precomputeMaps(const unsigned int totalSize,
+                     const unsigned int blockSize);
+
       /**
        * @brief overloaded dealii internal function "distribute" which sets the slave node
        * field values from master nodes

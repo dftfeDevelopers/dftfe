@@ -405,6 +405,11 @@ namespace dftfe
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     getShapeFunctionValuesDensityGaussQuad() const
   {
+    static bool once = [&]() {
+      std::cout << "DEBUG vals " << d_densityGaussQuadShapeFunctionValues.size()
+                << std::endl;
+      return true;
+    }();
     return d_densityGaussQuadShapeFunctionValues;
   }
 
@@ -414,6 +419,13 @@ namespace dftfe
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradValuesDensityGaussQuad() const
   {
+    static bool once2 = [&]() {
+      std::cout << "DEBUG vals "
+                << d_densityGaussQuadShapeFunctionGradientValues.size()
+                << std::endl;
+      return true;
+    }();
+
     return d_densityGaussQuadShapeFunctionGradientValues;
   }
 

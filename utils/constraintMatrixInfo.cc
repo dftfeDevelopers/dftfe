@@ -229,6 +229,24 @@ namespace dftfe
         }
     }
 
+    void
+    constraintMatrixInfo::precomputeMaps(const unsigned int totalSize,
+                                         const unsigned int blockSize)
+    {
+      d_localIndexMapUnflattenedToFlattened.clear();
+      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
+
+      //
+      // fill the data array
+      //
+      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
+        {
+          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
+            (dealii::types::global_dof_index)ilocalDof *
+            (dealii::types::global_dof_index)blockSize;
+        }
+    }
+
 
 
     //
