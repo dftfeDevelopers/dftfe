@@ -147,7 +147,7 @@ namespace dftfe
     //
     // compute Veff
     //
-    if (excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
       {
         kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                              phiInValues,
@@ -155,7 +155,7 @@ namespace dftfe
                                              d_rhoCore,
                                              d_lpspQuadratureId);
       }
-    else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+    else if (d_excManagerPtr->getDensityBasedFamilyType() ==
              densityFamilyType::GGA)
       {
         kohnShamDFTEigenOperator.computeVEff(rhoInValues,
@@ -287,22 +287,28 @@ namespace dftfe
 }
 
 
-// chebyshev solver
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
-  const unsigned int                                 spinType,
-  const unsigned int                                 kPointIndex,
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
-  elpaScalaManager &                                 elpaScala,
-  chebyshevOrthogonalizedSubspaceIterationSolver &   subspaceIterationSolver,
-  std::vector<double> &                              residualNormWaveFunctions,
-  const bool                                         computeResidual,
-  const bool                                         isSpectrumSplit,
-  const bool                                         useMixedPrec,
-  const bool                                         isFirstScf)
-{
-  computing_timer.enter_subsection("Chebyshev solve");
+
+
+
+  
+
+  // chebyshev solver
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
+    const unsigned int                                 spinType,
+    const unsigned int                                 kPointIndex,
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator,
+    elpaScalaManager &                                 elpaScala,
+    chebyshevOrthogonalizedSubspaceIterationSolver &   subspaceIterationSolver,
+    std::vector<double> &residualNormWaveFunctions,
+    const bool           computeResidual,
+    const bool           isSpectrumSplit,
+    const bool           useMixedPrec,
+    const bool           isFirstScf)
+  {
+    computing_timer.enter_subsection("Chebyshev solve");
+
 
     if (d_dftParamsPtr->verbosity >= 2)
       {

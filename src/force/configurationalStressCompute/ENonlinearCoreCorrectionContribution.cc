@@ -126,7 +126,7 @@ namespace dftfe
                   }
               }
 
-            if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA &&
                 !isCellOutsideCoreRhoTail)
               {
@@ -302,7 +302,7 @@ namespace dftfe
                   }
               }
 
-            if (dftPtr->excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA &&
                 !isCellOutsideCoreRhoTail)
               {

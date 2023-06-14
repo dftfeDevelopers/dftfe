@@ -54,8 +54,6 @@
 #include <poissonSolverProblem.h>
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
-#include <xc.h>
-#include <excWavefunctionBaseClass.h>
 #include <excManager.h>
 #include <dftd.h>
 #include <force.h>
@@ -341,6 +339,15 @@ namespace dftfe
      */
     void
     writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+
+    /**
+     * @brief writes atomistics data for subsequent post-processing. Related to
+     * WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS input parameter.
+     * @param[in] Path The folder path to store the atomistics data.
+     */
+    void
+    writeStructureEnergyForcesDataPostProcess(const std::string Path) const;
+
 
     /**
      * @brief Gets the current atom Locations in cartesian form
@@ -1024,11 +1031,9 @@ namespace dftfe
     applyPeriodicBCHigherOrderNodes();
 
 
-    /// objects for various exchange-correlations (from libxc package)
-    xc_func_type funcX, funcC;
 
-    excWavefunctionBaseClass *excFunctionalPtr;
-    dispersionCorrection      d_dispersionCorr;
+    excManager *         d_excManagerPtr;
+    dispersionCorrection d_dispersionCorr;
 
     /**
      * stores required data for Kohn-Sham problem

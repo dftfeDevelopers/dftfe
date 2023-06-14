@@ -43,6 +43,7 @@ namespace dftfe
       numberWaveFunctionsForEstimate, numLevels,
       maxLinearSolverIterationsHelmholtz;
 
+    bool        poissonGPU;
     std::string modelXCInputFile;
 
     double radiusAtomBall, mixingParameter;
@@ -187,6 +188,8 @@ namespace dftfe
     double      thermostatTimeConstantBOMD;
     std::string tempControllerTypeBOMD;
     int         MDTrack;
+
+    bool writeStructreEnergyForcesFileForPostProcess;
 
     dftParameters();
 

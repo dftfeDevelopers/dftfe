@@ -331,6 +331,15 @@ namespace dftfe
                                       d_solverRestart);
 
         if (solverReturn == nonLinearSolver::SUCCESS &&
+            d_dftPtr->getParametersObject()
+              .writeStructreEnergyForcesFileForPostProcess)
+          {
+            std::string fileName = "structureEnergyForcesGSDataIonRelaxed.txt";
+            d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+          }
+
+
+        if (solverReturn == nonLinearSolver::SUCCESS &&
             d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout
@@ -670,6 +679,14 @@ namespace dftfe
     d_dftPtr->solve(computeForces, false, d_isScfRestart);
     d_isScfRestart = false;
     d_totalUpdateCalls += 1;
+
+    if (d_dftPtr->getParametersObject()
+          .writeStructreEnergyForcesFileForPostProcess)
+      {
+        std::string fileName = "structureEnergyForcesGSData_ionRelaxStep" +
+                               std::to_string(d_totalUpdateCalls) + ".txt";
+        d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+      }
   }
 
 

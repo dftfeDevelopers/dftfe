@@ -167,6 +167,7 @@ namespace dftfe
                                                              mpi_comm_domain,
                                                              _interpoolcomm);
 
+    d_excManagerPtr                   = new excManager;
     d_isRestartGroundStateCalcFromChk = false;
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -193,10 +194,7 @@ namespace dftfe
 
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
-
-    xc_func_end(&funcX);
-    xc_func_end(&funcC);
-    delete excFunctionalPtr;
+    delete d_excManagerPtr;
   }
 
   namespace internaldft
@@ -1141,7 +1139,7 @@ namespace dftfe
           *(rhoInValues),
           *(gradRhoInValues),
           *(gradRhoInValues),
-          excFunctionalPtr->getDensityBasedFamilyType() ==
+          d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA);
 
         if (d_dftParamsPtr->spinPolarized == 1)
@@ -1168,7 +1166,7 @@ namespace dftfe
               *rhoInValuesSpinPolarized,
               *gradRhoInValuesSpinPolarized,
               *gradRhoInValuesSpinPolarized,
-              excFunctionalPtr->getDensityBasedFamilyType() ==
+              d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA);
           }
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
@@ -1178,7 +1176,7 @@ namespace dftfe
             rhoOutVals.push_back(*(rhoInValues));
             rhoOutValues = &(rhoOutVals.back());
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
                 gradRhoOutVals.push_back(*(gradRhoInValues));
@@ -1191,7 +1189,7 @@ namespace dftfe
                 rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
               }
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA &&
                 d_dftParamsPtr->spinPolarized == 1)
               {
@@ -1309,13 +1307,13 @@ namespace dftfe
                   *(rhoInValues),
                   *(gradRhoInValues),
                   *(gradRhoInValues),
-                  excFunctionalPtr->getDensityBasedFamilyType() ==
+                  d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA);
 
                 addAtomicRhoQuadValuesGradients(
                   *(rhoInValues),
                   *(gradRhoInValues),
-                  excFunctionalPtr->getDensityBasedFamilyType() ==
+                  d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA);
 
                 normalizeRhoInQuadValues();
@@ -1343,7 +1341,7 @@ namespace dftfe
               *(rhoInValues),
               *(gradRhoInValues),
               *(gradRhoInValues),
-              excFunctionalPtr->getDensityBasedFamilyType() ==
+              d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA);
 
             normalizeRhoInQuadValues();
@@ -1370,13 +1368,13 @@ namespace dftfe
               *(rhoInValues),
               *(gradRhoInValues),
               *(gradRhoInValues),
-              excFunctionalPtr->getDensityBasedFamilyType() ==
+              d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA);
 
             addAtomicRhoQuadValuesGradients(
               *(rhoInValues),
               *(gradRhoInValues),
-              excFunctionalPtr->getDensityBasedFamilyType() ==
+              d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA);
 
             normalizeRhoInQuadValues();
@@ -1732,6 +1730,10 @@ namespace dftfe
         writeBands();
       }
 
+    if (d_dftParamsPtr->writeStructreEnergyForcesFileForPostProcess)
+      writeStructureEnergyForcesDataPostProcess(
+        "structureEnergyForcesGSData.txt");
+
     if (d_dftParamsPtr->writeWfcSolutionFields)
       outputWfc();
 
@@ -2003,7 +2005,7 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
-        if (d_dftParamsPtr->useDevice and
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges)
           {
 #ifdef DFTFE_WITH_DEVICE
@@ -2273,7 +2275,7 @@ namespace dftfe
             << std::endl
             << "Poisson solve for total electrostatic potential (rhoIn+b): ";
 
-        if (d_dftParamsPtr->useDevice and
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
@@ -2374,7 +2376,7 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useDevice and
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
@@ -2450,7 +2452,7 @@ namespace dftfe
 
             for (unsigned int s = 0; s < 2; ++s)
               {
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::LDA)
                   {
                     computing_timer.enter_subsection("VEff Computation");
@@ -2474,7 +2476,7 @@ namespace dftfe
                         d_lpspQuadratureId);
                     computing_timer.leave_subsection("VEff Computation");
                   }
-                else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                else if (d_excManagerPtr->getDensityBasedFamilyType() ==
                          densityFamilyType::GGA)
                   {
                     computing_timer.enter_subsection("VEff Computation");
@@ -2778,7 +2780,7 @@ namespace dftfe
                   d_numEigenValues :
                   d_numEigenValuesRR);
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::LDA)
               {
                 computing_timer.enter_subsection("VEff Computation");
@@ -2799,7 +2801,7 @@ namespace dftfe
                                                        d_lpspQuadratureId);
                 computing_timer.leave_subsection("VEff Computation");
               }
-            else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            else if (d_excManagerPtr->getDensityBasedFamilyType() ==
                      densityFamilyType::GGA)
               {
                 computing_timer.enter_subsection("VEff Computation");
@@ -3133,7 +3135,7 @@ namespace dftfe
 
             computing_timer.enter_subsection("phiTot solve");
 
-            if (d_dftParamsPtr->useDevice and
+            if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
                 d_dftParamsPtr->floatingNuclearCharges and
                 not d_dftParamsPtr->pinnedNodeForPBC)
               {
@@ -3228,7 +3230,7 @@ namespace dftfe
                   eigenValues,
                   d_kPointWeights,
                   fermiEnergy,
-                  excFunctionalPtr,
+                  d_excManagerPtr,
                   d_dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
@@ -3266,7 +3268,7 @@ namespace dftfe
                   fermiEnergy,
                   fermiEnergyUp,
                   fermiEnergyDown,
-                  excFunctionalPtr,
+                  d_excManagerPtr,
                   d_dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
@@ -3385,7 +3387,7 @@ namespace dftfe
 
         computing_timer.enter_subsection("phiTot solve");
 
-        if (d_dftParamsPtr->useDevice and
+        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges and
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
@@ -3470,7 +3472,7 @@ namespace dftfe
                                  eigenValues,
                                  d_kPointWeights,
                                  fermiEnergy,
-                                 excFunctionalPtr,
+                                 d_excManagerPtr,
                                  d_dispersionCorr,
                                  d_phiInValues,
                                  d_phiTotRhoOut,
@@ -3507,7 +3509,7 @@ namespace dftfe
           fermiEnergy,
           fermiEnergyUp,
           fermiEnergyDown,
-          excFunctionalPtr,
+          d_excManagerPtr,
           d_dispersionCorr,
           d_phiInValues,
           d_phiTotRhoOut,

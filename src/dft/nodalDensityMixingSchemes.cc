@@ -108,7 +108,8 @@ namespace dftfe
 
     // initialize helmholtz solver function object with the quantity required
     // for computing rhs, solution vector and mixing constant
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         kerkerPreconditionedResidualSolverProblemDevice.reinit(
@@ -120,7 +121,8 @@ namespace dftfe
         d_preCondResidualVector, gradDensityResidualValuesMap);
 
     // solve the Helmholtz system to compute preconditioned residual
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         CGSolverDevice.solve(
@@ -173,7 +175,7 @@ namespace dftfe
     }
     }
 
-    if(excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if(d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
     for(unsigned int iSubCell = 0; iSubCell <
     d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell); ++iSubCell)
@@ -202,7 +204,7 @@ namespace dftfe
       *rhoInValues,
       *gradRhoInValues,
       *gradRhoInValues,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     return normValue;
   }
@@ -401,7 +403,8 @@ namespace dftfe
         << "Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "
         << std::endl;
 
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         kerkerPreconditionedResidualSolverProblemDevice.reinit(
@@ -413,7 +416,8 @@ namespace dftfe
         d_preCondResidualVector, gradDensityResidualValuesMap);
 
     // solve the Helmholtz system to compute preconditioned residual
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges)
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+        d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
         CGSolverDevice.solve(
@@ -467,7 +471,7 @@ namespace dftfe
       }
       }
 
-      if(excFunctionalPtr->getDensityBasedFamilyType() ==
+      if(d_excManagerPtr->getDensityBasedFamilyType() ==
       densityFamilyType::GGA)
       {
       for(unsigned int iSubCell = 0; iSubCell <
@@ -497,7 +501,7 @@ namespace dftfe
       *rhoInValues,
       *gradRhoInValues,
       *gradRhoInValues,
-      excFunctionalPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
 
     return normValue;
