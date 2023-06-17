@@ -227,7 +227,7 @@ namespace dftfe
      * Third, creates the array of pointers of dftClass for each image.
      */
     void
-    CalculatePathLength(double &) const;
+    CalculatePathLength(bool flag) const;
 
     /**
      * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.

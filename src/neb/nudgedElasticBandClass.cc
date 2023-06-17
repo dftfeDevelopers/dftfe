@@ -1156,10 +1156,12 @@ namespace dftfe
 
 
   void
-  nudgedElasticBandClass::CalculatePathLength(double &length) const
+  nudgedElasticBandClass::CalculatePathLength(bool flag) const
   {
-    length = 0.0;
+    double length = 0.0;
+    int atomId = 0;
     std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
+    std::vector<double> pathLength(d_numberGlobalCharges,0.0);
 
     for (int i = 0; i < d_numberOfImages - 1; i++)
       {
@@ -1181,10 +1183,26 @@ namespace dftfe
               tempy -= d_Length[1];
             if (d_Length[2] / 2 <= tempz)
               tempz -= d_Length[2];
-            temp += tempx * tempx + tempy * tempy + tempz * tempz;
+            pathLength[iCharge] += tempx * tempx + tempy * tempy + tempz * tempz;
           }
-        length += std::sqrt(temp);
+        
       }
+      for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+      {
+        if (pathLength[iCharge] > length)
+          {
+          length = pathLength[iCharge];
+          atomId = iCharge;
+
+          }
+        if(flag)
+          pcout<<"AtomID: "<<iCharge<<" "<<pathLength[iCharge]<<" "<<"Bohrs"<<std::endl;  
+      }
+      pcout<<"----------------------------------------"<<std::endl;
+      pcout<<"Atom ID with max displacement: "<<atomId<<std::endl;
+      pcout<<"Path Length of "<<atomId<<" is: "<<length<<" Bohrs"<<std::endl;
+      pcout<<"-----------------------------------------"<<std::endl;
+
   }
 
   void
@@ -1270,9 +1288,8 @@ namespace dftfe
         pcout<<std::endl;  
       }
     MPI_Barrier(d_mpiCommParent);
-    double Length = 0.0;
-    CalculatePathLength(Length);
-    pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
+    CalculatePathLength(false);
+
     pcout
       << std::endl
       << "-------------------------------------------------------------------------------"
@@ -1452,7 +1469,7 @@ namespace dftfe
       }
     MPI_Barrier(d_mpiCommParent);
     double Length = 0.0;
-    CalculatePathLength(Length);
+    CalculatePathLength(false);
     pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     step_time = MPI_Wtime() - step_time;
     pcout << "Time taken for initial dft solve of all images: " << step_time
