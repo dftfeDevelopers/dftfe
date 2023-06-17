@@ -166,7 +166,8 @@ namespace dftfe
     //
     computing_timer.enter_subsection("nscf solve");
 
-    double chebyTol = 1e-08;
+    double chebyTol;
+    chebyTol = d_dftParamsPtr->chebyshevTolerance > 0.0 ? d_dftParamsPtr->chebyshevTolerance:1e-08;
 
     
    
@@ -318,7 +319,7 @@ namespace dftfe
 
             for (unsigned int s = 0; s < 2; ++s)
               {
-                if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::LDA)
                   {
                     computing_timer.enter_subsection("VEff Computation");
@@ -342,7 +343,7 @@ namespace dftfe
                         d_lpspQuadratureId);
                     computing_timer.leave_subsection("VEff Computation");
                   }
-                else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+                else if (d_excManagerPtr->getDensityBasedFamilyType() ==
                          densityFamilyType::GGA)
                   {
                     computing_timer.enter_subsection("VEff Computation");
@@ -650,7 +651,7 @@ namespace dftfe
               residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValues);
                 
 
-            if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::LDA)
               {
                 computing_timer.enter_subsection("VEff Computation");
@@ -671,7 +672,7 @@ namespace dftfe
                                                        d_lpspQuadratureId);
                 computing_timer.leave_subsection("VEff Computation");
               }
-            else if (excFunctionalPtr->getDensityBasedFamilyType() ==
+            else if (d_excManagerPtr->getDensityBasedFamilyType() ==
                      densityFamilyType::GGA)
               {
                 computing_timer.enter_subsection("VEff Computation");
@@ -1065,7 +1066,7 @@ namespace dftfe
                   eigenValues,
                   d_kPointWeights,
                   fermiEnergy,
-                  excFunctionalPtr,
+                  d_excManagerPtr,
                   d_dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
@@ -1103,7 +1104,7 @@ namespace dftfe
                   fermiEnergy,
                   fermiEnergyUp,
                   fermiEnergyDown,
-                  excFunctionalPtr,
+                  d_excManagerPtr,
                   d_dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,

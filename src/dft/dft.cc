@@ -1727,7 +1727,8 @@ namespace dftfe
     else if( d_dftParamsPtr->solverMode == "NSCF" )
       {
         solveNoSCF();
-        writeBands();
+        if(d_dftParamsPtr->writeBandsFile)
+          writeBands();
       }
 
     if (d_dftParamsPtr->writeStructreEnergyForcesFileForPostProcess)

@@ -133,7 +133,7 @@ namespace dftfe
       }
       prm.leave_subsection();
 
-      prm.enter_subsection("Ground-state derived computations");
+      prm.enter_subsection("Post-processing Options");
       {
         prm.declare_entry(
           "WRITE WFC",
@@ -176,6 +176,12 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.");
+
+        prm.declare_entry(
+          "WRITE BANDS",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Write bands for every k-point to an outputfile. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 3 columns with first column indicating the k-point index, second column indicating band index and third column indicating corresponding eigenvalue.");
       }
       prm.leave_subsection();
 
@@ -1183,6 +1189,7 @@ namespace dftfe
     writeLdosFile               = false;
     writePdosFile               = false;
     writeLocalizationLengths    = false;
+    writeBandsFile              = false;
     std::string coordinatesFile = "";
     domainBoundingVectorsFile   = "";
     kPointDataFile              = "";
@@ -1360,7 +1367,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    prm.enter_subsection("Ground-state derived computations");
+    prm.enter_subsection("Post-processing Options");
     {
       writeWfcSolutionFields     = prm.get_bool("WRITE WFC");
       writeDensitySolutionFields = prm.get_bool("WRITE DENSITY");
@@ -1370,6 +1377,7 @@ namespace dftfe
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
+      writeBandsFile = prm.get_bool("WRITE BANDS");
     }
     prm.leave_subsection();
 
