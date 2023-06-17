@@ -764,6 +764,7 @@ namespace dftfe
           }
         pcout << "------------------------------------------------------"
               << std::endl;
+        CalculatePathLength(true);      
         return d_totalUpdateCalls;
       }
 

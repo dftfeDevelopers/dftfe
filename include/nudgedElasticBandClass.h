@@ -42,6 +42,8 @@ namespace dftfe
     /**
      * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
      * Third, creates the array of pointers of dftClass for each image.
+     * If in restart mode, calls function to read coordinates and initialise parameters
+     * Sets solvermode: CGPT, LBFGS, BFGS
      */
 
     nudgedElasticBandClass(const std::string  parameter_file,
@@ -91,6 +93,8 @@ namespace dftfe
     LNorm(double &, std::vector<double>, int, int);
     /**
      * @brief Identifies the images to freeze, calculates gradient.
+     * First prints the Image No., free energy and force error of each image
+     * Prints activation energy of current step
      */
     void
     gradient(std::vector<double> &gradient);
@@ -101,6 +105,7 @@ namespace dftfe
     getNumberUnknowns() const;
     /**
      * @brief Updates the positions of atoms and the total step count.
+     * Calls dftPtr colve to compute eenergy and force for current step.
      */
     void
     update(const std::vector<double> &solution,
@@ -181,23 +186,20 @@ namespace dftfe
     getMPICommunicator();
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculate the tangent between each image
      */
     void
     CalculatePathTangent(int, std::vector<double> &);
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculates the force on atom along the tangent between images
      */
     void
     CalculateForceparallel(int,
                            std::vector<double> &,
                            const std::vector<double> &);
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculates force perpendicular to the tangent
      */
     void
     CalculateForceperpendicular(int,
@@ -207,15 +209,13 @@ namespace dftfe
 
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculates the force due to the spring.
      */
     void
     CalculateSpringForce(int, std::vector<double> &, std::vector<double>);
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculates F_NEB = G_per+ F_spring
      */
     void
     CalculateForceonImage(const std::vector<double> &,
@@ -223,30 +223,26 @@ namespace dftfe
                           std::vector<double> &);
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculate path length: max diaplacement of atoms
      */
     void
     CalculatePathLength(bool flag) const;
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Write Restart files
      */
     void
     WriteRestartFiles(int step);
 
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Find spring constant based on k_max and k_min. 
      */
     void
     CalculateSpringConstant(int, double &);
 
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Calculate F_per norm
      */
     void
     ImageError(int image, double &Force);
@@ -264,8 +260,7 @@ namespace dftfe
     bool
     isConverged() const;
     /**
-     * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
-     * Third, creates the array of pointers of dftClass for each image.
+     * @brief Check the restart files.
      */
     int
     checkRestart(bool &periodic);
