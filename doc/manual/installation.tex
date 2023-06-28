@@ -135,7 +135,7 @@ export LD_LIBRARY_PATH=
 $LD_LIBRARY_PATH:$ROCM_PATH/lib:$ROCM_PATH/hip/lib:$ROCM_PATH/lib:$ROCM_PATH/rocblas/lib
 \end{verbatim}
 
-\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{http://www.p4est.org/}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
+\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{https://github.com/p4est/p4est.github.io/raw/master/release/p4est-2.2.tar.gz}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
 $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
