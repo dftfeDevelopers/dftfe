@@ -9,7 +9,6 @@
 # Modified 2010 by Wolfgang Bangerth
 # Modified 2010 by Timo Heister
 # Modified 2013 by Matthias Maier
-# Modified 2018 by Sambit Das (to fix OpenMP linking with intel compilers)
 #
 # p4est is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +19,13 @@
 #
 
 # This program comes with ABSOLUTELY NO WARRANTY.
+
+# error message when zlib is not found
+MISSING_ZLIB_MESSAGE="deal.II requires that p4est be built with zlib support. Please \
+either ensure that zlib is installed in a standard location or add appropriate \
+flags to LDFLAGS and CPPFLAGS to both calls to configure to describe where zlib's \
+shared object files and headers are (e.g., LDFLAGS=\"-L/path/to/shared-objects/\" \
+and CPPFLAGS=\"-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL -I/path/to/headers/\")."
 
 # unpack under current directory
 UNPACK=`pwd`
@@ -39,13 +45,13 @@ function bdie () {
 }
 
 if test -z "$CFLAGS" -a -z "$P4EST_CFLAGS_FAST" ; then
-        export CFLAGS_FAST="-O2 -fopenmp"
+        export CFLAGS_FAST="-fPIC -O2 -fopenmp"
 else
         export CFLAGS_FAST="$CFLAGS $P4EST_CFLAGS_FAST"
 fi
 echo "CFLAGS_FAST: $CFLAGS_FAST"
 if test -z "$CFLAGS" -a -z "$P4EST_CFLAGS_DEBUG" ; then
-        export CFLAGS_DEBUG="-O0 -g -fopenmp"
+        export CFLAGS_DEBUG="-fPIC -O0 -g -fopenmp"
 else
         export CFLAGS_DEBUG="$CFLAGS $P4EST_CFLAGS_DEBUG"
 fi
@@ -108,13 +114,16 @@ echo
 echo "Build FAST version in $BUILD_FAST"
 mkdir -p "$BUILD_FAST"
 cd "$BUILD_FAST"
-"$SRCDIR/configure" --enable-mpi --enable-shared \
-        --disable-vtk-binary --without-blas --enable-openmp=-fopenmp\
+"$SRCDIR/configure" --host=x86_64 CC=cc CXX=CC FC=ftn F77=ftn --enable-mpi --enable-shared\
+        --disable-vtk-binary --without-blas --enable-openmp=-fopenmp \
         --prefix="$INSTALL_FAST" CFLAGS="$CFLAGS_FAST" \
         CPPFLAGS="-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL" \
         "$@" > config.output || bdie "Error in configure"
 make -C sc -j 8 > make.output || bdie "Error in make sc"
 make -j 8 >> make.output || bdie "Error in make p4est"
+# ensure that we built p4est with zlib
+grep -q 'P4EST_HAVE_ZLIB *1' "$BUILD_FAST/src/p4est_config.h" \
+    || bdie "$MISSING_ZLIB_MESSAGE"
 make install >> make.output || bdie "Error in make install"
 echo "FAST version installed in $INSTALL_FAST"
 
@@ -122,13 +131,16 @@ echo
 echo "Build DEBUG version in $BUILD_DEBUG"
 mkdir -p "$BUILD_DEBUG"
 cd "$BUILD_DEBUG"
-"$SRCDIR/configure" --enable-debug --enable-mpi --enable-shared \
-        --disable-vtk-binary --without-blas --enable-openmp=-fopenmp\
+"$SRCDIR/configure" --host=x86_64 CC=cc CXX=CC FC=ftn F77=ftn --enable-debug --enable-mpi --enable-shared\
+        --disable-vtk-binary --without-blas --enable-openmp=-fopenmp \
         --prefix="$INSTALL_DEBUG" CFLAGS="$CFLAGS_DEBUG" \
         CPPFLAGS="-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL" \
         "$@" > config.output || bdie "Error in configure"
 make -C sc -j 8 > make.output || bdie "Error in make sc"
 make -j 8 >> make.output || bdie "Error in make p4est"
+# ensure that we built p4est with zlib
+grep -q 'P4EST_HAVE_ZLIB *1' "$BUILD_DEBUG/src/p4est_config.h" \
+    || bdie "$MISSING_ZLIB_MESSAGE"
 make install >> make.output || bdie "Error in make install"
 echo "DEBUG version installed in $INSTALL_DEBUG"
 echo
