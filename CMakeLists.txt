@@ -101,6 +101,8 @@ SET(TARGET_SRC
   ./utils/MPICommunicatorP2P.cc
   ./utils/MPICommunicatorP2PKernels.cc
   ./utils/MemoryManager.cc
+  ./utils/MPIWriteOnFile.cpp
+  ./utils/QuadDataCompositeWrite.cpp
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
