@@ -28,12 +28,13 @@ namespace dftfe
 {
   namespace dftUtils
   {
-    class MPIWriteOnFile {
-
+    class MPIWriteOnFile
+    {
     public:
-      static void writeData(const std::vector<CompositeData *> &data,
-                const std::string &fileName,
-                const MPI_Comm &mpiComm);
+      static void
+      writeData(const std::vector<CompositeData *> &data,
+                const std::string &                 fileName,
+                const MPI_Comm &                    mpiComm);
     };
   } // namespace dftUtils
 } // namespace dftfe

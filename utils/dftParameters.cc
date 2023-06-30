@@ -1367,7 +1367,7 @@ namespace dftfe
     {
       writeWfcSolutionFields     = prm.get_bool("WRITE WFC FE MESH");
       writeDensitySolutionFields = prm.get_bool("WRITE DENSITY FE MESH");
-      writeDensityQuadData = prm.get_bool("WRITE DENSITY QUAD DATA");
+      writeDensityQuadData       = prm.get_bool("WRITE DENSITY QUAD DATA");
       writeDosFile               = prm.get_bool("WRITE DENSITY OF STATES");
       writeLdosFile            = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");

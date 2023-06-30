@@ -9,19 +9,22 @@ namespace dftfe
 {
   namespace dftUtils
   {
-    class QuadDataCompositeWrite : public CompositeData {
-
+    class QuadDataCompositeWrite : public CompositeData
+    {
     public:
       QuadDataCompositeWrite(const std::vector<double> &vals);
 
-      virtual void getCharArray(char *data) override;
+      virtual void
+      getCharArray(char *data) override;
 
-      virtual void getMPIDataType(MPI_Datatype *mpi_datatype) override;
+      virtual void
+      getMPIDataType(MPI_Datatype *mpi_datatype) override;
 
-      virtual int getNumberCharsPerCompositeData() override;
+      virtual int
+      getNumberCharsPerCompositeData() override;
 
     private:
-      unsigned int d_charspernum;
+      unsigned int        d_charspernum;
       std::vector<double> d_vals;
     };
   } // namespace dftUtils

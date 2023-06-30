@@ -27,16 +27,19 @@ namespace dftfe
 {
   namespace dftUtils
   {
-    class CompositeData {
-
+    class CompositeData
+    {
     public:
-      CompositeData()=default;
+      CompositeData() = default;
 
-      virtual void getCharArray(char *data) = 0;
+      virtual void
+      getCharArray(char *data) = 0;
 
-      virtual void getMPIDataType(MPI_Datatype *mpi_datatype) = 0;
+      virtual void
+      getMPIDataType(MPI_Datatype *mpi_datatype) = 0;
 
-      virtual int getNumberCharsPerCompositeData() = 0;
+      virtual int
+      getNumberCharsPerCompositeData() = 0;
     };
   } // namespace dftUtils
 } // namespace dftfe

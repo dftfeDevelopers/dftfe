@@ -29,12 +29,12 @@ namespace dftfe
 {
   namespace dftUtils
   {
-    void MPIWriteOnFile::writeData(const std::vector<CompositeData *> &data,
-                              const std::string &fileName,
+    void
+    MPIWriteOnFile::writeData(const std::vector<CompositeData *> &data,
+                              const std::string &                 fileName,
                               const MPI_Comm &mpiCommunicator)
     {
-
-      //assert(data.size() > 0);
+      // assert(data.size() > 0);
 
       int rank, size;
       MPI_Comm_size(mpiCommunicator, &size);
@@ -42,11 +42,11 @@ namespace dftfe
 
 
       // create char array
-      const auto localSize = data.size();
+      const auto localSize          = data.size();
       const int charsPerDataElement = data[0]->getNumberCharsPerCompositeData();
 
-      // FIXME Playing a dangerous game ... the +1 is for the trailing NULL in the
-      // sprintf
+      // FIXME Playing a dangerous game ... the +1 is for the trailing NULL in
+      // the sprintf
       std::vector<char> dataTxt(localSize * charsPerDataElement + 1);
       // auto dataTxt = new char[localSize*charsPerDataElement];
       for (auto i = decltype(localSize){0}; i < localSize; ++i)
@@ -59,32 +59,42 @@ namespace dftfe
       // create local array for set view
       std::vector<unsigned long> sizes(static_cast<unsigned long>(size)),
         offset(static_cast<unsigned long>(size), 0);
-      MPI_Allgather(&localSize, 1, MPI_UNSIGNED_LONG, &sizes[0], 1,
-                    MPI_UNSIGNED_LONG, mpiCommunicator);
+      MPI_Allgather(&localSize,
+                    1,
+                    MPI_UNSIGNED_LONG,
+                    &sizes[0],
+                    1,
+                    MPI_UNSIGNED_LONG,
+                    mpiCommunicator);
 
-      const auto globalSize = (std::accumulate(sizes.begin(), sizes.end(),
+      const auto globalSize = (std::accumulate(sizes.begin(),
+                                               sizes.end(),
                                                static_cast<unsigned long>(0)));
 
-      for (int i = 1; i < size; ++i) {
+      for (int i = 1; i < size; ++i)
+        {
           offset[i] = offset[i - 1] + sizes[i - 1];
         }
 
 
       int globalsizes[1] = {static_cast<int>(globalSize)};
-      int localsizes[1] = {static_cast<int>(localSize)};
-      int starts[1] = {static_cast<int>(offset[rank])};
-      int order = MPI_ORDER_C;
+      int localsizes[1]  = {static_cast<int>(localSize)};
+      int starts[1]      = {static_cast<int>(offset[rank])};
+      int order          = MPI_ORDER_C;
 
       MPI_Datatype localarray;
-      MPI_Type_create_subarray(1, globalsizes, localsizes, starts, order, newType,
-                               &localarray);
+      MPI_Type_create_subarray(
+        1, globalsizes, localsizes, starts, order, newType, &localarray);
       MPI_Type_commit(&localarray);
 
       // open file and write
       /* open the file, and set the view */
       MPI_File file;
-      MPI_File_open(mpiCommunicator, fileName.c_str(),
-                    MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+      MPI_File_open(mpiCommunicator,
+                    fileName.c_str(),
+                    MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                    MPI_INFO_NULL,
+                    &file);
 
       MPI_File_set_view(file, 0, MPI_CHAR, localarray, "native", MPI_INFO_NULL);
 
@@ -99,5 +109,5 @@ namespace dftfe
 
       return;
     }
-  }
-}
+  } // namespace dftUtils
+} // namespace dftfe

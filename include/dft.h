@@ -349,7 +349,7 @@ namespace dftfe
     writeStructureEnergyForcesDataPostProcess(const std::string Path) const;
 
     /**
-     * @brief writes quadrature grid information and associated spin-up 
+     * @brief writes quadrature grid information and associated spin-up
      * and spin-down electron-density for post-processing
      * @param[in] Path The folder path to store the atomistics data.
      */
