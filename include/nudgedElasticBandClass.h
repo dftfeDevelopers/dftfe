@@ -42,8 +42,8 @@ namespace dftfe
     /**
      * @brief First, sets the nebRestart path. Second, creates Step0 folder with coordinaes and domainVectors file.
      * Third, creates the array of pointers of dftClass for each image.
-     * If in restart mode, calls function to read coordinates and initialise parameters
-     * Sets solvermode: CGPT, LBFGS, BFGS
+     * If in restart mode, calls function to read coordinates and initialise
+     * parameters Sets solvermode: CGPT, LBFGS, BFGS
      */
 
     nudgedElasticBandClass(const std::string  parameter_file,
@@ -236,7 +236,7 @@ namespace dftfe
 
 
     /**
-     * @brief Find spring constant based on k_max and k_min. 
+     * @brief Find spring constant based on k_max and k_min.
      */
     void
     CalculateSpringConstant(int, double &);

@@ -727,7 +727,8 @@ namespace dftfe
         for (int i = 0; i < d_numberOfImages; i++)
           {
             pcout << "Free Energy of Image in meV: " << i + 1 << "  = "
-                  << (d_dftfeWrapper[i])->getDFTFreeEnergy()*C_haToeV * 1000 << std::endl;
+                  << (d_dftfeWrapper[i])->getDFTFreeEnergy() * C_haToeV * 1000
+                  << std::endl;
             maxEnergy =
               std::max(maxEnergy, (d_dftfeWrapper[i])->getDFTFreeEnergy());
           }
@@ -764,7 +765,7 @@ namespace dftfe
           }
         pcout << "------------------------------------------------------"
               << std::endl;
-        CalculatePathLength(true);      
+        CalculatePathLength(true);
         return d_totalUpdateCalls;
       }
 
@@ -857,16 +858,12 @@ namespace dftfe
     pcout
       << "-----------------------------------------------------------------------"
       << std::endl;
-    pcout << "    "
-          <<std::setw(12)<< " Image No. "
-          << " "
-          <<std::setw(27)<< "Internal Energy (Ha)"
-          << " "
-          <<std::setw(27)<< "Free Energy (Ha)"
-          << " "
-          <<std::setw(27)<< "Max Force Error (Ha/bohr)" << std::endl;
+    pcout << std::setw(12) << " Image No. "
+          << " " << std::setw(27) << "Internal Energy (Ha)"
+          << " " << std::setw(27) << "Free Energy (Ha)"
+          << " " << std::setw(27) << "Max Force Error (Ha/bohr)" << std::endl;
     double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
-    int count = 0;
+    int    count     = 0;
     for (int image = 0; image < d_numberOfImages; image++)
       {
         double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
@@ -880,22 +877,23 @@ namespace dftfe
 
         if ((image > 0 && image < d_numberOfImages - 1))
           {
-            if(ForceError < d_optimizertolerance )
+            if (ForceError < d_optimizertolerance)
               Flag[count] = 1;
             count++;
-
           }
 
         if (flagmultiplier[image] == 0)
           pcout << "    "
-                << "  " <<std::setw(12)<< image << "(T)"
-                << "    " <<std::setw(12)<< InternalEnergy << "    "<<std::setw(12) << FreeEnergy << "    "
-                << ForceError << std::endl;
+                << "  " << std::setw(12) << image << "(T)"
+                << "    " << std::setw(12) << InternalEnergy << "    "
+                << std::setw(12) << FreeEnergy << "    " << ForceError
+                << std::endl;
         else
           pcout << "    "
-                << "  " <<std::setw(12)<< image << "(F)"
-                << "    " <<std::setw(12)<< InternalEnergy << "    " <<std::setw(12)<< FreeEnergy << "    "
-                << ForceError <<"  "<<Flag[count-1]<< std::endl;
+                << "  " << std::setw(12) << image << "(F)"
+                << "    " << std::setw(12) << InternalEnergy << "    "
+                << std::setw(12) << FreeEnergy << "    " << ForceError << "  "
+                << Flag[count - 1] << std::endl;
         maxEnergy =
           std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
@@ -911,7 +909,7 @@ namespace dftfe
     pcout << "----------------------------------------------" << std::endl;
     int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
-    pcout<<"FlagTotal: "<<FlagTotal<<std::endl;
+    pcout << "FlagTotal: " << FlagTotal << std::endl;
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
 
@@ -938,10 +936,10 @@ namespace dftfe
         // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
 
 
-        pcout<<"Flag: "<<Flag[image-1]<<std::endl;
+        pcout << "Flag: " << Flag[image - 1] << std::endl;
         for (int i = 0; i < d_countrelaxationFlags; i++)
           {
-            if (Flag[image-1] == 0)
+            if (Flag[image - 1] == 0)
               gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
             else
               gradient.push_back(-Forceperpendicular[i] *
@@ -1159,10 +1157,10 @@ namespace dftfe
   void
   nudgedElasticBandClass::CalculatePathLength(bool flag) const
   {
-    double length = 0.0;
-    int atomId = 0;
+    double                           length = 0.0;
+    int                              atomId = 0;
     std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
-    std::vector<double> pathLength(d_numberGlobalCharges,0.0);
+    std::vector<double>              pathLength(d_numberGlobalCharges, 0.0);
 
     for (int i = 0; i < d_numberOfImages - 1; i++)
       {
@@ -1184,26 +1182,26 @@ namespace dftfe
               tempy -= d_Length[1];
             if (d_Length[2] / 2 <= tempz)
               tempz -= d_Length[2];
-            pathLength[iCharge] += tempx * tempx + tempy * tempy + tempz * tempz;
+            pathLength[iCharge] +=
+              tempx * tempx + tempy * tempy + tempz * tempz;
           }
-        
       }
-      for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         if (pathLength[iCharge] > length)
           {
-          length = pathLength[iCharge];
-          atomId = iCharge;
-
+            length = pathLength[iCharge];
+            atomId = iCharge;
           }
-        if(flag)
-          pcout<<"AtomID: "<<iCharge<<" "<<pathLength[iCharge]<<" "<<"Bohrs"<<std::endl;  
+        if (flag)
+          pcout << "AtomID: " << iCharge << " " << pathLength[iCharge] << " "
+                << "Bohrs" << std::endl;
       }
-      pcout<<"----------------------------------------"<<std::endl;
-      pcout<<"Atom ID with max displacement: "<<atomId<<std::endl;
-      pcout<<"Path Length of "<<atomId<<" is: "<<length<<" Bohrs"<<std::endl;
-      pcout<<"-----------------------------------------"<<std::endl;
-
+    pcout << "----------------------------------------" << std::endl;
+    pcout << "Atom ID with max displacement: " << atomId << std::endl;
+    pcout << "Path Length of " << atomId << " is: " << length << " Bohrs"
+          << std::endl;
+    pcout << "-----------------------------------------" << std::endl;
   }
 
   void
@@ -1257,19 +1255,16 @@ namespace dftfe
   nudgedElasticBandClass::isConverged() const
   {
     std::vector<int> Flag(d_numberOfImages - 2, 0);
-    int count = 0;
+    int              count = 0;
     pcout
       << std::endl
       << "-------------------------------------------------------------------------------"
       << std::endl;
     pcout << " --------------------NEB Attempt Completed "
           << "---------------------------------------" << std::endl;
-    pcout << "    "
-          <<std::setw(12)<< " Image No "
-          << "    "
-          <<std::setw(12)<< "Force perpendicular in Ha/bohr"
-          << "    "
-         <<std::setw(12) << "Free Energy in Ha"
+    pcout << "    " << std::setw(12) << " Image No "
+          << "    " << std::setw(12) << "Force perpendicular in Ha/bohr"
+          << "    " << std::setw(12) << "Free Energy in Ha"
           << "    " << std::endl;
 
 
@@ -1277,16 +1272,16 @@ namespace dftfe
       {
         double Force  = d_ImageError[i];
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
-        pcout << "    " <<std::setw(12)<< i << "    " <<std::setw(12)<< Force << "    " <<std::setw(12)<< Energy << "    ";
+        pcout << "    " << std::setw(12) << i << "    " << std::setw(12)
+              << Force << "    " << std::setw(12) << Energy << "    ";
         if ((i > 0 && i < d_numberOfImages - 1))
           {
-            if(Force < d_optimizertolerance )
+            if (Force < d_optimizertolerance)
               Flag[count] = 1;
-            pcout<<Flag[count];
+            pcout << Flag[count];
             count++;
-
           }
-        pcout<<std::endl;  
+        pcout << std::endl;
       }
     MPI_Barrier(d_mpiCommParent);
     CalculatePathLength(false);
@@ -1295,13 +1290,10 @@ namespace dftfe
       << std::endl
       << "-------------------------------------------------------------------------------"
       << std::endl;
-    int FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);  
-    bool flag =
-      FlagTotal == (d_numberOfImages - 2) ?
-        true :
-        false;
-     pcout<<"FlagTotal: "<<FlagTotal<<std::endl;   
-     pcout<<"Is COnverged: "<<flag<<std::endl;   
+    int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
+    bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
+    pcout << "FlagTotal: " << FlagTotal << std::endl;
+    pcout << "Is COnverged: " << flag << std::endl;
     return flag;
   }
 
