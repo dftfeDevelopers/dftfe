@@ -2,7 +2,7 @@ set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
 set SOLVER MODE              = NEB
 subsection Geometry
-  set NATOMS=32
+  set NATOMS=3
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/H3NEB_coordinates.inp          
   set DOMAIN VECTORS FILE = @SOURCE_DIR@/H3NEB_domainBoundingVectors.inp 
