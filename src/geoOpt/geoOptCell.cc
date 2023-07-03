@@ -212,7 +212,18 @@ namespace dftfe
         d_solverRestartPath =
           d_restartPath + "/step" + std::to_string(d_totalUpdateCalls);
         if (!d_solverRestart)
-          d_dftPtr->solve(true, true);
+          {
+            d_dftPtr->solve(true, true);
+
+            if (d_dftPtr->getParametersObject()
+                  .writeStructreEnergyForcesFileForPostProcess)
+              {
+                std::string fileName =
+                  "structureEnergyForcesGSData_cellRelaxStep" +
+                  std::to_string(d_totalUpdateCalls) + ".txt";
+                d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+              }
+          }
       }
     else
       {
