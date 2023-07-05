@@ -41,6 +41,8 @@
 #include <symmetry.h>
 #include <vectorUtilities.h>
 #include <MemoryTransfer.h>
+#include <QuadDataCompositeWrite.h>
+#include <MPIWriteOnFile.h>
 
 #include <algorithm>
 #include <cmath>
@@ -1719,6 +1721,9 @@ namespace dftfe
 
     if (d_dftParamsPtr->writeDensitySolutionFields)
       outputDensity();
+
+    if (d_dftParamsPtr->writeDensityQuadData)
+      writeGSElectronDensity("densityQuadData.txt");
 
     if (d_dftParamsPtr->writeDosFile)
       compute_tdos(eigenValues, "dosData.out");
@@ -4315,6 +4320,83 @@ namespace dftfe
   {
     d_rhoOutNodalValuesSplit = OutDensity;
   }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeGSElectronDensity(
+    const std::string Path) const
+  {
+    const unsigned int poolId =
+      dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+    const unsigned int bandGroupId =
+      dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+
+    if (poolId == 0 && bandGroupId == 0)
+      {
+        std::vector<std::shared_ptr<dftUtils::CompositeData>> data(0);
+
+        const dealii::Quadrature<3> &quadrature_formula =
+          matrix_free_data.get_quadrature(d_densityQuadratureId);
+        dealii::FEValues<3> fe_values(FE,
+                                      quadrature_formula,
+                                      dealii::update_quadrature_points |
+                                        dealii::update_JxW_values);
+        const unsigned int  n_q_points = quadrature_formula.size();
+
+        // loop over elements
+        typename dealii::DoFHandler<3>::active_cell_iterator
+          cell = dofHandler.begin_active(),
+          endc = dofHandler.end();
+        for (; cell != endc; ++cell)
+          {
+            if (cell->is_locally_owned())
+              {
+                fe_values.reinit(cell);
+                const std::vector<double> &rhoValues =
+                  (d_dftParamsPtr->spinPolarized == 1) ?
+                    rhoOutValuesSpinPolarized->find(cell->id())->second :
+                    rhoOutValues->find(cell->id())->second;
+
+                for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+                  {
+                    std::vector<double> quadVals(0);
+
+                    const dealii::Point<3> &quadPoint =
+                      fe_values.quadrature_point(q_point);
+                    const double jxw = fe_values.JxW(q_point);
+
+                    quadVals.push_back(quadPoint[0]);
+                    quadVals.push_back(quadPoint[1]);
+                    quadVals.push_back(quadPoint[2]);
+                    quadVals.push_back(jxw);
+
+                    if (d_dftParamsPtr->spinPolarized == 1)
+                      {
+                        quadVals.push_back(rhoValues[2 * q_point + 0]);
+                        quadVals.push_back(rhoValues[2 * q_point + 1]);
+                      }
+                    else
+                      {
+                        quadVals.push_back(rhoValues[q_point]);
+                      }
+
+                    data.push_back(
+                      std::make_shared<dftUtils::QuadDataCompositeWrite>(
+                        quadVals));
+                  }
+              }
+          }
+
+        std::vector<dftUtils::CompositeData *> dataRawPtrs(data.size());
+        for (unsigned int i = 0; i < data.size(); ++i)
+          dataRawPtrs[i] = data[i].get();
+        dftUtils::MPIWriteOnFile().writeData(dataRawPtrs,
+                                             Path,
+                                             mpi_communicator);
+      }
+  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
