@@ -99,6 +99,8 @@ namespace dftfe
 
     bool writeDensitySolutionFields;
 
+    bool writeDensityQuadData;
+
     std::string  startingWFCType;
     bool         restrictToOnePass;
     unsigned int numCoreWfcRR;
