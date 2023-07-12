@@ -14,13 +14,7 @@
 
 
 {\it Default:} false
-
-
-{\it Description:} [Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.
-
-
 {\it Possible values:} A boolean value (true or false)
-
 \item {\it Parameter name:} {\tt WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
 \phantomsection\label{parameters:WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
 \label{parameters:WRITE_20STRUCTURE_20ENERGY_20FORCES_20DATA_20POST_20PROCESS}
@@ -33,11 +27,10 @@
 
 {\it Default:} false
 
-{\it Description:} [Standard] Write ground-state atomistics data to a file with the suffix number in the file-name denoting the geometry relaxation step number. Order: lattice vectors (see format for DOMAIN BOUNDING VECTORS), number of atoms, structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian with cell centered origin for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row correspoindng to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Printed as sigma\[i\]\[j\] with i denoting the row index and j denoting the column index. Atomic units used everywhere. Default: false.
+{\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, domain vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
-
 \item {\it Parameter name:} {\tt KEEP SCRATCH FOLDER}
 \phantomsection\label{parameters:KEEP SCRATCH FOLDER}
 \label{parameters:KEEP_20SCRATCH_20FOLDER}
@@ -112,7 +105,7 @@
 
 \index[prmindex]{SOLVER MODE}
 \index[prmindexfull]{SOLVER MODE}
-{\it Value:} NONE
+{\it Value:} GS
 
 
 {\it Default:} GS
@@ -485,7 +478,7 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. NÃ¸rskov, Phys. Rev. B 59, 7413 (1999)).
+{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)).
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 5$
@@ -1675,13 +1668,13 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE DENSITY}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY}
+\item {\it Parameter name:} {\tt WRITE DENSITY FE MESH}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY FE MESH}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY_20FE_20MESH}
 
 
-\index[prmindex]{WRITE DENSITY}
-\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY}
+\index[prmindex]{WRITE DENSITY FE MESH}
+\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY FE MESH}
 {\it Value:} false
 
 
@@ -1689,6 +1682,23 @@
 
 
 {\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY QUAD DATA}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY QUAD DATA}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY_20QUAD_20DATA}
+
+
+\index[prmindex]{WRITE DENSITY QUAD DATA}
+\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY QUAD DATA}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point Cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false..
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -1760,13 +1770,13 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE WFC}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE WFC}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20WFC}
+\item {\it Parameter name:} {\tt WRITE WFC FE MESH}
+\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE WFC FE MESH}
+\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20WFC_20FE_20MESH}
 
 
-\index[prmindex]{WRITE WFC}
-\index[prmindexfull]{Ground-state derived computations!WRITE WFC}
+\index[prmindex]{WRITE WFC FE MESH}
+\index[prmindexfull]{Ground-state derived computations!WRITE WFC MESH}
 {\it Value:} false
 
 
@@ -2124,11 +2134,11 @@
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
 \item {\it Parameter name:} {\tt GPU MODE}
 \phantomsection\label{parameters:Poisson problem parameters/GPU MODE}
-\label{parameters:Poisson_20problem_20parameters/GPU MODE}
+\label{parameters:Poisson_20problem_20parameters/GPU_20MODE}
 
 
 \index[prmindex]{GPU MODE}
-\index[prmindexfull]{Poisson problem parameters!GPU_20MODE}
+\index[prmindexfull]{Poisson problem parameters!GPU MODE}
 {\it Value:} false
 
 
@@ -2825,6 +2835,7 @@
 
 
 {\it Description:} [Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.
+
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 100$
