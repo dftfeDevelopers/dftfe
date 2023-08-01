@@ -17,15 +17,15 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii/install_complex_cpu"
-alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
-libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/install_libxc5.2.3"
-spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
+dealiiPetscRealDir="/shared/dftfesoftwares2021/dealii/installgcc9.2cudaawarempiWithPetscSlpec"
+dealiiPetscComplexDir="/shared/dftfesoftwares2021/dealii/installgcc9.2cudaawarempiWithPetscSlpecComplex"
+alglibDir="/shared/dftfesoftwares2021/alglib/cpp/src"
+libxcDir="/shared/dftfesoftwares2021/libxc/gcc9.2_libxc_5.1.5"
+spglibDir="/shared/dftfesoftwares2021/spglib/gcc9.2_spglib"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install202211"
-
+ELPA_PATH="/shared/dftfesoftwares2021/elpa2022/installgcc9.2elpa2022withcudaawarempi"
+numdiffdir="/shared/dftfesoftwares2021/numdiff/build"
 
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries
@@ -33,7 +33,7 @@ DCCL_PATH=""
 mdiPath=""
 
 #Toggle GPU compilation
-withGPU=OFF
+withGPU=ON
 gpuLang="cuda"     # Use "cuda"/"hip"
 gpuVendor="nvidia" # Use "nvidia/amd"
 withGPUAwareMPI=OFF #Please use this option with care
@@ -48,8 +48,8 @@ withTorch=OFF
 withCustomizedDealii=ON
 
 #Compiler options and flags
-cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.4/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-std=c++14 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
+cxx_compiler=mpic++  #sets DCMAKE_CXX_COMPILER
+cxx_flags="-march=native -fPIC" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
 device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 
                            #(only applicable for withGPU=ON)
@@ -88,7 +88,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
@@ -102,7 +102,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
@@ -116,7 +116,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
