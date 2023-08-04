@@ -1,6 +1,7 @@
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT=true
 set SOLVER MODE = NSCF
+set RESTART FOLDER = ../../fccAl_03.release/mpirun=16/fccAl_03
 subsection Boundary conditions
   set SMEARED NUCLEAR CHARGES=false
   set FLOATING NUCLEAR CHARGES=false
