@@ -1027,7 +1027,7 @@ namespace dftfe
               // iteration did not use the overlap algorithm
               if (overlap)
                 {
-                  projectorKetTimesVector2.accumulateAddLocallyOwnedBegin();
+                  projectorKetTimesVector2.accumulateAddLocallyOwnedBegin(1);
                 }
 
 #if DFTFE_WITH_DEVICE_LANG_CUDA
@@ -1071,7 +1071,7 @@ namespace dftfe
                 {
                   projectorKetTimesVector2.accumulateAddLocallyOwnedEnd();
 
-                  projectorKetTimesVector2.updateGhostValues();
+                  projectorKetTimesVector2.updateGhostValues(1);
                 }
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
@@ -1193,7 +1193,7 @@ namespace dftfe
                   XArray2.swap(YArray2);
                 }
 
-              projectorKetTimesVector1.accumulateAddLocallyOwnedBegin();
+              projectorKetTimesVector1.accumulateAddLocallyOwnedBegin(1);
 
 #if DFTFE_WITH_DEVICE_LANG_CUDA
               combinedDeviceKernel<<<
@@ -1234,7 +1234,7 @@ namespace dftfe
 
               projectorKetTimesVector1.accumulateAddLocallyOwnedEnd();
 
-              projectorKetTimesVector1.updateGhostValues();
+              projectorKetTimesVector1.updateGhostValues(1);
 
               if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
@@ -1349,8 +1349,8 @@ namespace dftfe
               // iteration.
               if (degree == (m - 1))
                 {
-                  projectorKetTimesVector2.accumulateAddLocallyOwned();
-                  projectorKetTimesVector2.updateGhostValues();
+                  projectorKetTimesVector2.accumulateAddLocallyOwned(1);
+                  projectorKetTimesVector2.updateGhostValues(1);
 
                   operatorMatrix.HXCheby(YArray2,
                                          tempFloatArray,

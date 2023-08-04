@@ -126,8 +126,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
   if (!skip1)
     {
-      projectorKetTimesVector.accumulateAddLocallyOwned();
-      projectorKetTimesVector.updateGhostValues();
+      projectorKetTimesVector.accumulateAddLocallyOwned(1);
+      projectorKetTimesVector.updateGhostValues(1);
     }
 
   //
@@ -379,8 +379,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                        d_projectorIdsParallelNumberingMapDevice.begin());
 #endif
 
-  projectorKetTimesVector.accumulateAddLocallyOwned();
-  projectorKetTimesVector.updateGhostValues();
+  projectorKetTimesVector.accumulateAddLocallyOwned(1);
+  projectorKetTimesVector.updateGhostValues(1);
 
   //
   // compute V*C^{\dagger}*X
