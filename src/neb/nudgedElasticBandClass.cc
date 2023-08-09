@@ -138,7 +138,7 @@ namespace dftfe
                                                     Image == 0 ? true : false,
                                                     "NEB",
                                                     d_restartFilesPath,
-                                                    d_verbosity,
+                                                    d_verbosity < 4 ? -1:d_verbosity,
                                                     Image == 0 ? false : true));
           }
       }
@@ -191,7 +191,7 @@ namespace dftfe
                                                     Image == 0 ? true : false,
                                                     "NEB",
                                                     d_restartFilesPath,
-                                                    d_verbosity,
+                                                    d_verbosity < 4 ? -1:d_verbosity,
                                                     Image == 0 ? false : true));
           }
       }
@@ -225,9 +225,9 @@ namespace dftfe
           temp_domainBoundingVectors[i][2] * temp_domainBoundingVectors[i][2];
         d_Length.push_back(pow(temp, 0.5));
       }
-    pcout << "--$ Domain Length$ --" << std::endl;
-    pcout << "Lx:= " << d_Length[0] << " Ly:=" << d_Length[1]
-          << " Lz:=" << d_Length[2] << std::endl;
+    // pcout << "--$ Domain Length$ --" << std::endl;
+    // pcout << "Lx:= " << d_Length[0] << " Ly:=" << d_Length[1]
+    //       << " Lz:=" << d_Length[2] << std::endl;
 
 
 
@@ -765,7 +765,7 @@ namespace dftfe
           }
         pcout << "------------------------------------------------------"
               << std::endl;
-        CalculatePathLength(true);
+        double Length = CalculatePathLength(true);
         return d_totalUpdateCalls;
       }
 
@@ -936,7 +936,7 @@ namespace dftfe
         // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
 
 
-        pcout << "Flag: " << Flag[image - 1] << std::endl;
+        //pcout << "Flag: " << Flag[image - 1] << std::endl;
         for (int i = 0; i < d_countrelaxationFlags; i++)
           {
             if (Flag[image - 1] == 0)
@@ -1154,7 +1154,7 @@ namespace dftfe
 
 
 
-  void
+  double
   nudgedElasticBandClass::CalculatePathLength(bool flag) const
   {
     double                           length = 0.0;
@@ -1183,7 +1183,7 @@ namespace dftfe
             if (d_Length[2] / 2 <= tempz)
               tempz -= d_Length[2];
             pathLength[iCharge] +=
-              tempx * tempx + tempy * tempy + tempz * tempz;
+              std::sqrt(tempx * tempx + tempy * tempy + tempz * tempz);
           }
       }
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -1197,11 +1197,7 @@ namespace dftfe
           pcout << "AtomID: " << iCharge << " " << pathLength[iCharge] << " "
                 << "Bohrs" << std::endl;
       }
-    pcout << "----------------------------------------" << std::endl;
-    pcout << "Atom ID with max displacement: " << atomId << std::endl;
-    pcout << "Path Length of " << atomId << " is: " << length << " Bohrs"
-          << std::endl;
-    pcout << "-----------------------------------------" << std::endl;
+      return(length);
   }
 
   void
@@ -1284,7 +1280,7 @@ namespace dftfe
         pcout << std::endl;
       }
     MPI_Barrier(d_mpiCommParent);
-    CalculatePathLength(false);
+    double length = CalculatePathLength(false);
 
     pcout
       << std::endl
@@ -1292,8 +1288,6 @@ namespace dftfe
       << std::endl;
     int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
-    pcout << "FlagTotal: " << FlagTotal << std::endl;
-    pcout << "Is COnverged: " << flag << std::endl;
     return flag;
   }
 
@@ -1462,7 +1456,7 @@ namespace dftfe
       }
     MPI_Barrier(d_mpiCommParent);
     double Length = 0.0;
-    CalculatePathLength(false);
+    Length = CalculatePathLength(false);
     pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     step_time = MPI_Wtime() - step_time;
     pcout << "Time taken for initial dft solve of all images: " << step_time

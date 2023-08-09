@@ -225,7 +225,7 @@ namespace dftfe
     /**
      * @brief Calculate path length: max diaplacement of atoms
      */
-    void
+    double
     CalculatePathLength(bool flag) const;
 
     /**
