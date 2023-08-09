@@ -67,7 +67,7 @@ namespace dftfe
         "SOLVER MODE",
         "GS",
         dealii::Patterns::Selection("GS|MD|NEB|GEOOPT|NONE|NSCF"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.");
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calulation at the k-points specified");
 
       prm.declare_entry(
         "RESTART",
@@ -1024,7 +1024,7 @@ namespace dftfe
             dealii::Patterns::Bool(),
             "[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");
 
-            prm.declare_entry(
+          prm.declare_entry(
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
             dealii::Patterns::Integer(0),
@@ -1386,7 +1386,7 @@ namespace dftfe
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
-      writeBandsFile = prm.get_bool("WRITE BANDS");
+      writeBandsFile           = prm.get_bool("WRITE BANDS");
     }
     prm.leave_subsection();
 
@@ -1610,7 +1610,7 @@ namespace dftfe
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
         highestStateOfInterestForChebFiltering =
-          prm.get_integer("HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING");  
+          prm.get_integer("HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING");
         useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
         restrictToOnePass = prm.get_bool("RESTRICT TO SINGLE FILTER PASS");
       }
@@ -1738,9 +1738,11 @@ namespace dftfe
                 dealii::ExcMessage(
                   "DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
-    if(solverMode == "NSCF")
-      AssertThrow(loadRhoData==true,
-      dealii::ExcMessage("DFT-FE Error: Cant run NSCF without load rho data set to true"))  ;            
+    if (solverMode == "NSCF")
+      AssertThrow(
+        loadRhoData == true,
+        dealii::ExcMessage(
+          "DFT-FE Error: Cant run NSCF without load rho data set to true"));
 
     if (isPseudopotential)
       AssertThrow(

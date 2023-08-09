@@ -704,19 +704,19 @@ namespace dftfe
 
 
 #ifdef USE_COMPLEX
-  if(d_dftParamsPtr->solverMode == "NSCF")
-    {
-      if(!(d_dftParamsPtr->kPointDataFile == ""))
+    if (d_dftParamsPtr->solverMode == "NSCF")
       {
-        readkPointData();
+        if (!(d_dftParamsPtr->kPointDataFile == ""))
+          {
+            readkPointData();
+          }
+        else
+          {
+            // Put an assert statement here
+          }
       }
-      else
-      {
-        //Put an assert statement here
-      }
-    }
-  else
-    generateMPGrid();
+    else
+      generateMPGrid();
 #else
     d_kPointCoordinates.resize(3, 0.0);
     d_kPointWeights.resize(1, 1.0);
@@ -1722,14 +1722,14 @@ namespace dftfe
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
       }
 
-    if (d_dftParamsPtr->solverMode == "GS" )
+    if (d_dftParamsPtr->solverMode == "GS")
       {
         solve(true, true, d_isRestartGroundStateCalcFromChk);
       }
-    else if( d_dftParamsPtr->solverMode == "NSCF" )
+    else if (d_dftParamsPtr->solverMode == "NSCF")
       {
         solveNoSCF();
-        if(d_dftParamsPtr->writeBandsFile)
+        if (d_dftParamsPtr->writeBandsFile)
           writeBands();
       }
 

@@ -283,14 +283,10 @@ namespace dftfe
       }
 #endif
 
-  return trXtKX;
-}
+    return trXtKX;
+  }
 
 
-
-
-
-  
 
   // chebyshev solver
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -901,34 +897,35 @@ namespace dftfe
 
     computing_timer.leave_subsection("Chebyshev solve");
   }
-     
 
 
-// compute the maximum of the residual norm of the highest state of interest
-// across all K points
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-double
-dftClass<FEOrder, FEOrderElectro>::
-  computeMaximumHighestOccupiedStateResidualNorm(
-    const std::vector<std::vector<double>> &residualNormWaveFunctionsAllkPoints,
-    const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-    const unsigned int highestState)
-{
-  double maxHighestOccupiedStateResNorm = -1e+6;
-  for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
-    {
 
-      if (residualNormWaveFunctionsAllkPoints[kPoint][highestState] >
-          maxHighestOccupiedStateResNorm)
-        {
-          maxHighestOccupiedStateResNorm =
-            residualNormWaveFunctionsAllkPoints[kPoint][highestState];
-        }
-    }
-  maxHighestOccupiedStateResNorm =
-    dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
-  return maxHighestOccupiedStateResNorm;
-}
+  // compute the maximum of the residual norm of the highest state of interest
+  // across all K points
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::
+    computeMaximumHighestOccupiedStateResidualNorm(
+      const std::vector<std::vector<double>>
+        &residualNormWaveFunctionsAllkPoints,
+      const std::vector<std::vector<double>> &eigenValuesAllkPoints,
+      const unsigned int                      highestState)
+  {
+    double maxHighestOccupiedStateResNorm = -1e+6;
+    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+      {
+        if (residualNormWaveFunctionsAllkPoints[kPoint][highestState] >
+            maxHighestOccupiedStateResNorm)
+          {
+            maxHighestOccupiedStateResNorm =
+              residualNormWaveFunctionsAllkPoints[kPoint][highestState];
+          }
+      }
+    maxHighestOccupiedStateResNorm =
+      dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
+                                  interpoolcomm);
+    return maxHighestOccupiedStateResNorm;
+  }
   // compute the maximum of the residual norm of the highest occupied state
   // among all k points
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

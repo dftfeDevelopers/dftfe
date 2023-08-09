@@ -1742,9 +1742,10 @@ namespace dftfe
      */
     double
     computeMaximumHighestOccupiedStateResidualNorm(
-      const std::vector<std::vector<double>> &residualNormWaveFunctionsAllkPoints,
+      const std::vector<std::vector<double>>
+        &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const unsigned int highestState);
+      const unsigned int                      highestState);
 
 
     void
