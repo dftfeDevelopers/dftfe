@@ -174,7 +174,7 @@ namespace dftfe
 
 
 
-    if (d_dftParamsPtr->verbosity == 0)
+    if (d_dftParamsPtr->verbosity >= 0)
       pcout << "Starting NSCF iteration...." << std::endl;
 
     dealii::Timer local_timer(d_mpiCommParent, true);
@@ -889,7 +889,7 @@ namespace dftfe
 
         numberChebyshevSolvePasses = count;
 
-        if (d_dftParamsPtr->verbosity >= 1)
+        if (d_dftParamsPtr->verbosity >= 0)
           {
             pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
           }
@@ -1094,7 +1094,7 @@ namespace dftfe
           d_dftParamsPtr->verbosity >= 2,
           d_dftParamsPtr->smearedNuclearCharges);
 
-    if (d_dftParamsPtr->verbosity == 1)
+    if (d_dftParamsPtr->verbosity <= 1)
       pcout << "Total energy  : " << totalEnergy << std::endl;
 
     d_groundStateEnergy = totalEnergy;
@@ -1111,13 +1111,13 @@ namespace dftfe
                                        d_dftParamsPtr->constraintMagnetization,
                                        d_dftParamsPtr->TVal);
 
-    if (d_dftParamsPtr->verbosity >= 1)
+    if (d_dftParamsPtr->verbosity >= 0)
       pcout << "Total entropic energy: " << d_entropicEnergy << std::endl;
 
 
     d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
 
-    if (d_dftParamsPtr->verbosity >= 1)
+    if (d_dftParamsPtr->verbosity >= 0)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
 
 
