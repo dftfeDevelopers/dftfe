@@ -168,7 +168,7 @@ namespace dftfe
     computing_timer.enter_subsection("nscf solve");
 
     double chebyTol;
-    chebyTol = d_dftParamsPtr->chebyshevTolerance > 0.0 ?
+    chebyTol = d_dftParamsPtr->chebyshevTolerance >= 0.0 ?
                  d_dftParamsPtr->chebyshevTolerance :
                  1e-08;
 

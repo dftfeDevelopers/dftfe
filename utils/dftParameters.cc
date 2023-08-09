@@ -1971,7 +1971,7 @@ namespace dftfe
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER")
           chebyshevTolerance = 1.0e-2;
-        else
+        else if(solverMode != "NSCF")
           chebyshevTolerance = 5.0e-2;
       }
 
