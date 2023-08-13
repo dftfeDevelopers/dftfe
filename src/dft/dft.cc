@@ -712,7 +712,7 @@ namespace dftfe
           }
         else
           {
-            // Put an assert statement here
+            generateMPGrid();
           }
       }
     else
