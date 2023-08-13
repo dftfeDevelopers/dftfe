@@ -4201,7 +4201,7 @@ namespace dftfe
                   {
                     fprintf(
                       pFile,
-                      "%d  %d   %g   %g\n",
+                      "%d  %d   %.14g   %.14g\n",
                       kPoint,
                       iWave,
                       eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
@@ -4225,7 +4225,7 @@ namespace dftfe
                                [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
                           1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(14) << eigenUpTrunc << "  "
+                              << std::setprecision(8) << eigenUpTrunc << "  "
                               << eigenDownTrunc << std::endl;
                       }
                   }
@@ -4233,7 +4233,7 @@ namespace dftfe
                   {
                     fprintf(
                       pFile,
-                      "%d  %d %g\n",
+                      "%d  %d %.14g\n",
                       kPoint,
                       iWave,
                       eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
@@ -4247,7 +4247,7 @@ namespace dftfe
                                         [kPoint * d_numEigenValues + iWave])) /
                           1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(14) << eigenTrunc
+                              << std::setprecision(8) << eigenTrunc
                               << std::endl;
                       }
                   }
