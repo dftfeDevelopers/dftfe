@@ -712,7 +712,7 @@ namespace dftfe
           }
         else
           {
-            // Put an assert statement here
+            generateMPGrid();
           }
       }
     else
@@ -4225,7 +4225,7 @@ namespace dftfe
                                [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
                           1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenUpTrunc << "  "
+                              << std::setprecision(14) << eigenUpTrunc << "  "
                               << eigenDownTrunc << std::endl;
                       }
                   }
@@ -4247,7 +4247,7 @@ namespace dftfe
                                         [kPoint * d_numEigenValues + iWave])) /
                           1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenTrunc
+                              << std::setprecision(14) << eigenTrunc
                               << std::endl;
                       }
                   }
