@@ -1028,7 +1028,7 @@ namespace dftfe
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
             dealii::Patterns::Integer(0),
-            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy .");
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation ");
 
           prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
