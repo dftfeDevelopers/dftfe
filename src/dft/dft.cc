@@ -4211,15 +4211,23 @@ namespace dftfe
                                                  iWave]);
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
-                      pcout << kPoint << "  " << iWave << "  "
-                            << eigenValuesFlattenedGlobal[2 * kPoint *
-                                                            d_numEigenValues +
-                                                          iWave]
-                            << "  "
-                            << eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
-                                                            d_numEigenValues +
-                                                          iWave]
-                            << std::endl;
+                      {
+                        double eigenUpTrunc =
+                          std::floor(
+                            1000000000 *
+                            (eigenValuesFlattenedGlobal
+                               [2 * kPoint * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        double eigenDownTrunc =
+                          std::floor(
+                            1000000000 *
+                            (eigenValuesFlattenedGlobal
+                               [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        pcout << kPoint << "  " << iWave << "  " << std::fixed
+                              << std::setprecision(8) << eigenUpTrunc << "  "
+                              << eigenDownTrunc << std::endl;
+                      }
                   }
                 else
                   {
@@ -4232,15 +4240,16 @@ namespace dftfe
                                                  iWave]);
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
-                      pcout << kPoint << "  " << iWave << "  "
-                            << eigenValuesFlattenedGlobal[2 * kPoint *
-                                                            d_numEigenValues +
-                                                          iWave]
-                            << "  "
-                            << eigenValuesFlattenedGlobal[kPoint *
-                                                            d_numEigenValues +
-                                                          iWave]
-                            << std::endl;
+                      {
+                        double eigenTrunc =
+                          std::floor(1000000000 *
+                                     (eigenValuesFlattenedGlobal
+                                        [kPoint * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        pcout << kPoint << "  " << iWave << "  " << std::fixed
+                              << std::setprecision(8) << eigenTrunc
+                              << std::endl;
+                      }
                   }
               }
           }

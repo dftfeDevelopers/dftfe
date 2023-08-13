@@ -169,7 +169,7 @@ namespace dftfe
 
     double chebyTol;
     chebyTol = d_dftParamsPtr->chebyshevTolerance == 0.0 ?
-                 1e-08: 
+                 1e-08 :
                  d_dftParamsPtr->chebyshevTolerance;
 
 
