@@ -56,7 +56,7 @@ $ make install
 \end{verbatim}
 There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
 
-\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
+\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via ELPA for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
 %Alternatively one can also use the python based installer~\url{http://www.netlib.org/scalapack/scalapack_installer.tgz} for Linux.
 
 \item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download the latest version elpa-2022.11.001 from \url{https://elpa.mpcdf.mpg.de/software/} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
@@ -149,7 +149,7 @@ $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
 
 
 \subsubsection{Instructions for deal.II}
-Assuming the above dependencies (p4est and ScaLAPACK) are installed, we now briefly discuss the steps to compile and install deal.II library linked with the above dependencies. You need to install two variants of the deal.II library-- one variant linked with real scalar type PETSc and SLEPc installations, and the other variant linked with complex scalar type PETSc and SLEPc installations. 
+Assuming the above p4est dependency is installed, we now briefly discuss the steps to compile and install deal.II library linked with the above dependencies. You need to install two variants of the deal.II library-- one variant linked with real scalar type PETSc and SLEPc installations, and the other variant linked with complex scalar type PETSc and SLEPc installations. 
 
 \begin{enumerate}
 
@@ -186,9 +186,6 @@ $ make install
 -DLAPACK_DIR=lapack_dir_paths (both BLAS and LAPACK directory paths)
 -DLAPACK_FOUND=true
 -DLAPACK_LIBRARIES=lapack_lib_paths (both BLAS and LAPACK library paths)
--DDEAL_II_WITH_SCALAPACK=ON
--DSCALAPACK_DIR=scalapack_dir_path (only required if linking to netlib ScaLAPACK)
--DSCALAPACK_LIBRARIES=scalapack_lib_path
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
@@ -225,12 +222,6 @@ $ cmake
 -Wl,--no-as-needed -lmkl_intel_lp64
 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm
 -ldl" -DLAPACK_INCLUDE_DIRS="-I${MKLROOT}/include" 
--DDEAL_II_WITH_SCALAPACK=ON
--DSCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64
--lmkl_scalapack_lp64 -Wl,--no-as-needed
--lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core
--lmkl_blacs_openmpi_lp64 -lgomp -lpthread -lm
--ldl"
 -DCMAKE_INSTALL_PREFIX=dealii_install_path ../dealii
 $ make -j 8
 $ make install
@@ -244,6 +235,8 @@ The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES| and \verb|-DLAPACK_
 \end{figure}
 
 %Note that in the above procedure one is installing the development version of deal.II library and this version is continuously updated by deal.II developers, which can sometimes lead to installation issues on certain compilers. If you face any issues during the installation procedure of deal.II development version as explained above, you may alternatively obtain the current release version of deal.II by downloading and unpacking the .tar.gz file from \url{https://www.dealii.org/download.html} and following the same procedure as above. If you still face installation issues, and/or if you have any questions about the deal.II installation, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists}.\\
+
+
 
 \subsubsection{Instructions for simple-dftd3 and dftd4}
 
@@ -424,8 +417,6 @@ $ make install
 -DLAPACK_DIR=lapack_dir_path 
 -DLAPACK_FOUND=true 
 -DLAPACK_LIBRARIES=lapack_lib_path
--DSCALAPACK_DIR=scalapack_dir_path (only required if linking to Netlib ScaLAPACK)
--DSCALAPACK_LIBRARIES=scalapack_lib_path
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
