@@ -316,7 +316,7 @@ namespace dftfe
 
           // std::cerr << " upf_nproj = " << upf_nproj << std::endl;
 
-          //std::vector<int> upf_l(upf_nwfc);
+          // std::vector<int> upf_l(upf_nwfc);
 
           // read mesh
           find_start_element("PP_MESH", upfFile);
@@ -436,12 +436,12 @@ namespace dftfe
           find_start_element("PP_PSWFC", upfFile);
           std::vector<std::vector<double>> upf_pswfcdata;
           upf_pswfcdata.resize(upf_nwfc);
-          std::vector<int> upf_wfc_l(upf_nwfc);
+          std::vector<int>         upf_wfc_l(upf_nwfc);
           std::vector<std::string> upf_wfc_orbital(upf_nwfc);
-          int upf_lwfcmax=0;
+          int                      upf_lwfcmax = 0;
           for (int j = 0; j < upf_nwfc; j++)
             {
-              int index, angular_momentum;
+              int         index, angular_momentum;
               std::string orbital;
               os.str("");
               os << j + 1;
@@ -465,7 +465,7 @@ namespace dftfe
               is.clear();
               is.str(buf);
               is >> orbital;
-              upf_lwfcmax = std::max(upf_lwfcmax,angular_momentum);
+              upf_lwfcmax          = std::max(upf_lwfcmax, angular_momentum);
               upf_wfc_l[index - 1] = angular_momentum;
               upf_wfc_orbital[index - 1] = orbital;
               upf_pswfcdata[j].resize(upf_mesh_size);
@@ -474,7 +474,7 @@ namespace dftfe
 
               find_end_element(element_name, upfFile);
             }
-            
+
           // compute number of projectors for each l
           // nproj_l[l] is the number of projectors having angular momentum l
           std::vector<int> npswfc_l(upf_lwfcmax + 1);
@@ -644,23 +644,23 @@ namespace dftfe
                 }
 
               // PSWFC
-              for(int iwave = 0; iwave < upf_nwfc; iwave++)
-              {
-                      xmlFile << "<PSwfc i=\"" << iwave<< "\" orbital=\"" << upf_wfc_orbital[iwave]
-                              << "\" size=\"" << nplin << "\">" << std::endl;
-                      int count2 = 0;
-                      for (int j = 0; j < nplin; j++)
-                        {
-                          count2 += 1;
-                          xmlFile << std::setprecision(14) << upf_pswfcdata[iwave][j]
-                                  << "   ";
-                          if (count2 % 4 == 0)
-                            xmlFile << std::endl;
-                        }
-                      xmlFile << "</PSwfc>" << std::endl;                
-              }
-              
-              
+              for (int iwave = 0; iwave < upf_nwfc; iwave++)
+                {
+                  xmlFile << "<PSwfc i=\"" << iwave << "\" orbital=\""
+                          << upf_wfc_orbital[iwave] << "\" size=\"" << nplin
+                          << "\">" << std::endl;
+                  int count2 = 0;
+                  for (int j = 0; j < nplin; j++)
+                    {
+                      count2 += 1;
+                      xmlFile << std::setprecision(14)
+                              << upf_pswfcdata[iwave][j] << "   ";
+                      if (count2 % 4 == 0)
+                        xmlFile << std::endl;
+                    }
+                  xmlFile << "</PSwfc>" << std::endl;
+                }
+
 
 
               // d_ij

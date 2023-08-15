@@ -256,7 +256,8 @@ namespace dftfe
                       else if (xmlStrcmp(cur_node->name,
                                          (const xmlChar *)"PSwfc") == 0)
                         {
-                          std::tuple<size_t, std::string, std::vector<std::string>>
+                          std::
+                            tuple<size_t, std::string, std::vector<std::string>>
                                    PSwfc_temp;
                           xmlAttr *attribute = cur_node->properties;
                           int      counter   = 0;
@@ -273,15 +274,15 @@ namespace dftfe
                               if (counter == 0)
                                 std::get<0>(PSwfc_temp) = stoi(value_str);
                               else if (counter == 1)
-                                std::get<1>(PSwfc_temp) = value_str;//stoi(value_str);
+                                std::get<1>(PSwfc_temp) =
+                                  value_str; // stoi(value_str);
 
                               attribute = attribute->next;
                               counter++;
                             }
 
-                          std::string PSwfc_content(
-                            reinterpret_cast<char *>(
-                              xmlNodeGetContent(cur_node)));
+                          std::string PSwfc_content(reinterpret_cast<char *>(
+                            xmlNodeGetContent(cur_node)));
 
                           std::string::size_type n = 0;
                           while ((n = PSwfc_content.find("   ", n)) !=
@@ -436,7 +437,7 @@ namespace dftfe
       l0.precision(14);
       l1.precision(14);
       l2.precision(14);
-      l3.precision(14);    
+      l3.precision(14);
       denom.precision(14);
       pseudo.precision(14);
 
@@ -601,11 +602,10 @@ namespace dftfe
       std::string file2 = "proj_l2.dat";
       std::string file3 = "proj_l3.dat";
 
-       j0 = 0;
-       j1 = 0;
-       j2 = 0;
-       j3 = 0;
-
+      j0 = 0;
+      j1 = 0;
+      j2 = 0;
+      j3 = 0;
 
 
 
@@ -746,20 +746,20 @@ namespace dftfe
           denom << std::endl;
         }
 
-        for(auto i:PSwfc)
+      for (auto i : PSwfc)
         {
           std::ofstream wfc;
-          std::string orbital = std::get<1>(i);
-          wfc.open(baseOutputPath+"/"+orbital+".dat");
-          pseudo <<orbital+".dat"<<std::endl;
+          std::string   orbital = std::get<1>(i);
+          wfc.open(baseOutputPath + "/" + orbital + ".dat");
+          pseudo << orbital + ".dat" << std::endl;
           wfc.precision(14);
           int k = 0;
-          for(auto j: std::get<2>(i))
+          for (auto j : std::get<2>(i))
             {
               wfc << std::fixed << std::setprecision(14)
                   << mesh[k] /* rp*/ << " " << j << std::endl;
               k++;
-            }     
+            }
         }
 
       // Clear the vectors

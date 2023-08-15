@@ -52,7 +52,8 @@ namespace dftfe
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
-      writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
+      writeLdosFile, writeBandsFile, writeLocalizationLengths, pinnedNodeForPBC,
+      writePdosFile;
 
 
     /** parameters for LRD preconditioner **/
@@ -162,6 +163,7 @@ namespace dftfe
     double       pspCutoffImageCharges;
     bool         reuseLanczosUpperBoundFromFirstCall;
     bool         allowMultipleFilteringPassesAfterFirstScf;
+    unsigned int highestStateOfInterestForChebFiltering;
     bool         useELPADeviceKernel;
     bool         deviceMemOptMode;
 

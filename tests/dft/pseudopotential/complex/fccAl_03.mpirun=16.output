@@ -1,0 +1,44 @@
+number of atoms: 4
+number of atoms types: 1
+Z:13
+=============================================================================================================================
+number of electrons: 12
+number of eigen values: 20
+=============================================================================================================================
+Total number of k-points 8
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 7.599999999999999645e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 7.599999999999999645e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 7.599999999999999645e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  0.000000000000000000e+00 5.000000000000000000e-01 5.000000000000000000e-01
+AtomId 2:  5.000000000000000000e-01 0.000000000000000000e+00 5.000000000000000000e-01
+AtomId 3:  5.000000000000000000e-01 5.000000000000000000e-01 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+Number Image Charges  1724
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
+FE interpolating polynomial order for electrostatics solve: 2
+FE interpolating polynomial order for nodal electron density computation: 4
+number of elements: 1408
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15849
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+Checkpointing tria info and rho data in progress...
+...checkpointing done.
+SCF iterations converged to the specified tolerance after: 9 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:          -8.36780768

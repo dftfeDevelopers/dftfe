@@ -14,20 +14,9 @@
 
 
 {\it Default:} false
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
-\phantomsection\label{parameters:WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
-\label{parameters:WRITE_20STRUCTURE_20ENERGY_20FORCES_20DATA_20POST_20PROCESS}
 
 
-\index[prmindex]{WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
-\index[prmindexfull]{WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
-{\it Value:} false
-
-
-{\it Default:} false
-
-{\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, domain vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
+{\it Description:} [Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -88,7 +77,7 @@
 
 \index[prmindex]{RESTART FOLDER}
 \index[prmindexfull]{RESTART FOLDER}
-{\it Value:} GSfolder
+{\it Value:} .
 
 
 {\it Default:} .
@@ -105,23 +94,23 @@
 
 \index[prmindex]{SOLVER MODE}
 \index[prmindexfull]{SOLVER MODE}
-{\it Value:} GS
+{\it Value:} NSCF
 
 
 {\it Default:} GS
 
 
-{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.
+{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified
 
 
-{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE
+{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF
 \item {\it Parameter name:} {\tt VERBOSITY}
 \phantomsection\label{parameters:VERBOSITY}
 
 
 \index[prmindex]{VERBOSITY}
 \index[prmindexfull]{VERBOSITY}
-{\it Value:} 1
+{\it Value:} 4
 
 
 {\it Default:} 1
@@ -131,6 +120,23 @@
 
 
 {\it Possible values:} An integer $n$ such that $-1\leq n \leq 5$
+\item {\it Parameter name:} {\tt WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+\phantomsection\label{parameters:WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+\label{parameters:WRITE_20STRUCTURE_20ENERGY_20FORCES_20DATA_20POST_20PROCESS}
+
+
+\index[prmindex]{WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+\index[prmindexfull]{WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 
@@ -197,7 +203,7 @@
 
 \index[prmindex]{PERIODIC1}
 \index[prmindexfull]{Boundary conditions!PERIODIC1}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -214,7 +220,7 @@
 
 \index[prmindex]{PERIODIC2}
 \index[prmindexfull]{Boundary conditions!PERIODIC2}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -231,7 +237,7 @@
 
 \index[prmindex]{PERIODIC3}
 \index[prmindexfull]{Boundary conditions!PERIODIC3}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -339,7 +345,7 @@
 
 \index[prmindex]{kPOINT RULE FILE}
 \index[prmindexfull]{Brillouin zone k point sampling options!kPOINT RULE FILE}
-{\it Value:} 
+{\it Value:} kPoint2x2x2File
 
 
 {\it Default:} 
@@ -478,10 +484,27 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)).
+{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. NÃ¸rskov, Phys. Rev. B 59, 7413 (1999)), 6(ML-XC NNLDA: LDA-PW + NN), 7(ML-XC NNGGA: GGA-PBE + NN). Caution: options 6-7 are experimental and only accessible to the DFT-FE developers currently.
 
 
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 5$
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 8$
+\item {\it Parameter name:} {\tt MODEL XC INPUT FILE}
+\phantomsection\label{parameters:DFT functional parameters/MODEL XC INPUT FILE}
+\label{parameters:DFT_20functional_20parameters/MODEL_20XC_20INPUT_20FILE}
+
+
+\index[prmindex]{MODEL XC INPUT FILE}
+\index[prmindexfull]{DFT functional parameters!MODEL XC INPUT FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Developer] Parameter specifying the filename that contains the data for an externally supplied XC model. This is an experimental feature to test out any new XC functional developed using machine learning. Currently, it assumes an LDA type functional.
+
+
+{\it Possible values:} Any string
 \item {\it Parameter name:} {\tt NUMBER OF IMAGES}
 \phantomsection\label{parameters:DFT functional parameters/NUMBER OF IMAGES}
 \label{parameters:DFT_20functional_20parameters/NUMBER_20OF_20IMAGES}
@@ -529,7 +552,7 @@
 {\it Default:} 
 
 
-{\it Description:} [Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.
+{\it Description:} [Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.
 
 
 {\it Possible values:} Any string
@@ -758,7 +781,7 @@
 
 \index[prmindex]{POLYNOMIAL ORDER}
 \index[prmindexfull]{Finite element mesh parameters!POLYNOMIAL ORDER}
-{\it Value:} 6
+{\it Value:} 5
 
 
 {\it Default:} 6
@@ -800,7 +823,7 @@
 
 \index[prmindex]{ATOM BALL RADIUS}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!ATOM BALL RADIUS}
-{\it Value:} 20
+{\it Value:} 0.0
 
 
 {\it Default:} 0.0
@@ -953,7 +976,7 @@
 
 \index[prmindex]{MESH SIZE AROUND ATOM}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE AROUND ATOM}
-{\it Value:} 1.0
+{\it Value:} 1.6
 
 
 {\it Default:} 1.0
@@ -1135,7 +1158,7 @@
 {\it Default:} true
 
 
-{\it Description:} [Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.
+{\it Description:} [Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI_Allreduce communication calls. Default: true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -1173,6 +1196,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE GPUDIRECT MPI ALL REDUCE}
+\phantomsection\label{parameters:GPU/USE GPUDIRECT MPI ALL REDUCE}
+\label{parameters:GPU/USE_20GPUDIRECT_20MPI_20ALL_20REDUCE}
+
+
+\index[prmindex]{USE GPUDIRECT MPI ALL REDUCE}
+\index[prmindexfull]{GPU!USE GPUDIRECT MPI ALL REDUCE}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Adavanced] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt USE TF32 OP}
 \phantomsection\label{parameters:GPU/USE TF32 OP}
 \label{parameters:GPU/USE_20TF32_20OP}
@@ -1190,23 +1230,6 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE GPUDIRECT MPI ALL REDUCE}
-\phantomsection\label{parameters:GPU/USE GPUDIRECT MPI ALL REDUCE}
-\label{parameters:GPU/USE_20GPUDIRECT_20MPI_20ALL_20REDUCE}
-
-
-\index[prmindex]{USE GPUDIRECT MPI ALL REDUCE}
-\index[prmindexfull]{GPU!USE GPUDIRECT MPI ALL REDUCE}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 \subsection{Parameters in section \tt Geometry}
@@ -1220,7 +1243,7 @@
 
 \index[prmindex]{ATOMIC COORDINATES FILE}
 \index[prmindexfull]{Geometry!ATOMIC COORDINATES FILE}
-{\it Value:} coordinates1.inp
+{\it Value:} coordinates.inp
 
 
 {\it Default:} 
@@ -1254,7 +1277,7 @@
 
 \index[prmindex]{DOMAIN VECTORS FILE}
 \index[prmindexfull]{Geometry!DOMAIN VECTORS FILE}
-{\it Value:} domainVectors.inp
+{\it Value:} domainBoundingVectors.inp
 
 
 {\it Default:} 
@@ -1270,7 +1293,7 @@
 
 \index[prmindex]{NATOMS}
 \index[prmindexfull]{Geometry!NATOMS}
-{\it Value:} 2
+{\it Value:} 4
 
 
 {\it Default:} 0
@@ -1397,7 +1420,7 @@
 
 \index[prmindex]{ION FORCE}
 \index[prmindexfull]{Geometry!Optimization!ION FORCE}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -1647,148 +1670,6 @@
 {\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
-\subsection{Parameters in section \tt Ground-state derived computations}
-\label{parameters:Ground_2dstate_20derived_20computations}
-
-\begin{itemize}
-\item {\it Parameter name:} {\tt READ ATOMIC WFC PDOS FROM PSP FILE}
-\phantomsection\label{parameters:Ground_2dstate derived computations/READ ATOMIC WFC PDOS FROM PSP FILE}
-\label{parameters:Ground_2dstate_20derived_20computations/READ_20ATOMIC_20WFC_20PDOS_20FROM_20PSP_20FILE}
-
-
-\index[prmindex]{READ ATOMIC WFC PDOS FROM PSP FILE}
-\index[prmindexfull]{Ground-state derived computations!READ ATOMIC WFC PDOS FROM PSP FILE}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Read atomic wavefunctons from the pseudopotential file for computing projected density of states. When set to false atomic wavefunctions from the internal database are read, which correspond to sg15 ONCV pseudopotentials.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE DENSITY FE MESH}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY FE MESH}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY_20FE_20MESH}
-
-
-\index[prmindex]{WRITE DENSITY FE MESH}
-\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY FE MESH}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE DENSITY QUAD DATA}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY QUAD DATA}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY_20QUAD_20DATA}
-
-
-\index[prmindex]{WRITE DENSITY QUAD DATA}
-\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY QUAD DATA}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point Cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false..
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE DENSITY OF STATES}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE DENSITY OF STATES}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20DENSITY_20OF_20STATES}
-
-
-\index[prmindex]{WRITE DENSITY OF STATES}
-\index[prmindexfull]{Ground-state derived computations!WRITE DENSITY OF STATES}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE LOCALIZATION LENGTHS}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE LOCALIZATION LENGTHS}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20LOCALIZATION_20LENGTHS}
-
-
-\index[prmindex]{WRITE LOCALIZATION LENGTHS}
-\index[prmindexfull]{Ground-state derived computations!WRITE LOCALIZATION LENGTHS}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE LOCAL DENSITY OF STATES}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE LOCAL DENSITY OF STATES}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20LOCAL_20DENSITY_20OF_20STATES}
-
-
-\index[prmindex]{WRITE LOCAL DENSITY OF STATES}
-\index[prmindexfull]{Ground-state derived computations!WRITE LOCAL DENSITY OF STATES}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE PROJECTED DENSITY OF STATES}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE PROJECTED DENSITY OF STATES}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20PROJECTED_20DENSITY_20OF_20STATES}
-
-
-\index[prmindex]{WRITE PROJECTED DENSITY OF STATES}
-\index[prmindexfull]{Ground-state derived computations!WRITE PROJECTED DENSITY OF STATES}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE WFC FE MESH}
-\phantomsection\label{parameters:Ground_2dstate derived computations/WRITE WFC FE MESH}
-\label{parameters:Ground_2dstate_20derived_20computations/WRITE_20WFC_20FE_20MESH}
-
-
-\index[prmindex]{WRITE WFC FE MESH}
-\index[prmindexfull]{Ground-state derived computations!WRITE WFC MESH}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\end{itemize}
-
 \subsection{Parameters in section \tt Helmholtz problem parameters}
 \label{parameters:Helmholtz_20problem_20parameters}
 
@@ -1840,7 +1721,7 @@
 
 \index[prmindex]{ATOMIC MASSES FILE}
 \index[prmindexfull]{Molecular Dynamics!ATOMIC MASSES FILE}
-{\it Value:} Mass.inp
+{\it Value:} 
 
 
 {\it Default:} 
@@ -1857,7 +1738,7 @@
 
 \index[prmindex]{BOMD}
 \index[prmindexfull]{Molecular Dynamics!BOMD}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -1925,7 +1806,7 @@
 
 \index[prmindex]{NUMBER OF STEPS}
 \index[prmindexfull]{Molecular Dynamics!NUMBER OF STEPS}
-{\it Value:} 9
+{\it Value:} 1000
 
 
 {\it Default:} 1000
@@ -2056,7 +1937,7 @@
 {\it Default:} 100.0
 
 
-{\it Description:} [Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.
+{\it Description:} [Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
@@ -2098,6 +1979,23 @@
 \label{parameters:Poisson_20problem_20parameters}
 
 \begin{itemize}
+\item {\it Parameter name:} {\tt GPU MODE}
+\phantomsection\label{parameters:Poisson problem parameters/GPU MODE}
+\label{parameters:Poisson_20problem_20parameters/GPU_20MODE}
+
+
+\index[prmindex]{GPU MODE}
+\index[prmindexfull]{Poisson problem parameters!GPU MODE}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Toggle GPU MODE in Poisson solve.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt MAXIMUM ITERATIONS}
 \phantomsection\label{parameters:Poisson problem parameters/MAXIMUM ITERATIONS}
 \label{parameters:Poisson_20problem_20parameters/MAXIMUM_20ITERATIONS}
@@ -2132,23 +2030,165 @@
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
-\item {\it Parameter name:} {\tt GPU MODE}
-\phantomsection\label{parameters:Poisson problem parameters/GPU MODE}
-\label{parameters:Poisson_20problem_20parameters/GPU_20MODE}
+\end{itemize}
+
+\subsection{Parameters in section \tt Post-processing Options}
+\label{parameters:Post_2dprocessing_20Options}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt READ ATOMIC WFC PDOS FROM PSP FILE}
+\phantomsection\label{parameters:Post_2dprocessing Options/READ ATOMIC WFC PDOS FROM PSP FILE}
+\label{parameters:Post_2dprocessing_20Options/READ_20ATOMIC_20WFC_20PDOS_20FROM_20PSP_20FILE}
 
 
-\index[prmindex]{GPU MODE}
-\index[prmindexfull]{Poisson problem parameters!GPU MODE}
+\index[prmindex]{READ ATOMIC WFC PDOS FROM PSP FILE}
+\index[prmindexfull]{Post-processing Options!READ ATOMIC WFC PDOS FROM PSP FILE}
 {\it Value:} false
 
 
 {\it Default:} false
 
 
-{\it Description:} [Advanced] Toggle GPU MODE in Poisson solve.
+{\it Description:} [Standard] Read atomic wavefunctons from the pseudopotential file for computing projected density of states. When set to false atomic wavefunctions from the internal database are read, which correspond to sg15 ONCV pseudopotentials.
 
 
-{\it Possible values:}  A boolean value (true or false)
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE BANDS}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE BANDS}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20BANDS}
+
+
+\index[prmindex]{WRITE BANDS}
+\index[prmindexfull]{Post-processing Options!WRITE BANDS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. This option is by default on for NSCF mode of solve. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 3 columns with first column indicating the k-point index, second column indicating band index and third column indicating corresponding eigenvalue.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY FE MESH}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE DENSITY FE MESH}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20DENSITY_20FE_20MESH}
+
+
+\index[prmindex]{WRITE DENSITY FE MESH}
+\index[prmindexfull]{Post-processing Options!WRITE DENSITY FE MESH}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY OF STATES}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE DENSITY OF STATES}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE DENSITY OF STATES}
+\index[prmindexfull]{Post-processing Options!WRITE DENSITY OF STATES}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY QUAD DATA}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE DENSITY QUAD DATA}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20DENSITY_20QUAD_20DATA}
+
+
+\index[prmindex]{WRITE DENSITY QUAD DATA}
+\index[prmindexfull]{Post-processing Options!WRITE DENSITY QUAD DATA}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE LOCALIZATION LENGTHS}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE LOCALIZATION LENGTHS}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20LOCALIZATION_20LENGTHS}
+
+
+\index[prmindex]{WRITE LOCALIZATION LENGTHS}
+\index[prmindexfull]{Post-processing Options!WRITE LOCALIZATION LENGTHS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE LOCAL DENSITY OF STATES}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE LOCAL DENSITY OF STATES}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20LOCAL_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE LOCAL DENSITY OF STATES}
+\index[prmindexfull]{Post-processing Options!WRITE LOCAL DENSITY OF STATES}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE PROJECTED DENSITY OF STATES}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE PROJECTED DENSITY OF STATES}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20PROJECTED_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE PROJECTED DENSITY OF STATES}
+\index[prmindexfull]{Post-processing Options!WRITE PROJECTED DENSITY OF STATES}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE WFC FE MESH}
+\phantomsection\label{parameters:Post_2dprocessing Options/WRITE WFC FE MESH}
+\label{parameters:Post_2dprocessing_20Options/WRITE_20WFC_20FE_20MESH}
+
+
+\index[prmindex]{WRITE WFC FE MESH}
+\index[prmindexfull]{Post-processing Options!WRITE WFC FE MESH}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 \subsection{Parameters in section \tt SCF Checkpointing and Restart}
@@ -2162,7 +2202,7 @@
 
 \index[prmindex]{LOAD RHO DATA}
 \index[prmindexfull]{SCF Checkpointing and Restart!LOAD RHO DATA}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -2196,7 +2236,7 @@
 
 \index[prmindex]{SAVE RHO DATA}
 \index[prmindexfull]{SCF Checkpointing and Restart!SAVE RHO DATA}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -2259,7 +2299,7 @@
 {\it Default:} 0.05
 
 
-{\it Description:} [Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).
+{\it Description:} [Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k_{TF}**2).
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1000$
@@ -2270,7 +2310,7 @@
 
 \index[prmindex]{MAXIMUM ITERATIONS}
 \index[prmindexfull]{SCF parameters!MAXIMUM ITERATIONS}
-{\it Value:} 40
+{\it Value:} 200
 
 
 {\it Default:} 200
@@ -2287,10 +2327,10 @@
 
 \index[prmindex]{MIXING HISTORY}
 \index[prmindexfull]{SCF parameters!MIXING HISTORY}
-{\it Value:} 50
+{\it Value:} 10
 
 
-{\it Default:} 50
+{\it Default:} 10
 
 
 {\it Description:} [Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.
@@ -2321,7 +2361,7 @@
 
 \index[prmindex]{MIXING PARAMETER}
 \index[prmindexfull]{SCF parameters!MIXING PARAMETER}
-{\it Value:} 0.5
+{\it Value:} 0.0
 
 
 {\it Default:} 0.0
@@ -2338,7 +2378,7 @@
 
 \index[prmindex]{STARTING WFC}
 \index[prmindexfull]{SCF parameters!STARTING WFC}
-{\it Value:} ATOMIC
+{\it Value:} RANDOM
 
 
 {\it Default:} RANDOM
@@ -2372,7 +2412,7 @@
 
 \index[prmindex]{TOLERANCE}
 \index[prmindexfull]{SCF parameters!TOLERANCE}
-{\it Value:} 1e-8
+{\it Value:} 5e-5
 
 
 {\it Default:} 1e-05
@@ -2482,13 +2522,13 @@
 
 \index[prmindex]{CHEBY WFC BLOCK SIZE}
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBY WFC BLOCK SIZE}
-{\it Value:} 400
+{\it Value:} 200
 
 
-{\it Default:} 400
+{\it Default:} 200
 
 
-{\it Description:} [Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 400.
+{\it Description:} [Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 200.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
@@ -2509,6 +2549,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/HIGHEST_20STATE_20OF_20INTEREST_20FOR_20CHEBYSHEV_20FILTERING}
+
+
+\index[prmindex]{HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING}
+{\it Value:} 0
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation 
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/NUMBER OF KOHN_2dSHAM WAVEFUNCTIONS}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/NUMBER_20OF_20KOHN_2dSHAM_20WAVEFUNCTIONS}
@@ -2516,7 +2573,7 @@
 
 \index[prmindex]{NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
-{\it Value:} 8
+{\it Value:} 20
 
 
 {\it Default:} 0
@@ -2574,6 +2631,23 @@
 
 
 {\it Description:} [Advanced] Overlap communication and computation in orthogonalization and Rayleigh-Ritz. This option can only be activated for USE GPU=true. Default setting is true.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt RESTRICT TO SINGLE FILTER PASS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/RESTRICT TO SINGLE FILTER PASS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/RESTRICT_20TO_20SINGLE_20FILTER_20PASS}
+
+
+\index[prmindex]{RESTRICT TO SINGLE FILTER PASS}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!RESTRICT TO SINGLE FILTER PASS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Restrict to single chebyshev filter pass in each SCF. This setting is only used for timing measurements of stable single SCF iteration.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2662,6 +2736,23 @@
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt SUBSPACE PROJ SHEP GPU}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SUBSPACE PROJ SHEP GPU}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SUBSPACE_20PROJ_20SHEP_20GPU}
+
+
+\index[prmindex]{SUBSPACE PROJ SHEP GPU}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!SUBSPACE PROJ SHEP GPU}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} [Advanced] Solve a standard hermitian eigenvalue problem in the Rayleigh Ritz step instead of a generalized hermitian eigenvalue problem on GPUs. Default setting is true.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt SUBSPACE ROT DOFS BLOCK SIZE}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SUBSPACE ROT DOFS BLOCK SIZE}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SUBSPACE_20ROT_20DOFS_20BLOCK_20SIZE}
@@ -2747,6 +2838,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE MIXED PREC COMMUN ONLY XTX XTHX}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC COMMUN ONLY XTX XTHX}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20COMMUN_20ONLY_20XTX_20XTHX}
+
+
+\index[prmindex]{USE MIXED PREC COMMUN ONLY XTX XTHX}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC COMMUN ONLY XTX XTHX}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt USE MIXED PREC RR\_SR}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC RR_5fSR}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20RR_5fSR}
@@ -2798,6 +2906,23 @@
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt XTHX CORE EIGENSTATES}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/XTHX CORE EIGENSTATES}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/XTHX_20CORE_20EIGENSTATES}
+
+
+\index[prmindex]{XTHX CORE EIGENSTATES}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!XTHX CORE EIGENSTATES}
+{\it Value:} 0
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Advanced] For mixed precision optimization.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \end{itemize}
 
 \subsection{Parameters in section \tt SCF parameters/LOW RANK DIELECM PRECOND}
@@ -2834,11 +2959,10 @@
 {\it Default:} 0.1
 
 
-{\it Description:} [Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.
+{\it Description:} [Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.
 
 
-
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 100$
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt ESTIMATE JAC CONDITION NO}
 \phantomsection\label{parameters:SCF parameters/LOW RANK DIELECM PRECOND/ESTIMATE JAC CONDITION NO}
 \label{parameters:SCF_20parameters/LOW_20RANK_20DIELECM_20PRECOND/ESTIMATE_20JAC_20CONDITION_20NO}
@@ -2869,7 +2993,7 @@
 {\it Default:} ADAPTIVE
 
 
-{\it Description:} [Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.
+{\it Description:} [Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.
 
 
 {\it Possible values:} Any one of ADAPTIVE, ACCUMULATED\_ADAPTIVE

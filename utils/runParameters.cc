@@ -34,8 +34,8 @@ namespace dftfe
       prm.declare_entry(
         "SOLVER MODE",
         "GS",
-        dealii::Patterns::Selection("GS|MD|NEB|GEOOPT|NONE"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.");
+        dealii::Patterns::Selection("GS|MD|NEB|GEOOPT|NONE|NSCF"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified");
 
 
       prm.declare_entry(
