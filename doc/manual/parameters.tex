@@ -2066,7 +2066,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 3 columns with first column indicating the k-point index, second column indicating band index and third column indicating corresponding eigenvalue.
+{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. This option is by default on for NSCF mode of solve. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 3 columns with first column indicating the k-point index, second column indicating band index and third column indicating corresponding eigenvalue.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2562,7 +2562,7 @@
 {\it Default:} 0
 
 
-{\it Description:} [Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy .
+{\it Description:} [Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation 
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
