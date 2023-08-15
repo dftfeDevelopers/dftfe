@@ -140,18 +140,19 @@ namespace dftfe
 
 
 
-  // compute fermi energy
+  // compute tdos
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::compute_tdos(
     const std::vector<std::vector<double>> &eigenValuesInput,
+    const unsigned int                      highestStateOfInterest,
     const std::string &                     dosFileName)
   {
     computing_timer.enter_subsection("DOS computation");
     std::vector<double> eigenValuesAllkPoints;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-        for (int statesIter = 0; statesIter < eigenValuesInput[0].size();
+        for (int statesIter = 0; statesIter < highestStateOfInterest;
              ++statesIter)
           {
             eigenValuesAllkPoints.push_back(
@@ -161,13 +162,13 @@ namespace dftfe
 
     std::sort(eigenValuesAllkPoints.begin(), eigenValuesAllkPoints.end());
 
-    double totalEigenValues  = eigenValuesAllkPoints.size();
-    double intervalSize      = 0.001;
-    double sigma             = C_kb * d_dftParamsPtr->TVal;
-    double lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
-    double upperBoundEpsilon =
+    const double totalEigenValues  = eigenValuesAllkPoints.size();
+    const double intervalSize      = 0.001;
+    const double sigma             = C_kb * d_dftParamsPtr->TVal;
+    const double lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
+    const double upperBoundEpsilon =
       eigenValuesAllkPoints[totalEigenValues - 1] * 1.5;
-    unsigned int numberIntervals =
+    const unsigned int numberIntervals =
       std::ceil((upperBoundEpsilon - lowerBoundEpsilon) / intervalSize);
 
     std::vector<double> densityOfStates, densityOfStatesUp, densityOfStatesDown;
@@ -187,7 +188,7 @@ namespace dftfe
                      ++spinType)
                   {
                     for (unsigned int statesIter = 0;
-                         statesIter < d_numEigenValues;
+                         statesIter < highestStateOfInterest;
                          ++statesIter)
                       {
                         double term1 =
@@ -198,14 +199,30 @@ namespace dftfe
                         double denom = term1 * term1 + sigma * sigma;
                         if (spinType == 0)
                           densityOfStatesUp[epsInt] +=
-                            (sigma / M_PI) * (1.0 / denom);
+                            d_kPointWeights[kPoint] * (sigma / M_PI) *
+                            (1.0 / denom) / d_domainVolume;
                         else
                           densityOfStatesDown[epsInt] +=
-                            (sigma / M_PI) * (1.0 / denom);
+                            d_kPointWeights[kPoint] * (sigma / M_PI) *
+                            (1.0 / denom) / d_domainVolume;
                       }
                   }
               }
           }
+
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &densityOfStatesUp[0],
+                      densityOfStatesUp.size(),
+                      dataTypes::mpi_type_id(&densityOfStatesUp[0]),
+                      MPI_SUM,
+                      interpoolcomm);
+
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &densityOfStatesDown[0],
+                      densityOfStatesDown.size(),
+                      dataTypes::mpi_type_id(&densityOfStatesDown[0]),
+                      MPI_SUM,
+                      interpoolcomm);
       }
     else
       {
@@ -215,18 +232,29 @@ namespace dftfe
             double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
             for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
               {
-                for (unsigned int statesIter = 0; statesIter < d_numEigenValues;
+                for (unsigned int statesIter = 0;
+                     statesIter < highestStateOfInterest;
                      ++statesIter)
                   {
                     double term1 =
                       (epsValue - eigenValuesInput[kPoint][statesIter]);
                     double denom = term1 * term1 + sigma * sigma;
-                    densityOfStates[epsInt] +=
-                      2.0 * (sigma / M_PI) * (1.0 / denom);
+                    densityOfStates[epsInt] += 2.0 * d_kPointWeights[kPoint] *
+                                               (sigma / M_PI) * (1.0 / denom) /
+                                               d_domainVolume;
                   }
               }
           }
+
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &densityOfStates[0],
+                      densityOfStates.size(),
+                      dataTypes::mpi_type_id(&densityOfStates[0]),
+                      MPI_SUM,
+                      interpoolcomm);
       }
+
+
 
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
@@ -240,7 +268,8 @@ namespace dftfe
                 for (unsigned int epsInt = 0; epsInt < numberIntervals;
                      ++epsInt)
                   {
-                    double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
+                    double epsValue =
+                      lowerBoundEpsilon + epsInt * intervalSize - fermiEnergy;
                     outFile << std::setprecision(18) << epsValue * 27.21138602
                             << "  " << densityOfStatesUp[epsInt] << " "
                             << densityOfStatesDown[epsInt] << std::endl;
@@ -251,7 +280,8 @@ namespace dftfe
                 for (unsigned int epsInt = 0; epsInt < numberIntervals;
                      ++epsInt)
                   {
-                    double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
+                    double epsValue =
+                      lowerBoundEpsilon + epsInt * intervalSize - fermiEnergy;
                     outFile << std::setprecision(18) << epsValue * 27.21138602
                             << "  " << densityOfStates[epsInt] << std::endl;
                   }
