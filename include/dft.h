@@ -964,6 +964,7 @@ namespace dftfe
      */
     void
     compute_tdos(const std::vector<std::vector<double>> &eigenValuesInput,
+                 const unsigned int                      highestStateOfInterest,
                  const std::string &                     fileName);
 
     void

@@ -1746,7 +1746,9 @@ namespace dftfe
       writeGSElectronDensity("densityQuadData.txt");
 
     if (d_dftParamsPtr->writeDosFile)
-      compute_tdos(eigenValues, "dosData.out");
+      compute_tdos(eigenValues,
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                   "dosData.out");
 
     if (d_dftParamsPtr->writeLdosFile)
       compute_ldos(eigenValues, "ldosData.out");
