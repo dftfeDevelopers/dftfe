@@ -1747,10 +1747,7 @@ namespace dftfe
 
     if (d_dftParamsPtr->writeDosFile)
       compute_tdos(eigenValues,
-                   (d_dftParamsPtr->highestStateOfInterestForChebFiltering ==
-                    0) ?
-                     d_numEigenValues :
-                     d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering,
                    "dosData.out");
 
     if (d_dftParamsPtr->writeLdosFile)
