@@ -192,8 +192,8 @@ From the ``outputMesh1'' file, you can obtain information on the number of degre
 Repeat the above step thrice, once with \verb|MESH SIZE AROUND ATOM  = 1.6|, then with\\ \verb|MESH SIZE AROUND ATOM  = 1.3|, and finally with \verb|MESH SIZE AROUND ATOM  = 1.0|. Now run one more time with \verb|POLYNOMIAL ORDER  = 7| while keeping \\ \verb|MESH SIZE AROUND ATOM  = 1.0|. We recommend to run this final simulation with more MPI tasks for faster computational times. The ground-state energy per atom and force on the atomId 0 is tabulated in Table~\ref{tab:table1} for all the above cases. Upon comparing the errors in the energy and force with respect the most refined mesh (\emph{Mesh No. 4}), we observe that for \emph{Mesh No. 3} we obtain convergence in energy per atom to $\mathcal{O}(10^{-5})$ accuracy, and convergence in force to $\mathcal{O}(10^{-5})$ accuracy. For your reference, we have provided the output file for \emph{Mesh No. 3} at \verb|/demo/ex1/ex1_a.output|. \dftfe{} also has the capability to write finite-element meshes with electron-density or wavefunction information to .vtu format which can be visualized using software like ParaView or Visit.
 %As an example, Figure~\ref{fig:N2} shows the finite-element mesh and electron-density contours for \emph{Mesh No. 3}, which are obtained via setting
 \begin{verbatim}
-subsection Postprocessing
-   set WRITE DENSITY=true
+subsection Post-processing Options
+   set WRITE DENSITY FE MESH=true
 end
 \end{verbatim}
 in the input parameter file, and visualizing the ``densityOutput.vtu'' file in ParaView.
