@@ -4187,16 +4187,21 @@ namespace dftfe
         else
           pcout << "EigenValue" << std::endl;
       }
+    
+    double fermiEnergy = d_dftParamsPtr->spinPolarized?std::max(fermiEnergyDown,fermiEnergyUp):fermiEnergy;
+   
+    
+    unsigned int numberEigenValues = d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0?d_numEigenValues:d_dftParamsPtr->highestStateOfInterestForChebFiltering;
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         FILE *pFile;
         pFile = fopen("bands.out", "w");
-        fprintf(pFile, "%d %d\n", totkPoints, d_numEigenValues);
+        fprintf(pFile, "%d %d\n", totkPoints, numberEigenValues);
         for (unsigned int kPoint = 0;
              kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
              ++kPoint)
           {
-            for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+            for (unsigned int iWave = 0; iWave < numberEigenValues; ++iWave)
               {
                 if (d_dftParamsPtr->spinPolarized)
                   {

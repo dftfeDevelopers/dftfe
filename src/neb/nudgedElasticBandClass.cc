@@ -733,11 +733,11 @@ namespace dftfe
               std::max(maxEnergy, (d_dftfeWrapper[i])->getDFTFreeEnergy());
           }
         pcout << "--- Converged Activation Energy---" << std::endl;
-        pcout << "--> Activation Energy (meV): " << std::setprecision(5)
+        pcout << "--> Activation Energy (meV): " << std::setprecision(8)
               << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
               << std::endl;
-        pcout << "<-- Activation Energy (meV): " << std::setprecision(5)
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(8)
               << (maxEnergy -
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
@@ -858,10 +858,13 @@ namespace dftfe
     pcout
       << "-----------------------------------------------------------------------"
       << std::endl;
-    pcout << std::setw(12) << " Image No. "
-          << " " << std::setw(27) << "Internal Energy (Ha)"
-          << " " << std::setw(27) << "Free Energy (Ha)"
-          << " " << std::setw(27) << "Max Force Error (Ha/bohr)" << std::endl;
+    pcout <<std::setw(12) 
+          << "Image No"
+          <<std::setw(25)
+          << " Free Energy(Ha) "
+          <<std::setw(16)
+          << " Error(Ha/bohr) "
+          << std::endl;
     double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
     int    count     = 0;
     for (int image = 0; image < d_numberOfImages; image++)
@@ -883,33 +886,31 @@ namespace dftfe
           }
 
         if (flagmultiplier[image] == 0)
-          pcout << "    "
-                << "  " << std::setw(12) << image << "(T)"
-                << "    " << std::setw(12) << InternalEnergy << "    "
-                << std::setw(12) << FreeEnergy << "    " << ForceError
-                << std::endl;
+          pcout<<std::setw(8) << image << "(T)"
+                << std::setw(25) <<std::setprecision(14)<< FreeEnergy 
+                <<std::setw(16)<<std::setprecision(4)<< std::floor(1000000000.0*ForceError)/1000000000.0<<std::endl;
         else
-          pcout << "    "
-                << "  " << std::setw(12) << image << "(F)"
-                << "    " << std::setw(12) << InternalEnergy << "    "
-                << std::setw(12) << FreeEnergy << "    " << ForceError << "  "
-                << Flag[count - 1] << std::endl;
+          pcout<<std::setw(8) << image << "(F)"
+                << std::setw(25) <<std::setprecision(14)<< FreeEnergy 
+                <<std::setw(16)<<std::setprecision(4)<< std::floor(1000000000.0*ForceError)/1000000000.0<<std::endl;
         maxEnergy =
           std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
-    pcout << "--> Activation Energy (meV): " << std::setprecision(5)
+    pcout << "--> Activation Energy (meV): " << std::setprecision(8)
           << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) * C_haToeV *
                1000
           << std::endl;
-    pcout << "<-- Activation Energy (meV): " << std::setprecision(5)
+    pcout << "<-- Activation Energy (meV): " << std::setprecision(8)
           << (maxEnergy -
               (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                C_haToeV * 1000
           << std::endl;
+    double Length = CalculatePathLength(d_verbosity>2?true:false);
+    pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     pcout << "----------------------------------------------" << std::endl;
     int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
-    pcout << "FlagTotal: " << FlagTotal << std::endl;
+    
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
 
@@ -1193,10 +1194,12 @@ namespace dftfe
             length = pathLength[iCharge];
             atomId = iCharge;
           }
-        if (flag)
-          pcout << "AtomID: " << iCharge << " " << pathLength[iCharge] << " "
-                << "Bohrs" << std::endl;
+
       }
+        if (flag)
+          pcout << "AtomID: " << atomId << " " << pathLength[atomId] << " "
+                << "Bohrs" << std::endl;
+
     return (length);
   }
 
@@ -1252,41 +1255,22 @@ namespace dftfe
   {
     std::vector<int> Flag(d_numberOfImages - 2, 0);
     int              count = 0;
-    pcout
-      << std::endl
-      << "-------------------------------------------------------------------------------"
-      << std::endl;
-    pcout << " --------------------NEB Attempt Completed "
-          << "---------------------------------------" << std::endl;
-    pcout << "    " << std::setw(12) << " Image No "
-          << "    " << std::setw(12) << "Force perpendicular in Ha/bohr"
-          << "    " << std::setw(12) << "Free Energy in Ha"
-          << "    " << std::endl;
-
-
     for (int i = 0; i < d_numberOfImages; i++)
       {
         double Force  = d_ImageError[i];
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
-        pcout << "    " << std::setw(12) << i << "    " << std::setw(12)
-              << Force << "    " << std::setw(12) << Energy << "    ";
         if ((i > 0 && i < d_numberOfImages - 1))
           {
             if (Force < d_optimizertolerance)
               Flag[count] = 1;
-            pcout << Flag[count];
+           
             count++;
           }
-        pcout << std::endl;
+        
       }
     MPI_Barrier(d_mpiCommParent);
-    double length = CalculatePathLength(false);
-
-    pcout
-      << std::endl
-      << "-------------------------------------------------------------------------------"
-      << std::endl;
-    int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
+    //double length = CalculatePathLength(false);
+   int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
     return flag;
   }
@@ -1429,13 +1413,13 @@ namespace dftfe
       << std::endl;
     pcout << " --------------------Initial NEB Data "
           << "---------------------------------------" << std::endl;
-    pcout << "    "
-          << " Image No "
-          << "    "
-          << "Force perpendicular in Ha/bohr"
-          << "    "
-          << "Internal Energy in Ha"
-          << "    " << std::endl;
+    pcout <<std::setw(12) 
+          << "Image No"
+          <<std::setw(25)
+          << " Free Energy(Ha) "
+          <<std::setw(16)
+          << " Error(Ha/bohr) "
+          << std::endl;
 
 
 
@@ -1446,8 +1430,7 @@ namespace dftfe
         Force        = 0.0;
         ImageError(d_NEBImageno, Force);
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
-        pcout << "    " << i << "    " << Force << "    " << Energy << "    "
-              << std::endl;
+        pcout <<std::setw(8)<< i <<std::setw(25)<<std::setprecision(14)<< Energy<<std::setw(16)<<std::setprecision(4)<< std::floor(1000000000.0*Force)/1000000000.0<<std::endl;
         d_ImageError[d_NEBImageno] = (Force);
         if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
