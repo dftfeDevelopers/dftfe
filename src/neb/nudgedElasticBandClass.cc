@@ -129,17 +129,17 @@ namespace dftfe
                                         domainVectorsFile,
                                         d_mpiCommParent);
 
-            d_dftfeWrapper.push_back(
-              std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                    coordinatesFile,
-                                                    domainVectorsFile,
-                                                    d_mpiCommParent,
-                                                    Image == 0 ? true : false,
-                                                    Image == 0 ? true : false,
-                                                    "NEB",
-                                                    d_restartFilesPath,
-                                                    d_verbosity < 4 ? -1:d_verbosity,
-                                                    Image == 0 ? false : true));
+            d_dftfeWrapper.push_back(std::make_unique<dftfe::dftfeWrapper>(
+              parameter_file,
+              coordinatesFile,
+              domainVectorsFile,
+              d_mpiCommParent,
+              Image == 0 ? true : false,
+              Image == 0 ? true : false,
+              "NEB",
+              d_restartFilesPath,
+              d_verbosity < 4 ? -1 : d_verbosity,
+              Image == 0 ? false : true));
           }
       }
     else
@@ -182,17 +182,17 @@ namespace dftfe
                                 "domainBoundingVectorsCurrent.chk";
 
 
-            d_dftfeWrapper.push_back(
-              std::make_unique<dftfe::dftfeWrapper>(parameter_file,
-                                                    coordinatesFile,
-                                                    domainVectorsFile,
-                                                    d_mpiCommParent,
-                                                    Image == 0 ? true : false,
-                                                    Image == 0 ? true : false,
-                                                    "NEB",
-                                                    d_restartFilesPath,
-                                                    d_verbosity < 4 ? -1:d_verbosity,
-                                                    Image == 0 ? false : true));
+            d_dftfeWrapper.push_back(std::make_unique<dftfe::dftfeWrapper>(
+              parameter_file,
+              coordinatesFile,
+              domainVectorsFile,
+              d_mpiCommParent,
+              Image == 0 ? true : false,
+              Image == 0 ? true : false,
+              "NEB",
+              d_restartFilesPath,
+              d_verbosity < 4 ? -1 : d_verbosity,
+              Image == 0 ? false : true));
           }
       }
     d_dftPtr = d_dftfeWrapper[0]->getDftfeBasePtr();
@@ -936,7 +936,7 @@ namespace dftfe
         // pcout << image << "  " << F_per << "  " << F_spring << std::endl;
 
 
-        //pcout << "Flag: " << Flag[image - 1] << std::endl;
+        // pcout << "Flag: " << Flag[image - 1] << std::endl;
         for (int i = 0; i < d_countrelaxationFlags; i++)
           {
             if (Flag[image - 1] == 0)
@@ -1197,7 +1197,7 @@ namespace dftfe
           pcout << "AtomID: " << iCharge << " " << pathLength[iCharge] << " "
                 << "Bohrs" << std::endl;
       }
-      return(length);
+    return (length);
   }
 
   void
@@ -1456,7 +1456,7 @@ namespace dftfe
       }
     MPI_Barrier(d_mpiCommParent);
     double Length = 0.0;
-    Length = CalculatePathLength(false);
+    Length        = CalculatePathLength(false);
     pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     step_time = MPI_Wtime() - step_time;
     pcout << "Time taken for initial dft solve of all images: " << step_time
