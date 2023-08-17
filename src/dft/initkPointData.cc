@@ -155,6 +155,7 @@ namespace dftfe
       //
     }
   } // namespace internaldft
+
   //============================================================================================================================================
   //============================================================================================================================================
   //			           Following routine can read k-points supplied through
@@ -170,10 +171,13 @@ namespace dftfe
     const int                        numberColumnskPointDataFile = 4;
     std::vector<std::vector<double>> kPointData;
     char                             kPointRuleFile[256];
-    sprintf(kPointRuleFile,
-            "%s/data/kPointList/%s",
-            DFTFE_PATH,
-            d_dftParamsPtr->kPointDataFile.c_str());
+    strcpy(kPointRuleFile, d_dftParamsPtr->kPointDataFile.c_str());
+    // sprintf(kPointRuleFile,
+    //      "%s/data/kPointList/%s",
+    //    DFTFE_PATH,
+    //  d_dftParamsPtr->kPointDataFile.c_str());
+    if (d_dftParamsPtr->verbosity >= 2)
+      pcout << "Reading data from file: " << kPointRuleFile << std::endl;
     dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
     d_kPointCoordinates.clear();
     d_kPointWeights.clear();
@@ -330,6 +334,24 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::recomputeKPointCoordinates()
   {
+    if (d_dftParamsPtr->verbosity >= 4)
+      {
+        // FIXME: Print all k points across all pools
+        pcout
+          << "-------------------k points reduced coordinates and weights-----------------------------"
+          << std::endl;
+        for (unsigned int i = 0; i < d_kPointWeights.size(); ++i)
+          {
+            pcout << " [" << kPointReducedCoordinates[3 * i + 0] << ", "
+                  << kPointReducedCoordinates[3 * i + 1] << ", "
+                  << kPointReducedCoordinates[3 * i + 2] << "] "
+                  << d_kPointWeights[i] << std::endl;
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
+      }
+
     const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
                                                   d_dftParamsPtr->periodicY,
                                                   d_dftParamsPtr->periodicZ};
@@ -847,6 +869,6 @@ namespace dftfe
                  interpoolcomm);
     //
   }
-  // #include "dft.inst.cc"
+  //#include "dft.inst.cc"
 
 } // namespace dftfe

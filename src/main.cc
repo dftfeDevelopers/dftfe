@@ -216,6 +216,16 @@ main(int argc, char *argv[])
                                        runParams.verbosity);
       dftfeWrapped.writeMesh();
     }
+  else if (runParams.solvermode == "NSCF")
+    {
+      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                       MPI_COMM_WORLD,
+                                       true,
+                                       true,
+                                       "NSCF",
+                                       runParams.restartFilesPath);
+      dftfeWrapped.run();
+    }
 
   else
     {

@@ -51,13 +51,11 @@ namespace dftfe
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
 
-
       prm.declare_entry(
         "KEEP SCRATCH FOLDER",
         "false",
         dealii::Patterns::Bool(),
         "[Advanced] If set to true this option does not delete the dftfeScratch folder when the dftfe object is destroyed. This is useful for debugging and code development. Default: false.");
-
 
 
       prm.enter_subsection("GPU");
@@ -113,7 +111,7 @@ namespace dftfe
       }
       prm.leave_subsection();
 
-      prm.enter_subsection("Ground-state derived computations");
+      prm.enter_subsection("Post-processing Options");
       {
         prm.declare_entry(
           "WRITE WFC FE MESH",
@@ -138,7 +136,7 @@ namespace dftfe
           "WRITE DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states");
+          "[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV relative to the Fermi energy and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
 
         prm.declare_entry(
           "WRITE LOCAL DENSITY OF STATES",
@@ -163,6 +161,12 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.");
+
+        prm.declare_entry(
+          "WRITE BANDS",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. This option is by default on for NSCF mode of solve. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 3 columns with first column indicating the k-point index, second column indicating band index and third column indicating corresponding eigenvalue.");
       }
       prm.leave_subsection();
 
@@ -993,6 +997,12 @@ namespace dftfe
             "[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");
 
           prm.declare_entry(
+            "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
+            "0",
+            dealii::Patterns::Integer(0),
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation ");
+
+          prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
             "false",
             dealii::Patterns::Bool(),
@@ -1157,6 +1167,7 @@ namespace dftfe
     writeLdosFile               = false;
     writePdosFile               = false;
     writeLocalizationLengths    = false;
+    writeBandsFile              = false;
     std::string coordinatesFile = "";
     domainBoundingVectorsFile   = "";
     kPointDataFile              = "";
@@ -1337,7 +1348,7 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    prm.enter_subsection("Ground-state derived computations");
+    prm.enter_subsection("Post-processing Options");
     {
       writeWfcSolutionFields     = prm.get_bool("WRITE WFC FE MESH");
       writeDensitySolutionFields = prm.get_bool("WRITE DENSITY FE MESH");
@@ -1348,6 +1359,7 @@ namespace dftfe
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
+      writeBandsFile           = prm.get_bool("WRITE BANDS");
     }
     prm.leave_subsection();
 
@@ -1571,6 +1583,8 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
+        highestStateOfInterestForChebFiltering =
+          prm.get_integer("HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING");
         useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
         restrictToOnePass = prm.get_bool("RESTRICT TO SINGLE FILTER PASS");
       }
@@ -1697,6 +1711,12 @@ namespace dftfe
     AssertThrow(!domainBoundingVectorsFile.empty(),
                 dealii::ExcMessage(
                   "DFT-FE Error: DOMAIN VECTORS FILE not given."));
+
+    if (solverMode == "NSCF")
+      AssertThrow(
+        loadRhoData == true,
+        dealii::ExcMessage(
+          "DFT-FE Error: Cant run NSCF without load rho data set to true"));
 
     if (isPseudopotential)
       AssertThrow(
@@ -1928,7 +1948,7 @@ namespace dftfe
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER")
           chebyshevTolerance = 1.0e-2;
-        else
+        else if (solverMode != "NSCF")
           chebyshevTolerance = 5.0e-2;
       }
 

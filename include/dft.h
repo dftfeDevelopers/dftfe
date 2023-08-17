@@ -967,6 +967,7 @@ namespace dftfe
      */
     void
     compute_tdos(const std::vector<std::vector<double>> &eigenValuesInput,
+                 const unsigned int                      highestStateOfInterest,
                  const std::string &                     fileName);
 
     void
@@ -1738,6 +1739,17 @@ namespace dftfe
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const double                            _fermiEnergy);
+
+
+    /**
+     * @brief compute the maximum of the residual norm of the highest state of interest among all k points
+     */
+    double
+    computeMaximumHighestOccupiedStateResidualNorm(
+      const std::vector<std::vector<double>>
+        &residualNormWaveFunctionsAllkPoints,
+      const std::vector<std::vector<double>> &eigenValuesAllkPoints,
+      const unsigned int                      highestState);
 
 
     void

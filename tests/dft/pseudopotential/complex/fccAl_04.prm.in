@@ -1,0 +1,90 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT=true
+set SOLVER MODE = NSCF
+set RESTART FOLDER = ../../fccAl_03.release/mpirun=16/fccAl_03
+
+subsection Post-processing Options
+ set WRITE DENSITY OF STATES=true
+end
+
+subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+  set POINT WISE DIRICHLET CONSTRAINT=true
+  set SELF POTENTIAL RADIUS = 0
+  set CONSTRAINTS PARALLEL CHECK=true
+end
+
+
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = false
+  set kPOINT RULE FILE = @SOURCE_DIR@/kPoint2x2x2File
+end
+
+subsection SCF Checkpointing and Restart
+ set LOAD RHO DATA     = true
+ set RESTART SP FROM NO SP = false
+ set SAVE RHO DATA     = false
+end
+
+subsection Parallelization
+  set NPKPT=2
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 1
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlKB.inp
+  set PSEUDO TESTS FLAG        = true
+end
+
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 2
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set ATOM BALL RADIUS      = 2.0
+    set BASE MESH SIZE        = 4.0
+    set MESH SIZE AT ATOM     = 0.6
+    set MESH SIZE AROUND ATOM = 0.6
+  end
+
+end
+
+subsection Geometry
+  set NATOMS=4
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fccAl_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp
+end
+
+
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 4000
+  set TOLERANCE          = 1e-12
+end
+
+
+subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
+  set MIXING HISTORY   = 70
+  set MIXING PARAMETER = 0.5
+  set MAXIMUM ITERATIONS               = 50
+  set TEMPERATURE                      = 500 
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC=ATOMIC
+  
+  subsection Eigen-solver parameters
+     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+     set CHEBYSHEV FILTER TOLERANCE=1e-5
+     set ORTHOGONALIZATION TYPE=CGS
+     set CHEBYSHEV POLYNOMIAL DEGREE=8
+     set USE ELPA=true
+  end
+end
+set H REFINED ELECTROSTATICS=false

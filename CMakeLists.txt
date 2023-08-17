@@ -131,11 +131,11 @@ SET(TARGET_SRC
   ./src/dft/moveAtoms.cc
   ./src/dft/moveMeshToAtoms.cc
   ./src/dft/nodalDensityMixingSchemes.cc
-  ./src/dft/nscf.cc
   ./src/dft/pRefinedDoFHandler.cc
   ./src/dft/psiInitialGuess.cc
   ./src/dft/publicMethods.cc
   ./src/dft/restart.cc
+  ./src/dft/solveNSCF.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInv.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInvSpinPolarized.cc
   ./src/dft/computeOutputDensityDirectionalDerivative.cc

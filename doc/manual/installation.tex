@@ -252,20 +252,25 @@ $ FC=gfortran cmake -B _build
 $ cmake --build _build
 $ cmake --install _build 
 \end{verbatim}
-	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.4.0 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
+	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.460 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
 \begin{verbatim}
-$ FC=gfortran cmake -B _build 
--DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 
--Wl,--no-as-needed -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp 
--lpthread -lm -ldl" 
--DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 
--Wl,--no-as-needed -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp 
--lpthread -lm -ldl" 
--DCMAKE_INSTALL_PREFIX=dftd4_install_path
-$ cmake --build _build
-$ cmake --install _build 
+$ cd dftd4-3.6.0
+$ mkdir build 
+$ cd build
+$ cmake -DCMAKE_Fortran_COMPILER=gfortran
+        -DCMAKE_C_COMPILER=gcc
+        -DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
+        -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_rt -lmkl_core -lgomp 
+        -lpthread -lm -ldl" 
+        -DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64
+        -lmkl_gnu_thread -lmkl_rt -lmkl_core 
+        -lgomp -lpthread -lm -ldl"
+        -DBUILD_SHARED_LIBS=ON 
+        -DCMAKE_INSTALL_PREFIX=dftd4_install_path
+        -DWITH_OpenMP=OFF
+        ..
+$ make -j16
+$ make install
 \end{verbatim}
 \end{enumerate}
 The values for \verb|-DBLAS_LIBRARIES| and \verb|-DLAPACK_LIBRARIES| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU fortran compiler.\\ 

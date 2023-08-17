@@ -703,7 +703,19 @@ namespace dftfe
 
 
 #ifdef USE_COMPLEX
-    generateMPGrid();
+    if (d_dftParamsPtr->solverMode == "NSCF")
+      {
+        if (!(d_dftParamsPtr->kPointDataFile == ""))
+          {
+            readkPointData();
+          }
+        else
+          {
+            generateMPGrid();
+          }
+      }
+    else
+      generateMPGrid();
 #else
     d_kPointCoordinates.resize(3, 0.0);
     d_kPointWeights.resize(1, 1.0);
@@ -1709,7 +1721,15 @@ namespace dftfe
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
       }
 
-    solve(true, true, d_isRestartGroundStateCalcFromChk);
+    if (d_dftParamsPtr->solverMode == "GS")
+      {
+        solve(true, true, d_isRestartGroundStateCalcFromChk);
+      }
+    else if (d_dftParamsPtr->solverMode == "NSCF")
+      {
+        solveNoSCF();
+        writeBands();
+      }
 
     if (d_dftParamsPtr->writeStructreEnergyForcesFileForPostProcess)
       writeStructureEnergyForcesDataPostProcess(
@@ -1725,7 +1745,9 @@ namespace dftfe
       writeGSElectronDensity("densityQuadData.txt");
 
     if (d_dftParamsPtr->writeDosFile)
-      compute_tdos(eigenValues, "dosData.out");
+      compute_tdos(eigenValues,
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                   "dosData.out");
 
     if (d_dftParamsPtr->writeLdosFile)
       compute_ldos(eigenValues, "ldosData.out");
@@ -3648,15 +3670,7 @@ namespace dftfe
 #endif
       );
 
-#ifdef USE_COMPLEX
-    if (!(d_dftParamsPtr->kPointDataFile == ""))
-      {
-        readkPointData();
-        initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem, CGSolver);
-        nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
-        writeBands();
-      }
-#endif
+
     return std::make_tuple(scfConverged, norm);
   }
 
@@ -4164,6 +4178,15 @@ namespace dftfe
                 0,
                 interpoolcomm);
     //
+    if (d_dftParamsPtr->reproducible_output && d_dftParamsPtr->verbosity == 0)
+      {
+        pcout << "Writing Bands File..." << std::endl;
+        pcout << "K-Point   WaveNo.  ";
+        if (d_dftParamsPtr->spinPolarized)
+          pcout << "SpinUpEigenValue          SpinDownEigenValue" << std::endl;
+        else
+          pcout << "EigenValue" << std::endl;
+      }
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         FILE *pFile;
@@ -4176,23 +4199,59 @@ namespace dftfe
             for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
               {
                 if (d_dftParamsPtr->spinPolarized)
-                  fprintf(
-                    pFile,
-                    "%d  %d   %g   %g\n",
-                    kPoint,
-                    iWave,
-                    eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
-                                               iWave],
-                    eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
-                                                 d_numEigenValues +
-                                               iWave]);
+                  {
+                    fprintf(
+                      pFile,
+                      "%d  %d   %.14g   %.14g\n",
+                      kPoint,
+                      iWave,
+                      eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
+                                                 iWave],
+                      eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                   d_numEigenValues +
+                                                 iWave]);
+                    if (d_dftParamsPtr->reproducible_output &&
+                        d_dftParamsPtr->verbosity == 0)
+                      {
+                        double eigenUpTrunc =
+                          std::floor(
+                            1000000000 *
+                            (eigenValuesFlattenedGlobal
+                               [2 * kPoint * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        double eigenDownTrunc =
+                          std::floor(
+                            1000000000 *
+                            (eigenValuesFlattenedGlobal
+                               [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        pcout << kPoint << "  " << iWave << "  " << std::fixed
+                              << std::setprecision(8) << eigenUpTrunc << "  "
+                              << eigenDownTrunc << std::endl;
+                      }
+                  }
                 else
-                  fprintf(pFile,
-                          "%d  %d %g\n",
-                          kPoint,
-                          iWave,
-                          eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                     iWave]);
+                  {
+                    fprintf(
+                      pFile,
+                      "%d  %d %.14g\n",
+                      kPoint,
+                      iWave,
+                      eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
+                                                 iWave]);
+                    if (d_dftParamsPtr->reproducible_output &&
+                        d_dftParamsPtr->verbosity == 0)
+                      {
+                        double eigenTrunc =
+                          std::floor(1000000000 *
+                                     (eigenValuesFlattenedGlobal
+                                        [kPoint * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        pcout << kPoint << "  " << iWave << "  " << std::fixed
+                              << std::setprecision(8) << eigenTrunc
+                              << std::endl;
+                      }
+                  }
               }
           }
       }

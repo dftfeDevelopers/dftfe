@@ -61,9 +61,9 @@ namespace dftfe
       std::vector<std::string> coreDensity;
       std::vector<std::string> mesh;
       std::vector<std::tuple<size_t, size_t, std::vector<std::string>>>
-                                                              projectors;
+        projectors;
       std::vector<std::tuple<size_t, std::string, std::vector<std::string>>>
-                                                              PSwfc;
+        PSwfc;
 
       std::vector<std::tuple<size_t, size_t, size_t, double>> d_ij;
 
