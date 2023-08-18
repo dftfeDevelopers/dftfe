@@ -223,7 +223,8 @@ main(int argc, char *argv[])
                                        true,
                                        true,
                                        "NSCF",
-                                       runParams.restartFilesPath);
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity);
       dftfeWrapped.run();
     }
 
