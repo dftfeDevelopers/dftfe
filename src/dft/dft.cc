@@ -457,8 +457,23 @@ namespace dftfe
           numElectrons += Z;
       }
 
-    if (d_dftParamsPtr->numberEigenValues <= numElectrons / 2.0 ||
-        d_dftParamsPtr->numberEigenValues == 0)
+    if (d_dftParamsPtr->solverMode == "NSCF" &&
+        d_dftParamsPtr->numberEigenValues == 0 &&
+        d_dftParamsPtr->highestStateOfInterestForChebFiltering != 0)
+      {
+        d_numEigenValues =
+          std::max(d_dftParamsPtr->highestStateOfInterestForChebFiltering * 1.1,
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering + 10.0);
+
+        if (d_dftParamsPtr->verbosity >= 1)
+          {
+            pcout
+              << " Setting the number of Kohn-Sham wave functions to be 10 percent more than the HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING "
+              << d_numEigenValues << std::endl;
+          }
+      }
+    else if (d_dftParamsPtr->numberEigenValues <= numElectrons / 2.0 ||
+             d_dftParamsPtr->numberEigenValues == 0)
       {
         if (d_dftParamsPtr->verbosity >= 1)
           {
