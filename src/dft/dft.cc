@@ -4187,59 +4187,63 @@ namespace dftfe
         else
           pcout << "EigenValue" << std::endl;
       }
-    
-    double FE = d_dftParamsPtr->spinPolarized?std::max(fermiEnergyDown,fermiEnergyUp):fermiEnergy;
-    pcout<<"Fermi Energy: "<<FE<<std::endl;
-    unsigned int maxeigenIndex = d_numEigenValues;
-    std::vector<double> occupationVector(totkPoints,0.0);
 
-    for(int iWave = 1; iWave <d_numEigenValues; iWave++ )
-    {
-      double maxOcc = -1.0;
-      for (unsigned int kPoint = 0;
+    double FE = d_dftParamsPtr->spinPolarized ?
+                  std::max(fermiEnergyDown, fermiEnergyUp) :
+                  fermiEnergy;
+    pcout << "Fermi Energy: " << FE << std::endl;
+    unsigned int        maxeigenIndex = d_numEigenValues;
+    std::vector<double> occupationVector(totkPoints, 0.0);
+
+    for (int iWave = 1; iWave < d_numEigenValues; iWave++)
+      {
+        double maxOcc = -1.0;
+        for (unsigned int kPoint = 0;
              kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
              ++kPoint)
-      {
-          
-          if(d_dftParamsPtr->spinPolarized)
           {
-            occupationVector[2*kPoint] = dftUtils::getPartialOccupancy(
-                                    eigenValuesFlattenedGlobal[2*kPoint * d_numEigenValues +
-                                                 iWave],
-                                    FE,
-                                    C_kb,
-                                    d_dftParamsPtr->TVal);
-            occupationVector[2*kPoint+1] = dftUtils::getPartialOccupancy(
-                                    eigenValuesFlattenedGlobal[(2*kPoint+1) * d_numEigenValues +
-                                                 iWave],
-                                    FE,
-                                    C_kb,
-                                    d_dftParamsPtr->TVal); 
-            maxOcc = std::max(maxOcc, std::max(occupationVector[2*kPoint+1],occupationVector[2*kPoint])) ;                                              
+            if (d_dftParamsPtr->spinPolarized)
+              {
+                occupationVector[2 * kPoint] = dftUtils::getPartialOccupancy(
+                  eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
+                                             iWave],
+                  FE,
+                  C_kb,
+                  d_dftParamsPtr->TVal);
+                occupationVector[2 * kPoint + 1] =
+                  dftUtils::getPartialOccupancy(
+                    eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                 d_numEigenValues +
+                                               iWave],
+                    FE,
+                    C_kb,
+                    d_dftParamsPtr->TVal);
+                maxOcc = std::max(maxOcc,
+                                  std::max(occupationVector[2 * kPoint + 1],
+                                           occupationVector[2 * kPoint]));
+              }
+            else
+              {
+                occupationVector[kPoint] = dftUtils::getPartialOccupancy(
+                  eigenValuesFlattenedGlobal[kPoint * d_numEigenValues + iWave],
+                  FE,
+                  C_kb,
+                  d_dftParamsPtr->TVal);
+                maxOcc = std::max(maxOcc, occupationVector[kPoint]);
+              }
           }
-          else
+
+        if (maxOcc < 1E-5)
           {
-            occupationVector[kPoint] = dftUtils::getPartialOccupancy(
-                                    eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                 iWave],
-                                    FE,
-                                    C_kb,
-                                    d_dftParamsPtr->TVal);
-            maxOcc = std::max(maxOcc,occupationVector[kPoint]) ;
-                       
+            maxeigenIndex = iWave;
+            break;
           }
       }
 
-        if(maxOcc < 1E-5)
-        {
-
-            maxeigenIndex = iWave;
-            break;
-        }
-
-    }
-
-    unsigned int numberEigenValues = d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0?std::min(d_numEigenValues,maxeigenIndex+10):d_dftParamsPtr->highestStateOfInterestForChebFiltering;
+    unsigned int numberEigenValues =
+      d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0 ?
+        std::min(d_numEigenValues, maxeigenIndex + 10) :
+        d_dftParamsPtr->highestStateOfInterestForChebFiltering;
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         FILE *pFile;

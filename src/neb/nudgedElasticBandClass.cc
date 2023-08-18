@@ -721,18 +721,49 @@ namespace dftfe
           << d_optimizertolerance
           << ", total number of ion position updates: " << d_totalUpdateCalls
           << std::endl;
-        pcout << "--------------Final Ground State Results-------------"
+       std::vector<int> flagmultiplier(d_numberOfImages, 1);
+        flagmultiplier[0]                    = 0;
+        flagmultiplier[d_numberOfImages - 1] = 0;
+        std::vector<int> Flag(d_numberOfImages - 2, 0);
+        pcout << "--------------Final Results-------------" << std::endl;
+        pcout << std::setw(12) << "Image No" << std::setw(25)
+              << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
               << std::endl;
         double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
-        for (int i = 0; i < d_numberOfImages; i++)
+        int    count     = 0;
+        for (int image = 0; image < d_numberOfImages; image++)
           {
-            pcout << "Free Energy of Image in meV: " << i + 1 << "  = "
-                  << (d_dftfeWrapper[i])->getDFTFreeEnergy() * C_haToeV * 1000
-                  << std::endl;
+            double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
+            double InternalEnergy =
+              (d_dftfeWrapper[image])->getDFTFreeEnergy() +
+              (d_dftfeWrapper[image])->getElectronicEntropicEnergy();
+            double ForceError = d_ImageError[image];
+            if (ForceError < 0.95 * d_optimizertolerance && d_imageFreeze &&
+                (image != 0 || image != d_numberOfImages - 1))
+              flagmultiplier[image] = 0;
+
+            if ((image > 0 && image < d_numberOfImages - 1))
+              {
+                if (ForceError < d_optimizertolerance)
+                  Flag[count] = 1;
+                count++;
+              }
+
+            if (flagmultiplier[image] == 0)
+              pcout << std::setw(8) << image << "(T)" << std::setw(25)
+                    << std::setprecision(14) << FreeEnergy << std::setw(16)
+                    << std::setprecision(4)
+                    << std::floor(1000000000.0 * ForceError) / 1000000000.0
+                    << std::endl;
+            else
+              pcout << std::setw(8) << image << "(F)" << std::setw(25)
+                    << std::setprecision(14) << FreeEnergy << std::setw(16)
+                    << std::setprecision(4)
+                    << std::floor(1000000000.0 * ForceError) / 1000000000.0
+                    << std::endl;
             maxEnergy =
-              std::max(maxEnergy, (d_dftfeWrapper[i])->getDFTFreeEnergy());
+              std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
           }
-        pcout << "--- Converged Activation Energy---" << std::endl;
         pcout << "--> Activation Energy (meV): " << std::setprecision(8)
               << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
@@ -742,31 +773,12 @@ namespace dftfe
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
               << std::endl;
-        pcout << "-----------------------------------" << std::endl;
-        pcout << "--------------Final Error Results(Ha/bohr)-------------"
-              << std::endl;
-        for (int i = 0; i < d_numberOfImages; i++)
-          {
-            d_NEBImageno = i;
-            std::vector<double> tangent(d_countrelaxationFlags, 0.0);
-            std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
-            std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
-            double              Force = 0.0;
-
-            CalculatePathTangent(d_NEBImageno, tangent);
-            CalculateForceparallel(d_NEBImageno, Forceparallel, tangent);
-            CalculateForceperpendicular(d_NEBImageno,
-                                        Forceperpendicular,
-                                        Forceparallel,
-                                        tangent);
-            LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
-            pcout << "Error of Image: " << i + 1 << "  = " << Force
-                  << " Ha/bohr" << std::endl;
-          }
-        pcout << "------------------------------------------------------"
-              << std::endl;
-        double Length = CalculatePathLength(true);
-        return d_totalUpdateCalls;
+        double Length = CalculatePathLength(d_verbosity > 2 ? true : false);
+        pcout << std::endl
+              << "--Path Length: " << Length << " Bohr" << std::endl;
+        pcout << "----------------------------------------------" << std::endl;
+      
+    
       }
 
     else if (solverReturn == nonLinearSolver::FAILURE)
@@ -782,32 +794,62 @@ namespace dftfe
 
     if (solverReturn != nonLinearSolver::SUCCESS && d_verbosity >= 1)
       {
-        pcout << "--------------Ground State Results-------------" << std::endl;
-        for (int i = 0; i < d_numberOfImages; i++)
+        std::vector<int> flagmultiplier(d_numberOfImages, 1);
+        flagmultiplier[0]                    = 0;
+        flagmultiplier[d_numberOfImages - 1] = 0;
+        std::vector<int> Flag(d_numberOfImages - 2, 0);
+        pcout << "--------------Current Results-------------" << std::endl;
+        pcout << std::setw(12) << "Image No" << std::setw(25)
+              << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
+              << std::endl;
+        double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
+        int    count     = 0;
+        for (int image = 0; image < d_numberOfImages; image++)
           {
-            pcout << "Free Energy of Image: " << i + 1 << "  = "
-                  << (d_dftfeWrapper[i])->getDFTFreeEnergy() << std::endl;
-          }
-        pcout << "--------------NEB Step No: " << d_totalUpdateCalls
-              << " Error Results(Ha/bohr)-------------" << std::endl;
-        for (int i = 0; i < d_numberOfImages; i++)
-          {
-            d_NEBImageno = i;
-            std::vector<double> tangent(d_countrelaxationFlags, 0.0);
-            std::vector<double> Forceparallel(d_countrelaxationFlags, 0.0);
-            std::vector<double> Forceperpendicular(d_countrelaxationFlags, 0.0);
-            double              Force = 0.0;
+            double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
+            double InternalEnergy =
+              (d_dftfeWrapper[image])->getDFTFreeEnergy() +
+              (d_dftfeWrapper[image])->getElectronicEntropicEnergy();
+            double ForceError = d_ImageError[image];
+            if (ForceError < 0.95 * d_optimizertolerance && d_imageFreeze &&
+                (image != 0 || image != d_numberOfImages - 1))
+              flagmultiplier[image] = 0;
 
-            CalculatePathTangent(d_NEBImageno, tangent);
-            CalculateForceparallel(d_NEBImageno, Forceparallel, tangent);
-            CalculateForceperpendicular(d_NEBImageno,
-                                        Forceperpendicular,
-                                        Forceparallel,
-                                        tangent);
-            LNorm(Force, Forceperpendicular, 0, d_countrelaxationFlags);
-            pcout << "Error of Image: " << i + 1 << "  = " << Force
-                  << " Ha/bohr" << std::endl;
+            if ((image > 0 && image < d_numberOfImages - 1))
+              {
+                if (ForceError < d_optimizertolerance)
+                  Flag[count] = 1;
+                count++;
+              }
+
+            if (flagmultiplier[image] == 0)
+              pcout << std::setw(8) << image << "(T)" << std::setw(25)
+                    << std::setprecision(14) << FreeEnergy << std::setw(16)
+                    << std::setprecision(4)
+                    << std::floor(1000000000.0 * ForceError) / 1000000000.0
+                    << std::endl;
+            else
+              pcout << std::setw(8) << image << "(F)" << std::setw(25)
+                    << std::setprecision(14) << FreeEnergy << std::setw(16)
+                    << std::setprecision(4)
+                    << std::floor(1000000000.0 * ForceError) / 1000000000.0
+                    << std::endl;
+            maxEnergy =
+              std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
           }
+        pcout << "--> Activation Energy (meV): " << std::setprecision(8)
+              << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
+              << std::endl;
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(8)
+              << (maxEnergy -
+                  (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
+              << std::endl;
+        double Length = CalculatePathLength(d_verbosity > 2 ? true : false);
+        pcout << std::endl
+              << "--Path Length: " << Length << " Bohr" << std::endl;
+        pcout << "----------------------------------------------" << std::endl;
       }
     return d_totalUpdateCalls;
   }
@@ -858,13 +900,8 @@ namespace dftfe
     pcout
       << "-----------------------------------------------------------------------"
       << std::endl;
-    pcout <<std::setw(12) 
-          << "Image No"
-          <<std::setw(25)
-          << " Free Energy(Ha) "
-          <<std::setw(16)
-          << " Error(Ha/bohr) "
-          << std::endl;
+    pcout << std::setw(12) << "Image No" << std::setw(25) << " Free Energy(Ha) "
+          << std::setw(16) << " Error(Ha/bohr) " << std::endl;
     double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
     int    count     = 0;
     for (int image = 0; image < d_numberOfImages; image++)
@@ -886,13 +923,17 @@ namespace dftfe
           }
 
         if (flagmultiplier[image] == 0)
-          pcout<<std::setw(8) << image << "(T)"
-                << std::setw(25) <<std::setprecision(14)<< FreeEnergy 
-                <<std::setw(16)<<std::setprecision(4)<< std::floor(1000000000.0*ForceError)/1000000000.0<<std::endl;
+          pcout << std::setw(8) << image << "(T)" << std::setw(25)
+                << std::setprecision(14) << FreeEnergy << std::setw(16)
+                << std::setprecision(4)
+                << std::floor(1000000000.0 * ForceError) / 1000000000.0
+                << std::endl;
         else
-          pcout<<std::setw(8) << image << "(F)"
-                << std::setw(25) <<std::setprecision(14)<< FreeEnergy 
-                <<std::setw(16)<<std::setprecision(4)<< std::floor(1000000000.0*ForceError)/1000000000.0<<std::endl;
+          pcout << std::setw(8) << image << "(F)" << std::setw(25)
+                << std::setprecision(14) << FreeEnergy << std::setw(16)
+                << std::setprecision(4)
+                << std::floor(1000000000.0 * ForceError) / 1000000000.0
+                << std::endl;
         maxEnergy =
           std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
@@ -905,12 +946,12 @@ namespace dftfe
               (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                C_haToeV * 1000
           << std::endl;
-    double Length = CalculatePathLength(d_verbosity>2?true:false);
+    double Length = CalculatePathLength(d_verbosity > 2 ? true : false);
     pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     pcout << "----------------------------------------------" << std::endl;
     int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
-    
+
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
 
@@ -994,13 +1035,13 @@ namespace dftfe
     for (int image = 1; image < d_numberOfImages - 1; image++)
       {
         int multiplier = 1;
-        pcout << "Update called for image: " << image << std::endl;
+        //pcout << "Update called for image: " << image << std::endl;
 
         if (d_ImageError[image] < 0.95 * d_optimizertolerance && d_imageFreeze)
           {
             multiplier = 0;
-            pcout << "NEB: Image is forzen. Image No: " << image
-                  << " with Image force: " << d_ImageError[image] << std::endl;
+            // pcout << "NEB: Image is forzen. Image No: " << image
+            //       << " with Image force: " << d_ImageError[image] << std::endl;
           }
         MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
@@ -1194,11 +1235,10 @@ namespace dftfe
             length = pathLength[iCharge];
             atomId = iCharge;
           }
-
       }
-        if (flag)
-          pcout << "AtomID: " << atomId << " " << pathLength[atomId] << " "
-                << "Bohrs" << std::endl;
+    if (flag)
+      pcout << "AtomID: " << atomId << " " << pathLength[atomId] << " "
+            << "Bohrs" << std::endl;
 
     return (length);
   }
@@ -1263,14 +1303,13 @@ namespace dftfe
           {
             if (Force < d_optimizertolerance)
               Flag[count] = 1;
-           
+
             count++;
           }
-        
       }
     MPI_Barrier(d_mpiCommParent);
-    //double length = CalculatePathLength(false);
-   int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
+    // double length = CalculatePathLength(false);
+    int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
     return flag;
   }
@@ -1413,13 +1452,8 @@ namespace dftfe
       << std::endl;
     pcout << " --------------------Initial NEB Data "
           << "---------------------------------------" << std::endl;
-    pcout <<std::setw(12) 
-          << "Image No"
-          <<std::setw(25)
-          << " Free Energy(Ha) "
-          <<std::setw(16)
-          << " Error(Ha/bohr) "
-          << std::endl;
+    pcout << std::setw(12) << "Image No" << std::setw(25) << " Free Energy(Ha) "
+          << std::setw(16) << " Error(Ha/bohr) " << std::endl;
 
 
 
@@ -1430,7 +1464,9 @@ namespace dftfe
         Force        = 0.0;
         ImageError(d_NEBImageno, Force);
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
-        pcout <<std::setw(8)<< i <<std::setw(25)<<std::setprecision(14)<< Energy<<std::setw(16)<<std::setprecision(4)<< std::floor(1000000000.0*Force)/1000000000.0<<std::endl;
+        pcout << std::setw(8) << i << std::setw(25) << std::setprecision(14)
+              << Energy << std::setw(16) << std::setprecision(4)
+              << std::floor(1000000000.0 * Force) / 1000000000.0 << std::endl;
         d_ImageError[d_NEBImageno] = (Force);
         if (Force > d_optimizertolerance && i > 0 && i < d_numberOfImages - 1)
           {
