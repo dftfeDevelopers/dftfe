@@ -771,6 +771,7 @@ namespace dftfe
               }
             maxEnergy =
               std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
+              
           }
         if(!d_dftPtr->getParametersObject().reproducible_output)
         {
@@ -786,11 +787,11 @@ namespace dftfe
         }
         else
         {
-        pcout << "--> Activation Energy (meV): " << std::setprecision(3)
+        pcout << "--> Activation Energy (meV): " << std::setprecision(4)
               << std::floor(((maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
                    C_haToeV * 1000)/1000000)*1000000
               << std::endl;
-        pcout << "<-- Activation Energy (meV): " << std::setprecision(3)
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(4)
               << std::floor(((maxEnergy -
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                    C_haToeV * 1000)/1000000)*1000000
@@ -869,6 +870,7 @@ namespace dftfe
               }   
             maxEnergy =
               std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
+              
           }
         if(!d_dftPtr->getParametersObject().reproducible_output)
         {
@@ -884,11 +886,11 @@ namespace dftfe
         }
         else
         {
-        pcout << "--> Activation Energy (meV): " << std::setprecision(3)
+        pcout << "--> Activation Energy (meV): " << std::setprecision(4)
               << std::floor(((maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
                    C_haToeV * 1000)/1000000)*1000000
               << std::endl;
-        pcout << "<-- Activation Energy (meV): " << std::setprecision(3)
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(4)
               << std::floor(((maxEnergy -
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                    C_haToeV * 1000)/1000000)*1000000
@@ -994,6 +996,7 @@ namespace dftfe
           }
         maxEnergy =
           std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
+          
       }
         if(!d_dftPtr->getParametersObject().reproducible_output)
         {
@@ -1009,15 +1012,15 @@ namespace dftfe
         }
         else
         {
-        pcout << "--> Activation Energy (meV): " << std::setprecision(3)
-              << std::floor(((maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
-                   C_haToeV * 1000)/1000000)*1000000
+        pcout << "--> Activation Energy (meV): " << std::setprecision(4)
+              << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
               << std::endl;
-        pcout << "<-- Activation Energy (meV): " << std::setprecision(3)
-              << std::floor(((maxEnergy -
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(4)
+              << (maxEnergy -
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
-                   C_haToeV * 1000)/1000000)*1000000
-              << std::endl;          
+                   C_haToeV * 1000
+              << std::endl;         
         }
     double Length = CalculatePathLength(d_verbosity > 2 && !d_dftPtr->getParametersObject().reproducible_output ? true : false);
     if(!d_dftPtr->getParametersObject().reproducible_output)
