@@ -164,9 +164,12 @@ namespace dftfe
                              std::to_string(d_totalUpdateCalls) +
                              "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
-        pcout << "Solver update: NEB is in Restart mode" << std::endl;
-        pcout << "Checking for files in Step: " << d_totalUpdateCalls
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
+          pcout << "Solver update: NEB is in Restart mode" << std::endl;
+          pcout << "Checking for files in Step: " << d_totalUpdateCalls
               << std::endl;
+        }
 
         for (int Image = 0; Image < d_numberOfImages; Image++)
           {
@@ -225,11 +228,6 @@ namespace dftfe
           temp_domainBoundingVectors[i][2] * temp_domainBoundingVectors[i][2];
         d_Length.push_back(pow(temp, 0.5));
       }
-    // pcout << "--$ Domain Length$ --" << std::endl;
-    // pcout << "Lx:= " << d_Length[0] << " Ly:=" << d_Length[1]
-    //       << " Lz:=" << d_Length[2] << std::endl;
-
-
 
     init();
   }
@@ -726,9 +724,13 @@ namespace dftfe
         flagmultiplier[d_numberOfImages - 1] = 0;
         std::vector<int> Flag(d_numberOfImages - 2, 0);
         pcout << "--------------Final Results-------------" << std::endl;
-        pcout << std::setw(12) << "Image No" << std::setw(25)
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
+          
+          pcout << std::setw(12) << "Image No" << std::setw(25)
               << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
               << std::endl;
+        }
         double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
         int    count     = 0;
         for (int image = 0; image < d_numberOfImages; image++)
@@ -750,20 +752,28 @@ namespace dftfe
               }
 
             if (flagmultiplier[image] == 0)
-              pcout << std::setw(8) << image << "(T)" << std::setw(25)
+              {
+                if(!d_dftPtr->getParametersObject().reproducible_output)
+                  pcout << std::setw(8) << image << "(T)" << std::setw(25)
                     << std::setprecision(14) << FreeEnergy << std::setw(16)
                     << std::setprecision(4)
                     << std::floor(1000000000.0 * ForceError) / 1000000000.0
                     << std::endl;
+              }
             else
-              pcout << std::setw(8) << image << "(F)" << std::setw(25)
+              {
+                if(!d_dftPtr->getParametersObject().reproducible_output)
+                  pcout << std::setw(8) << image << "(F)" << std::setw(25)
                     << std::setprecision(14) << FreeEnergy << std::setw(16)
                     << std::setprecision(4)
                     << std::floor(1000000000.0 * ForceError) / 1000000000.0
                     << std::endl;
+              }
             maxEnergy =
               std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
           }
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
         pcout << "--> Activation Energy (meV): " << std::setprecision(8)
               << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
@@ -773,10 +783,26 @@ namespace dftfe
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
               << std::endl;
-        double Length = CalculatePathLength(d_verbosity > 2 ? true : false);
-        pcout << std::endl
+        }
+        else
+        {
+        pcout << "--> Activation Energy (meV): " << std::setprecision(3)
+              << std::floor(((maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000)/1000000)*1000000
+              << std::endl;
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(3)
+              << std::floor(((maxEnergy -
+                  (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000)/1000000)*1000000
+              << std::endl;          
+        }
+        double Length = CalculatePathLength(d_verbosity > 2 && !d_dftPtr->getParametersObject().reproducible_output  ? true : false);
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
+          pcout << std::endl
               << "--Path Length: " << Length << " Bohr" << std::endl;
         pcout << "----------------------------------------------" << std::endl;
+        }
       
     
       }
@@ -799,7 +825,8 @@ namespace dftfe
         flagmultiplier[d_numberOfImages - 1] = 0;
         std::vector<int> Flag(d_numberOfImages - 2, 0);
         pcout << "--------------Current Results-------------" << std::endl;
-        pcout << std::setw(12) << "Image No" << std::setw(25)
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+            pcout << std::setw(12) << "Image No" << std::setw(25)
               << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
               << std::endl;
         double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
@@ -823,20 +850,28 @@ namespace dftfe
               }
 
             if (flagmultiplier[image] == 0)
-              pcout << std::setw(8) << image << "(T)" << std::setw(25)
+              {
+                if(!d_dftPtr->getParametersObject().reproducible_output)
+                pcout << std::setw(8) << image << "(T)" << std::setw(25)
                     << std::setprecision(14) << FreeEnergy << std::setw(16)
                     << std::setprecision(4)
                     << std::floor(1000000000.0 * ForceError) / 1000000000.0
                     << std::endl;
+              }
             else
-              pcout << std::setw(8) << image << "(F)" << std::setw(25)
+              {
+               if(!d_dftPtr->getParametersObject().reproducible_output)
+                pcout << std::setw(8) << image << "(F)" << std::setw(25)
                     << std::setprecision(14) << FreeEnergy << std::setw(16)
                     << std::setprecision(4)
                     << std::floor(1000000000.0 * ForceError) / 1000000000.0
                     << std::endl;
+              }   
             maxEnergy =
               std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
           }
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
         pcout << "--> Activation Energy (meV): " << std::setprecision(8)
               << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
@@ -846,10 +881,26 @@ namespace dftfe
                   (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
                    C_haToeV * 1000
               << std::endl;
-        double Length = CalculatePathLength(d_verbosity > 2 ? true : false);
-        pcout << std::endl
+        }
+        else
+        {
+        pcout << "--> Activation Energy (meV): " << std::setprecision(3)
+              << std::floor(((maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000)/1000000)*1000000
+              << std::endl;
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(3)
+              << std::floor(((maxEnergy -
+                  (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000)/1000000)*1000000
+              << std::endl;          
+        }
+        double Length = CalculatePathLength(d_verbosity > 2 && !d_dftPtr->getParametersObject().reproducible_output ? true : false);
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
+          pcout << std::endl
               << "--Path Length: " << Length << " Bohr" << std::endl;
         pcout << "----------------------------------------------" << std::endl;
+        }
       }
     return d_totalUpdateCalls;
   }
@@ -900,7 +951,8 @@ namespace dftfe
     pcout
       << "-----------------------------------------------------------------------"
       << std::endl;
-    pcout << std::setw(12) << "Image No" << std::setw(25) << " Free Energy(Ha) "
+    if(!d_dftPtr->getParametersObject().reproducible_output)
+      pcout << std::setw(12) << "Image No" << std::setw(25) << " Free Energy(Ha) "
           << std::setw(16) << " Error(Ha/bohr) " << std::endl;
     double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
     int    count     = 0;
@@ -923,32 +975,56 @@ namespace dftfe
           }
 
         if (flagmultiplier[image] == 0)
-          pcout << std::setw(8) << image << "(T)" << std::setw(25)
+          {
+            if(!d_dftPtr->getParametersObject().reproducible_output)
+              pcout << std::setw(8) << image << "(T)" << std::setw(25)
                 << std::setprecision(14) << FreeEnergy << std::setw(16)
                 << std::setprecision(4)
                 << std::floor(1000000000.0 * ForceError) / 1000000000.0
                 << std::endl;
+          }
         else
-          pcout << std::setw(8) << image << "(F)" << std::setw(25)
+          {
+            if(!d_dftPtr->getParametersObject().reproducible_output)
+              pcout << std::setw(8) << image << "(F)" << std::setw(25)
                 << std::setprecision(14) << FreeEnergy << std::setw(16)
                 << std::setprecision(4)
                 << std::floor(1000000000.0 * ForceError) / 1000000000.0
                 << std::endl;
+          }
         maxEnergy =
           std::max(maxEnergy, (d_dftfeWrapper[image])->getDFTFreeEnergy());
       }
-    pcout << "--> Activation Energy (meV): " << std::setprecision(8)
-          << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) * C_haToeV *
-               1000
-          << std::endl;
-    pcout << "<-- Activation Energy (meV): " << std::setprecision(8)
-          << (maxEnergy -
-              (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
-               C_haToeV * 1000
-          << std::endl;
-    double Length = CalculatePathLength(d_verbosity > 2 ? true : false);
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
+        pcout << "--> Activation Energy (meV): " << std::setprecision(8)
+              << (maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
+              << std::endl;
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(8)
+              << (maxEnergy -
+                  (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000
+              << std::endl;
+        }
+        else
+        {
+        pcout << "--> Activation Energy (meV): " << std::setprecision(3)
+              << std::floor(((maxEnergy - (d_dftfeWrapper[0])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000)/1000000)*1000000
+              << std::endl;
+        pcout << "<-- Activation Energy (meV): " << std::setprecision(3)
+              << std::floor(((maxEnergy -
+                  (d_dftfeWrapper[d_numberOfImages - 1])->getDFTFreeEnergy()) *
+                   C_haToeV * 1000)/1000000)*1000000
+              << std::endl;          
+        }
+    double Length = CalculatePathLength(d_verbosity > 2 && !d_dftPtr->getParametersObject().reproducible_output ? true : false);
+    if(!d_dftPtr->getParametersObject().reproducible_output)
+    {
     pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     pcout << "----------------------------------------------" << std::endl;
+    }
     int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
     bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
 
@@ -1000,7 +1076,8 @@ namespace dftfe
         if (temp > d_maximumAtomForceToBeRelaxed)
           d_maximumAtomForceToBeRelaxed = temp;
       }
-    pcout << std::endl
+    if(!d_dftPtr->getParametersObject().reproducible_output)
+        pcout << std::endl
           << "Maximum Force " << d_maximumAtomForceToBeRelaxed << "in Ha/bohr"
           << std::endl;
   }
@@ -1035,7 +1112,7 @@ namespace dftfe
     for (int image = 1; image < d_numberOfImages - 1; image++)
       {
         int multiplier = 1;
-        //pcout << "Update called for image: " << image << std::endl;
+
 
         if (d_ImageError[image] < 0.95 * d_optimizertolerance && d_imageFreeze)
           {
@@ -1045,7 +1122,7 @@ namespace dftfe
           }
         MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
         int count = 0;
-        if (d_verbosity > 4)
+        if (d_verbosity > 4 && !d_dftPtr->getParametersObject().reproducible_output)
           pcout << "--Displacements for image: " << image << std::endl;
         for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
           {
@@ -1069,7 +1146,7 @@ namespace dftfe
                       }
                   }
               }
-            if (d_verbosity > 4)
+            if (d_verbosity > 4 && !d_dftPtr->getParametersObject().reproducible_output)
               pcout << globalAtomsDisplacements[i][0] << " "
                     << globalAtomsDisplacements[i][1] << " "
                     << globalAtomsDisplacements[i][2] << std::endl;
@@ -1087,7 +1164,7 @@ namespace dftfe
             MPI_Barrier(d_mpiCommParent);
             (d_dftfeWrapper[image])
               ->updateAtomPositions(globalAtomsDisplacements);
-            if (d_verbosity > 4)
+            if (d_verbosity > 4 && !d_dftPtr->getParametersObject().reproducible_output)
               pcout << "--Positions of image: " << image << " updated--"
                     << std::endl;
             MPI_Barrier(d_mpiCommParent);
@@ -1236,7 +1313,7 @@ namespace dftfe
             atomId = iCharge;
           }
       }
-    if (flag)
+    if (flag && !d_dftPtr->getParametersObject().reproducible_output)
       pcout << "AtomID: " << atomId << " " << pathLength[atomId] << " "
             << "Bohrs" << std::endl;
 
@@ -1344,16 +1421,19 @@ namespace dftfe
               }
           }
         // print relaxation flags
-        pcout << " --------------Ion force relaxation flags----------------"
+        if(!d_dftPtr->getParametersObject().reproducible_output)
+        {
+          pcout << " --------------Ion force relaxation flags----------------"
               << std::endl;
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+          for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
           {
             pcout << tempRelaxFlagsData[i][0] << "  "
                   << tempRelaxFlagsData[i][1] << "  "
                   << tempRelaxFlagsData[i][2] << std::endl;
           }
-        pcout << " --------------------------------------------------"
+          pcout << " --------------------------------------------------"
               << std::endl;
+        }
       }
     else
       {
@@ -1452,6 +1532,7 @@ namespace dftfe
       << std::endl;
     pcout << " --------------------Initial NEB Data "
           << "---------------------------------------" << std::endl;
+    if(!d_dftPtr->getParametersObject().reproducible_output)
     pcout << std::setw(12) << "Image No" << std::setw(25) << " Free Energy(Ha) "
           << std::setw(16) << " Error(Ha/bohr) " << std::endl;
 
@@ -1464,6 +1545,7 @@ namespace dftfe
         Force        = 0.0;
         ImageError(d_NEBImageno, Force);
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
+        if(!d_dftPtr->getParametersObject().reproducible_output)
         pcout << std::setw(8) << i << std::setw(25) << std::setprecision(14)
               << Energy << std::setw(16) << std::setprecision(4)
               << std::floor(1000000000.0 * Force) / 1000000000.0 << std::endl;
@@ -1474,12 +1556,15 @@ namespace dftfe
           }
       }
     MPI_Barrier(d_mpiCommParent);
-    double Length = 0.0;
+    if(!d_dftPtr->getParametersObject().reproducible_output)
+    {
+      double Length = 0.0;
     Length        = CalculatePathLength(false);
     pcout << std::endl << "--Path Length: " << Length << " Bohr" << std::endl;
     step_time = MPI_Wtime() - step_time;
     pcout << "Time taken for initial dft solve of all images: " << step_time
           << std::endl;
+    }
     pcout
       << "-------------------------------------------------------------------------------"
       << std::endl;
@@ -1641,6 +1726,7 @@ namespace dftfe
                        d_restartFilesPath + "/Step" +
                          std::to_string(d_totalUpdateCalls) + "/maxForce.chk");
     // d_maximumAtomForceToBeRelaxed = tmp[0][0];
+
     pcout << "Solver update: NEB is in Restart mode" << std::endl;
     pcout << "Checking for files in Step: " << d_totalUpdateCalls << std::endl;
     std::string path =
