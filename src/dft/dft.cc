@@ -463,7 +463,8 @@ namespace dftfe
       {
         d_numEigenValues =
           std::max(d_dftParamsPtr->highestStateOfInterestForChebFiltering * 1.1,
-                   d_dftParamsPtr->highestStateOfInterestForChebFiltering + 10.0);
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering +
+                     10.0);
 
         if (d_dftParamsPtr->verbosity >= 1)
           {
