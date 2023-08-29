@@ -97,11 +97,11 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_DEVICE
-        MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
-          d_ghostDataCopyHostPinned;
+        std::shared_ptr<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>
+          d_ghostDataCopyHostPinnedPtr;
 
-        MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
-          d_sendRecvBufferHostPinned;
+        std::shared_ptr<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>
+          d_sendRecvBufferHostPinnedPtr;
 #endif // DFTFE_WITH_DEVICE
 
         std::vector<MPI_Request> d_requestsUpdateGhostValues;

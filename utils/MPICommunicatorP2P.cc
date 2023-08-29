@@ -57,10 +57,11 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           {
-            d_ghostDataCopyHostPinned.resize(d_mpiPatternP2P->localGhostSize() *
-                                               blockSize,
-                                             0.0);
-            d_sendRecvBufferHostPinned.resize(
+            d_ghostDataCopyHostPinnedPtr = std::make_shared<
+              MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+              d_mpiPatternP2P->localGhostSize() * blockSize, 0.0);
+            d_sendRecvBufferHostPinnedPtr = std::make_shared<
+              MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
               d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
                 blockSize,
               0.0);
@@ -115,7 +116,7 @@ namespace dftfe
 
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
-          recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
+          recvArrayStartPtr = d_ghostDataCopyHostPinnedPtr->begin();
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
@@ -167,12 +168,12 @@ namespace dftfe
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
 
-            if (d_sendRecvBufferHostPinned.size() > 0)
-              memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
-                                  d_sendRecvBufferHostPinned.begin(),
+            if (d_sendRecvBufferHostPinnedPtr->size() > 0)
+              memoryTransfer.copy(d_sendRecvBufferHostPinnedPtr->size(),
+                                  d_sendRecvBufferHostPinnedPtr->begin(),
                                   d_sendRecvBuffer.begin());
 
-            sendArrayStartPtr = d_sendRecvBufferHostPinned.begin();
+            sendArrayStartPtr = d_sendRecvBufferHostPinnedPtr->begin();
           }
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -231,12 +232,12 @@ namespace dftfe
               {
                 MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
-                if (d_ghostDataCopyHostPinned.size() > 0)
-                  memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                  memoryTransfer.copy(d_ghostDataCopyHostPinnedPtr->size(),
                                       dataArray.begin() +
                                         d_mpiPatternP2P->localOwnedSize() *
                                           d_blockSize,
-                                      d_ghostDataCopyHostPinned.data());
+                                      d_ghostDataCopyHostPinnedPtr->data());
               }
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -274,7 +275,7 @@ namespace dftfe
         ValueType *recvArrayStartPtr = d_sendRecvBuffer.data();
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
-          recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
+          recvArrayStartPtr = d_sendRecvBufferHostPinnedPtr->begin();
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
 
@@ -317,14 +318,14 @@ namespace dftfe
           {
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
-            if (d_ghostDataCopyHostPinned.size() > 0)
-              memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
-                                  d_ghostDataCopyHostPinned.begin(),
+            if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+              memoryTransfer.copy(d_ghostDataCopyHostPinnedPtr->size(),
+                                  d_ghostDataCopyHostPinnedPtr->begin(),
                                   dataArray.begin() +
                                     d_mpiPatternP2P->localOwnedSize() *
                                       d_blockSize);
 
-            sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
+            sendArrayStartPtr = d_ghostDataCopyHostPinnedPtr->begin();
           }
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -386,10 +387,10 @@ namespace dftfe
               {
                 MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
-                if (d_sendRecvBufferHostPinned.size() > 0)
-                  memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
+                if (d_sendRecvBufferHostPinnedPtr->size() > 0)
+                  memoryTransfer.copy(d_sendRecvBufferHostPinnedPtr->size(),
                                       d_sendRecvBuffer.data(),
-                                      d_sendRecvBufferHostPinned.data());
+                                      d_sendRecvBufferHostPinnedPtr->data());
               }
 #endif // defined(DFTFE_WITH_DEVICE) &&
        // !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
