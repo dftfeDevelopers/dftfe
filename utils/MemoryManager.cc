@@ -103,7 +103,7 @@ namespace dftfe
     void
     MemoryManager<ValueType, MemorySpace::DEVICE>::deallocate(ValueType *ptr)
     {
-      if(ptr!=nullptr)
+      if (ptr != nullptr)
         deviceFree(ptr);
     }
 

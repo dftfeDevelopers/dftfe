@@ -57,10 +57,11 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           {
-            d_ghostDataCopyHostPinnedPtr= std::make_shared<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(d_mpiPatternP2P->localGhostSize() *
-                                               blockSize,
-                                             0.0);
-            d_sendRecvBufferHostPinnedPtr=std::make_shared<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+            d_ghostDataCopyHostPinnedPtr = std::make_shared<
+              MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+              d_mpiPatternP2P->localGhostSize() * blockSize, 0.0);
+            d_sendRecvBufferHostPinnedPtr = std::make_shared<
+              MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
               d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
                 blockSize,
               0.0);
