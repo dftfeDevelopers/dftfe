@@ -44,12 +44,14 @@ namespace dftfe
      *                   2 - all debug output.
      * @param mpi_comm_parent The mpi communicator used.
      */
-    LBFGSNonLinearSolver(const bool         usePreconditioner,
-                         const double       maxUpdate,
-                         const unsigned int maxNumberIterations,
-                         const int          maxNumPastSteps,
-                         const unsigned int debugLevel,
-                         const MPI_Comm &   mpi_comm_parent);
+    LBFGSNonLinearSolver(
+      const bool         usePreconditioner,
+      const double       maxUpdate,
+      const unsigned int maxNumberIterations,
+      const int          maxNumPastSteps,
+      const unsigned int debugLevel,
+      const MPI_Comm &   mpi_comm_parent,
+      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -202,6 +204,11 @@ namespace dftfe
     const bool d_usePreconditioner;
 
     bool d_useSingleAtomSolutionsInitialGuess, d_noHistory;
+
+    //
+    bool d_isCurvatureOnlyLineSearchStoppingCondition;
+
+
 
     // parallel objects
     MPI_Comm                   mpi_communicator;

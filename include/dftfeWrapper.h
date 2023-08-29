@@ -62,7 +62,8 @@ namespace dftfe
                  const bool        printParams                         = false,
                  const bool        setDeviceToMPITaskBindingInternally = false,
                  const std::string solverMode                          = "GS",
-                 const std::string restartFilesPath                    = ".");
+                 const std::string restartFilesPath                    = ".",
+                 const int         _verbosity                          = 1);
 
     /**
      * @brief constructor based on input parameter_file and restart
@@ -76,6 +77,7 @@ namespace dftfe
                  const bool        setDeviceToMPITaskBindingInternally = false,
                  const std::string solverMode                          = "GS",
                  const std::string restartFilesPath                    = ".",
+                 const int         _verbosity                          = 1,
                  const bool        isScfRestart                        = true);
 
 
@@ -166,7 +168,8 @@ namespace dftfe
            const bool        printParams                         = false,
            const bool        setDeviceToMPITaskBindingInternally = false,
            const std::string solverMode                          = "GS",
-           const std::string restartFilesPath                    = ".");
+           const std::string restartFilesPath                    = ".",
+           const int         _verbosity                          = 1);
 
     /**
      * @brief clear and reinitialize based on input parameter_file and restart
@@ -181,6 +184,7 @@ namespace dftfe
            const bool        setDeviceToMPITaskBindingInternally = false,
            const std::string solverMode                          = "GS",
            const std::string restartFilesPath                    = ".",
+           const int         _verbosity                          = 1,
            const bool        isScfRestart                        = true);
 
     void
@@ -347,6 +351,18 @@ namespace dftfe
      */
     std::vector<int>
     getValenceElectronNumbers() const;
+
+
+    /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files for
+     * structural optimization and dynamics restarts. The coordinates are stored
+     * as: 1. fractional for semi-periodic/periodic 2. Cartesian for
+     * non-periodic.
+     * @param[in] Path The folder path to store the atom coordinates required
+     * during restart.
+     */
+    void
+    writeDomainAndAtomCoordinates(const std::string Path) const;
 
 
     dftBase *

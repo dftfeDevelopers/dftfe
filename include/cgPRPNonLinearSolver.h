@@ -46,13 +46,15 @@ namespace dftfe
      * line search.
      * @param lineSearchDampingParameter scales the initial line search step
      */
-    cgPRPNonLinearSolver(const unsigned int maxNumberIterations,
-                         const unsigned int debugLevel,
-                         const MPI_Comm &   mpi_comm_parent,
-                         const double       lineSearchTolerance       = 1.0e-6,
-                         const unsigned int lineSearchMaxIterations   = 10,
-                         const double       lineSeachDampingParameter = 1.0,
-                         const double       maxIncrementSolLinf       = 1e+6);
+    cgPRPNonLinearSolver(
+      const unsigned int maxNumberIterations,
+      const unsigned int debugLevel,
+      const MPI_Comm &   mpi_comm_parent,
+      const double       lineSearchTolerance                        = 1.0e-6,
+      const unsigned int lineSearchMaxIterations                    = 10,
+      const double       lineSeachDampingParameter                  = 1.0,
+      const double       maxIncrementSolLinf                        = 1e+6,
+      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -267,6 +269,9 @@ namespace dftfe
 
     ///
     bool d_useSingleAtomSolutionsInitialGuess;
+
+    //
+    bool d_isCurvatureOnlyLineSearchStoppingCondition;
 
     // parallel objects
     MPI_Comm                   mpi_communicator;

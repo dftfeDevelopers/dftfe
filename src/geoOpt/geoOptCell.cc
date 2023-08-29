@@ -487,7 +487,7 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------"
               << std::endl;
 
-            d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges("./");
+            d_dftPtr->writeDomainAndAtomCoordinates("./");
           }
         else if (solverReturn == nonLinearSolver::MAX_ITER_REACHED)
           {
@@ -671,7 +671,7 @@ namespace dftfe
           mkdir(savePath.c_str(), ACCESSPERMS);
         const dealii::Tensor<2, 3, double> tempGradient =
           d_dftPtr->getCellStress();
-        d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(savePath);
+        d_dftPtr->writeDomainAndAtomCoordinates(savePath);
         d_nonLinearSolverPtr->save(savePath + "/cellRelax.chk");
         tmpData[0][0] = d_totalUpdateCalls;
         dftUtils::writeDataIntoFile(tmpData,

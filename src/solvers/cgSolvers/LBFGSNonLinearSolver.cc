@@ -31,7 +31,8 @@ namespace dftfe
     const unsigned int maxNumberIterations,
     const int          maxNumPastSteps,
     const unsigned int debugLevel,
-    const MPI_Comm &   mpi_comm_parent)
+    const MPI_Comm &   mpi_comm_parent,
+    const bool         isCurvatureOnlyLineSearchStoppingCondition)
     : nonLinearSolver(debugLevel, maxNumberIterations)
     , d_maxStepLength(maxUpdate)
     , mpi_communicator(mpi_comm_parent)
@@ -39,6 +40,8 @@ namespace dftfe
     , d_usePreconditioner(usePreconditioner)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_isCurvatureOnlyLineSearchStoppingCondition(
+        isCurvatureOnlyLineSearchStoppingCondition)
   {
     d_useSingleAtomSolutionsInitialGuess = false;
   }
@@ -501,16 +504,25 @@ namespace dftfe
   {
     double gtdx  = internalLBFGS::dot(d_deltaXNew, d_gradient);
     double gntdx = internalLBFGS::dot(d_deltaXNew, d_gradientNew);
-
-    d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
-    d_wolfeCurvature     = std::abs(gntdx) < 0.9 * std::abs(gtdx);
-    d_wolfeSatisfied     = d_wolfeSufficientDec && d_wolfeCurvature;
+    if (!d_isCurvatureOnlyLineSearchStoppingCondition)
+      d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
+    else
+      d_wolfeSufficientDec = false;
+    if (!d_isCurvatureOnlyLineSearchStoppingCondition)
+      d_wolfeCurvature = std::abs(gntdx) < 0.9 * std::abs(gtdx);
+    else
+      d_wolfeCurvature = std::abs(gntdx) < std::abs(gtdx);
+    d_wolfeSatisfied = d_wolfeSufficientDec && d_wolfeCurvature;
     if (d_debugLevel >= 1)
       {
-        if (d_wolfeSatisfied)
+        if (d_wolfeSatisfied && !d_isCurvatureOnlyLineSearchStoppingCondition)
           pcout << "Wolfe conditions satisfied." << std::endl;
-        else if (d_wolfeSufficientDec)
+        else if (d_wolfeSufficientDec &&
+                 !d_isCurvatureOnlyLineSearchStoppingCondition)
           pcout << "Only Armijo condition satisfied." << std::endl;
+        else if (d_isCurvatureOnlyLineSearchStoppingCondition &&
+                 d_wolfeCurvature)
+          pcout << "Curvature condition satisfied." << std::endl;
       }
   }
 
@@ -533,7 +545,11 @@ namespace dftfe
     else
       {
         double gtdx = internalLBFGS::dot(d_deltaX, d_gradient);
-        d_alpha = -0.5 * gtdx * d_alpha / ((d_valueNew[0] - d_value[0]) - gtdx);
+        if (!d_isCurvatureOnlyLineSearchStoppingCondition)
+          d_alpha =
+            -0.5 * gtdx * d_alpha / ((d_valueNew[0] - d_value[0]) - gtdx);
+        else
+          d_alpha /= 2;
         if (d_alpha < 0.1)
           {
             if (d_debugLevel >= 1)
@@ -851,7 +867,9 @@ namespace dftfe
         // update trust radius and hessian
         //
         checkWolfe();
-        d_stepAccepted = d_wolfeSufficientDec;
+        d_stepAccepted = d_isCurvatureOnlyLineSearchStoppingCondition ?
+                           d_wolfeCurvature :
+                           d_wolfeSufficientDec;
         if (d_stepAccepted)
           {
             updateHistory();
@@ -863,8 +881,16 @@ namespace dftfe
         else
           {
             if (d_debugLevel >= 1)
-              pcout << "Step rejected as Armijo condition was not satisfied."
+              {
+                if (!d_isCurvatureOnlyLineSearchStoppingCondition)
+                  pcout
+                    << "Step rejected as Armijo condition was not satisfied."
                     << std::endl;
+                else
+                  pcout
+                    << "Step rejected as Curvature condition was not satisfied."
+                    << std::endl;
+              }
 
             d_deltaX = d_deltaXNew;
           }

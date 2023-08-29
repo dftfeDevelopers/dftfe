@@ -243,7 +243,7 @@ namespace dftfe
 
     computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
         not d_dftParamsPtr->pinnedNodeForPBC)
 #else
@@ -943,7 +943,7 @@ namespace dftfe
 
     computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
         not d_dftParamsPtr->pinnedNodeForPBC)
 #else

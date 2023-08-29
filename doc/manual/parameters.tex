@@ -139,7 +139,249 @@
 {\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
+\subsection{Parameters in section \tt NEB}
+\label{parameters:NEB}
 
+\begin{itemize}
+\item {\it Parameter name:} {\tt ALLOW IMAGE FREEZING}
+\phantomsection\label{parameters:NEB/ALLOW IMAGE FREEZING}
+\label{parameters:NEB/ALLOW_20IMAGE_20FREEZING}
+
+
+\index[prmindex]{ALLOW IMAGE FREEZING}
+\index[prmindexfull]{NEB!ALLOW IMAGE FREEZING}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} If true images less than threshold will freeze for optimization step
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt BFGS STEP METHOD}
+\phantomsection\label{parameters:NEB/BFGS STEP METHOD}
+\label{parameters:NEB/BFGS_20STEP_20METHOD}
+
+
+\index[prmindex]{BFGS STEP METHOD}
+\index[prmindexfull]{NEB!BFGS STEP METHOD}
+{\it Value:} QN
+
+
+{\it Default:} QN
+
+
+{\it Description:} [Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.
+
+
+{\it Possible values:} Any one of QN, RFO
+\item {\it Parameter name:} {\tt ION RELAX FLAGS FILE}
+\phantomsection\label{parameters:NEB/ION RELAX FLAGS FILE}
+\label{parameters:NEB/ION_20RELAX_20FLAGS_20FILE}
+
+
+\index[prmindex]{ION RELAX FLAGS FILE}
+\index[prmindexfull]{NEB!ION RELAX FLAGS FILE}
+{\it Value:} ion\_force\_flag.inp
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt LBFGS HISTORY}
+\phantomsection\label{parameters:NEB/LBFGS HISTORY}
+\label{parameters:NEB/LBFGS_20HISTORY}
+
+
+\index[prmindex]{LBFGS HISTORY}
+\index[prmindexfull]{NEB!LBFGS HISTORY}
+{\it Value:} 5
+
+
+{\it Default:} 5
+
+
+{\it Description:} [Standard] Number of previous steps to considered for the LBFGS update.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
+\item {\it Parameter name:} {\tt MAXIMUM ION UPDATE STEP}
+\phantomsection\label{parameters:NEB/MAXIMUM ION UPDATE STEP}
+\label{parameters:NEB/MAXIMUM_20ION_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM ION UPDATE STEP}
+\index[prmindexfull]{NEB!MAXIMUM ION UPDATE STEP}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
+\item {\it Parameter name:} {\tt MAXIMUM NUMBER OF NEB ITERATIONS}
+\phantomsection\label{parameters:NEB/MAXIMUM NUMBER OF NEB ITERATIONS}
+\label{parameters:NEB/MAXIMUM_20NUMBER_20OF_20NEB_20ITERATIONS}
+
+
+\index[prmindex]{MAXIMUM NUMBER OF NEB ITERATIONS}
+\index[prmindexfull]{NEB!MAXIMUM NUMBER OF NEB ITERATIONS}
+{\it Value:} 2
+
+
+{\it Default:} 100
+
+
+{\it Description:} [Standard] Maximum number of NEB iterations that will be performed in the simulation
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 250$
+\item {\it Parameter name:} {\tt MAXIMUM SPRING CONSTANT}
+\phantomsection\label{parameters:NEB/MAXIMUM SPRING CONSTANT}
+\label{parameters:NEB/MAXIMUM_20SPRING_20CONSTANT}
+
+
+\index[prmindex]{MAXIMUM SPRING CONSTANT}
+\index[prmindexfull]{NEB!MAXIMUM SPRING CONSTANT}
+{\it Value:} 5e-3
+
+
+{\it Default:} 5e-3
+
+
+{\it Description:} [Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt MAX LINE SEARCH ITER}
+\phantomsection\label{parameters:NEB/MAX LINE SEARCH ITER}
+\label{parameters:NEB/MAX_20LINE_20SEARCH_20ITER}
+
+
+\index[prmindex]{MAX LINE SEARCH ITER}
+\index[prmindexfull]{NEB!MAX LINE SEARCH ITER}
+{\it Value:} 5
+
+
+{\it Default:} 5
+
+
+{\it Description:} [Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
+\item {\it Parameter name:} {\tt MINIMUM SPRING CONSTANT}
+\phantomsection\label{parameters:NEB/MINIMUM SPRING CONSTANT}
+\label{parameters:NEB/MINIMUM_20SPRING_20CONSTANT}
+
+
+\index[prmindex]{MINIMUM SPRING CONSTANT}
+\index[prmindexfull]{NEB!MINIMUM SPRING CONSTANT}
+{\it Value:} 2e-3
+
+
+{\it Default:} 2e-3
+
+
+{\it Description:} [Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt NEB COORDINATES FILE}
+\phantomsection\label{parameters:NEB/NEB COORDINATES FILE}
+\label{parameters:NEB/NEB_20COORDINATES_20FILE}
+
+
+\index[prmindex]{NEB COORDINATES FILE}
+\index[prmindexfull]{NEB!NEB COORDINATES FILE}
+{\it Value:} coordinates.inp
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NEB DOMAIN VECTORS FILE}
+\phantomsection\label{parameters:NEB/NEB DOMAIN VECTORS FILE}
+\label{parameters:NEB/NEB_20DOMAIN_20VECTORS_20FILE}
+
+
+\index[prmindex]{NEB DOMAIN VECTORS FILE}
+\index[prmindexfull]{NEB!NEB DOMAIN VECTORS FILE}
+{\it Value:} domainVectors.inp
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NEB OPT SOLVER}
+\phantomsection\label{parameters:NEB/NEB OPT SOLVER}
+\label{parameters:NEB/NEB_20OPT_20SOLVER}
+
+
+\index[prmindex]{NEB OPT SOLVER}
+\index[prmindexfull]{NEB!NEB OPT SOLVER}
+{\it Value:} LBFGS
+
+
+{\it Default:} LBFGS
+
+
+{\it Description:} [Standard] Method for Ion relaxation solver. LBFGS is the default
+
+
+{\it Possible values:} Any one of BFGS, LBFGS, CGPRP
+\item {\it Parameter name:} {\tt NUMBER OF IMAGES}
+\phantomsection\label{parameters:NEB/NUMBER OF IMAGES}
+\label{parameters:NEB/NUMBER_20OF_20IMAGES}
+
+
+\index[prmindex]{NUMBER OF IMAGES}
+\index[prmindexfull]{NEB!NUMBER OF IMAGES}
+{\it Value:} 7
+
+
+{\it Default:} 7
+
+
+{\it Description:} [Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 50$
+\item {\it Parameter name:} {\tt PATH THRESHOLD}
+\phantomsection\label{parameters:NEB/PATH THRESHOLD}
+\label{parameters:NEB/PATH_20THRESHOLD}
+
+
+\index[prmindex]{PATH THRESHOLD}
+\index[prmindexfull]{NEB!PATH THRESHOLD}
+{\it Value:} 0.0005
+
+
+{\it Default:} 5e-4
+
+
+{\it Description:} [Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD 
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\end{itemize}
 
 \subsection{Parameters in section \tt Boundary conditions}
 \label{parameters:Boundary_20conditions}

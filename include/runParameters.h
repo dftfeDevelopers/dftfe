@@ -19,9 +19,11 @@
 
 #ifndef runParameters_H_
 #define runParameters_H_
-
+#include <deal.II/base/data_out_base.h>
+#include <deal.II/base/parameter_handler.h>
 #include <string>
-
+#include <fstream>
+#include <iostream>
 namespace dftfe
 {
   /**
@@ -36,6 +38,21 @@ namespace dftfe
     std::string solvermode;
     bool        restart;
     std::string restartFilesPath;
+    int         numberOfImages;
+    bool        imageFreeze;
+    double      Kmax;
+    double      Kmin;
+    double      pathThreshold;
+    int         maximumNEBiteration;
+
+    unsigned int maxLineSearchIterCGPRP;
+    std::string  bfgsStepMethod;
+    double       optimizermaxIonUpdateStep;
+    unsigned int lbfgsNumPastSteps;
+    std::string  optimizationSolver;
+    std::string  ionRelaxFlagsFile;
+
+    std::string coordinatesFileNEB, domainVectorsFileNEB;
     runParameters() = default;
 
     /**
@@ -43,6 +60,13 @@ namespace dftfe
      */
     void
     parse_parameters(const std::string &parameter_file);
+    void
+    print_parameters();
+
+  private:
+    dealii::ParameterHandler prm;
+
+
 
   }; // class runParameters
 
