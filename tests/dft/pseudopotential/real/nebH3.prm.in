@@ -1,0 +1,62 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set SOLVER MODE              = NEB
+subsection Geometry
+  set NATOMS=3
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/H3NEB_coordinates.inp          
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/H3NEB_domainBoundingVectors.inp 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=4
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 1.0
+    set ATOM BALL RADIUS = 6.0
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/H3NEB_pseudo.inp
+  set PSEUDO TESTS FLAG               = true
+  set SPIN POLARIZATION               = 1
+  set START MAGNETIZATION             = 0.45  
+end
+
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-5
+  set MIXING METHOD                     =ANDERSON
+  set STARTING WFC=ATOMIC
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS =  5
+      set CHEBYSHEV FILTER TOLERANCE=1e-3      
+  end
+end
+
+subsection NEB
+  set NUMBER OF IMAGES                = 7
+  set PATH THRESHOLD                  = 0.0005
+  set MAXIMUM NUMBER OF NEB ITERATIONS = 2
+  set NEB DOMAIN VECTORS FILE = @SOURCE_DIR@/H3NEB_domainBoundingVectors.inp 
+  set NEB COORDINATES FILE = @SOURCE_DIR@/H3NEB_coordinates.inp
+  set NEB OPT SOLVER                   = LBFGS
+  set ION RELAX FLAGS FILE = @SOURCE_DIR@/H3NEB_ionRelaxFlags.inp
+  set ALLOW IMAGE FREEZING             = true
+end
+
+
+
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 4000
+  set TOLERANCE          = 1e-10
+end
+set H REFINED ELECTROSTATICS=false
