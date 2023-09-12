@@ -19,18 +19,22 @@
 
 #include <deque>
 #include <headers.h>
+#include <dftParameters.h>
+#include <excManager.h>
 
 namespace dftfe
 {
   class MixingScheme
   {
+   public:
 
     MixingScheme(const dftParameters &dftParam,
                  const MPI_Comm &mpi_comm_domain);
 
     void init(const dealii::MatrixFree<3, double> & matrixFreeData,
          const unsigned int matrixFreeVectorComponent,
-                 const unsigned int matrixFreeQuadratureComponent);
+                 const unsigned int matrixFreeQuadratureComponent,
+		 excManager * excManagerPtr);
 
     void dotProduct(const std::deque<std::vector<double>> &inHist,
                const std::deque<std::vector<double>> &outHist,
@@ -38,34 +42,33 @@ namespace dftfe
                std::vector<double> &c,
                std::string fieldName);
 
-    void copyDensityToInHist(const std::map<dealii::CellId, std::vector<double>> *rhoInValues);
+    void copyDensityToInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues);
 
-    void copyDensityToOutHist(const std::map<dealii::CellId, std::vector<double>> *rhoOutValues);
+    void copyDensityToOutHist(std::map<dealii::CellId, std::vector<double>> *rhoOutValues);
 
     unsigned int lengthOfHistory();
 
     void computeAndersonMixingCoeff();
 
-    double mixDensity();
 
     void popRhoInHist();
 
     void popRhoOutHist();
 
     void copyDensityFromInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues);
-    void copyDensityFromOutHist(const std::map<dealii::CellId, std::vector<double>> *rhoOutValues);
+    void copyDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> *rhoOutValues);
 
-    void copyGradDensityFromInHist(std::map<dealii::CellId, std::vector<double>> & gradInput);
-    void copyGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutput);
+    void copyGradDensityFromInHist(std::map<dealii::CellId, std::vector<double>>* gradInput);
+    void copyGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput);
 
-    void copySpinGradDensityFromInHist(std::map<dealii::CellId, std::vector<double>> & gradInputSpin);
-    void copySpinGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutputSpin);
+    void copySpinGradDensityFromInHist(std::map<dealii::CellId, std::vector<double>> * gradInputSpin);
+    void copySpinGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutputSpin);
 
-    void copyGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> & gradInput);
-    void copyGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutput);
+    void copyGradDensityToInHist(std::map<dealii::CellId, std::vector<double>>  *gradInput);
+    void copyGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput);
 
-    void copySpinGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> & gradInputSpin);
-    void copySpinGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutputSpin);
+    void copySpinGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> * gradInputSpin);
+    void copySpinGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>>* gradOutputSpin);
 
     void computeMixingMatricesDensity(const std::deque<std::vector<double>> &inHist,
                                  const std::deque<std::vector<double>> &outHist,
@@ -82,6 +85,8 @@ namespace dftfe
                              std::map<dealii::CellId, std::vector<double>> *gradRhoOutValuesSpinPolarized);
 
     void popOldHistory();
+
+    void clearHistory();
 
     void popGradRhoInHist();
     void popGradRhoOutHist();
@@ -102,14 +107,16 @@ namespace dftfe
     unsigned int d_matrixFreeVectorComponent,d_matrixFreeQuadratureComponent;
 
     unsigned int d_numberQuadraturePointsPerCell;
-
+    unsigned int d_numCells;
     const dealii::DoFHandler<3> * d_dofHandler;
 
     std::vector<double> d_vecJxW;
 
+    const excManager *         d_excManagerPtr;
+
     const MPI_Comm d_mpi_comm_domain;
 
-    dftParameters *d_dftParamsPtr;
+    const dftParameters *d_dftParamsPtr;
 
   };
 } //  end of namespace dftfe

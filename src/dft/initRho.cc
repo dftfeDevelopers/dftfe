@@ -32,7 +32,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::clearRhoData()
   {
-    d_mixingScheme.popOldHistory();
+    d_mixingScheme.clearHistory();
 
 
     d_rhoInNodalVals.clear();

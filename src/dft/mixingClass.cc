@@ -18,6 +18,8 @@
 //
 
 #include <mixingClass.h>
+#include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
 
 namespace dftfe
 {
@@ -50,7 +52,7 @@ namespace dftfe
           {
             for(unsigned int iQuad = 0 ;iQuad < numQuadPointsPerCell; iQuad++)
               {
-                rhoInValues[cell->id()][iQuad] =
+                (*rhoInValues)[cell->id()][iQuad] =
                   d_rhoInVals[hist-1][iElem*numQuadPointsPerCell +
                                   iQuad];
               }
@@ -59,7 +61,7 @@ namespace dftfe
       }
 
   }
-  void MixingScheme::copyDensityFromOutHist(const std::map<dealii::CellId, std::vector<double>> *rhoOutValues)
+  void MixingScheme::copyDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> *rhoOutValues)
   {
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -83,7 +85,7 @@ namespace dftfe
           {
             for(unsigned int iQuad = 0 ;iQuad < numQuadPointsPerCell; iQuad++)
               {
-                rhoOutValues[cell->id()][iQuad] =
+                (*rhoOutValues)[cell->id()][iQuad] =
                     d_rhoOutVals[hist-1][iElem*numQuadPointsPerCell +
                                  iQuad];
               }
@@ -93,54 +95,55 @@ namespace dftfe
 
   }
 
-  void MixingScheme::copyGradDensityFromInHist( std::map<dealii::CellId, std::vector<double>> & gradInput)
+  void MixingScheme::copyGradDensityFromInHist( std::map<dealii::CellId, std::vector<double>> *gradInput)
   {
     gradInput = &(d_gradRhoInVals.back());
   }
 
-  void MixingScheme::copyGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutput)
+  void MixingScheme::copyGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput)
   {
     gradOutput = &(d_gradRhoOutVals.back());
   }
 
-  void MixingScheme::copySpinGradDensityFromInHist( std::map<dealii::CellId, std::vector<double>> & gradInputSpin)
+  void MixingScheme::copySpinGradDensityFromInHist( std::map<dealii::CellId, std::vector<double>> * gradInputSpin)
   {
     gradInputSpin = &(d_gradRhoInValsSpinPolarized.back());
   }
 
-  void MixingScheme::copySpinGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutputSpin)
+  void MixingScheme::copySpinGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutputSpin)
   {
     gradOutputSpin = &(d_gradRhoOutValsSpinPolarized.back());
   }
 
-  void MixingScheme::copyGradDensityToInHist( std::map<dealii::CellId, std::vector<double>> & gradInput)
+  void MixingScheme::copyGradDensityToInHist( std::map<dealii::CellId, std::vector<double>> * gradInput)
   {
-    d_gradRhoInVals.push_back(gradInput);
+    d_gradRhoInVals.push_back(*gradInput);
   }
-  void MixingScheme::copyGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutput)
+  void MixingScheme::copyGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput)
   {
-    d_gradRhoOutVals.push_back(gradOutput);
+    d_gradRhoOutVals.push_back(*gradOutput);
   }
 
-  void MixingScheme::copySpinGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> & gradInputSpin)
+  void MixingScheme::copySpinGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> * gradInputSpin)
   {
-    d_gradRhoInValsSpinPolarized.push_back(gradInputSpin);
+    d_gradRhoInValsSpinPolarized.push_back(*gradInputSpin);
   }
-  void MixingScheme::copySpinGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> & gradOutputSpin)
+  void MixingScheme::copySpinGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutputSpin)
   {
-    d_gradRhoOutValsSpinPolarized.push_back(gradOutputSpin);
+    d_gradRhoOutValsSpinPolarized.push_back(*gradOutputSpin);
   }
 
 
   void MixingScheme::init(const dealii::MatrixFree<3, double> & matrixFreeData,
                      const unsigned int matrixFreeVectorComponent,
-                     const unsigned int matrixFreeQuadratureComponent)
+                     const unsigned int matrixFreeQuadratureComponent,
+		     excManager * excManagerPtr)
   {
 
     d_matrixFreeDataPtr = &matrixFreeData ;
-    d_matrixFreeVectorComponent = matrixFreeVectorComponent
+    d_matrixFreeVectorComponent = matrixFreeVectorComponent;
     d_matrixFreeQuadratureComponent = matrixFreeQuadratureComponent;
-
+    d_excManagerPtr = excManagerPtr;
         const dealii::Quadrature<3> &quadratureRhs =
           d_matrixFreeDataPtr->get_quadrature(
             d_matrixFreeQuadratureComponent);
@@ -155,6 +158,8 @@ namespace dftfe
                                       dealii::update_JxW_values);
 
         unsigned int iElem = 0;
+
+	d_numCells = d_matrixFreeDataPtr->n_physical_cells();
 
         if(d_dftParamsPtr->spinPolarized == 0)
           {
@@ -272,7 +277,7 @@ namespace dftfe
       }
   }
 
-  void MixingScheme::copyDensityToInHist(const std::map<dealii::CellId, std::vector<double>> *rhoInValues)
+  void MixingScheme::copyDensityToInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues)
   {
     std::vector<double> latestHistRhoIn;
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
@@ -297,7 +302,7 @@ namespace dftfe
               {
                 latestHistRhoIn[iElem*numQuadPointsPerCell +
                                 iQuad] =
-                  rhoInValues[cell->id()][iQuad];
+                  (*rhoInValues)[cell->id()][iQuad];
               }
             iElem++;
           }
@@ -306,7 +311,7 @@ namespace dftfe
     d_rhoInVals.push_back(latestHistRhoIn);
   }
 
-  void MixingScheme::copyDensityToOutHist(const std::map<dealii::CellId, std::vector<double>> *rhoOutValues)
+  void MixingScheme::copyDensityToOutHist( std::map<dealii::CellId, std::vector<double>> *rhoOutValues)
   {
     std::vector<double> latestHistRhoOut;
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
@@ -334,7 +339,7 @@ namespace dftfe
               {
                 latestHistRhoOut[iElem*numQuadPointsPerCell +
                                 iQuad] =
-                  rhoOutValues[cell->id()][iQuad];
+                  (*rhoOutValues)[cell->id()][iQuad];
               }
             iElem++;
           }
@@ -606,7 +611,7 @@ namespace dftfe
             std::map<dealii::CellId, std::vector<double>>());
           gradRhoInValuesSpinPolarized = &(d_gradRhoInValsSpinPolarized.back());
           //
-          cell = dofHandler.begin_active();
+          cell = d_dofHandler->begin_active();
           for (; cell != endc; ++cell)
             {
               if (cell->is_locally_owned())
@@ -783,6 +788,16 @@ namespace dftfe
     return std::sqrt(dealii::Utilities::MPI::sum(normValue, d_mpi_comm_domain));
   }
 
+  void MixingScheme::clearHistory()
+  {
+	  d_rhoInVals.clear();
+	  d_rhoOutVals.clear();
+	  d_gradRhoInVals.clear();
+	  d_gradRhoOutVals.clear();
+	  d_gradRhoInValsSpinPolarized.clear();
+	  d_gradRhoOutValsSpinPolarized.clear();
+
+  }
   void MixingScheme::popOldHistory()
   {
     if (d_rhoInVals.size() == d_dftParamsPtr->mixingHistory)

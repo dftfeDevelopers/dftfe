@@ -380,24 +380,50 @@ namespace dftfe
       if (cell->is_locally_owned())
         {
           const dealii::CellId cellId = cell->id();
-          rhoVals[cellId]      = std::vector<double>(numQuadPoints, 0.0);
+          (*rhoVals)[cellId]      = std::vector<double>(numQuadPoints, 0.0);
           if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
-            gradRhoVals[cellId] =
+            (*gradRhoVals)[cellId] =
               std::vector<double>(3 * numQuadPoints, 0.0);
 
           if (d_dftParamsPtr->spinPolarized == 1)
             {
-              rhoValsSpinPolarized[cellId] =
+              (*rhoValsSpinPolarized)[cellId] =
                 std::vector<double>(2 * numQuadPoints, 0.0);
               if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA)
-                gradRhoValsSpinPolarized[cellId] =
+                (*gradRhoValsSpinPolarized)[cellId] =
                   std::vector<double>(6 * numQuadPoints, 0.0);
             }
         }
   }
 
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho)
+  {
+	  if(outputRho != nullptr)
+	  {
+		  delete outputRho;
+	  }
+	  outputRho = new std::map<dealii::CellId, std::vector<double>>;
+
+	  typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler.begin_active(),
+      endc = dofHandler.end();
+	  for (; cell != endc; ++cell)
+      if (cell->is_locally_owned())
+        {
+          const dealii::CellId cellId = cell->id();
+	  unsigned int numQuadPoints = (*inputRho)[cellId].size();
+	  (*outputRho)[cellId].resize(numQuadPoints);
+	  for(unsigned int iQuad = 0; iQuad< numQuadPoints; iQuad++)
+	  {
+		  (*outputRho)[cellId][iQuad] = (*inputRho)[cellId][iQuad];
+	  }
+	}
+  }
 
   // rho data reinitilization without remeshing. The rho out of last ground
   // state solve is made the rho in of the new solve
@@ -441,25 +467,22 @@ namespace dftfe
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-            *(gradRhoInValues) = *(gradRhoOutValuesCopy)
+            *(gradRhoInValues) = (gradRhoOutValuesCopy);
           }
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            *(rhoInValuesSpinPolarized) = *(rhoOutValuesSpinPolarizedCopy);
+            *(rhoInValuesSpinPolarized) = (rhoOutValuesSpinPolarizedCopy);
 
           }
-        else
-          {
             /// copy back temporary rho out to rho in data
-            *(rhoInValues) = *(rhoOutValuesCopy);
-          }
+            *(rhoInValues) = (rhoOutValuesCopy);
 
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA &&
             d_dftParamsPtr->spinPolarized == 1)
           {
-            *(gradRhoInValuesSpinPolarized) = *(gradRhoOutValuesSpinPolarizedCopy);
+            *(gradRhoInValuesSpinPolarized) = (gradRhoOutValuesSpinPolarizedCopy);
           }
 
         if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||

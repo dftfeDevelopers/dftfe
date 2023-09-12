@@ -187,6 +187,57 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::~dftClass()
   {
+	  if (rhoInValues != nullptr)
+              {
+                delete rhoInValues;
+              }
+
+    if (rhoOutValues != nullptr)
+              {
+                delete rhoOutValues;
+              }
+    if (d_dftParamsPtr->spinPolarized == 1)
+              {
+                if (rhoOutValuesSpinPolarized != nullptr)
+                  {
+                    delete rhoOutValuesSpinPolarized;
+                  }
+
+		if (rhoInValuesSpinPolarized != nullptr)
+                  {
+                    delete rhoInValuesSpinPolarized;
+                  }
+
+              }
+
+
+	      if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA)
+              {
+                if (gradRhoOutValues != nullptr)
+                  {
+                    delete gradRhoOutValues;
+                  }
+
+		if (gradRhoInValues != nullptr)
+                  {
+                    delete gradRhoInValues;
+                  }
+
+                if (d_dftParamsPtr->spinPolarized == 1)
+                  {
+                    if (gradRhoOutValuesSpinPolarized != nullptr)
+                      {
+                        delete gradRhoOutValuesSpinPolarized;
+                      }
+
+		    if (gradRhoInValuesSpinPolarized != nullptr)
+                      {
+                        delete gradRhoInValuesSpinPolarized;
+                      }
+                  }
+              }
+
     finalizeKohnShamDFTOperator();
     delete symmetryPtr;
     matrix_free_data.clear();
@@ -198,6 +249,8 @@ namespace dftfe
     d_elpaScala->elpaDeallocateHandles(*d_dftParamsPtr);
     delete d_elpaScala;
     delete d_excManagerPtr;
+
+
   }
 
   namespace internaldft
@@ -2168,7 +2221,8 @@ namespace dftfe
     // initialise the mixing scheme
     d_mixingScheme.init(matrix_free_data,
                         d_densityDofHandlerIndex,
-                        d_densityQuadratureId);
+                        d_densityQuadratureId,
+			d_excManagerPtr);
 
     //
     // Begin SCF iteration

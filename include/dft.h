@@ -711,6 +711,9 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<double>>
         *gradRhoValuesSpinPolarized);
 
+    void 
+    copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho);
+    
     void
     noRemeshRhoDataInit();
     void
