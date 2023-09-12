@@ -50,49 +50,6 @@ namespace dftfe
               }
           }
       }
-    else
-      {
-        // pop out rhoInVals and rhoOutVals if their size exceeds mixing history
-        // size
-        if (rhoInVals.size() == d_dftParamsPtr->mixingHistory)
-          {
-            rhoInVals.pop_front();
-            rhoOutVals.pop_front();
-
-            if (d_dftParamsPtr->spinPolarized == 1)
-              {
-                rhoInValsSpinPolarized.pop_front();
-                rhoOutValsSpinPolarized.pop_front();
-              }
-
-            if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA) // GGA
-              {
-                gradRhoInVals.pop_front();
-                gradRhoOutVals.pop_front();
-              }
-
-            if (d_dftParamsPtr->spinPolarized == 1 &&
-                d_excManagerPtr->getDensityBasedFamilyType() ==
-                  densityFamilyType::GGA)
-              {
-                gradRhoInValsSpinPolarized.pop_front();
-                gradRhoOutValsSpinPolarized.pop_front();
-              }
-
-            if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-              {
-                dFBroyden.pop_front();
-                uBroyden.pop_front();
-                if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA) // GGA
-                  {
-                    graddFBroyden.pop_front();
-                    gradUBroyden.pop_front();
-                  }
-              }
-          }
-      }
   }
 
 
@@ -182,23 +139,10 @@ namespace dftfe
       }
     else
       {
-        resizeAndAllocateRhoTableStorage(rhoOutVals,
-                                         gradRhoOutVals,
-                                         rhoOutValsSpinPolarized,
-                                         gradRhoOutValsSpinPolarized);
-
-        rhoOutValues = &(rhoOutVals.back());
-        if (d_dftParamsPtr->spinPolarized == 1)
-          rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
-
-        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
-          {
-            gradRhoOutValues = &(gradRhoOutVals.back());
-            if (d_dftParamsPtr->spinPolarized == 1)
-              gradRhoOutValuesSpinPolarized =
-                &(gradRhoOutValsSpinPolarized.back());
-          }
+        resizeAndAllocateRhoTableStorage(rhoOutValues,
+                                         gradRhoOutValues,
+                                         rhoOutValuesSpinPolarized,
+                                         gradRhoOutValuesSpinPolarized);
 
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
@@ -384,29 +328,48 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::resizeAndAllocateRhoTableStorage(
-    std::deque<std::map<dealii::CellId, std::vector<double>>> &rhoVals,
-    std::deque<std::map<dealii::CellId, std::vector<double>>> &gradRhoVals,
-    std::deque<std::map<dealii::CellId, std::vector<double>>>
-      &rhoValsSpinPolarized,
-    std::deque<std::map<dealii::CellId, std::vector<double>>>
-      &gradRhoValsSpinPolarized)
+    std::map<dealii::CellId, std::vector<double>> *rhoVals,
+    std::map<dealii::CellId, std::vector<double>> *gradRhoVals,
+    std::map<dealii::CellId, std::vector<double>>
+      *rhoValsSpinPolarized,
+    std::map<dealii::CellId, std::vector<double>>
+      *gradRhoValsSpinPolarized)
   {
     const unsigned int numQuadPoints =
       matrix_free_data.get_n_q_points(d_densityQuadratureId);
     ;
 
     // create new rhoValue tables
-    rhoVals.push_back(std::map<dealii::CellId, std::vector<double>>());
+    if(rhoVals != nullptr)
+      {
+        delete rhoVals;
+      }
+    rhoVals = new std::map<dealii::CellId, std::vector<double>>();
     if (d_dftParamsPtr->spinPolarized == 1)
-      rhoValsSpinPolarized.push_back(
-        std::map<dealii::CellId, std::vector<double>>());
+      {
+        if(rhoValsSpinPolarized != nullptr)
+          {
+            delete rhoValsSpinPolarized;
+          }
+        rhoValsSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+      }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        gradRhoVals.push_back(std::map<dealii::CellId, std::vector<double>>());
+        if(gradRhoVals != nullptr)
+          {
+            delete gradRhoVals;
+          }
+        gradRhoVals = new std::map<dealii::CellId, std::vector<double>>();
+
         if (d_dftParamsPtr->spinPolarized == 1)
-          gradRhoValsSpinPolarized.push_back(
-            std::map<dealii::CellId, std::vector<double>>());
+          {
+            if(gradRhoValsSpinPolarized != nullptr)
+              {
+                delete gradRhoValsSpinPolarized;
+              }
+            gradRhoValsSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+          }
       }
 
 
@@ -417,19 +380,19 @@ namespace dftfe
       if (cell->is_locally_owned())
         {
           const dealii::CellId cellId = cell->id();
-          rhoVals.back()[cellId]      = std::vector<double>(numQuadPoints, 0.0);
+          rhoVals[cellId]      = std::vector<double>(numQuadPoints, 0.0);
           if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
-            gradRhoVals.back()[cellId] =
+            gradRhoVals[cellId] =
               std::vector<double>(3 * numQuadPoints, 0.0);
 
           if (d_dftParamsPtr->spinPolarized == 1)
             {
-              rhoValsSpinPolarized.back()[cellId] =
+              rhoValsSpinPolarized[cellId] =
                 std::vector<double>(2 * numQuadPoints, 0.0);
               if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA)
-                gradRhoValsSpinPolarized.back()[cellId] =
+                gradRhoValsSpinPolarized[cellId] =
                   std::vector<double>(6 * numQuadPoints, 0.0);
             }
         }
@@ -442,7 +405,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
   {
-    if (rhoOutVals.size() > 0 || d_rhoInNodalVals.size() > 0)
+    if ( d_rhoInNodalVals.size() > 0)
       {
         // create temporary copies of rho Out data
         std::map<dealii::CellId, std::vector<double>> rhoOutValuesCopy =
@@ -475,30 +438,28 @@ namespace dftfe
         // cleanup of existing rho Out and rho In data
         clearRhoData();
 
-        /// copy back temporary rho out to rho in data
-        rhoInVals.push_back(rhoOutValuesCopy);
-        rhoInValues = &(rhoInVals.back());
-
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-            gradRhoInVals.push_back(gradRhoOutValuesCopy);
-            gradRhoInValues = &(gradRhoInVals.back());
+            *(gradRhoInValues) = *(gradRhoOutValuesCopy)
           }
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            rhoInValsSpinPolarized.push_back(rhoOutValuesSpinPolarizedCopy);
-            rhoInValuesSpinPolarized = &(rhoInValsSpinPolarized.back());
+            *(rhoInValuesSpinPolarized) = *(rhoOutValuesSpinPolarizedCopy);
+
+          }
+        else
+          {
+            /// copy back temporary rho out to rho in data
+            *(rhoInValues) = *(rhoOutValuesCopy);
           }
 
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA &&
             d_dftParamsPtr->spinPolarized == 1)
           {
-            gradRhoInValsSpinPolarized.push_back(
-              gradRhoOutValuesSpinPolarizedCopy);
-            gradRhoInValuesSpinPolarized = &(gradRhoInValsSpinPolarized.back());
+            *(gradRhoInValuesSpinPolarized) = *(gradRhoOutValuesSpinPolarizedCopy);
           }
 
         if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
@@ -556,29 +517,36 @@ namespace dftfe
                     densityFamilyType::GGA);
               }
 
-            rhoOutVals.push_back(
-              std::map<dealii::CellId, std::vector<double>>());
-            rhoOutValues = &(rhoOutVals.back());
+            if (rhoOutValues != nullptr)
+              {
+                delete rhoOutValues;
+              }
+            rhoOutValues = new  std::map<dealii::CellId, std::vector<double>>();
             if (d_dftParamsPtr->spinPolarized == 1)
               {
-                rhoOutValsSpinPolarized.push_back(
-                  std::map<dealii::CellId, std::vector<double>>());
-                rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+                if (rhoOutValuesSpinPolarized != nullptr)
+                  {
+                    delete rhoOutValuesSpinPolarized;
+                  }
+                rhoOutValuesSpinPolarized = new  std::map<dealii::CellId, std::vector<double>>();
               }
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
-                gradRhoOutVals.push_back(
-                  std::map<dealii::CellId, std::vector<double>>());
-                gradRhoOutValues = &(gradRhoOutVals.back());
+                if (gradRhoOutValues != nullptr)
+                  {
+                    delete gradRhoOutValues;
+                  }
+                gradRhoOutValues = new  std::map<dealii::CellId, std::vector<double>>();
 
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    gradRhoOutValsSpinPolarized.push_back(
-                      std::map<dealii::CellId, std::vector<double>>());
-                    gradRhoOutValuesSpinPolarized =
-                      &(gradRhoOutValsSpinPolarized.back());
+                    if (gradRhoOutValuesSpinPolarized != nullptr)
+                      {
+                        delete gradRhoOutValuesSpinPolarized;
+                      }
+                    gradRhoOutValuesSpinPolarized = new  std::map<dealii::CellId, std::vector<double>>();
                   }
               }
           }

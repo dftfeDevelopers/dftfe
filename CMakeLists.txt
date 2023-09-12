@@ -158,7 +158,7 @@ SET(TARGET_SRC
   ./src/force/configurationalStressCompute/stress.cc
   ./src/force/createBinObjectsForce.cc
   ./src/force/locateAtomCoreNodesForce.cc
-  )
+  ./src/dft/mixingClass.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
 

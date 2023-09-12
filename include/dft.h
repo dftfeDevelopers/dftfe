@@ -64,6 +64,7 @@
 #  include <slepceps.h>
 #endif
 
+#include <mixingClass.h>
 
 
 namespace dftfe
@@ -434,19 +435,7 @@ namespace dftfe
      *@brief save triangulation information and rho quadrature data to checkpoint file for restarts
      */
     void
-    saveTriaInfoAndRhoData();
-
-    /**
-     *@brief save triangulation information and rho quadrature data to checkpoint file for restarts
-     */
-    void
     saveTriaInfoAndRhoNodalData();
-
-    /**
-     *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
-     */
-    void
-    loadTriaInfoAndRhoData();
 
     /**
      *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
@@ -715,12 +704,12 @@ namespace dftfe
      */
     void
     resizeAndAllocateRhoTableStorage(
-      std::deque<std::map<dealii::CellId, std::vector<double>>> &rhoVals,
-      std::deque<std::map<dealii::CellId, std::vector<double>>> &gradRhoVals,
-      std::deque<std::map<dealii::CellId, std::vector<double>>>
-        &rhoValsSpinPolarized,
-      std::deque<std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoValsSpinPolarized);
+      std::map<dealii::CellId, std::vector<double>> *rhoValues,
+      std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
+      std::map<dealii::CellId, std::vector<double>>
+        *rhoValuesSpinPolarized,
+      std::map<dealii::CellId, std::vector<double>>
+        *gradRhoValuesSpinPolarized);
 
     void
     noRemeshRhoDataInit();
@@ -891,16 +880,12 @@ namespace dftfe
      */
     double
     mixing_simple();
-    double
-    mixing_anderson();
+//    double
+//    mixing_anderson();
     double
     mixing_simple_spinPolarized();
-    double
-    mixing_anderson_spinPolarized();
-    double
-    mixing_broyden();
-    double
-    mixing_broyden_spinPolarized();
+//    double
+//    mixing_anderson_spinPolarized();
 
     double
     nodalDensity_mixing_simple_kerker(
@@ -1388,9 +1373,9 @@ namespace dftfe
     // dft related objects
     std::map<dealii::CellId, std::vector<double>> *rhoInValues, *rhoOutValues,
       *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> rhoInVals,
-      rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
     std::map<dealii::CellId, std::vector<double>> d_phiInValues, d_phiOutValues;
+
+    MixingScheme d_mixingScheme;
 
     distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues,
       d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector,
@@ -1439,18 +1424,6 @@ namespace dftfe
       *gradRhoInValuesSpinPolarized;
     std::map<dealii::CellId, std::vector<double>> *gradRhoOutValues,
       *gradRhoOutValuesSpinPolarized;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> gradRhoInVals,
-      gradRhoInValsSpinPolarized, gradRhoOutVals, gradRhoOutValsSpinPolarized;
-
-    // Broyden mixing related objects
-    std::map<dealii::CellId, std::vector<double>> FBroyden, gradFBroyden;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> dFBroyden,
-      graddFBroyden;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> uBroyden,
-      gradUBroyden;
-    std::deque<double> wtBroyden;
-    double             w0Broyden = 0.0;
-    //
 
 
     // storage for total electrostatic potential solution vector corresponding

@@ -146,6 +146,8 @@ namespace dftfe
                                 0.0,
                                 0.0,
                                 dftParams)
+    , d_mixingScheme(dftParams,
+                     mpi_comm_domain)
 #ifdef DFTFE_WITH_DEVICE
     , d_subspaceIterationSolverDevice(mpi_comm_parent,
                                       mpi_comm_domain,
@@ -1190,30 +1192,25 @@ namespace dftfe
           {
             d_rhoOutNodalValues = d_rhoInNodalValues;
             d_rhoOutNodalValues.update_ghost_values();
-            rhoOutVals.push_back(*(rhoInValues));
-            rhoOutValues = &(rhoOutVals.back());
+
+            *(rhoOutValues) = *(rhoInValues);
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
-                gradRhoOutVals.push_back(*(gradRhoInValues));
-                gradRhoOutValues = &(gradRhoOutVals.back());
+                *(gradRhoOutValues) = *(gradRhoInValues);
               }
 
             if (d_dftParamsPtr->spinPolarized == 1)
               {
-                rhoOutValsSpinPolarized.push_back(*rhoInValuesSpinPolarized);
-                rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+                *(rhoOutValuesSpinPolarized)= *(rhoInValuesSpinPolarized);
               }
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA &&
                 d_dftParamsPtr->spinPolarized == 1)
               {
-                gradRhoOutValsSpinPolarized.push_back(
-                  *gradRhoInValuesSpinPolarized);
-                gradRhoOutValuesSpinPolarized =
-                  &(gradRhoOutValsSpinPolarized.back());
+                *(gradRhoOutValuesSpinPolarized)= *(gradRhoInValuesSpinPolarized);
               }
           }
 
@@ -2168,6 +2165,11 @@ namespace dftfe
                            1e-3 :
                            d_dftParamsPtr->chebyshevTolerance;
 
+    // initialise the mixing scheme
+    d_mixingScheme.init(matrix_free_data,
+                        d_densityDofHandlerIndex,
+                        d_densityQuadratureId);
+
     //
     // Begin SCF iteration
     //
@@ -2239,9 +2241,40 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      norm = mixing_anderson_spinPolarized();
-                    else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-                      norm = mixing_broyden_spinPolarized();
+                      {
+                        if(d_dftParamsPtr->spinPolarized == 1)
+                          {
+                            d_mixingScheme.copyDensityToInHist(rhoInValuesSpinPolarized);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValuesSpinPolarized);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
+                                d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
+                              }
+                          }
+                        else
+                          {
+                            d_mixingScheme.copyDensityToInHist(rhoInValues);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValues);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
+                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
+                              }
+                          }
+                        d_mixingScheme.popOldHistory();
+                        d_mixingScheme.computeAndersonMixingCoeff();
+                        norm = d_mixingScheme.mixDensity(rhoInValues,
+                                                         rhoOutValues,
+                                                         rhoInValuesSpinPolarized,
+                                                         rhoOutValuesSpinPolarized,
+                                                         gradRhoInValues,
+                                                         gradRhoOutValues,
+                                                         gradRhoInValuesSpinPolarized,
+                                                         gradRhoOutValuesSpinPolarized);
+                      }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
@@ -2256,9 +2289,17 @@ namespace dftfe
                 else
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      norm = mixing_anderson();
-                    else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-                      norm = mixing_broyden();
+                      {
+                        d_mixingScheme.computeAndersonMixingCoeff();
+                        norm = d_mixingScheme.mixDensity(rhoInValues,
+                                                         rhoOutValues,
+                                                         rhoInValuesSpinPolarized,
+                                                         rhoOutValuesSpinPolarized,
+                                                         gradRhoInValues,
+                                                         gradRhoOutValues,
+                                                         gradRhoInValuesSpinPolarized,
+                                                         gradRhoOutValuesSpinPolarized);
+                      }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       {
