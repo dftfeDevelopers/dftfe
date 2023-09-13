@@ -139,10 +139,45 @@ namespace dftfe
       }
     else
       {
-        resizeAndAllocateRhoTableStorage(rhoOutValues,
-                                         gradRhoOutValues,
-                                         rhoOutValuesSpinPolarized,
-                                         gradRhoOutValuesSpinPolarized);
+
+		      rhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
+	    
+	   //  std::cout<<" rhoOut is empty before resize = "<<rhoOutValues->empty()<<"\n";
+        //resizeAndAllocateRhoTableStorage(rhoOutValues,
+        //                                 gradRhoOutValues,
+        //                                 rhoOutValuesSpinPolarized,
+        //                                 gradRhoOutValuesSpinPolarized);
+
+	 const unsigned int numQuadPoints =
+      matrix_free_data.get_n_q_points(d_densityQuadratureId);
+    ;
+
+ typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler.begin_active(),
+      endc = dofHandler.end();
+    for (; cell != endc; ++cell)
+      if (cell->is_locally_owned())
+        {
+          const dealii::CellId cellId = cell->id();
+          (*rhoOutValues)[cellId].resize(numQuadPoints,0.0); //      = std::vector<double>(numQuadPoints, 0.0);
+          if (d_excManagerPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
+            (*gradRhoOutValues)[cellId].resize(3 * numQuadPoints, 0.0); // =
+              //std::vector<double>(3 * numQuadPoints, 0.0);
+
+          if (d_dftParamsPtr->spinPolarized == 1)
+           {
+              (*rhoOutValuesSpinPolarized)[cellId].resize(2 * numQuadPoints, 0.0);// =
+                //std::vector<double>(2 * numQuadPoints, 0.0);
+              if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                  densityFamilyType::GGA)
+                (*gradRhoOutValuesSpinPolarized)[cellId].resize(6 * numQuadPoints, 0.0); // =
+                  //std::vector<double>(6 * numQuadPoints, 0.0);
+            }
+        }    
+	//std::cout<<" size of rhoIn = "<<rhoInValues->size()<<"\n";
+	//std::cout<<" size of rhoOut = "<<rhoOutValues->size()<<"\n";
+	//std::cout<<" rhoOut is empty after resize = "<<rhoOutValues->empty()<<"\n";
 
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
@@ -345,6 +380,7 @@ namespace dftfe
         delete rhoVals;
       }
     rhoVals = new std::map<dealii::CellId, std::vector<double>>();
+    std::cout<<" Size of rho val inside resize = "<<rhoVals->size();
     if (d_dftParamsPtr->spinPolarized == 1)
       {
         if(rhoValsSpinPolarized != nullptr)
@@ -373,6 +409,8 @@ namespace dftfe
       }
 
 
+    unsigned int iElem = 0; 
+    std::cout<<"num quad points  = "<<numQuadPoints<<"\n";
     typename dealii::DoFHandler<3>::active_cell_iterator
       cell = dofHandler.begin_active(),
       endc = dofHandler.end();
@@ -380,8 +418,9 @@ namespace dftfe
       if (cell->is_locally_owned())
         {
           const dealii::CellId cellId = cell->id();
-          (*rhoVals)[cellId]      = std::vector<double>(numQuadPoints, 0.0);
-          if (d_excManagerPtr->getDensityBasedFamilyType() ==
+          (*rhoVals)[cellId].resize(numQuadPoints,0.0);//      = std::vector<double>(numQuadPoints, 0.0);
+          //std::cout<<" size of rho = "<<(*rhoVals)[cellId].size()<<"\n";
+  	  if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
             (*gradRhoVals)[cellId] =
               std::vector<double>(3 * numQuadPoints, 0.0);
@@ -395,7 +434,11 @@ namespace dftfe
                 (*gradRhoValsSpinPolarized)[cellId] =
                   std::vector<double>(6 * numQuadPoints, 0.0);
             }
+	  iElem++;
         }
+    std::cout<<"Number of cell = "<<iElem<<"\n";
+    std::cout<<" Size of rho val inside resize after resize = "<<rhoVals->size();
+    std::cout<<" rhoout is empty inside resize = "<<rhoVals->empty()<<"\n";
   }
 
 

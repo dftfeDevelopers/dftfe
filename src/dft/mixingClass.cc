@@ -360,7 +360,8 @@ namespace dftfe
     // pcout << "\nN:" << N << "\n";
     int                 NRHS = 1, lda = N, ldb = N, info;
     std::vector<int>    ipiv(N);
-    std::vector<double> A(lda * N), c(ldb * NRHS);
+    d_A.resize(lda * N);
+    d_c.resize(ldb * NRHS);
     for (int i = 0; i < lda * N; i++)
       d_A[i] = 0.0;
     for (int i = 0; i < ldb * NRHS; i++)
@@ -441,7 +442,7 @@ namespace dftfe
                     rhoOutBar += d_c[i] * d_rhoOutVals[N - 1 - i][iElem*numQuadPointsPerCell + q_point];
                     rhoInBar += d_c[i] * d_rhoInVals[N - 1 - i][iElem*numQuadPointsPerCell + q_point];
                   }
-                (rhoInputValues)[cell->id()][q_point] =
+                (*rhoInValues)[cell->id()][q_point] =
                   ((1 - d_dftParamsPtr->mixingParameter) * rhoInBar +
                    d_dftParamsPtr->mixingParameter * rhoOutBar);
               }
@@ -784,7 +785,7 @@ namespace dftfe
             }
 
       }
-    copyDensityToInHist(rhoInValues);
+    //copyDensityToInHist(rhoInValues);
     return std::sqrt(dealii::Utilities::MPI::sum(normValue, d_mpi_comm_domain));
   }
 

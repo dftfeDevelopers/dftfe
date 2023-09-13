@@ -2255,6 +2255,33 @@ namespace dftfe
           {
             if (scfIter == 1)
               {
+		 if (d_dftParamsPtr->mixingMethod == "ANDERSON")
+                      {
+			      if (d_dftParamsPtr->spinPolarized == 1)
+                  		{
+					d_mixingScheme.copyDensityToInHist(rhoInValuesSpinPolarized);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValuesSpinPolarized);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
+                                d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
+                              }
+
+		  		}
+			      else
+			      {
+				      d_mixingScheme.copyDensityToInHist(rhoInValues);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValues);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
+                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
+                              }
+
+			      }
+		      }
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     if (d_dftParamsPtr->mixingMethod ==
@@ -2296,8 +2323,6 @@ namespace dftfe
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON")
                       {
-                        if(d_dftParamsPtr->spinPolarized == 1)
-                          {
                             d_mixingScheme.copyDensityToInHist(rhoInValuesSpinPolarized);
                             d_mixingScheme.copyDensityToOutHist(rhoOutValuesSpinPolarized);
                             if(d_excManagerPtr->getDensityBasedFamilyType() ==
@@ -2306,9 +2331,6 @@ namespace dftfe
                                 d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
                                 d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
                               }
-                          }
-                        else
-                          {
                             d_mixingScheme.copyDensityToInHist(rhoInValues);
                             d_mixingScheme.copyDensityToOutHist(rhoOutValues);
                             if(d_excManagerPtr->getDensityBasedFamilyType() ==
@@ -2317,9 +2339,7 @@ namespace dftfe
                                 d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
                                 d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
                               }
-                          }
-                        d_mixingScheme.popOldHistory();
-                        d_mixingScheme.computeAndersonMixingCoeff();
+
                         norm = d_mixingScheme.mixDensity(rhoInValues,
                                                          rhoOutValues,
                                                          rhoInValuesSpinPolarized,
@@ -2344,6 +2364,16 @@ namespace dftfe
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON")
                       {
+			    d_mixingScheme.copyDensityToInHist(rhoInValues);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValues);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
+                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
+                              }
+                        d_mixingScheme.popOldHistory();
+
                         d_mixingScheme.computeAndersonMixingCoeff();
                         norm = d_mixingScheme.mixDensity(rhoInValues,
                                                          rhoOutValues,
