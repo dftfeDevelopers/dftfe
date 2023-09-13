@@ -100,7 +100,7 @@ namespace dftfe
     std::deque<std::vector<double>> d_rhoInVals,
       d_rhoOutVals, d_rhoInValsSpinPolarized, d_rhoOutValsSpinPolarized;
 
-    std::deque<std::map<dealii::CellId, std::vector<double>>> d_gradRhoInVals,
+    std::deque<std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>> d_gradRhoInVals,
       d_gradRhoInValsSpinPolarized, d_gradRhoOutVals, d_gradRhoOutValsSpinPolarized;
 
     const dealii::MatrixFree<3,double>  *d_matrixFreeDataPtr;

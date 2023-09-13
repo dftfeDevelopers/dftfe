@@ -1374,8 +1374,9 @@ namespace dftfe
     dealii::Timer d_globalTimer;
 
     // dft related objects
-    std::map<dealii::CellId, std::vector<double>> *rhoInValues, *rhoOutValues,
-      *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>rhoInValues, rhoOutValues,
+      rhoInValuesSpinPolarized, rhoOutValuesSpinPolarized;
+
     std::map<dealii::CellId, std::vector<double>> d_phiInValues, d_phiOutValues;
 
     MixingScheme d_mixingScheme;

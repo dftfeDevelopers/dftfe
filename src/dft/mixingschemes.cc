@@ -59,11 +59,7 @@ namespace dftfe
     // create new rhoValue tables
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOld = *rhoInValues;
 
-    if(rhoInValues != nullptr)
-      {
-        delete rhoInValues;
-      }
-    rhoInValues = new std::map<dealii::CellId, std::vector<double>>();
+    rhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
     // create new gradRhoValue tables
     std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
@@ -71,11 +67,7 @@ namespace dftfe
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         gradRhoInValuesOld = *gradRhoInValues;
-        if(gradRhoInValues != nullptr)
-          {
-            delete gradRhoInValues;
-          }
-        gradRhoInValues = new std::map<dealii::CellId, std::vector<double>>();
+        gradRhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
       }
 
@@ -452,20 +444,12 @@ namespace dftfe
 
     // create new rhoValue tables
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOld = *rhoInValues;
-    if(rhoInValues != nullptr)
-      {
-        delete rhoInValues;
-      }
-    rhoInValues = new std::map<dealii::CellId, std::vector<double>>();
+    rhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOldSpinPolarized =
       *rhoInValuesSpinPolarized;
 
-    if(rhoInValuesSpinPolarized != nullptr)
-      {
-        delete rhoInValuesSpinPolarized;
-      }
-    rhoInValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+    rhoInValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
     //
 
     // create new gradRhoValue tables
@@ -477,19 +461,11 @@ namespace dftfe
       {
         gradRhoInValuesOld = *gradRhoInValues;
 
-        if(gradRhoInValues != nullptr)
-          {
-            delete gradRhoInValues;
-          }
-        gradRhoInValues = new std::map<dealii::CellId, std::vector<double>>();
+        gradRhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
         //
         gradRhoInValuesOldSpinPolarized = *gradRhoInValuesSpinPolarized;
 
-        if(gradRhoInValuesSpinPolarized != nullptr)
-          {
-            delete gradRhoInValuesSpinPolarized;
-          }
-        gradRhoInValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+        gradRhoInValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
 
     // parallel loop over all elements

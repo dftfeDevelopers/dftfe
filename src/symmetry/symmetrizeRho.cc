@@ -54,35 +54,19 @@ namespace dftfe
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
     const unsigned int num_quad_points = quadrature.size();
     //
-    if(dftPtr->rhoOutValues == nullptr)
-      {
-        delete dftPtr->rhoOutValues;
-      }
-    dftPtr->rhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
+    dftPtr->rhoOutValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
     if (dftPtr->getParametersObject().spinPolarized == 1)
       {
-        if(dftPtr->rhoOutValuesSpinPolarized == nullptr)
-          {
-            delete dftPtr->rhoOutValuesSpinPolarized;
-          }
-        dftPtr->rhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+        dftPtr->rhoOutValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
     if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       {
-        if(dftPtr->gradRhoOutValues == nullptr)
-          {
-            delete dftPtr->gradRhoOutValues;
-          }
-        dftPtr->gradRhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
+        dftPtr->gradRhoOutValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
         if (dftPtr->getParametersObject().spinPolarized == 1)
           {
-            if(dftPtr->gradRhoOutValuesSpinPolarized == nullptr)
-              {
-                delete dftPtr->gradRhoOutValuesSpinPolarized;
-              }
-            dftPtr->gradRhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+            dftPtr->gradRhoOutValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
           }
       }
     std::vector<double> rhoOut(num_quad_points),

@@ -454,9 +454,18 @@ namespace dftfe
                     rhoOutBar += d_c[i] * d_rhoOutVals[N - 1 - i][iElem*numQuadPointsPerCell + q_point];
                     rhoInBar += d_c[i] * d_rhoInVals[N - 1 - i][iElem*numQuadPointsPerCell + q_point];
                   }
-                (*rhoInValues)[cell->id()][q_point] =
+                (*rhoInputValues)[cell->id()][q_point] =
                   ((1 - d_dftParamsPtr->mixingParameter) * rhoInBar +
                    d_dftParamsPtr->mixingParameter * rhoOutBar);
+              }
+
+            if(d_dftParamsPtr->spinPolarized == 1)
+              {
+                for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell; ++q_point)
+                  {
+                    (*rhoInValues)[cell->id()][q_point] = (rhoInputValues)[cell->id()][2*q_point + 0] +
+                                                          (rhoInputValues)[cell->id()][2*q_point + 1];
+                  }
               }
             iElem++;
           }
@@ -467,334 +476,330 @@ namespace dftfe
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
     {
-        std::vector<std::vector<double>> gradRhoOutTemp(
-          N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
+      if(d_dftParamsPtr->spinPolarized == 0)
+        {
+          std::vector<std::vector<double>> gradRhoOutTemp(
+            N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
 
-        std::vector<std::vector<double>> gradRhoInTemp(
-          N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
-
-        std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
-          *gradRhoInValues;
-        d_gradRhoInVals.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
-        gradRhoInValues = &(d_gradRhoInVals.back());
-        cell            = d_dofHandler->begin_active();
-        for (; cell != endc; ++cell)
-          {
-            if (cell->is_locally_owned())
-              {
-                (*gradRhoInValues)[cell->id()] =
-                  std::vector<double>(3 * d_numberQuadraturePointsPerCell);
-
-
-                for (int hist = 0; hist < N + 1; hist++)
-                  {
-                    gradRhoOutTemp[hist] = (d_gradRhoOutVals[hist])[cell->id()];
-                    gradRhoInTemp[hist]  = (d_gradRhoInVals[hist])[cell->id()];
-                  }
-
-
-                for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell;
-                     ++q_point)
-                  {
-                    //
-                    // Anderson mixing scheme
-                    //
-                    double gradRhoXOutBar =
-                      d_cFinal *
-                      gradRhoOutTemp
-                        [N][3 * q_point +
-                            0]; // cn*(gradRhoOutVals[N])[cell->id()][3*q_point
-                                // + 0];
-                    double gradRhoYOutBar =
-                      d_cFinal *
-                      gradRhoOutTemp
-                        [N][3 * q_point +
-                            1]; // cn*(gradRhoOutVals[N])[cell->id()][3*q_point
-                                // + 1];
-                    double gradRhoZOutBar =
-                      d_cFinal *
-                      gradRhoOutTemp
-                        [N][3 * q_point +
-                            2]; // cn*(gradRhoOutVals[N])[cell->id()][3*q_point
-                                // + 2];
-
-                    double gradRhoXInBar =
-                      d_cFinal *
-                      gradRhoInTemp
-                        [N][3 * q_point +
-                            0]; // cn*(gradRhoInVals[N])[cell->id()][3*q_point
-                                // + 0];
-                    double gradRhoYInBar =
-                      d_cFinal *
-                      gradRhoInTemp
-                        [N][3 * q_point +
-                            1]; // cn*(gradRhoInVals[N])[cell->id()][3*q_point
-                                // + 1];
-                    double gradRhoZInBar =
-                      d_cFinal *
-                      gradRhoInTemp
-                        [N][3 * q_point +
-                            2]; // cn*(gradRhoInVals[N])[cell->id()][3*q_point
-                                // + 2];
-
-                    for (int i = 0; i < N; i++)
-                      {
-                        gradRhoXOutBar +=
-                          d_c[i] *
-                          gradRhoOutTemp
-                            [N - 1 - i]
-                            [3 * q_point +
-                             0]; // cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point
-                                 // + 0];
-                        gradRhoYOutBar +=
-                          d_c[i] *
-                          gradRhoOutTemp
-                            [N - 1 - i]
-                            [3 * q_point +
-                             1]; // cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point
-                                 // + 1];
-                        gradRhoZOutBar +=
-                          d_c[i] *
-                          gradRhoOutTemp
-                            [N - 1 - i]
-                            [3 * q_point +
-                             2]; // cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point
-                                 // + 2];
-
-                        gradRhoXInBar +=
-                          d_c[i] *
-                          gradRhoInTemp
-                            [N - 1 - i]
-                            [3 * q_point +
-                             0]; // cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point
-                                 // + 0];
-                        gradRhoYInBar +=
-                          d_c[i] *
-                          gradRhoInTemp
-                            [N - 1 - i]
-                            [3 * q_point +
-                             1]; // cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point
-                                 // + 1];
-                        gradRhoZInBar +=
-                          d_c[i] *
-                          gradRhoInTemp
-                            [N - 1 - i]
-                            [3 * q_point +
-                             2]; // cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point
-                                 // + 2];
-                      }
-
-                    (*gradRhoInValues)[cell->id()][3 * q_point + 0] =
-                      ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar +
-                       d_dftParamsPtr->mixingParameter * gradRhoXOutBar);
-                    (*gradRhoInValues)[cell->id()][3 * q_point + 1] =
-                      ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar +
-                       d_dftParamsPtr->mixingParameter * gradRhoYOutBar);
-                    (*gradRhoInValues)[cell->id()][3 * q_point + 2] =
-                      ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar +
-                       d_dftParamsPtr->mixingParameter * gradRhoZOutBar);
-                  }
-              }
-          }
-    if(d_dftParamsPtr->spinPolarized == 1)
-      {
-        std::vector<std::vector<double>> gradRhoOutTemp(
-          N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
-
-        std::vector<std::vector<double>> gradRhoInTemp(
-          N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
-
-        std::vector<std::vector<double>> gradRhoOutSpinPolarizedTemp(
-          N + 1, std::vector<double>(6 * d_numberQuadraturePointsPerCell, 0.0));
-
-        std::vector<std::vector<double>> gradRhoInSpinPolarizedTemp(
-          N + 1, std::vector<double>(6 * d_numberQuadraturePointsPerCell, 0.0));
+          std::vector<std::vector<double>> gradRhoInTemp(
+            N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
 
           std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
             *gradRhoInValues;
-          d_gradRhoInVals.push_back(
-            std::map<dealii::CellId, std::vector<double>>());
-          gradRhoInValues = &(d_gradRhoInVals.back());
-
-          //
-          d_gradRhoInValsSpinPolarized.push_back(
-            std::map<dealii::CellId, std::vector<double>>());
-          gradRhoInValuesSpinPolarized = &(d_gradRhoInValsSpinPolarized.back());
-          //
-          cell = d_dofHandler->begin_active();
+          gradRhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+          cell            = d_dofHandler->begin_active();
           for (; cell != endc; ++cell)
             {
               if (cell->is_locally_owned())
                 {
                   (*gradRhoInValues)[cell->id()] =
                     std::vector<double>(3 * d_numberQuadraturePointsPerCell);
-                  (*gradRhoInValuesSpinPolarized)[cell->id()] =
-                    std::vector<double>(6 * d_numberQuadraturePointsPerCell);
-                  //
+
 
                   for (int hist = 0; hist < N + 1; hist++)
                     {
-                      gradRhoOutSpinPolarizedTemp[hist] =
-                        (d_gradRhoOutValsSpinPolarized[hist])[cell->id()];
-                      gradRhoInSpinPolarizedTemp[hist] =
-                        (d_gradRhoInValsSpinPolarized[hist])[cell->id()];
+                      gradRhoOutTemp[hist] = (d_gradRhoOutVals[hist])[cell->id()];
+                      gradRhoInTemp[hist]  = (d_gradRhoInVals[hist])[cell->id()];
                     }
+
 
                   for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell;
                        ++q_point)
                     {
                       //
-                      // Anderson mixing scheme spin up
+                      // Anderson mixing scheme
                       //
-                      double gradRhoXOutBar1 =
+                      double gradRhoXOutBar =
                         d_cFinal *
-                        gradRhoOutSpinPolarizedTemp
-                          [N]
-                          [6 * q_point +
-                           0]; // cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point
-                               // + 0];
-                      double gradRhoYOutBar1 =
+                        gradRhoOutTemp
+                          [N][3 * q_point +
+                              0]; // cn*(gradRhoOutVals[N])[cell->id()][3*q_point
+                                  // + 0];
+                      double gradRhoYOutBar =
                         d_cFinal *
-                        gradRhoOutSpinPolarizedTemp
-                          [N]
-                          [6 * q_point +
-                           1]; // cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point
-                               // + 1];
-                      double gradRhoZOutBar1 =
+                        gradRhoOutTemp
+                          [N][3 * q_point +
+                              1]; // cn*(gradRhoOutVals[N])[cell->id()][3*q_point
+                                  // + 1];
+                      double gradRhoZOutBar =
                         d_cFinal *
-                        gradRhoOutSpinPolarizedTemp
-                          [N]
-                          [6 * q_point +
-                           2]; // cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point
-                               // + 2];
+                        gradRhoOutTemp
+                          [N][3 * q_point +
+                              2]; // cn*(gradRhoOutVals[N])[cell->id()][3*q_point
+                                  // + 2];
 
-                      double gradRhoXInBar1 =
-                        d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 0];
-                      double gradRhoYInBar1 =
-                        d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 1];
-                      double gradRhoZInBar1 =
-                        d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 2];
+                      double gradRhoXInBar =
+                        d_cFinal *
+                        gradRhoInTemp
+                          [N][3 * q_point +
+                              0]; // cn*(gradRhoInVals[N])[cell->id()][3*q_point
+                                  // + 0];
+                      double gradRhoYInBar =
+                        d_cFinal *
+                        gradRhoInTemp
+                          [N][3 * q_point +
+                              1]; // cn*(gradRhoInVals[N])[cell->id()][3*q_point
+                                  // + 1];
+                      double gradRhoZInBar =
+                        d_cFinal *
+                        gradRhoInTemp
+                          [N][3 * q_point +
+                              2]; // cn*(gradRhoInVals[N])[cell->id()][3*q_point
+                                  // + 2];
 
                       for (int i = 0; i < N; i++)
                         {
-                          gradRhoXOutBar1 +=
+                          gradRhoXOutBar +=
                             d_c[i] *
-                            gradRhoOutSpinPolarizedTemp[N - 1 - i]
-                                                       [6 * q_point + 0];
-                          gradRhoYOutBar1 +=
+                            gradRhoOutTemp
+                              [N - 1 - i]
+                              [3 * q_point +
+                               0]; // cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point
+                                   // + 0];
+                          gradRhoYOutBar +=
                             d_c[i] *
-                            gradRhoOutSpinPolarizedTemp[N - 1 - i]
-                                                       [6 * q_point + 1];
-                          gradRhoZOutBar1 +=
+                            gradRhoOutTemp
+                              [N - 1 - i]
+                              [3 * q_point +
+                               1]; // cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point
+                                   // + 1];
+                          gradRhoZOutBar +=
                             d_c[i] *
-                            gradRhoOutSpinPolarizedTemp[N - 1 - i]
-                                                       [6 * q_point + 2];
+                            gradRhoOutTemp
+                              [N - 1 - i]
+                              [3 * q_point +
+                               2]; // cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point
+                                   // + 2];
 
-                          gradRhoXInBar1 +=
+                          gradRhoXInBar +=
                             d_c[i] *
-                            gradRhoInSpinPolarizedTemp[N - 1 - i]
-                                                      [6 * q_point + 0];
-                          gradRhoYInBar1 +=
+                            gradRhoInTemp
+                              [N - 1 - i]
+                              [3 * q_point +
+                               0]; // cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point
+                                   // + 0];
+                          gradRhoYInBar +=
                             d_c[i] *
-                            gradRhoInSpinPolarizedTemp[N - 1 - i]
-                                                      [6 * q_point + 1];
-                          gradRhoZInBar1 +=
+                            gradRhoInTemp
+                              [N - 1 - i]
+                              [3 * q_point +
+                               1]; // cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point
+                                   // + 1];
+                          gradRhoZInBar +=
                             d_c[i] *
-                            gradRhoInSpinPolarizedTemp[N - 1 - i]
-                                                      [6 * q_point + 2];
+                            gradRhoInTemp
+                              [N - 1 - i]
+                              [3 * q_point +
+                               2]; // cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point
+                                   // + 2];
                         }
-                      //
-                      // Anderson mixing scheme spin down
-                      //
-                      double gradRhoXOutBar2 =
-                        d_cFinal * gradRhoOutSpinPolarizedTemp[N][6 * q_point + 3];
-                      double gradRhoYOutBar2 =
-                        d_cFinal * gradRhoOutSpinPolarizedTemp[N][6 * q_point + 4];
-                      double gradRhoZOutBar2 =
-                        d_cFinal * gradRhoOutSpinPolarizedTemp[N][6 * q_point + 5];
 
-                      double gradRhoXInBar2 =
-                        d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 3];
-                      double gradRhoYInBar2 =
-                        d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 4];
-                      double gradRhoZInBar2 =
-                        d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 5];
-
-                      for (int i = 0; i < N; i++)
-                        {
-                          gradRhoXOutBar2 +=
-                            d_c[i] *
-                            gradRhoOutSpinPolarizedTemp[N - 1 - i]
-                                                       [6 * q_point + 3];
-                          gradRhoYOutBar2 +=
-                            d_c[i] *
-                            gradRhoOutSpinPolarizedTemp[N - 1 - i]
-                                                       [6 * q_point + 4];
-                          gradRhoZOutBar2 +=
-                            d_c[i] *
-                            gradRhoOutSpinPolarizedTemp[N - 1 - i]
-                                                       [6 * q_point + 5];
-
-                          gradRhoXInBar2 +=
-                            d_c[i] *
-                            gradRhoInSpinPolarizedTemp[N - 1 - i]
-                                                      [6 * q_point + 3];
-                          gradRhoYInBar2 +=
-                            d_c[i] *
-                            gradRhoInSpinPolarizedTemp[N - 1 - i]
-                                                      [6 * q_point + 4];
-                          gradRhoZInBar2 +=
-                            d_c[i] *
-                            gradRhoInSpinPolarizedTemp[N - 1 - i]
-                                                      [6 * q_point + 5];
-                        }
-                      //
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  0] =
-                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar1 +
-                         d_dftParamsPtr->mixingParameter * gradRhoXOutBar1);
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  1] =
-                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar1 +
-                         d_dftParamsPtr->mixingParameter * gradRhoYOutBar1);
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  2] =
-                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar1 +
-                         d_dftParamsPtr->mixingParameter * gradRhoZOutBar1);
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  3] =
-                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar2 +
-                         d_dftParamsPtr->mixingParameter * gradRhoXOutBar2);
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  4] =
-                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar2 +
-                         d_dftParamsPtr->mixingParameter * gradRhoYOutBar2);
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  5] =
-                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar2 +
-                         d_dftParamsPtr->mixingParameter * gradRhoZOutBar2);
-
-                      ((*gradRhoInValues)[cell->id()][3 * q_point + 0]) =
-                        ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                        [6 * q_point + 0]) +
-                        ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                        [6 * q_point + 3]);
-                      ((*gradRhoInValues)[cell->id()][3 * q_point + 1]) =
-                        ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                        [6 * q_point + 1]) +
-                        ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                        [6 * q_point + 4]);
-                      ((*gradRhoInValues)[cell->id()][3 * q_point + 2]) =
-                        ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                        [6 * q_point + 2]) +
-                        ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                        [6 * q_point + 5]);
+                      (*gradRhoInValues)[cell->id()][3 * q_point + 0] =
+                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar +
+                         d_dftParamsPtr->mixingParameter * gradRhoXOutBar);
+                      (*gradRhoInValues)[cell->id()][3 * q_point + 1] =
+                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar +
+                         d_dftParamsPtr->mixingParameter * gradRhoYOutBar);
+                      (*gradRhoInValues)[cell->id()][3 * q_point + 2] =
+                        ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar +
+                         d_dftParamsPtr->mixingParameter * gradRhoZOutBar);
                     }
                 }
             }
-         }
-      }
+        }
+      else
+          {
+            std::vector<std::vector<double>> gradRhoOutTemp(
+              N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
+
+            std::vector<std::vector<double>> gradRhoInTemp(
+              N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
+
+            std::vector<std::vector<double>> gradRhoOutSpinPolarizedTemp(
+              N + 1, std::vector<double>(6 * d_numberQuadraturePointsPerCell, 0.0));
+
+            std::vector<std::vector<double>> gradRhoInSpinPolarizedTemp(
+              N + 1, std::vector<double>(6 * d_numberQuadraturePointsPerCell, 0.0));
+
+            std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld =
+              *gradRhoInValues;
+
+            gradRhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+
+            gradRhoInValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+            cell = d_dofHandler->begin_active();
+            for (; cell != endc; ++cell)
+              {
+                if (cell->is_locally_owned())
+                  {
+                    (*gradRhoInValues)[cell->id()] =
+                      std::vector<double>(3 * d_numberQuadraturePointsPerCell);
+                    (*gradRhoInValuesSpinPolarized)[cell->id()] =
+                      std::vector<double>(6 * d_numberQuadraturePointsPerCell);
+                    //
+
+                    for (int hist = 0; hist < N + 1; hist++)
+                      {
+                        gradRhoOutSpinPolarizedTemp[hist] =
+                          (d_gradRhoOutValsSpinPolarized[hist])[cell->id()];
+                        gradRhoInSpinPolarizedTemp[hist] =
+                          (d_gradRhoInValsSpinPolarized[hist])[cell->id()];
+                      }
+
+                    for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell;
+                         ++q_point)
+                      {
+                        //
+                        // Anderson mixing scheme spin up
+                        //
+                        double gradRhoXOutBar1 =
+                          d_cFinal *
+                          gradRhoOutSpinPolarizedTemp
+                            [N]
+                            [6 * q_point +
+                             0]; // cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point
+                                 // + 0];
+                        double gradRhoYOutBar1 =
+                          d_cFinal *
+                          gradRhoOutSpinPolarizedTemp
+                            [N]
+                            [6 * q_point +
+                             1]; // cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point
+                                 // + 1];
+                        double gradRhoZOutBar1 =
+                          d_cFinal *
+                          gradRhoOutSpinPolarizedTemp
+                            [N]
+                            [6 * q_point +
+                             2]; // cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point
+                                 // + 2];
+
+                        double gradRhoXInBar1 =
+                          d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 0];
+                        double gradRhoYInBar1 =
+                          d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 1];
+                        double gradRhoZInBar1 =
+                          d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 2];
+
+                        for (int i = 0; i < N; i++)
+                          {
+                            gradRhoXOutBar1 +=
+                              d_c[i] *
+                              gradRhoOutSpinPolarizedTemp[N - 1 - i]
+                                                         [6 * q_point + 0];
+                            gradRhoYOutBar1 +=
+                              d_c[i] *
+                              gradRhoOutSpinPolarizedTemp[N - 1 - i]
+                                                         [6 * q_point + 1];
+                            gradRhoZOutBar1 +=
+                              d_c[i] *
+                              gradRhoOutSpinPolarizedTemp[N - 1 - i]
+                                                         [6 * q_point + 2];
+
+                            gradRhoXInBar1 +=
+                              d_c[i] *
+                              gradRhoInSpinPolarizedTemp[N - 1 - i]
+                                                        [6 * q_point + 0];
+                            gradRhoYInBar1 +=
+                              d_c[i] *
+                              gradRhoInSpinPolarizedTemp[N - 1 - i]
+                                                        [6 * q_point + 1];
+                            gradRhoZInBar1 +=
+                              d_c[i] *
+                              gradRhoInSpinPolarizedTemp[N - 1 - i]
+                                                        [6 * q_point + 2];
+                          }
+                        //
+                        // Anderson mixing scheme spin down
+                        //
+                        double gradRhoXOutBar2 =
+                          d_cFinal * gradRhoOutSpinPolarizedTemp[N][6 * q_point + 3];
+                        double gradRhoYOutBar2 =
+                          d_cFinal * gradRhoOutSpinPolarizedTemp[N][6 * q_point + 4];
+                        double gradRhoZOutBar2 =
+                          d_cFinal * gradRhoOutSpinPolarizedTemp[N][6 * q_point + 5];
+
+                        double gradRhoXInBar2 =
+                          d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 3];
+                        double gradRhoYInBar2 =
+                          d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 4];
+                        double gradRhoZInBar2 =
+                          d_cFinal * gradRhoInSpinPolarizedTemp[N][6 * q_point + 5];
+
+                        for (int i = 0; i < N; i++)
+                          {
+                            gradRhoXOutBar2 +=
+                              d_c[i] *
+                              gradRhoOutSpinPolarizedTemp[N - 1 - i]
+                                                         [6 * q_point + 3];
+                            gradRhoYOutBar2 +=
+                              d_c[i] *
+                              gradRhoOutSpinPolarizedTemp[N - 1 - i]
+                                                         [6 * q_point + 4];
+                            gradRhoZOutBar2 +=
+                              d_c[i] *
+                              gradRhoOutSpinPolarizedTemp[N - 1 - i]
+                                                         [6 * q_point + 5];
+
+                            gradRhoXInBar2 +=
+                              d_c[i] *
+                              gradRhoInSpinPolarizedTemp[N - 1 - i]
+                                                        [6 * q_point + 3];
+                            gradRhoYInBar2 +=
+                              d_c[i] *
+                              gradRhoInSpinPolarizedTemp[N - 1 - i]
+                                                        [6 * q_point + 4];
+                            gradRhoZInBar2 +=
+                              d_c[i] *
+                              gradRhoInSpinPolarizedTemp[N - 1 - i]
+                                                        [6 * q_point + 5];
+                          }
+                        //
+                        (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
+                                                                    0] =
+                          ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar1 +
+                           d_dftParamsPtr->mixingParameter * gradRhoXOutBar1);
+                        (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
+                                                                    1] =
+                          ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar1 +
+                           d_dftParamsPtr->mixingParameter * gradRhoYOutBar1);
+                        (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
+                                                                    2] =
+                          ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar1 +
+                           d_dftParamsPtr->mixingParameter * gradRhoZOutBar1);
+                        (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
+                                                                    3] =
+                          ((1 - d_dftParamsPtr->mixingParameter) * gradRhoXInBar2 +
+                           d_dftParamsPtr->mixingParameter * gradRhoXOutBar2);
+                        (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
+                                                                    4] =
+                          ((1 - d_dftParamsPtr->mixingParameter) * gradRhoYInBar2 +
+                           d_dftParamsPtr->mixingParameter * gradRhoYOutBar2);
+                        (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
+                                                                    5] =
+                          ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar2 +
+                           d_dftParamsPtr->mixingParameter * gradRhoZOutBar2);
+
+                        ((*gradRhoInValues)[cell->id()][3 * q_point + 0]) =
+                          ((*gradRhoInValuesSpinPolarized)[cell->id()]
+                                                          [6 * q_point + 0]) +
+                          ((*gradRhoInValuesSpinPolarized)[cell->id()]
+                                                          [6 * q_point + 3]);
+                        ((*gradRhoInValues)[cell->id()][3 * q_point + 1]) =
+                          ((*gradRhoInValuesSpinPolarized)[cell->id()]
+                                                          [6 * q_point + 1]) +
+                          ((*gradRhoInValuesSpinPolarized)[cell->id()]
+                                                          [6 * q_point + 4]);
+                        ((*gradRhoInValues)[cell->id()][3 * q_point + 2]) =
+                          ((*gradRhoInValuesSpinPolarized)[cell->id()]
+                                                          [6 * q_point + 2]) +
+                          ((*gradRhoInValuesSpinPolarized)[cell->id()]
+                                                          [6 * q_point + 5]);
+                      }
+                  }
+              }
+          }
+    }
     //copyDensityToInHist(rhoInValues);
     return std::sqrt(dealii::Utilities::MPI::sum(normValue, d_mpi_comm_domain));
   }

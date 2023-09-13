@@ -139,36 +139,19 @@ namespace dftfe
       }
     else
       {
-
-	      if(rhoOutValues != nullptr)
-                   {
-                           delete rhoOutValues;
-                   }
-		      rhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
+		      rhoOutValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 	   if (d_dftParamsPtr->spinPolarized == 1)
            {
-		   if(rhoOutValuesSpinPolarized != nullptr)
-                   {
-                           delete rhoOutValuesSpinPolarized;
-                   }
-		   rhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+		   rhoOutValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 	   }
 	   if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA)
 	   {
-		   if(gradRhoOutValues != nullptr)
-                   {
-                           delete gradRhoOutValues;
-                   }
-		   gradRhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
+		   gradRhoOutValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
 		   if (d_dftParamsPtr->spinPolarized == 1)
            {
-		   if(gradRhoOutValuesSpinPolarized != nullptr)
-		   {
-			   delete gradRhoOutValuesSpinPolarized;
-		   }
-		   gradRhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+		   gradRhoOutValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
 	   }
 	   }
@@ -405,36 +388,20 @@ namespace dftfe
     ;
 
     // create new rhoValue tables
-    if(rhoVals != nullptr)
-      {
-        delete rhoVals;
-      }
-    rhoVals = new std::map<dealii::CellId, std::vector<double>>();
+    rhoVals =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
     std::cout<<" Size of rho val inside resize = "<<rhoVals->size();
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        if(rhoValsSpinPolarized != nullptr)
-          {
-            delete rhoValsSpinPolarized;
-          }
-        rhoValsSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+        rhoValsSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        if(gradRhoVals != nullptr)
-          {
-            delete gradRhoVals;
-          }
-        gradRhoVals = new std::map<dealii::CellId, std::vector<double>>();
+        gradRhoVals =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            if(gradRhoValsSpinPolarized != nullptr)
-              {
-                delete gradRhoValsSpinPolarized;
-              }
-            gradRhoValsSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+            gradRhoValsSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
           }
       }
 
@@ -476,11 +443,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho)
   {
-	  if(outputRho != nullptr)
-	  {
-		  delete outputRho;
-	  }
-	  outputRho = new std::map<dealii::CellId, std::vector<double>>;
+	  outputRho =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
 	  typename dealii::DoFHandler<3>::active_cell_iterator
       cell = dofHandler.begin_active(),
@@ -613,36 +576,20 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
                     densityFamilyType::GGA);
               }
 
-            if (rhoOutValues != nullptr)
-              {
-                delete rhoOutValues;
-              }
-            rhoOutValues = new  std::map<dealii::CellId, std::vector<double>>();
+            rhoOutValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
             if (d_dftParamsPtr->spinPolarized == 1)
               {
-                if (rhoOutValuesSpinPolarized != nullptr)
-                  {
-                    delete rhoOutValuesSpinPolarized;
-                  }
-                rhoOutValuesSpinPolarized = new  std::map<dealii::CellId, std::vector<double>>();
+                rhoOutValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
               }
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
-                if (gradRhoOutValues != nullptr)
-                  {
-                    delete gradRhoOutValues;
-                  }
-                gradRhoOutValues = new  std::map<dealii::CellId, std::vector<double>>();
+                gradRhoOutValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    if (gradRhoOutValuesSpinPolarized != nullptr)
-                      {
-                        delete gradRhoOutValuesSpinPolarized;
-                      }
-                    gradRhoOutValuesSpinPolarized = new  std::map<dealii::CellId, std::vector<double>>();
+                    gradRhoOutValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
                   }
               }
           }
