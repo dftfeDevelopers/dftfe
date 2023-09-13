@@ -143,7 +143,7 @@ namespace dftfe
 
     if(rhoInValues != nullptr)
       {
-        delete rhoInValues;
+        //delete rhoInValues;
       }
     rhoInValues = new std::map<dealii::CellId, std::vector<double>>();
 
@@ -151,7 +151,7 @@ namespace dftfe
       {
         if(rhoInValuesSpinPolarized != nullptr)
           {
-            delete rhoInValuesSpinPolarized;
+            //delete rhoInValuesSpinPolarized;
           }
         rhoInValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
       }
@@ -160,7 +160,7 @@ namespace dftfe
       {
         if(gradRhoInValues != nullptr)
           {
-            delete gradRhoInValues;
+            //delete gradRhoInValues;
           }
         gradRhoInValues = new std::map<dealii::CellId, std::vector<double>>();
         //
@@ -168,7 +168,7 @@ namespace dftfe
           {
             if(gradRhoInValuesSpinPolarized != nullptr)
               {
-                delete gradRhoInValuesSpinPolarized;
+                //delete gradRhoInValuesSpinPolarized;
               }
             gradRhoInValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
           }

@@ -2331,15 +2331,10 @@ namespace dftfe
                                 d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
                                 d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
                               }
-                            d_mixingScheme.copyDensityToInHist(rhoInValues);
-                            d_mixingScheme.copyDensityToOutHist(rhoOutValues);
-                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
-                                densityFamilyType::GGA)
-                              {
-                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
-                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
-                              }
 
+			    d_mixingScheme.popOldHistory();
+
+                        d_mixingScheme.computeAndersonMixingCoeff();
                         norm = d_mixingScheme.mixDensity(rhoInValues,
                                                          rhoOutValues,
                                                          rhoInValuesSpinPolarized,

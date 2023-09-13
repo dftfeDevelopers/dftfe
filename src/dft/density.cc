@@ -140,8 +140,38 @@ namespace dftfe
     else
       {
 
+	      if(rhoOutValues != nullptr)
+                   {
+                           delete rhoOutValues;
+                   }
 		      rhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
-	    
+	   if (d_dftParamsPtr->spinPolarized == 1)
+           {
+		   if(rhoOutValuesSpinPolarized != nullptr)
+                   {
+                           delete rhoOutValuesSpinPolarized;
+                   }
+		   rhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+	   }
+	   if (d_excManagerPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA)
+	   {
+		   if(gradRhoOutValues != nullptr)
+                   {
+                           delete gradRhoOutValues;
+                   }
+		   gradRhoOutValues = new std::map<dealii::CellId, std::vector<double>>();
+
+		   if (d_dftParamsPtr->spinPolarized == 1)
+           {
+		   if(gradRhoOutValuesSpinPolarized != nullptr)
+		   {
+			   delete gradRhoOutValuesSpinPolarized;
+		   }
+		   gradRhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double>>();
+
+	   }
+	   }
 	   //  std::cout<<" rhoOut is empty before resize = "<<rhoOutValues->empty()<<"\n";
         //resizeAndAllocateRhoTableStorage(rhoOutValues,
         //                                 gradRhoOutValues,
