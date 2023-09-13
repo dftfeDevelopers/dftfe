@@ -2325,12 +2325,12 @@ namespace dftfe
                       {
                             d_mixingScheme.copyDensityToInHist(rhoInValuesSpinPolarized);
                             d_mixingScheme.copyDensityToOutHist(rhoOutValuesSpinPolarized);
-                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
-                                densityFamilyType::GGA)
-                              {
-                                d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
-                                d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
-                              }
+                            //if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                            //    densityFamilyType::GGA)
+                            //  {
+                            //    d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
+                            //    d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
+                            //  }
 
 			    d_mixingScheme.popOldHistory();
 
@@ -2361,12 +2361,12 @@ namespace dftfe
                       {
 			    d_mixingScheme.copyDensityToInHist(rhoInValues);
                             d_mixingScheme.copyDensityToOutHist(rhoOutValues);
-                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
-                                densityFamilyType::GGA)
-                              {
-                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
-                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
-                              }
+                            //if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                            //    densityFamilyType::GGA)
+                            //  {
+                            //    d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
+                            //    d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
+                            //  }
                         d_mixingScheme.popOldHistory();
 
                         d_mixingScheme.computeAndersonMixingCoeff();

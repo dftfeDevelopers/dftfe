@@ -228,6 +228,7 @@ namespace dftfe
 
     int N = d_rhoOutVals.size() - 1;
 
+    std::cout<<" size of hist  = "<<N<<"\n";
     unsigned int numQuadPoints = 0;
     if( N > 0)
       numQuadPoints = inHist[0].size();
@@ -261,6 +262,8 @@ namespace dftfe
     unsigned int cSize = cDensity.size();
 
     std::vector<double> ATotal(aSize), cTotal(cSize);
+    std::fill(ATotal.begin(),ATotal.end(),0.0);
+    std::fill(cTotal.begin(),cTotal.end(),0.0);
     MPI_Allreduce(
       &Adensity[0], &ATotal[0], aSize, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
     MPI_Allreduce(
@@ -269,11 +272,13 @@ namespace dftfe
     for (unsigned int i = 0 ; i < aSize; i++)
       {
         A[i] += ATotal[i];
+	std::cout<<"A["<<i<<"] = "<<A[i]<<"\n";
       }
 
     for (unsigned int i = 0 ; i < cSize; i++)
       {
         c[i] += cTotal[i];
+	std::cout<<"c["<<i<<"] = "<<c[i]<<"\n";
       }
   }
 
@@ -373,10 +378,17 @@ namespace dftfe
                                  d_c);
 
     dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
+    
+    for (unsigned int i = 0 ; i < ldb*NRHS; i++)
+      {
+        std::cout<<"d_c["<<i<<"] = "<<d_c[i]<<"\n";
+      }
 
     d_cFinal = 1.0;
     for (int i = 0; i < N; i++)
       d_cFinal -= d_c[i];
+
+    std::cout<<"cFinal = "<<d_cFinal<<"\n";
   }
 
   double MixingScheme::mixDensity(std::map<dealii::CellId, std::vector<double>> *rhoInValues,
@@ -454,8 +466,7 @@ namespace dftfe
 
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
-      if(d_dftParamsPtr->spinPolarized == 0)
-      {
+    {
         std::vector<std::vector<double>> gradRhoOutTemp(
           N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
 
@@ -586,8 +597,7 @@ namespace dftfe
                   }
               }
           }
-      }
-    else
+    if(d_dftParamsPtr->spinPolarized == 1)
       {
         std::vector<std::vector<double>> gradRhoOutTemp(
           N + 1, std::vector<double>(3 * d_numberQuadraturePointsPerCell, 0.0));
@@ -783,7 +793,7 @@ namespace dftfe
                     }
                 }
             }
-
+         }
       }
     //copyDensityToInHist(rhoInValues);
     return std::sqrt(dealii::Utilities::MPI::sum(normValue, d_mpi_comm_domain));
