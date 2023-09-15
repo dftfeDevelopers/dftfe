@@ -32,6 +32,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::clearRhoData()
   {
+//    std::cout<<" clearing data \n";
     d_mixingScheme.clearHistory();
 
 
@@ -1260,7 +1261,7 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const unsigned int n_q_points = quadrature_formula.size();
 
-    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoInValues);
+    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoInValues.get());
     const double scaling = ((double)numElectrons) / charge;
 
     if (d_dftParamsPtr->verbosity >= 2)
@@ -1304,7 +1305,7 @@ namespace dftfe
               }
           }
       }
-    double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoInValues);
+    double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoInValues.get());
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Initial total charge: " << chargeAfterScaling << std::endl;
@@ -1321,7 +1322,7 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const unsigned int n_q_points = quadrature_formula.size();
 
-    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
+    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
     const double scaling = ((double)numElectrons) / charge;
 
     if (d_dftParamsPtr->verbosity >= 2)
@@ -1364,7 +1365,7 @@ namespace dftfe
               }
           }
       }
-    double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
+    double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total charge out after scaling: " << chargeAfterScaling

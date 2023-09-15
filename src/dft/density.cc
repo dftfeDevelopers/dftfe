@@ -241,10 +241,10 @@ namespace dftfe
             matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
             matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
             d_kPointWeights,
-            rhoOutValues,
-            gradRhoOutValues,
-            rhoOutValuesSpinPolarized,
-            gradRhoOutValuesSpinPolarized,
+            rhoOutValues.get(),
+            gradRhoOutValues.get(),
+            rhoOutValuesSpinPolarized.get(),
+            gradRhoOutValuesSpinPolarized.get(),
             d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA,
             d_mpiCommParent,
@@ -343,7 +343,7 @@ namespace dftfe
           matrix_free_data.get_quadrature(d_densityQuadratureId);
         const unsigned int n_q_points = quadrature_formula.size();
 
-        const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
+        const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
         const double scaling = ((double)numElectrons) / charge;
 
         // scaling rho
@@ -376,12 +376,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::resizeAndAllocateRhoTableStorage(
-    std::map<dealii::CellId, std::vector<double>> *rhoVals,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoVals,
-    std::map<dealii::CellId, std::vector<double>>
-      *rhoValsSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>>
-      *gradRhoValsSpinPolarized)
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoVals,
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoVals,
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValsSpinPolarized,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValsSpinPolarized)
   {
     const unsigned int numQuadPoints =
       matrix_free_data.get_n_q_points(d_densityQuadratureId);
@@ -439,27 +437,27 @@ namespace dftfe
   }
 
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho)
-  {
-	  outputRho =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-
-	  typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler.begin_active(),
-      endc = dofHandler.end();
-	  for (; cell != endc; ++cell)
-      if (cell->is_locally_owned())
-        {
-          const dealii::CellId cellId = cell->id();
-	  unsigned int numQuadPoints = (*inputRho)[cellId].size();
-	  (*outputRho)[cellId].resize(numQuadPoints);
-	  for(unsigned int iQuad = 0; iQuad< numQuadPoints; iQuad++)
-	  {
-		  (*outputRho)[cellId][iQuad] = (*inputRho)[cellId][iQuad];
-	  }
-	}
-  }
+//template <unsigned int FEOrder, unsigned int FEOrderElectro>
+//  void
+//  dftClass<FEOrder, FEOrderElectro>::copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho)
+//  {
+//	  outputRho =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+//
+//	  typename dealii::DoFHandler<3>::active_cell_iterator
+//      cell = dofHandler.begin_active(),
+//      endc = dofHandler.end();
+//	  for (; cell != endc; ++cell)
+//      if (cell->is_locally_owned())
+//        {
+//          const dealii::CellId cellId = cell->id();
+//	  unsigned int numQuadPoints = (*inputRho)[cellId].size();
+//	  (*outputRho)[cellId].resize(numQuadPoints);
+//	  for(unsigned int iQuad = 0; iQuad< numQuadPoints; iQuad++)
+//	  {
+//		  (*outputRho)[cellId][iQuad] = (*inputRho)[cellId][iQuad];
+//	  }
+//	}
+//  }
 
   // rho data reinitilization without remeshing. The rho out of last ground
   // state solve is made the rho in of the new solve
@@ -467,7 +465,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
   {
-    if ( d_rhoInNodalVals.size() > 0)
+    if ( d_mixingScheme.lengthOfHistory() > 0 || d_rhoInNodalVals.size() > 0)
       {
         // create temporary copies of rho Out data
         std::map<dealii::CellId, std::vector<double>> rhoOutValuesCopy =

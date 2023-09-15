@@ -31,7 +31,7 @@ namespace dftfe
 
   }
 
-  void MixingScheme::copyDensityFromInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues)
+  void MixingScheme::copyDensityFromInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues)
   {
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -61,7 +61,7 @@ namespace dftfe
       }
 
   }
-  void MixingScheme::copyDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> *rhoOutValues)
+  void MixingScheme::copyDensityFromOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues)
   {
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -95,42 +95,42 @@ namespace dftfe
 
   }
 
-  void MixingScheme::copyGradDensityFromInHist( std::map<dealii::CellId, std::vector<double>> *gradInput)
+  void MixingScheme::copyGradDensityFromInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInput)
   {
-    gradInput = &(d_gradRhoInVals.back());
+    gradInput = d_gradRhoInVals.back();
   }
 
-  void MixingScheme::copyGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput)
+  void MixingScheme::copyGradDensityFromOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutput)
   {
-    gradOutput = &(d_gradRhoOutVals.back());
+    gradOutput = d_gradRhoOutVals.back();
   }
 
-  void MixingScheme::copySpinGradDensityFromInHist( std::map<dealii::CellId, std::vector<double>> * gradInputSpin)
+  void MixingScheme::copySpinGradDensityFromInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInputSpin)
   {
-    gradInputSpin = &(d_gradRhoInValsSpinPolarized.back());
+    gradInputSpin = d_gradRhoInValsSpinPolarized.back();
   }
 
-  void MixingScheme::copySpinGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutputSpin)
+  void MixingScheme::copySpinGradDensityFromOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutputSpin)
   {
-    gradOutputSpin = &(d_gradRhoOutValsSpinPolarized.back());
+    gradOutputSpin = d_gradRhoOutValsSpinPolarized.back();
   }
 
-  void MixingScheme::copyGradDensityToInHist( std::map<dealii::CellId, std::vector<double>> * gradInput)
+  void MixingScheme::copyGradDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInput)
   {
-    d_gradRhoInVals.push_back(*gradInput);
+    d_gradRhoInVals.push_back(gradInput);
   }
-  void MixingScheme::copyGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput)
+  void MixingScheme::copyGradDensityToOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutput)
   {
-    d_gradRhoOutVals.push_back(*gradOutput);
+    d_gradRhoOutVals.push_back(gradOutput);
   }
 
-  void MixingScheme::copySpinGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> * gradInputSpin)
+  void MixingScheme::copySpinGradDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInputSpin)
   {
-    d_gradRhoInValsSpinPolarized.push_back(*gradInputSpin);
+    d_gradRhoInValsSpinPolarized.push_back(gradInputSpin);
   }
-  void MixingScheme::copySpinGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutputSpin)
+  void MixingScheme::copySpinGradDensityToOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutputSpin)
   {
-    d_gradRhoOutValsSpinPolarized.push_back(*gradOutputSpin);
+    d_gradRhoOutValsSpinPolarized.push_back(gradOutputSpin);
   }
 
 
@@ -187,7 +187,7 @@ namespace dftfe
           {
             d_vecJxW.resize(2*
                             d_numberQuadraturePointsPerCell*
-                            d_numCells);
+                            d_numCells,0.0);
             typename dealii::DoFHandler<3>::active_cell_iterator
               cell = d_dofHandler->begin_active(),
               endc = d_dofHandler->end();
@@ -195,6 +195,7 @@ namespace dftfe
               {
                 if (cell->is_locally_owned())
                   {
+                    fe_values.reinit(cell);
                     for(unsigned int iQuad = 0 ;iQuad < d_numberQuadraturePointsPerCell; iQuad++)
                       {
                         d_vecJxW[2*iElem*d_numberQuadraturePointsPerCell +
@@ -211,6 +212,7 @@ namespace dftfe
                   }
               }
           }
+//        std::cout<<" size of JxW = "<<d_vecJxW.size()<<"\n";
   }
 
   void MixingScheme::computeMixingMatricesDensity(const std::deque<std::vector<double>> &inHist,
@@ -228,7 +230,7 @@ namespace dftfe
 
     int N = d_rhoOutVals.size() - 1;
 
-    std::cout<<" size of hist  = "<<N<<"\n";
+//    std::cout<<" size of hist  = "<<N<<"\n";
     unsigned int numQuadPoints = 0;
     if( N > 0)
       numQuadPoints = inHist[0].size();
@@ -237,8 +239,10 @@ namespace dftfe
       {
         std::cout<<" ERROR in vec size in mixing anderson \n";
       }
+    double vecJxWSum = 0.0;
     for( unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
       {
+        vecJxWSum += d_vecJxW[iQuad];
         double Fn = d_rhoOutVals[N][iQuad] - d_rhoInVals[N][iQuad];
         for (int m = 0; m < N; m++)
           {
@@ -258,6 +262,15 @@ namespace dftfe
           }
       }
 
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &vecJxWSum,
+                  1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  d_mpi_comm_domain);
+
+//    std::cout<<" Sum of Jxw = "<<vecJxWSum<<"\n";
+
     unsigned int aSize = Adensity.size();
     unsigned int cSize = cDensity.size();
 
@@ -272,17 +285,17 @@ namespace dftfe
     for (unsigned int i = 0 ; i < aSize; i++)
       {
         A[i] += ATotal[i];
-	std::cout<<"A["<<i<<"] = "<<A[i]<<"\n";
+//	std::cout<<"A["<<i<<"] = "<<A[i]<<"\n";
       }
 
     for (unsigned int i = 0 ; i < cSize; i++)
       {
         c[i] += cTotal[i];
-	std::cout<<"c["<<i<<"] = "<<c[i]<<"\n";
+//	std::cout<<"c["<<i<<"] = "<<c[i]<<"\n";
       }
   }
 
-  void MixingScheme::copyDensityToInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues)
+  void MixingScheme::copyDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues)
   {
     std::vector<double> latestHistRhoIn;
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
@@ -316,7 +329,7 @@ namespace dftfe
     d_rhoInVals.push_back(latestHistRhoIn);
   }
 
-  void MixingScheme::copyDensityToOutHist( std::map<dealii::CellId, std::vector<double>> *rhoOutValues)
+  void MixingScheme::copyDensityToOutHist( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues)
   {
     std::vector<double> latestHistRhoOut;
     unsigned int numQuadPointsPerCell = d_numberQuadraturePointsPerCell;
@@ -379,32 +392,49 @@ namespace dftfe
 
     dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
     
-    for (unsigned int i = 0 ; i < ldb*NRHS; i++)
-      {
-        std::cout<<"d_c["<<i<<"] = "<<d_c[i]<<"\n";
-      }
+//    for (unsigned int i = 0 ; i < ldb*NRHS; i++)
+//      {
+//        std::cout<<"d_c["<<i<<"] = "<<d_c[i]<<"\n";
+//      }
 
     d_cFinal = 1.0;
     for (int i = 0; i < N; i++)
       d_cFinal -= d_c[i];
 
-    std::cout<<"cFinal = "<<d_cFinal<<"\n";
+//    std::cout<<"cFinal = "<<d_cFinal<<"\n";
   }
 
-  double MixingScheme::mixDensity(std::map<dealii::CellId, std::vector<double>> *rhoInValues,
-                           std::map<dealii::CellId, std::vector<double>> *rhoOutValues,
-                           std::map<dealii::CellId, std::vector<double>> *rhoInValuesSpinPolarized,
-                           std::map<dealii::CellId, std::vector<double>> *rhoOutValuesSpinPolarized,
-                           std::map<dealii::CellId, std::vector<double>> *gradRhoInValues,
-                             std::map<dealii::CellId, std::vector<double>> *gradRhoOutValues,
-                           std::map<dealii::CellId, std::vector<double>> *gradRhoInValuesSpinPolarized,
-                           std::map<dealii::CellId, std::vector<double>> *gradRhoOutValuesSpinPolarized)
+  double MixingScheme::mixDensity(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValuesSpinPolarized,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValuesSpinPolarized,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoInValues,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoOutValues,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoInValuesSpinPolarized,
+                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoOutValuesSpinPolarized)
   {
     double normValue = 0.0;
 
+//    std::cout<<" size of rhoInHist = "<<d_rhoInVals.size()<<"\n";
+//    std::cout<<" size of rhoOutHist = "<<d_rhoOutVals.size()<<"\n";
+//    std::cout<<" size of gradRhoInHist = "<<d_gradRhoInVals.size()<<"\n";
+//    std::cout<<" size of gradRhoOutHist = "<<d_gradRhoOutVals.size()<<"\n";
+//    std::cout<<" size of gradSpinRhoInHist = "<<d_gradRhoInValsSpinPolarized.size()<<"\n";
+//    std::cout<<" size of gradSpinRhoOutHist = "<<d_gradRhoOutValsSpinPolarized.size()<<"\n";
+
     int N = d_rhoOutVals.size() - 1;
 
-    std::map<dealii::CellId, std::vector<double>> rhoInputValues, rhoOutputValues;
+    std::vector<double> rhoInHistNorm(N+1,0.0), rhoOutHistNorm(N+1,0.0), gradRhoInHistNorm(N+1,0.0), gradRhoOutHistNorm(N+1,0.0), gradSpinRhoInHistNorm(N+1,0.0), gradSpinRhoOutHistNorm(N+1,0.0);
+    double rhoOutputNorm = 0.0, gradRhoOutputNorm = 0.0;
+
+    std::fill(rhoInHistNorm.begin(),rhoInHistNorm.end(),0.0);
+    std::fill(rhoOutHistNorm.begin(),rhoOutHistNorm.end(),0.0);
+    std::fill(gradRhoInHistNorm.begin(),gradRhoInHistNorm.end(),0.0);
+    std::fill(gradRhoOutHistNorm.begin(),gradRhoOutHistNorm.end(),0.0);
+    std::fill(gradSpinRhoInHistNorm.begin(),gradSpinRhoInHistNorm.end(),0.0);
+    std::fill(gradSpinRhoOutHistNorm.begin(),gradSpinRhoOutHistNorm.end(),0.0);
+
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> rhoInputValues, rhoOutputValues;
     // create new rhoValue tables
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOld = *rhoInValues;
 
@@ -413,16 +443,16 @@ namespace dftfe
     if(d_dftParamsPtr->spinPolarized == 0)
       {
         rhoInValuesOld = *rhoInValues;
-        rhoInputValues = *rhoInValues;
-        rhoOutputValues = *rhoOutValues;
+        rhoInputValues = rhoInValues;
+        rhoOutputValues = rhoOutValues;
       }
     if (d_dftParamsPtr->spinPolarized == 1)
       {
         numQuadPointsPerCell = 2*numQuadPointsPerCell;
 
         rhoInValuesOld = *rhoInValuesSpinPolarized;
-        rhoInputValues = *rhoInValuesSpinPolarized;
-        rhoOutputValues = *rhoOutValuesSpinPolarized;
+        rhoInputValues = rhoInValuesSpinPolarized;
+        rhoOutputValues = rhoOutValuesSpinPolarized;
       }
 
     // implement anderson mixing
@@ -434,13 +464,19 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            (rhoInputValues)[cell->id()] = std::vector<double>(numQuadPointsPerCell);
+            (*rhoInputValues)[cell->id()].resize(numQuadPointsPerCell);
 
             for (unsigned int q_point = 0; q_point < numQuadPointsPerCell; ++q_point)
               {
+
+                for(unsigned int iHist = 0;  iHist < N+1; iHist++)
+                  {
+                    rhoInHistNorm[iHist] += std::abs(d_rhoInVals[iHist][iElem*numQuadPointsPerCell + q_point]);
+                    rhoOutHistNorm[iHist] += std::abs(d_rhoOutVals[iHist][iElem*numQuadPointsPerCell + q_point]);
+                  }
                 // Compute (rhoIn-rhoOut)^2
                 normValue += std::pow((rhoInValuesOld)[cell->id()][q_point] -
-                                        (rhoOutputValues)[cell->id()][q_point],
+                                        (*rhoOutputValues)[cell->id()][q_point],
                                       2.0) *
                              d_vecJxW[iElem*numQuadPointsPerCell + q_point];
                 // Anderson mixing scheme
@@ -457,19 +493,50 @@ namespace dftfe
                 (*rhoInputValues)[cell->id()][q_point] =
                   ((1 - d_dftParamsPtr->mixingParameter) * rhoInBar +
                    d_dftParamsPtr->mixingParameter * rhoOutBar);
+                rhoOutputNorm += (*rhoInputValues)[cell->id()][q_point];
               }
 
             if(d_dftParamsPtr->spinPolarized == 1)
               {
                 for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell; ++q_point)
                   {
-                    (*rhoInValues)[cell->id()][q_point] = (rhoInputValues)[cell->id()][2*q_point + 0] +
-                                                          (rhoInputValues)[cell->id()][2*q_point + 1];
+                    (*rhoInValues)[cell->id()][q_point] = (*rhoInputValues)[cell->id()][2*q_point + 0] +
+                                                          (*rhoInputValues)[cell->id()][2*q_point + 1];
                   }
               }
             iElem++;
           }
       }
+
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &rhoOutputNorm,
+                      1,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                  d_mpi_comm_domain);
+
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &rhoInHistNorm[0],
+                      N+1,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpi_comm_domain);
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &rhoOutHistNorm[0],
+                      N+1,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpi_comm_domain);
+
+//        std::cout<<" norm of output rho = "<<rhoOutputNorm<<"\n";
+//
+//        for(unsigned int iHist = 0; iHist < N+1; iHist++)
+//          {
+//            std::cout<<" norm of rhoIn["<<iHist<<"] = "<<rhoInHistNorm[iHist]<<" norm of rhoOut["<<iHist<<"] = "<<rhoOutHistNorm[iHist]<<"\n";
+//          }
+
+
+
 
     // compute gradRho for GGA using mixing constants from rho mixing
 
@@ -498,14 +565,24 @@ namespace dftfe
 
                   for (int hist = 0; hist < N + 1; hist++)
                     {
-                      gradRhoOutTemp[hist] = (d_gradRhoOutVals[hist])[cell->id()];
-                      gradRhoInTemp[hist]  = (d_gradRhoInVals[hist])[cell->id()];
+                      gradRhoOutTemp[hist] = (*(d_gradRhoOutVals[hist]))[cell->id()];
+                      gradRhoInTemp[hist]  = (*(d_gradRhoInVals[hist]))[cell->id()];
                     }
 
 
                   for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell;
                        ++q_point)
                     {
+                      for( unsigned int iHist = 0 ;iHist < N+1;iHist++)
+                        {
+                          gradRhoInHistNorm[iHist] += std::abs(gradRhoInTemp[iHist][3*q_point+0]);
+                          gradRhoInHistNorm[iHist] += std::abs(gradRhoInTemp[iHist][3*q_point+1]);
+                          gradRhoInHistNorm[iHist] += std::abs(gradRhoInTemp[iHist][3*q_point+2]);
+                          gradRhoOutHistNorm[iHist] += std::abs(gradRhoOutTemp[iHist][3*q_point+0]);
+                          gradRhoOutHistNorm[iHist] += std::abs(gradRhoOutTemp[iHist][3*q_point+1]);
+                          gradRhoOutHistNorm[iHist] += std::abs(gradRhoOutTemp[iHist][3*q_point+2]);
+
+                        }
                       //
                       // Anderson mixing scheme
                       //
@@ -603,6 +680,10 @@ namespace dftfe
                       (*gradRhoInValues)[cell->id()][3 * q_point + 2] =
                         ((1 - d_dftParamsPtr->mixingParameter) * gradRhoZInBar +
                          d_dftParamsPtr->mixingParameter * gradRhoZOutBar);
+
+                      gradRhoOutputNorm += std::abs((*gradRhoInValues)[cell->id()][3 * q_point + 0]);
+                      gradRhoOutputNorm += std::abs((*gradRhoInValues)[cell->id()][3 * q_point + 1]);
+                      gradRhoOutputNorm += std::abs((*gradRhoInValues)[cell->id()][3 * q_point + 2]);
                     }
                 }
             }
@@ -641,14 +722,39 @@ namespace dftfe
                     for (int hist = 0; hist < N + 1; hist++)
                       {
                         gradRhoOutSpinPolarizedTemp[hist] =
-                          (d_gradRhoOutValsSpinPolarized[hist])[cell->id()];
+                          (*(d_gradRhoOutValsSpinPolarized[hist]))[cell->id()];
                         gradRhoInSpinPolarizedTemp[hist] =
-                          (d_gradRhoInValsSpinPolarized[hist])[cell->id()];
+                          (*(d_gradRhoInValsSpinPolarized[hist]))[cell->id()];
                       }
 
                     for (unsigned int q_point = 0; q_point < d_numberQuadraturePointsPerCell;
                          ++q_point)
                       {
+                        for( unsigned int iHist = 0 ;iHist < N+1;iHist++)
+                          {
+//                            gradRhoInHistNorm[iHist] += std::abs(gradRhoInTemp[iHist][3*q_point+0]);
+//                            gradRhoInHistNorm[iHist] += std::abs(gradRhoInTemp[iHist][3*q_point+1]);
+//                            gradRhoInHistNorm[iHist] += std::abs(gradRhoInTemp[iHist][3*q_point+2]);
+//                            gradRhoOutHistNorm[iHist] += std::abs(gradRhoOutTemp[iHist][3*q_point+0]);
+//                            gradRhoOutHistNorm[iHist] += std::abs(gradRhoOutTemp[iHist][3*q_point+1]);
+//                            gradRhoOutHistNorm[iHist] += std::abs(gradRhoOutTemp[iHist][3*q_point+2]);
+
+                            gradSpinRhoInHistNorm[iHist] += std::abs(gradRhoInSpinPolarizedTemp[iHist][6*q_point+0]);
+                            gradSpinRhoInHistNorm[iHist] += std::abs(gradRhoInSpinPolarizedTemp[iHist][6*q_point+1]);
+                            gradSpinRhoInHistNorm[iHist] += std::abs(gradRhoInSpinPolarizedTemp[iHist][6*q_point+2]);
+                            gradSpinRhoInHistNorm[iHist] += std::abs(gradRhoInSpinPolarizedTemp[iHist][6*q_point+3]);
+                            gradSpinRhoInHistNorm[iHist] += std::abs(gradRhoInSpinPolarizedTemp[iHist][6*q_point+4]);
+                            gradSpinRhoInHistNorm[iHist] += std::abs(gradRhoInSpinPolarizedTemp[iHist][6*q_point+5]);
+
+                            gradSpinRhoOutHistNorm[iHist] += std::abs(gradRhoOutSpinPolarizedTemp[iHist][6*q_point+0]);
+                            gradSpinRhoOutHistNorm[iHist] += std::abs(gradRhoOutSpinPolarizedTemp[iHist][6*q_point+1]);
+                            gradSpinRhoOutHistNorm[iHist] += std::abs(gradRhoOutSpinPolarizedTemp[iHist][6*q_point+2]);
+                            gradSpinRhoOutHistNorm[iHist] += std::abs(gradRhoOutSpinPolarizedTemp[iHist][6*q_point+3]);
+                            gradSpinRhoOutHistNorm[iHist] += std::abs(gradRhoOutSpinPolarizedTemp[iHist][6*q_point+4]);
+                            gradSpinRhoOutHistNorm[iHist] += std::abs(gradRhoOutSpinPolarizedTemp[iHist][6*q_point+5]);
+
+
+                          }
                         //
                         // Anderson mixing scheme spin up
                         //
@@ -795,18 +901,70 @@ namespace dftfe
                                                           [6 * q_point + 2]) +
                           ((*gradRhoInValuesSpinPolarized)[cell->id()]
                                                           [6 * q_point + 5]);
+
+                        gradRhoOutputNorm += std::abs((*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 0]);
+                        gradRhoOutputNorm += std::abs((*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 1]);
+                        gradRhoOutputNorm += std::abs((*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 2]);
+                        gradRhoOutputNorm += std::abs((*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 3]);
+                        gradRhoOutputNorm += std::abs((*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 4]);
+                        gradRhoOutputNorm += std::abs((*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point + 5]);
                       }
                   }
               }
           }
     }
+
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &gradRhoOutputNorm,
+                  1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  d_mpi_comm_domain);
+
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &gradRhoInHistNorm[0],
+                  N+1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  d_mpi_comm_domain);
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &gradRhoOutHistNorm[0],
+                  N+1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  d_mpi_comm_domain);
+
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &gradSpinRhoInHistNorm[0],
+                  N+1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  d_mpi_comm_domain);
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &gradSpinRhoOutHistNorm[0],
+                  N+1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  d_mpi_comm_domain);
+
+//    std::cout<<" norm of output  grad rho = "<<gradRhoOutputNorm<<"\n";
+//
+//    for(unsigned int iHist = 0; iHist < N+1; iHist++)
+//      {
+//        std::cout<<" norm of grad rhoIn["<<iHist<<"] = "<<gradRhoInHistNorm[iHist]<<" norm of grad rhoOut["<<iHist<<"] = "<<gradRhoOutHistNorm[iHist]<<"\n";
+//        std::cout<<" norm of spin grad rhoIn["<<iHist<<"] = "<<gradSpinRhoInHistNorm[iHist]<<" norm of grad rhoOut["<<iHist<<"] = "<<gradSpinRhoOutHistNorm[iHist]<<"\n";
+//      }
+
+
     //copyDensityToInHist(rhoInValues);
     return std::sqrt(dealii::Utilities::MPI::sum(normValue, d_mpi_comm_domain));
   }
 
   void MixingScheme::clearHistory()
   {
+//    std::cout<<" size of rho before clearing = "<<d_rhoInVals.size()<<"\n";
 	  d_rhoInVals.clear();
+//    std::cout<<" size of rho after clearing = "<<d_rhoInVals.size()<<"\n";
 	  d_rhoOutVals.clear();
 	  d_gradRhoInVals.clear();
 	  d_gradRhoOutVals.clear();
@@ -816,7 +974,7 @@ namespace dftfe
   }
   void MixingScheme::popOldHistory()
   {
-    if (d_rhoInVals.size() == d_dftParamsPtr->mixingHistory)
+    if (d_rhoInVals.size() >=  d_dftParamsPtr->mixingHistory)
       {
         d_rhoInVals.pop_front();
         d_rhoOutVals.pop_front();

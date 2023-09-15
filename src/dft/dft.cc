@@ -2202,33 +2202,6 @@ namespace dftfe
           {
             if (scfIter == 1)
               {
-		 if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      {
-			      if (d_dftParamsPtr->spinPolarized == 1)
-                  		{
-					d_mixingScheme.copyDensityToInHist(rhoInValuesSpinPolarized);
-                            d_mixingScheme.copyDensityToOutHist(rhoOutValuesSpinPolarized);
-                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
-                                densityFamilyType::GGA)
-                              {
-                                d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
-                                d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
-                              }
-
-		  		}
-			      else
-			      {
-				      d_mixingScheme.copyDensityToInHist(rhoInValues);
-                            d_mixingScheme.copyDensityToOutHist(rhoOutValues);
-                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
-                                densityFamilyType::GGA)
-                              {
-                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
-                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
-                              }
-
-			      }
-		      }
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     if (d_dftParamsPtr->mixingMethod ==
@@ -2236,7 +2209,21 @@ namespace dftfe
                       norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
                         scfIter);
                     else
-                      norm = mixing_simple_spinPolarized();
+                      {
+                        if (d_dftParamsPtr->mixingMethod == "ANDERSON")
+                          {
+                            d_mixingScheme.copyDensityToInHist(rhoInValuesSpinPolarized);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValuesSpinPolarized);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copySpinGradDensityToInHist(gradRhoInValuesSpinPolarized);
+                                d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
+                              }
+                          }
+                        norm = mixing_simple_spinPolarized();
+                      }
+
                   }
                 else
                   {
@@ -2254,7 +2241,20 @@ namespace dftfe
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
                     else
-                      norm = mixing_simple();
+                      {
+                        if (d_dftParamsPtr->mixingMethod == "ANDERSON")
+                          {
+                            d_mixingScheme.copyDensityToInHist(rhoInValues);
+                            d_mixingScheme.copyDensityToOutHist(rhoOutValues);
+                            if(d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                d_mixingScheme.copyGradDensityToInHist(gradRhoInValues);
+                                d_mixingScheme.copyGradDensityToOutHist(gradRhoOutValues);
+                              }
+                          }
+                        norm = mixing_simple();
+                      }
                   }
 
                 if (d_dftParamsPtr->verbosity >= 1)
@@ -2279,7 +2279,7 @@ namespace dftfe
                                 d_mixingScheme.copySpinGradDensityToOutHist(gradRhoOutValuesSpinPolarized);
                               }
 
-			    d_mixingScheme.popOldHistory();
+                            d_mixingScheme.popOldHistory();
 
                         d_mixingScheme.computeAndersonMixingCoeff();
                         norm = d_mixingScheme.mixDensity(rhoInValues,
@@ -2290,6 +2290,76 @@ namespace dftfe
                                                          gradRhoOutValues,
                                                          gradRhoInValuesSpinPolarized,
                                                          gradRhoOutValuesSpinPolarized);
+//                        double normRhoInAfterMixing = 0.0;
+//                        double normGradRhoInAfterMixing = 0.0;
+//                        double normSpinRhoInAfterMixing = 0.0;
+//                        double normGradSpinRhoInAfterMixing = 0.0;
+//                        const dealii::Quadrature<3> &quadrature =
+//                          matrix_free_data.get_quadrature(d_densityQuadratureId);
+//                        const unsigned int  num_quad_points = quadrature.size();
+//                        typename dealii::DoFHandler<3>::active_cell_iterator
+//                          cell = dofHandler.begin_active(),
+//                          endc = dofHandler.end();
+//                        for (; cell != endc; ++cell)
+//                          {
+//                            if (cell->is_locally_owned())
+//                              {
+//                                for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+//                                  {
+//                                    normRhoInAfterMixing += (*(rhoInValues))[cell->id()][q_point];
+//
+//                                    normSpinRhoInAfterMixing += (*(rhoInValuesSpinPolarized))[cell->id()][2*q_point+0];
+//                                    normSpinRhoInAfterMixing += (*(rhoInValuesSpinPolarized))[cell->id()][2*q_point+1];
+//
+//                                    normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+0]);
+//                                    normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+1]);
+//                                    normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+2]);
+//
+//                                    normGradSpinRhoInAfterMixing += std::abs((*(gradRhoInValuesSpinPolarized))[cell->id()][6*q_point+0]);
+//                                    normGradSpinRhoInAfterMixing += std::abs((*(gradRhoInValuesSpinPolarized))[cell->id()][6*q_point+1]);
+//                                    normGradSpinRhoInAfterMixing += std::abs((*(gradRhoInValuesSpinPolarized))[cell->id()][6*q_point+2]);
+//                                    normGradSpinRhoInAfterMixing += std::abs((*(gradRhoInValuesSpinPolarized))[cell->id()][6*q_point+3]);
+//                                    normGradSpinRhoInAfterMixing += std::abs((*(gradRhoInValuesSpinPolarized))[cell->id()][6*q_point+4]);
+//                                    normGradSpinRhoInAfterMixing += std::abs((*(gradRhoInValuesSpinPolarized))[cell->id()][6*q_point+5]);
+//
+//                                  }
+//                              }
+//                          }
+//
+//
+//                        MPI_Allreduce(MPI_IN_PLACE,
+//                                      &normRhoInAfterMixing,
+//                                      1,
+//                                      MPI_DOUBLE,
+//                                      MPI_SUM,
+//                                      mpi_communicator);
+//
+//                        MPI_Allreduce(MPI_IN_PLACE,
+//                                      &normGradRhoInAfterMixing,
+//                                      1,
+//                                      MPI_DOUBLE,
+//                                      MPI_SUM,
+//                                      mpi_communicator);
+//
+//                        MPI_Allreduce(MPI_IN_PLACE,
+//                                      &normSpinRhoInAfterMixing,
+//                                      1,
+//                                      MPI_DOUBLE,
+//                                      MPI_SUM,
+//                                      mpi_communicator);
+//
+//                        MPI_Allreduce(MPI_IN_PLACE,
+//                                      &normGradSpinRhoInAfterMixing,
+//                                      1,
+//                                      MPI_DOUBLE,
+//                                      MPI_SUM,
+//                                      mpi_communicator);
+//
+//                        std::cout<<" Norm of rho in after mixing in dft.cc = "<<normRhoInAfterMixing<<"\n";
+//                        std::cout<<" Norm of grad rho in after mixing in dft.cc = "<<normGradRhoInAfterMixing<<"\n";
+//
+//                        std::cout<<" Norm of spin rho in after mixing in dft.cc = "<<normSpinRhoInAfterMixing<<"\n";
+//                        std::cout<<" Norm of grad spin rho in after mixing in dft.cc = "<<normGradSpinRhoInAfterMixing<<"\n";
                       }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
@@ -2325,6 +2395,48 @@ namespace dftfe
                                                          gradRhoOutValues,
                                                          gradRhoInValuesSpinPolarized,
                                                          gradRhoOutValuesSpinPolarized);
+
+//                        double normRhoInAfterMixing = 0.0;
+//                        double normGradRhoInAfterMixing = 0.0;
+//                            const dealii::Quadrature<3> &quadrature =
+//                              matrix_free_data.get_quadrature(d_densityQuadratureId);
+//                            const unsigned int  num_quad_points = quadrature.size();
+//                                typename dealii::DoFHandler<3>::active_cell_iterator
+//                                  cell = dofHandler.begin_active(),
+//                                  endc = dofHandler.end();
+//                                for (; cell != endc; ++cell)
+//                                  {
+//                                    if (cell->is_locally_owned())
+//                                      {
+//                                        for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+//                                        {
+//                                          normRhoInAfterMixing += (*(rhoInValues))[cell->id()][q_point];
+//
+//                                          normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+0]);
+//                                          normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+1]);
+//                                          normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+2]);
+//                                        }
+//                                      }
+//                                  }
+//                                MPI_Allreduce(MPI_IN_PLACE,
+//                                              &normRhoInAfterMixing,
+//                                              1,
+//                                              MPI_DOUBLE,
+//                                              MPI_SUM,
+//                                              mpi_communicator);
+//
+//                                MPI_Allreduce(MPI_IN_PLACE,
+//                                              &normGradRhoInAfterMixing,
+//                                              1,
+//                                              MPI_DOUBLE,
+//                                              MPI_SUM,
+//                                              mpi_communicator);
+//
+//                                std::cout<<" Norm of rho in after mixing in dft.cc = "<<normRhoInAfterMixing<<"\n";
+//                                std::cout<<" Norm of grad rho in after mixing in dft.cc = "<<normGradRhoInAfterMixing<<"\n";
+
+//                                std::cout<<" Norm of spin rho in after mixing in dft.cc = "<<normSpinRhoInAfterMixing<<"\n";
+//                                std::cout<<" Norm of grad spin rho in after mixing in dft.cc = "<<normGradSpinRhoInAfterMixing<<"\n";
                       }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
@@ -2548,7 +2660,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                     if (d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2557,7 +2669,7 @@ namespace dftfe
 #endif
                     if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2572,8 +2684,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                     if (d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
-                        gradRhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
+                        gradRhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2583,8 +2695,8 @@ namespace dftfe
 #endif
                     if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
-                        gradRhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
+                        gradRhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2876,14 +2988,14 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEff(
-                    rhoInValues,
+                    rhoInValues.get(),
                     d_phiInValues,
                     d_pseudoVLoc,
                     d_rhoCore,
                     d_lpspQuadratureId);
 #endif
                 if (!d_dftParamsPtr->useDevice)
-                  kohnShamDFTEigenOperator.computeVEff(rhoInValues,
+                  kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
                                                        d_phiInValues,
                                                        d_pseudoVLoc,
                                                        d_rhoCore,
@@ -2897,8 +3009,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEff(
-                    rhoInValues,
-                    gradRhoInValues,
+                    rhoInValues.get(),
+                    gradRhoInValues.get(),
                     d_phiInValues,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -2906,8 +3018,8 @@ namespace dftfe
                     d_lpspQuadratureId);
 #endif
                 if (!d_dftParamsPtr->useDevice)
-                  kohnShamDFTEigenOperator.computeVEff(rhoInValues,
-                                                       gradRhoInValues,
+                  kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
+                                                       gradRhoInValues.get(),
                                                        d_phiInValues,
                                                        d_pseudoVLoc,
                                                        d_rhoCore,
@@ -3197,7 +3309,7 @@ namespace dftfe
         // compute integral rhoOut
         //
         const double integralRhoValue =
-          totalCharge(d_dofHandlerPRefined, rhoOutValues);
+          totalCharge(d_dofHandlerPRefined, rhoOutValues.get());
 
         if (d_dftParamsPtr->verbosity >= 2)
           {
@@ -3209,7 +3321,7 @@ namespace dftfe
             d_dftParamsPtr->spinPolarized == 1)
           pcout << std::endl
                 << "net magnetization: "
-                << totalMagnetization(rhoOutValuesSpinPolarized) << std::endl;
+                << totalMagnetization(rhoOutValuesSpinPolarized.get()) << std::endl;
 
         //
         // phiTot with rhoOut

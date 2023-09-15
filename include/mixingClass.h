@@ -42,9 +42,9 @@ namespace dftfe
                std::vector<double> &c,
                std::string fieldName);
 
-    void copyDensityToInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues);
+    void copyDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues);
 
-    void copyDensityToOutHist(std::map<dealii::CellId, std::vector<double>> *rhoOutValues);
+    void copyDensityToOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues);
 
     unsigned int lengthOfHistory();
 
@@ -55,34 +55,34 @@ namespace dftfe
 
     void popRhoOutHist();
 
-    void copyDensityFromInHist(std::map<dealii::CellId, std::vector<double>> *rhoInValues);
-    void copyDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> *rhoOutValues);
+    void copyDensityFromInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues);
+    void copyDensityFromOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues);
 
-    void copyGradDensityFromInHist(std::map<dealii::CellId, std::vector<double>>* gradInput);
-    void copyGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput);
+    void copyGradDensityFromInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInput);
+    void copyGradDensityFromOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutput);
 
-    void copySpinGradDensityFromInHist(std::map<dealii::CellId, std::vector<double>> * gradInputSpin);
-    void copySpinGradDensityFromOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutputSpin);
+    void copySpinGradDensityFromInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInputSpin);
+    void copySpinGradDensityFromOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutputSpin);
 
-    void copyGradDensityToInHist(std::map<dealii::CellId, std::vector<double>>  *gradInput);
-    void copyGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>> * gradOutput);
+    void copyGradDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInput);
+    void copyGradDensityToOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutput);
 
-    void copySpinGradDensityToInHist(std::map<dealii::CellId, std::vector<double>> * gradInputSpin);
-    void copySpinGradDensityToOutHist(std::map<dealii::CellId, std::vector<double>>* gradOutputSpin);
+    void copySpinGradDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradInputSpin);
+    void copySpinGradDensityToOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradOutputSpin);
 
     void computeMixingMatricesDensity(const std::deque<std::vector<double>> &inHist,
                                  const std::deque<std::vector<double>> &outHist,
                                  std::vector<double> &A,
                                  std::vector<double> &c);
 
-    double mixDensity(std::map<dealii::CellId, std::vector<double>> *rhoInValues,
-                             std::map<dealii::CellId, std::vector<double>> *rhoOutValues,
-                             std::map<dealii::CellId, std::vector<double>> *rhoInValuesSpinPolarized,
-                             std::map<dealii::CellId, std::vector<double>> *rhoOutValuesSpinPolarized,
-                                 std::map<dealii::CellId, std::vector<double>> *gradRhoInValues,
-                                 std::map<dealii::CellId, std::vector<double>> *gradRhoOutValues,
-                             std::map<dealii::CellId, std::vector<double>> *gradRhoInValuesSpinPolarized,
-                             std::map<dealii::CellId, std::vector<double>> *gradRhoOutValuesSpinPolarized);
+    double mixDensity(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues,
+                             std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues,
+                             std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValuesSpinPolarized,
+                             std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValuesSpinPolarized,
+                                 std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoInValues,
+                                 std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoOutValues,
+                             std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoInValuesSpinPolarized,
+                             std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoOutValuesSpinPolarized);
 
     void popOldHistory();
 

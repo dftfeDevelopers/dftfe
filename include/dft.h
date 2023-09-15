@@ -704,16 +704,14 @@ namespace dftfe
      */
     void
     resizeAndAllocateRhoTableStorage(
-      std::map<dealii::CellId, std::vector<double>> *rhoValues,
-      std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-      std::map<dealii::CellId, std::vector<double>>
-        *rhoValuesSpinPolarized,
-      std::map<dealii::CellId, std::vector<double>>
-        *gradRhoValuesSpinPolarized);
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValuesSpinPolarized,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValuesSpinPolarized);
 
-    void 
-    copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho);
-    
+//    void
+//    copyDensityMaps(std::map<dealii::CellId, std::vector<double>> *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho);
+//
     void
     noRemeshRhoDataInit();
     void
@@ -1424,10 +1422,10 @@ namespace dftfe
       d_rhoAtomsValuesSeparate, d_gradRhoAtomsValuesSeparate,
       d_hessianRhoAtomsValuesSeparate;
 
-    std::map<dealii::CellId, std::vector<double>> *gradRhoInValues,
-      *gradRhoInValuesSpinPolarized;
-    std::map<dealii::CellId, std::vector<double>> *gradRhoOutValues,
-      *gradRhoOutValuesSpinPolarized;
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> gradRhoInValues,
+      gradRhoInValuesSpinPolarized;
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> gradRhoOutValues,
+      gradRhoOutValuesSpinPolarized;
 
 
     // storage for total electrostatic potential solution vector corresponding
