@@ -979,8 +979,8 @@ namespace dftfe
         d_rhoInVals.pop_front();
         d_rhoOutVals.pop_front();
 
-        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA) // GGA
+        if ((d_excManagerPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA) && (d_gradRhoInVals.size() >= d_dftParamsPtr->mixingHistory  )) // GGA
           {
             d_gradRhoInVals.pop_front();
             d_gradRhoOutVals.pop_front();
@@ -988,7 +988,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->spinPolarized == 1 &&
             d_excManagerPtr->getDensityBasedFamilyType() ==
-              densityFamilyType::GGA)
+              densityFamilyType::GGA && (d_gradRhoInValsSpinPolarized.size() >= d_dftParamsPtr->mixingHistory  ))
           {
             d_gradRhoInValsSpinPolarized.pop_front();
             d_gradRhoOutValsSpinPolarized.pop_front();
