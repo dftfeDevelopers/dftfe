@@ -655,6 +655,9 @@ namespace dftfe
         std::transform(begin(), begin() + d_numVectors, normVec, [](auto &a) {
           return dftfe::utils::realPart(dftfe::utils::complexConj(a) * (a));
         });
+      else
+        for(int i = 0; i < d_numVectors;i++)
+          normVec[i] = 0.0;  
       for (auto k = 1; k < d_locallyOwnedSize; ++k)
         {
           std::transform(begin() + k * d_numVectors,
