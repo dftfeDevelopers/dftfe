@@ -215,6 +215,25 @@ namespace dftfe
       distributedCPUVec<double> &      fvSpin0,
       distributedCPUVec<double> &      fvSpin1);
 
+    void copyDensityToVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
+                                                           std::vector<double> &rhoValuesVector);
+
+    void copyDensityFromVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
+                                                             std::vector<double> &rhoValuesVector);
+
+    void copyGradDensityToVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
+                        std::vector<double> &gradRhoValuesVector);
+
+    void copyGradDensityFromVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
+                          std::vector<double> &gradRhoValuesVector);
+
+    void computeTotalDensityFromSpinPolarised(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
+                                         std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoSpinValues);
+
+    void computeTotalGradDensityFromSpinPolarised(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
+                                         std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoSpinValues);
+
+    void computeJxWForRho(std::vector<double> &vecJxW);
     void
     initializeKohnShamDFTOperator(const bool initializeCublas = true);
 
