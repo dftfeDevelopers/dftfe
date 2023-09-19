@@ -2228,8 +2228,8 @@ namespace dftfe
 
                             copyDensityToVector(rhoInValuesSpinPolarized,rhoInOld);
                             copyDensityToVector(rhoOutValuesSpinPolarized,rhoOutOld);
-                            d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInValues);
-                            d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutValues);
+                            d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInOld);
+                            d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutOld);
                             if(d_excManagerPtr->getDensityBasedFamilyType() ==
                                 densityFamilyType::GGA)
                               {
@@ -2268,8 +2268,8 @@ namespace dftfe
 
                             copyDensityToVector(rhoInValues,rhoInOld);
                             copyDensityToVector(rhoOutValues,rhoOutOld);
-                            d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInValues);
-                            d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutValues);
+                            d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInOld);
+                            d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutOld);
                             if(d_excManagerPtr->getDensityBasedFamilyType() ==
                                 densityFamilyType::GGA)
                               {
@@ -2303,8 +2303,8 @@ namespace dftfe
 
                         copyDensityToVector(rhoInValuesSpinPolarized,rhoInOld);
                         copyDensityToVector(rhoOutValuesSpinPolarized,rhoOutOld);
-                        d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInValues);
-                        d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutValues);
+                        d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInOld);
+                        d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutOld);
                         if(d_excManagerPtr->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -2316,15 +2316,15 @@ namespace dftfe
                             d_mixingScheme.addVariableToOutHist(mixingVariable::gradRho,gradRhoOutOld);
                           }
 
-                            d_mixingScheme.popOldHistory();
+                            d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
 
                         d_mixingScheme.computeAndersonMixingCoeff();
                         std::vector<double> rhoInNew;
                         norm = d_mixingScheme.mixVariable(mixingVariable::rho,
                                                           rhoInNew);
 
-                        copyDensityFromVector(rhoInValuesSpinPolarized,rhoInNew);
-                        computeTotalDensityFromSpinPolarised(rhoInValues,rhoInValuesSpinPolarized);
+                        copyDensityFromVector(rhoInNew,rhoInValuesSpinPolarized);
+                        computeTotalDensityFromSpinPolarised(rhoInValuesSpinPolarized,rhoInValues);
 
                         if(d_excManagerPtr->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
@@ -2332,8 +2332,8 @@ namespace dftfe
                             std::vector<double> gradRhoInNew;
                             d_mixingScheme.mixVariable(mixingVariable::gradRho,
                                                        gradRhoInNew);
-                            copyGradDensityFromVector(gradRhoInValuesSpinPolarized,gradRhoInNew);
-                            computeTotalGradDensityFromSpinPolarised(gradRhoInValues,gradRhoInValuesSpinPolarized);
+                            copyGradDensityFromVector(gradRhoInNew,gradRhoInValuesSpinPolarized);
+                            computeTotalGradDensityFromSpinPolarised(gradRhoInValuesSpinPolarized,gradRhoInValues);
                           }
 
 
@@ -2427,8 +2427,8 @@ namespace dftfe
 
                         copyDensityToVector(rhoInValues,rhoInOld);
                         copyDensityToVector(rhoOutValues,rhoOutOld);
-                        d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInValues);
-                        d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutValues);
+                        d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInOld);
+                        d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutOld);
                         if(d_excManagerPtr->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
@@ -2439,14 +2439,14 @@ namespace dftfe
                             d_mixingScheme.addVariableToInHist(mixingVariable::gradRho,gradRhoInOld);
                             d_mixingScheme.addVariableToOutHist(mixingVariable::gradRho,gradRhoOutOld);
                           }
-                        d_mixingScheme.popOldHistory();
+                        d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
 
                         d_mixingScheme.computeAndersonMixingCoeff();
                         std::vector<double> rhoInNew;
                         norm = d_mixingScheme.mixVariable(mixingVariable::rho,
                                                           rhoInNew);
 
-                        copyDensityFromVector(rhoInValues,rhoInNew);
+                        copyDensityFromVector(rhoInNew,rhoInValues);
 
                         if(d_excManagerPtr->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
@@ -2454,7 +2454,7 @@ namespace dftfe
                             std::vector<double> gradRhoInNew;
                             d_mixingScheme.mixVariable(mixingVariable::gradRho,
                                                        gradRhoInNew);
-                            copyGradDensityFromVector(gradRhoInValues,gradRhoInNew);
+                            copyGradDensityFromVector(gradRhoInNew,gradRhoInValues);
                           }
 //                        double normRhoInAfterMixing = 0.0;
 //                        double normGradRhoInAfterMixing = 0.0;
@@ -4829,7 +4829,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void dftClass<FEOrder, FEOrderElectro>::copyDensityToVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
+  void dftClass<FEOrder, FEOrderElectro>::copyDensityToVector( const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
                                                          std::vector<double> &rhoValuesVector)
   {
     unsigned int numCells = matrix_free_data.n_physical_cells();
@@ -4872,8 +4872,8 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void dftClass<FEOrder, FEOrderElectro>::copyDensityFromVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
-                                                         std::vector<double> &rhoValuesVector)
+  void dftClass<FEOrder, FEOrderElectro>::copyDensityFromVector( const std::vector<double> &rhoValuesVector,
+                                                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues)
   {
     unsigned int numCells = matrix_free_data.n_physical_cells();
 
@@ -4912,7 +4912,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void dftClass<FEOrder, FEOrderElectro>::copyGradDensityToVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
+  void dftClass<FEOrder, FEOrderElectro>::copyGradDensityToVector( const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
                           std::vector<double> &gradRhoValuesVector)
   {
     unsigned int numCells = matrix_free_data.n_physical_cells();
@@ -4955,8 +4955,8 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void dftClass<FEOrder, FEOrderElectro>::copyGradDensityFromVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
-                            std::vector<double> &gradRhoValuesVector)
+  void dftClass<FEOrder, FEOrderElectro>::copyGradDensityFromVector(const std::vector<double> &gradRhoValuesVector,
+                                                               std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues)
   {
     unsigned int numCells = matrix_free_data.n_physical_cells();
 
@@ -4995,8 +4995,8 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void dftClass<FEOrder, FEOrderElectro>::computeTotalDensityFromSpinPolarised(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
-                                       std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoSpinValues)
+  void dftClass<FEOrder, FEOrderElectro>::computeTotalDensityFromSpinPolarised(const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoSpinValues,
+                                                                          std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues)
   {
     unsigned int numCells = matrix_free_data.n_physical_cells();
 
@@ -5030,8 +5030,8 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void dftClass<FEOrder, FEOrderElectro>::computeTotalGradDensityFromSpinPolarised(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
-                                           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoSpinValues)
+  void dftClass<FEOrder, FEOrderElectro>::computeTotalGradDensityFromSpinPolarised(const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoSpinValues,
+                                                                              std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues)
   {
     unsigned int numCells = matrix_free_data.n_physical_cells();
 
@@ -5055,21 +5055,21 @@ namespace dftfe
           {
             for(unsigned int iQuad = 0 ;iQuad < numQuadPoints; iQuad++)
               {
-                ((*gradRhoValues)[cell->id()][3 * q_point + 0]) =
+                ((*gradRhoValues)[cell->id()][3 * iQuad + 0]) =
                                         ((*gradRhoSpinValues)[cell->id()]
-                                                                        [6 * q_point + 0]) +
+                                                                        [6 * iQuad + 0]) +
                                         ((*gradRhoSpinValues)[cell->id()]
-                                                                        [6 * q_point + 3]);
-                ((*gradRhoValues)[cell->id()][3 * q_point + 1]) =
+                                                                        [6 * iQuad + 3]);
+                ((*gradRhoValues)[cell->id()][3 * iQuad + 1]) =
                                         ((*gradRhoSpinValues)[cell->id()]
-                                                                        [6 * q_point + 1]) +
+                                                                        [6 * iQuad + 1]) +
                                         ((*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                                        [6 * q_point + 4]);
-                ((*gradRhoValues)[cell->id()][3 * q_point + 2]) =
+                                                                        [6 * iQuad + 4]);
+                ((*gradRhoValues)[cell->id()][3 * iQuad + 2]) =
                                         ((*gradRhoSpinValues)[cell->id()]
-                                                                        [6 * q_point + 2]) +
+                                                                        [6 * iQuad + 2]) +
                                         ((*gradRhoSpinValues)[cell->id()]
-                                                                        [6 * q_point + 5]);
+                                                                        [6 * iQuad + 5]);
               }
             iElem++;
           }
@@ -5102,7 +5102,7 @@ namespace dftfe
     unsigned int iElem = 0;
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        vecJxW.reinit(numCells*numQuadPoints*2);
+        vecJxW.resize(numCells*numQuadPoints*2);
         std::fill(vecJxW.begin(),vecJxW.end(),0.0);
         for (; cell != endc; ++cell)
           {
@@ -5122,7 +5122,7 @@ namespace dftfe
       }
     else
       {
-        vecJxW.reinit(numCells*numQuadPoints);
+        vecJxW.resize(numCells*numQuadPoints);
         std::fill(vecJxW.begin(),vecJxW.end(),0.0);
         for (; cell != endc; ++cell)
           {

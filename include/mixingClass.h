@@ -25,7 +25,7 @@
 namespace dftfe
 {
 
-  enum mixingVariable
+  enum class mixingVariable
   {
     rho,
     gradRho
@@ -40,22 +40,22 @@ namespace dftfe
 
     void computeAndersonMixingCoeff();
 
-    void popOldHistory();
+    void popOldHistory(unsigned int mixingHistory);
 
     void clearHistory();
 
-    void addMixingVariable(mixingVariable &mixingVariableList,
-                      std::vector<double> &weightDotProducts,
-                      bool performMPIReduce,
-                      double mixingValue);
+    void addMixingVariable(const mixingVariable mixingVariableList,
+                      const std::vector<double> &weightDotProducts,
+                      const bool performMPIReduce,
+                      const double mixingValue);
 
-    void addVariableToInHist(mixingVariable &mixingVariableName,
-                      std::vector<double> &inputVariableToInHist);
+    void addVariableToInHist(const mixingVariable mixingVariableName,
+                      const std::vector<double> &inputVariableToInHist);
 
-    void addVariableToOutHist(mixingVariable &mixingVariableName,
-                        std::vector<double> &inputVariableToOutHist);
+    void addVariableToOutHist(const mixingVariable mixingVariableName,
+                        const std::vector<double> &inputVariableToOutHist);
 
-    double mixVariable(mixingVariable &mixingVariableName,
+    double mixVariable(const mixingVariable mixingVariableName,
                 std::vector<double> &outputVariable);
 
 
@@ -72,12 +72,13 @@ namespace dftfe
     double d_cFinal;
 
     std::map<mixingVariable, std::deque<std::vector<double>>> d_variableHistoryIn, d_variableHistoryOut ;
-    std:map<mixingVariable, std::vector<double>> d_vectorDotProductWeights;
-    std:map<mixingVariable, bool> d_performMPIReduce;
+    std::map<mixingVariable, std::vector<double>> d_vectorDotProductWeights;
+    std::map<mixingVariable, bool> d_performMPIReduce;
 
     const MPI_Comm d_mpi_comm_domain;
 
-    std:map<mixingVariable, double> d_mixingParameter;
+    std::map<mixingVariable, double> d_mixingParameter;
+    unsigned int d_mixingHistory;
 
   };
 } //  end of namespace dftfe

@@ -29,10 +29,10 @@ namespace dftfe
 
   }
 
-  void MixingScheme::addMixingVariable(mixingVariable &mixingVariableList,
-                         std::vector<double> &weightDotProducts,
-                         bool performMPIReduce,
-                                  double mixingValue)
+  void MixingScheme::addMixingVariable(const mixingVariable mixingVariableList,
+                         const std::vector<double> &weightDotProducts,
+                         const bool performMPIReduce,
+                         const double mixingValue)
   {
     d_variableHistoryIn.insert({mixingVariableList, std::deque<std::vector<double>>()});
 
@@ -130,13 +130,13 @@ namespace dftfe
 
   unsigned int MixingScheme::lengthOfHistory()
   {
-    return variableHistoryIn[mixingVariable::rho].size();
+    return d_variableHistoryIn[mixingVariable::rho].size();
   }
 
   void MixingScheme::computeAndersonMixingCoeff()
   {
     // initialize data structures
-    int N = variableHistoryIn[mixingVariable::rho].size() - 1;
+    int N = d_variableHistoryIn[mixingVariable::rho].size() - 1;
     // pcout << "\nN:" << N << "\n";
     int                 NRHS = 1, lda = N, ldb = N, info;
     std::vector<int>    ipiv(N);
@@ -147,12 +147,12 @@ namespace dftfe
     for (int i = 0; i < ldb * NRHS; i++)
       d_c[i] = 0.0;
 
-    for (const auto& [key, value] : variableHistoryIn)
+    for (const auto& [key, value] : d_variableHistoryIn)
       {
-        computeMixingMatrices(variableHistoryIn[key],
-                              variableHistoryOut[key],
-                              vectorDotProductWeights[key],
-                              performMPIReduce[key],
+        computeMixingMatrices(d_variableHistoryIn[key],
+                              d_variableHistoryOut[key],
+                              d_vectorDotProductWeights[key],
+                              d_performMPIReduce[key],
                               d_A,
                               d_c);
       }
@@ -171,41 +171,41 @@ namespace dftfe
 //    std::cout<<"cFinal = "<<d_cFinal<<"\n";
   }
 
-  void MixingScheme::addVariableToInHist(mixingVariable &mixingVariableName,
-                             std::vector<double> &inputVariableToInHist)
+  void MixingScheme::addVariableToInHist(const mixingVariable mixingVariableName,
+                             const std::vector<double> &inputVariableToInHist)
   {
-    variableHistoryIn[mixingVariableName].push_back(inputVariableToInHist);
+    d_variableHistoryIn[mixingVariableName].push_back(inputVariableToInHist);
   }
 
-  void MixingScheme::addVariableToOutHist(mixingVariable &mixingVariableName,
-                       std::vector<double> &inputVariableToOutHist)
+  void MixingScheme::addVariableToOutHist(const mixingVariable mixingVariableName,
+                       const std::vector<double> &inputVariableToOutHist)
   {
-    variableHistoryOut[mixingVariableName].push_back(inputVariableToOutHist);
+    d_variableHistoryOut[mixingVariableName].push_back(inputVariableToOutHist);
   }
 
-  double MixingScheme::mixVariable(mixingVariable &mixingVariableName,
+  double MixingScheme::mixVariable(mixingVariable mixingVariableName,
                      std::vector<double> &outputVariable)
   {
     double normValue = 0.0;
-    int N = variableHistoryIn[mixingVariableName].size() - 1;
-    unsigned int lenVar = variableHistoryIn[mixingVariableName][0].size();
+    int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+    unsigned int lenVar = d_variableHistoryIn[mixingVariableName][0].size();
     outputVariable.resize(lenVar);
     std::fill(outputVariable.begin(),outputVariable.end(),0.0);
 
     for( unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
       {
-        normValue += std::pow(variableHistoryOut[mixingVariableName][N][iQuad] -
-                                variableHistoryIn[mixingVariableName][N][iQuad],
+        normValue += std::pow(d_variableHistoryOut[mixingVariableName][N][iQuad] -
+                                d_variableHistoryIn[mixingVariableName][N][iQuad],
                               2.0) *
-                     vectorDotProductWeights[mixingVariableName][iQuad];
+                     d_vectorDotProductWeights[mixingVariableName][iQuad];
 
-        double varOutBar = d_cFinal * variableHistoryOut[mixingVariableName][N][iQuad];
-        double varInBar  = d_cFinal * variableHistoryIn[mixingVariableName][N][iQuad];
+        double varOutBar = d_cFinal * d_variableHistoryOut[mixingVariableName][N][iQuad];
+        double varInBar  = d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
         for (int i = 0; i < N; i++)
           {
-            varOutBar += d_c[i] * variableHistoryOut[mixingVariableName][N - 1 - i][iQuad];
-            varInBar += d_c[i] * variableHistoryIn[mixingVariableName][N - 1 - i][iQuad];
+            varOutBar += d_c[i] * d_variableHistoryOut[mixingVariableName][N - 1 - i][iQuad];
+            varInBar += d_c[i] * d_variableHistoryIn[mixingVariableName][N - 1 - i][iQuad];
           }
         outputVariable[iQuad] = ((1 - d_mixingParameter[mixingVariableName]) * varInBar +
                                  d_mixingParameter[mixingVariableName] * varOutBar);
@@ -216,20 +216,20 @@ namespace dftfe
 
   void MixingScheme::clearHistory()
   {
-    for (const auto& [key, value] : variableHistoryIn)
+    for (const auto& [key, value] : d_variableHistoryIn)
       {
-        variableHistoryIn[key].clear();
-        variableHistoryOut[key].clear();
+        d_variableHistoryIn[key].clear();
+        d_variableHistoryOut[key].clear();
       }
   }
-  void MixingScheme::popOldHistory()
+  void MixingScheme::popOldHistory(unsigned int mixingHistory)
   {
-    if (variableHistoryIn[mixingVariable::rho].size() >=  d_dftParamsPtr->mixingHistory)
+    if (d_variableHistoryIn[mixingVariable::rho].size() >=  mixingHistory)
       {
-        for (const auto& [key, value] : variableHistoryIn)
+        for (const auto& [key, value] : d_variableHistoryIn)
           {
-            variableHistoryIn[key].pop_front();
-            variableHistoryOut[key].pop_front();
+            d_variableHistoryIn[key].pop_front();
+            d_variableHistoryOut[key].pop_front();
           }
       }
   }

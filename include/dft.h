@@ -215,23 +215,23 @@ namespace dftfe
       distributedCPUVec<double> &      fvSpin0,
       distributedCPUVec<double> &      fvSpin1);
 
-    void copyDensityToVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
+    void copyDensityToVector( const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
                                                            std::vector<double> &rhoValuesVector);
 
-    void copyDensityFromVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
-                                                             std::vector<double> &rhoValuesVector);
+    void copyDensityFromVector( const std::vector<double> &rhoValuesVector,
+                          std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues);
 
-    void copyGradDensityToVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
+    void copyGradDensityToVector( const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
                         std::vector<double> &gradRhoValuesVector);
 
-    void copyGradDensityFromVector( std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
-                          std::vector<double> &gradRhoValuesVector);
+    void copyGradDensityFromVector(const std::vector<double> &gradRhoValuesVector,
+                              std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues);
 
-    void computeTotalDensityFromSpinPolarised(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
-                                         std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoSpinValues);
+    void computeTotalDensityFromSpinPolarised(const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoSpinValues,
+                                         std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues);
 
-    void computeTotalGradDensityFromSpinPolarised(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues,
-                                         std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoSpinValues);
+    void computeTotalGradDensityFromSpinPolarised(const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoSpinValues,
+                                             std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoValues);
 
     void computeJxWForRho(std::vector<double> &vecJxW);
     void
