@@ -651,9 +651,10 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] L2-Norm evaluation not implemented for DEVICE");
-      std::transform(begin(), begin() + d_numVectors, normVec, [](auto &a) {
-        return dftfe::utils::realPart(dftfe::utils::complexConj(a) * (a));
-      });
+      if (d_locallyOwnedSize > 0)
+        std::transform(begin(), begin() + d_numVectors, normVec, [](auto &a) {
+          return dftfe::utils::realPart(dftfe::utils::complexConj(a) * (a));
+        });
       for (auto k = 1; k < d_locallyOwnedSize; ++k)
         {
           std::transform(begin() + k * d_numVectors,
@@ -769,11 +770,17 @@ namespace dftfe
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
         "[] dot product evaluation not implemented for DEVICE");
-      for (auto ib = 0; ib < d_numVectors; ++ib)
-        {
-          dotVec[ib] =
-            (*d_storage)[ib] * dftfe::utils::complexConj((*(u.d_storage))[ib]);
-        }
+      if (d_locallyOwnedSize > 0)
+        for (auto ib = 0; ib < d_numVectors; ++ib)
+          {
+            dotVec[ib] = (*d_storage)[ib] *
+                         dftfe::utils::complexConj((*(u.d_storage))[ib]);
+          }
+      else
+        for (auto ib = 0; ib < d_numVectors; ++ib)
+          {
+            dotVec[ib] = 0.0;
+          }
       for (auto k = 1; k < d_locallyOwnedSize; ++k)
         {
           for (auto ib = 0; ib < d_numVectors; ++ib)
