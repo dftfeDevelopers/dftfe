@@ -18,8 +18,8 @@ Note the above are shown only as an example. We strongly recommend using the lat
 
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
-on \href{http://p4est.org/}{p4est}, \href{http://www.netlib.org/scalapack/}{ScaLAPACK} and BLAS-LAPACK are set. The other required external libraries, which are
-not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA}. DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc} (via deali.II), \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. \dftfe{} can also be linked to \href{https://github.com/awvwgk/simple-dftd3}{simple-dftd3} and \href{https://github.com/dftd4/dftd4}{dftd4} in order to provide support for the dftd family of dispersion corrections by Grimme et. al.. Below, we give brief installation instructions for each of the above libraries.
+on \href{http://p4est.org/}{p4est} and BLAS-LAPACK are set. The other required external libraries, which are
+not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA} (ELPA requires \href{http://www.netlib.org/scalapack/}{ScaLAPACK}). DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc} (via deali.II), \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. \dftfe{} can also be linked to \href{https://github.com/awvwgk/simple-dftd3}{simple-dftd3} and \href{https://github.com/dftd4/dftd4}{dftd4} in order to provide support for the dftd family of dispersion corrections by Grimme et. al.. Below, we give brief installation instructions for each of the above libraries.
 \subsubsection{Instructions for dependencies: ALGLIB, Libxc, spglib, Libxml2, ScaLAPACK, ELPA, p4est and nccl (nccl is optional)}
 \begin{enumerate}
 	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting for various radial data. Download the current release of the Alglib free C++ edition from \url{http://www.alglib.net/download.php}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using GCC compiler do
@@ -252,20 +252,25 @@ $ FC=gfortran cmake -B _build
 $ cmake --build _build
 $ cmake --install _build 
 \end{verbatim}
-	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.4.0 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
+	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.460 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
 \begin{verbatim}
-$ FC=gfortran cmake -B _build 
--DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 
--Wl,--no-as-needed -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp 
--lpthread -lm -ldl" 
--DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 
--Wl,--no-as-needed -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp 
--lpthread -lm -ldl" 
--DCMAKE_INSTALL_PREFIX=dftd4_install_path
-$ cmake --build _build
-$ cmake --install _build 
+$ cd dftd4-3.6.0
+$ mkdir build 
+$ cd build
+$ cmake -DCMAKE_Fortran_COMPILER=gfortran
+        -DCMAKE_C_COMPILER=gcc
+        -DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
+        -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_rt -lmkl_core -lgomp 
+        -lpthread -lm -ldl" 
+        -DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64
+        -lmkl_gnu_thread -lmkl_rt -lmkl_core 
+        -lgomp -lpthread -lm -ldl"
+        -DBUILD_SHARED_LIBS=ON 
+        -DCMAKE_INSTALL_PREFIX=dftd4_install_path
+        -DWITH_OpenMP=OFF
+        ..
+$ make -j16
+$ make install
 \end{verbatim}
 \end{enumerate}
 The values for \verb|-DBLAS_LIBRARIES| and \verb|-DLAPACK_LIBRARIES| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU fortran compiler.\\ 

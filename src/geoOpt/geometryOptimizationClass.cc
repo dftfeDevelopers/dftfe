@@ -169,6 +169,7 @@ namespace dftfe
                                                         true,
                                                         "GEOOPT",
                                                         d_restartFilesPath,
+                                                        d_verbosity,
                                                         scfRestart);
         d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
 
@@ -195,7 +196,8 @@ namespace dftfe
                                                         true,
                                                         true,
                                                         "GEOOPT",
-                                                        d_restartFilesPath);
+                                                        d_restartFilesPath,
+                                                        d_verbosity);
         d_dftPtr       = d_dftfeWrapper->getDftfeBasePtr();
         if (d_dftPtr->getParametersObject().optimizationMode == "ION")
           d_optMode = 0;

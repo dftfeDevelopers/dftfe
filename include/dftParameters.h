@@ -204,7 +204,8 @@ namespace dftfe
                      const MPI_Comm &   mpi_comm_parent,
                      const bool         printParams      = false,
                      const std::string  mode             = "GS",
-                     const std::string  restartFilesPath = ".");
+                     const std::string  restartFilesPath = ".",
+                     const int          _verbosity       = 1);
 
     /**
      * Check parameters

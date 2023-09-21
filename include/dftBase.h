@@ -118,6 +118,7 @@ namespace dftfe
     getAtomLocationsFrac() const = 0;
 
 
+
     /**
      * @brief Gets the current cell lattice vectors
      *
@@ -170,14 +171,14 @@ namespace dftfe
 
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files for
-     * structural optimization and dynamics restarts.simplified version for
-     * floating charges case
+     * structural optimization and dynamics restarts. The coordinates are stored
+     * as: 1. fractional for semi-periodic/periodic 2. Cartesian for
+     * non-periodic.
      * @param[in] Path The folder path to store the atom coordinates required
      * during restart.
      */
     virtual void
-    writeDomainAndAtomCoordinatesFloatingCharges(
-      const std::string Path) const = 0;
+    writeDomainAndAtomCoordinates(const std::string Path) const = 0;
 
 
     /**

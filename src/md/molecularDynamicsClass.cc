@@ -70,7 +70,8 @@ namespace dftfe
                                                 true,
                                                 true,
                                                 "MD",
-                                                d_restartFilesPath);
+                                                d_restartFilesPath,
+                                                d_verbosity);
       }
     else
       {
@@ -88,6 +89,7 @@ namespace dftfe
                                                 true,
                                                 "MD",
                                                 d_restartFilesPath,
+                                                d_verbosity,
                                                 scfRestart);
       }
 
@@ -1577,7 +1579,7 @@ namespace dftfe
         fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
       }
     std::string cordFolder = tempfolder + "/";
-    d_dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
+    d_dftPtr->writeDomainAndAtomCoordinates(cordFolder);
     if (time > 1)
       {
         if (d_dftPtr->getParametersObject().reproducible_output == false)
