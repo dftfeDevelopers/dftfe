@@ -51,35 +51,12 @@ namespace dftfe
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
 
-
-      prm.declare_entry(
-        "VERBOSITY",
-        "1",
-        dealii::Patterns::Integer(-1, 5),
-        "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.");
-
       prm.declare_entry(
         "KEEP SCRATCH FOLDER",
         "false",
         dealii::Patterns::Bool(),
         "[Advanced] If set to true this option does not delete the dftfeScratch folder when the dftfe object is destroyed. This is useful for debugging and code development. Default: false.");
 
-      prm.declare_entry(
-        "SOLVER MODE",
-        "GS",
-        dealii::Patterns::Selection("GS|MD|NEB|GEOOPT|NONE"),
-        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data.");
-
-      prm.declare_entry(
-        "RESTART",
-        "false",
-        dealii::Patterns::Bool(),
-        "[Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.");
-
-      prm.declare_entry("RESTART FOLDER",
-                        ".",
-                        dealii::Patterns::Anything(),
-                        "[Standard] Folder to store restart files.");
 
       prm.enter_subsection("GPU");
       {
@@ -134,25 +111,32 @@ namespace dftfe
       }
       prm.leave_subsection();
 
-      prm.enter_subsection("Ground-state derived computations");
+      prm.enter_subsection("Post-processing Options");
       {
         prm.declare_entry(
-          "WRITE WFC",
+          "WRITE WFC FE MESH",
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
 
         prm.declare_entry(
-          "WRITE DENSITY",
+          "WRITE DENSITY FE MESH",
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
 
         prm.declare_entry(
+          "WRITE DENSITY QUAD DATA",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false.");
+
+
+        prm.declare_entry(
           "WRITE DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states");
+          "[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV relative to the Fermi energy and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
 
         prm.declare_entry(
           "WRITE LOCAL DENSITY OF STATES",
@@ -177,6 +161,12 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.");
+
+        prm.declare_entry(
+          "WRITE BANDS",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. This option is by default on for NSCF mode of solve. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 3 columns with first column indicating the k-point index, second column indicating band index and third column indicating corresponding eigenvalue.");
       }
       prm.leave_subsection();
 
@@ -664,12 +654,6 @@ namespace dftfe
           dealii::Patterns::Integer(0, 1),
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
-        prm.declare_entry(
-          "NUMBER OF IMAGES",
-          "1",
-          dealii::Patterns::Integer(1, 50),
-          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");
-
 
 
         prm.declare_entry(
@@ -1013,6 +997,12 @@ namespace dftfe
             "[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");
 
           prm.declare_entry(
+            "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
+            "0",
+            dealii::Patterns::Integer(0),
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation ");
+
+          prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
             "false",
             dealii::Patterns::Bool(),
@@ -1059,7 +1049,6 @@ namespace dftfe
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Helmholtz problem convergence.");
       }
       prm.leave_subsection();
-
 
       prm.enter_subsection("Molecular Dynamics");
       {
@@ -1178,6 +1167,7 @@ namespace dftfe
     writeLdosFile               = false;
     writePdosFile               = false;
     writeLocalizationLengths    = false;
+    writeBandsFile              = false;
     std::string coordinatesFile = "";
     domainBoundingVectorsFile   = "";
     kPointDataFile              = "";
@@ -1223,6 +1213,7 @@ namespace dftfe
     restrictToOnePass                              = false;
     writeWfcSolutionFields                         = false;
     writeDensitySolutionFields                     = false;
+    writeDensityQuadData                           = false;
     wfcBlockSize                                   = 400;
     chebyWfcBlockSize                              = 400;
     subspaceRotDofsBlockSize                       = 2000;
@@ -1328,13 +1319,15 @@ namespace dftfe
                                   const MPI_Comm &   mpi_comm_parent,
                                   const bool         printParams,
                                   const std::string  mode,
-                                  const std::string  restartFilesPath)
+                                  const std::string  restartFilesPath,
+                                  const int          _verbosity)
   {
     dealii::ParameterHandler prm;
     internalDftParameters::declare_parameters(prm);
-    prm.parse_input(parameter_file);
+    // prm.parse_input(parameter_file);
+    prm.parse_input(parameter_file, "", true);
     solverMode                = mode;
-    verbosity                 = prm.get_integer("VERBOSITY");
+    verbosity                 = _verbosity;
     reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
     keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
     electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
@@ -1355,16 +1348,18 @@ namespace dftfe
     }
     prm.leave_subsection();
 
-    prm.enter_subsection("Ground-state derived computations");
+    prm.enter_subsection("Post-processing Options");
     {
-      writeWfcSolutionFields     = prm.get_bool("WRITE WFC");
-      writeDensitySolutionFields = prm.get_bool("WRITE DENSITY");
+      writeWfcSolutionFields     = prm.get_bool("WRITE WFC FE MESH");
+      writeDensitySolutionFields = prm.get_bool("WRITE DENSITY FE MESH");
+      writeDensityQuadData       = prm.get_bool("WRITE DENSITY QUAD DATA");
       writeDosFile               = prm.get_bool("WRITE DENSITY OF STATES");
       writeLdosFile            = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
+      writeBandsFile           = prm.get_bool("WRITE BANDS");
     }
     prm.leave_subsection();
 
@@ -1383,6 +1378,8 @@ namespace dftfe
       saveRhoData           = prm.get_bool("SAVE RHO DATA");
       loadRhoData           = prm.get_bool("LOAD RHO DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
+      if (solverMode == "NEB")
+        saveRhoData = true;
     }
     prm.leave_subsection();
 
@@ -1517,7 +1514,6 @@ namespace dftfe
       modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
       start_magnetization   = prm.get_double("START MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
-      TotalImages           = prm.get_integer("NUMBER OF IMAGES");
     }
     prm.leave_subsection();
 
@@ -1587,6 +1583,8 @@ namespace dftfe
         ;
         allowMultipleFilteringPassesAfterFirstScf =
           prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");
+        highestStateOfInterestForChebFiltering =
+          prm.get_integer("HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING");
         useSubspaceProjectedSHEPGPU = prm.get_bool("SUBSPACE PROJ SHEP GPU");
         restrictToOnePass = prm.get_bool("RESTRICT TO SINGLE FILTER PASS");
       }
@@ -1714,6 +1712,12 @@ namespace dftfe
                 dealii::ExcMessage(
                   "DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
+    if (solverMode == "NSCF")
+      AssertThrow(
+        loadRhoData == true,
+        dealii::ExcMessage(
+          "DFT-FE Error: Cant run NSCF without load rho data set to true"));
+
     if (isPseudopotential)
       AssertThrow(
         !pseudoPotentialFile.empty(),
@@ -1771,6 +1775,9 @@ namespace dftfe
     //
 
     if (isBOMD)
+      isIonForce = true;
+
+    if (solverMode == "NEB" || solverMode == "MD")
       isIonForce = true;
 
     if (!isPseudopotential)
@@ -1941,7 +1948,7 @@ namespace dftfe
           chebyshevTolerance = 2.0e-3;
         else if (mixingMethod == "ANDERSON_WITH_KERKER")
           chebyshevTolerance = 1.0e-2;
-        else
+        else if (solverMode != "NSCF")
           chebyshevTolerance = 5.0e-2;
       }
 

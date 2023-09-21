@@ -1,6 +1,10 @@
 set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
+subsection Post-processing Options
+ set WRITE DENSITY OF STATES=true
+end
+
 subsection Geometry
   set NATOMS=4
   set NATOM TYPES=1

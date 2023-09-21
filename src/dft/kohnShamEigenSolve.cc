@@ -290,117 +290,6 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
-  {
-    //
-    // create kohnShamDFTOperatorClass object
-    //
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> kohnShamDFTEigenOperator(
-      this, d_mpiCommParent, mpi_communicator);
-    kohnShamDFTEigenOperator.init();
-
-    for (unsigned int spinType = 0;
-         spinType < (1 + d_dftParamsPtr->spinPolarized);
-         ++spinType)
-      {
-        //
-        // scale the eigenVectors (initial guess of single atom wavefunctions or
-        // previous guess) to convert into Lowden Orthonormalized FE basis
-        // multiply by M^{1/2}
-        for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
-             ++kPointIndex)
-          {
-            internal::pointWiseScaleWithDiagonal(
-              kohnShamDFTEigenOperator.d_sqrtMassVector,
-              d_numEigenValues,
-              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-              d_eigenVectorsFlattenedHost.data() +
-                ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-                  d_numEigenValues *
-                  matrix_free_data.get_vector_partitioner()
-                    ->locally_owned_size());
-          }
-
-
-        if (d_dftParamsPtr->verbosity >= 2)
-          pcout
-            << "Re-orthonormalizing before solving for ground-state after Gaussian Movement of Mesh "
-            << std::endl;
-        //
-        // orthogonalize the vectors
-        //
-        for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
-             ++kPointIndex)
-          {
-            const unsigned int flag =
-              linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(
-                *d_elpaScala,
-                d_eigenVectorsFlattenedHost.data() +
-                  ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
-                   spinType) *
-                    d_numEigenValues *
-                    matrix_free_data.get_vector_partitioner()
-                      ->locally_owned_size(),
-                d_numEigenValues,
-                matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-                d_mpiCommParent,
-                interBandGroupComm,
-                mpi_communicator,
-                false,
-                *d_dftParamsPtr);
-          }
-
-
-        //
-        // scale the eigenVectors with M^{-1/2} to represent the wavefunctions
-        // in the usual FE basis
-        //
-        for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
-             ++kPointIndex)
-          {
-            internal::pointWiseScaleWithDiagonal(
-              kohnShamDFTEigenOperator.d_invSqrtMassVector,
-              d_numEigenValues,
-              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-              d_eigenVectorsFlattenedHost.data() +
-                ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-                  d_numEigenValues *
-                  matrix_free_data.get_vector_partitioner()
-                    ->locally_owned_size());
-          }
-      }
-
-    computeRhoFromPSICPU(
-      d_eigenVectorsFlattenedHost.data(),
-      d_eigenVectorsRotFracDensityFlattenedHost.data(),
-      d_numEigenValues,
-      d_numEigenValuesRR,
-      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-      eigenValues,
-      fermiEnergy,
-      fermiEnergyUp,
-      fermiEnergyDown,
-      kohnShamDFTEigenOperator,
-      basisOperationsPtrHost,
-      dofHandler,
-      matrix_free_data.n_physical_cells(),
-      matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
-      matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
-      d_kPointWeights,
-      rhoOutValues,
-      gradRhoOutValues,
-      rhoOutValuesSpinPolarized,
-      gradRhoOutValuesSpinPolarized,
-      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA,
-      d_mpiCommParent,
-      interpoolcomm,
-      interBandGroupComm,
-      *d_dftParamsPtr,
-      false,
-      false);
-  }
 
   // chebyshev solver
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -418,6 +307,7 @@ namespace dftfe
     const bool           isFirstScf)
   {
     computing_timer.enter_subsection("Chebyshev solve");
+
 
     if (d_dftParamsPtr->verbosity >= 2)
       {
@@ -1035,6 +925,33 @@ namespace dftfe
   }
 
 
+
+  // compute the maximum of the residual norm of the highest state of interest
+  // across all K points
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::
+    computeMaximumHighestOccupiedStateResidualNorm(
+      const std::vector<std::vector<double>>
+        &residualNormWaveFunctionsAllkPoints,
+      const std::vector<std::vector<double>> &eigenValuesAllkPoints,
+      const unsigned int                      highestState)
+  {
+    double maxHighestOccupiedStateResNorm = -1e+6;
+    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+      {
+        if (residualNormWaveFunctionsAllkPoints[kPoint][highestState] >
+            maxHighestOccupiedStateResNorm)
+          {
+            maxHighestOccupiedStateResNorm =
+              residualNormWaveFunctionsAllkPoints[kPoint][highestState];
+          }
+      }
+    maxHighestOccupiedStateResNorm =
+      dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
+                                  interpoolcomm);
+    return maxHighestOccupiedStateResNorm;
+  }
   // compute the maximum of the residual norm of the highest occupied state
   // among all k points
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

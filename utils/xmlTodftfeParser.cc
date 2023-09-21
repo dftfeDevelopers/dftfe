@@ -254,6 +254,64 @@ namespace dftfe
                           projectors.push_back(projector_temp);
                         }
                       else if (xmlStrcmp(cur_node->name,
+                                         (const xmlChar *)"PSwfc") == 0)
+                        {
+                          std::
+                            tuple<size_t, std::string, std::vector<std::string>>
+                                   PSwfc_temp;
+                          xmlAttr *attribute = cur_node->properties;
+                          int      counter   = 0;
+
+                          while (attribute != nullptr)
+                            {
+                              xmlChar *value =
+                                xmlNodeListGetString(doc,
+                                                     attribute->children,
+                                                     1);
+                              std::string value_str(
+                                reinterpret_cast<char *>(value));
+
+                              if (counter == 0)
+                                std::get<0>(PSwfc_temp) = stoi(value_str);
+                              else if (counter == 1)
+                                std::get<1>(PSwfc_temp) =
+                                  value_str; // stoi(value_str);
+
+                              attribute = attribute->next;
+                              counter++;
+                            }
+
+                          std::string PSwfc_content(reinterpret_cast<char *>(
+                            xmlNodeGetContent(cur_node)));
+
+                          std::string::size_type n = 0;
+                          while ((n = PSwfc_content.find("   ", n)) !=
+                                 std::string::npos)
+                            {
+                              PSwfc_content.replace(n, 3, ",");
+                              n++;
+                            }
+
+                          n = PSwfc_content.find("\n,", 0);
+                          if (n != std::string::npos)
+                            PSwfc_content.replace(n, 2, "");
+
+                          n = 0;
+                          while ((n = PSwfc_content.find("\n", n)) !=
+                                 std::string::npos)
+                            {
+                              PSwfc_content.replace(n, 1, "");
+                              n++;
+                            }
+
+                          std::istringstream ss(PSwfc_content);
+                          std::string        token;
+                          while (std::getline(ss, token, ','))
+                            std::get<2>(PSwfc_temp).push_back(token);
+
+                          PSwfc.push_back(PSwfc_temp);
+                        }
+                      else if (xmlStrcmp(cur_node->name,
                                          (const xmlChar *)"d_ij") == 0)
                         {
                           std::tuple<size_t, size_t, size_t, double> d_ij_temp;
@@ -363,6 +421,8 @@ namespace dftfe
       std::ofstream l3;
       l3.open(baseOutputPath + "/" + "proj_l3.dat");
 
+
+
       std::ofstream denom;
       denom.open(baseOutputPath + "/" + "denom.dat");
 
@@ -388,6 +448,10 @@ namespace dftfe
       std::vector<std::vector<std::string>> l2_vec;
       std::vector<std::vector<std::string>> l3_vec;
 
+      // Set up vectors for the wfc values;
+
+
+
       double r0 = 0.000000000000;
       double r1 = 0.000000000000;
       double r2 = 0.000000000000;
@@ -410,6 +474,8 @@ namespace dftfe
           else
             l3_vec.push_back(std::get<2>(i));
         }
+
+
 
       // Output mesh_spacing
       int jl = 0;
@@ -535,6 +601,13 @@ namespace dftfe
       std::string file1 = "proj_l1.dat";
       std::string file2 = "proj_l2.dat";
       std::string file3 = "proj_l3.dat";
+
+      j0 = 0;
+      j1 = 0;
+      j2 = 0;
+      j3 = 0;
+
+
 
       // Populate the PseudoAtomData file
       int lead_no  = 0;
@@ -673,6 +746,22 @@ namespace dftfe
           denom << std::endl;
         }
 
+      for (auto i : PSwfc)
+        {
+          std::ofstream wfc;
+          std::string   orbital = std::get<1>(i);
+          wfc.open(baseOutputPath + "/" + orbital + ".dat");
+          pseudo << orbital + ".dat" << std::endl;
+          wfc.precision(14);
+          int k = 0;
+          for (auto j : std::get<2>(i))
+            {
+              wfc << std::fixed << std::setprecision(14)
+                  << mesh[k] /* rp*/ << " " << j << std::endl;
+              k++;
+            }
+        }
+
       // Clear the vectors
       mult.resize(0);
       denom_vec.resize(0);
@@ -685,6 +774,7 @@ namespace dftfe
       l1.close();
       l2.close();
       l3.close();
+
       denom.close();
       pseudo.close();
       ad_file.close();
@@ -696,6 +786,7 @@ namespace dftfe
       coreDensity.clear();
       mesh.clear();
       projectors.clear();
+      PSwfc.clear();
       d_ij.clear();
 
       return false;

@@ -89,6 +89,7 @@ SET(TARGET_SRC
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc
+  ./src/neb/nudgedElasticBandClass.cc
   ./src/geoOpt/geometryOptimizationClass.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
@@ -102,6 +103,8 @@ SET(TARGET_SRC
   ./utils/MPICommunicatorP2P.cc
   ./utils/MPICommunicatorP2PKernels.cc
   ./utils/MemoryManager.cc
+  ./utils/MPIWriteOnFile.cpp
+  ./utils/QuadDataCompositeWrite.cpp
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
@@ -131,11 +134,11 @@ SET(TARGET_SRC
   ./src/dft/moveAtoms.cc
   ./src/dft/moveMeshToAtoms.cc
   ./src/dft/nodalDensityMixingSchemes.cc
-  ./src/dft/nscf.cc
   ./src/dft/pRefinedDoFHandler.cc
   ./src/dft/psiInitialGuess.cc
   ./src/dft/publicMethods.cc
   ./src/dft/restart.cc
+  ./src/dft/solveNSCF.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInv.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInvSpinPolarized.cc
   ./src/dft/computeOutputDensityDirectionalDerivative.cc
@@ -355,15 +358,13 @@ ENDIF()
 IF(NOT DEAL_II_WITH_LAPACK OR
    NOT DEAL_II_WITH_P4EST OR
    NOT DEAL_II_WITH_64BIT_INDICES OR
-   NOT DEAL_II_WITH_MPI OR
-   NOT DEAL_II_WITH_SCALAPACK)
+   NOT DEAL_II_WITH_MPI)
   MESSAGE(FATAL_ERROR "
 Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
     DEAL_II_WITH_LAPACK = ON
     DEAL_II_WITH_P4EST = ON
     DEAL_II_WITH_64BIT_INDICES = ON
     DEAL_II_WITH_MPI = ON
-    DEAL_II_WITH_SCALAPACK = ON
 which is required."
     )
 ENDIF()

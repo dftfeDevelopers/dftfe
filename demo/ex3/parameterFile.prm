@@ -1,0 +1,50 @@
+set SOLVER MODE = GS
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = coordinates.inp           
+  set DOMAIN VECTORS FILE = domainVectors.inp 
+end
+
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = false
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 0.5
+  end
+end
+
+subsection Parallelization
+  set NPKPT=8
+end
+
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 4
+    set SAMPLING POINTS 2 = 4
+    set SAMPLING POINTS 3 = 1
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 0
+  end
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
+end
+
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 5e-5
+end

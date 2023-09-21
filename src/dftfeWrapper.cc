@@ -182,7 +182,8 @@ namespace dftfe
                              const bool        printParams,
                              const bool setDeviceToMPITaskBindingInternally,
                              const std::string mode,
-                             const std::string restartFilesPath)
+                             const std::string restartFilesPath,
+                             const int         _verbosity)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
     , d_mpi_comm_parent(MPI_COMM_NULL)
@@ -193,7 +194,8 @@ namespace dftfe
            printParams,
            setDeviceToMPITaskBindingInternally,
            mode,
-           restartFilesPath);
+           restartFilesPath,
+           _verbosity);
   }
 
 
@@ -208,6 +210,7 @@ namespace dftfe
                              const bool setDeviceToMPITaskBindingInternally,
                              const std::string mode,
                              const std::string restartFilesPath,
+                             const int         _verbosity,
                              const bool        isScfRestart)
     : d_dftfeBasePtr(nullptr)
     , d_dftfeParamsPtr(nullptr)
@@ -222,6 +225,7 @@ namespace dftfe
            setDeviceToMPITaskBindingInternally,
            mode,
            restartFilesPath,
+           _verbosity,
            isScfRestart);
   }
 
@@ -282,12 +286,12 @@ namespace dftfe
                        const bool        printParams,
                        const bool        setDeviceToMPITaskBindingInternally,
                        const std::string mode,
-                       const std::string restartFilesPath)
+                       const std::string restartFilesPath,
+                       const int         _verbosity)
   {
     clear();
     if (mpi_comm_parent != MPI_COMM_NULL)
       MPI_Comm_dup(mpi_comm_parent, &d_mpi_comm_parent);
-
     createScratchFolder();
 
     if (d_mpi_comm_parent != MPI_COMM_NULL)
@@ -297,7 +301,8 @@ namespace dftfe
                                            d_mpi_comm_parent,
                                            printParams,
                                            mode,
-                                           restartFilesPath);
+                                           restartFilesPath,
+                                           _verbosity);
       }
     initialize(setDeviceToMPITaskBindingInternally);
   }
@@ -312,6 +317,7 @@ namespace dftfe
                        const bool        setDeviceToMPITaskBindingInternally,
                        const std::string mode,
                        const std::string restartFilesPath,
+                       const int         _verbosity,
                        const bool        isScfRestart)
   {
     clear();
@@ -327,7 +333,8 @@ namespace dftfe
                                            d_mpi_comm_parent,
                                            printParams,
                                            mode,
-                                           restartFilesPath);
+                                           restartFilesPath,
+                                           _verbosity);
         d_dftfeParamsPtr->coordinatesFile           = restartCoordsFile;
         d_dftfeParamsPtr->domainBoundingVectorsFile = restartDomainVectorsFile;
         d_dftfeParamsPtr->loadRhoData =
@@ -956,7 +963,6 @@ namespace dftfe
     std::vector<std::vector<double>> ionicForces(
       d_dftfeBasePtr->getForceonAtoms().size() / 3,
       std::vector<double>(3, 0.0));
-
     std::vector<double> ionicForcesVec = d_dftfeBasePtr->getForceonAtoms();
     for (unsigned int i = 0; i < ionicForces.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
@@ -1130,5 +1136,18 @@ namespace dftfe
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     return d_dftfeBasePtr;
   }
+
+
+  void
+  dftfeWrapper::writeDomainAndAtomCoordinates(const std::string Path) const
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    d_dftfeBasePtr->writeDomainAndAtomCoordinates(Path);
+  }
+
+
 
 } // namespace dftfe

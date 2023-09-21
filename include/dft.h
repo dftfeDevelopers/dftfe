@@ -333,13 +333,14 @@ namespace dftfe
 
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files for
-     * structural optimization and dynamics restarts.simplified version for
-     * floating charges case
+     * structural optimization and dynamics restarts. The coordinates are stored
+     * as: 1. fractional for semi-periodic/periodic 2. Cartesian for
+     * non-periodic.
      * @param[in] Path The folder path to store the atom coordinates required
      * during restart.
      */
     void
-    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+    writeDomainAndAtomCoordinates(const std::string Path) const;
 
     /**
      * @brief writes atomistics data for subsequent post-processing. Related to
@@ -348,6 +349,14 @@ namespace dftfe
      */
     void
     writeStructureEnergyForcesDataPostProcess(const std::string Path) const;
+
+    /**
+     * @brief writes quadrature grid information and associated spin-up
+     * and spin-down electron-density for post-processing
+     * @param[in] Path The folder path to store the atomistics data.
+     */
+    virtual void
+    writeGSElectronDensity(const std::string Path) const;
 
 
     /**
@@ -363,6 +372,8 @@ namespace dftfe
      */
     std::vector<std::vector<double>>
     getAtomLocationsFrac() const;
+
+
 
     /**
      * @brief Gets the current cell lattice vectors
@@ -957,6 +968,7 @@ namespace dftfe
      */
     void
     compute_tdos(const std::vector<std::vector<double>> &eigenValuesInput,
+                 const unsigned int                      highestStateOfInterest,
                  const std::string &                     fileName);
 
     void
@@ -1750,6 +1762,17 @@ namespace dftfe
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const double                            _fermiEnergy);
+
+
+    /**
+     * @brief compute the maximum of the residual norm of the highest state of interest among all k points
+     */
+    double
+    computeMaximumHighestOccupiedStateResidualNorm(
+      const std::vector<std::vector<double>>
+        &residualNormWaveFunctionsAllkPoints,
+      const std::vector<std::vector<double>> &eigenValuesAllkPoints,
+      const unsigned int                      highestState);
 
 
     void

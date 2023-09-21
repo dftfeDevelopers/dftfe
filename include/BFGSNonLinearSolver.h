@@ -46,14 +46,16 @@ namespace dftfe
      * @param trustRadius_initial Initial trust region radius.
      * @param trustRadius_minimum mimimum trust region radius (will reset BFGS).
      */
-    BFGSNonLinearSolver(const bool         usePreconditioner,
-                        const bool         useRFOStep,
-                        const unsigned int maxNumberIterations,
-                        const unsigned int debugLevel,
-                        const MPI_Comm &   mpi_comm_parent,
-                        const double       trustRadius_maximum = 0.5,
-                        const double       trustRadius_initial = 0.02,
-                        const double       trustRadius_minimum = 1.0e-4);
+    BFGSNonLinearSolver(
+      const bool         usePreconditioner,
+      const bool         useRFOStep,
+      const unsigned int maxNumberIterations,
+      const unsigned int debugLevel,
+      const MPI_Comm &   mpi_comm_parent,
+      const double       trustRadius_maximum                        = 0.5,
+      const double       trustRadius_initial                        = 0.02,
+      const double       trustRadius_minimum                        = 1.0e-4,
+      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -198,6 +200,9 @@ namespace dftfe
     /// flag to check if hessian is scaled.
     ///
     bool d_hessianScaled;
+
+    //
+    bool d_isCurvatureOnlyLineSearchStoppingCondition;
 
     /// Flag to store the reset state, 0 if step is accepted, 1 if reset occured
     /// and no steps are accepted, 2 if two resets occur without step being

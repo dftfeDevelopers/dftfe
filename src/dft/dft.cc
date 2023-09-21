@@ -34,13 +34,14 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
-#include "molecularDynamicsClass.h"
 #include <poissonSolverProblem.h>
 #include <pseudoConverter.h>
 #include <pseudoUtils.h>
 #include <symmetry.h>
 #include <vectorUtilities.h>
 #include <MemoryTransfer.h>
+#include <QuadDataCompositeWrite.h>
+#include <MPIWriteOnFile.h>
 
 #include <algorithm>
 #include <cmath>
@@ -456,8 +457,24 @@ namespace dftfe
           numElectrons += Z;
       }
 
-    if (d_dftParamsPtr->numberEigenValues <= numElectrons / 2.0 ||
-        d_dftParamsPtr->numberEigenValues == 0)
+    if (d_dftParamsPtr->solverMode == "NSCF" &&
+        d_dftParamsPtr->numberEigenValues == 0 &&
+        d_dftParamsPtr->highestStateOfInterestForChebFiltering != 0)
+      {
+        d_numEigenValues =
+          std::max(d_dftParamsPtr->highestStateOfInterestForChebFiltering * 1.1,
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering +
+                     10.0);
+
+        if (d_dftParamsPtr->verbosity >= 1)
+          {
+            pcout
+              << " Setting the number of Kohn-Sham wave functions to be 10 percent more than the HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING "
+              << d_numEigenValues << std::endl;
+          }
+      }
+    else if (d_dftParamsPtr->numberEigenValues <= numElectrons / 2.0 ||
+             d_dftParamsPtr->numberEigenValues == 0)
       {
         if (d_dftParamsPtr->verbosity >= 1)
           {
@@ -702,7 +719,19 @@ namespace dftfe
 
 
 #ifdef USE_COMPLEX
-    generateMPGrid();
+    if (d_dftParamsPtr->solverMode == "NSCF")
+      {
+        if (!(d_dftParamsPtr->kPointDataFile == ""))
+          {
+            readkPointData();
+          }
+        else
+          {
+            generateMPGrid();
+          }
+      }
+    else
+      generateMPGrid();
 #else
     d_kPointCoordinates.resize(3, 0.0);
     d_kPointWeights.resize(1, 1.0);
@@ -1705,7 +1734,15 @@ namespace dftfe
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
       }
 
-    solve(true, true, d_isRestartGroundStateCalcFromChk);
+    if (d_dftParamsPtr->solverMode == "GS")
+      {
+        solve(true, true, d_isRestartGroundStateCalcFromChk);
+      }
+    else if (d_dftParamsPtr->solverMode == "NSCF")
+      {
+        solveNoSCF();
+        writeBands();
+      }
 
     if (d_dftParamsPtr->writeStructreEnergyForcesFileForPostProcess)
       writeStructureEnergyForcesDataPostProcess(
@@ -1717,8 +1754,13 @@ namespace dftfe
     if (d_dftParamsPtr->writeDensitySolutionFields)
       outputDensity();
 
+    if (d_dftParamsPtr->writeDensityQuadData)
+      writeGSElectronDensity("densityQuadData.txt");
+
     if (d_dftParamsPtr->writeDosFile)
-      compute_tdos(eigenValues, "dosData.out");
+      compute_tdos(eigenValues,
+                   d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                   "dosData.out");
 
     if (d_dftParamsPtr->writeLdosFile)
       compute_ldos(eigenValues, "ldosData.out");
@@ -3636,15 +3678,7 @@ namespace dftfe
 #endif
       );
 
-#ifdef USE_COMPLEX
-    if (!(d_dftParamsPtr->kPointDataFile == ""))
-      {
-        readkPointData();
-        initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem, CGSolver);
-        nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
-        writeBands();
-      }
-#endif
+
     return std::make_tuple(scfConverged, norm);
   }
 
@@ -4158,35 +4192,137 @@ namespace dftfe
                 0,
                 interpoolcomm);
     //
-    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+    if (d_dftParamsPtr->reproducible_output && d_dftParamsPtr->verbosity == 0)
       {
-        FILE *pFile;
-        pFile = fopen("bands.out", "w");
-        fprintf(pFile, "%d %d\n", totkPoints, d_numEigenValues);
+        pcout << "Writing Bands File..." << std::endl;
+        pcout << "K-Point   WaveNo.  ";
+        if (d_dftParamsPtr->spinPolarized)
+          pcout << "SpinUpEigenValue          SpinDownEigenValue" << std::endl;
+        else
+          pcout << "EigenValue" << std::endl;
+      }
+
+    double FE = d_dftParamsPtr->spinPolarized ?
+                  std::max(fermiEnergyDown, fermiEnergyUp) :
+                  fermiEnergy;
+    pcout << "Fermi Energy: " << FE << std::endl;
+    unsigned int        maxeigenIndex = d_numEigenValues;
+    std::vector<double> occupationVector(totkPoints, 0.0);
+
+    for (int iWave = 1; iWave < d_numEigenValues; iWave++)
+      {
+        double maxOcc = -1.0;
         for (unsigned int kPoint = 0;
              kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
              ++kPoint)
           {
-            for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+            if (d_dftParamsPtr->spinPolarized)
               {
-                if (d_dftParamsPtr->spinPolarized)
-                  fprintf(
-                    pFile,
-                    "%d  %d   %g   %g\n",
-                    kPoint,
-                    iWave,
-                    eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
-                                               iWave],
+                occupationVector[2 * kPoint] = dftUtils::getPartialOccupancy(
+                  eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
+                                             iWave],
+                  FE,
+                  C_kb,
+                  d_dftParamsPtr->TVal);
+                occupationVector[2 * kPoint + 1] =
+                  dftUtils::getPartialOccupancy(
                     eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
                                                  d_numEigenValues +
-                                               iWave]);
+                                               iWave],
+                    FE,
+                    C_kb,
+                    d_dftParamsPtr->TVal);
+                maxOcc = std::max(maxOcc,
+                                  std::max(occupationVector[2 * kPoint + 1],
+                                           occupationVector[2 * kPoint]));
+              }
+            else
+              {
+                occupationVector[kPoint] = dftUtils::getPartialOccupancy(
+                  eigenValuesFlattenedGlobal[kPoint * d_numEigenValues + iWave],
+                  FE,
+                  C_kb,
+                  d_dftParamsPtr->TVal);
+                maxOcc = std::max(maxOcc, occupationVector[kPoint]);
+              }
+          }
+
+        if (maxOcc < 1E-5)
+          {
+            maxeigenIndex = iWave;
+            break;
+          }
+      }
+
+    unsigned int numberEigenValues =
+      d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0 ?
+        std::min(d_numEigenValues, maxeigenIndex + 10) :
+        d_dftParamsPtr->highestStateOfInterestForChebFiltering;
+    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+      {
+        FILE *pFile;
+        pFile = fopen("bands.out", "w");
+        fprintf(pFile, "%d %d\n", totkPoints, numberEigenValues);
+        for (unsigned int kPoint = 0;
+             kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
+             ++kPoint)
+          {
+            for (unsigned int iWave = 0; iWave < numberEigenValues; ++iWave)
+              {
+                if (d_dftParamsPtr->spinPolarized)
+                  {
+                    fprintf(
+                      pFile,
+                      "%d  %d   %.14g   %.14g\n",
+                      kPoint,
+                      iWave,
+                      eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
+                                                 iWave],
+                      eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                   d_numEigenValues +
+                                                 iWave]);
+                    if (d_dftParamsPtr->reproducible_output &&
+                        d_dftParamsPtr->verbosity == 0)
+                      {
+                        double eigenUpTrunc =
+                          std::floor(
+                            1000000000 *
+                            (eigenValuesFlattenedGlobal
+                               [2 * kPoint * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        double eigenDownTrunc =
+                          std::floor(
+                            1000000000 *
+                            (eigenValuesFlattenedGlobal
+                               [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        pcout << kPoint << "  " << iWave << "  " << std::fixed
+                              << std::setprecision(8) << eigenUpTrunc << "  "
+                              << eigenDownTrunc << std::endl;
+                      }
+                  }
                 else
-                  fprintf(pFile,
-                          "%d  %d %g\n",
-                          kPoint,
-                          iWave,
-                          eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                     iWave]);
+                  {
+                    fprintf(
+                      pFile,
+                      "%d  %d %.14g\n",
+                      kPoint,
+                      iWave,
+                      eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
+                                                 iWave]);
+                    if (d_dftParamsPtr->reproducible_output &&
+                        d_dftParamsPtr->verbosity == 0)
+                      {
+                        double eigenTrunc =
+                          std::floor(1000000000 *
+                                     (eigenValuesFlattenedGlobal
+                                        [kPoint * d_numEigenValues + iWave])) /
+                          1000000000.0;
+                        pcout << kPoint << "  " << iWave << "  " << std::fixed
+                              << std::setprecision(8) << eigenTrunc
+                              << std::endl;
+                      }
+                  }
               }
           }
       }
@@ -4313,6 +4449,83 @@ namespace dftfe
   {
     d_rhoOutNodalValuesSplit = OutDensity;
   }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::writeGSElectronDensity(
+    const std::string Path) const
+  {
+    const unsigned int poolId =
+      dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+    const unsigned int bandGroupId =
+      dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+
+    if (poolId == 0 && bandGroupId == 0)
+      {
+        std::vector<std::shared_ptr<dftUtils::CompositeData>> data(0);
+
+        const dealii::Quadrature<3> &quadrature_formula =
+          matrix_free_data.get_quadrature(d_densityQuadratureId);
+        dealii::FEValues<3> fe_values(FE,
+                                      quadrature_formula,
+                                      dealii::update_quadrature_points |
+                                        dealii::update_JxW_values);
+        const unsigned int  n_q_points = quadrature_formula.size();
+
+        // loop over elements
+        typename dealii::DoFHandler<3>::active_cell_iterator
+          cell = dofHandler.begin_active(),
+          endc = dofHandler.end();
+        for (; cell != endc; ++cell)
+          {
+            if (cell->is_locally_owned())
+              {
+                fe_values.reinit(cell);
+                const std::vector<double> &rhoValues =
+                  (d_dftParamsPtr->spinPolarized == 1) ?
+                    rhoOutValuesSpinPolarized->find(cell->id())->second :
+                    rhoOutValues->find(cell->id())->second;
+
+                for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+                  {
+                    std::vector<double> quadVals(0);
+
+                    const dealii::Point<3> &quadPoint =
+                      fe_values.quadrature_point(q_point);
+                    const double jxw = fe_values.JxW(q_point);
+
+                    quadVals.push_back(quadPoint[0]);
+                    quadVals.push_back(quadPoint[1]);
+                    quadVals.push_back(quadPoint[2]);
+                    quadVals.push_back(jxw);
+
+                    if (d_dftParamsPtr->spinPolarized == 1)
+                      {
+                        quadVals.push_back(rhoValues[2 * q_point + 0]);
+                        quadVals.push_back(rhoValues[2 * q_point + 1]);
+                      }
+                    else
+                      {
+                        quadVals.push_back(rhoValues[q_point]);
+                      }
+
+                    data.push_back(
+                      std::make_shared<dftUtils::QuadDataCompositeWrite>(
+                        quadVals));
+                  }
+              }
+          }
+
+        std::vector<dftUtils::CompositeData *> dataRawPtrs(data.size());
+        for (unsigned int i = 0; i < data.size(); ++i)
+          dataRawPtrs[i] = data[i].get();
+        dftUtils::MPIWriteOnFile().writeData(dataRawPtrs,
+                                             Path,
+                                             mpi_communicator);
+      }
+  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void

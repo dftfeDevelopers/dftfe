@@ -49,7 +49,4 @@ end
 subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-5
-  subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
-  end
 end

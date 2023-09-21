@@ -23,6 +23,7 @@
 #include "dftfeWrapper.h"
 #include "runParameters.h"
 #include "molecularDynamicsClass.h"
+#include "nudgedElasticBandClass.h"
 #include "geometryOptimizationClass.h"
 
 //
@@ -154,6 +155,8 @@ main(int argc, char *argv[])
       std::cout
         << "=========================================================================================================="
         << std::endl;
+
+      runParams.print_parameters();
     }
 
 
@@ -169,7 +172,30 @@ main(int argc, char *argv[])
     }
 
   else if (runParams.solvermode == "NEB")
-    {}
+    {
+      dftfe::nudgedElasticBandClass nebClass(
+        parameter_file,
+        runParams.restartFilesPath,
+        MPI_COMM_WORLD,
+        runParams.restart,
+        runParams.verbosity,
+        runParams.numberOfImages,
+        runParams.imageFreeze,
+        runParams.Kmax,
+        runParams.Kmin,
+        runParams.pathThreshold,
+        runParams.maximumNEBiteration,
+        runParams.maxLineSearchIterCGPRP,
+        runParams.lbfgsNumPastSteps,
+        runParams.bfgsStepMethod,
+        runParams.optimizermaxIonUpdateStep,
+        runParams.optimizationSolver,
+        runParams.coordinatesFileNEB,
+        runParams.domainVectorsFileNEB,
+        runParams.ionRelaxFlagsFile);
+
+      int status = nebClass.findMEP();
+    }
   else if (runParams.solvermode == "GEOOPT")
     {
       dftfe::geometryOptimizationClass geoOpt(parameter_file,
@@ -186,8 +212,20 @@ main(int argc, char *argv[])
                                        true,
                                        true,
                                        "NONE",
-                                       runParams.restartFilesPath);
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity);
       dftfeWrapped.writeMesh();
+    }
+  else if (runParams.solvermode == "NSCF")
+    {
+      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                       MPI_COMM_WORLD,
+                                       true,
+                                       true,
+                                       "NSCF",
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity);
+      dftfeWrapped.run();
     }
 
   else
@@ -197,7 +235,8 @@ main(int argc, char *argv[])
                                        true,
                                        true,
                                        "GS",
-                                       runParams.restartFilesPath);
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity);
       dftfeWrapped.run();
     }
 

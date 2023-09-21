@@ -52,7 +52,8 @@ namespace dftfe
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
-      writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
+      writeLdosFile, writeBandsFile, writeLocalizationLengths, pinnedNodeForPBC,
+      writePdosFile;
 
 
     /** parameters for LRD preconditioner **/
@@ -98,6 +99,8 @@ namespace dftfe
     bool writeWfcSolutionFields;
 
     bool writeDensitySolutionFields;
+
+    bool writeDensityQuadData;
 
     std::string  startingWFCType;
     bool         restrictToOnePass;
@@ -160,6 +163,7 @@ namespace dftfe
     double       pspCutoffImageCharges;
     bool         reuseLanczosUpperBoundFromFirstCall;
     bool         allowMultipleFilteringPassesAfterFirstScf;
+    unsigned int highestStateOfInterestForChebFiltering;
     bool         useELPADeviceKernel;
     bool         deviceMemOptMode;
 
@@ -200,7 +204,8 @@ namespace dftfe
                      const MPI_Comm &   mpi_comm_parent,
                      const bool         printParams      = false,
                      const std::string  mode             = "GS",
-                     const std::string  restartFilesPath = ".");
+                     const std::string  restartFilesPath = ".",
+                     const int          _verbosity       = 1);
 
     /**
      * Check parameters

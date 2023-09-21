@@ -18,8 +18,8 @@ Note the above are shown only as an example. We strongly recommend using the lat
 
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
-on \href{http://p4est.org/}{p4est}, \href{http://www.netlib.org/scalapack/}{ScaLAPACK} and BLAS-LAPACK are set. The other required external libraries, which are
-not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA}. DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc} (via deali.II), \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. \dftfe{} can also be linked to \href{https://github.com/awvwgk/simple-dftd3}{simple-dftd3} and \href{https://github.com/dftd4/dftd4}{dftd4} in order to provide support for the dftd family of dispersion corrections by Grimme et. al.. Below, we give brief installation instructions for each of the above libraries.
+on \href{http://p4est.org/}{p4est} and BLAS-LAPACK are set. The other required external libraries, which are
+not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA} (ELPA requires \href{http://www.netlib.org/scalapack/}{ScaLAPACK}). DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc} (via deali.II), \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. \dftfe{} can also be linked to \href{https://github.com/awvwgk/simple-dftd3}{simple-dftd3} and \href{https://github.com/dftd4/dftd4}{dftd4} in order to provide support for the dftd family of dispersion corrections by Grimme et. al.. Below, we give brief installation instructions for each of the above libraries.
 \subsubsection{Instructions for dependencies: ALGLIB, Libxc, spglib, Libxml2, ScaLAPACK, ELPA, p4est and nccl (nccl is optional)}
 \begin{enumerate}
 	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting for various radial data. Download the current release of the Alglib free C++ edition from \url{http://www.alglib.net/download.php}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using GCC compiler do
@@ -56,7 +56,7 @@ $ make install
 \end{verbatim}
 There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
 
-\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
+\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via ELPA for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
 %Alternatively one can also use the python based installer~\url{http://www.netlib.org/scalapack/scalapack_installer.tgz} for Linux.
 
 \item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download the latest version elpa-2022.11.001 from \url{https://elpa.mpcdf.mpg.de/software/} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
@@ -135,7 +135,7 @@ export LD_LIBRARY_PATH=
 $LD_LIBRARY_PATH:$ROCM_PATH/lib:$ROCM_PATH/hip/lib:$ROCM_PATH/lib:$ROCM_PATH/rocblas/lib
 \end{verbatim}
 
-\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{http://www.p4est.org/}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
+\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{https://github.com/p4est/p4est.github.io/raw/master/release/p4est-2.2.tar.gz}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
 $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
@@ -149,7 +149,7 @@ $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
 
 
 \subsubsection{Instructions for deal.II}
-Assuming the above dependencies (p4est and ScaLAPACK) are installed, we now briefly discuss the steps to compile and install deal.II library linked with the above dependencies. You need to install two variants of the deal.II library-- one variant linked with real scalar type PETSc and SLEPc installations, and the other variant linked with complex scalar type PETSc and SLEPc installations. 
+Assuming the above p4est dependency is installed, we now briefly discuss the steps to compile and install deal.II library linked with the above dependencies. You need to install two variants of the deal.II library-- one variant linked with real scalar type PETSc and SLEPc installations, and the other variant linked with complex scalar type PETSc and SLEPc installations. 
 
 \begin{enumerate}
 
@@ -186,9 +186,6 @@ $ make install
 -DLAPACK_DIR=lapack_dir_paths (both BLAS and LAPACK directory paths)
 -DLAPACK_FOUND=true
 -DLAPACK_LIBRARIES=lapack_lib_paths (both BLAS and LAPACK library paths)
--DDEAL_II_WITH_SCALAPACK=ON
--DSCALAPACK_DIR=scalapack_dir_path (only required if linking to netlib ScaLAPACK)
--DSCALAPACK_LIBRARIES=scalapack_lib_path
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
@@ -225,12 +222,6 @@ $ cmake
 -Wl,--no-as-needed -lmkl_intel_lp64
 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm
 -ldl" -DLAPACK_INCLUDE_DIRS="-I${MKLROOT}/include" 
--DDEAL_II_WITH_SCALAPACK=ON
--DSCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64
--lmkl_scalapack_lp64 -Wl,--no-as-needed
--lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core
--lmkl_blacs_openmpi_lp64 -lgomp -lpthread -lm
--ldl"
 -DCMAKE_INSTALL_PREFIX=dealii_install_path ../dealii
 $ make -j 8
 $ make install
@@ -244,6 +235,8 @@ The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES| and \verb|-DLAPACK_
 \end{figure}
 
 %Note that in the above procedure one is installing the development version of deal.II library and this version is continuously updated by deal.II developers, which can sometimes lead to installation issues on certain compilers. If you face any issues during the installation procedure of deal.II development version as explained above, you may alternatively obtain the current release version of deal.II by downloading and unpacking the .tar.gz file from \url{https://www.dealii.org/download.html} and following the same procedure as above. If you still face installation issues, and/or if you have any questions about the deal.II installation, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists}.\\
+
+
 
 \subsubsection{Instructions for simple-dftd3 and dftd4}
 
@@ -259,20 +252,25 @@ $ FC=gfortran cmake -B _build
 $ cmake --build _build
 $ cmake --install _build 
 \end{verbatim}
-	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.4.0 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
+	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.460 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
 \begin{verbatim}
-$ FC=gfortran cmake -B _build 
--DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 
--Wl,--no-as-needed -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp 
--lpthread -lm -ldl" 
--DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 
--Wl,--no-as-needed -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp 
--lpthread -lm -ldl" 
--DCMAKE_INSTALL_PREFIX=dftd4_install_path
-$ cmake --build _build
-$ cmake --install _build 
+$ cd dftd4-3.6.0
+$ mkdir build 
+$ cd build
+$ cmake -DCMAKE_Fortran_COMPILER=gfortran
+        -DCMAKE_C_COMPILER=gcc
+        -DBLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
+        -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_rt -lmkl_core -lgomp 
+        -lpthread -lm -ldl" 
+        -DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64
+        -lmkl_gnu_thread -lmkl_rt -lmkl_core 
+        -lgomp -lpthread -lm -ldl"
+        -DBUILD_SHARED_LIBS=ON 
+        -DCMAKE_INSTALL_PREFIX=dftd4_install_path
+        -DWITH_OpenMP=OFF
+        ..
+$ make -j16
+$ make install
 \end{verbatim}
 \end{enumerate}
 The values for \verb|-DBLAS_LIBRARIES| and \verb|-DLAPACK_LIBRARIES| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU fortran compiler.\\ 
@@ -424,8 +422,6 @@ $ make install
 -DLAPACK_DIR=lapack_dir_path 
 -DLAPACK_FOUND=true 
 -DLAPACK_LIBRARIES=lapack_lib_path
--DSCALAPACK_DIR=scalapack_dir_path (only required if linking to Netlib ScaLAPACK)
--DSCALAPACK_LIBRARIES=scalapack_lib_path
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
