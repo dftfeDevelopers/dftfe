@@ -33,8 +33,8 @@ namespace dftfe
   template <typename NumberType>
   void
   computeRhoFirstOrderResponseCPU(
-    const std::vector<std::vector<NumberType>> &   X,
-    const std::vector<std::vector<NumberType>> &   XPrime,
+    const NumberType *                             X,
+    const NumberType *                             XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
@@ -59,8 +59,8 @@ namespace dftfe
   template <typename NumberType, typename NumberTypeLowPrec>
   void
   computeRhoFirstOrderResponseCPUMixedPrec(
-    const std::vector<std::vector<NumberType>> &   X,
-    const std::vector<std::vector<NumberType>> &   XPrime,
+    const NumberType *                             X,
+    const NumberType *                             XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,

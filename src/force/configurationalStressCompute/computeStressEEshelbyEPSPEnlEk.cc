@@ -163,7 +163,7 @@ namespace dftfe
                                             bandGroupLowHighPlusOneIndices[1]);
 
     const unsigned int localVectorSize =
-      dftPtr->d_eigenVectorsFlattenedSTL[0].size() / numEigenVectors;
+      matrixFreeData.get_vector_partitioner()->locally_owned_size();
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
       dftPtr->d_kPointWeights.size());
     std::vector<distributedCPUVec<dataTypes::number>>
@@ -289,7 +289,7 @@ namespace dftfe
 
             force::wfcContractionsForceKernelsAllH(
               kohnShamDFTEigenOperator,
-              dftPtr->d_eigenVectorsFlattenedSTL,
+              dftPtr->d_eigenVectorsFlattenedHost.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
               dftPtr->eigenValues,

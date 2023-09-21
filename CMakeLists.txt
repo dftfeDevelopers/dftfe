@@ -48,6 +48,7 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/dft/densityCalculatorCPU.cc
+  ./src/dft/densityCalculator.cc
   ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
   ./src/excManager/excDensityBaseClass.cpp
   ./src/excManager/excDensityLDAClass.cpp
@@ -105,7 +106,7 @@ SET(TARGET_SRC
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
   ./utils/FEBasisOperations.cc
-  ./utils/FEBasisOperationsHostKernels.cc
+  ./utils/FEBasisOperationsHost.cc
   ./src/dft/dftd.cc
   ./src/mdi/MDIEngine.cpp
   ./src/mdi/libraryMDI.cpp
@@ -166,6 +167,7 @@ SET(DEVICE_SRC
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
   ./src/dftOperator/kohnShamDFTOperatorDevice.cc
@@ -184,6 +186,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./utils/FEBasisOperationsDevice.cc
   )
 
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
@@ -193,6 +196,7 @@ SET(DEVICE_SRC
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
   ./src/dftOperator/kohnShamDFTOperatorDevice.cc
@@ -211,6 +215,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./utils/FEBasisOperationsDevice.cc
   )
 
 ENDIF()

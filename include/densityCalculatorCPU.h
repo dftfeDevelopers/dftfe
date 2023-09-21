@@ -20,6 +20,7 @@
 
 #include "headers.h"
 #include "operator.h"
+#include "FEBasisOperations.h"
 #include "dftParameters.h"
 
 namespace dftfe
@@ -33,16 +34,20 @@ namespace dftfe
   template <typename T>
   void
   computeRhoFromPSICPU(
-    const std::vector<std::vector<T>> &            X,
-    const std::vector<std::vector<T>> &            XFrac,
-    const unsigned int                             totalNumWaveFunctions,
-    const unsigned int                             Nfr,
-    const unsigned int                             numLocalDofs,
-    const std::vector<std::vector<double>> &       eigenValues,
-    const double                                   fermiEnergy,
-    const double                                   fermiEnergyUp,
-    const double                                   fermiEnergyDown,
-    operatorDFTClass &                             operatorMatrix,
+    const T *                               X,
+    const T *                               XFrac,
+    const unsigned int                      totalNumWaveFunctions,
+    const unsigned int                      Nfr,
+    const unsigned int                      numLocalDofs,
+    const std::vector<std::vector<double>> &eigenValues,
+    const double                            fermiEnergy,
+    const double                            fermiEnergyUp,
+    const double                            fermiEnergyDown,
+    operatorDFTClass &                      operatorMatrix,
+    std::unique_ptr<
+      dftfe::basis::
+        FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
+      &                                            basisOperationsPtrHost,
     const dealii::DoFHandler<3> &                  dofHandler,
     const unsigned int                             totalLocallyOwnedCells,
     const unsigned int                             numberNodesPerElement,

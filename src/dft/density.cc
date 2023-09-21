@@ -19,10 +19,7 @@
 
 // source file for electron density related computations
 #include <dft.h>
-#include <densityCalculatorCPU.h>
-#ifdef DFTFE_WITH_DEVICE
-#  include <densityCalculatorDevice.h>
-#endif
+#include <densityCalculator.h>
 
 namespace dftfe
 {
@@ -202,18 +199,18 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
-          Device::computeRhoFromPSI(
-            d_eigenVectorsFlattenedDevice.begin(),
-            d_eigenVectorsRotFracFlattenedDevice.begin(),
+          computeRhoFromPSI(
+            &d_eigenVectorsFlattenedDevice,
+            &d_eigenVectorsRotFracFlattenedDevice,
             d_numEigenValues,
             d_numEigenValuesRR,
-            d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             eigenValues,
             fermiEnergy,
             fermiEnergyUp,
             fermiEnergyDown,
-            kohnShamDFTEigenOperator,
-            d_eigenDofHandlerIndex,
+            basisOperationsPtrDevice,
+            0,
             dofHandler,
             matrix_free_data.n_physical_cells(),
             matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
@@ -230,20 +227,22 @@ namespace dftfe
             interBandGroupComm,
             *d_dftParamsPtr,
             isConsiderSpectrumSplitting &&
-              d_numEigenValues != d_numEigenValuesRR);
+              d_numEigenValues != d_numEigenValuesRR,
+            false);
 #endif
         if (!d_dftParamsPtr->useDevice)
-          computeRhoFromPSICPU(
-            d_eigenVectorsFlattenedSTL,
-            d_eigenVectorsRotFracDensityFlattenedSTL,
+          computeRhoFromPSI(
+            &d_eigenVectorsFlattenedHost,
+            &d_eigenVectorsRotFracDensityFlattenedHost,
             d_numEigenValues,
             d_numEigenValuesRR,
-            d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             eigenValues,
             fermiEnergy,
             fermiEnergyUp,
             fermiEnergyDown,
-            kohnShamDFTEigenOperatorCPU,
+            basisOperationsPtrHost,
+            0,
             dofHandler,
             matrix_free_data.n_physical_cells(),
             matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
@@ -685,18 +684,18 @@ namespace dftfe
         // nodes in each cell
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
-      Device::computeRhoFromPSI(
-        d_eigenVectorsFlattenedDevice.begin(),
-        d_eigenVectorsRotFracFlattenedDevice.begin(),
+      computeRhoFromPSI(
+        &d_eigenVectorsFlattenedDevice,
+        &d_eigenVectorsRotFracFlattenedDevice,
         d_numEigenValues,
         d_numEigenValuesRR,
-        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+        matrix_free_data.get_vector_partitioner()->locally_owned_size(),
         eigenValues,
         fermiEnergy,
         fermiEnergyUp,
         fermiEnergyDown,
-        kohnShamDFTEigenOperator,
-        d_eigenDofHandlerIndex,
+        basisOperationsPtrDevice,
+        0,
         dofHandler,
         matrix_free_data.n_physical_cells(),
         matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
@@ -715,17 +714,18 @@ namespace dftfe
         true);
 #endif
     if (!d_dftParamsPtr->useDevice)
-      computeRhoFromPSICPU(
-        d_eigenVectorsFlattenedSTL,
-        d_eigenVectorsRotFracDensityFlattenedSTL,
+      computeRhoFromPSI(
+        &d_eigenVectorsFlattenedHost,
+        &d_eigenVectorsRotFracDensityFlattenedHost,
         d_numEigenValues,
         d_numEigenValuesRR,
-        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+        matrix_free_data.get_vector_partitioner()->locally_owned_size(),
         eigenValues,
         fermiEnergy,
         fermiEnergyUp,
         fermiEnergyDown,
-        kohnShamDFTEigenOperatorCPU,
+        basisOperationsPtrHost,
+        0,
         dofHandler,
         matrix_free_data.n_physical_cells(),
         matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),

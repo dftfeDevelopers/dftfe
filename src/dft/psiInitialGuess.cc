@@ -344,14 +344,9 @@ namespace dftfe
     locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
     unsigned int numberDofs = locallyOwnedDOFs.size();
 
-    for (unsigned int kPoint = 0;
-         kPoint < (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-         ++kPoint)
-      {
-        std::fill(d_eigenVectorsFlattenedSTL[kPoint].begin(),
-                  d_eigenVectorsFlattenedSTL[kPoint].end(),
-                  0.0);
-      }
+    std::fill(d_eigenVectorsFlattenedHost.begin(),
+              d_eigenVectorsFlattenedHost.end(),
+              0.0);
 
     const unsigned int numberGlobalAtoms = atomLocations.size();
 
@@ -498,8 +493,9 @@ namespace dftfe
                             // spherical part
                             if (it->m > 0)
                               {
-                                d_eigenVectorsFlattenedSTL
-                                  [kPoint][dof * d_numEigenValues + waveId] +=
+                                d_eigenVectorsFlattenedHost
+                                  [kPoint * d_numEigenValues * numberDofs +
+                                   dof * d_numEigenValues + waveId] +=
                                   dataTypes::number(
                                     R * std::sqrt(2) *
                                     boost::math::spherical_harmonic_r(
@@ -507,16 +503,18 @@ namespace dftfe
                               }
                             else if (it->m == 0)
                               {
-                                d_eigenVectorsFlattenedSTL
-                                  [kPoint][dof * d_numEigenValues + waveId] +=
+                                d_eigenVectorsFlattenedHost
+                                  [kPoint * d_numEigenValues * numberDofs +
+                                   dof * d_numEigenValues + waveId] +=
                                   dataTypes::number(
                                     R * boost::math::spherical_harmonic_r(
                                           it->l, it->m, theta, phi));
                               }
                             else
                               {
-                                d_eigenVectorsFlattenedSTL
-                                  [kPoint][dof * d_numEigenValues + waveId] +=
+                                d_eigenVectorsFlattenedHost
+                                  [kPoint * d_numEigenValues * numberDofs +
+                                   dof * d_numEigenValues + waveId] +=
                                   dataTypes::number(
                                     R * std::sqrt(2) *
                                     boost::math::spherical_harmonic_i(
@@ -539,8 +537,9 @@ namespace dftfe
                     //
                     // boost::math::normal normDist;
 
-                    std::vector<dataTypes::number> &temp =
-                      d_eigenVectorsFlattenedSTL[kPoint];
+                    dataTypes::number *temp =
+                      d_eigenVectorsFlattenedHost.data() +
+                      kPoint * d_numEigenValues * numberDofs;
                     for (unsigned int iWave = waveFunctionsVector.size();
                          iWave < d_numEigenValues;
                          ++iWave)
@@ -565,11 +564,10 @@ namespace dftfe
              (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
              ++kPoint)
           {
-            std::vector<dataTypes::number> &temp1 =
-              d_eigenVectorsFlattenedSTL[kPoint];
+            dataTypes::number *temp1 = d_eigenVectorsFlattenedHost.data() +
+                                       kPoint * d_numEigenValues * numberDofs;
 
-            std::vector<dataTypes::number> &temp2 =
-              d_eigenVectorsFlattenedSTL[0];
+            dataTypes::number *temp2 = d_eigenVectorsFlattenedHost.data();
 
             for (unsigned int idof = 0; idof < numberDofs; idof++)
               for (unsigned int iwave = 0; iwave < d_numEigenValues; iwave++)

@@ -728,10 +728,6 @@ namespace dftfe
     d_upperBoundUnwantedSpectrumValues.resize(
       (d_dftParamsPtr->spinPolarized + 1) * d_kPointWeights.size(), 0.0);
 
-    d_eigenVectorsFlattenedSTL.resize((1 + d_dftParamsPtr->spinPolarized) *
-                                      d_kPointWeights.size());
-    d_eigenVectorsRotFracDensityFlattenedSTL.resize(
-      (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
 
     for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
@@ -1628,8 +1624,9 @@ namespace dftfe
 
 
             vectorTools::copyFlattenedSTLVecToSingleCompVec(
-              d_eigenVectorsFlattenedSTL[0],
+              d_eigenVectorsFlattenedHost.data(),
               d_numEigenValues,
+              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
               std::make_pair(0, numberWaveFunctionsErrorEstimate),
               eigenVectorsArray);
 
@@ -1803,6 +1800,8 @@ namespace dftfe
         if (initializeCublas)
           {
             kohnShamDFTEigenOperatorDevice.createDeviceBlasHandle();
+            basisOperationsPtrDevice->setDeviceBLASHandle(
+              &(kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle()));
           }
 
         AssertThrow(
@@ -3330,8 +3329,7 @@ namespace dftfe
       dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
 
     const unsigned int localVectorSize =
-      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
-
+      matrix_free_data.get_vector_partitioner()->locally_owned_size();
     if (numberBandGroups > 1 && !d_dftParamsPtr->useDevice)
       {
         MPI_Barrier(interBandGroupComm);
@@ -3347,13 +3345,17 @@ namespace dftfe
             {
               const unsigned int currentBlockSize =
                 std::min(blockSize, d_numEigenValues * localVectorSize - i);
-              MPI_Allreduce(MPI_IN_PLACE,
-                            &d_eigenVectorsFlattenedSTL[kPoint][0] + i,
-                            currentBlockSize,
-                            dataTypes::mpi_type_id(
-                              &d_eigenVectorsFlattenedSTL[kPoint][0]),
-                            MPI_SUM,
-                            interBandGroupComm);
+              MPI_Allreduce(
+                MPI_IN_PLACE,
+                &d_eigenVectorsFlattenedHost[kPoint * d_numEigenValues *
+                                             localVectorSize] +
+                  i,
+                currentBlockSize,
+                dataTypes::mpi_type_id(
+                  &d_eigenVectorsFlattenedHost[kPoint * d_numEigenValues *
+                                               localVectorSize]),
+                MPI_SUM,
+                interBandGroupComm);
             }
       }
 
@@ -3553,17 +3555,7 @@ namespace dftfe
     if (d_dftParamsPtr->useDevice &&
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
-      for (unsigned int kPoint = 0;
-           kPoint <
-           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-           ++kPoint)
-        {
-          d_eigenVectorsFlattenedDevice.copyTo<dftfe::utils::MemorySpace::HOST>(
-            &d_eigenVectorsFlattenedSTL[kPoint][0],
-            d_eigenVectorsFlattenedSTL[kPoint].size(),
-            (kPoint * d_eigenVectorsFlattenedSTL[0].size()),
-            0);
-        }
+      d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
 #endif
 
 
@@ -3957,20 +3949,26 @@ namespace dftfe
           {
 #ifdef USE_COMPLEX
             vectorTools::copyFlattenedSTLVecToSingleCompVec(
-              d_eigenVectorsFlattenedSTL[k *
-                                           (1 + d_dftParamsPtr->spinPolarized) +
-                                         s],
+              d_eigenVectorsFlattenedHost.data() +
+                (k * (1 + d_dftParamsPtr->spinPolarized) + s) *
+                  d_numEigenValues *
+                  matrix_free_data.get_vector_partitioner()
+                    ->locally_owned_size(),
               d_numEigenValues,
+              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
               std::make_pair(i, i + 1),
               localProc_dof_indicesReal,
               localProc_dof_indicesImag,
               tempVec);
 #else
             vectorTools::copyFlattenedSTLVecToSingleCompVec(
-              d_eigenVectorsFlattenedSTL[k *
-                                           (1 + d_dftParamsPtr->spinPolarized) +
-                                         s],
+              d_eigenVectorsFlattenedHost.data() +
+                (k * (1 + d_dftParamsPtr->spinPolarized) + s) *
+                  d_numEigenValues *
+                  matrix_free_data.get_vector_partitioner()
+                    ->locally_owned_size(),
               d_numEigenValues,
+              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
               std::make_pair(i, i + 1),
               tempVec);
 #endif

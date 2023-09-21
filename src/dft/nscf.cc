@@ -46,7 +46,7 @@ namespace dftfe
     eigenValues.clear();
     a0.clear();
     bLow.clear();
-    d_eigenVectorsFlattenedSTL.clear();
+    d_eigenVectorsFlattenedHost.clear();
     waveFunctionsVector.clear();
     numElectrons = 0;
     d_numEigenValues =
@@ -56,13 +56,9 @@ namespace dftfe
     eigenValues.resize(d_maxkPoints);
     a0.resize(d_maxkPoints, 0.0);
     bLow.resize(d_maxkPoints, 0.0);
-    d_eigenVectorsFlattenedSTL.resize(d_maxkPoints);
-    //
-    for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-      d_eigenVectorsFlattenedSTL[kPoint].resize(
-        d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->local_size(),
-        dataTypes::number(0.0));
+    d_eigenVectorsFlattenedHost.resize(
+      d_maxkPoints * d_numEigenValues *
+      matrix_free_data.get_vector_partitioner()->locally_owned_size());
     //
     pcout << " check 0.1 " << std::endl;
     //

@@ -29,8 +29,9 @@ namespace dftfe
     template <typename T>
     unsigned int
     pseudoGramSchmidtOrthogonalization(elpaScalaManager &   elpaScala,
-                                       std::vector<T> &     X,
+                                       T *                  X,
                                        const unsigned int   numberVectors,
+                                       const unsigned int   numLocalDofs,
                                        const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiComm,
@@ -38,8 +39,6 @@ namespace dftfe
                                        const dftParameters &dftParams)
 
     {
-      const unsigned int numLocalDofs = X.size() / numberVectors;
-
       dealii::ConditionalOStream pcout(
         std::cout,
         (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
@@ -74,8 +73,8 @@ namespace dftfe
       if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
           computing_timer.enter_subsection("Fill overlap matrix CGS");
-          internal::fillParallelOverlapMatrix(&X[0],
-                                              X.size(),
+          internal::fillParallelOverlapMatrix(X,
+                                              numberVectors * numLocalDofs,
                                               numberVectors,
                                               processGrid,
                                               interBandGroupComm,
@@ -91,8 +90,8 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberVectors * numLocalDofs,
               numberVectors,
               processGrid,
               interBandGroupComm,
@@ -101,8 +100,8 @@ namespace dftfe
               dftParams);
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
-              &X[0],
-              X.size(),
+              X,
+              numberVectors * numLocalDofs,
               numberVectors,
               processGrid,
               interBandGroupComm,
@@ -218,8 +217,8 @@ namespace dftfe
       if (!(dftParams.useMixedPrecCGS_SR && useMixedPrec))
         {
           computing_timer.enter_subsection("Subspace rotation CGS");
-          internal::subspaceRotation(&X[0],
-                                     X.size(),
+          internal::subspaceRotation(X,
+                                     numberVectors * numLocalDofs,
                                      numberVectors,
                                      processGrid,
                                      interBandGroupComm,
@@ -235,8 +234,8 @@ namespace dftfe
           computing_timer.enter_subsection("Subspace rotation mixed prec CGS");
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationCGSMixedPrec<T, std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberVectors * numLocalDofs,
               numberVectors,
               processGrid,
               interBandGroupComm,
@@ -245,8 +244,9 @@ namespace dftfe
               dftParams,
               false);
           else
-            internal::subspaceRotationCGSMixedPrec<T, float>(&X[0],
-                                                             X.size(),
+            internal::subspaceRotationCGSMixedPrec<T, float>(X,
+                                                             numberVectors *
+                                                               numLocalDofs,
                                                              numberVectors,
                                                              processGrid,
                                                              interBandGroupComm,

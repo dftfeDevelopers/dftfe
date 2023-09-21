@@ -22,6 +22,7 @@
 #    include <headers.h>
 #    include <operatorDevice.h>
 #    include "dftParameters.h"
+#    include "FEBasisOperations.h"
 
 namespace dftfe
 {
@@ -30,16 +31,21 @@ namespace dftfe
     template <typename NumberType>
     void
     computeRhoFromPSI(
-      const NumberType *                             X,
-      const NumberType *                             XFrac,
-      const unsigned int                             totalNumWaveFunctions,
-      const unsigned int                             Nfr,
-      const unsigned int                             numLocalDofs,
-      const std::vector<std::vector<double>> &       eigenValues,
-      const double                                   fermiEnergy,
-      const double                                   fermiEnergyUp,
-      const double                                   fermiEnergyDown,
-      operatorDFTDeviceClass &                       operatorMatrix,
+      const NumberType *                      X,
+      const NumberType *                      XFrac,
+      const unsigned int                      totalNumWaveFunctions,
+      const unsigned int                      Nfr,
+      const unsigned int                      numLocalDofs,
+      const std::vector<std::vector<double>> &eigenValues,
+      const double                            fermiEnergy,
+      const double                            fermiEnergyUp,
+      const double                            fermiEnergyDown,
+      operatorDFTDeviceClass &                operatorMatrix,
+      std::unique_ptr<
+        dftfe::basis::FEBasisOperations<NumberType,
+                                        double,
+                                        dftfe::utils::MemorySpace::DEVICE>>
+        &                                            basisOperationsPtrDevice,
       const unsigned int                             matrixFreeDofhandlerIndex,
       const dealii::DoFHandler<3> &                  dofHandler,
       const unsigned int                             totalLocallyOwnedCells,

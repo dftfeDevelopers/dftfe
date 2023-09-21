@@ -262,6 +262,19 @@ namespace dftfe
                             d_constraintsVector,
                             quadratureVector,
                             additional_data);
+    basisOperationsPtrHost = std::make_unique<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>(
+      matrix_free_data, d_constraintsVector);
+#if defined(DFTFE_WITH_DEVICE)
+    if (d_dftParamsPtr->useDevice)
+      basisOperationsPtrDevice = std::make_unique<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::DEVICE>>(
+        matrix_free_data, d_constraintsVector);
+#endif
 
     MPI_Barrier(d_mpiCommParent);
     init_mf = MPI_Wtime() - init_mf;

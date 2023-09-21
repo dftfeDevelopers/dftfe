@@ -169,8 +169,9 @@ namespace dftfe
      */
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<std::complex<double>> &   flattenedArray,
+      const std::complex<double> *                flattenedArray,
       const unsigned int                          totalNumberComponents,
+      const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<dealii::types::global_dof_index>
         &localProcDofIndicesReal,
@@ -180,8 +181,9 @@ namespace dftfe
 
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<std::complex<double>> &   flattenedArray,
+      const std::complex<double> *                flattenedArray,
       const unsigned int                          totalNumberComponents,
+      const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
 
       std::vector<distributedCPUVec<double>> &componentVectors);
@@ -206,8 +208,9 @@ namespace dftfe
      */
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<double> &                 flattenedArray,
+      const double *                              flattenedArray,
       const unsigned int                          totalNumberComponents,
+      const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       std::vector<distributedCPUVec<double>> &    componentVectors);
 

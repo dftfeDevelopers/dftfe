@@ -24,22 +24,26 @@
 #include <vectorUtilities.h>
 #include <linearAlgebraOperations.h>
 #include <DataTypeOverloads.h>
-
+#include <FEBasisOperations.h>
 namespace dftfe
 {
   template <typename T>
   void
   computeRhoFromPSICPU(
-    const std::vector<std::vector<T>> &            X,
-    const std::vector<std::vector<T>> &            XFrac,
-    const unsigned int                             totalNumWaveFunctions,
-    const unsigned int                             Nfr,
-    const unsigned int                             numLocalDofs,
-    const std::vector<std::vector<double>> &       eigenValues,
-    const double                                   fermiEnergy,
-    const double                                   fermiEnergyUp,
-    const double                                   fermiEnergyDown,
-    operatorDFTClass &                             operatorMatrix,
+    const T *                               X,
+    const T *                               XFrac,
+    const unsigned int                      totalNumWaveFunctions,
+    const unsigned int                      Nfr,
+    const unsigned int                      numLocalDofs,
+    const std::vector<std::vector<double>> &eigenValues,
+    const double                            fermiEnergy,
+    const double                            fermiEnergyUp,
+    const double                            fermiEnergyDown,
+    operatorDFTClass &                      operatorMatrix,
+    std::unique_ptr<
+      dftfe::basis::
+        FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
+      &                                            basisOperationsPtrHost,
     const dealii::DoFHandler<3> &                  dofHandler,
     const unsigned int                             totalLocallyOwnedCells,
     const unsigned int                             numNodesPerElement,
@@ -79,9 +83,12 @@ namespace dftfe
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
 
-    std::vector<T> wfcQuads(numQuadPoints * BVec, T(0.0));
+    // std::vector<T> wfcQuads(numQuadPoints * BVec, T(0.0));
 
-    std::vector<T> gradWfcQuads(numQuadPoints * 3 * BVec, T(0.0));
+    // std::vector<T> gradWfcQuads(numQuadPoints * 3 * BVec, T(0.0));
+    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST> wfcQuads(
+      numQuadPoints * BVec, T(0.0)),
+      gradWfcQuads(numQuadPoints * 3 * BVec, T(0.0));
 
     std::vector<T>     shapeFunctionValues(numQuadPoints * numNodesPerElement,
                                        T(0.0));
@@ -112,7 +119,8 @@ namespace dftfe
 
     dftfe::distributedCPUMultiVec<T> flattenedArrayBlock;
 
-    std::vector<T> cellWaveFunctionMatrix(numNodesPerElement * BVec, T(0.0));
+    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
+      cellWaveFunctionMatrix(numNodesPerElement * BVec, T(0.0));
 
     // set density to zero
     typename dealii::DoFHandler<3>::active_cell_iterator cell =
@@ -176,16 +184,27 @@ namespace dftfe
               isEvaluateGradRho ? (totalLocallyOwnedCells * numQuadPoints) : 1,
               0.0);
 
-            const std::vector<T> &XCurrentKPoint =
-              X[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
-            const std::vector<T> &XFracCurrentKPoint =
-              XFrac[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
+            const T *XCurrentKPoint =
+              X + ((dftParams.spinPolarized + 1) * kPoint + spinIndex) *
+                    numLocalDofs * totalNumWaveFunctions;
+            const T *XFracCurrentKPoint =
+              XFrac + ((dftParams.spinPolarized + 1) * kPoint + spinIndex) *
+                        numLocalDofs * Nfr;
 
             for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
                  jvec += BVec)
               {
                 const unsigned int currentBlockSize =
                   std::min(BVec, totalNumWaveFunctions - jvec);
+                const unsigned int d_eigenDofHandlerIndex = 1;
+                const unsigned int d_quadratureIndex =
+                  useFEOrderRhoPlusOneGLQuad ? 2 : 0;
+                dftfe::basis::UpdateFlags updateFlags =
+                  dftfe::basis::update_values | dftfe::basis::update_gradients;
+                basisOperationsPtrHost->reinit(currentBlockSize,
+                                               d_eigenDofHandlerIndex,
+                                               d_quadratureIndex,
+                                               updateFlags);
 
                 if (currentBlockSize != BVec || jvec == 0)
                   operatorMatrix.reinit(currentBlockSize,
@@ -277,21 +296,26 @@ namespace dftfe
                         const T scalarCoeffAlpha = T(1.0),
                                 scalarCoeffBeta  = T(0.0);
                         const char transA = 'N', transB = 'N';
+                        basisOperationsPtrHost->interpolateKernel(
+                          flattenedArrayBlock,
+                          &wfcQuads,
+                          &gradWfcQuads,
+                          std::pair<unsigned int, unsigned int>(icell,
+                                                                icell + 1));
 
-                        xgemm(&transA,
-                              &transB,
-                              &currentBlockSize,
-                              &numQuadPoints,
-                              &numNodesPerElement,
-                              &scalarCoeffAlpha,
-                              &cellWaveFunctionMatrix[0],
-                              &currentBlockSize,
-                              &shapeFunctionValues[0],
-                              &numNodesPerElement,
-                              &scalarCoeffBeta,
-                              &wfcQuads[0],
-                              &currentBlockSize);
-
+                        // xgemm(&transA,
+                        //       &transB,
+                        //       &currentBlockSize,
+                        //       &numQuadPoints,
+                        //       &numNodesPerElement,
+                        //       &scalarCoeffAlpha,
+                        //       &cellWaveFunctionMatrix[0],
+                        //       &currentBlockSize,
+                        //       &shapeFunctionValues[0],
+                        //       &numNodesPerElement,
+                        //       &scalarCoeffBeta,
+                        //       &wfcQuads[0],
+                        //       &currentBlockSize);
                         for (unsigned int iquad = 0; iquad < numQuadPoints;
                              ++iquad)
                           for (unsigned int iWave = 0; iWave < currentBlockSize;
@@ -317,19 +341,19 @@ namespace dftfe
                                        i]);
                               }
 
-                            xgemm(&transA,
-                                  &transB,
-                                  &currentBlockSize,
-                                  &numQuadPointsTimes3,
-                                  &numNodesPerElement,
-                                  &scalarCoeffAlpha,
-                                  &cellWaveFunctionMatrix[0],
-                                  &currentBlockSize,
-                                  &shapeFunctionGradValues[0],
-                                  &numNodesPerElement,
-                                  &scalarCoeffBeta,
-                                  &gradWfcQuads[0],
-                                  &currentBlockSize);
+                            // xgemm(&transA,
+                            //       &transB,
+                            //       &currentBlockSize,
+                            //       &numQuadPointsTimes3,
+                            //       &numNodesPerElement,
+                            //       &scalarCoeffAlpha,
+                            //       &cellWaveFunctionMatrix[0],
+                            //       &currentBlockSize,
+                            //       &shapeFunctionGradValues[0],
+                            //       &numNodesPerElement,
+                            //       &scalarCoeffBeta,
+                            //       &gradWfcQuads[0],
+                            //       &currentBlockSize);
 
                             for (unsigned int iquad = 0; iquad < numQuadPoints;
                                  ++iquad)
@@ -343,7 +367,7 @@ namespace dftfe
                                                iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
-                                    gradWfcQuads[iquad * 3 * currentBlockSize +
+                                    gradWfcQuads[iquad * currentBlockSize +
                                                  iWave];
                                   gradRhoXContribution[icell * numQuadPoints +
                                                        iquad] +=
@@ -363,8 +387,10 @@ namespace dftfe
                                                iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
-                                    gradWfcQuads[iquad * 3 * currentBlockSize +
-                                                 currentBlockSize + iWave];
+                                    gradWfcQuads[currentBlockSize *
+                                                   numQuadPoints +
+                                                 iquad * currentBlockSize +
+                                                 iWave];
                                   gradRhoYContribution[icell * numQuadPoints +
                                                        iquad] +=
                                     2.0 * partialOccupVecTimesKptWeight[iWave] *
@@ -383,8 +409,10 @@ namespace dftfe
                                                iWave]);
                                   const T temp1 =
                                     wfcQuadVal *
-                                    gradWfcQuads[iquad * 3 * currentBlockSize +
-                                                 2 * currentBlockSize + iWave];
+                                    gradWfcQuads[currentBlockSize *
+                                                   numQuadPoints * 2 +
+                                                 iquad * currentBlockSize +
+                                                 iWave];
                                   gradRhoZContribution[icell * numQuadPoints +
                                                        iquad] +=
                                     2.0 * partialOccupVecTimesKptWeight[iWave] *
@@ -453,7 +481,6 @@ namespace dftfe
                                 kPointWeights[kPoint] * spinPolarizedFactor;
                             }
                         }
-
 
                       for (unsigned int iNode = 0; iNode < numLocalDofs;
                            ++iNode)
@@ -818,24 +845,29 @@ namespace dftfe
 
   template void
   computeRhoFromPSICPU(
-    const std::vector<std::vector<dataTypes::number>> &X,
-    const std::vector<std::vector<dataTypes::number>> &XFrac,
-    const unsigned int                                 totalNumWaveFunctions,
-    const unsigned int                                 Nfr,
-    const unsigned int                                 numLocalDofs,
-    const std::vector<std::vector<double>> &           eigenValues,
-    const double                                       fermiEnergy,
-    const double                                       fermiEnergyUp,
-    const double                                       fermiEnergyDown,
-    operatorDFTClass &                                 operatorMatrix,
-    const dealii::DoFHandler<3> &                      dofHandler,
-    const unsigned int                                 totalLocallyOwnedCells,
-    const unsigned int                                 numNodesPerElement,
-    const unsigned int                                 numQuadPoints,
-    const std::vector<double> &                        kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> *    rhoValues,
-    std::map<dealii::CellId, std::vector<double>> *    gradRhoValues,
-    std::map<dealii::CellId, std::vector<double>> *    rhoValuesSpinPolarized,
+    const dataTypes::number *               X,
+    const dataTypes::number *               XFrac,
+    const unsigned int                      totalNumWaveFunctions,
+    const unsigned int                      Nfr,
+    const unsigned int                      numLocalDofs,
+    const std::vector<std::vector<double>> &eigenValues,
+    const double                            fermiEnergy,
+    const double                            fermiEnergyUp,
+    const double                            fermiEnergyDown,
+    operatorDFTClass &                      operatorMatrix,
+    std::unique_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+      &                                            basisOperationsPtrHost,
+    const dealii::DoFHandler<3> &                  dofHandler,
+    const unsigned int                             totalLocallyOwnedCells,
+    const unsigned int                             numNodesPerElement,
+    const unsigned int                             numQuadPoints,
+    const std::vector<double> &                    kPointWeights,
+    std::map<dealii::CellId, std::vector<double>> *rhoValues,
+    std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
+    std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
     std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
     const bool                                     isEvaluateGradRho,
     const MPI_Comm &                               mpiCommParent,

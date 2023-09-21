@@ -120,16 +120,21 @@ namespace dftfe
     template <typename NumberType>
     void
     computeRhoFromPSI(
-      const NumberType *                             X,
-      const NumberType *                             XFrac,
-      const unsigned int                             totalNumWaveFunctions,
-      const unsigned int                             Nfr,
-      const unsigned int                             numLocalDofs,
-      const std::vector<std::vector<double>> &       eigenValues,
-      const double                                   fermiEnergy,
-      const double                                   fermiEnergyUp,
-      const double                                   fermiEnergyDown,
-      operatorDFTDeviceClass &                       operatorMatrix,
+      const NumberType *                      X,
+      const NumberType *                      XFrac,
+      const unsigned int                      totalNumWaveFunctions,
+      const unsigned int                      Nfr,
+      const unsigned int                      numLocalDofs,
+      const std::vector<std::vector<double>> &eigenValues,
+      const double                            fermiEnergy,
+      const double                            fermiEnergyUp,
+      const double                            fermiEnergyDown,
+      operatorDFTDeviceClass &                operatorMatrix,
+      std::unique_ptr<
+        dftfe::basis::FEBasisOperations<NumberType,
+                                        double,
+                                        dftfe::utils::MemorySpace::DEVICE>>
+        &                                            basisOperationsPtrDevice,
       const unsigned int                             matrixFreeDofhandlerIndex,
       const dealii::DoFHandler<3> &                  dofHandler,
       const unsigned int                             totalLocallyOwnedCells,
@@ -282,9 +287,9 @@ namespace dftfe
 
       distributedDeviceVec<NumberType> &deviceFlattenedArrayBlock =
         operatorMatrix.getParallelChebyBlockVectorDevice();
-
-      NumberType *cellWaveFunctionMatrix =
-        (operatorMatrix.getCellWaveFunctionMatrix()).begin();
+      dftfe::utils::MemoryStorage<NumberType, dftfe::utils::MemorySpace::DEVICE>
+        &cellWaveFunctionMatrixMV = operatorMatrix.getCellWaveFunctionMatrix();
+      NumberType *cellWaveFunctionMatrix = (cellWaveFunctionMatrixMV).begin();
 
       typename dealii::DoFHandler<3>::active_cell_iterator cell =
         dofHandler.begin_active();
@@ -387,6 +392,17 @@ namespace dftfe
                                  spinIndex),
                           deviceFlattenedArrayBlock.begin());
 
+                      const unsigned int d_eigenDofHandlerIndex = 1;
+                      const unsigned int d_quadratureIndex =
+                        use2pPlusOneGLQuad ? 2 : 0;
+                      dftfe::basis::UpdateFlags updateFlags =
+                        dftfe::basis::update_values |
+                        dftfe::basis::update_gradients;
+                      basisOperationsPtrDevice->reinit(BVec,
+                                                       0,
+                                                       d_quadratureIndex,
+                                                       updateFlags);
+
 
                       deviceFlattenedArrayBlock.updateGhostValues();
 
@@ -414,6 +430,13 @@ namespace dftfe
                                      .getFlattenedArrayCellLocalProcIndexIdMap())
                                       .begin() +
                                     startingCellId * numNodesPerElement);
+                              // basisOperationsPtrDevice
+                              //   ->extractToCellNodalDataKernel(
+                              //     deviceFlattenedArrayBlock,
+                              //     &cellWaveFunctionMatrixMV,
+                              //     std::pair<unsigned int, unsigned int>(
+                              //       startingCellId,
+                              //       startingCellId + currentCellsBlockSize));
 
                               NumberType scalarCoeffAlpha = 1.0;
                               NumberType scalarCoeffBeta  = 0;
@@ -421,26 +444,33 @@ namespace dftfe
                               int        strideB = 0;
                               int        strideC = BVec * numQuadPoints;
 
-                              dftfe::utils::deviceBlasWrapper::
-                                gemmStridedBatched(
-                                  operatorMatrix.getDeviceBlasHandle(),
-                                  dftfe::utils::DEVICEBLAS_OP_N,
-                                  dftfe::utils::DEVICEBLAS_OP_N,
-                                  BVec,
-                                  numQuadPoints,
-                                  numNodesPerElement,
-                                  &scalarCoeffAlpha,
-                                  cellWaveFunctionMatrix,
-                                  BVec,
-                                  strideA,
-                                  shapeFunctionValuesTransposedDevice.begin(),
-                                  numNodesPerElement,
-                                  strideB,
-                                  &scalarCoeffBeta,
-                                  rhoWfcContributionsDevice.begin(),
-                                  BVec,
-                                  strideC,
-                                  currentCellsBlockSize);
+                              // dftfe::utils::deviceBlasWrapper::
+                              //   gemmStridedBatched(
+                              //     operatorMatrix.getDeviceBlasHandle(),
+                              //     dftfe::utils::DEVICEBLAS_OP_N,
+                              //     dftfe::utils::DEVICEBLAS_OP_N,
+                              //     BVec,
+                              //     numQuadPoints,
+                              //     numNodesPerElement,
+                              //     &scalarCoeffAlpha,
+                              //     cellWaveFunctionMatrixMV.data(),
+                              //     BVec,
+                              //     strideA,
+                              //     shapeFunctionValuesTransposedDevice.begin(),
+                              //     numNodesPerElement,
+                              //     strideB,
+                              //     &scalarCoeffBeta,
+                              //     rhoWfcContributionsDevice.begin(),
+                              //     BVec,
+                              //     strideC,
+                              //     currentCellsBlockSize);
+                              basisOperationsPtrDevice->interpolateKernel(
+                                deviceFlattenedArrayBlock,
+                                &rhoWfcContributionsDevice,
+                                NULL,
+                                std::pair<unsigned int, unsigned int>(
+                                  startingCellId,
+                                  startingCellId + currentCellsBlockSize));
 
 
                               if (isEvaluateGradRho)
@@ -1252,16 +1282,21 @@ namespace dftfe
 
     template void
     computeRhoFromPSI(
-      const dataTypes::number *                      X,
-      const dataTypes::number *                      XFrac,
-      const unsigned int                             totalNumWaveFunctions,
-      const unsigned int                             Nfr,
-      const unsigned int                             numLocalDofs,
-      const std::vector<std::vector<double>> &       eigenValues,
-      const double                                   fermiEnergy,
-      const double                                   fermiEnergyUp,
-      const double                                   fermiEnergyDown,
-      operatorDFTDeviceClass &                       operatorMatrix,
+      const dataTypes::number *               X,
+      const dataTypes::number *               XFrac,
+      const unsigned int                      totalNumWaveFunctions,
+      const unsigned int                      Nfr,
+      const unsigned int                      numLocalDofs,
+      const std::vector<std::vector<double>> &eigenValues,
+      const double                            fermiEnergy,
+      const double                            fermiEnergyUp,
+      const double                            fermiEnergyDown,
+      operatorDFTDeviceClass &                operatorMatrix,
+      std::unique_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::DEVICE>>
+        &                                            basisOperationsPtrDevice,
       const unsigned int                             matrixFreeDofhandlerIndex,
       const dealii::DoFHandler<3> &                  dofHandler,
       const unsigned int                             totalLocallyOwnedCells,

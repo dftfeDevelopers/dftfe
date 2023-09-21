@@ -53,7 +53,7 @@ namespace dftfe
              d_eigenVectorsFlattenedDevice.begin());
 #endif
     if (!d_dftParamsPtr->useDevice)
-      d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
+      d_eigenVectorsDensityMatrixPrimeHost = d_eigenVectorsFlattenedHost;
 
 
     // set up linear solver
@@ -465,7 +465,7 @@ namespace dftfe
             d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
             d_densityMatDerFermiEnergy,
             d_numEigenValues,
-            d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             kohnShamDFTEigenOperatorDevice,
             d_eigenDofHandlerIndex,
             dofHandler,
@@ -488,7 +488,7 @@ namespace dftfe
             d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin(),
             d_densityMatDerFermiEnergy,
             d_numEigenValues,
-            d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             kohnShamDFTEigenOperatorDevice,
             d_eigenDofHandlerIndex,
             dofHandler,
@@ -511,11 +511,11 @@ namespace dftfe
         if (d_dftParamsPtr->singlePrecLRD)
           computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
                                                    dataTypes::numberFP32>(
-            d_eigenVectorsFlattenedSTL,
-            d_eigenVectorsDensityMatrixPrimeSTL,
+            d_eigenVectorsFlattenedHost.data(),
+            d_eigenVectorsDensityMatrixPrimeHost.data(),
             d_densityMatDerFermiEnergy,
             d_numEigenValues,
-            d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             kohnShamDFTEigenOperatorCPU,
             d_eigenDofHandlerIndex,
             dofHandler,
@@ -533,11 +533,11 @@ namespace dftfe
             *d_dftParamsPtr);
         else
           computeRhoFirstOrderResponseCPU(
-            d_eigenVectorsFlattenedSTL,
-            d_eigenVectorsDensityMatrixPrimeSTL,
+            d_eigenVectorsFlattenedHost.data(),
+            d_eigenVectorsDensityMatrixPrimeHost.data(),
             d_densityMatDerFermiEnergy,
             d_numEigenValues,
-            d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             kohnShamDFTEigenOperatorCPU,
             d_eigenDofHandlerIndex,
             dofHandler,
