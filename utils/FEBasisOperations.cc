@@ -168,17 +168,19 @@ namespace dftfe
                           ValueTypeBasisData,
                           memorySpace>::initializeIndexMaps()
     {
-      d_nCells = d_matrixFreeDataPtr->n_physical_cells();
-      d_nDofsPerCell =
-        d_matrixFreeDataPtr->get_dof_handler(0).get_fe().dofs_per_cell;
+      d_nCells       = d_matrixFreeDataPtr->n_physical_cells();
+      d_nDofsPerCell = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID)
+                         .get_fe()
+                         .dofs_per_cell;
       d_cellDofIndexToProcessDofIndexMap.clear();
       d_cellDofIndexToProcessDofIndexMap.resize(d_nCells * d_nDofsPerCell);
 
       d_cellIndexToCellIdMap.clear();
       d_cellIndexToCellIdMap.resize(d_nCells);
 
-      auto cellPtr = d_matrixFreeDataPtr->get_dof_handler(0).begin_active();
-      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(0).end();
+      auto cellPtr =
+        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
+      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
 
       std::vector<global_size_type>       cellDofIndicesGlobal(d_nDofsPerCell);
       std::map<dealii::CellId, size_type> cellIdToCellIndexMap;
@@ -191,8 +193,8 @@ namespace dftfe
             for (unsigned int iDof = 0; iDof < d_nDofsPerCell; ++iDof)
               d_cellDofIndexToProcessDofIndexMap[iCell * d_nDofsPerCell +
                                                  iDof] =
-                d_matrixFreeDataPtr->get_vector_partitioner(0)->global_to_local(
-                  cellDofIndicesGlobal[iDof]);
+                d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+                  ->global_to_local(cellDofIndicesGlobal[iDof]);
 
 
             d_cellIndexToCellIdMap[iCell] = cellPtr->id();
@@ -211,11 +213,13 @@ namespace dftfe
                           memorySpace>::initializeConstraints()
     {
       d_constraintInfo.initialize(d_matrixFreeDataPtr->get_vector_partitioner(
-                                    0),
-                                  *((*d_constraintsVector)[0]));
+                                    d_dofHandlerID),
+                                  *((*d_constraintsVector)[d_dofHandlerID]));
       d_constraintInfo.precomputeMaps(
-        d_matrixFreeDataPtr->get_vector_partitioner(0)->locally_owned_size() +
-          d_matrixFreeDataPtr->get_vector_partitioner(0)->n_ghost_indices(),
+        d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+            ->locally_owned_size() +
+          d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+            ->n_ghost_indices(),
         d_nVectors);
     }
 
@@ -230,7 +234,7 @@ namespace dftfe
       const dealii::Quadrature<3> &quadrature =
         d_matrixFreeDataPtr->get_quadrature(d_quadratureID);
       dealii::FEValues<3> fe_values(
-        d_matrixFreeDataPtr->get_dof_handler(0).get_fe(),
+        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
         quadrature,
         dealii::update_values | dealii::update_gradients |
           dealii::update_jacobians | dealii::update_JxW_values |
@@ -282,8 +286,9 @@ namespace dftfe
       const unsigned int nJacobiansPerCell =
         areAllCellsAffine ? 1 : d_nQuadsPerCell;
 
-      auto cellPtr = d_matrixFreeDataPtr->get_dof_handler(0).begin_active();
-      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(0).end();
+      auto cellPtr =
+        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
+      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
 
       unsigned int iCell = 0;
       for (; cellPtr != endcPtr; ++cellPtr)
@@ -386,13 +391,5 @@ namespace dftfe
     {
       d_constraintInfo.distribute(multiVector, d_nVectors);
     }
-
-
-    // template class FEBasisOperations<double,
-    //                                  double,
-    //                                  dftfe::utils::MemorySpace::HOST>;
-    // template class FEBasisOperations<double,
-    //                                  double,
-    //                                  dftfe::utils::MemorySpace::DEVICE>;
   } // namespace basis
 } // namespace dftfe

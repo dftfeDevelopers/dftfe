@@ -85,7 +85,7 @@ namespace dftfe
                                                bandGroupLowHighPlusOneIndices);
 
     const unsigned int BVec =
-      std::min(dftParams.chebyWfcBlockSize, totalNumWaveFunctions);
+      std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
@@ -181,8 +181,6 @@ namespace dftfe
 
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
-        rho.setValue(0.0);
-        gradRho.setValue(0.0);
         for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
              ++spinIndex)
           {
@@ -255,18 +253,17 @@ namespace dftfe
                                 kPointWeights[kPoint] * spinPolarizedFactor;
                             }
                         }
-#if defined(DFTFE_WITH_DEVICE)
-                      for (unsigned int spinIndex = 0;
-                           spinIndex < numSpinComponents;
-                           ++spinIndex)
-                        {
-                          partialOccupVec[spinIndex].resize(
-                            partialOccupVecHost[spinIndex].size());
-                          partialOccupVec[spinIndex].copyFrom(
-                            partialOccupVecHost[spinIndex]);
-                        }
-#endif
                     }
+#if defined(DFTFE_WITH_DEVICE)
+                for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
+                     ++spinIndex)
+                  {
+                    partialOccupVec[spinIndex].resize(
+                      partialOccupVecHost[spinIndex].size());
+                    partialOccupVec[spinIndex].copyFrom(
+                      partialOccupVecHost[spinIndex]);
+                  }
+#endif
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                      ++spinIndex)
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
@@ -298,8 +295,8 @@ namespace dftfe
                   use2pPlusOneGLQuad ? 2 : 0;
                 dftfe::basis::UpdateFlags updateFlags =
                   dftfe::basis::update_values | dftfe::basis::update_gradients;
-                basisOperationsPtr->reinit(currentBlockSize * numSpinComponents,
-                                           0,
+                basisOperationsPtr->reinit(currentBlockSize,
+                                           matrixFreeDofhandlerIndex,
                                            d_quadratureIndex,
                                            updateFlags);
 
@@ -440,7 +437,8 @@ namespace dftfe
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       for (unsigned int iNode = 0; iNode < numLocalDofs;
                            ++iNode)
-                        for (unsigned int iWave = 0; iWave < Nfr; ++iWave)
+                        for (unsigned int iWave = 0; iWave < currentBlockSize;
+                             ++iWave)
                           flattenedArrayBlock[spinIndex]
                             .data()[iNode * currentBlockSize + iWave] =
                             (XFrac->data())[numLocalDofs * Nfr *
@@ -466,7 +464,7 @@ namespace dftfe
                     dftfe::basis::update_values |
                     dftfe::basis::update_gradients;
                   basisOperationsPtr->reinit(currentBlockSize,
-                                             0,
+                                             matrixFreeDofhandlerIndex,
                                              d_quadratureIndex,
                                              updateFlags);
 
@@ -609,6 +607,10 @@ namespace dftfe
                   tempRhoQuadsSP[2 * q + 1] =
                     rhoHost[totalLocallyOwnedCells * numQuadPoints +
                             iElem * numQuadPoints + q];
+                  tempRhoQuads[q] =
+                    rhoHost[iElem * numQuadPoints + q] +
+                    rhoHost[totalLocallyOwnedCells * numQuadPoints +
+                            iElem * numQuadPoints + q];
                 }
 
               if (isEvaluateGradRho)
@@ -633,25 +635,43 @@ namespace dftfe
                       gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
                                   2 * totalLocallyOwnedCells * numQuadPoints +
                                   iElem * numQuadPoints + q];
+                    tempGradRhoQuads[3 * q] =
+                      gradRhoHost[iElem * numQuadPoints + q] +
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
+                                  iElem * numQuadPoints + q];
+                    tempGradRhoQuads[3 * q + 1] =
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints +
+                                  iElem * numQuadPoints + q] +
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
+                                  totalLocallyOwnedCells * numQuadPoints +
+                                  iElem * numQuadPoints + q];
+                    tempGradRhoQuads[3 * q + 2] =
+                      gradRhoHost[2 * totalLocallyOwnedCells * numQuadPoints +
+                                  iElem * numQuadPoints + q] +
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
+                                  2 * totalLocallyOwnedCells * numQuadPoints +
+                                  iElem * numQuadPoints + q];
                   }
             }
+          else
+            {
+              for (unsigned int q = 0; q < numQuadPoints; ++q)
+                tempRhoQuads[q] = rhoHost[iElem * numQuadPoints + q];
 
-          for (unsigned int q = 0; q < numQuadPoints; ++q)
-            tempRhoQuads[q] = rhoHost[iElem * numQuadPoints + q];
 
-
-          if (isEvaluateGradRho)
-            for (unsigned int q = 0; q < numQuadPoints; ++q)
-              {
-                tempGradRhoQuads[3 * q] =
-                  gradRhoHost[iElem * numQuadPoints + q];
-                tempGradRhoQuads[3 * q + 1] =
-                  gradRhoHost[totalLocallyOwnedCells * numQuadPoints +
-                              iElem * numQuadPoints + q];
-                tempGradRhoQuads[3 * q + 2] =
-                  gradRhoHost[2 * totalLocallyOwnedCells * numQuadPoints +
-                              iElem * numQuadPoints + q];
-              }
+              if (isEvaluateGradRho)
+                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                  {
+                    tempGradRhoQuads[3 * q] =
+                      gradRhoHost[iElem * numQuadPoints + q];
+                    tempGradRhoQuads[3 * q + 1] =
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints +
+                                  iElem * numQuadPoints + q];
+                    tempGradRhoQuads[3 * q + 2] =
+                      gradRhoHost[2 * totalLocallyOwnedCells * numQuadPoints +
+                                  iElem * numQuadPoints + q];
+                  }
+            }
           iElem++;
         }
   }

@@ -47,7 +47,6 @@ SET(TARGET_SRC
   ./src/dft/dft.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
-  ./src/dft/densityCalculatorCPU.cc
   ./src/dft/densityCalculator.cc
   ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
   ./src/excManager/excDensityBaseClass.cpp
@@ -169,7 +168,6 @@ SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
-  ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
