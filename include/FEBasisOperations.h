@@ -74,6 +74,11 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     class FEBasisOperationsBase
     {
+    protected:
+      mutable dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        tempCellNodalData, tempQuadratureGradientsData,
+        tempQuadratureGradientsDataNonAffine;
+
     public:
       FEBasisOperationsBase(
         dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
@@ -83,7 +88,8 @@ namespace dftfe
       ~FEBasisOperationsBase() = default;
 
       void
-      reinit(const unsigned int &blockSize,
+      reinit(const unsigned int &vecBlockSize,
+             const unsigned int &cellBlockSize,
              const unsigned int &dofHandlerID,
              const unsigned int &quadratureID,
              const UpdateFlags   updateFlags = update_values);
@@ -111,6 +117,9 @@ namespace dftfe
 
       void
       initializeShapeFunctionAndJacobianData();
+
+      void
+      resizeTempStorage();
 
       void
       createMultiVector(
@@ -150,6 +159,7 @@ namespace dftfe
       unsigned int d_dofHandlerID;
       unsigned int d_nVectors;
       unsigned int d_nCells;
+      unsigned int d_cellsBlockSize;
       unsigned int d_nDofsPerCell;
       unsigned int d_nQuadsPerCell;
       bool         areAllCellsAffine;
@@ -374,7 +384,23 @@ namespace dftfe
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::tempCellNodalData;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::tempQuadratureGradientsData;
+      using FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData,
+                                  dftfe::utils::MemorySpace::DEVICE>::
+        tempQuadratureGradientsDataNonAffine;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_nVectors;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::d_cellsBlockSize;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,

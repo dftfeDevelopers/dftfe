@@ -229,26 +229,7 @@ namespace dftfe
           *                                         quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        cellNodalData, tempQuadratureGradientsData,
-        tempQuadratureGradientsDataNonAffine;
-      cellNodalData.resize(d_nVectors * d_nDofsPerCell *
-                           (cellRange.second - cellRange.first));
-
-      if (quadratureGradients != NULL)
-        tempQuadratureGradientsData.resize(
-          areAllCellsCartesian ? 0 :
-                                 (d_nVectors * d_nQuadsPerCell * 3 *
-                                  (cellRange.second - cellRange.first)));
-
-      if (quadratureGradients != NULL)
-        tempQuadratureGradientsDataNonAffine.resize(
-          areAllCellsAffine ? 0 :
-                              (d_nVectors * d_nQuadsPerCell * 3 *
-                               (cellRange.second - cellRange.first)));
-
-      extractToCellNodalDataKernel(nodalValues, &cellNodalData, cellRange);
+      extractToCellNodalDataKernel(nodalValues, &tempCellNodalData, cellRange);
 
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                 scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
@@ -261,7 +242,7 @@ namespace dftfe
         d_nQuadsPerCell,
         d_nDofsPerCell,
         &scalarCoeffAlpha,
-        cellNodalData.data(),
+        tempCellNodalData.data(),
         d_nVectors,
         d_nVectors * d_nDofsPerCell,
         d_shapeFunctionData.data(),
@@ -282,7 +263,7 @@ namespace dftfe
             d_nQuadsPerCell * 3,
             d_nDofsPerCell,
             &scalarCoeffAlpha,
-            cellNodalData.data(),
+            tempCellNodalData.data(),
             d_nVectors,
             d_nVectors * d_nDofsPerCell,
             d_shapeFunctionGradientData.data(),

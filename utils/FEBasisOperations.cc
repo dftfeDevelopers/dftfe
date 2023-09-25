@@ -67,41 +67,79 @@ namespace dftfe
     void
     FEBasisOperationsBase<ValueTypeBasisCoeff,
                           ValueTypeBasisData,
-                          memorySpace>::reinit(const unsigned int &blockSize,
+                          memorySpace>::reinit(const unsigned int &vecBlockSize,
+                                               const unsigned int
+                                                 &cellsBlockSize,
                                                const unsigned int &dofHandlerID,
                                                const unsigned int &quadratureID,
                                                const UpdateFlags   updateFlags)
     {
       if ((d_dofHandlerID != dofHandlerID) || (d_updateFlags != updateFlags))
         {
-          d_dofHandlerID = dofHandlerID;
-          d_quadratureID = quadratureID;
-          d_nVectors     = blockSize;
-          d_updateFlags  = updateFlags;
+          d_dofHandlerID   = dofHandlerID;
+          d_quadratureID   = quadratureID;
+          d_nVectors       = vecBlockSize;
+          d_cellsBlockSize = cellsBlockSize;
+          d_updateFlags    = updateFlags;
           initializeIndexMaps();
           initializeConstraints();
           initializeShapeFunctionAndJacobianData();
           initializeFlattenedIndexMaps();
+          resizeTempStorage();
         }
-      else if ((d_quadratureID != quadratureID) && (d_nVectors != blockSize))
+      else if ((d_quadratureID != quadratureID) && (d_nVectors != vecBlockSize))
         {
-          d_quadratureID = quadratureID;
-          d_nVectors     = blockSize;
+          d_quadratureID   = quadratureID;
+          d_nVectors       = vecBlockSize;
+          d_cellsBlockSize = cellsBlockSize;
           initializeConstraints();
           initializeShapeFunctionAndJacobianData();
           initializeFlattenedIndexMaps();
+          resizeTempStorage();
         }
       else if (d_quadratureID != quadratureID)
         {
-          d_quadratureID = quadratureID;
+          d_quadratureID   = quadratureID;
+          d_cellsBlockSize = cellsBlockSize;
           initializeShapeFunctionAndJacobianData();
+          resizeTempStorage();
         }
-      else if (d_nVectors != blockSize)
+      else if (d_nVectors != vecBlockSize)
         {
-          d_nVectors = blockSize;
+          d_nVectors       = vecBlockSize;
+          d_cellsBlockSize = cellsBlockSize;
           initializeConstraints();
           initializeFlattenedIndexMaps();
+          resizeTempStorage();
         }
+      else if (d_cellsBlockSize != cellsBlockSize)
+        {
+          d_cellsBlockSize = cellsBlockSize;
+          resizeTempStorage();
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::resizeTempStorage()
+    {
+      tempCellNodalData.resize(d_nVectors * d_nDofsPerCell * d_cellsBlockSize);
+
+      if (d_updateFlags & update_gradients)
+        tempQuadratureGradientsData.resize(
+          areAllCellsCartesian ?
+            0 :
+            (d_nVectors * d_nQuadsPerCell * 3 * d_cellsBlockSize));
+
+      if (d_updateFlags & update_gradients)
+        tempQuadratureGradientsDataNonAffine.resize(
+          areAllCellsAffine ?
+            0 :
+            (d_nVectors * d_nQuadsPerCell * 3 * d_cellsBlockSize));
     }
 
     template <typename ValueTypeBasisCoeff,
