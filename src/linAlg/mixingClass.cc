@@ -29,20 +29,47 @@ namespace dftfe
 
   }
 
-  void MixingScheme::addMixingVariable(const mixingVariable mixingVariableList,
-                         const std::vector<double> &weightDotProducts,
+  void MixingScheme::addMixingVariable(const mixingVariable mixingVariableList,std::vector<double> &weightDotProducts,
                          const bool performMPIReduce,
                          const double mixingValue)
   {
-    d_variableHistoryIn.insert({mixingVariableList, std::deque<std::vector<double>>()});
+//    d_variableHistoryIn.insert({mixingVariableList, std::deque<std::vector<double>>()});
+//
+//    d_variableHistoryOut.insert({mixingVariableList, std::deque<std::vector<double>>()});
+//
+//    d_vectorDotProductWeights.insert({mixingVariableList,weightDotProducts});
+//
+//    d_performMPIReduce.insert({mixingVariableList,performMPIReduce});
+//
+//    d_mixingParameter.insert({mixingVariableList,mixingValue});
 
-    d_variableHistoryOut.insert({mixingVariableList, std::deque<std::vector<double>>()});
+      d_variableHistoryIn[mixingVariableList] = std::deque<std::vector<double>>();
+      d_variableHistoryOut[mixingVariableList] = std::deque<std::vector<double>>();
+      d_vectorDotProductWeights[mixingVariableList] =  weightDotProducts;
 
-    d_vectorDotProductWeights.insert({mixingVariableList,weightDotProducts});
+//      std::cout<<" size of jxwVec = "<<d_vectorDotProductWeights[mixingVariableList].size()<<"\n";
+//      double jxwNorm = 0.0;
+//      for( unsigned int iQuad = 0; iQuad < d_vectorDotProductWeights[mixingVariableList].size(); iQuad++)
+//        {
+//          jxwNorm += d_vectorDotProductWeights[mixingVariableList][iQuad];
+//        }
+//      std::cout<<" jxw norm in add vector  = "<<jxwNorm<<"\n";
+//
+//      weightDotProducts[0] = 5000;
+//
+//      jxwNorm = 0.0;
+//      for( unsigned int iQuad = 0; iQuad < d_vectorDotProductWeights[mixingVariableList].size(); iQuad++)
+//        {
+//          jxwNorm += d_vectorDotProductWeights[mixingVariableList][iQuad];
+//        }
+//      std::cout<<" jxw norm in add vector  = "<<jxwNorm<<"\n";
 
-    d_performMPIReduce.insert({mixingVariableList,performMPIReduce});
+      d_performMPIReduce[mixingVariableList] = performMPIReduce;
+      d_mixingParameter[mixingVariableList] = mixingValue;
 
-    d_mixingParameter.insert({mixingVariableList,mixingValue});
+
+//      std::cout<<" loc of input jxw vec = "<<&weightDotProducts[0]<<"\n";
+//      std::cout<<" loc of map jxw vec = "<<&d_vectorDotProductWeights[mixingVariableList][0]<<"\n";
   }
 
   void MixingScheme::computeMixingMatrices(const std::deque<std::vector<double>> &inHist,
@@ -116,13 +143,13 @@ namespace dftfe
     for (unsigned int i = 0 ; i < aSize; i++)
       {
         A[i] += ATotal[i];
-//	std::cout<<"A["<<i<<"] = "<<A[i]<<"\n";
+//	std::cout<<"A["<<i<<"] = "<<ATotal[i]<<"\n";
       }
 
     for (unsigned int i = 0 ; i < cSize; i++)
       {
         c[i] += cTotal[i];
-//	std::cout<<"c["<<i<<"] = "<<c[i]<<"\n";
+//	std::cout<<"c["<<i<<"] = "<<cTotal[i]<<"\n";
       }
   }
 
@@ -137,7 +164,8 @@ namespace dftfe
   {
     // initialize data structures
     int N = d_variableHistoryIn[mixingVariable::rho].size() - 1;
-    // pcout << "\nN:" << N << "\n";
+//    int N = 1;
+      // pcout << "\nN:" << N << "\n";
     int                 NRHS = 1, lda = N, ldb = N, info;
     std::vector<int>    ipiv(N);
     d_A.resize(lda * N);
@@ -158,7 +186,15 @@ namespace dftfe
       }
 
     dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
-    
+   
+//   std::cout<<" loc of map jxw vec in mix= "<<&d_vectorDotProductWeights[mixingVariable::rho][0]<<"\n";
+//    double jxwNorm = 0.0;
+//    for( unsigned int iQuad = 0; iQuad < d_vectorDotProductWeights[mixingVariable::rho].size(); iQuad++)
+//      {
+//        jxwNorm += d_vectorDotProductWeights[mixingVariable::rho][iQuad];
+//      }
+//    std::cout<<" jxw norm in compute coeff  = "<<jxwNorm<<"\n";
+
 //    for (unsigned int i = 0 ; i < ldb*NRHS; i++)
 //      {
 //        std::cout<<"d_c["<<i<<"] = "<<d_c[i]<<"\n";
@@ -175,52 +211,225 @@ namespace dftfe
                              const std::vector<double> &inputVariableToInHist)
   {
     d_variableHistoryIn[mixingVariableName].push_back(inputVariableToInHist);
+//    double normOfRhoInPushBack = 0.0;
+//    unsigned int sizeOfHist = d_variableHistoryIn[mixingVariableName].size();
+//    std::cout<<" size of in hist  = "<<sizeOfHist<<"\n";
+//    for( unsigned int iQuad = 0 ;iQuad < d_variableHistoryIn[mixingVariableName][sizeOfHist-1].size() ; iQuad++)
+//      {
+//        normOfRhoInPushBack += d_variableHistoryIn[mixingVariableName][sizeOfHist-1][iQuad];
+//      }
+//    MPI_Allreduce(MPI_IN_PLACE,
+//                  &normOfRhoInPushBack,
+//                  1,
+//                  MPI_DOUBLE,
+//                  MPI_SUM,
+//                  d_mpi_comm_domain);
+//    std::cout<<" norm of rho in vec push back = "<<normOfRhoInPushBack<<"\n";
+
+//    std::cout<<" loc of map jxw vec in mix= "<<&d_vectorDotProductWeights[mixingVariableName][0]<<"\n";
+//    double jxwNorm = 0.0;
+//    for( unsigned int iQuad = 0; iQuad < d_vectorDotProductWeights[mixingVariableName].size(); iQuad++)
+//      {
+//        jxwNorm += d_vectorDotProductWeights[mixingVariableName][iQuad];
+//      }
+//    std::cout<<" jxw norm in add vector  = "<<jxwNorm<<"\n";
   }
 
   void MixingScheme::addVariableToOutHist(const mixingVariable mixingVariableName,
                        const std::vector<double> &inputVariableToOutHist)
   {
     d_variableHistoryOut[mixingVariableName].push_back(inputVariableToOutHist);
+
+//    double normOfRhoOutPushBack = 0.0;
+//    unsigned int sizeOfHist = d_variableHistoryOut[mixingVariableName].size();
+//    for( unsigned int iQuad = 0 ;iQuad < d_variableHistoryOut[mixingVariableName][sizeOfHist-1].size() ; iQuad++)
+//      {
+//        normOfRhoOutPushBack += d_variableHistoryOut[mixingVariableName][sizeOfHist-1][iQuad];
+//      }
+//    MPI_Allreduce(MPI_IN_PLACE,
+//                  &normOfRhoOutPushBack,
+//                  1,
+//                  MPI_DOUBLE,
+//                  MPI_SUM,
+//                  d_mpi_comm_domain);
+//    std::cout<<" norm of rho out vec push back = "<<normOfRhoOutPushBack<<"\n";
+
+//    std::cout<<" loc of map jxw vec in mix= "<<&d_vectorDotProductWeights[mixingVariableName][0]<<"\n";
+//    double jxwNorm = 0.0;
+//    for( unsigned int iQuad = 0; iQuad < d_vectorDotProductWeights[mixingVariableName].size(); iQuad++)
+//      {
+//        jxwNorm += d_vectorDotProductWeights[mixingVariableName][iQuad];
+//      }
+//    std::cout<<" jxw norm in add vector  = "<<jxwNorm<<"\n";
+
   }
 
   double MixingScheme::mixVariable(mixingVariable mixingVariableName,
                      std::vector<double> &outputVariable)
   {
     double normValue = 0.0;
-    int N = d_variableHistoryIn[mixingVariableName].size() - 1;
-    unsigned int lenVar = d_variableHistoryIn[mixingVariableName][0].size();
+    unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+//    std::cout<<" size of hist  = "<<N<<"\n";
+//    unsigned int N  = 1;
+//        std::cout<<"len of mixing variable  = "<<N<<"\n";
+    unsigned int lenVar = d_vectorDotProductWeights[mixingVariableName].size();
     outputVariable.resize(lenVar);
     std::fill(outputVariable.begin(),outputVariable.end(),0.0);
 
+//    std::cout<<" size of in Hist = "<<d_variableHistoryIn[mixingVariableName].size()<<"\n";
+//    std::cout<<" size of in 0 Hist = "<<d_variableHistoryIn[mixingVariableName][0].size()<<"\n";
+//    std::cout<<" size of in 1 Hist = "<<d_variableHistoryIn[mixingVariableName][1].size()<<"\n";
+//
+//    std::cout<<" size of out Hist = "<<d_variableHistoryOut[mixingVariableName].size()<<"\n";
+//    std::cout<<" size of out 0 Hist = "<<d_variableHistoryOut[mixingVariableName][0].size()<<"\n";
+//    std::cout<<" size of out 1 Hist = "<<d_variableHistoryOut[mixingVariableName][1].size()<<"\n";
+
+//        std::cout<<" loc of map jxw vec in mix= "<<&d_vectorDotProductWeights[mixingVariable::rho][0]<<"\n";
+    double jxwNorm = 0.0;
+    std::vector<double> rhoInNorm, rhoOutNorm;
+    rhoInNorm.resize(N+1);
+    std::fill(rhoInNorm.begin(),rhoInNorm.end(),0.0);
+    rhoOutNorm.resize(N+1);
+    std::fill(rhoOutNorm.begin(),rhoOutNorm.end(),0.0);
+
+    double rhoNewNorm = 0.0;
+
+    double rhoInMixNorm = 0.0;
+    double rhoIOutMixNorm = 0.0;
+//
+//    double rhoNormDiff = 0.0;
+//    double jxwNorm1 = 0.0;
+//    for( unsigned int iQuad = 0; iQuad < d_vectorDotProductWeights[mixingVariable::rho].size(); iQuad++)
+//      {
+//        jxwNorm1 += d_vectorDotProductWeights[mixingVariable::rho][iQuad];
+//      }
+//    std::cout<<" jxw norm in mix  vector  = "<<jxwNorm1<<"\n";
+
+//    std::cout<<" size of rhoInNorm = "<<rhoInNorm.size()<<" rhoOutNorm = "<<rhoOutNorm.size()<<"\n";
+//    std::cout<<" size of jxwVec = "<<d_vectorDotProductWeights[mixingVariable::rho].size()<<"\n";
     for( unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
       {
-        normValue += std::pow(d_variableHistoryOut[mixingVariableName][N][iQuad] -
-                                d_variableHistoryIn[mixingVariableName][N][iQuad],
-                              2.0) *
-                     d_vectorDotProductWeights[mixingVariableName][iQuad];
+        for(unsigned int hist = 0; hist < N+1; hist++)
+          {
+            rhoInNorm[hist] += d_variableHistoryIn[mixingVariableName][hist][iQuad];
+            rhoOutNorm[hist] += d_variableHistoryOut[mixingVariableName][hist][iQuad];
+          }
+//        normValue += std::pow(d_variableHistoryIn[mixingVariableName][N][iQuad] -
+//                                d_variableHistoryOut[mixingVariableName][N][iQuad],
+//                              2.0) *
+//                     d_vectorDotProductWeights[mixingVariableName][iQuad];
+
+        double rhodiff = std::abs(d_variableHistoryIn[mixingVariableName][N][iQuad] -
+                                  d_variableHistoryOut[mixingVariableName][N][iQuad]);
+//        rhoNormDiff += rhodiff;
+
+        normValue += rhodiff*rhodiff*d_vectorDotProductWeights[mixingVariableName][iQuad];
+
+//        std::cout<<" iQuad = "<<iQuad<<" rho norm = "<<rhodiff*rhodiff*d_vectorDotProductWeights[mixingVariableName][iQuad]<<"\n";
+
+//        rhoInMixNorm += d_variableHistoryIn[mixingVariableName][N][iQuad];
+//        rhoIOutMixNorm += d_variableHistoryOut[mixingVariableName][N][iQuad];
+//        std::cout<<" iQuad = "<<iQuad<<" jxw val = "<<d_vectorDotProductWeights[mixingVariable::rho][iQuad]<<"\n";
+
+//        jxwNorm += d_vectorDotProductWeights[mixingVariableName][iQuad];
+
+
+//        rhoInNorm[N] +=  d_variableHistoryIn[mixingVariableName][N][iQuad];
+//        rhoOutNorm[N] +=  d_variableHistoryOut[mixingVariableName][N][iQuad];
+
 
         double varOutBar = d_cFinal * d_variableHistoryOut[mixingVariableName][N][iQuad];
         double varInBar  = d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
         for (int i = 0; i < N; i++)
           {
+//            rhoInNorm[i] +=  d_variableHistoryIn[mixingVariableName][i][iQuad];
+//            rhoOutNorm[i] +=  d_variableHistoryOut[mixingVariableName][i][iQuad];
+
+
             varOutBar += d_c[i] * d_variableHistoryOut[mixingVariableName][N - 1 - i][iQuad];
             varInBar += d_c[i] * d_variableHistoryIn[mixingVariableName][N - 1 - i][iQuad];
           }
         outputVariable[iQuad] = ((1 - d_mixingParameter[mixingVariableName]) * varInBar +
                                  d_mixingParameter[mixingVariableName] * varOutBar);
+//        rhoNewNorm += outputVariable[iQuad];
 
       }
 
+    double totalNormValue = 0.0;
+
+//    std::cout<<" norm of mixing error = "<<normValue<<" total = "<<totalNormValue<<"\n";
+//    std::vector<double> rhoInTotal, rhoOutTotal;
+//    rhoInTotal.resize(N+1);
+//    std::fill(rhoInTotal.begin(),rhoInTotal.end(),0.0);
+//    rhoOutTotal.resize(N+1);
+//    std::fill(rhoOutTotal.begin(),rhoOutTotal.end(),0.0);
+
+//    std::cout<<" size of rhoInTotal = "<<rhoInTotal.size()<<" rhoOutTotal = "<<rhoOutTotal.size()<<"\n";
+
+//    MPI_Allreduce(
+//      MPI_IN_PLACE , &rhoInMixNorm, 1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+
+//    std::cout<<"norm of rho in in norm mix  = "<<rhoInMixNorm<<"\n";
+
+//    MPI_Allreduce(
+//      MPI_IN_PLACE , &rhoIOutMixNorm, 1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+
+
+//    std::cout<<"norm of rho in out norm mix  = "<<rhoIOutMixNorm<<"\n";
+
+//    MPI_Allreduce(
+//      MPI_IN_PLACE , &rhoNormDiff, 1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+
+//    std::cout<<"norm of rho diff norm mix  = "<<rhoNormDiff<<"\n";
+
+    if (d_performMPIReduce[mixingVariableName])
+      {
+        MPI_Allreduce(
+          &normValue , &totalNormValue, 1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+
+//        MPI_Allreduce(
+//          MPI_IN_PLACE , &rhoNewNorm, 1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+
+//        std::cout<<" Norm of rho new = "<<rhoNewNorm<<"\n";
+
+//        MPI_Allreduce(
+//          MPI_IN_PLACE , &rhoInNorm, N+1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+//
+//        MPI_Allreduce(
+//          MPI_IN_PLACE , &rhoOutNorm, N+1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+//
+//        double jxwNormTotal = 0.0;
+//        MPI_Allreduce(
+//          &jxwNorm, &jxwNormTotal,  1, MPI_DOUBLE, MPI_SUM, d_mpi_comm_domain);
+
+//        std::cout<<" norm of jxw = "<<jxwNorm<<"\n";
+//        std::cout<<" norm of jxw = "<<jxwNormTotal<<"\n";
+//        for(unsigned int i = 0 ; i < N+1;i++)
+//          {
+//            std::cout<<" rho norm i = "<<i<<" in = "<<rhoInNorm[i]<< " out = "<<rhoOutNorm[i]<<"\n";
+//          }
+      }
+    else
+      {
+        totalNormValue = normValue;
+      }
+
+//    std::cout<<" norm of mixing error = "<<normValue<<" total = "<<totalNormValue<<"\n";
+    return std::sqrt(totalNormValue);
+//    return 0.0;
   }
 
   void MixingScheme::clearHistory()
   {
+//    std::cout<<" CLear the history of variables \n";
     for (const auto& [key, value] : d_variableHistoryIn)
       {
         d_variableHistoryIn[key].clear();
         d_variableHistoryOut[key].clear();
       }
+//    std::cout<<" size of rho in hist = "<<d_variableHistoryIn[mixingVariable::rho].size()<<"\n";
+//    std::cout<<" size of rho out hist = "<<d_variableHistoryOut[mixingVariable::rho].size()<<"\n";
   }
   void MixingScheme::popOldHistory(unsigned int mixingHistory)
   {
@@ -228,10 +437,13 @@ namespace dftfe
       {
         for (const auto& [key, value] : d_variableHistoryIn)
           {
+//            std::cout<<" clearing the rho variables\n";
             d_variableHistoryIn[key].pop_front();
             d_variableHistoryOut[key].pop_front();
           }
       }
+//    std::cout<<" size of rho in hist = "<<d_variableHistoryIn[mixingVariable::rho].size()<<"\n";
+//    std::cout<<" size of rho out hist = "<<d_variableHistoryOut[mixingVariable::rho].size()<<"\n";
   }
 
 } // end of namespace

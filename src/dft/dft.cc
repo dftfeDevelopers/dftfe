@@ -2317,7 +2317,7 @@ namespace dftfe
                           }
 
                             d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
-
+                            
                         d_mixingScheme.computeAndersonMixingCoeff();
                         std::vector<double> rhoInNew;
                         norm = d_mixingScheme.mixVariable(mixingVariable::rho,
@@ -2426,6 +2426,19 @@ namespace dftfe
                         std::vector<double> rhoInOld, rhoOutOld;
 
                         copyDensityToVector(rhoInValues,rhoInOld);
+
+                        double normRhoInVector = 0.0;
+                        for (unsigned int i = 0; i< rhoInOld.size();i++)
+                          {
+                            normRhoInVector += rhoInOld[i];
+                          }
+                        MPI_Allreduce(MPI_IN_PLACE,
+                                      &normRhoInVector,
+                                      1,
+                                      MPI_DOUBLE,
+                                      MPI_SUM,
+                                      mpi_communicator);
+//                        std::cout<<" norm of rho in vec = "<<normRhoInVector<<"\n";
                         copyDensityToVector(rhoOutValues,rhoOutOld);
                         d_mixingScheme.addVariableToInHist(mixingVariable::rho,rhoInOld);
                         d_mixingScheme.addVariableToOutHist(mixingVariable::rho,rhoOutOld);
@@ -2445,6 +2458,11 @@ namespace dftfe
                         std::vector<double> rhoInNew;
                         norm = d_mixingScheme.mixVariable(mixingVariable::rho,
                                                           rhoInNew);
+                        double normRhoInNewVec = 0.0;
+                        for (unsigned int i = 0; i< rhoInNew.size();i++)
+                          {
+                            normRhoInNewVec += rhoInNew[i];
+                          }
 
                         copyDensityFromVector(rhoInNew,rhoInValues);
 
@@ -2456,47 +2474,52 @@ namespace dftfe
                                                        gradRhoInNew);
                             copyGradDensityFromVector(gradRhoInNew,gradRhoInValues);
                           }
-//                        double normRhoInAfterMixing = 0.0;
-//                        double normGradRhoInAfterMixing = 0.0;
-//                            const dealii::Quadrature<3> &quadrature =
-//                              matrix_free_data.get_quadrature(d_densityQuadratureId);
-//                            const unsigned int  num_quad_points = quadrature.size();
-//                                typename dealii::DoFHandler<3>::active_cell_iterator
-//                                  cell = dofHandler.begin_active(),
-//                                  endc = dofHandler.end();
-//                                for (; cell != endc; ++cell)
-//                                  {
-//                                    if (cell->is_locally_owned())
-//                                      {
-//                                        for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
-//                                        {
-//                                          normRhoInAfterMixing += (*(rhoInValues))[cell->id()][q_point];
-//
+                        double normRhoInAfterMixing = 0.0;
+                        double normGradRhoInAfterMixing = 0.0;
+                            const dealii::Quadrature<3> &quadrature =
+                              matrix_free_data.get_quadrature(d_densityQuadratureId);
+                            const unsigned int  num_quad_points = quadrature.size();
+                                typename dealii::DoFHandler<3>::active_cell_iterator
+                                  cell = dofHandler.begin_active(),
+                                  endc = dofHandler.end();
+                                for (; cell != endc; ++cell)
+                                  {
+                                    if (cell->is_locally_owned())
+                                      {
+                                        for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+                                        {
+                                          normRhoInAfterMixing += (*(rhoInValues))[cell->id()][q_point];
+
 //                                          normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+0]);
 //                                          normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+1]);
 //                                          normGradRhoInAfterMixing += std::abs((*(gradRhoInValues))[cell->id()][3*q_point+2]);
-//                                        }
-//                                      }
-//                                  }
-//                                MPI_Allreduce(MPI_IN_PLACE,
-//                                              &normRhoInAfterMixing,
-//                                              1,
-//                                              MPI_DOUBLE,
-//                                              MPI_SUM,
-//                                              mpi_communicator);
-//
-//                                MPI_Allreduce(MPI_IN_PLACE,
-//                                              &normGradRhoInAfterMixing,
-//                                              1,
-//                                              MPI_DOUBLE,
-//                                              MPI_SUM,
-//                                              mpi_communicator);
-//
+                                        }
+                                      }
+                                  }
+                                MPI_Allreduce(MPI_IN_PLACE,
+                                              &normRhoInNewVec,
+                                              1,
+                                              MPI_DOUBLE,
+                                              MPI_SUM,
+                                              mpi_communicator);
+
+                                MPI_Allreduce(MPI_IN_PLACE,
+                                              &normRhoInAfterMixing,
+                                              1,
+                                              MPI_DOUBLE,
+                                              MPI_SUM,
+                                              mpi_communicator);
+
+                                MPI_Allreduce(MPI_IN_PLACE,
+                                              &normGradRhoInAfterMixing,
+                                              1,
+                                              MPI_DOUBLE,
+                                              MPI_SUM,
+                                              mpi_communicator);
+
+//                                std::cout<<" Norm of rho vec in after mixing in dft.cc = "<<normRhoInNewVec<<"\n";
 //                                std::cout<<" Norm of rho in after mixing in dft.cc = "<<normRhoInAfterMixing<<"\n";
 //                                std::cout<<" Norm of grad rho in after mixing in dft.cc = "<<normGradRhoInAfterMixing<<"\n";
-
-//                                std::cout<<" Norm of spin rho in after mixing in dft.cc = "<<normSpinRhoInAfterMixing<<"\n";
-//                                std::cout<<" Norm of grad spin rho in after mixing in dft.cc = "<<normGradSpinRhoInAfterMixing<<"\n";
                       }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
@@ -5022,7 +5045,7 @@ namespace dftfe
               {
                 (*rhoValues)[cell->id()][iQuad] =
                   (*rhoSpinValues)[cell->id()][2*iQuad+0] +
-                  (*rhoSpinValues)[cell->id()][2*iQuad+0];
+                  (*rhoSpinValues)[cell->id()][2*iQuad+1];
               }
             iElem++;
           }

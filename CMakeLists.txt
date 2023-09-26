@@ -85,6 +85,7 @@ SET(TARGET_SRC
   ./src/linAlg/elpaScalaManager.cc
   ./src/linAlg/scalapackWrapper.cc
   ./src/linAlg/process_grid.cc
+  ./src/linAlg/mixingClass.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamicsClass.cc
@@ -157,8 +158,7 @@ SET(TARGET_SRC
   ./src/force/configurationalStressCompute/computeStressEself.cc
   ./src/force/configurationalStressCompute/stress.cc
   ./src/force/createBinObjectsForce.cc
-  ./src/force/locateAtomCoreNodesForce.cc
-  ./src/dft/mixingClass.cc)
+  ./src/force/locateAtomCoreNodesForce.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
 
