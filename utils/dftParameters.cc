@@ -745,7 +745,7 @@ namespace dftfe
           "MIXING PARAMETER",
           "0.0",
           dealii::Patterns::Double(-1e-12, 1.0),
-          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRD.");
+          "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
           "KERKER MIXING PARAMETER",
@@ -757,7 +757,7 @@ namespace dftfe
           "MIXING METHOD",
           "ANDERSON",
           dealii::Patterns::Selection(
-            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
+            "ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 

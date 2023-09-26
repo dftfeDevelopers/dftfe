@@ -45,7 +45,7 @@ namespace dftfe
     void clearHistory();
 
     void addMixingVariable(const mixingVariable mixingVariableList,
-                      const std::vector<double> &weightDotProducts,
+                      std::vector<double> &weightDotProducts,
                       const bool performMPIReduce,
                       const double mixingValue);
 
