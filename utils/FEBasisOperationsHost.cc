@@ -30,52 +30,8 @@ namespace dftfe
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &nodalData,
-        std::map<dealii::CellId,
-                 dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                             dftfe::utils::MemorySpace::HOST>>
-          *quadratureValues,
-        std::map<dealii::CellId,
-                 dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                             dftfe::utils::MemorySpace::HOST>>
-          *quadratureGradients) const
-    {
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::HOST>
-        *quadratureValuesCurrentCell;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::HOST>
-        *quadratureGradientsCurrentCell;
-
-      for (unsigned int iCell = 0; iCell < d_nCells; ++iCell)
-        {
-          dealii::CellId currentCellId = d_cellIndexToCellIdMap[iCell];
-          quadratureValuesCurrentCell  = &(quadratureValues->at(currentCellId));
-          quadratureGradientsCurrentCell =
-            quadratureGradients ? &(quadratureGradients->at(currentCellId)) :
-                                  NULL;
-          interpolateKernel(nodalData,
-                            quadratureValuesCurrentCell,
-                            quadratureGradientsCurrentCell,
-                            std::pair<unsigned int, unsigned int>(iCell,
-                                                                  iCell + 1));
-        }
-    }
-
-    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
-    void
-    FEBasisOperations<ValueTypeBasisCoeff,
-                      ValueTypeBasisData,
-                      dftfe::utils::MemorySpace::HOST>::
-      interpolate(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          &nodalData,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *quadratureValues,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *quadratureGradients) const
+       ValueTypeBasisCoeff          *quadratureValues,
+        ValueTypeBasisCoeff          *quadratureGradients) const
     {
       interpolateKernel(nodalData,
                         quadratureValues,
@@ -89,50 +45,8 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::HOST>::
       integrateWithBasis(
-        std::map<dealii::CellId,
-                 dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                             dftfe::utils::MemorySpace::HOST>>
-          *quadratureValues,
-        std::map<dealii::CellId,
-                 dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                             dftfe::utils::MemorySpace::HOST>>
-          *quadratureGradients,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          &nodalData) const
-    {
-      for (unsigned int iCell = 0; iCell < d_nCells; ++iCell)
-        {
-          dealii::CellId currentCellId = d_cellIndexToCellIdMap[iCell];
-          const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                            dftfe::utils::MemorySpace::HOST>
-            *quadratureValuesCurrentCell =
-              &(quadratureValues->at(currentCellId));
-          const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                            dftfe::utils::MemorySpace::HOST>
-            *quadratureGradientsCurrentCell =
-              quadratureGradients ? &(quadratureGradients->at(currentCellId)) :
-                                    NULL;
-          integrateWithBasisKernel(
-            quadratureValuesCurrentCell,
-            quadratureGradientsCurrentCell,
-            nodalData,
-            std::pair<unsigned int, unsigned int>(iCell, iCell + 1));
-        }
-    }
-
-    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
-    void
-    FEBasisOperations<ValueTypeBasisCoeff,
-                      ValueTypeBasisData,
-                      dftfe::utils::MemorySpace::HOST>::
-      integrateWithBasis(
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *quadratureValues,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *quadratureGradients,
+        ValueTypeBasisCoeff          *quadratureValues,
+        ValueTypeBasisCoeff          *quadratureGradients,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &nodalData) const
@@ -154,9 +68,7 @@ namespace dftfe
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &nodalData,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *cellNodalDataPtr) const
+        ValueTypeBasisCoeff          *cellNodalDataPtr) const
     {
       extractToCellNodalDataKernel(
         nodalData,
@@ -170,9 +82,7 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::HOST>::
       accumulateFromCellNodalData(
-        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          *cellNodalDataPtr,
+        const ValueTypeBasisCoeff          *cellNodalDataPtr,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &nodalData) const
@@ -191,12 +101,8 @@ namespace dftfe
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                 dftfe::utils::MemorySpace::HOST>
           &nodalValues,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *quadratureValues,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *                                         quadratureGradients,
+        ValueTypeBasisCoeff          *quadratureValues,
+        ValueTypeBasisCoeff          *quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
@@ -219,7 +125,7 @@ namespace dftfe
         {
           extractToCellNodalDataKernel(
             nodalValues,
-            &cellNodalData,
+            cellNodalData.data(),
             std::pair<unsigned int, unsigned int>(iCell, iCell + 1));
           const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                     scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
@@ -237,7 +143,7 @@ namespace dftfe
                 d_shapeFunctionData.data(),
                 &d_nDofsPerCell,
                 &scalarCoeffBeta,
-                quadratureValues->data() +
+                quadratureValues +
                   d_nQuadsPerCell * (iCell - cellRange.first) * d_nVectors,
                 &d_nVectors);
           if (quadratureGradients != NULL)
@@ -256,7 +162,7 @@ namespace dftfe
                     d_shapeFunctionGradientData.data(),
                     &d_nDofsPerCell,
                     &scalarCoeffBeta,
-                    areAllCellsCartesian ? (quadratureGradients->data() +
+                    areAllCellsCartesian ? (quadratureGradients +
                                             d_nQuadsPerCell * d_nVectors * 3 *
                                               (iCell - cellRange.first)) :
                                            (tempQuadratureGradientsData.data()),
@@ -269,7 +175,7 @@ namespace dftfe
                   for (unsigned int iDim = 0; iDim < 3; ++iDim)
                     xscal(&d_nQuadsPerCellTimesnVectors,
                           d_inverseJacobianData.data() + 3 * iCell + iDim,
-                          quadratureGradients->data() +
+                          quadratureGradients +
                             d_nQuadsPerCell * d_nVectors * 3 *
                               (iCell - cellRange.first) +
                             d_nQuadsPerCell * d_nVectors * iDim,
@@ -291,7 +197,7 @@ namespace dftfe
                         d_inverseJacobianData.data() + 9 * iCell,
                         &three,
                         &scalarCoeffBeta,
-                        quadratureGradients->data() +
+                        quadratureGradients +
                           d_nQuadsPerCell * d_nVectors * 3 *
                             (iCell - cellRange.first),
                         &d_nQuadsPerCellTimesnVectors);
@@ -318,7 +224,7 @@ namespace dftfe
                           &d_nVectors);
                   for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
                     for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                      std::memcpy(quadratureGradients->data() +
+                      std::memcpy(quadratureGradients +
                                     d_nVectors * 3 * d_nQuadsPerCell *
                                       (iCell - cellRange.first) +
                                     d_nVectors * d_nQuadsPerCell * iDim +
@@ -337,12 +243,8 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::HOST>::
       integrateWithBasisKernel(
-        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          *quadratureValues,
-        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          *quadratureGradients,
+        const ValueTypeBasisCoeff          *quadratureValues,
+        const ValueTypeBasisCoeff          *quadratureGradients,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &                                         nodalData,
@@ -375,7 +277,7 @@ namespace dftfe
                 &d_nDofsPerCell,
                 &d_nQuadsPerCell,
                 &scalarCoeffAlpha,
-                quadratureValues->data() + d_nQuadsPerCell * iCell,
+                quadratureValues + d_nQuadsPerCell * iCell,
                 &d_nVectors,
                 d_shapeFunctionData.data(),
                 &d_nQuadsPerCell,
@@ -390,7 +292,7 @@ namespace dftfe
                     d_nQuadsPerCell * d_nVectors;
                   const unsigned int one = 1;
                   std::memcpy(tempQuadratureGradientsData.data(),
-                              quadratureGradients->data() +
+                              quadratureGradients +
                                 d_nQuadsPerCell * d_nVectors * 3 * iCell,
                               3 * d_nQuadsPerCellTimesnVectors *
                                 sizeof(ValueTypeBasisCoeff));
@@ -412,7 +314,7 @@ namespace dftfe
                         &three,
                         &three,
                         &scalarCoeffAlpha,
-                        quadratureGradients->data() +
+                        quadratureGradients +
                           d_nQuadsPerCell * d_nVectors * 3 * iCell,
                         &d_nQuadsPerCellTimesnVectors,
                         d_inverseJacobianData.data() + 9 * iCell,
@@ -427,7 +329,7 @@ namespace dftfe
                     for (unsigned int iDim = 0; iDim < 3; ++iDim)
                       std::memcpy(tempQuadratureGradientsDataNonAffine.data() +
                                     d_nVectors * 3 * iQuad + d_nVectors * iDim,
-                                  quadratureGradients->data() +
+                                  quadratureGradients +
                                     d_nVectors * 3 * d_nQuadsPerCell * iCell +
                                     d_nVectors * d_nQuadsPerCell * iDim +
                                     d_nVectors * iQuad,
@@ -468,7 +370,7 @@ namespace dftfe
                     &d_nVectors);
             }
           accumulateFromCellNodalDataKernel(
-            &cellNodalData,
+            cellNodalData.data(),
             nodalData,
             std::pair<unsigned int, unsigned int>(iCell, iCell + 1));
         }
@@ -483,16 +385,14 @@ namespace dftfe
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                 dftfe::utils::MemorySpace::HOST>
           &nodalData,
-        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                    dftfe::utils::MemorySpace::HOST>
-          *                                         cellNodalDataPtr,
+        ValueTypeBasisCoeff          *cellNodalDataPtr,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       for (unsigned int iCell = cellRange.first; iCell < cellRange.second;
            ++iCell)
         for (unsigned int iDof = 0; iDof < d_nDofsPerCell; ++iDof)
           {
-            std::memcpy(cellNodalDataPtr->data() +
+            std::memcpy(cellNodalDataPtr +
                           (iCell - cellRange.first) * d_nVectors *
                             d_nDofsPerCell +
                           iDof * d_nVectors,
@@ -509,9 +409,7 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::HOST>::
       accumulateFromCellNodalDataKernel(
-        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          *cellNodalDataPtr,
+        const ValueTypeBasisCoeff          *cellNodalDataPtr,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &                                         nodalData,
@@ -521,9 +419,9 @@ namespace dftfe
            ++iCell)
         for (unsigned int iDof = 0; iDof < d_nDofsPerCell; ++iDof)
           std::transform(
-            cellNodalDataPtr->data() + iCell * d_nVectors * d_nDofsPerCell +
+            cellNodalDataPtr + iCell * d_nVectors * d_nDofsPerCell +
               iDof * d_nVectors,
-            cellNodalDataPtr->data() + iCell * d_nVectors * d_nDofsPerCell +
+            cellNodalDataPtr + iCell * d_nVectors * d_nDofsPerCell +
               iDof * d_nVectors + d_nVectors,
             nodalData.data() + d_flattenedCellDofIndexToProcessDofIndexMap
                                  [iCell * d_nDofsPerCell + iDof],

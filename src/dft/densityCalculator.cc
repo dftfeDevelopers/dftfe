@@ -319,9 +319,9 @@ namespace dftfe
                              ++spinIndex)
                           basisOperationsPtr->interpolateKernel(
                             flattenedArrayBlock[spinIndex],
-                            &wfcQuadPointData[spinIndex],
+                            wfcQuadPointData[spinIndex].data(),
                             isEvaluateGradRho ?
-                              &gradWfcQuadPointData[spinIndex] :
+                              gradWfcQuadPointData[spinIndex].data() :
                               NULL,
                             std::pair<unsigned int, unsigned int>(
                               startingCellId,
@@ -493,9 +493,9 @@ namespace dftfe
                                ++spinIndex)
                             basisOperationsPtr->interpolateKernel(
                               flattenedArrayBlock[spinIndex],
-                              &wfcQuadPointData[spinIndex],
+                              wfcQuadPointData[spinIndex].data(),
                               isEvaluateGradRho ?
-                                &gradWfcQuadPointData[spinIndex] :
+                                gradWfcQuadPointData[spinIndex].data() :
                                 NULL,
                               std::pair<unsigned int, unsigned int>(
                                 startingCellId,
