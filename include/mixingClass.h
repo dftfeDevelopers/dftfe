@@ -20,7 +20,6 @@
 #include <deque>
 #include <headers.h>
 #include <dftParameters.h>
-#include <excManager.h>
 
 namespace dftfe
 {
