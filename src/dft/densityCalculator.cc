@@ -266,11 +266,13 @@ namespace dftfe
                      ++spinIndex)
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
-                  std::memcpy(flattenedArrayBlock[spinIndex]
-                          .data()+iNode * currentBlockSize,X->data()+numLocalDofs * totalNumWaveFunctions *
-                                        (numSpinComponents * kPoint +
-                                         spinIndex) +
-                                      iNode * totalNumWaveFunctions + jvec,currentBlockSize*sizeof(NumberType));
+                      std::memcpy(flattenedArrayBlock[spinIndex].data() +
+                                    iNode * currentBlockSize,
+                                  X->data() +
+                                    numLocalDofs * totalNumWaveFunctions *
+                                      (numSpinComponents * kPoint + spinIndex) +
+                                    iNode * totalNumWaveFunctions + jvec,
+                                  currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                   else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
                     dftfe::utils::deviceKernelsGeneric::
@@ -432,12 +434,16 @@ namespace dftfe
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       for (unsigned int iNode = 0; iNode < numLocalDofs;
                            ++iNode)
-                           std::memcpy(flattenedArrayBlock[spinIndex]
-                            .data()+iNode * currentBlockSize,XFrac->data()+numLocalDofs * Nfr *
-                                              (numSpinComponents * kPoint +
-                                               spinIndex) +
-                                            iNode * Nfr + jvec,currentBlockSize*sizeof(NumberType));
-                        // for (unsigned int iWave = 0; iWave < currentBlockSize;
+                        std::memcpy(flattenedArrayBlock[spinIndex].data() +
+                                      iNode * currentBlockSize,
+                                    XFrac->data() +
+                                      numLocalDofs * Nfr *
+                                        (numSpinComponents * kPoint +
+                                         spinIndex) +
+                                      iNode * Nfr + jvec,
+                                    currentBlockSize * sizeof(NumberType));
+                        // for (unsigned int iWave = 0; iWave <
+                        // currentBlockSize;
                         //      ++iWave)
                         //   flattenedArrayBlock[spinIndex]
                         //     .data()[iNode * currentBlockSize + iWave] =
@@ -606,32 +612,42 @@ namespace dftfe
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
                   const double rho0 = rhoHost[iElem * numQuadPoints + q];
-                  const double rho1 = rhoHost[totalLocallyOwnedCells * numQuadPoints +
+                  const double rho1 =
+                    rhoHost[totalLocallyOwnedCells * numQuadPoints +
                             iElem * numQuadPoints + q];
                   tempRhoQuadsSP[2 * q + 0] = rho0;
 
                   tempRhoQuadsSP[2 * q + 1] = rho1;
-                  tempRhoQuads[q] = rho0+rho1;
+                  tempRhoQuads[q]           = rho0 + rho1;
                 }
 
               if (isEvaluateGradRho)
                 for (unsigned int q = 0; q < numQuadPoints; ++q)
                   {
-                    const double gradRho0x = gradRhoHost[iElem * numQuadPoints * 3 + 3*q];
-                    const double gradRho0y = gradRhoHost[iElem * numQuadPoints * 3 + 3*q+1];
-                    const double gradRho0z = gradRhoHost[iElem * numQuadPoints * 3 + 3*q+2];
-                    const double gradRho1x = gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3+iElem * numQuadPoints * 3 + 3*q];
-                    const double gradRho1y = gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3+iElem * numQuadPoints * 3 + 3*q+1];
-                    const double gradRho1z = gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3+iElem * numQuadPoints * 3 + 3*q+2];
+                    const double gradRho0x =
+                      gradRhoHost[iElem * numQuadPoints * 3 + 3 * q];
+                    const double gradRho0y =
+                      gradRhoHost[iElem * numQuadPoints * 3 + 3 * q + 1];
+                    const double gradRho0z =
+                      gradRhoHost[iElem * numQuadPoints * 3 + 3 * q + 2];
+                    const double gradRho1x =
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
+                                  iElem * numQuadPoints * 3 + 3 * q];
+                    const double gradRho1y =
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
+                                  iElem * numQuadPoints * 3 + 3 * q + 1];
+                    const double gradRho1z =
+                      gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
+                                  iElem * numQuadPoints * 3 + 3 * q + 2];
                     tempGradRhoQuadsSP[6 * q + 0] = gradRho0x;
                     tempGradRhoQuadsSP[6 * q + 1] = gradRho0y;
                     tempGradRhoQuadsSP[6 * q + 2] = gradRho0z;
                     tempGradRhoQuadsSP[6 * q + 3] = gradRho1x;
                     tempGradRhoQuadsSP[6 * q + 4] = gradRho1y;
                     tempGradRhoQuadsSP[6 * q + 5] = gradRho1z;
-                    tempGradRhoQuads[3 * q] = gradRho0x + gradRho1x;
-                    tempGradRhoQuads[3 * q + 1] = gradRho0y + gradRho1y;
-                    tempGradRhoQuads[3 * q + 2] = gradRho0z + gradRho1z;
+                    tempGradRhoQuads[3 * q]       = gradRho0x + gradRho1x;
+                    tempGradRhoQuads[3 * q + 1]   = gradRho0y + gradRho1y;
+                    tempGradRhoQuads[3 * q + 2]   = gradRho0z + gradRho1z;
                   }
             }
           else

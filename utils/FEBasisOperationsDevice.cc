@@ -25,7 +25,6 @@ namespace dftfe
 {
   namespace basis
   {
-
     template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
     void
     FEBasisOperations<ValueTypeBasisCoeff,
@@ -34,9 +33,9 @@ namespace dftfe
       interpolate(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::DEVICE>
-          &nodalData,
-        ValueTypeBasisCoeff          *quadratureValues,
-        ValueTypeBasisCoeff          *quadratureGradients) const
+          &                  nodalData,
+        ValueTypeBasisCoeff *quadratureValues,
+        ValueTypeBasisCoeff *quadratureGradients) const
     {
       interpolateKernel(nodalData,
                         quadratureValues,
@@ -50,8 +49,8 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::DEVICE>::
       integrateWithBasis(
-        ValueTypeBasisCoeff          *quadratureValues,
-        ValueTypeBasisCoeff          *quadratureGradients,
+        ValueTypeBasisCoeff *quadratureValues,
+        ValueTypeBasisCoeff *quadratureGradients,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::DEVICE>
           &nodalData) const
@@ -72,8 +71,8 @@ namespace dftfe
       extractToCellNodalData(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::DEVICE>
-          &nodalData,
-        ValueTypeBasisCoeff          *cellNodalDataPtr) const
+          &                  nodalData,
+        ValueTypeBasisCoeff *cellNodalDataPtr) const
     {
       extractToCellNodalDataKernel(
         nodalData,
@@ -87,7 +86,7 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::DEVICE>::
       accumulateFromCellNodalData(
-        const ValueTypeBasisCoeff          *cellNodalDataPtr,
+        const ValueTypeBasisCoeff *cellNodalDataPtr,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::DEVICE>
           &nodalData) const
@@ -108,13 +107,31 @@ namespace dftfe
       interpolateKernel(
         const dftfe::linearAlgebra::MultiVector<
           ValueTypeBasisCoeff,
-          dftfe::utils::MemorySpace::DEVICE> &nodalValues,
-       ValueTypeBasisCoeff          *quadratureValues,
-       ValueTypeBasisCoeff          *quadratureGradients,
+          dftfe::utils::MemorySpace::DEVICE> &      nodalValues,
+        ValueTypeBasisCoeff *                       quadratureValues,
+        ValueTypeBasisCoeff *                       quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
-      extractToCellNodalDataKernel(nodalValues, tempCellNodalData.data(), cellRange);
+      extractToCellNodalDataKernel(nodalValues,
+                                   tempCellNodalData.data(),
+                                   cellRange);
+      interpolateKernel(tempCellNodalData.data(),
+                        quadratureValues,
+                        quadratureGradients,
+                        cellRange);
+    }
 
+    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      dftfe::utils::MemorySpace::DEVICE>::
+      interpolateKernel(
+        const ValueTypeBasisCoeff *                 cellNodalValues,
+        ValueTypeBasisCoeff *                       quadratureValues,
+        ValueTypeBasisCoeff *                       quadratureGradients,
+        const std::pair<unsigned int, unsigned int> cellRange) const
+    {
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                 scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
 
@@ -126,7 +143,7 @@ namespace dftfe
         d_nQuadsPerCell,
         d_nDofsPerCell,
         &scalarCoeffAlpha,
-        tempCellNodalData.data(),
+        cellNodalValues,
         d_nVectors,
         d_nVectors * d_nDofsPerCell,
         d_shapeFunctionData.data(),
@@ -147,7 +164,7 @@ namespace dftfe
             d_nQuadsPerCell * 3,
             d_nDofsPerCell,
             &scalarCoeffAlpha,
-            tempCellNodalData.data(),
+            cellNodalValues,
             d_nVectors,
             d_nVectors * d_nDofsPerCell,
             d_shapeFunctionGradientData.data(),
@@ -229,8 +246,8 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::DEVICE>::
       integrateWithBasisKernel(
-        const ValueTypeBasisCoeff          *quadratureValues,
-        const ValueTypeBasisCoeff          *quadratureGradients,
+        const ValueTypeBasisCoeff *quadratureValues,
+        const ValueTypeBasisCoeff *quadratureGradients,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::DEVICE>
           &                                         nodalData,
@@ -245,8 +262,8 @@ namespace dftfe
       extractToCellNodalDataKernel(
         const dftfe::linearAlgebra::MultiVector<
           ValueTypeBasisCoeff,
-          dftfe::utils::MemorySpace::DEVICE> &nodalData,
-        ValueTypeBasisCoeff          *cellNodalDataPtr,
+          dftfe::utils::MemorySpace::DEVICE> &      nodalData,
+        ValueTypeBasisCoeff *                       cellNodalDataPtr,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
@@ -264,7 +281,7 @@ namespace dftfe
                       ValueTypeBasisData,
                       dftfe::utils::MemorySpace::DEVICE>::
       accumulateFromCellNodalDataKernel(
-        const ValueTypeBasisCoeff          *cellNodalDataPtr,
+        const ValueTypeBasisCoeff *cellNodalDataPtr,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::DEVICE>
           &                                         nodalData,

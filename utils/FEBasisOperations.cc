@@ -210,6 +210,12 @@ namespace dftfe
       d_nDofsPerCell = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID)
                          .get_fe()
                          .dofs_per_cell;
+      d_locallyOwnedSize =
+        d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+          ->locally_owned_size();
+      d_localSize = d_locallyOwnedSize +
+                    d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+                      ->n_ghost_indices();
       d_cellDofIndexToProcessDofIndexMap.clear();
       d_cellDofIndexToProcessDofIndexMap.resize(d_nCells * d_nDofsPerCell);
 
