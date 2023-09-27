@@ -24,11 +24,24 @@
 namespace dftfe
 {
 
+  /**
+     * @brief Enum class that stores he list of variables that will can be
+     * used in the mixing scheme
+     *
+   */
   enum class mixingVariable
   {
     rho,
     gradRho
   };
+
+  /**
+   * @brief This class performs the anderson mixing in a variable agnostic way
+   * This class takes can take different input variables as input in a std::vector format
+   * and computes the mixing coefficients
+   * These coefficients can then be used to compute the new variable at the start of the SCF.
+   * @author Vishal Subramanian
+   */
   class MixingScheme
   {
    public:
@@ -37,29 +50,63 @@ namespace dftfe
 
     unsigned int lengthOfHistory();
 
+    /**
+   * @brief Computes the mixing coefficients.
+   *
+     */
     void computeAndersonMixingCoeff();
 
+    /**
+   * @brief Deletes the old history if the length exceeds max length of history
+   *
+     */
     void popOldHistory(unsigned int mixingHistory);
 
+    /**
+   * @brief Clears all the the history.
+   *
+     */
     void clearHistory();
 
+    /**
+   * @brief This function is used to add the mixing variables and its corresponding
+     * JxW values
+   *
+     */
     void addMixingVariable(const mixingVariable mixingVariableList,
                       std::vector<double> &weightDotProducts,
                       const bool performMPIReduce,
                       const double mixingValue);
 
+    /**
+   * @brief Adds to the input history
+   *
+     */
     void addVariableToInHist(const mixingVariable mixingVariableName,
                       const std::vector<double> &inputVariableToInHist);
 
+    /**
+   * @brief Adds to the output history
+   *
+     */
     void addVariableToOutHist(const mixingVariable mixingVariableName,
                         const std::vector<double> &inputVariableToOutHist);
 
+    /**
+   * @brief Computes the input for the next iteration based on the anderson coefficients
+   *
+     */
     double mixVariable(const mixingVariable mixingVariableName,
                 std::vector<double> &outputVariable);
 
 
   private:
 
+    /**
+   * @brief Computes the matrix A and c vector that will be needed for anderson mixing.
+     * This function computes the A and c values for each variable which will be then added up in
+     * computeAndersonMixingCoeff()
+     */
     void computeMixingMatrices(const std::deque<std::vector<double>> &inHist,
                           const std::deque<std::vector<double>> &outHist,
                           const std::vector<double> &weightDotProducts,
@@ -81,20 +128,4 @@ namespace dftfe
 
   };
 } //  end of namespace dftfe
-
-
 #endif // DFTFE_MIXINGCLASS_H
-
-//
-//double mixDensity(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValuesSpinPolarized,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValuesSpinPolarized,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoInValues,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoOutValues,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoInValuesSpinPolarized,
-//           std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoOutValuesSpinPolarized);
-
-//    void copyDensityToInHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoInValues);
-//
-//    void copyDensityToOutHist(std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoOutValues);
