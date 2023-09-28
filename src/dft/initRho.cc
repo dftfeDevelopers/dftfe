@@ -32,18 +32,9 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::clearRhoData()
   {
-    rhoInVals.clear();
-    rhoOutVals.clear();
-    gradRhoInVals.clear();
-    gradRhoOutVals.clear();
-    rhoInValsSpinPolarized.clear();
-    rhoOutValsSpinPolarized.clear();
-    gradRhoInValsSpinPolarized.clear();
-    gradRhoOutValsSpinPolarized.clear();
-    dFBroyden.clear();
-    graddFBroyden.clear();
-    uBroyden.clear();
-    gradUBroyden.clear();
+    d_mixingScheme.clearHistory();
+
+
     d_rhoInNodalVals.clear();
     d_rhoOutNodalVals.clear();
     d_rhoInSpin0NodalVals.clear();
@@ -150,26 +141,24 @@ namespace dftfe
 
     // Initialize electron density table storage for rhoIn
 
-    rhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
-    rhoInValues = &(rhoInVals.back());
+    rhoInValues =
+      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        rhoInValsSpinPolarized.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
-        rhoInValuesSpinPolarized = &(rhoInValsSpinPolarized.back());
+        rhoInValuesSpinPolarized =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        gradRhoInVals.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
-        gradRhoInValues = &(gradRhoInVals.back());
+        gradRhoInValues =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
         //
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            gradRhoInValsSpinPolarized.push_back(
-              std::map<dealii::CellId, std::vector<double>>());
-            gradRhoInValuesSpinPolarized = &(gradRhoInValsSpinPolarized.back());
+            gradRhoInValuesSpinPolarized =
+              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
           }
       }
 
@@ -179,30 +168,26 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
-        rhoOutVals.push_back(std::map<dealii::CellId, std::vector<double>>());
-        rhoOutValues = &(rhoOutVals.back());
+        rhoOutValues =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-            gradRhoOutVals.push_back(
-              std::map<dealii::CellId, std::vector<double>>());
-            gradRhoOutValues = &(gradRhoOutVals.back());
+            gradRhoOutValues =
+              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
           }
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            rhoOutValsSpinPolarized.push_back(
-              std::map<dealii::CellId, std::vector<double>>());
-            rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+            rhoOutValuesSpinPolarized =
+              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
-                gradRhoOutValsSpinPolarized.push_back(
-                  std::map<dealii::CellId, std::vector<double>>());
-                gradRhoOutValuesSpinPolarized =
-                  &(gradRhoOutValsSpinPolarized.back());
+                gradRhoOutValuesSpinPolarized = std::make_shared<
+                  std::map<dealii::CellId, std::vector<double>>>();
               }
           }
       }
@@ -709,27 +694,24 @@ namespace dftfe
     const unsigned int num_quad_points = quadrature.size();
 
     // Initialize electron density table storage
+    rhoInValues =
+      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
-    rhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
-    rhoInValues = &(rhoInVals.back());
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        rhoInValsSpinPolarized.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
-        rhoInValuesSpinPolarized = &(rhoInValsSpinPolarized.back());
+        rhoInValuesSpinPolarized =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        gradRhoInVals.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
-        gradRhoInValues = &(gradRhoInVals.back());
+        gradRhoInValues =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
         //
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            gradRhoInValsSpinPolarized.push_back(
-              std::map<dealii::CellId, std::vector<double>>());
-            gradRhoInValuesSpinPolarized = &(gradRhoInValsSpinPolarized.back());
+            gradRhoInValuesSpinPolarized =
+              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
           }
       }
 
@@ -1290,7 +1272,7 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const unsigned int n_q_points = quadrature_formula.size();
 
-    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoInValues);
+    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoInValues.get());
     const double scaling = ((double)numElectrons) / charge;
 
     if (d_dftParamsPtr->verbosity >= 2)
@@ -1334,7 +1316,8 @@ namespace dftfe
               }
           }
       }
-    double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoInValues);
+    double chargeAfterScaling =
+      totalCharge(d_dofHandlerRhoNodal, rhoInValues.get());
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Initial total charge: " << chargeAfterScaling << std::endl;
@@ -1351,7 +1334,7 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const unsigned int n_q_points = quadrature_formula.size();
 
-    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
+    const double charge = totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
     const double scaling = ((double)numElectrons) / charge;
 
     if (d_dftParamsPtr->verbosity >= 2)
@@ -1394,7 +1377,8 @@ namespace dftfe
               }
           }
       }
-    double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
+    double chargeAfterScaling =
+      totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total charge out after scaling: " << chargeAfterScaling

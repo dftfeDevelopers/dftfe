@@ -145,7 +145,7 @@ namespace dftfe
     //
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
       {
-        kohnShamDFTEigenOperator.computeVEff(rhoInValues,
+        kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
                                              phiInValues,
                                              d_pseudoVLoc,
                                              d_rhoCore,
@@ -154,8 +154,8 @@ namespace dftfe
     else if (d_excManagerPtr->getDensityBasedFamilyType() ==
              densityFamilyType::GGA)
       {
-        kohnShamDFTEigenOperator.computeVEff(rhoInValues,
-                                             gradRhoInValues,
+        kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
+                                             gradRhoInValues.get(),
                                              phiInValues,
                                              d_pseudoVLoc,
                                              d_rhoCore,

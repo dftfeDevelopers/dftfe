@@ -65,6 +65,7 @@
 #  include <slepceps.h>
 #endif
 
+#include <mixingClass.h>
 
 
 namespace dftfe
@@ -215,6 +216,78 @@ namespace dftfe
       distributedCPUVec<double> &      fvSpin0,
       distributedCPUVec<double> &      fvSpin1);
 
+    /**
+     * @brief Copies the density stored in std::map<dealii:cellId, std::vector<double>> into a flattened std::vector<double> format
+     *
+     *
+     */
+    void
+    copyDensityToVector(
+      const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &                  rhoValues,
+      std::vector<double> &rhoValuesVector);
+
+    /**
+     * @brief Copies the density stored in  a flattened std::vector<double> format to std::map<dealii:cellId, std::vector<double>>
+     *
+     */
+    void
+    copyDensityFromVector(
+      const std::vector<double> &rhoValuesVector,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &rhoValues);
+
+    /**
+     * @brief Copies the gradient of density stored in a std::map<dealii:cellId, std::vector<double>>
+     * into a flattened std::vector<double> format
+     *
+     *
+     */
+    void
+    copyGradDensityToVector(
+      const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &                  gradRhoValues,
+      std::vector<double> &gradRhoValuesVector);
+
+    /**
+     * @brief Copies the gradient of density stored in  a flattened std::vector<double> format
+     * to std::map<dealii:cellId, std::vector<double>>
+     *
+     */
+    void
+    copyGradDensityFromVector(
+      const std::vector<double> &gradRhoValuesVector,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &gradRhoValues);
+
+    /**
+     * @brief Computes the total density from the spin polarised densities
+     *
+     */
+    void
+    computeTotalDensityFromSpinPolarised(
+      const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &rhoSpinValues,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &rhoValues);
+
+    /**
+     * @brief Computes the total gradient of density from the spin polarised densities
+     *
+     */
+    void
+    computeTotalGradDensityFromSpinPolarised(
+      const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &gradRhoSpinValues,
+      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+        &gradRhoValues);
+
+    /**
+     * @brief Computes the JxW values used in the \int \rho
+     *
+     */
+    void
+    computeJxWForRho(std::vector<double> &vecJxW);
     void
     initializeKohnShamDFTOperator(const bool initializeCublas = true);
 
@@ -435,19 +508,7 @@ namespace dftfe
      *@brief save triangulation information and rho quadrature data to checkpoint file for restarts
      */
     void
-    saveTriaInfoAndRhoData();
-
-    /**
-     *@brief save triangulation information and rho quadrature data to checkpoint file for restarts
-     */
-    void
     saveTriaInfoAndRhoNodalData();
-
-    /**
-     *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
-     */
-    void
-    loadTriaInfoAndRhoData();
 
     /**
      *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
@@ -711,18 +772,6 @@ namespace dftfe
       distributedCPUVec<double> &fvSpin0,
       distributedCPUVec<double> &fvSpin1);
 
-    /**
-     *@brief resize and allocate table storage for rho cell quadratrue data
-     */
-    void
-    resizeAndAllocateRhoTableStorage(
-      std::deque<std::map<dealii::CellId, std::vector<double>>> &rhoVals,
-      std::deque<std::map<dealii::CellId, std::vector<double>>> &gradRhoVals,
-      std::deque<std::map<dealii::CellId, std::vector<double>>>
-        &rhoValsSpinPolarized,
-      std::deque<std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoValsSpinPolarized);
-
     void
     noRemeshRhoDataInit();
     void
@@ -892,16 +941,9 @@ namespace dftfe
      */
     double
     mixing_simple();
-    double
-    mixing_anderson();
+
     double
     mixing_simple_spinPolarized();
-    double
-    mixing_anderson_spinPolarized();
-    double
-    mixing_broyden();
-    double
-    mixing_broyden_spinPolarized();
 
     double
     nodalDensity_mixing_simple_kerker(
@@ -1409,11 +1451,12 @@ namespace dftfe
     dealii::Timer d_globalTimer;
 
     // dft related objects
-    std::map<dealii::CellId, std::vector<double>> *rhoInValues, *rhoOutValues,
-      *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> rhoInVals,
-      rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> rhoInValues,
+      rhoOutValues, rhoInValuesSpinPolarized, rhoOutValuesSpinPolarized;
+
     std::map<dealii::CellId, std::vector<double>> d_phiInValues, d_phiOutValues;
+
+    MixingScheme d_mixingScheme;
 
     distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues,
       d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector,
@@ -1458,22 +1501,10 @@ namespace dftfe
       d_rhoAtomsValuesSeparate, d_gradRhoAtomsValuesSeparate,
       d_hessianRhoAtomsValuesSeparate;
 
-    std::map<dealii::CellId, std::vector<double>> *gradRhoInValues,
-      *gradRhoInValuesSpinPolarized;
-    std::map<dealii::CellId, std::vector<double>> *gradRhoOutValues,
-      *gradRhoOutValuesSpinPolarized;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> gradRhoInVals,
-      gradRhoInValsSpinPolarized, gradRhoOutVals, gradRhoOutValsSpinPolarized;
-
-    // Broyden mixing related objects
-    std::map<dealii::CellId, std::vector<double>> FBroyden, gradFBroyden;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> dFBroyden,
-      graddFBroyden;
-    std::deque<std::map<dealii::CellId, std::vector<double>>> uBroyden,
-      gradUBroyden;
-    std::deque<double> wtBroyden;
-    double             w0Broyden = 0.0;
-    //
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      gradRhoInValues, gradRhoInValuesSpinPolarized;
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      gradRhoOutValues, gradRhoOutValuesSpinPolarized;
 
 
     // storage for total electrostatic potential solution vector corresponding

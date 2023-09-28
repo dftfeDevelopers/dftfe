@@ -54,28 +54,23 @@ namespace dftfe
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
     const unsigned int num_quad_points = quadrature.size();
     //
-    dftPtr->rhoOutVals.push_back(
-      std::map<dealii::CellId, std::vector<double>>());
-    dftPtr->rhoOutValues = &(dftPtr->rhoOutVals.back());
+    dftPtr->rhoOutValues =
+      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
     if (dftPtr->getParametersObject().spinPolarized == 1)
       {
-        dftPtr->rhoOutValsSpinPolarized.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
         dftPtr->rhoOutValuesSpinPolarized =
-          &(dftPtr->rhoOutValsSpinPolarized.back());
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
     if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
         densityFamilyType::GGA)
       {
-        dftPtr->gradRhoOutVals.push_back(
-          std::map<dealii::CellId, std::vector<double>>());
-        dftPtr->gradRhoOutValues = &(dftPtr->gradRhoOutVals.back());
+        dftPtr->gradRhoOutValues =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+
         if (dftPtr->getParametersObject().spinPolarized == 1)
           {
-            dftPtr->gradRhoOutValsSpinPolarized.push_back(
-              std::map<dealii::CellId, std::vector<double>>());
             dftPtr->gradRhoOutValuesSpinPolarized =
-              &(dftPtr->gradRhoOutValsSpinPolarized.back());
+              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
           }
       }
     std::vector<double> rhoOut(num_quad_points),
@@ -211,43 +206,6 @@ namespace dftfe
     //			Free up some memory by getting rid of density history beyond what is
     // required by mixing scheme
     //=============================================================================================================================================
-    if ((dftPtr->rhoInVals).size() ==
-        dftPtr->getParametersObject().mixingHistory)
-      {
-        dftPtr->rhoInVals.pop_front();
-        dftPtr->rhoOutVals.pop_front();
-        //
-        if (dftPtr->getParametersObject().spinPolarized)
-          {
-            dftPtr->rhoInValsSpinPolarized.pop_front();
-            dftPtr->rhoOutValsSpinPolarized.pop_front();
-          }
-        //
-        if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
-          {
-            dftPtr->gradRhoInVals.pop_front();
-            dftPtr->gradRhoOutVals.pop_front();
-            //
-            if (dftPtr->getParametersObject().spinPolarized)
-              {
-                dftPtr->gradRhoInValsSpinPolarized.pop_front();
-                dftPtr->gradRhoOutValsSpinPolarized.pop_front();
-              }
-          }
-        //
-        if (dftPtr->getParametersObject().mixingMethod == "BROYDEN")
-          {
-            dftPtr->dFBroyden.pop_front();
-            dftPtr->uBroyden.pop_front();
-            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA) // GGA
-              {
-                dftPtr->graddFBroyden.pop_front();
-                dftPtr->gradUBroyden.pop_front();
-              }
-          }
-      }
   }
   //=============================================================================================================================================
   //=============================================================================================================================================
