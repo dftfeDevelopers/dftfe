@@ -38,7 +38,8 @@ namespace dftfe
     // create new rhoValue tables
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOld = *rhoInValues;
 
-    rhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+    rhoInValues =
+      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
     // create new gradRhoValue tables
     std::map<dealii::CellId, std::vector<double>> gradRhoInValuesOld;
@@ -46,8 +47,8 @@ namespace dftfe
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         gradRhoInValuesOld = *gradRhoInValues;
-        gradRhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-
+        gradRhoInValues =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
 
     // parallel loop over all elements
@@ -122,12 +123,14 @@ namespace dftfe
 
     // create new rhoValue tables
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOld = *rhoInValues;
-    rhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+    rhoInValues =
+      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
     std::map<dealii::CellId, std::vector<double>> rhoInValuesOldSpinPolarized =
       *rhoInValuesSpinPolarized;
 
-    rhoInValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+    rhoInValuesSpinPolarized =
+      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
     //
 
     // create new gradRhoValue tables
@@ -139,11 +142,13 @@ namespace dftfe
       {
         gradRhoInValuesOld = *gradRhoInValues;
 
-        gradRhoInValues =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+        gradRhoInValues =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
         //
         gradRhoInValuesOldSpinPolarized = *gradRhoInValuesSpinPolarized;
 
-        gradRhoInValuesSpinPolarized =  std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+        gradRhoInValuesSpinPolarized =
+          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
       }
 
     // parallel loop over all elements

@@ -23,11 +23,10 @@
 
 namespace dftfe
 {
-
   /**
-     * @brief Enum class that stores he list of variables that will can be
-     * used in the mixing scheme
-     *
+   * @brief Enum class that stores he list of variables that will can be
+   * used in the mixing scheme
+   *
    */
   enum class mixingVariable
   {
@@ -37,95 +36,102 @@ namespace dftfe
 
   /**
    * @brief This class performs the anderson mixing in a variable agnostic way
-   * This class takes can take different input variables as input in a std::vector format
-   * and computes the mixing coefficients
-   * These coefficients can then be used to compute the new variable at the start of the SCF.
+   * This class takes can take different input variables as input in a
+   * std::vector format and computes the mixing coefficients These coefficients
+   * can then be used to compute the new variable at the start of the SCF.
    * @author Vishal Subramanian
    */
   class MixingScheme
   {
-   public:
-
+  public:
     MixingScheme(const MPI_Comm &mpi_comm_domain);
 
-    unsigned int lengthOfHistory();
+    unsigned int
+    lengthOfHistory();
 
     /**
-   * @brief Computes the mixing coefficients.
-   *
+     * @brief Computes the mixing coefficients.
+     *
      */
-    void computeAndersonMixingCoeff();
+    void
+    computeAndersonMixingCoeff();
 
     /**
-   * @brief Deletes the old history if the length exceeds max length of history
-   *
+     * @brief Deletes the old history if the length exceeds max length of history
+     *
      */
-    void popOldHistory(unsigned int mixingHistory);
+    void
+    popOldHistory(unsigned int mixingHistory);
 
     /**
-   * @brief Clears all the the history.
-   *
+     * @brief Clears all the the history.
+     *
      */
-    void clearHistory();
+    void
+    clearHistory();
 
     /**
-   * @brief This function is used to add the mixing variables and its corresponding
+     * @brief This function is used to add the mixing variables and its corresponding
      * JxW values
-   *
+     *
      */
-    void addMixingVariable(const mixingVariable mixingVariableList,
+    void
+    addMixingVariable(const mixingVariable mixingVariableList,
                       std::vector<double> &weightDotProducts,
-                      const bool performMPIReduce,
-                      const double mixingValue);
+                      const bool           performMPIReduce,
+                      const double         mixingValue);
 
     /**
-   * @brief Adds to the input history
-   *
+     * @brief Adds to the input history
+     *
      */
-    void addVariableToInHist(const mixingVariable mixingVariableName,
-                      const std::vector<double> &inputVariableToInHist);
+    void
+    addVariableToInHist(const mixingVariable       mixingVariableName,
+                        const std::vector<double> &inputVariableToInHist);
 
     /**
-   * @brief Adds to the output history
-   *
+     * @brief Adds to the output history
+     *
      */
-    void addVariableToOutHist(const mixingVariable mixingVariableName,
-                        const std::vector<double> &inputVariableToOutHist);
+    void
+    addVariableToOutHist(const mixingVariable       mixingVariableName,
+                         const std::vector<double> &inputVariableToOutHist);
 
     /**
-   * @brief Computes the input for the next iteration based on the anderson coefficients
-   *
+     * @brief Computes the input for the next iteration based on the anderson coefficients
+     *
      */
-    double mixVariable(const mixingVariable mixingVariableName,
+    double
+    mixVariable(const mixingVariable mixingVariableName,
                 std::vector<double> &outputVariable);
 
 
   private:
-
     /**
-   * @brief Computes the matrix A and c vector that will be needed for anderson mixing.
-     * This function computes the A and c values for each variable which will be then added up in
-     * computeAndersonMixingCoeff()
+     * @brief Computes the matrix A and c vector that will be needed for anderson mixing.
+     * This function computes the A and c values for each variable which will be
+     * then added up in computeAndersonMixingCoeff()
      */
-    void computeMixingMatrices(const std::deque<std::vector<double>> &inHist,
+    void
+    computeMixingMatrices(const std::deque<std::vector<double>> &inHist,
                           const std::deque<std::vector<double>> &outHist,
                           const std::vector<double> &weightDotProducts,
-                          const bool isMPIAllReduce,
-                          std::vector<double> &A,
-                          std::vector<double> &c);
+                          const bool                 isMPIAllReduce,
+                          std::vector<double> &      A,
+                          std::vector<double> &      c);
 
     std::vector<double> d_A, d_c;
-    double d_cFinal;
+    double              d_cFinal;
 
-    std::map<mixingVariable, std::deque<std::vector<double>>> d_variableHistoryIn, d_variableHistoryOut ;
+    std::map<mixingVariable, std::deque<std::vector<double>>>
+                                                  d_variableHistoryIn, d_variableHistoryOut;
     std::map<mixingVariable, std::vector<double>> d_vectorDotProductWeights;
-    std::map<mixingVariable, bool> d_performMPIReduce;
+    std::map<mixingVariable, bool>                d_performMPIReduce;
 
     const MPI_Comm d_mpi_comm_domain;
 
     std::map<mixingVariable, double> d_mixingParameter;
-    unsigned int d_mixingHistory;
-
+    unsigned int                     d_mixingHistory;
   };
 } //  end of namespace dftfe
 #endif // DFTFE_MIXINGCLASS_H
