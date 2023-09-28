@@ -319,7 +319,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized,
+                    rhoInValuesSpinPolarized.get(),
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -328,7 +328,7 @@ namespace dftfe
 #endif
                 if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized,
+                    rhoInValuesSpinPolarized.get(),
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -343,8 +343,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized,
-                    gradRhoInValuesSpinPolarized,
+                    rhoInValuesSpinPolarized.get(),
+                    gradRhoInValuesSpinPolarized.get(),
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -354,8 +354,8 @@ namespace dftfe
 #endif
                 if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized,
-                    gradRhoInValuesSpinPolarized,
+                    rhoInValuesSpinPolarized.get(),
+                    gradRhoInValuesSpinPolarized.get(),
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -641,14 +641,14 @@ namespace dftfe
             computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
             if (d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues,
+              kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues.get(),
                                                          d_phiInValues,
                                                          d_pseudoVLoc,
                                                          d_rhoCore,
                                                          d_lpspQuadratureId);
 #endif
             if (!d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperator.computeVEff(rhoInValues,
+              kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
                                                    d_phiInValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
@@ -661,8 +661,8 @@ namespace dftfe
             computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
             if (d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues,
-                                                         gradRhoInValues,
+              kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues.get(),
+                                                         gradRhoInValues.get(),
                                                          d_phiInValues,
                                                          d_pseudoVLoc,
                                                          d_rhoCore,
@@ -670,8 +670,8 @@ namespace dftfe
                                                          d_lpspQuadratureId);
 #endif
             if (!d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperator.computeVEff(rhoInValues,
-                                                   gradRhoInValues,
+              kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
+                                                   gradRhoInValues.get(),
                                                    d_phiInValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
@@ -911,7 +911,7 @@ namespace dftfe
     // compute integral rhoOut
     //
     const double integralRhoValue =
-      totalCharge(d_dofHandlerPRefined, rhoOutValues);
+      totalCharge(d_dofHandlerPRefined, rhoOutValues.get());
 
     if (d_dftParamsPtr->verbosity >= 2)
       {
@@ -922,7 +922,7 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 1 && d_dftParamsPtr->spinPolarized == 1)
       pcout << std::endl
             << "net magnetization: "
-            << totalMagnetization(rhoOutValuesSpinPolarized) << std::endl;
+            << totalMagnetization(rhoOutValuesSpinPolarized.get()) << std::endl;
 
 
     local_timer.stop();

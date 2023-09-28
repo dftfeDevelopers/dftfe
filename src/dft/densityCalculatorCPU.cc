@@ -114,6 +114,7 @@ namespace dftfe
 
     std::vector<T> cellWaveFunctionMatrix(numNodesPerElement * BVec, T(0.0));
 
+
     // set density to zero
     typename dealii::DoFHandler<3>::active_cell_iterator cell =
       dofHandler.begin_active();
@@ -123,6 +124,7 @@ namespace dftfe
       if (cell->is_locally_owned())
         {
           const dealii::CellId cellid = cell->id();
+
 
           std::fill((*rhoValues)[cellid].begin(),
                     (*rhoValues)[cellid].end(),

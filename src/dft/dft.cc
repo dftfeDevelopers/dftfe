@@ -146,6 +146,7 @@ namespace dftfe
                                 0.0,
                                 0.0,
                                 dftParams)
+    , d_mixingScheme(mpi_comm_domain)
 #ifdef DFTFE_WITH_DEVICE
     , d_subspaceIterationSolverDevice(mpi_comm_parent,
                                       mpi_comm_domain,
@@ -1190,30 +1191,26 @@ namespace dftfe
           {
             d_rhoOutNodalValues = d_rhoInNodalValues;
             d_rhoOutNodalValues.update_ghost_values();
-            rhoOutVals.push_back(*(rhoInValues));
-            rhoOutValues = &(rhoOutVals.back());
+
+            *(rhoOutValues) = *(rhoInValues);
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
-                gradRhoOutVals.push_back(*(gradRhoInValues));
-                gradRhoOutValues = &(gradRhoOutVals.back());
+                *(gradRhoOutValues) = *(gradRhoInValues);
               }
 
             if (d_dftParamsPtr->spinPolarized == 1)
               {
-                rhoOutValsSpinPolarized.push_back(*rhoInValuesSpinPolarized);
-                rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+                *(rhoOutValuesSpinPolarized) = *(rhoInValuesSpinPolarized);
               }
 
             if (d_excManagerPtr->getDensityBasedFamilyType() ==
                   densityFamilyType::GGA &&
                 d_dftParamsPtr->spinPolarized == 1)
               {
-                gradRhoOutValsSpinPolarized.push_back(
-                  *gradRhoInValuesSpinPolarized);
-                gradRhoOutValuesSpinPolarized =
-                  &(gradRhoOutValsSpinPolarized.back());
+                *(gradRhoOutValuesSpinPolarized) =
+                  *(gradRhoInValuesSpinPolarized);
               }
           }
 
@@ -2168,6 +2165,30 @@ namespace dftfe
                            1e-3 :
                            d_dftParamsPtr->chebyshevTolerance;
 
+    // call the mixing scheme with the mixing variables
+    // Have to be called once for each variable
+    // initialise the variables in the mixing scheme
+    std::vector<double> rhoJxW;
+    computeJxWForRho(rhoJxW);
+    d_mixingScheme.addMixingVariable(
+      mixingVariable::rho,
+      rhoJxW,
+      true, // call MPI REDUCE while computing dot products
+      d_dftParamsPtr->mixingParameter);
+
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+      {
+        std::vector<double> gradRhoJxW;
+        gradRhoJxW.resize(rhoJxW.size() * 3);
+        std::fill(gradRhoJxW.begin(), gradRhoJxW.end(), 0.0);
+        d_mixingScheme.addMixingVariable(
+          mixingVariable::gradRho,
+          gradRhoJxW, // this is just a dummy variable to amke it compatible
+                      // with rho
+          false,      // call MPI REDUCE while computing dot products
+          d_dftParamsPtr->mixingParameter);
+      }
+
     //
     // Begin SCF iteration
     //
@@ -2206,7 +2227,37 @@ namespace dftfe
                       norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
                         scfIter);
                     else
-                      norm = mixing_simple_spinPolarized();
+                      {
+                        if (d_dftParamsPtr->mixingMethod == "ANDERSON")
+                          {
+                            std::vector<double> rhoInOld, rhoOutOld;
+
+                            // Update the history of mixing variables
+                            copyDensityToVector(rhoInValuesSpinPolarized,
+                                                rhoInOld);
+                            copyDensityToVector(rhoOutValuesSpinPolarized,
+                                                rhoOutOld);
+                            d_mixingScheme.addVariableToInHist(
+                              mixingVariable::rho, rhoInOld);
+                            d_mixingScheme.addVariableToOutHist(
+                              mixingVariable::rho, rhoOutOld);
+                            if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                std::vector<double> gradRhoInOld, gradRhoOutOld;
+
+                                copyGradDensityToVector(
+                                  gradRhoInValuesSpinPolarized, gradRhoInOld);
+                                copyGradDensityToVector(
+                                  gradRhoOutValuesSpinPolarized, gradRhoOutOld);
+                                d_mixingScheme.addVariableToInHist(
+                                  mixingVariable::gradRho, gradRhoInOld);
+                                d_mixingScheme.addVariableToOutHist(
+                                  mixingVariable::gradRho, gradRhoOutOld);
+                              }
+                          }
+                        norm = mixing_simple_spinPolarized();
+                      }
                   }
                 else
                   {
@@ -2224,7 +2275,35 @@ namespace dftfe
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInv(scfIter);
                     else
-                      norm = mixing_simple();
+                      {
+                        if (d_dftParamsPtr->mixingMethod == "ANDERSON")
+                          {
+                            std::vector<double> rhoInOld, rhoOutOld;
+
+                            // Update the history of mixing variables
+                            copyDensityToVector(rhoInValues, rhoInOld);
+                            copyDensityToVector(rhoOutValues, rhoOutOld);
+                            d_mixingScheme.addVariableToInHist(
+                              mixingVariable::rho, rhoInOld);
+                            d_mixingScheme.addVariableToOutHist(
+                              mixingVariable::rho, rhoOutOld);
+                            if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                                densityFamilyType::GGA)
+                              {
+                                std::vector<double> gradRhoInOld, gradRhoOutOld;
+
+                                copyGradDensityToVector(gradRhoInValues,
+                                                        gradRhoInOld);
+                                copyGradDensityToVector(gradRhoOutValues,
+                                                        gradRhoOutOld);
+                                d_mixingScheme.addVariableToInHist(
+                                  mixingVariable::gradRho, gradRhoInOld);
+                                d_mixingScheme.addVariableToOutHist(
+                                  mixingVariable::gradRho, gradRhoOutOld);
+                              }
+                          }
+                        norm = mixing_simple();
+                      }
                   }
 
                 if (d_dftParamsPtr->verbosity >= 1)
@@ -2239,9 +2318,62 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      norm = mixing_anderson_spinPolarized();
-                    else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-                      norm = mixing_broyden_spinPolarized();
+                      {
+                        std::vector<double> rhoInOld, rhoOutOld;
+
+                        // Update the history of mixing variables
+                        copyDensityToVector(rhoInValuesSpinPolarized, rhoInOld);
+                        copyDensityToVector(rhoOutValuesSpinPolarized,
+                                            rhoOutOld);
+                        d_mixingScheme.addVariableToInHist(mixingVariable::rho,
+                                                           rhoInOld);
+                        d_mixingScheme.addVariableToOutHist(mixingVariable::rho,
+                                                            rhoOutOld);
+                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                            densityFamilyType::GGA)
+                          {
+                            std::vector<double> gradRhoInOld, gradRhoOutOld;
+
+                            copyGradDensityToVector(
+                              gradRhoInValuesSpinPolarized, gradRhoInOld);
+                            copyGradDensityToVector(
+                              gradRhoOutValuesSpinPolarized, gradRhoOutOld);
+                            d_mixingScheme.addVariableToInHist(
+                              mixingVariable::gradRho, gradRhoInOld);
+                            d_mixingScheme.addVariableToOutHist(
+                              mixingVariable::gradRho, gradRhoOutOld);
+                          }
+
+                        // Delete old history if it exceeds a pre-described
+                        // length
+                        d_mixingScheme.popOldHistory(
+                          d_dftParamsPtr->mixingHistory);
+
+                        // Compute the mixing coefficients
+                        d_mixingScheme.computeAndersonMixingCoeff();
+                        std::vector<double> rhoInNew;
+
+                        // update the mixing variables
+                        norm = d_mixingScheme.mixVariable(mixingVariable::rho,
+                                                          rhoInNew);
+
+                        copyDensityFromVector(rhoInNew,
+                                              rhoInValuesSpinPolarized);
+                        computeTotalDensityFromSpinPolarised(
+                          rhoInValuesSpinPolarized, rhoInValues);
+
+                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                            densityFamilyType::GGA)
+                          {
+                            std::vector<double> gradRhoInNew;
+                            d_mixingScheme.mixVariable(mixingVariable::gradRho,
+                                                       gradRhoInNew);
+                            copyGradDensityFromVector(
+                              gradRhoInNew, gradRhoInValuesSpinPolarized);
+                            computeTotalGradDensityFromSpinPolarised(
+                              gradRhoInValuesSpinPolarized, gradRhoInValues);
+                          }
+                      }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "LOW_RANK_DIELECM_PRECOND")
                       norm = lowrankApproxScfDielectricMatrixInvSpinPolarized(
@@ -2256,9 +2388,57 @@ namespace dftfe
                 else
                   {
                     if (d_dftParamsPtr->mixingMethod == "ANDERSON")
-                      norm = mixing_anderson();
-                    else if (d_dftParamsPtr->mixingMethod == "BROYDEN")
-                      norm = mixing_broyden();
+                      {
+                        std::vector<double> rhoInOld, rhoOutOld;
+
+                        // Update the history of mixing variables
+                        copyDensityToVector(rhoInValues, rhoInOld);
+                        copyDensityToVector(rhoOutValues, rhoOutOld);
+                        d_mixingScheme.addVariableToInHist(mixingVariable::rho,
+                                                           rhoInOld);
+                        d_mixingScheme.addVariableToOutHist(mixingVariable::rho,
+                                                            rhoOutOld);
+
+                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                            densityFamilyType::GGA)
+                          {
+                            std::vector<double> gradRhoInOld, gradRhoOutOld;
+
+                            copyGradDensityToVector(gradRhoInValues,
+                                                    gradRhoInOld);
+                            copyGradDensityToVector(gradRhoOutValues,
+                                                    gradRhoOutOld);
+                            d_mixingScheme.addVariableToInHist(
+                              mixingVariable::gradRho, gradRhoInOld);
+                            d_mixingScheme.addVariableToOutHist(
+                              mixingVariable::gradRho, gradRhoOutOld);
+                          }
+
+                        // Delete old history if it exceeds a pre-described
+                        // length
+                        d_mixingScheme.popOldHistory(
+                          d_dftParamsPtr->mixingHistory);
+
+                        // Compute the mixing coefficients
+                        d_mixingScheme.computeAndersonMixingCoeff();
+
+                        // update the mixing variables
+                        std::vector<double> rhoInNew;
+                        norm = d_mixingScheme.mixVariable(mixingVariable::rho,
+                                                          rhoInNew);
+
+                        copyDensityFromVector(rhoInNew, rhoInValues);
+
+                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                            densityFamilyType::GGA)
+                          {
+                            std::vector<double> gradRhoInNew;
+                            d_mixingScheme.mixVariable(mixingVariable::gradRho,
+                                                       gradRhoInNew);
+                            copyGradDensityFromVector(gradRhoInNew,
+                                                      gradRhoInValues);
+                          }
+                      }
                     else if (d_dftParamsPtr->mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       {
@@ -2481,7 +2661,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                     if (d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2490,7 +2670,7 @@ namespace dftfe
 #endif
                     if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2505,8 +2685,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                     if (d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
-                        gradRhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
+                        gradRhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2516,8 +2696,8 @@ namespace dftfe
 #endif
                     if (!d_dftParamsPtr->useDevice)
                       kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                        rhoInValuesSpinPolarized,
-                        gradRhoInValuesSpinPolarized,
+                        rhoInValuesSpinPolarized.get(),
+                        gradRhoInValuesSpinPolarized.get(),
                         d_phiInValues,
                         s,
                         d_pseudoVLoc,
@@ -2809,14 +2989,14 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEff(
-                    rhoInValues,
+                    rhoInValues.get(),
                     d_phiInValues,
                     d_pseudoVLoc,
                     d_rhoCore,
                     d_lpspQuadratureId);
 #endif
                 if (!d_dftParamsPtr->useDevice)
-                  kohnShamDFTEigenOperator.computeVEff(rhoInValues,
+                  kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
                                                        d_phiInValues,
                                                        d_pseudoVLoc,
                                                        d_rhoCore,
@@ -2830,8 +3010,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEff(
-                    rhoInValues,
-                    gradRhoInValues,
+                    rhoInValues.get(),
+                    gradRhoInValues.get(),
                     d_phiInValues,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -2839,8 +3019,8 @@ namespace dftfe
                     d_lpspQuadratureId);
 #endif
                 if (!d_dftParamsPtr->useDevice)
-                  kohnShamDFTEigenOperator.computeVEff(rhoInValues,
-                                                       gradRhoInValues,
+                  kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
+                                                       gradRhoInValues.get(),
                                                        d_phiInValues,
                                                        d_pseudoVLoc,
                                                        d_rhoCore,
@@ -3130,7 +3310,7 @@ namespace dftfe
         // compute integral rhoOut
         //
         const double integralRhoValue =
-          totalCharge(d_dofHandlerPRefined, rhoOutValues);
+          totalCharge(d_dofHandlerPRefined, rhoOutValues.get());
 
         if (d_dftParamsPtr->verbosity >= 2)
           {
@@ -3142,7 +3322,8 @@ namespace dftfe
             d_dftParamsPtr->spinPolarized == 1)
           pcout << std::endl
                 << "net magnetization: "
-                << totalMagnetization(rhoOutValuesSpinPolarized) << std::endl;
+                << totalMagnetization(rhoOutValuesSpinPolarized.get())
+                << std::endl;
 
         //
         // phiTot with rhoOut
@@ -4587,6 +4768,321 @@ namespace dftfe
         << std::endl
         << "------------------DFT-FE mesh file creation completed---------------------------"
         << std::endl;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::copyDensityToVector(
+    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      &                  rhoValues,
+    std::vector<double> &rhoValuesVector)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = quadratureDensity.size();
+
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        numQuadPoints = 2 * numQuadPoints;
+      }
+
+    rhoValuesVector.resize(numCells * numQuadPoints);
+    std::fill(rhoValuesVector.begin(), rhoValuesVector.end(), 0.0);
+
+    unsigned int iElem = 0;
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler->begin_active(),
+      endc = dofHandler->end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+              {
+                rhoValuesVector[iElem * numQuadPoints + iQuad] =
+                  (*rhoValues)[cell->id()][iQuad];
+              }
+            iElem++;
+          }
+      }
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::copyDensityFromVector(
+    const std::vector<double> &rhoValuesVector,
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = quadratureDensity.size();
+
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        numQuadPoints = 2 * numQuadPoints;
+      }
+
+    unsigned int iElem = 0;
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler->begin_active(),
+      endc = dofHandler->end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+              {
+                (*rhoValues)[cell->id()][iQuad] =
+                  rhoValuesVector[iElem * numQuadPoints + iQuad];
+              }
+            iElem++;
+          }
+      }
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::copyGradDensityToVector(
+    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      &                  gradRhoValues,
+    std::vector<double> &gradRhoValuesVector)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = 3 * quadratureDensity.size();
+
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        numQuadPoints = 2 * numQuadPoints;
+      }
+
+    gradRhoValuesVector.resize(numCells * numQuadPoints);
+    std::fill(gradRhoValuesVector.begin(), gradRhoValuesVector.end(), 0.0);
+
+    unsigned int iElem = 0;
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler->begin_active(),
+      endc = dofHandler->end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+              {
+                gradRhoValuesVector[iElem * numQuadPoints + iQuad] =
+                  (*gradRhoValues)[cell->id()][iQuad];
+              }
+            iElem++;
+          }
+      }
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::copyGradDensityFromVector(
+    const std::vector<double> &gradRhoValuesVector,
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      &gradRhoValues)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = 3 * quadratureDensity.size();
+
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        numQuadPoints = 2 * numQuadPoints;
+      }
+
+    unsigned int iElem = 0;
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler->begin_active(),
+      endc = dofHandler->end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+              {
+                (*gradRhoValues)[cell->id()][iQuad] =
+                  gradRhoValuesVector[iElem * numQuadPoints + iQuad];
+              }
+            iElem++;
+          }
+      }
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeTotalDensityFromSpinPolarised(
+    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      &rhoSpinValues,
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = quadratureDensity.size();
+
+    unsigned int iElem = 0;
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler->begin_active(),
+      endc = dofHandler->end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+              {
+                (*rhoValues)[cell->id()][iQuad] =
+                  (*rhoSpinValues)[cell->id()][2 * iQuad + 0] +
+                  (*rhoSpinValues)[cell->id()][2 * iQuad + 1];
+              }
+            iElem++;
+          }
+      }
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeTotalGradDensityFromSpinPolarised(
+    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      &gradRhoSpinValues,
+    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
+      &gradRhoValues)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = quadratureDensity.size();
+
+    unsigned int iElem = 0;
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = dofHandler->begin_active(),
+      endc = dofHandler->end();
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+              {
+                ((*gradRhoValues)[cell->id()][3 * iQuad + 0]) =
+                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 0]) +
+                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 3]);
+                ((*gradRhoValues)[cell->id()][3 * iQuad + 1]) =
+                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 1]) +
+                  ((*gradRhoInValuesSpinPolarized)[cell->id()][6 * iQuad + 4]);
+                ((*gradRhoValues)[cell->id()][3 * iQuad + 2]) =
+                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 2]) +
+                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 5]);
+              }
+            iElem++;
+          }
+      }
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeJxWForRho(
+    std::vector<double> &vecJxW)
+  {
+    unsigned int numCells = matrix_free_data.n_physical_cells();
+
+    const dealii::Quadrature<3> &quadratureDensity =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+
+    unsigned int numQuadPoints = quadratureDensity.size();
+
+
+
+    const dealii::DoFHandler<3> *dofHandler =
+      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
+
+    dealii::FEValues<3> fe_values(dofHandler->get_fe(),
+                                  quadratureDensity,
+                                  dealii::update_JxW_values);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell             = dofHandler->begin_active(),
+      endc             = dofHandler->end();
+    unsigned int iElem = 0;
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        vecJxW.resize(numCells * numQuadPoints * 2);
+        std::fill(vecJxW.begin(), vecJxW.end(), 0.0);
+        for (; cell != endc; ++cell)
+          {
+            if (cell->is_locally_owned())
+              {
+                fe_values.reinit(cell);
+                for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+                  {
+                    vecJxW[iElem * numQuadPoints * 2 + 2 * iQuad + 0] =
+                      fe_values.JxW(iQuad);
+                    vecJxW[iElem * numQuadPoints * 2 + 2 * iQuad + 1] =
+                      vecJxW[iElem * numQuadPoints * 2 + 2 * iQuad + 0];
+                  }
+                iElem++;
+              }
+          }
+      }
+    else
+      {
+        vecJxW.resize(numCells * numQuadPoints);
+        std::fill(vecJxW.begin(), vecJxW.end(), 0.0);
+        for (; cell != endc; ++cell)
+          {
+            if (cell->is_locally_owned())
+              {
+                fe_values.reinit(cell);
+                for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+                  {
+                    vecJxW[iElem * numQuadPoints + iQuad] =
+                      fe_values.JxW(iQuad);
+                  }
+                iElem++;
+              }
+          }
+      }
   }
 
 

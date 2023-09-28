@@ -184,7 +184,7 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
       pcout << std::endl
             << "net magnetization: "
-            << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;
+            << totalMagnetization(rhoInValuesSpinPolarized.get()) << std::endl;
   }
 #include "dft.inst.cc"
 } // namespace dftfe
