@@ -372,69 +372,6 @@ namespace dftfe
   }
 
 
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::resizeAndAllocateRhoTableStorage(
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoVals,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &gradRhoVals,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &rhoValsSpinPolarized,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &gradRhoValsSpinPolarized)
-  {
-    const unsigned int numQuadPoints =
-      matrix_free_data.get_n_q_points(d_densityQuadratureId);
-    ;
-
-    // create new rhoValue tables
-    rhoVals = std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        rhoValsSpinPolarized =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-      }
-
-    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
-      {
-        gradRhoVals =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-
-        if (d_dftParamsPtr->spinPolarized == 1)
-          {
-            gradRhoValsSpinPolarized =
-              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-          }
-      }
-
-
-    unsigned int iElem = 0;
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler.begin_active(),
-      endc = dofHandler.end();
-    for (; cell != endc; ++cell)
-      if (cell->is_locally_owned())
-        {
-          const dealii::CellId cellId = cell->id();
-          (*rhoVals)[cellId].resize(numQuadPoints, 0.0);
-          if (d_excManagerPtr->getDensityBasedFamilyType() ==
-              densityFamilyType::GGA)
-            (*gradRhoVals)[cellId] =
-              std::vector<double>(3 * numQuadPoints, 0.0);
-
-          if (d_dftParamsPtr->spinPolarized == 1)
-            {
-              (*rhoValsSpinPolarized)[cellId] =
-                std::vector<double>(2 * numQuadPoints, 0.0);
-              if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                  densityFamilyType::GGA)
-                (*gradRhoValsSpinPolarized)[cellId] =
-                  std::vector<double>(6 * numQuadPoints, 0.0);
-            }
-          iElem++;
-        }
-  }
-
   // rho data reinitilization without remeshing. The rho out of last ground
   // state solve is made the rho in of the new solve
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

@@ -29,7 +29,7 @@ namespace dftfe
 
   void
   MixingScheme::addMixingVariable(const mixingVariable mixingVariableList,
-                                  std::vector<double> &weightDotProducts,
+                                  const std::vector<double> &weightDotProducts,
                                   const bool           performMPIReduce,
                                   const double         mixingValue)
   {

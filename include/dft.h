@@ -771,23 +771,6 @@ namespace dftfe
       distributedCPUVec<double> &fvSpin0,
       distributedCPUVec<double> &fvSpin1);
 
-    /**
-     *@brief resize and allocate table storage for rho cell quadratrue data
-     */
-    void
-    resizeAndAllocateRhoTableStorage(
-      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues,
-      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoValues,
-      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-        &rhoValuesSpinPolarized,
-      std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoValuesSpinPolarized);
-
-    //    void
-    //    copyDensityMaps(std::map<dealii::CellId, std::vector<double>>
-    //    *inputRho, std::map<dealii::CellId, std::vector<double>> *outputRho);
-    //
     void
     noRemeshRhoDataInit();
     void
