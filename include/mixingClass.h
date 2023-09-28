@@ -76,10 +76,10 @@ namespace dftfe
      *
      */
     void
-    addMixingVariable(const mixingVariable mixingVariableList,
+    addMixingVariable(const mixingVariable       mixingVariableList,
                       const std::vector<double> &weightDotProducts,
-                      const bool           performMPIReduce,
-                      const double         mixingValue);
+                      const bool                 performMPIReduce,
+                      const double               mixingValue);
 
     /**
      * @brief Adds to the input history

@@ -28,10 +28,10 @@ namespace dftfe
   {}
 
   void
-  MixingScheme::addMixingVariable(const mixingVariable mixingVariableList,
+  MixingScheme::addMixingVariable(const mixingVariable       mixingVariableList,
                                   const std::vector<double> &weightDotProducts,
-                                  const bool           performMPIReduce,
-                                  const double         mixingValue)
+                                  const bool                 performMPIReduce,
+                                  const double               mixingValue)
   {
     d_variableHistoryIn[mixingVariableList] = std::deque<std::vector<double>>();
     d_variableHistoryOut[mixingVariableList] =
