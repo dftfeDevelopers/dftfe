@@ -20,9 +20,43 @@
 #include <deviceKernelsGeneric.h>
 #include <DeviceBlasWrapper.h>
 #include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
 
 namespace dftfe
 {
+  namespace
+  {
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
+    reshapeNonAffineCaseDeviceKernel(const dftfe::size_type numVecs,
+                                     const dftfe::size_type numQuads,
+                                     const dftfe::size_type numCells,
+                                     const ValueType1 *     copyFromVec,
+                                     ValueType2 *           copyToVec)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries = numQuads * numCells * numVecs * 3;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex  = index / numVecs;
+          dftfe::size_type iVec        = index - blockIndex * numVecs;
+          dftfe::size_type blockIndex2 = blockIndex / numQuads;
+          dftfe::size_type iQuad       = blockIndex - blockIndex2 * numQuads;
+          dftfe::size_type iCell       = blockIndex2 / 3;
+          dftfe::size_type iDim        = blockIndex2 - iCell * 3;
+          dftfe::utils::copyValue(
+            copyToVec + index,
+            copyFromVec[iVec + iDim * numVecs + iQuad * 3 * numVecs +
+                        iCell * 3 * numQuads * numVecs]);
+        }
+    }
+  } // namespace
+
   namespace basis
   {
     template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
@@ -229,13 +263,45 @@ namespace dftfe
                 d_nVectors,
                 d_nVectors * 3,
                 (cellRange.second - cellRange.first) * d_nQuadsPerCell);
-              dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+              // dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+              //   d_nVectors,
+              //   (cellRange.second - cellRange.first) * d_nQuadsPerCell * 3,
+              //   tempQuadratureGradientsDataNonAffine.data(),
+              //   quadratureGradients,
+              //   d_nonAffineReshapeIDs.data() +
+              //     cellRange.first * d_nQuadsPerCell * 3);
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+              reshapeNonAffineCaseDeviceKernel<<<
+                (d_nVectors * (cellRange.second - cellRange.first) *
+                 d_nQuadsPerCell * 3) /
+                    dftfe::utils::DEVICE_BLOCK_SIZE +
+                  1,
+                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 d_nVectors,
-                (cellRange.second - cellRange.first) * d_nQuadsPerCell * 3,
-                tempQuadratureGradientsDataNonAffine.data(),
-                quadratureGradients,
-                d_nonAffineReshapeIDs.data() +
-                  cellRange.first * d_nDofsPerCell);
+                d_nQuadsPerCell,
+                (cellRange.second - cellRange.first),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  tempQuadratureGradientsDataNonAffine.data()),
+                dftfe::utils::makeDataTypeDeviceCompatible(
+                  quadratureGradients));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+              hipLaunchKernelGGL(reshapeNonAffineCaseDeviceKernel,
+                                 (d_nVectors *
+                                  (cellRange.second - cellRange.first) *
+                                  d_nQuadsPerCell * 3) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE +
+                                   1,
+                                 dftfe::utils::DEVICE_BLOCK_SIZE,
+                                 0,
+                                 0,
+                                 d_nVectors,
+                                 d_nQuadsPerCell,
+                                 (cellRange.second - cellRange.first),
+                                 dftfe::utils::makeDataTypeDeviceCompatible(
+                                   tempQuadratureGradientsDataNonAffine.data()),
+                                 dftfe::utils::makeDataTypeDeviceCompatible(
+                                   quadratureGradients), );
+#endif
             }
         }
     }

@@ -21,6 +21,7 @@
 #include <constants.h>
 #include <headers.h>
 #include <operatorDevice.h>
+#include <FEBasisOperations.h>
 
 namespace dftfe
 {
@@ -85,14 +86,14 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValuesNLPTransposed();
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientValuesXTransposed();
+    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+    // getShapeFunctionGradientValuesXTransposed();
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientValuesYTransposed();
+    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+    // getShapeFunctionGradientValuesYTransposed();
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientValuesZTransposed();
+    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+    // getShapeFunctionGradientValuesZTransposed();
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesNLPTransposed();
@@ -647,6 +648,14 @@ namespace dftfe
 
     /// pointer to dft class
     dftClass<FEOrder, FEOrderElectro> *dftPtr;
+    std::unique_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+      basisOperationsPtrDevice;
+    std::unique_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      basisOperationsPtrHOST;
 
 
     /// data structures to store diagonal of inverse square root mass matrix and
@@ -687,14 +696,14 @@ namespace dftfe
       d_shapeFunctionValueTransposedLpspDevice;
 
     /// storage for shapefunction gradients
-    std::vector<double> d_shapeFunctionGradientValueX;
-    std::vector<double> d_shapeFunctionGradientValueXTransposed;
+    // std::vector<double> d_shapeFunctionGradientValueX;
+    // std::vector<double> d_shapeFunctionGradientValueXTransposed;
 
-    std::vector<double> d_shapeFunctionGradientValueY;
-    std::vector<double> d_shapeFunctionGradientValueYTransposed;
+    // std::vector<double> d_shapeFunctionGradientValueY;
+    // std::vector<double> d_shapeFunctionGradientValueYTransposed;
 
-    std::vector<double> d_shapeFunctionGradientValueZ;
-    std::vector<double> d_shapeFunctionGradientValueZTransposed;
+    // std::vector<double> d_shapeFunctionGradientValueZ;
+    // std::vector<double> d_shapeFunctionGradientValueZTransposed;
 
 
     std::vector<double> d_cellJxWValues;

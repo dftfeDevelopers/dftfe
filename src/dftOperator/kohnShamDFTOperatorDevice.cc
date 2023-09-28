@@ -386,29 +386,29 @@ namespace dftfe
     return d_shapeFunctionValueNLPTransposedDevice;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesXTransposed()
-  {
-    return d_shapeFunctionGradientValueXTransposedDevice;
-  }
+  // template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+  // kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
+  //   getShapeFunctionGradientValuesXTransposed()
+  // {
+  //   return d_shapeFunctionGradientValueXTransposedDevice;
+  // }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesYTransposed()
-  {
-    return d_shapeFunctionGradientValueYTransposedDevice;
-  }
+  // template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+  // kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
+  //   getShapeFunctionGradientValuesYTransposed()
+  // {
+  //   return d_shapeFunctionGradientValueYTransposedDevice;
+  // }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZTransposed()
-  {
-    return d_shapeFunctionGradientValueZTransposedDevice;
-  }
+  // template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+  // kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
+  //   getShapeFunctionGradientValuesZTransposed()
+  // {
+  //   return d_shapeFunctionGradientValueZTransposedDevice;
+  // }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
@@ -495,6 +495,18 @@ namespace dftfe
   {
     computing_timer.enter_subsection("kohnShamDFTOperatorDeviceClass setup");
 
+    basisOperationsPtrDevice = std::make_unique<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>(
+      dftPtr->matrix_free_data, dftPtr->d_constraintsVector);
+    basisOperationsPtrHOST = std::make_unique<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
+      dftPtr->matrix_free_data, dftPtr->d_constraintsVector);
+    dftfe::basis::UpdateFlags updateFlags =
+      dftfe::basis::update_values | dftfe::basis::update_gradients;
+    basisOperationsPtrDevice->reinit(0, 0, 0, 0, updateFlags);
+    basisOperationsPtrHOST->reinit(0, 0, 0, 0, updateFlags);
 
     dftPtr->matrix_free_data.initialize_dof_vector(
       d_invSqrtMassVector, dftPtr->d_densityDofHandlerIndex);

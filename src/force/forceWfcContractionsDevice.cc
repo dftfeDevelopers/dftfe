@@ -41,9 +41,7 @@ namespace dftfe
         const unsigned int numContiguousBlocks,
         const unsigned int numQuads,
         const double *     psiQuadValues,
-        const double *     gradPsiQuadValuesX,
-        const double *     gradPsiQuadValuesY,
-        const double *     gradPsiQuadValuesZ,
+        const double *     gradPsiQuadValues,
         const double *     eigenValues,
         const double *     partialOccupancies,
         double *           eshelbyTensor)
@@ -66,10 +64,16 @@ namespace dftfe
             const unsigned int tempIndex =
               (cellIndex)*numQuads * contiguousBlockSize +
               quadId * contiguousBlockSize + intraBlockIndex;
-            const double psi        = psiQuadValues[tempIndex];
-            const double gradPsiX   = gradPsiQuadValuesX[tempIndex];
-            const double gradPsiY   = gradPsiQuadValuesY[tempIndex];
-            const double gradPsiZ   = gradPsiQuadValuesZ[tempIndex];
+            const unsigned int tempIndex2 =
+              (cellIndex)*numQuads * contiguousBlockSize * 3 +
+              quadId * contiguousBlockSize + intraBlockIndex;
+            const double psi      = psiQuadValues[tempIndex];
+            const double gradPsiX = gradPsiQuadValues[tempIndex2];
+            const double gradPsiY =
+              gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize];
+            const double gradPsiZ =
+              gradPsiQuadValues[tempIndex2 +
+                                2 * numQuads * contiguousBlockSize];
             const double eigenValue = eigenValues[intraBlockIndex];
             const double partOcc    = partialOccupancies[intraBlockIndex];
 
@@ -109,9 +113,7 @@ namespace dftfe
         const unsigned int                       numContiguousBlocks,
         const unsigned int                       numQuads,
         const dftfe::utils::deviceDoubleComplex *psiQuadValues,
-        const dftfe::utils::deviceDoubleComplex *gradPsiQuadValuesX,
-        const dftfe::utils::deviceDoubleComplex *gradPsiQuadValuesY,
-        const dftfe::utils::deviceDoubleComplex *gradPsiQuadValuesZ,
+        const dftfe::utils::deviceDoubleComplex *gradPsiQuadValues,
         const double *                           eigenValues,
         const double *                           partialOccupancies,
         const double                             kcoordx,
@@ -138,22 +140,29 @@ namespace dftfe
             const unsigned int tempIndex =
               (cellIndex)*numQuads * contiguousBlockSize +
               quadId * contiguousBlockSize + intraBlockIndex;
+            const unsigned int tempIndex2 =
+              (cellIndex)*numQuads * contiguousBlockSize * 3 +
+              quadId * contiguousBlockSize + intraBlockIndex;
             const dftfe::utils::deviceDoubleComplex psi =
               psiQuadValues[tempIndex];
             const dftfe::utils::deviceDoubleComplex psiConj =
               dftfe::utils::conj(psiQuadValues[tempIndex]);
             const dftfe::utils::deviceDoubleComplex gradPsiX =
-              gradPsiQuadValuesX[tempIndex];
+              gradPsiQuadValues[tempIndex2];
             const dftfe::utils::deviceDoubleComplex gradPsiY =
-              gradPsiQuadValuesY[tempIndex];
+              gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize];
             const dftfe::utils::deviceDoubleComplex gradPsiZ =
-              gradPsiQuadValuesZ[tempIndex];
+              gradPsiQuadValues[tempIndex2 +
+                                2 * numQuads * contiguousBlockSize];
             const dftfe::utils::deviceDoubleComplex gradPsiXConj =
-              dftfe::utils::conj(gradPsiQuadValuesX[tempIndex]);
+              dftfe::utils::conj(gradPsiQuadValues[tempIndex2]);
             const dftfe::utils::deviceDoubleComplex gradPsiYConj =
-              dftfe::utils::conj(gradPsiQuadValuesY[tempIndex]);
+              dftfe::utils::conj(
+                gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize]);
             const dftfe::utils::deviceDoubleComplex gradPsiZConj =
-              dftfe::utils::conj(gradPsiQuadValuesZ[tempIndex]);
+              dftfe::utils::conj(
+                gradPsiQuadValues[tempIndex2 +
+                                  2 * numQuads * contiguousBlockSize]);
             const double eigenValue = eigenValues[intraBlockIndex];
             const double partOcc    = partialOccupancies[intraBlockIndex];
 
@@ -410,6 +419,11 @@ namespace dftfe
 
       void
       interpolatePsiComputeELocWfcEshelbyTensorD(
+        std::unique_ptr<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>
+          &                                      basisOperationsPtr,
         operatorDFTDeviceClass &                 operatorMatrix,
         distributedDeviceVec<dataTypes::number> &Xb,
         const unsigned int                       BVec,
@@ -437,13 +451,7 @@ namespace dftfe
           &psiQuadsFlatD,
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
-          &gradPsiQuadsXFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          &gradPsiQuadsYFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          &gradPsiQuadsZFlatD,
+          &gradPsiQuadsFlatD,
 #ifdef USE_COMPLEX
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
@@ -463,31 +471,34 @@ namespace dftfe
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
+        dftfe::basis::UpdateFlags updateFlags =
+          dftfe::basis::update_values | dftfe::basis::update_gradients;
+        basisOperationsPtr->reinit(BVec, cellsBlockSize, 0, 0, updateFlags);
 
-        dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-          BVec,
-          numCells * numNodesPerElement,
-          Xb.begin(),
-          cellWaveFunctionMatrix.begin(),
-          (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin());
+        // dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
+        //   BVec,
+        //   numCells * numNodesPerElement,
+        //   Xb.begin(),
+        //   cellWaveFunctionMatrix.begin(),
+        //   (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin());
 
         const int blockSize    = cellsBlockSize;
         const int numberBlocks = numCells / blockSize;
         const int remBlockSize = numCells - numberBlocks * blockSize;
 
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionValuesReferenceD(numQuads * numNodesPerElement,
-                                        dataTypes::number(0.0));
+        // dftfe::utils::MemoryStorage<dataTypes::number,
+        //                             dftfe::utils::MemorySpace::DEVICE>
+        //   shapeFunctionValuesReferenceD(numQuads * numNodesPerElement,
+        //                                 dataTypes::number(0.0));
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionValuesNLPReferenceD(numQuadsNLP * numNodesPerElement,
                                            dataTypes::number(0.0));
 
-        dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-          numQuads * numNodesPerElement,
-          (operatorMatrix.getShapeFunctionValuesTransposed()).begin(),
-          shapeFunctionValuesReferenceD.begin());
+        // dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+        //   numQuads * numNodesPerElement,
+        //   (operatorMatrix.getShapeFunctionValuesTransposed()).begin(),
+        //   shapeFunctionValuesReferenceD.begin());
 
 
         dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
@@ -495,23 +506,23 @@ namespace dftfe
           (operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),
           shapeFunctionValuesNLPReferenceD.begin());
 
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesXTransposedDevice(blockSize * numQuads *
-                                                         numNodesPerElement,
-                                                       dataTypes::number(0.0));
+        // dftfe::utils::MemoryStorage<dataTypes::number,
+        //                             dftfe::utils::MemorySpace::DEVICE>
+        //   shapeFunctionGradientValuesXTransposedDevice(blockSize * numQuads *
+        //                                                  numNodesPerElement,
+        //                                                dataTypes::number(0.0));
 
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesYTransposedDevice(blockSize * numQuads *
-                                                         numNodesPerElement,
-                                                       dataTypes::number(0.0));
+        // dftfe::utils::MemoryStorage<dataTypes::number,
+        //                             dftfe::utils::MemorySpace::DEVICE>
+        //   shapeFunctionGradientValuesYTransposedDevice(blockSize * numQuads *
+        //                                                  numNodesPerElement,
+        //                                                dataTypes::number(0.0));
 
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          shapeFunctionGradientValuesZTransposedDevice(blockSize * numQuads *
-                                                         numNodesPerElement,
-                                                       dataTypes::number(0.0));
+        // dftfe::utils::MemoryStorage<dataTypes::number,
+        //                             dftfe::utils::MemorySpace::DEVICE>
+        //   shapeFunctionGradientValuesZTransposedDevice(blockSize * numQuads *
+        //                                                  numNodesPerElement,
+        //                                                dataTypes::number(0.0));
 
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionGradientValuesNLPReferenceD(blockSize * numQuadsNLP * 3 *
@@ -535,6 +546,10 @@ namespace dftfe
             0,
             i * numQuadsNLP * 3 * numNodesPerElement);
 
+        basisOperationsPtr->extractToCellNodalDataKernel(
+          Xb,
+          cellWaveFunctionMatrix.data(),
+          std::pair<unsigned int, unsigned int>(0, numCells));
 
 
         for (int iblock = 0; iblock < (numberBlocks + 1); iblock++)
@@ -558,120 +573,12 @@ namespace dftfe
 
                 if (!isFloatingChargeForces)
                   {
-                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      BVec,
-                      numQuads,
-                      numNodesPerElement,
-                      &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin() +
-                        startingId * numNodesPerElement * BVec,
-                      BVec,
-                      strideA,
-                      shapeFunctionValuesReferenceD.begin(),
-                      numNodesPerElement,
-                      strideB,
-                      &scalarCoeffBeta,
-                      psiQuadsFlatD.begin(),
-                      BVec,
-                      strideC,
-                      currentBlockSize);
-
-                    strideB = numNodesPerElement * numQuads;
-
-                    dftfe::utils::deviceKernelsGeneric::
-                      copyValueType1ArrToValueType2Arr(
-                        currentBlockSize * numQuads * numNodesPerElement,
-                        (operatorMatrix
-                           .getShapeFunctionGradientValuesXTransposed())
-                            .begin() +
-                          startingId * numQuads * numNodesPerElement,
-                        shapeFunctionGradientValuesXTransposedDevice.begin());
-
-                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      BVec,
-                      numQuads,
-                      numNodesPerElement,
-                      &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin() +
-                        startingId * numNodesPerElement * BVec,
-                      BVec,
-                      strideA,
-                      shapeFunctionGradientValuesXTransposedDevice.begin(),
-                      numNodesPerElement,
-                      strideB,
-                      &scalarCoeffBeta,
-                      gradPsiQuadsXFlatD.begin(),
-                      BVec,
-                      strideC,
-                      currentBlockSize);
-
-
-                    dftfe::utils::deviceKernelsGeneric::
-                      copyValueType1ArrToValueType2Arr(
-                        currentBlockSize * numQuads * numNodesPerElement,
-                        (operatorMatrix
-                           .getShapeFunctionGradientValuesYTransposed())
-                            .begin() +
-                          startingId * numQuads * numNodesPerElement,
-                        shapeFunctionGradientValuesYTransposedDevice.begin());
-
-                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      BVec,
-                      numQuads,
-                      numNodesPerElement,
-                      &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin() +
-                        startingId * numNodesPerElement * BVec,
-                      BVec,
-                      strideA,
-                      shapeFunctionGradientValuesYTransposedDevice.begin(),
-                      numNodesPerElement,
-                      strideB,
-                      &scalarCoeffBeta,
-                      gradPsiQuadsYFlatD.begin(),
-                      BVec,
-                      strideC,
-                      currentBlockSize);
-
-                    dftfe::utils::deviceKernelsGeneric::
-                      copyValueType1ArrToValueType2Arr(
-                        currentBlockSize * numQuads * numNodesPerElement,
-                        (operatorMatrix
-                           .getShapeFunctionGradientValuesZTransposed())
-                            .begin() +
-                          startingId * numQuads * numNodesPerElement,
-                        shapeFunctionGradientValuesZTransposedDevice.begin());
-
-                    dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      dftfe::utils::DEVICEBLAS_OP_N,
-                      BVec,
-                      numQuads,
-                      numNodesPerElement,
-                      &scalarCoeffAlpha,
-                      cellWaveFunctionMatrix.begin() +
-                        startingId * numNodesPerElement * BVec,
-                      BVec,
-                      strideA,
-                      shapeFunctionGradientValuesZTransposedDevice.begin(),
-                      numNodesPerElement,
-                      strideB,
-                      &scalarCoeffBeta,
-                      gradPsiQuadsZFlatD.begin(),
-                      BVec,
-                      strideC,
-                      currentBlockSize);
-
+                    basisOperationsPtr->interpolateKernel(
+                      cellWaveFunctionMatrix.data(),
+                      psiQuadsFlatD.data(),
+                      gradPsiQuadsFlatD.begin(),
+                      std::pair<unsigned int, unsigned int>(
+                        startingId, startingId + currentBlockSize));
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                     computeELocWfcEshelbyTensorContributions<<<
                       (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -684,11 +591,7 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                         psiQuadsFlatD.begin()),
                       dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsXFlatD.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsYFlatD.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsZFlatD.begin()),
+                        gradPsiQuadsFlatD.begin()),
                       eigenValuesD.begin(),
                       partialOccupanciesD.begin(),
 #  ifdef USE_COMPLEX
@@ -717,11 +620,7 @@ namespace dftfe
                       dftfe::utils::makeDataTypeDeviceCompatible(
                         psiQuadsFlatD.begin()),
                       dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsXFlatD.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsYFlatD.begin()),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        gradPsiQuadsZFlatD.begin()),
+                        gradPsiQuadsFlatD.begin()),
                       eigenValuesD.begin(),
                       partialOccupanciesD.begin(),
 #  ifdef USE_COMPLEX
@@ -1069,6 +968,11 @@ namespace dftfe
 
       void
       devicePortedForceKernelsAllD(
+        std::unique_ptr<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>
+          &                                      basisOperationsPtr,
         operatorDFTDeviceClass &                 operatorMatrix,
         distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock,
         distributedDeviceVec<dataTypes::number> &projectorKetTimesVectorD,
@@ -1109,13 +1013,7 @@ namespace dftfe
           &psiQuadsFlatD,
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
-          &gradPsiQuadsXFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          &gradPsiQuadsYFlatD,
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::DEVICE>
-          &gradPsiQuadsZFlatD,
+          &gradPsiQuadsFlatD,
 #ifdef USE_COMPLEX
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
@@ -1154,11 +1052,13 @@ namespace dftfe
         // int this_process;
         // MPI_Comm_rank(d_mpiCommParent, &this_process);
 
-        const unsigned int M = operatorMatrix.getMatrixFreeData()
-                                 ->get_vector_partitioner()
-                                 ->local_size();
         dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
-          numPsi, N, M, startingVecId, X, deviceFlattenedArrayBlock.begin());
+          numPsi,
+          N,
+          basisOperationsPtr->d_locallyOwnedSize,
+          startingVecId,
+          X,
+          deviceFlattenedArrayBlock.begin());
         deviceFlattenedArrayBlock.updateGhostValues();
 
         (operatorMatrix.getOverloadedConstraintMatrix())
@@ -1169,7 +1069,8 @@ namespace dftfe
         // MPI_Barrier(d_mpiCommParent);
         // double kernel1_time = MPI_Wtime();
 
-        interpolatePsiComputeELocWfcEshelbyTensorD(operatorMatrix,
+        interpolatePsiComputeELocWfcEshelbyTensorD(basisOperationsPtr,
+                                                   operatorMatrix,
                                                    deviceFlattenedArrayBlock,
                                                    numPsi,
                                                    numCells,
@@ -1186,9 +1087,7 @@ namespace dftfe
                                                    onesVecD,
                                                    cellsBlockSize,
                                                    psiQuadsFlatD,
-                                                   gradPsiQuadsXFlatD,
-                                                   gradPsiQuadsYFlatD,
-                                                   gradPsiQuadsZFlatD,
+                                                   gradPsiQuadsFlatD,
 #ifdef USE_COMPLEX
                                                    psiQuadsNLPD,
 #endif
@@ -1273,6 +1172,11 @@ namespace dftfe
 
     void
     wfcContractionsForceKernelsAllH(
+      std::unique_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::DEVICE>>
+        &                                     basisOperationsPtr,
       operatorDFTDeviceClass &                operatorMatrix,
       const dataTypes::number *               X,
       const unsigned int                      spinPolarizedFlag,
@@ -1361,16 +1265,8 @@ namespace dftfe
                       dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        gradPsiQuadsXFlatD(cellsBlockSize * numQuads * blockSize,
-                           dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        gradPsiQuadsYFlatD(cellsBlockSize * numQuads * blockSize,
-                           dataTypes::number(0.0));
-      dftfe::utils::MemoryStorage<dataTypes::number,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        gradPsiQuadsZFlatD(cellsBlockSize * numQuads * blockSize,
-                           dataTypes::number(0.0));
+        gradPsiQuadsFlatD(cellsBlockSize * numQuads * blockSize * 3,
+                          dataTypes::number(0.0));
 #ifdef USE_COMPLEX
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -1501,6 +1397,7 @@ namespace dftfe
                   // double kernel_time = MPI_Wtime();
 
                   devicePortedForceKernelsAllD(
+                    basisOperationsPtr,
                     operatorMatrix,
                     deviceFlattenedArrayBlock,
                     projectorKetTimesVectorD,
@@ -1526,9 +1423,7 @@ namespace dftfe
                     numNodesPerElement,
                     totalNonTrivialPseudoWfcs,
                     psiQuadsFlatD,
-                    gradPsiQuadsXFlatD,
-                    gradPsiQuadsYFlatD,
-                    gradPsiQuadsZFlatD,
+                    gradPsiQuadsFlatD,
 #ifdef USE_COMPLEX
                     psiQuadsNLPD,
 #endif

@@ -244,6 +244,7 @@ namespace dftfe
             double device_time = MPI_Wtime();
 
             forceDevice::wfcContractionsForceKernelsAllH(
+              dftPtr->basisOperationsPtrDevice,
               kohnShamDFTEigenOperatorDevice,
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,

@@ -527,8 +527,13 @@ namespace dftfe
 
     template void
     constraintMatrixInfo::distribute(
-      distributedCPUMultiVec<dataTypes::number> &fieldVector,
-      const unsigned int                         blockSize) const;
+      distributedCPUMultiVec<double> &fieldVector,
+      const unsigned int              blockSize) const;
+
+    template void
+    constraintMatrixInfo::distribute(
+      distributedCPUMultiVec<std::complex<double>> &fieldVector,
+      const unsigned int                            blockSize) const;
 
     template void
     constraintMatrixInfo::distribute_slave_to_master(
