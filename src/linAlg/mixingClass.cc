@@ -64,66 +64,68 @@ namespace dftfe
     if (N > 0)
       numQuadPoints = inHist[0].size();
 
-    if (numQuadPoints != weightDotProducts.size())
+    if (weightDotProducts.size() > 0)
       {
-        std::cout << " ERROR in vec size in mixing anderson \n";
-      }
-    for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-      {
-        double Fn = outHist[N][iQuad] - inHist[N][iQuad];
-        for (int m = 0; m < N; m++)
+        AssertThrow(numQuadPoints == weightDotProducts.size(),
+                    dealii::ExcMessage(
+                      "DFT-FE Error: The size of the weight dot products vec "
+                      "does not match the size of the vectors in history."
+                      "Please resize the vectors appropriately."));
+        for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
           {
-            double Fnm = outHist[N - 1 - m][iQuad] - inHist[N - 1 - m][iQuad];
-            for (int k = 0; k < N; k++)
+            double Fn = outHist[N][iQuad] - inHist[N][iQuad];
+            for (int m = 0; m < N; m++)
               {
-                double Fnk =
-                  outHist[N - 1 - k][iQuad] - inHist[N - 1 - k][iQuad];
-                Adensity[k * N + m] +=
-                  (Fn - Fnm) * (Fn - Fnk) *
-                  weightDotProducts[iQuad]; // (m,k)^th entry
+                double Fnm =
+                  outHist[N - 1 - m][iQuad] - inHist[N - 1 - m][iQuad];
+                for (int k = 0; k < N; k++)
+                  {
+                    double Fnk =
+                      outHist[N - 1 - k][iQuad] - inHist[N - 1 - k][iQuad];
+                    Adensity[k * N + m] +=
+                      (Fn - Fnm) * (Fn - Fnk) *
+                      weightDotProducts[iQuad]; // (m,k)^th entry
+                  }
+                cDensity[m] +=
+                  (Fn - Fnm) * (Fn)*weightDotProducts[iQuad]; // (m)^th entry
               }
-            cDensity[m] +=
-              (Fn - Fnm) * (Fn)*weightDotProducts[iQuad]; // (m)^th entry
           }
-      }
 
-    unsigned int aSize = Adensity.size();
-    unsigned int cSize = cDensity.size();
+        unsigned int aSize = Adensity.size();
+        unsigned int cSize = cDensity.size();
 
-    std::vector<double> ATotal(aSize), cTotal(cSize);
-    std::fill(ATotal.begin(), ATotal.end(), 0.0);
-    std::fill(cTotal.begin(), cTotal.end(), 0.0);
-    if (isMPIAllReduce)
-      {
-        MPI_Allreduce(&Adensity[0],
-                      &ATotal[0],
-                      aSize,
-                      MPI_DOUBLE,
-                      MPI_SUM,
-                      d_mpi_comm_domain);
-        MPI_Allreduce(&cDensity[0],
-                      &cTotal[0],
-                      cSize,
-                      MPI_DOUBLE,
-                      MPI_SUM,
-                      d_mpi_comm_domain);
-      }
-    else
-      {
-        ATotal = Adensity;
-        cTotal = cDensity;
-      }
+        std::vector<double> ATotal(aSize), cTotal(cSize);
+        std::fill(ATotal.begin(), ATotal.end(), 0.0);
+        std::fill(cTotal.begin(), cTotal.end(), 0.0);
+        if (isMPIAllReduce)
+          {
+            MPI_Allreduce(&Adensity[0],
+                          &ATotal[0],
+                          aSize,
+                          MPI_DOUBLE,
+                          MPI_SUM,
+                          d_mpi_comm_domain);
+            MPI_Allreduce(&cDensity[0],
+                          &cTotal[0],
+                          cSize,
+                          MPI_DOUBLE,
+                          MPI_SUM,
+                          d_mpi_comm_domain);
+          }
+        else
+          {
+            ATotal = Adensity;
+            cTotal = cDensity;
+          }
+        for (unsigned int i = 0; i < aSize; i++)
+          {
+            A[i] += ATotal[i];
+          }
 
-
-
-    for (unsigned int i = 0; i < aSize; i++)
-      {
-        A[i] += ATotal[i];
-      }
-
-    for (unsigned int i = 0; i < cSize; i++)
-      {
-        c[i] += cTotal[i];
+        for (unsigned int i = 0; i < cSize; i++)
+          {
+            c[i] += cTotal[i];
+          }
       }
   }
 
@@ -192,18 +194,30 @@ namespace dftfe
     double       normValue = 0.0;
     unsigned int N         = d_variableHistoryIn[mixingVariableName].size() - 1;
     unsigned int lenVar = d_vectorDotProductWeights[mixingVariableName].size();
+
+    if (lenVar > 0)
+      {
+        for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
+          {
+            double rhodiff =
+              std::abs(d_variableHistoryIn[mixingVariableName][N][iQuad] -
+                       d_variableHistoryOut[mixingVariableName][N][iQuad]);
+
+            normValue += rhodiff * rhodiff *
+                         d_vectorDotProductWeights[mixingVariableName][iQuad];
+          }
+      }
+    else
+      {
+        // Assumes the variable is present otherwise will lead to a seg fault
+        lenVar = d_variableHistoryIn[mixingVariableName][0].size();
+      }
+
     outputVariable.resize(lenVar);
     std::fill(outputVariable.begin(), outputVariable.end(), 0.0);
 
     for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
       {
-        double rhodiff =
-          std::abs(d_variableHistoryIn[mixingVariableName][N][iQuad] -
-                   d_variableHistoryOut[mixingVariableName][N][iQuad]);
-
-        normValue += rhodiff * rhodiff *
-                     d_vectorDotProductWeights[mixingVariableName][iQuad];
-
         double varOutBar =
           d_cFinal * d_variableHistoryOut[mixingVariableName][N][iQuad];
         double varInBar =

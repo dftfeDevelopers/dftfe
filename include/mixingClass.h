@@ -73,6 +73,9 @@ namespace dftfe
     /**
      * @brief This function is used to add the mixing variables and its corresponding
      * JxW values
+     * For dependent variables which are not used in mixing, the
+     * weightDotProducts is set to a vector of size zero. Later the dependent
+     * variables can be mixed with the same mixing coefficients.
      *
      */
     void

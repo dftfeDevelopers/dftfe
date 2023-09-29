@@ -2179,11 +2179,10 @@ namespace dftfe
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
         std::vector<double> gradRhoJxW;
-        gradRhoJxW.resize(rhoJxW.size() * 3);
-        std::fill(gradRhoJxW.begin(), gradRhoJxW.end(), 0.0);
+        gradRhoJxW.resize(0);
         d_mixingScheme.addMixingVariable(
           mixingVariable::gradRho,
-          gradRhoJxW, // this is just a dummy variable to amke it compatible
+          gradRhoJxW, // this is just a dummy variable to make it compatible
                       // with rho
           false,      // call MPI REDUCE while computing dot products
           d_dftParamsPtr->mixingParameter);
