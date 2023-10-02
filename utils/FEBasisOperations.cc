@@ -400,13 +400,16 @@ namespace dftfe
                                       dftfe::utils::MemorySpace::HOST>
             d_shapeFunctionGradientDataTransposeHost;
 #else
-          auto &d_inverseJacobianDataHost = d_inverseJacobianData[areAllCellsAffine ? 0:iQuadID];
-          auto &d_JxWDataHost             = d_JxWData[iQuadID];
-          auto &d_shapeFunctionDataHost   = d_shapeFunctionData[iQuadID];
+          auto &d_inverseJacobianDataHost =
+            d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID];
+          auto &d_JxWDataHost           = d_JxWData[iQuadID];
+          auto &d_shapeFunctionDataHost = d_shapeFunctionData[iQuadID];
           auto &d_shapeFunctionGradientDataInternalLayoutHost =
             d_shapeFunctionGradientDataInternalLayout[iQuadID];
-          auto &d_shapeFunctionDataTransposeHost = d_shapeFunctionDataTranspose[iQuadID];
-          auto &d_shapeFunctionGradientDataHost  = d_shapeFunctionGradientData[iQuadID];
+          auto &d_shapeFunctionDataTransposeHost =
+            d_shapeFunctionDataTranspose[iQuadID];
+          auto &d_shapeFunctionGradientDataHost =
+            d_shapeFunctionGradientData[iQuadID];
           auto &d_shapeFunctionGradientDataTransposeHost =
             d_shapeFunctionGradientDataTranspose[iQuadID];
 #endif

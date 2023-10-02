@@ -573,17 +573,17 @@ namespace dftfe
       {
         deviceBlasStatus_t status =
           hipblasZgemv(handle,
-                      trans,
-                      m,
-                      n,
-                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(A),
-                      lda,
-                      dftfe::utils::makeDataTypeDeviceCompatible(x),
-                      incx,
-                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(y),
-                      incy);
+                       trans,
+                       m,
+                       n,
+                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       lda,
+                       dftfe::utils::makeDataTypeDeviceCompatible(x),
+                       incx,
+                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                       dftfe::utils::makeDataTypeDeviceCompatible(y),
+                       incy);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
@@ -604,17 +604,17 @@ namespace dftfe
       {
         deviceBlasStatus_t status =
           hipblasCgemv(handle,
-                      trans,
-                      m,
-                      n,
-                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                      dftfe::utils::makeDataTypeDeviceCompatible(A),
-                      lda,
-                      dftfe::utils::makeDataTypeDeviceCompatible(x),
-                      incx,
-                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                      dftfe::utils::makeDataTypeDeviceCompatible(y),
-                      incy);
+                       trans,
+                       m,
+                       n,
+                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       lda,
+                       dftfe::utils::makeDataTypeDeviceCompatible(x),
+                       incx,
+                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                       dftfe::utils::makeDataTypeDeviceCompatible(y),
+                       incy);
         DEVICEBLAS_API_CHECK(status);
         return status;
       }
