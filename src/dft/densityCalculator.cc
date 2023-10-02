@@ -69,7 +69,9 @@ namespace dftfe
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
+#if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::deviceSynchronize();
+#endif
     MPI_Barrier(mpiCommParent);
     double             computeRho_time = MPI_Wtime();
     const unsigned int numKPoints      = kPointWeights.size();
@@ -656,7 +658,9 @@ namespace dftfe
             }
           iElem++;
         }
+#if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::deviceSynchronize();
+#endif
     MPI_Barrier(mpiCommParent);
     computeRho_time = MPI_Wtime() - computeRho_time;
 
