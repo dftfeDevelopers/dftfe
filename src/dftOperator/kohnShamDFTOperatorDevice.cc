@@ -499,14 +499,22 @@ namespace dftfe
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>(
       dftPtr->matrix_free_data, dftPtr->d_constraintsVector);
-    basisOperationsPtrHOST = std::make_unique<
+    basisOperationsPtrHost = std::make_unique<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
       dftPtr->matrix_free_data, dftPtr->d_constraintsVector);
-    dftfe::basis::UpdateFlags updateFlags =
-      dftfe::basis::update_values | dftfe::basis::update_gradients;
-    basisOperationsPtrDevice->reinit(0, 0, 0, 0, updateFlags);
-    basisOperationsPtrHOST->reinit(0, 0, 0, 0, updateFlags);
+    dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
+                                            dftfe::basis::update_gradients |
+                                            dftfe::basis::update_transpose;
+    std::vector<unsigned int> quadratureIndices(4, 0);
+    for (auto i = 0; i < 4; ++i)
+      quadratureIndices[i] = i;
+    basisOperationsPtrHost->init(dftPtr->d_densityDofHandlerIndex,
+                                 quadratureIndices,
+                                 updateFlags);
+    basisOperationsPtrDevice->init(dftPtr->d_densityDofHandlerIndex,
+                                   quadratureIndices,
+                                   updateFlags);
 
     dftPtr->matrix_free_data.initialize_dof_vector(
       d_invSqrtMassVector, dftPtr->d_densityDofHandlerIndex);
@@ -652,16 +660,6 @@ namespace dftfe
       d_flattenedArrayCellLocalProcIndexIdMap.size());
     d_flattenedArrayCellLocalProcIndexIdMapDevice.copyFrom(
       d_flattenedArrayCellLocalProcIndexIdMap);
-
-
-
-    getOverloadedConstraintMatrix()->precomputeMaps(
-      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
-
-    getOverloadedConstraintMatrixHost()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      1);
 
 
     const unsigned int totalLocallyOwnedCells =

@@ -475,11 +475,6 @@ namespace dftfe
                   eigenVectorsFlattenedBlock[kPoint]);
                 eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
               }
-
-            constraintsNoneDataInfo.precomputeMaps(
-              matrix_free_data.get_vector_partitioner(),
-              eigenVectorsFlattenedBlock[0].get_partitioner(),
-              currentBlockSize);
           }
 
 
@@ -1024,11 +1019,6 @@ namespace dftfe
                   eigenVectorsFlattenedBlock[kPoint]);
                 eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
               }
-
-            constraintsNoneDataInfo.precomputeMaps(
-              matrix_free_data.get_vector_partitioner(),
-              eigenVectorsFlattenedBlock[0].get_partitioner(),
-              currentBlockSize);
           }
 
 

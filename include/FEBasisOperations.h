@@ -34,7 +34,9 @@ namespace dftfe
 
       update_values = 0x0001,
 
-      update_gradients = 0x0002
+      update_gradients = 0x0002,
+
+      update_transpose = 0x0004
     };
 
     inline UpdateFlags
@@ -88,11 +90,14 @@ namespace dftfe
       ~FEBasisOperationsBase() = default;
 
       void
+      init(const unsigned int &             dofHandlerID,
+           const std::vector<unsigned int> &quadratureID,
+           const UpdateFlags                updateFlags = update_values);
+
+      void
       reinit(const unsigned int &vecBlockSize,
              const unsigned int &cellBlockSize,
-             const unsigned int &dofHandlerID,
-             const unsigned int &quadratureID,
-             const UpdateFlags   updateFlags = update_values);
+             const unsigned int &quadratureID);
 
       // private:
 #if defined(DFTFE_WITH_DEVICE)
@@ -121,6 +126,37 @@ namespace dftfe
       void
       resizeTempStorage();
 
+      unsigned int
+      nQuadsPerCell() const;
+
+      unsigned int
+      nDofsPerCell() const;
+
+      unsigned int
+      nCells() const;
+
+      unsigned int
+      nRelaventDofs() const;
+
+      unsigned int
+      nOwnedDofs() const;
+
+      const ValueTypeBasisCoeff *
+      shapeFunctionData(bool transpose = false) const;
+
+      const ValueTypeBasisCoeff *
+      shapeFunctionGradientData(bool transpose = false) const;
+
+      const ValueTypeBasisCoeff *
+      inverseJacobians() const;
+
+      const ValueTypeBasisCoeff *
+      JxW() const;
+
+      unsigned int
+      cellsTypeFlag() const;
+
+
       void
       createMultiVector(
         const unsigned int dofHandlerIndex,
@@ -145,28 +181,34 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
                                   d_flattenedCellDofIndexToProcessDofIndexMap;
       std::vector<dealii::CellId> d_cellIndexToCellIdMap;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-                                                                    d_inverseJacobianData;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> d_JxWData;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+        d_inverseJacobianData;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+        d_JxWData;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionData;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+        d_shapeFunctionGradientDataInternalLayout;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientData;
-      dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-        d_nonAffineReshapeIDs;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+        d_shapeFunctionDataTranspose;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+        d_shapeFunctionGradientDataTranspose;
 
-      unsigned int d_quadratureID;
-      unsigned int d_dofHandlerID;
-      unsigned int d_nVectors;
-      unsigned int d_nCells;
-      unsigned int d_cellsBlockSize;
-      unsigned int d_nDofsPerCell;
-      unsigned int d_nQuadsPerCell;
-      unsigned int d_localSize;
-      unsigned int d_locallyOwnedSize;
-      bool         areAllCellsAffine;
-      bool         areAllCellsCartesian;
-      UpdateFlags  d_updateFlags;
+      std::vector<unsigned int> d_quadratureIDsVector;
+      unsigned int              d_quadratureID;
+      std::vector<unsigned int> d_nQuadsPerCell;
+      unsigned int              d_dofHandlerID;
+      unsigned int              d_nVectors;
+      unsigned int              d_nCells;
+      unsigned int              d_cellsBlockSize;
+      unsigned int              d_nDofsPerCell;
+      unsigned int              d_localSize;
+      unsigned int              d_locallyOwnedSize;
+      bool                      areAllCellsAffine;
+      bool                      areAllCellsCartesian;
+      UpdateFlags               d_updateFlags;
     };
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -218,6 +260,10 @@ namespace dftfe
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
+        dftfe::utils::MemorySpace::HOST>::d_quadratureID;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
         dftfe::utils::MemorySpace::HOST>::d_nQuadsPerCell;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
@@ -242,7 +288,19 @@ namespace dftfe
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
+        dftfe::utils::MemorySpace::HOST>::d_shapeFunctionDataTranspose;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
         dftfe::utils::MemorySpace::HOST>::d_shapeFunctionGradientData;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::HOST>::d_shapeFunctionGradientDataTranspose;
+      using FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData,
+                                  dftfe::utils::MemorySpace::HOST>::
+        d_shapeFunctionGradientDataInternalLayout;
       using FEBasisOperationsBase<ValueTypeBasisCoeff,
                                   ValueTypeBasisData,
                                   dftfe::utils::MemorySpace::HOST>::d_JxWData;
@@ -388,6 +446,10 @@ namespace dftfe
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::d_quadratureID;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_nQuadsPerCell;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
@@ -412,7 +474,19 @@ namespace dftfe
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::d_shapeFunctionDataTranspose;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_shapeFunctionGradientData;
+      using FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData,
+                                  dftfe::utils::MemorySpace::DEVICE>::
+        d_shapeFunctionGradientDataTranspose;
+      using FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData,
+                                  dftfe::utils::MemorySpace::DEVICE>::
+        d_shapeFunctionGradientDataInternalLayout;
       using FEBasisOperationsBase<ValueTypeBasisCoeff,
                                   ValueTypeBasisData,
                                   dftfe::utils::MemorySpace::DEVICE>::d_JxWData;
@@ -424,10 +498,6 @@ namespace dftfe
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_cellIndexToCellIdMap;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_nonAffineReshapeIDs;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,

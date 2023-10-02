@@ -655,7 +655,7 @@ namespace dftfe
     std::unique_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      basisOperationsPtrHOST;
+      basisOperationsPtrHost;
 
 
     /// data structures to store diagonal of inverse square root mass matrix and

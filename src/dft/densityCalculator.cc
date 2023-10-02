@@ -293,9 +293,7 @@ namespace dftfe
                   dftfe::basis::update_values | dftfe::basis::update_gradients;
                 basisOperationsPtr->reinit(currentBlockSize,
                                            cellsBlockSize,
-                                           matrixFreeDofhandlerIndex,
-                                           d_quadratureIndex,
-                                           updateFlags);
+                                           d_quadratureIndex);
 
 
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
@@ -471,9 +469,7 @@ namespace dftfe
                     dftfe::basis::update_gradients;
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
-                                             matrixFreeDofhandlerIndex,
-                                             d_quadratureIndex,
-                                             updateFlags);
+                                             d_quadratureIndex);
 
 
                   for (unsigned int spinIndex = 0;
@@ -582,9 +578,6 @@ namespace dftfe
                         MPI_SUM,
                         interBandGroupComm);
       }
-    dftfe::utils::deviceSynchronize();
-    MPI_Barrier(mpiCommParent);
-    double computeRho_time2 = MPI_Wtime();
 
     unsigned int iElem = 0;
     auto         cell  = dofHandler.begin_active();
@@ -665,8 +658,7 @@ namespace dftfe
         }
     dftfe::utils::deviceSynchronize();
     MPI_Barrier(mpiCommParent);
-    computeRho_time  = MPI_Wtime() - computeRho_time;
-    computeRho_time2 = MPI_Wtime() - computeRho_time2;
+    computeRho_time = MPI_Wtime() - computeRho_time;
 
     if (this_process == 0 && dftParams.verbosity >= 2)
       if (memorySpace == dftfe::utils::MemorySpace::HOST)
@@ -674,7 +666,7 @@ namespace dftfe
                   << std::endl;
       else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
         std::cout << "Time for compute rho on Device: " << computeRho_time
-                  << " " << computeRho_time2 << std::endl;
+                  << std::endl;
   }
   template <typename NumberType>
   void
@@ -696,8 +688,8 @@ namespace dftfe
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->d_nQuadsPerCell;
-    const unsigned int nCells           = basisOperationsPtr->d_nCells;
+    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
+    const unsigned int nCells           = basisOperationsPtr->nCells();
     for (unsigned int iCell = cellRange.first; iCell < cellRange.second;
          ++iCell)
       for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)

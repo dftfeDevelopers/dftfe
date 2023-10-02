@@ -158,8 +158,8 @@ namespace dftfe
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->d_nQuadsPerCell;
-    const unsigned int nCells           = basisOperationsPtr->d_nCells;
+    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
+    const unsigned int nCells           = basisOperationsPtr->nCells();
     const double       scalarCoeffAlphaRho     = 1.0;
     const double       scalarCoeffBetaRho      = 1.0;
     const double       scalarCoeffAlphaGradRho = 1.0;

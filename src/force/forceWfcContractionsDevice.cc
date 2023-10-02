@@ -473,7 +473,7 @@ namespace dftfe
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
         dftfe::basis::UpdateFlags updateFlags =
           dftfe::basis::update_values | dftfe::basis::update_gradients;
-        basisOperationsPtr->reinit(BVec, cellsBlockSize, 0, 0, updateFlags);
+        basisOperationsPtr->reinit(BVec, cellsBlockSize, 0);
 
         // dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
         //   BVec,
@@ -1055,7 +1055,7 @@ namespace dftfe
         dftfe::utils::deviceKernelsGeneric::stridedCopyToBlockConstantStride(
           numPsi,
           N,
-          basisOperationsPtr->d_locallyOwnedSize,
+          basisOperationsPtr->nOwnedDofs(),
           startingVecId,
           X,
           deviceFlattenedArrayBlock.begin());

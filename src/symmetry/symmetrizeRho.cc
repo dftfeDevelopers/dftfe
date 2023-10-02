@@ -231,11 +231,6 @@ namespace dftfe
       dftPtr->d_numEigenValues,
       eigenVectorsFlattenedArrayFullBlock);
 
-    dftPtr->constraintsNoneDataInfo.precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      eigenVectorsFlattenedArrayFullBlock.get_partitioner(),
-      dftPtr->d_numEigenValues);
-
     for (unsigned int kPoint = 0;
          kPoint < (1 + dftPtr->getParametersObject().spinPolarized) *
                     dftPtr->d_kPointWeights.size();

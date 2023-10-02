@@ -174,19 +174,19 @@ namespace dftfe
         dftfe::utils::DEVICEBLAS_OP_N,
         dftfe::utils::DEVICEBLAS_OP_N,
         d_nVectors,
-        d_nQuadsPerCell,
+        d_nQuadsPerCell[d_quadratureID],
         d_nDofsPerCell,
         &scalarCoeffAlpha,
         cellNodalValues,
         d_nVectors,
         d_nVectors * d_nDofsPerCell,
-        d_shapeFunctionData.data(),
+        d_shapeFunctionData[d_quadratureID].data(),
         d_nDofsPerCell,
         0,
         &scalarCoeffBeta,
         quadratureValues,
         d_nVectors,
-        d_nVectors * d_nQuadsPerCell,
+        d_nVectors * d_nQuadsPerCell[d_quadratureID],
         cellRange.second - cellRange.first);
       if (quadratureGradients != NULL)
         {
@@ -195,28 +195,28 @@ namespace dftfe
             dftfe::utils::DEVICEBLAS_OP_N,
             dftfe::utils::DEVICEBLAS_OP_N,
             d_nVectors,
-            d_nQuadsPerCell * 3,
+            d_nQuadsPerCell[d_quadratureID] * 3,
             d_nDofsPerCell,
             &scalarCoeffAlpha,
             cellNodalValues,
             d_nVectors,
             d_nVectors * d_nDofsPerCell,
-            d_shapeFunctionGradientData.data(),
+            d_shapeFunctionGradientDataInternalLayout[d_quadratureID].data(),
             d_nDofsPerCell,
             0,
             &scalarCoeffBeta,
             areAllCellsCartesian ? quadratureGradients :
                                    tempQuadratureGradientsData.data(),
             d_nVectors,
-            d_nVectors * d_nQuadsPerCell * 3,
+            d_nVectors * d_nQuadsPerCell[d_quadratureID] * 3,
             cellRange.second - cellRange.first);
           if (areAllCellsCartesian)
             {
               dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
-                d_nQuadsPerCell * d_nVectors,
+                d_nQuadsPerCell[d_quadratureID] * d_nVectors,
                 3 * (cellRange.second - cellRange.first),
                 ValueTypeBasisCoeff(1.0),
-                d_inverseJacobianData.data() + cellRange.first * 3,
+                d_inverseJacobianData[0].data() + cellRange.first * 3,
                 quadratureGradients);
             }
           else if (areAllCellsAffine)
@@ -225,20 +225,20 @@ namespace dftfe
                 *d_deviceBlasHandlePtr,
                 dftfe::utils::DEVICEBLAS_OP_N,
                 dftfe::utils::DEVICEBLAS_OP_N,
-                d_nQuadsPerCell * d_nVectors,
+                d_nQuadsPerCell[d_quadratureID] * d_nVectors,
                 3,
                 3,
                 &scalarCoeffAlpha,
                 tempQuadratureGradientsData.data(),
-                d_nQuadsPerCell * d_nVectors,
-                d_nQuadsPerCell * d_nVectors * 3,
-                d_inverseJacobianData.data() + 9 * cellRange.first,
+                d_nQuadsPerCell[d_quadratureID] * d_nVectors,
+                d_nQuadsPerCell[d_quadratureID] * d_nVectors * 3,
+                d_inverseJacobianData[0].data() + 9 * cellRange.first,
                 3,
                 9,
                 &scalarCoeffBeta,
                 quadratureGradients,
-                d_nQuadsPerCell * d_nVectors,
-                d_nVectors * d_nQuadsPerCell * 3,
+                d_nQuadsPerCell[d_quadratureID] * d_nVectors,
+                d_nVectors * d_nQuadsPerCell[d_quadratureID] * 3,
                 cellRange.second - cellRange.first);
             }
           else
@@ -254,31 +254,25 @@ namespace dftfe
                 tempQuadratureGradientsData.data(),
                 d_nVectors,
                 d_nVectors * 3,
-                d_inverseJacobianData.data() +
-                  9 * cellRange.first * d_nQuadsPerCell,
+                d_inverseJacobianData[d_quadratureID].data() +
+                  9 * cellRange.first * d_nQuadsPerCell[d_quadratureID],
                 3,
                 9,
                 &scalarCoeffBeta,
                 tempQuadratureGradientsDataNonAffine.data(),
                 d_nVectors,
                 d_nVectors * 3,
-                (cellRange.second - cellRange.first) * d_nQuadsPerCell);
-              // dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-              //   d_nVectors,
-              //   (cellRange.second - cellRange.first) * d_nQuadsPerCell * 3,
-              //   tempQuadratureGradientsDataNonAffine.data(),
-              //   quadratureGradients,
-              //   d_nonAffineReshapeIDs.data() +
-              //     cellRange.first * d_nQuadsPerCell * 3);
+                (cellRange.second - cellRange.first) *
+                  d_nQuadsPerCell[d_quadratureID]);
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
               reshapeNonAffineCaseDeviceKernel<<<
                 (d_nVectors * (cellRange.second - cellRange.first) *
-                 d_nQuadsPerCell * 3) /
+                 d_nQuadsPerCell[d_quadratureID] * 3) /
                     dftfe::utils::DEVICE_BLOCK_SIZE +
                   1,
                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
                 d_nVectors,
-                d_nQuadsPerCell,
+                d_nQuadsPerCell[d_quadratureID],
                 (cellRange.second - cellRange.first),
                 dftfe::utils::makeDataTypeDeviceCompatible(
                   tempQuadratureGradientsDataNonAffine.data()),
@@ -288,14 +282,14 @@ namespace dftfe
               hipLaunchKernelGGL(reshapeNonAffineCaseDeviceKernel,
                                  (d_nVectors *
                                   (cellRange.second - cellRange.first) *
-                                  d_nQuadsPerCell * 3) /
+                                  d_nQuadsPerCell[d_quadratureID] * 3) /
                                      dftfe::utils::DEVICE_BLOCK_SIZE +
                                    1,
                                  dftfe::utils::DEVICE_BLOCK_SIZE,
                                  0,
                                  0,
                                  d_nVectors,
-                                 d_nQuadsPerCell,
+                                 d_nQuadsPerCell[d_quadratureID],
                                  (cellRange.second - cellRange.first),
                                  dftfe::utils::makeDataTypeDeviceCompatible(
                                    tempQuadratureGradientsDataNonAffine.data()),

@@ -167,18 +167,16 @@ namespace
 
             double gradShapeXI, gradShapeXJ, gradShapeYI, gradShapeYJ,
               gradShapeZI, gradShapeZJ;
+            const double gradShapeXIRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeYIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeZIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexI];
             if (areAllCellsAffineOrCartesianFlag == 0)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexI];
                 const double Jxx =
                   inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
                                         0];
@@ -216,18 +214,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 1)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
                 const double Jxx = inverseJacobianValues[cellIndex * 9 + 0];
                 const double Jxy = inverseJacobianValues[cellIndex * 9 + 1];
                 const double Jxz = inverseJacobianValues[cellIndex * 9 + 2];
@@ -247,18 +233,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 2)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
                 const double Jxx = inverseJacobianValues[cellIndex * 3 + 0];
                 const double Jyy = inverseJacobianValues[cellIndex * 3 + 1];
                 const double Jzz = inverseJacobianValues[cellIndex * 3 + 2];
@@ -353,28 +327,24 @@ namespace
 
             double gradShapeXI, gradShapeXJ, gradShapeYI, gradShapeYJ,
               gradShapeZI, gradShapeZJ;
+            const double gradShapeXIRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeYIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeZIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeXJRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeYJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeZJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexJ];
             if (areAllCellsAffineOrCartesianFlag == 0)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexJ];
                 const double Jxx =
                   inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
                                         0];
@@ -418,26 +388,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 1)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 9 + 0];
                 const double Jxy = inverseJacobianValues[cellIndex * 9 + 1];
                 const double Jxz = inverseJacobianValues[cellIndex * 9 + 2];
@@ -463,30 +413,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 2)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 3 + 0];
                 const double Jyy = inverseJacobianValues[cellIndex * 3 + 1];
                 const double Jzz = inverseJacobianValues[cellIndex * 3 + 2];
@@ -581,28 +507,24 @@ namespace
 
             double gradShapeXI, gradShapeXJ, gradShapeYI, gradShapeYJ,
               gradShapeZI, gradShapeZJ;
+            const double gradShapeXIRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeYIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeZIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeXJRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeYJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeZJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexJ];
             if (areAllCellsAffineOrCartesianFlag == 0)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexJ];
                 const double Jxx =
                   inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
                                         0];
@@ -646,30 +568,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 1)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 9 + 0];
                 const double Jxy = inverseJacobianValues[cellIndex * 9 + 1];
                 const double Jxz = inverseJacobianValues[cellIndex * 9 + 2];
@@ -695,30 +593,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 2)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 3 + 0];
                 const double Jyy = inverseJacobianValues[cellIndex * 3 + 1];
                 const double Jzz = inverseJacobianValues[cellIndex * 3 + 2];
@@ -910,28 +784,24 @@ namespace
 
             double gradShapeXI, gradShapeXJ, gradShapeYI, gradShapeYJ,
               gradShapeZI, gradShapeZJ;
+            const double gradShapeXIRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeYIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeZIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeXJRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeYJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeZJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexJ];
             if (areAllCellsAffineOrCartesianFlag == 0)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexJ];
                 const double Jxx =
                   inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
                                         0];
@@ -975,30 +845,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 1)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 9 + 0];
                 const double Jxy = inverseJacobianValues[cellIndex * 9 + 1];
                 const double Jxz = inverseJacobianValues[cellIndex * 9 + 2];
@@ -1024,30 +870,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 2)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 3 + 0];
                 const double Jyy = inverseJacobianValues[cellIndex * 3 + 1];
                 const double Jzz = inverseJacobianValues[cellIndex * 3 + 2];
@@ -1124,28 +946,24 @@ namespace
 
             double gradShapeXI, gradShapeXJ, gradShapeYI, gradShapeYJ,
               gradShapeZI, gradShapeZJ;
+            const double gradShapeXIRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeYIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeZIRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexI];
+            const double gradShapeXJRef =
+              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeYJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                          numDofsPerCell * q + cellDofIndexJ];
+            const double gradShapeZJRef =
+              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
+                                          numDofsPerCell * q + cellDofIndexJ];
             if (areAllCellsAffineOrCartesianFlag == 0)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              numDofsPerCell + cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q * 3 +
-                                              2 * numDofsPerCell +
-                                              cellDofIndexJ];
                 const double Jxx =
                   inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
                                         0];
@@ -1189,30 +1007,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 1)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 9 + 0];
                 const double Jxy = inverseJacobianValues[cellIndex * 9 + 1];
                 const double Jxz = inverseJacobianValues[cellIndex * 9 + 2];
@@ -1238,30 +1032,6 @@ namespace
               }
             else if (areAllCellsAffineOrCartesianFlag == 2)
               {
-                const double gradShapeXIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeYIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeZIRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexI];
-                const double gradShapeXJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeYJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
-                const double gradShapeZJRef =
-                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
-                                                2 +
-                                              numDofsPerCell * q +
-                                              cellDofIndexJ];
                 const double Jxx = inverseJacobianValues[cellIndex * 3 + 0];
                 const double Jyy = inverseJacobianValues[cellIndex * 3 + 1];
                 const double Jzz = inverseJacobianValues[cellIndex * 3 + 2];
@@ -1327,17 +1097,18 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       !d_isStiffnessMatrixExternalPotCorrComputed &&
       !onlyHPrimePartForFirstOrderDensityMatResponse)
     {
+      basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_lpspQuadratureId);
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
                                d_numberNodesPerElement +
                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                               dftfe::utils::DEVICE_BLOCK_SIZE,
                             dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        d_numLocallyOwnedCells,
-        d_numberNodesPerElement,
-        d_numQuadPointsLpsp,
-        d_shapeFunctionValueLpspDevice.begin(),
-        d_shapeFunctionValueTransposedLpspDevice.begin(),
+        basisOperationsPtrDevice->nCells(),
+        basisOperationsPtrDevice->nDofsPerCell(),
+        basisOperationsPtrDevice->nQuadsPerCell(),
+        basisOperationsPtrDevice->shapeFunctionData(true),
+        basisOperationsPtrDevice->shapeFunctionData(false),
         d_vEffExternalPotCorrJxWDevice.begin(),
         d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin());
 #elif DFTFE_WITH_DEVICE_LANG_HIP
@@ -1350,18 +1121,18 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
         0,
-        d_numLocallyOwnedCells,
-        d_numberNodesPerElement,
-        d_numQuadPointsLpsp,
-        d_shapeFunctionValueLpspDevice.begin(),
-        d_shapeFunctionValueTransposedLpspDevice.begin(),
+        basisOperationsPtrDevice->nCells(),
+        basisOperationsPtrDevice->nDofsPerCell(),
+        basisOperationsPtrDevice->nQuadsPerCell(),
+        basisOperationsPtrDevice->shapeFunctionData(true),
+        basisOperationsPtrDevice->shapeFunctionData(false),
         d_vEffExternalPotCorrJxWDevice.begin(),
         d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin());
 #endif
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
     }
-
+  basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_densityQuadratureId);
   if (onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
@@ -1373,15 +1144,14 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
            (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
             dftfe::utils::DEVICE_BLOCK_SIZE,
           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
@@ -1399,15 +1169,14 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
           0,
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
@@ -1425,15 +1194,14 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                     dftfe::utils::DEVICE_BLOCK_SIZE,
                                   dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -1450,15 +1218,14 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
           0,
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -1478,18 +1245,17 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                                     (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                      dftfe::utils::DEVICE_BLOCK_SIZE,
                                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
           dftPtr->d_kPointWeights.size(),
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
@@ -1511,18 +1277,17 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
           0,
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
           dftPtr->d_kPointWeights.size(),
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
@@ -1543,18 +1308,17 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                               (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                                dftfe::utils::DEVICE_BLOCK_SIZE,
                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
           dftPtr->d_kPointWeights.size(),
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),
@@ -1575,18 +1339,17 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
           0,
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
+          basisOperationsPtrDevice->nCells(),
+          basisOperationsPtrDevice->nDofsPerCell(),
+          basisOperationsPtrDevice->nQuadsPerCell(),
           spinIndex,
           (1 + dftPtr->d_dftParamsPtr->spinPolarized),
           dftPtr->d_kPointWeights.size(),
-          d_shapeFunctionValueDevice.begin(),
-          d_shapeFunctionValueTransposedDevice.begin(),
-          basisOperationsPtrDevice->d_shapeFunctionGradientData.begin(),
-          basisOperationsPtrDevice->d_inverseJacobianData.begin(),
-          (int)basisOperationsPtrDevice->areAllCellsAffine +
-            (int)basisOperationsPtrDevice->areAllCellsCartesian,
+          basisOperationsPtrDevice->shapeFunctionData(true),
+          basisOperationsPtrDevice->shapeFunctionData(false),
+          basisOperationsPtrDevice->shapeFunctionGradientData(),
+          basisOperationsPtrDevice->inverseJacobians(),
+          basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
           d_cellJxWValuesDevice.begin(),

@@ -103,11 +103,6 @@ namespace dftfe
       d_matrixFreeDataPRefinedPtr->get_vector_partitioner(
         d_matrixFreeVectorComponent),
       *d_constraintMatrixPRefinedPtr);
-    d_constraintsTotalPotentialInfo.precomputeMaps(
-      d_matrixFreeDataPRefinedPtr->get_vector_partitioner(
-        d_matrixFreeVectorComponent),
-      d_xPtr->get_partitioner(),
-      1);
   }
 
 

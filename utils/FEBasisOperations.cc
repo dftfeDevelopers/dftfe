@@ -34,7 +34,6 @@ namespace dftfe
       d_matrixFreeDataPtr = &matrixFreeData;
       d_constraintsVector = &constraintsVector;
       d_dofHandlerID      = 0;
-      d_quadratureID      = 0;
       d_nVectors          = 0;
       d_updateFlags       = update_default;
       areAllCellsAffine   = true;
@@ -57,8 +56,25 @@ namespace dftfe
             (d_matrixFreeDataPtr->get_mapping_info().get_cell_type(
                iMacroCell) == dealii::internal::MatrixFreeFunctions::cartesian);
         }
-      // std::cout << "DEBUG cart " << areAllCellsCartesian << " "
-      //           << areAllCellsAffine << std::endl;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::init(const unsigned int &dofHandlerID,
+                                             const std::vector<unsigned int>
+                                               &               quadratureID,
+                                             const UpdateFlags updateFlags)
+    {
+      d_dofHandlerID        = dofHandlerID;
+      d_quadratureIDsVector = quadratureID;
+      d_updateFlags         = updateFlags;
+      initializeIndexMaps();
+      initializeConstraints();
+      initializeShapeFunctionAndJacobianData();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -70,54 +86,136 @@ namespace dftfe
                           memorySpace>::reinit(const unsigned int &vecBlockSize,
                                                const unsigned int
                                                  &cellsBlockSize,
-                                               const unsigned int &dofHandlerID,
-                                               const unsigned int &quadratureID,
-                                               const UpdateFlags   updateFlags)
+                                               const unsigned int &quadratureID)
     {
-      if ((d_dofHandlerID != dofHandlerID) || (d_updateFlags != updateFlags))
+      d_quadratureID   = quadratureID;
+      d_cellsBlockSize = cellsBlockSize;
+      if (d_nVectors != vecBlockSize)
         {
-          d_dofHandlerID   = dofHandlerID;
-          d_quadratureID   = quadratureID;
-          d_nVectors       = vecBlockSize;
-          d_cellsBlockSize = cellsBlockSize;
-          d_updateFlags    = updateFlags;
-          initializeIndexMaps();
-          initializeConstraints();
-          initializeShapeFunctionAndJacobianData();
+          d_nVectors = vecBlockSize;
           initializeFlattenedIndexMaps();
-          resizeTempStorage();
         }
-      else if ((d_quadratureID != quadratureID) && (d_nVectors != vecBlockSize))
-        {
-          d_quadratureID   = quadratureID;
-          d_nVectors       = vecBlockSize;
-          d_cellsBlockSize = cellsBlockSize;
-          initializeConstraints();
-          initializeShapeFunctionAndJacobianData();
-          initializeFlattenedIndexMaps();
-          resizeTempStorage();
-        }
-      else if (d_quadratureID != quadratureID)
-        {
-          d_quadratureID   = quadratureID;
-          d_cellsBlockSize = cellsBlockSize;
-          initializeShapeFunctionAndJacobianData();
-          resizeTempStorage();
-        }
-      else if (d_nVectors != vecBlockSize)
-        {
-          d_nVectors       = vecBlockSize;
-          d_cellsBlockSize = cellsBlockSize;
-          initializeConstraints();
-          initializeFlattenedIndexMaps();
-          resizeTempStorage();
-        }
-      else if (d_cellsBlockSize != cellsBlockSize)
-        {
-          d_cellsBlockSize = cellsBlockSize;
-          resizeTempStorage();
-        }
+      resizeTempStorage();
     }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::nQuadsPerCell() const
+    {
+      return d_nQuadsPerCell[d_quadratureID];
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::nDofsPerCell() const
+    {
+      return d_nDofsPerCell;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::nCells() const
+    {
+      return d_nCells;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::nRelaventDofs() const
+    {
+      return d_localSize;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::nOwnedDofs() const
+    {
+      return d_locallyOwnedSize;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const ValueTypeBasisCoeff *
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::shapeFunctionData(bool transpose) const
+    {
+      return transpose ? d_shapeFunctionDataTranspose[d_quadratureID].data() :
+                         d_shapeFunctionData[d_quadratureID].data();
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const ValueTypeBasisCoeff *
+    FEBasisOperationsBase<
+      ValueTypeBasisCoeff,
+      ValueTypeBasisData,
+      memorySpace>::shapeFunctionGradientData(bool transpose) const
+    {
+      return transpose ?
+               d_shapeFunctionGradientDataTranspose[d_quadratureID].data() :
+               d_shapeFunctionGradientData[d_quadratureID].data();
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const ValueTypeBasisCoeff *
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::inverseJacobians() const
+    {
+      return d_inverseJacobianData[areAllCellsAffine ? 0 : d_quadratureID]
+        .data();
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const ValueTypeBasisCoeff *
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::JxW() const
+    {
+      return d_inverseJacobianData[areAllCellsAffine ? 0 : d_quadratureID]
+        .data();
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::cellsTypeFlag() const
+    {
+      return (unsigned int)areAllCellsAffine +
+             (unsigned int)areAllCellsCartesian;
+    }
+
+
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -131,15 +229,15 @@ namespace dftfe
 
       if (d_updateFlags & update_gradients)
         tempQuadratureGradientsData.resize(
-          areAllCellsCartesian ?
-            0 :
-            (d_nVectors * d_nQuadsPerCell * 3 * d_cellsBlockSize));
+          areAllCellsCartesian ? 0 :
+                                 (d_nVectors * d_nQuadsPerCell[d_quadratureID] *
+                                  3 * d_cellsBlockSize));
 
       if (d_updateFlags & update_gradients)
         tempQuadratureGradientsDataNonAffine.resize(
-          areAllCellsAffine ?
-            0 :
-            (d_nVectors * d_nQuadsPerCell * 3 * d_cellsBlockSize));
+          areAllCellsAffine ? 0 :
+                              (d_nVectors * d_nQuadsPerCell[d_quadratureID] *
+                               3 * d_cellsBlockSize));
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -154,29 +252,6 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dftfe::global_size_type,
                                   dftfe::utils::MemorySpace::HOST>
         d_flattenedCellDofIndexToProcessDofIndexMapHost;
-      dftfe::utils::MemoryStorage<dftfe::global_size_type,
-                                  dftfe::utils::MemorySpace::HOST>
-        d_nonAffineReshapeIDsHost;
-      if ((memorySpace == dftfe::utils::MemorySpace::DEVICE) &&
-          (!areAllCellsAffine))
-        {
-          d_nonAffineReshapeIDsHost.resize(d_nCells * d_nQuadsPerCell * 3);
-          for (unsigned int iCell = 0; iCell < d_nCells; ++iCell)
-            {
-              for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
-                {
-                  for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                    {
-                      d_nonAffineReshapeIDsHost[iQuad + d_nQuadsPerCell * iDim +
-                                                d_nQuadsPerCell * 3 * iCell] =
-                        (iDim + 3 * iQuad + d_nQuadsPerCell * 3 * iCell) *
-                        d_nVectors;
-                    }
-                }
-            }
-        }
-      d_nonAffineReshapeIDs.resize(d_nonAffineReshapeIDsHost.size());
-      d_nonAffineReshapeIDs.copyFrom(d_nonAffineReshapeIDsHost);
 #else
       auto &d_flattenedCellDofIndexToProcessDofIndexMapHost =
         d_flattenedCellDofIndexToProcessDofIndexMap;
@@ -259,12 +334,6 @@ namespace dftfe
       d_constraintInfo.initialize(d_matrixFreeDataPtr->get_vector_partitioner(
                                     d_dofHandlerID),
                                   *((*d_constraintsVector)[d_dofHandlerID]));
-      d_constraintInfo.precomputeMaps(
-        d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
-            ->locally_owned_size() +
-          d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
-            ->n_ghost_indices(),
-        d_nVectors);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -275,133 +344,239 @@ namespace dftfe
                           ValueTypeBasisData,
                           memorySpace>::initializeShapeFunctionAndJacobianData()
     {
-      const dealii::Quadrature<3> &quadrature =
-        d_matrixFreeDataPtr->get_quadrature(d_quadratureID);
-      dealii::FEValues<3> fe_values(
-        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
-        quadrature,
-        dealii::update_values | dealii::update_gradients |
-          dealii::update_jacobians | dealii::update_JxW_values |
-          dealii::update_inverse_jacobians);
-
-      d_nQuadsPerCell = quadrature.size();
-
-#if defined(DFTFE_WITH_DEVICE)
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::HOST>
-        d_inverseJacobianDataHost;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::HOST>
-        d_JxWDataHost;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::HOST>
-        d_shapeFunctionDataHost;
-      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
-                                  dftfe::utils::MemorySpace::HOST>
-        d_shapeFunctionGradientDataHost;
-#else
-      auto &d_inverseJacobianDataHost       = d_inverseJacobianData;
-      auto &d_JxWDataHost                   = d_JxWData;
-      auto &d_shapeFunctionDataHost         = d_shapeFunctionData;
-      auto &d_shapeFunctionGradientDataHost = d_shapeFunctionGradientData;
-#endif
-
-
-      d_shapeFunctionDataHost.clear();
+      d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
+      d_inverseJacobianData.resize(
+        areAllCellsAffine ? 1 : d_quadratureIDsVector.size());
+      d_JxWData.resize(d_quadratureIDsVector.size());
       if (d_updateFlags & update_values)
-        d_shapeFunctionDataHost.resize(d_nQuadsPerCell * d_nDofsPerCell, 0.0);
-      d_shapeFunctionGradientDataHost.clear();
+        {
+          d_shapeFunctionData.resize(d_quadratureIDsVector.size());
+          if (d_updateFlags & update_transpose)
+            d_shapeFunctionDataTranspose.resize(d_quadratureIDsVector.size());
+        }
       if (d_updateFlags & update_gradients)
-        d_shapeFunctionGradientDataHost.resize(d_nQuadsPerCell *
-                                                 d_nDofsPerCell * 3,
-                                               0.0);
+        {
+          d_shapeFunctionGradientDataInternalLayout.resize(
+            d_quadratureIDsVector.size());
+          d_shapeFunctionGradientData.resize(d_quadratureIDsVector.size());
+          if (d_updateFlags & update_transpose)
+            d_shapeFunctionGradientDataTranspose.resize(
+              d_quadratureIDsVector.size());
+        }
+      for (unsigned int iQuadID = 0; iQuadID < d_quadratureIDsVector.size();
+           ++iQuadID)
+        {
+          const dealii::Quadrature<3> &quadrature =
+            d_matrixFreeDataPtr->get_quadrature(d_quadratureIDsVector[iQuadID]);
+          dealii::FEValues<3> fe_values(
+            d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
+            quadrature,
+            dealii::update_values | dealii::update_gradients |
+              dealii::update_jacobians | dealii::update_JxW_values |
+              dealii::update_inverse_jacobians);
 
-      d_JxWDataHost.clear();
-      if ((d_updateFlags & update_values) || (d_updateFlags & update_gradients))
-        d_JxWDataHost.resize(d_nCells * d_nQuadsPerCell);
-
-      d_inverseJacobianDataHost.clear();
-      if (d_updateFlags & update_gradients)
-        d_inverseJacobianDataHost.resize(areAllCellsCartesian ?
-                                           d_nCells * 3 :
-                                           (areAllCellsAffine ?
-                                              d_nCells * 9 :
-                                              d_nCells * 9 * d_nQuadsPerCell));
-      const unsigned int nJacobiansPerCell =
-        areAllCellsAffine ? 1 : d_nQuadsPerCell;
-
-      auto cellPtr =
-        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
-      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
-
-      unsigned int iCell = 0;
-      for (; cellPtr != endcPtr; ++cellPtr)
-        if (cellPtr->is_locally_owned())
-          {
-            fe_values.reinit(cellPtr);
-            auto &jacobians        = fe_values.get_jacobians();
-            auto &inverseJacobians = fe_values.get_inverse_jacobians();
-            if (iCell == 0)
-              {
-                if (d_updateFlags & update_values)
-                  for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
-                    for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell;
-                         ++iQuad)
-                      d_shapeFunctionDataHost[iQuad * d_nDofsPerCell + iNode] =
-                        fe_values.shape_value(iNode, iQuad);
-
-
-                if (d_updateFlags & update_gradients)
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
-                    for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
-                         ++iNode)
-                      {
-                        const auto &shape_grad_real =
-                          fe_values.shape_grad(iNode, iQuad);
-                        const auto &shape_grad_reference =
-                          apply_transformation(jacobians[iQuad].transpose(),
-                                               shape_grad_real);
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                          if (areAllCellsAffine)
-                            d_shapeFunctionGradientDataHost
-                              [d_nQuadsPerCell * d_nDofsPerCell * iDim +
-                               d_nDofsPerCell * iQuad + iNode] =
-                                shape_grad_reference[iDim];
-                          else
-                            d_shapeFunctionGradientDataHost
-                              [iQuad * d_nDofsPerCell * 3 +
-                               d_nDofsPerCell * iDim + iNode] =
-                                shape_grad_reference[iDim];
-                      }
-              }
-            for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
-              d_JxWDataHost[iCell * d_nQuadsPerCell + iQuad] =
-                fe_values.JxW(iQuad);
-            for (unsigned int iQuad = 0; iQuad < nJacobiansPerCell; ++iQuad)
-              for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                if (areAllCellsCartesian)
-                  d_inverseJacobianDataHost[iCell * nJacobiansPerCell * 3 +
-                                            iDim * nJacobiansPerCell + iQuad] =
-                    inverseJacobians[iQuad][iDim][iDim];
-                else
-                  for (unsigned int jDim = 0; jDim < 3; ++jDim)
-                    d_inverseJacobianDataHost[iCell * nJacobiansPerCell * 9 +
-                                              9 * iQuad + jDim * 3 + iDim] =
-                      inverseJacobians[iQuad][iDim][jDim];
-            ++iCell;
-          }
+          d_nQuadsPerCell[iQuadID] = quadrature.size();
 
 #if defined(DFTFE_WITH_DEVICE)
-      d_inverseJacobianData.resize(d_inverseJacobianDataHost.size());
-      d_inverseJacobianData.copyFrom(d_inverseJacobianDataHost);
-      d_JxWData.resize(d_JxWDataHost.size());
-      d_JxWData.copyFrom(d_JxWDataHost);
-      d_shapeFunctionData.resize(d_shapeFunctionDataHost.size());
-      d_shapeFunctionData.copyFrom(d_shapeFunctionDataHost);
-      d_shapeFunctionGradientData.resize(
-        d_shapeFunctionGradientDataHost.size());
-      d_shapeFunctionGradientData.copyFrom(d_shapeFunctionGradientDataHost);
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_inverseJacobianDataHost;
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_JxWDataHost;
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_shapeFunctionDataHost;
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_shapeFunctionDataTransposeHost;
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_shapeFunctionGradientDataInternalLayoutHost;
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_shapeFunctionGradientDataHost;
+          dftfe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                      dftfe::utils::MemorySpace::HOST>
+            d_shapeFunctionGradientDataTransposeHost;
+#else
+          auto &d_inverseJacobianDataHost = d_inverseJacobianData;
+          auto &d_JxWDataHost             = d_JxWData;
+          auto &d_shapeFunctionDataHost   = d_shapeFunctionData;
+          auto &d_shapeFunctionGradientDataInternalLayoutHost =
+            d_shapeFunctionGradientDataInternalLayout;
+          auto &d_shapeFunctionDataTransposeHost = d_shapeFunctionDataTranspose;
+          auto &d_shapeFunctionGradientDataHost  = d_shapeFunctionGradientData;
+          auto &d_shapeFunctionGradientDataTransposeHost =
+            d_shapeFunctionGradientDataTranspose;
 #endif
+
+
+          d_shapeFunctionDataHost.clear();
+          if (d_updateFlags & update_values)
+            d_shapeFunctionDataHost.resize(d_nQuadsPerCell[iQuadID] *
+                                             d_nDofsPerCell,
+                                           0.0);
+          d_shapeFunctionDataTransposeHost.clear();
+          if ((d_updateFlags & update_values) &&
+              (d_updateFlags & update_transpose))
+            d_shapeFunctionDataTransposeHost.resize(d_nQuadsPerCell[iQuadID] *
+                                                      d_nDofsPerCell,
+                                                    0.0);
+          d_shapeFunctionGradientDataInternalLayoutHost.clear();
+          d_shapeFunctionGradientDataHost.clear();
+          d_shapeFunctionGradientDataTransposeHost.clear();
+          if (d_updateFlags & update_gradients)
+            {
+              d_shapeFunctionGradientDataInternalLayoutHost.resize(
+                d_nQuadsPerCell[iQuadID] * d_nDofsPerCell * 3, 0.0);
+              d_shapeFunctionGradientDataHost.resize(d_nQuadsPerCell[iQuadID] *
+                                                       d_nDofsPerCell * 3,
+                                                     0.0);
+              if (d_updateFlags & update_transpose)
+                d_shapeFunctionGradientDataTransposeHost.resize(
+                  d_nQuadsPerCell[iQuadID] * d_nDofsPerCell * 3, 0.0);
+            }
+
+          d_JxWDataHost.clear();
+          if ((d_updateFlags & update_values) ||
+              (d_updateFlags & update_gradients))
+            d_JxWDataHost.resize(d_nCells * d_nQuadsPerCell[iQuadID]);
+
+          d_inverseJacobianDataHost.clear();
+          if (d_updateFlags & update_gradients)
+            d_inverseJacobianDataHost.resize(
+              areAllCellsCartesian ?
+                d_nCells * 3 :
+                (areAllCellsAffine ? d_nCells * 9 :
+                                     d_nCells * 9 * d_nQuadsPerCell[iQuadID]));
+          const unsigned int nJacobiansPerCell =
+            areAllCellsAffine ? 1 : d_nQuadsPerCell[iQuadID];
+
+          auto cellPtr =
+            d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
+          auto endcPtr =
+            d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
+
+          unsigned int iCell = 0;
+          for (; cellPtr != endcPtr; ++cellPtr)
+            if (cellPtr->is_locally_owned())
+              {
+                fe_values.reinit(cellPtr);
+                auto &jacobians        = fe_values.get_jacobians();
+                auto &inverseJacobians = fe_values.get_inverse_jacobians();
+                if (iCell == 0)
+                  {
+                    if (d_updateFlags & update_values)
+                      {
+                        for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
+                             ++iNode)
+                          for (unsigned int iQuad = 0;
+                               iQuad < d_nQuadsPerCell[iQuadID];
+                               ++iQuad)
+                            d_shapeFunctionDataHost[iQuad * d_nDofsPerCell +
+                                                    iNode] =
+                              fe_values.shape_value(iNode, iQuad);
+                        if (d_updateFlags & update_transpose)
+                          for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
+                               ++iNode)
+                            for (unsigned int iQuad = 0;
+                                 iQuad < d_nQuadsPerCell[iQuadID];
+                                 ++iQuad)
+                              d_shapeFunctionDataTransposeHost
+                                [iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
+                                  fe_values.shape_value(iNode, iQuad);
+                      }
+
+
+                    if (d_updateFlags & update_gradients)
+                      for (unsigned int iQuad = 0;
+                           iQuad < d_nQuadsPerCell[iQuadID];
+                           ++iQuad)
+                        for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
+                             ++iNode)
+                          {
+                            const auto &shape_grad_real =
+                              fe_values.shape_grad(iNode, iQuad);
+                            const auto &shape_grad_reference =
+                              apply_transformation(jacobians[iQuad].transpose(),
+                                                   shape_grad_real);
+                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                              if (areAllCellsAffine)
+                                d_shapeFunctionGradientDataInternalLayoutHost
+                                  [d_nQuadsPerCell[iQuadID] * d_nDofsPerCell *
+                                     iDim +
+                                   d_nDofsPerCell * iQuad + iNode] =
+                                    shape_grad_reference[iDim];
+                              else
+                                d_shapeFunctionGradientDataInternalLayoutHost
+                                  [iQuad * d_nDofsPerCell * 3 +
+                                   d_nDofsPerCell * iDim + iNode] =
+                                    shape_grad_reference[iDim];
+
+
+                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                              d_shapeFunctionGradientDataHost
+                                [iDim * d_nQuadsPerCell[iQuadID] *
+                                   d_nDofsPerCell +
+                                 iQuad * d_nDofsPerCell + iNode] =
+                                  shape_grad_reference[iDim];
+                            if (d_updateFlags & update_transpose)
+                              for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                                d_shapeFunctionGradientDataTransposeHost
+                                  [iDim * d_nQuadsPerCell[iQuadID] *
+                                     d_nDofsPerCell +
+                                   iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
+                                    shape_grad_reference[iDim];
+                          }
+                  }
+                for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadID];
+                     ++iQuad)
+                  d_JxWDataHost[iCell * d_nQuadsPerCell[iQuadID] + iQuad] =
+                    fe_values.JxW(iQuad);
+                for (unsigned int iQuad = 0; iQuad < nJacobiansPerCell; ++iQuad)
+                  for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                    if (areAllCellsCartesian)
+                      d_inverseJacobianDataHost[iCell * nJacobiansPerCell * 3 +
+                                                iDim * nJacobiansPerCell +
+                                                iQuad] =
+                        inverseJacobians[iQuad][iDim][iDim];
+                    else
+                      for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                        d_inverseJacobianDataHost[iCell * nJacobiansPerCell *
+                                                    9 +
+                                                  9 * iQuad + jDim * 3 + iDim] =
+                          inverseJacobians[iQuad][iDim][jDim];
+                ++iCell;
+              }
+
+#if defined(DFTFE_WITH_DEVICE)
+          d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID].resize(
+            d_inverseJacobianDataHost.size());
+          d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID].copyFrom(
+            d_inverseJacobianDataHost);
+          d_JxWData[iQuadID].resize(d_JxWDataHost.size());
+          d_JxWData[iQuadID].copyFrom(d_JxWDataHost);
+          d_shapeFunctionData[iQuadID].resize(d_shapeFunctionDataHost.size());
+          d_shapeFunctionData[iQuadID].copyFrom(d_shapeFunctionDataHost);
+          d_shapeFunctionGradientDataInternalLayout[iQuadID].resize(
+            d_shapeFunctionGradientDataInternalLayoutHost.size());
+          d_shapeFunctionGradientDataInternalLayout[iQuadID].copyFrom(
+            d_shapeFunctionGradientDataInternalLayoutHost);
+          d_shapeFunctionDataTranspose[iQuadID].resize(
+            d_shapeFunctionDataTransposeHost.size());
+          d_shapeFunctionDataTranspose[iQuadID].copyFrom(
+            d_shapeFunctionDataTransposeHost);
+          d_shapeFunctionGradientData[iQuadID].resize(
+            d_shapeFunctionGradientDataHost.size());
+          d_shapeFunctionGradientData[iQuadID].copyFrom(
+            d_shapeFunctionGradientDataHost);
+          d_shapeFunctionGradientDataTranspose[iQuadID].resize(
+            d_shapeFunctionGradientDataTransposeHost.size());
+          d_shapeFunctionGradientDataTranspose[iQuadID].copyFrom(
+            d_shapeFunctionGradientDataTransposeHost);
+#endif
+        }
     }
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,

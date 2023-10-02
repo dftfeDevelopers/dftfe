@@ -267,13 +267,27 @@ namespace dftfe
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>(
       matrix_free_data, d_constraintsVector);
+    dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
+                                            dftfe::basis::update_gradients |
+                                            dftfe::basis::update_transpose;
+    std::vector<unsigned int> quadratureIndices(4, 0);
+    for (auto i = 0; i < 4; ++i)
+      quadratureIndices[i] = i;
+    basisOperationsPtrHost->init(d_densityDofHandlerIndex,
+                                 quadratureIndices,
+                                 updateFlags);
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice)
-      basisOperationsPtrDevice = std::make_unique<
-        dftfe::basis::FEBasisOperations<dataTypes::number,
-                                        double,
-                                        dftfe::utils::MemorySpace::DEVICE>>(
-        matrix_free_data, d_constraintsVector);
+      {
+        basisOperationsPtrDevice = std::make_unique<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          matrix_free_data, d_constraintsVector);
+        basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
+                                       quadratureIndices,
+                                       updateFlags);
+      }
 #endif
 
     MPI_Barrier(d_mpiCommParent);

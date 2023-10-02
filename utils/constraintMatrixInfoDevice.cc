@@ -39,9 +39,7 @@ namespace dftfe
         const unsigned int *constraintRowSizesAccumulated,
         const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
         const double *      constraintColumnValuesAllRowsUnflattened,
-        const double *      inhomogenities,
-        const dealii::types::global_dof_index
-          *localIndexMapUnflattenedToFlattened)
+        const double *      inhomogenities)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -60,7 +58,7 @@ namespace dftfe
             const unsigned int startingColumnNumber =
               constraintRowSizesAccumulated[blockIndex];
             const dealii::types::global_dof_index xVecStartingIdRow =
-              localIndexMapUnflattenedToFlattened[constrainedRowId];
+              constrainedRowId * contiguousBlockSize;
             xVec[xVecStartingIdRow + intraBlockIndex] =
               inhomogenities[blockIndex];
             for (unsigned int i = 0; i < numberColumns; ++i)
@@ -69,7 +67,7 @@ namespace dftfe
                   constraintLocalColumnIdsAllRowsUnflattened
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
-                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  constrainedColumnId * contiguousBlockSize;
                 xVec[xVecStartingIdRow + intraBlockIndex] +=
                   constraintColumnValuesAllRowsUnflattened
                     [startingColumnNumber + i] *
@@ -89,9 +87,7 @@ namespace dftfe
         const unsigned int *constraintRowSizesAccumulated,
         const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
         const double *      constraintColumnValuesAllRowsUnflattened,
-        const double *      inhomogenities,
-        const dealii::types::global_dof_index
-          *localIndexMapUnflattenedToFlattened)
+        const double *      inhomogenities)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -110,7 +106,7 @@ namespace dftfe
             const unsigned int startingColumnNumber =
               constraintRowSizesAccumulated[blockIndex];
             const dealii::types::global_dof_index xVecStartingIdRow =
-              localIndexMapUnflattenedToFlattened[constrainedRowId];
+              constrainedRowId * contiguousBlockSize;
             xVec[xVecStartingIdRow + intraBlockIndex] =
               inhomogenities[blockIndex];
             for (unsigned int i = 0; i < numberColumns; ++i)
@@ -119,7 +115,7 @@ namespace dftfe
                   constraintLocalColumnIdsAllRowsUnflattened
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
-                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  constrainedColumnId * contiguousBlockSize;
                 xVec[xVecStartingIdRow + intraBlockIndex] +=
                   constraintColumnValuesAllRowsUnflattened
                     [startingColumnNumber + i] *
@@ -139,9 +135,7 @@ namespace dftfe
         const unsigned int *               constraintRowSizesAccumulated,
         const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
         const double *      constraintColumnValuesAllRowsUnflattened,
-        const double *      inhomogenities,
-        const dealii::types::global_dof_index
-          *localIndexMapUnflattenedToFlattened)
+        const double *      inhomogenities)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -160,7 +154,7 @@ namespace dftfe
             const unsigned int startingColumnNumber =
               constraintRowSizesAccumulated[blockIndex];
             const dealii::types::global_dof_index xVecStartingIdRow =
-              localIndexMapUnflattenedToFlattened[constrainedRowId];
+              constrainedRowId * contiguousBlockSize;
             dftfe::utils::copyValue(xVec + xVecStartingIdRow + intraBlockIndex,
                                     inhomogenities[blockIndex]);
             for (unsigned int i = 0; i < numberColumns; ++i)
@@ -169,7 +163,7 @@ namespace dftfe
                   constraintLocalColumnIdsAllRowsUnflattened
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
-                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  constrainedColumnId * contiguousBlockSize;
                 dftfe::utils::copyValue(
                   xVec + xVecStartingIdRow + intraBlockIndex,
                   dftfe::utils::add(
@@ -196,9 +190,7 @@ namespace dftfe
         const unsigned int *              constraintRowSizesAccumulated,
         const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
         const double *      constraintColumnValuesAllRowsUnflattened,
-        const double *      inhomogenities,
-        const dealii::types::global_dof_index
-          *localIndexMapUnflattenedToFlattened)
+        const double *      inhomogenities)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -217,7 +209,7 @@ namespace dftfe
             const unsigned int startingColumnNumber =
               constraintRowSizesAccumulated[blockIndex];
             const dealii::types::global_dof_index xVecStartingIdRow =
-              localIndexMapUnflattenedToFlattened[constrainedRowId];
+              constrainedRowId * contiguousBlockSize;
             dftfe::utils::copyValue(xVec + xVecStartingIdRow + intraBlockIndex,
                                     inhomogenities[blockIndex]);
             for (unsigned int i = 0; i < numberColumns; ++i)
@@ -226,7 +218,7 @@ namespace dftfe
                   constraintLocalColumnIdsAllRowsUnflattened
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
-                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  constrainedColumnId * contiguousBlockSize;
                 dftfe::utils::copyValue(
                   xVec + xVecStartingIdRow + intraBlockIndex,
                   dftfe::utils::add(
@@ -251,9 +243,7 @@ namespace dftfe
         const unsigned int *constraintRowSizes,
         const unsigned int *constraintRowSizesAccumulated,
         const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-        const double *      constraintColumnValuesAllRowsUnflattened,
-        const dealii::types::global_dof_index
-          *localIndexMapUnflattenedToFlattened)
+        const double *      constraintColumnValuesAllRowsUnflattened)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -272,14 +262,14 @@ namespace dftfe
             const unsigned int startingColumnNumber =
               constraintRowSizesAccumulated[blockIndex];
             const dealii::types::global_dof_index xVecStartingIdRow =
-              localIndexMapUnflattenedToFlattened[constrainedRowId];
+              constrainedRowId * contiguousBlockSize;
             for (unsigned int i = 0; i < numberColumns; ++i)
               {
                 const unsigned int constrainedColumnId =
                   constraintLocalColumnIdsAllRowsUnflattened
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
-                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  constrainedColumnId * contiguousBlockSize;
                 atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
                           constraintColumnValuesAllRowsUnflattened
                               [startingColumnNumber + i] *
@@ -299,9 +289,7 @@ namespace dftfe
         const unsigned int *constraintRowSizes,
         const unsigned int *constraintRowSizesAccumulated,
         const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-        const double *      constraintColumnValuesAllRowsUnflattened,
-        const dealii::types::global_dof_index
-          *localIndexMapUnflattenedToFlattened)
+        const double *      constraintColumnValuesAllRowsUnflattened)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -320,14 +308,14 @@ namespace dftfe
             const unsigned int startingColumnNumber =
               constraintRowSizesAccumulated[blockIndex];
             const dealii::types::global_dof_index xVecStartingIdRow =
-              localIndexMapUnflattenedToFlattened[constrainedRowId];
+              constrainedRowId * contiguousBlockSize;
             for (unsigned int i = 0; i < numberColumns; ++i)
               {
                 const unsigned int constrainedColumnId =
                   constraintLocalColumnIdsAllRowsUnflattened
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
-                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  constrainedColumnId * contiguousBlockSize;
                 const float tempfloatval =
                   constraintColumnValuesAllRowsUnflattened
                     [startingColumnNumber + i] *
@@ -344,9 +332,7 @@ namespace dftfe
       setzeroKernel(const unsigned int  contiguousBlockSize,
                     double *            xVec,
                     const unsigned int *constraintLocalRowIdsUnflattened,
-                    const unsigned int  numConstraints,
-                    const dealii::types::global_dof_index
-                      *localIndexMapUnflattenedToFlattened)
+                    const unsigned int  numConstraints)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -359,8 +345,8 @@ namespace dftfe
           {
             const unsigned int blockIndex      = index / contiguousBlockSize;
             const unsigned int intraBlockIndex = index % contiguousBlockSize;
-            xVec[localIndexMapUnflattenedToFlattened
-                   [constraintLocalRowIdsUnflattened[blockIndex]] +
+            xVec[constraintLocalRowIdsUnflattened[blockIndex] *
+                   contiguousBlockSize +
                  intraBlockIndex]              = 0;
           }
       }
@@ -369,9 +355,7 @@ namespace dftfe
       setzeroKernel(const unsigned int  contiguousBlockSize,
                     float *             xVec,
                     const unsigned int *constraintLocalRowIdsUnflattened,
-                    const unsigned int  numConstraints,
-                    const dealii::types::global_dof_index
-                      *localIndexMapUnflattenedToFlattened)
+                    const unsigned int  numConstraints)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -384,8 +368,8 @@ namespace dftfe
           {
             const unsigned int blockIndex      = index / contiguousBlockSize;
             const unsigned int intraBlockIndex = index % contiguousBlockSize;
-            xVec[localIndexMapUnflattenedToFlattened
-                   [constraintLocalRowIdsUnflattened[blockIndex]] +
+            xVec[constraintLocalRowIdsUnflattened[blockIndex] *
+                   contiguousBlockSize +
                  intraBlockIndex]              = 0;
           }
       }
@@ -394,9 +378,7 @@ namespace dftfe
       setzeroKernel(const unsigned int                 contiguousBlockSize,
                     dftfe::utils::deviceDoubleComplex *xVec,
                     const unsigned int *constraintLocalRowIdsUnflattened,
-                    const unsigned int  numConstraints,
-                    const dealii::types::global_dof_index
-                      *localIndexMapUnflattenedToFlattened)
+                    const unsigned int  numConstraints)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -411,8 +393,8 @@ namespace dftfe
             const unsigned int intraBlockIndex = index % contiguousBlockSize;
             dftfe::utils::copyValue(
               xVec +
-                localIndexMapUnflattenedToFlattened
-                  [constraintLocalRowIdsUnflattened[blockIndex]] +
+                constraintLocalRowIdsUnflattened[blockIndex] *
+                  contiguousBlockSize +
                 intraBlockIndex,
               0.0);
           }
@@ -423,9 +405,7 @@ namespace dftfe
       setzeroKernel(const unsigned int                contiguousBlockSize,
                     dftfe::utils::deviceFloatComplex *xVec,
                     const unsigned int *constraintLocalRowIdsUnflattened,
-                    const unsigned int  numConstraints,
-                    const dealii::types::global_dof_index
-                      *localIndexMapUnflattenedToFlattened)
+                    const unsigned int  numConstraints)
       {
         const dealii::types::global_dof_index globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -440,8 +420,8 @@ namespace dftfe
             const unsigned int intraBlockIndex = index % contiguousBlockSize;
             dftfe::utils::copyValue(
               xVec +
-                localIndexMapUnflattenedToFlattened
-                  [constraintLocalRowIdsUnflattened[blockIndex]] +
+                constraintLocalRowIdsUnflattened[blockIndex] *
+                  contiguousBlockSize +
                 intraBlockIndex,
               0.0);
           }
@@ -561,102 +541,6 @@ namespace dftfe
       d_numConstrainedDofs = d_rowIdsLocal.size();
     }
 
-
-    void
-    constraintMatrixInfoDevice::precomputeMaps(
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &unFlattenedPartitioner,
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                flattenedPartitioner,
-      const unsigned int blockSize)
-    {
-      //
-      // Get required sizes
-      //
-      const unsigned int n_ghosts  = unFlattenedPartitioner->n_ghost_indices();
-      const unsigned int localSize = unFlattenedPartitioner->local_size();
-      const unsigned int totalSize = n_ghosts + localSize;
-
-      d_localIndexMapUnflattenedToFlattened.clear();
-      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
-
-      //
-      // fill the data array
-      //
-      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
-        {
-          const dealii::types::global_dof_index globalIndex =
-            unFlattenedPartitioner->local_to_global(ilocalDof);
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
-            flattenedPartitioner->global_to_local(globalIndex * blockSize);
-        }
-
-      d_localIndexMapUnflattenedToFlattenedDevice.resize(
-        d_localIndexMapUnflattenedToFlattened.size());
-      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(
-        d_localIndexMapUnflattenedToFlattened);
-    }
-
-    void
-    constraintMatrixInfoDevice::precomputeMaps(
-      const std::shared_ptr<
-        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-        &                mpiPattern,
-      const unsigned int blockSize)
-    {
-      //
-      // Get required sizes
-      //
-      const unsigned int totalSize =
-        mpiPattern->localOwnedSize() + mpiPattern->localGhostSize();
-
-      d_localIndexMapUnflattenedToFlattened.clear();
-      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
-
-      //
-      // fill the data array
-      //
-      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
-        {
-          // const dealii::types::global_dof_index globalIndex =
-          //   unFlattenedPartitioner->local_to_global(ilocalDof);
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
-            ilocalDof * blockSize;
-          // flattenedPartitioner->globalToLocal(globalIndex * blockSize);
-        }
-
-      d_localIndexMapUnflattenedToFlattenedDevice.resize(
-        d_localIndexMapUnflattenedToFlattened.size());
-      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(
-        d_localIndexMapUnflattenedToFlattened);
-    }
-
-    void
-    constraintMatrixInfoDevice::precomputeMaps(const unsigned int totalSize,
-                                               const unsigned int blockSize)
-    {
-      d_localIndexMapUnflattenedToFlattened.clear();
-      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
-
-      //
-      // fill the data array
-      //
-      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
-        {
-          // const dealii::types::global_dof_index globalIndex =
-          //   unFlattenedPartitioner->local_to_global(ilocalDof);
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
-            ilocalDof * blockSize;
-          // flattenedPartitioner->globalToLocal(globalIndex * blockSize);
-        }
-
-      d_localIndexMapUnflattenedToFlattenedDevice.resize(
-        d_localIndexMapUnflattenedToFlattened.size());
-      d_localIndexMapUnflattenedToFlattenedDevice.copyFrom(
-        d_localIndexMapUnflattenedToFlattened);
-    }
-
-
     template <typename NumberType>
     void
     constraintMatrixInfoDevice::distribute(
@@ -681,8 +565,7 @@ namespace dftfe
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
         d_columnValuesDevice.begin(),
-        d_inhomogenitiesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_inhomogenitiesDevice.begin());
 #elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         distributeKernel,
@@ -700,8 +583,7 @@ namespace dftfe
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
         d_columnValuesDevice.begin(),
-        d_inhomogenitiesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_inhomogenitiesDevice.begin());
 #endif
     }
 
@@ -732,8 +614,7 @@ namespace dftfe
         d_rowSizesDevice.begin(),
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_columnValuesDevice.begin());
 #elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         distributeSlaveToMasterKernelAtomicAdd,
@@ -750,8 +631,7 @@ namespace dftfe
         d_rowSizesDevice.begin(),
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_columnValuesDevice.begin());
 #endif
     }
 
@@ -780,31 +660,27 @@ namespace dftfe
         min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize,
-        tempReal,
-        d_rowIdsLocalDevice.begin(),
-        d_numConstrainedDofs,
-        d_rowSizesDevice.begin(),
-        d_rowSizesAccumulatedDevice.begin(),
-        d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(blockSize,
+                                           tempReal,
+                                           d_rowIdsLocalDevice.begin(),
+                                           d_numConstrainedDofs,
+                                           d_rowSizesDevice.begin(),
+                                           d_rowSizesAccumulatedDevice.begin(),
+                                           d_columnIdsLocalDevice.begin(),
+                                           d_columnValuesDevice.begin());
 
       distributeSlaveToMasterKernelAtomicAdd<<<
         min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize,
-        tempImag,
-        d_rowIdsLocalDevice.begin(),
-        d_numConstrainedDofs,
-        d_rowSizesDevice.begin(),
-        d_rowSizesAccumulatedDevice.begin(),
-        d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(blockSize,
+                                           tempImag,
+                                           d_rowIdsLocalDevice.begin(),
+                                           d_numConstrainedDofs,
+                                           d_rowSizesDevice.begin(),
+                                           d_rowSizesAccumulatedDevice.begin(),
+                                           d_columnIdsLocalDevice.begin(),
+                                           d_columnValuesDevice.begin());
 #elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         distributeSlaveToMasterKernelAtomicAdd,
@@ -821,8 +697,7 @@ namespace dftfe
         d_rowSizesDevice.begin(),
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_columnValuesDevice.begin());
 
       hipLaunchKernelGGL(
         distributeSlaveToMasterKernelAtomicAdd,
@@ -839,8 +714,7 @@ namespace dftfe
         d_rowSizesDevice.begin(),
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_columnValuesDevice.begin());
 #endif
 
       dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
@@ -875,31 +749,27 @@ namespace dftfe
         min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize,
-        tempReal,
-        d_rowIdsLocalDevice.begin(),
-        d_numConstrainedDofs,
-        d_rowSizesDevice.begin(),
-        d_rowSizesAccumulatedDevice.begin(),
-        d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(blockSize,
+                                           tempReal,
+                                           d_rowIdsLocalDevice.begin(),
+                                           d_numConstrainedDofs,
+                                           d_rowSizesDevice.begin(),
+                                           d_rowSizesAccumulatedDevice.begin(),
+                                           d_columnIdsLocalDevice.begin(),
+                                           d_columnValuesDevice.begin());
 
       distributeSlaveToMasterKernelAtomicAdd<<<
         min((blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
               dftfe::utils::DEVICE_BLOCK_SIZE * d_numConstrainedDofs,
             30000),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize,
-        tempImag,
-        d_rowIdsLocalDevice.begin(),
-        d_numConstrainedDofs,
-        d_rowSizesDevice.begin(),
-        d_rowSizesAccumulatedDevice.begin(),
-        d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(blockSize,
+                                           tempImag,
+                                           d_rowIdsLocalDevice.begin(),
+                                           d_numConstrainedDofs,
+                                           d_rowSizesDevice.begin(),
+                                           d_rowSizesAccumulatedDevice.begin(),
+                                           d_columnIdsLocalDevice.begin(),
+                                           d_columnValuesDevice.begin());
 #elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         distributeSlaveToMasterKernelAtomicAdd,
@@ -916,8 +786,7 @@ namespace dftfe
         d_rowSizesDevice.begin(),
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_columnValuesDevice.begin());
 
       hipLaunchKernelGGL(
         distributeSlaveToMasterKernelAtomicAdd,
@@ -934,8 +803,7 @@ namespace dftfe
         d_rowSizesDevice.begin(),
         d_rowSizesAccumulatedDevice.begin(),
         d_columnIdsLocalDevice.begin(),
-        d_columnValuesDevice.begin(),
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        d_columnValuesDevice.begin());
 #endif
 
       dftfe::utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
@@ -965,8 +833,7 @@ namespace dftfe
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),
-        numConstrainedDofs,
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        numConstrainedDofs);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         setzeroKernel,
@@ -979,8 +846,7 @@ namespace dftfe
         blockSize,
         dftfe::utils::makeDataTypeDeviceCompatible(fieldVector.begin()),
         d_rowIdsLocalDevice.begin(),
-        numConstrainedDofs,
-        d_localIndexMapUnflattenedToFlattenedDevice.begin());
+        numConstrainedDofs);
 #endif
     }
 

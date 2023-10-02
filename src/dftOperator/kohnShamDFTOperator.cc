@@ -170,11 +170,6 @@ namespace dftfe
       d_normalCellIdToMacroCellIdMap,
       d_macroCellIdToNormalCellIdMap,
       d_FullflattenedArrayCellLocalProcIndexIdMap);
-
-    getOverloadedConstraintMatrix()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      flattenedArray.get_partitioner(),
-      numberWaveFunctions);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -217,9 +212,6 @@ namespace dftfe
       d_normalCellIdToMacroCellIdMap,
       d_macroCellIdToNormalCellIdMap,
       d_FullflattenedArrayCellLocalProcIndexIdMap);
-
-    getOverloadedConstraintMatrix()->precomputeMaps(
-      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

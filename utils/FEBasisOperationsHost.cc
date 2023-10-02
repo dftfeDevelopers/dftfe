@@ -140,22 +140,22 @@ namespace dftfe
           xgemm(&transA,
                 &transB,
                 &d_nVectors,
-                &d_nQuadsPerCell,
+                &d_nQuadsPerCell[d_quadratureID],
                 &d_nDofsPerCell,
                 &scalarCoeffAlpha,
                 cellNodalValues +
                   d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
                 &d_nVectors,
-                d_shapeFunctionData.data(),
+                d_shapeFunctionData[d_quadratureID].data(),
                 &d_nDofsPerCell,
                 &scalarCoeffBeta,
-                quadratureValues +
-                  d_nQuadsPerCell * (iCell - cellRange.first) * d_nVectors,
+                quadratureValues + d_nQuadsPerCell[d_quadratureID] *
+                                     (iCell - cellRange.first) * d_nVectors,
                 &d_nVectors);
           if (quadratureGradients != NULL)
             {
               const unsigned int d_nQuadsPerCellTimesThree =
-                d_nQuadsPerCell * 3;
+                d_nQuadsPerCell[d_quadratureID] * 3;
               xgemm(&transA,
                     &transB,
                     &d_nVectors,
@@ -165,32 +165,34 @@ namespace dftfe
                     cellNodalValues +
                       d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
                     &d_nVectors,
-                    d_shapeFunctionGradientData.data(),
+                    d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
+                      .data(),
                     &d_nDofsPerCell,
                     &scalarCoeffBeta,
                     areAllCellsCartesian ?
-                      (quadratureGradients + d_nQuadsPerCell * d_nVectors * 3 *
+                      (quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
+                                               d_nVectors * 3 *
                                                (iCell - cellRange.first)) :
                       (tempQuadratureGradientsData.data()),
                     &d_nVectors);
               if (areAllCellsCartesian)
                 {
                   const unsigned int d_nQuadsPerCellTimesnVectors =
-                    d_nQuadsPerCell * d_nVectors;
+                    d_nQuadsPerCell[d_quadratureID] * d_nVectors;
                   const unsigned int one = 1;
                   for (unsigned int iDim = 0; iDim < 3; ++iDim)
                     xscal(&d_nQuadsPerCellTimesnVectors,
-                          d_inverseJacobianData.data() + 3 * iCell + iDim,
+                          d_inverseJacobianData[0].data() + 3 * iCell + iDim,
                           quadratureGradients +
-                            d_nQuadsPerCell * d_nVectors * 3 *
+                            d_nQuadsPerCell[d_quadratureID] * d_nVectors * 3 *
                               (iCell - cellRange.first) +
-                            d_nQuadsPerCell * d_nVectors * iDim,
+                            d_nQuadsPerCell[d_quadratureID] * d_nVectors * iDim,
                           &one);
                 }
               else if (areAllCellsAffine)
                 {
                   const unsigned int d_nQuadsPerCellTimesnVectors =
-                    d_nQuadsPerCell * d_nVectors;
+                    d_nQuadsPerCell[d_quadratureID] * d_nVectors;
                   const unsigned int three = 3;
                   xgemm(&transA,
                         &transB,
@@ -200,17 +202,20 @@ namespace dftfe
                         &scalarCoeffAlpha,
                         tempQuadratureGradientsData.data(),
                         &d_nQuadsPerCellTimesnVectors,
-                        d_inverseJacobianData.data() + 9 * iCell,
+                        d_inverseJacobianData[0].data() + 9 * iCell,
                         &three,
                         &scalarCoeffBeta,
-                        quadratureGradients + d_nQuadsPerCell * d_nVectors * 3 *
+                        quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
+                                                d_nVectors * 3 *
                                                 (iCell - cellRange.first),
                         &d_nQuadsPerCellTimesnVectors);
                 }
               else
                 {
                   const unsigned int three = 3;
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[d_quadratureID];
+                       ++iQuad)
                     xgemm(&transA,
                           &transB,
                           &d_nVectors,
@@ -220,19 +225,24 @@ namespace dftfe
                           tempQuadratureGradientsData.data() +
                             iQuad * d_nVectors * 3,
                           &d_nVectors,
-                          d_inverseJacobianData.data() +
-                            9 * d_nQuadsPerCell * iCell + 9 * iQuad,
+                          d_inverseJacobianData[d_quadratureID].data() +
+                            9 * d_nQuadsPerCell[d_quadratureID] * iCell +
+                            9 * iQuad,
                           &three,
                           &scalarCoeffBeta,
                           tempQuadratureGradientsDataNonAffine.data() +
                             iQuad * d_nVectors * 3,
                           &d_nVectors);
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[d_quadratureID];
+                       ++iQuad)
                     for (unsigned int iDim = 0; iDim < 3; ++iDim)
                       std::memcpy(quadratureGradients +
-                                    d_nVectors * 3 * d_nQuadsPerCell *
+                                    d_nVectors * 3 *
+                                      d_nQuadsPerCell[d_quadratureID] *
                                       (iCell - cellRange.first) +
-                                    d_nVectors * d_nQuadsPerCell * iDim +
+                                    d_nVectors *
+                                      d_nQuadsPerCell[d_quadratureID] * iDim +
                                     d_nVectors * iQuad,
                                   tempQuadratureGradientsDataNonAffine.data() +
                                     d_nVectors * 3 * iQuad + d_nVectors * iDim,
@@ -261,11 +271,14 @@ namespace dftfe
         tempQuadratureGradientsDataNonAffine;
       cellNodalData.resize(d_nVectors * d_nDofsPerCell * d_nCells);
       if (quadratureGradients != NULL)
-        tempQuadratureGradientsData.resize(3 * d_nVectors * d_nQuadsPerCell);
+        tempQuadratureGradientsData.resize(3 * d_nVectors *
+                                           d_nQuadsPerCell[d_quadratureID]);
 
       if (quadratureGradients != NULL)
         tempQuadratureGradientsDataNonAffine.resize(
-          areAllCellsAffine ? 0 : (3 * d_nVectors * d_nQuadsPerCell));
+          areAllCellsAffine ?
+            0 :
+            (3 * d_nVectors * d_nQuadsPerCell[d_quadratureID]));
 
 
 
@@ -280,12 +293,12 @@ namespace dftfe
                 &transB,
                 &d_nVectors,
                 &d_nDofsPerCell,
-                &d_nQuadsPerCell,
+                &d_nQuadsPerCell[d_quadratureID],
                 &scalarCoeffAlpha,
-                quadratureValues + d_nQuadsPerCell * iCell,
+                quadratureValues + d_nQuadsPerCell[d_quadratureID] * iCell,
                 &d_nVectors,
-                d_shapeFunctionData.data(),
-                &d_nQuadsPerCell,
+                d_shapeFunctionData[d_quadratureID].data(),
+                &d_nQuadsPerCell[d_quadratureID],
                 &scalarCoeffBeta,
                 cellNodalData.data() + d_nDofsPerCell * iCell,
                 &d_nVectors);
@@ -294,24 +307,25 @@ namespace dftfe
               if (areAllCellsCartesian)
                 {
                   const unsigned int d_nQuadsPerCellTimesnVectors =
-                    d_nQuadsPerCell * d_nVectors;
+                    d_nQuadsPerCell[d_quadratureID] * d_nVectors;
                   const unsigned int one = 1;
                   std::memcpy(tempQuadratureGradientsData.data(),
                               quadratureGradients +
-                                d_nQuadsPerCell * d_nVectors * 3 * iCell,
+                                d_nQuadsPerCell[d_quadratureID] * d_nVectors *
+                                  3 * iCell,
                               3 * d_nQuadsPerCellTimesnVectors *
                                 sizeof(ValueTypeBasisCoeff));
                   for (unsigned int iDim = 0; iDim < 3; ++iDim)
                     xscal(&d_nQuadsPerCellTimesnVectors,
-                          d_inverseJacobianData.data() + 3 * iCell + iDim,
+                          d_inverseJacobianData[0].data() + 3 * iCell + iDim,
                           tempQuadratureGradientsData.data() +
-                            d_nQuadsPerCell * d_nVectors * iDim,
+                            d_nQuadsPerCell[d_quadratureID] * d_nVectors * iDim,
                           &one);
                 }
               else if (areAllCellsAffine)
                 {
                   const unsigned int d_nQuadsPerCellTimesnVectors =
-                    d_nQuadsPerCell * d_nVectors;
+                    d_nQuadsPerCell[d_quadratureID] * d_nVectors;
                   const unsigned int three = 3;
                   xgemm(&transA,
                         &transB,
@@ -319,10 +333,10 @@ namespace dftfe
                         &three,
                         &three,
                         &scalarCoeffAlpha,
-                        quadratureGradients +
-                          d_nQuadsPerCell * d_nVectors * 3 * iCell,
+                        quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
+                                                d_nVectors * 3 * iCell,
                         &d_nQuadsPerCellTimesnVectors,
-                        d_inverseJacobianData.data() + 9 * iCell,
+                        d_inverseJacobianData[0].data() + 9 * iCell,
                         &three,
                         &scalarCoeffBeta,
                         tempQuadratureGradientsData.data(),
@@ -330,17 +344,23 @@ namespace dftfe
                 }
               else
                 {
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[d_quadratureID];
+                       ++iQuad)
                     for (unsigned int iDim = 0; iDim < 3; ++iDim)
                       std::memcpy(tempQuadratureGradientsDataNonAffine.data() +
                                     d_nVectors * 3 * iQuad + d_nVectors * iDim,
                                   quadratureGradients +
-                                    d_nVectors * 3 * d_nQuadsPerCell * iCell +
-                                    d_nVectors * d_nQuadsPerCell * iDim +
+                                    d_nVectors * 3 *
+                                      d_nQuadsPerCell[d_quadratureID] * iCell +
+                                    d_nVectors *
+                                      d_nQuadsPerCell[d_quadratureID] * iDim +
                                     d_nVectors * iQuad,
                                   d_nVectors * sizeof(ValueTypeBasisCoeff));
                   const unsigned int three = 3;
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell; ++iQuad)
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[d_quadratureID];
+                       ++iQuad)
                     xgemm(&transA,
                           &transB,
                           &d_nVectors,
@@ -350,8 +370,9 @@ namespace dftfe
                           tempQuadratureGradientsDataNonAffine.data() +
                             d_nVectors * 3 * iQuad,
                           &d_nVectors,
-                          d_inverseJacobianData.data() +
-                            9 * d_nQuadsPerCell * iCell + 9 * iQuad,
+                          d_inverseJacobianData[d_quadratureID].data() +
+                            9 * d_nQuadsPerCell[d_quadratureID] * iCell +
+                            9 * iQuad,
                           &three,
                           &scalarCoeffBeta,
                           tempQuadratureGradientsData.data() +
@@ -359,7 +380,7 @@ namespace dftfe
                           &d_nVectors);
                 }
               const unsigned int d_nQuadsPerCellTimesThree =
-                d_nQuadsPerCell * 3;
+                d_nQuadsPerCell[d_quadratureID] * 3;
               xgemm(&transA,
                     &transB,
                     &d_nVectors,
@@ -368,7 +389,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     tempQuadratureGradientsData.data(),
                     &d_nVectors,
-                    d_shapeFunctionGradientData.data(),
+                    d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
+                      .data(),
                     &d_nDofsPerCell,
                     &scalarCoeffBeta,
                     cellNodalData.data() + d_nDofsPerCell * iCell,

@@ -97,18 +97,6 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionValuesNLPTransposed() = 0;
 
-    // virtual dftfe::utils::MemoryStorage<double,
-    //                                     dftfe::utils::MemorySpace::DEVICE> &
-    // getShapeFunctionGradientValuesXTransposed() = 0;
-
-    // virtual dftfe::utils::MemoryStorage<double,
-    //                                     dftfe::utils::MemorySpace::DEVICE> &
-    // getShapeFunctionGradientValuesYTransposed() = 0;
-
-    // virtual dftfe::utils::MemoryStorage<double,
-    //                                     dftfe::utils::MemorySpace::DEVICE> &
-    // getShapeFunctionGradientValuesZTransposed() = 0;
-
     virtual dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientValuesNLPTransposed() = 0;
