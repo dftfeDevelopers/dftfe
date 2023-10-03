@@ -157,6 +157,8 @@ namespace dftfe
       unsigned int
       cellsTypeFlag() const;
 
+      dealii::CellId
+      cellID(const unsigned int iElem) const;
 
       void
       createMultiVector(

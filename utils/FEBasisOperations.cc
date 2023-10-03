@@ -217,6 +217,17 @@ namespace dftfe
              (unsigned int)areAllCellsCartesian;
     }
 
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    dealii::CellId
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::cellID(const unsigned int iElem) const
+    {
+      return d_cellIndexToCellIdMap[iElem];
+    }
+
 
 
     template <typename ValueTypeBasisCoeff,

@@ -32,7 +32,6 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
     const unsigned int                      Nfr,
-    const unsigned int                      numLocalDofs,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -41,10 +40,7 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &                                            basisOperationsPtr,
     const unsigned int                             matrixFreeDofhandlerIndex,
-    const dealii::DoFHandler<3> &                  dofHandler,
-    const unsigned int                             totalLocallyOwnedCells,
-    const unsigned int                             numberNodesPerElement,
-    const unsigned int                             numQuadPoints,
+    const unsigned int                             quadratureIndex,
     const std::vector<double> &                    kPointWeights,
     std::map<dealii::CellId, std::vector<double>> *rhoValues,
     std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
@@ -55,8 +51,7 @@ namespace dftfe
     const MPI_Comm &                               interpoolcomm,
     const MPI_Comm &                               interBandGroupComm,
     const dftParameters &                          dftParams,
-    const bool                                     spectrumSplit,
-    const bool                                     use2pPlusOneGLQuad = false);
+    const bool                                     spectrumSplit);
 
   template <typename NumberType>
   void
