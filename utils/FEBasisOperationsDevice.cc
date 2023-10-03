@@ -169,25 +169,26 @@ namespace dftfe
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                 scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
 
-      dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-        *d_deviceBlasHandlePtr,
-        dftfe::utils::DEVICEBLAS_OP_N,
-        dftfe::utils::DEVICEBLAS_OP_N,
-        d_nVectors,
-        d_nQuadsPerCell[d_quadratureID],
-        d_nDofsPerCell,
-        &scalarCoeffAlpha,
-        cellNodalValues,
-        d_nVectors,
-        d_nVectors * d_nDofsPerCell,
-        d_shapeFunctionData[d_quadratureID].data(),
-        d_nDofsPerCell,
-        0,
-        &scalarCoeffBeta,
-        quadratureValues,
-        d_nVectors,
-        d_nVectors * d_nQuadsPerCell[d_quadratureID],
-        cellRange.second - cellRange.first);
+      if (quadratureValues != NULL)
+        dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
+          *d_deviceBlasHandlePtr,
+          dftfe::utils::DEVICEBLAS_OP_N,
+          dftfe::utils::DEVICEBLAS_OP_N,
+          d_nVectors,
+          d_nQuadsPerCell[d_quadratureID],
+          d_nDofsPerCell,
+          &scalarCoeffAlpha,
+          cellNodalValues,
+          d_nVectors,
+          d_nVectors * d_nDofsPerCell,
+          d_shapeFunctionData[d_quadratureID].data(),
+          d_nDofsPerCell,
+          0,
+          &scalarCoeffBeta,
+          quadratureValues,
+          d_nVectors,
+          d_nVectors * d_nQuadsPerCell[d_quadratureID],
+          cellRange.second - cellRange.first);
       if (quadratureGradients != NULL)
         {
           dftfe::utils::deviceBlasWrapper::gemmStridedBatched(

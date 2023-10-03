@@ -20,7 +20,6 @@
 // Include header files
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
-#include <densityCalculatorCPU.h>
 #include <densityFirstOrderResponseCalculator.h>
 #include <dft.h>
 #include <dftParameters.h>
@@ -65,7 +64,6 @@
 #include <ctime>
 
 #ifdef DFTFE_WITH_DEVICE
-#  include <densityCalculatorDevice.h>
 #  include <linearAlgebraOperationsDevice.h>
 #endif
 
@@ -1941,6 +1939,9 @@ namespace dftfe
 
         d_kohnShamDFTOperatorDevicePtr->reinit(
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues), true);
+
+        basisOperationsPtrDevice->setDeviceBLASHandle(
+          &(d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle()));
       }
 #endif
   }
@@ -3883,6 +3884,11 @@ namespace dftfe
 #endif
         );
       }
+#ifdef DFTFE_WITH_DEVICE
+    if (d_dftParamsPtr->useDevice)
+      basisOperationsPtrDevice->setDeviceBLASHandle(
+        &(d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle()));
+#endif
 
     forcePtr->computeStress(matrix_free_data,
 #ifdef DFTFE_WITH_DEVICE

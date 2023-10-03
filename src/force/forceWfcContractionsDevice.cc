@@ -475,54 +475,19 @@ namespace dftfe
           dftfe::basis::update_values | dftfe::basis::update_gradients;
         basisOperationsPtr->reinit(BVec, cellsBlockSize, 0);
 
-        // dftfe::utils::deviceKernelsGeneric::stridedCopyToBlock(
-        //   BVec,
-        //   numCells * numNodesPerElement,
-        //   Xb.begin(),
-        //   cellWaveFunctionMatrix.begin(),
-        //   (operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap()).begin());
-
         const int blockSize    = cellsBlockSize;
         const int numberBlocks = numCells / blockSize;
         const int remBlockSize = numCells - numberBlocks * blockSize;
 
-        // dftfe::utils::MemoryStorage<dataTypes::number,
-        //                             dftfe::utils::MemorySpace::DEVICE>
-        //   shapeFunctionValuesReferenceD(numQuads * numNodesPerElement,
-        //                                 dataTypes::number(0.0));
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionValuesNLPReferenceD(numQuadsNLP * numNodesPerElement,
                                            dataTypes::number(0.0));
 
-        // dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-        //   numQuads * numNodesPerElement,
-        //   (operatorMatrix.getShapeFunctionValuesTransposed()).begin(),
-        //   shapeFunctionValuesReferenceD.begin());
-
-
         dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
           numQuadsNLP * numNodesPerElement,
           (operatorMatrix.getShapeFunctionValuesNLPTransposed()).begin(),
           shapeFunctionValuesNLPReferenceD.begin());
-
-        // dftfe::utils::MemoryStorage<dataTypes::number,
-        //                             dftfe::utils::MemorySpace::DEVICE>
-        //   shapeFunctionGradientValuesXTransposedDevice(blockSize * numQuads *
-        //                                                  numNodesPerElement,
-        //                                                dataTypes::number(0.0));
-
-        // dftfe::utils::MemoryStorage<dataTypes::number,
-        //                             dftfe::utils::MemorySpace::DEVICE>
-        //   shapeFunctionGradientValuesYTransposedDevice(blockSize * numQuads *
-        //                                                  numNodesPerElement,
-        //                                                dataTypes::number(0.0));
-
-        // dftfe::utils::MemoryStorage<dataTypes::number,
-        //                             dftfe::utils::MemorySpace::DEVICE>
-        //   shapeFunctionGradientValuesZTransposedDevice(blockSize * numQuads *
-        //                                                  numNodesPerElement,
-        //                                                dataTypes::number(0.0));
 
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
           shapeFunctionGradientValuesNLPReferenceD(blockSize * numQuadsNLP * 3 *
@@ -574,7 +539,8 @@ namespace dftfe
                 if (!isFloatingChargeForces)
                   {
                     basisOperationsPtr->interpolateKernel(
-                      cellWaveFunctionMatrix.data(),
+                      cellWaveFunctionMatrix.data() +
+                        startingId * numNodesPerElement * BVec,
                       psiQuadsFlatD.data(),
                       gradPsiQuadsFlatD.begin(),
                       std::pair<unsigned int, unsigned int>(

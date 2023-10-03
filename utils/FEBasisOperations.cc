@@ -86,7 +86,8 @@ namespace dftfe
                           memorySpace>::reinit(const unsigned int &vecBlockSize,
                                                const unsigned int
                                                  &cellsBlockSize,
-                                               const unsigned int &quadratureID)
+                                               const unsigned int &quadratureID,
+                                               const bool isResizeTempStorage)
     {
       d_quadratureID   = quadratureID;
       d_cellsBlockSize = cellsBlockSize;
@@ -95,7 +96,8 @@ namespace dftfe
           d_nVectors = vecBlockSize;
           initializeFlattenedIndexMaps();
         }
-      resizeTempStorage();
+      if (isResizeTempStorage)
+        resizeTempStorage();
     }
 
     template <typename ValueTypeBasisCoeff,

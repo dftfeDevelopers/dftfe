@@ -97,7 +97,8 @@ namespace dftfe
       void
       reinit(const unsigned int &vecBlockSize,
              const unsigned int &cellBlockSize,
-             const unsigned int &quadratureID);
+             const unsigned int &quadratureID,
+             const bool          isResizeTempStorage = true);
 
       // private:
 #if defined(DFTFE_WITH_DEVICE)

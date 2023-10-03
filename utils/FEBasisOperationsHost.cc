@@ -137,21 +137,22 @@ namespace dftfe
                                     scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
           const char transA = 'N', transB = 'N';
 
-          xgemm(&transA,
-                &transB,
-                &d_nVectors,
-                &d_nQuadsPerCell[d_quadratureID],
-                &d_nDofsPerCell,
-                &scalarCoeffAlpha,
-                cellNodalValues +
-                  d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
-                &d_nVectors,
-                d_shapeFunctionData[d_quadratureID].data(),
-                &d_nDofsPerCell,
-                &scalarCoeffBeta,
-                quadratureValues + d_nQuadsPerCell[d_quadratureID] *
-                                     (iCell - cellRange.first) * d_nVectors,
-                &d_nVectors);
+          if (quadratureValues != NULL)
+            xgemm(&transA,
+                  &transB,
+                  &d_nVectors,
+                  &d_nQuadsPerCell[d_quadratureID],
+                  &d_nDofsPerCell,
+                  &scalarCoeffAlpha,
+                  cellNodalValues +
+                    d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
+                  &d_nVectors,
+                  d_shapeFunctionData[d_quadratureID].data(),
+                  &d_nDofsPerCell,
+                  &scalarCoeffBeta,
+                  quadratureValues + d_nQuadsPerCell[d_quadratureID] *
+                                       (iCell - cellRange.first) * d_nVectors,
+                  &d_nVectors);
           if (quadratureGradients != NULL)
             {
               const unsigned int d_nQuadsPerCellTimesThree =

@@ -20,7 +20,6 @@
 #include <vector>
 #include <dft.h>
 #include <linearAlgebraOperations.h>
-#include <densityCalculatorCPU.h>
 
 namespace dftfe
 {
