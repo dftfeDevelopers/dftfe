@@ -375,6 +375,14 @@ namespace dftfe
     {
       return *d_deviceBlasHandlePtr;
     }
+    template class FEBasisOperations<dataTypes::number,
+                                     double,
+                                     dftfe::utils::MemorySpace::DEVICE>;
+#ifdef USE_COMPLEX
+    template class FEBasisOperations<double,
+                                     double,
+                                     dftfe::utils::MemorySpace::DEVICE>;
+#endif
 
   } // namespace basis
 } // namespace dftfe

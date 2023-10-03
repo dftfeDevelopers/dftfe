@@ -615,5 +615,25 @@ namespace dftfe
     {
       d_constraintInfo.distribute(multiVector, d_nVectors);
     }
+
+
+    template class FEBasisOperationsBase<dataTypes::number,
+                                         double,
+                                         dftfe::utils::MemorySpace::HOST>;
+#ifdef USE_COMPLEX
+    template class FEBasisOperationsBase<double,
+                                         double,
+                                         dftfe::utils::MemorySpace::HOST>;
+#endif
+#ifdef DFTFE_WITH_DEVICE
+    template class FEBasisOperationsBase<dataTypes::number,
+                                         double,
+                                         dftfe::utils::MemorySpace::DEVICE>;
+#  ifdef USE_COMPLEX
+    template class FEBasisOperationsBase<double,
+                                         double,
+                                         dftfe::utils::MemorySpace::DEVICE>;
+#  endif
+#endif
   } // namespace basis
 } // namespace dftfe

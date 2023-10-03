@@ -595,45 +595,6 @@ namespace dftfe
         const std::pair<unsigned int, unsigned int> cellRange) const;
     };
 #endif
-
-    template class FEBasisOperationsBase<dataTypes::number,
-                                         double,
-                                         dftfe::utils::MemorySpace::HOST>;
-#ifdef USE_COMPLEX
-    template class FEBasisOperationsBase<double,
-                                         double,
-                                         dftfe::utils::MemorySpace::HOST>;
-#endif
-#if defined(DFTFE_WITH_DEVICE)
-    template class FEBasisOperationsBase<dataTypes::number,
-                                         double,
-                                         dftfe::utils::MemorySpace::DEVICE>;
-#  ifdef USE_COMPLEX
-    template class FEBasisOperationsBase<double,
-                                         double,
-                                         dftfe::utils::MemorySpace::DEVICE>;
-#  endif
-#endif
-
-    template class FEBasisOperations<dataTypes::number,
-                                     double,
-                                     dftfe::utils::MemorySpace::HOST>;
-#ifdef USE_COMPLEX
-    template class FEBasisOperations<double,
-                                     double,
-                                     dftfe::utils::MemorySpace::HOST>;
-#endif
-#if defined(DFTFE_WITH_DEVICE)
-    template class FEBasisOperations<dataTypes::number,
-                                     double,
-                                     dftfe::utils::MemorySpace::DEVICE>;
-#  ifdef USE_COMPLEX
-    template class FEBasisOperations<double,
-                                     double,
-                                     dftfe::utils::MemorySpace::DEVICE>;
-#  endif
-#endif
-
   } // end of namespace basis
 
 } // end of namespace dftfe
