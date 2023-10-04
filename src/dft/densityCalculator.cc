@@ -290,7 +290,8 @@ namespace dftfe
 
                 basisOperationsPtr->reinit(currentBlockSize,
                                            cellsBlockSize,
-                                           quadratureIndex);
+                                           quadratureIndex,
+                                           false);
 
 
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
@@ -461,7 +462,8 @@ namespace dftfe
 #endif
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
-                                             quadratureIndex);
+                                             quadratureIndex,
+                                             false);
 
 
                   for (unsigned int spinIndex = 0;
