@@ -1408,17 +1408,17 @@ namespace dftfe
 
     /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
     std::vector<std::vector<double>> eigenValuesRRSplit;
-    // std::vector<distributedCPUVec<dataTypes::number>>
-    // d_eigenVectorsFlattened; std::vector<std::vector<dataTypes::number>>
-    // d_eigenVectorsFlattenedSTL;
+
+    /**
+     * The indexing of d_eigenVectorsFlattenedHost and
+     * d_eigenVectorsFlattenedDevice [kPoint * numSpinComponents *
+     * numLocallyOwnedNodes * numWaveFunctions + iSpin * numLocallyOwnedNodes *
+     * numWaveFunctions + iNode * numWaveFunctions + iWaveFunction]
+     */
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST>
       d_eigenVectorsFlattenedHost;
-    // std::vector<std::vector<dataTypes::number>>
-    //   d_eigenVectorsRotFracDensityFlattenedSTL;
 
-    // std::vector<std::vector<dataTypes::number>>
-    //   d_eigenVectorsDensityMatrixPrimeSTL;
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST>
       d_eigenVectorsRotFracDensityFlattenedHost;
