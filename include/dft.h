@@ -1285,13 +1285,13 @@ namespace dftfe
     unsigned int                  d_densityQuadratureId;
     unsigned int                  d_densityQuadratureIdElectro;
     dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
       basisOperationsPtrHost;
 #if defined(DFTFE_WITH_DEVICE)
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>

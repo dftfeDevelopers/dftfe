@@ -457,15 +457,5 @@ namespace dftfe
                                  [iCell * d_nDofsPerCell + iDof],
             std::plus<ValueTypeBasisCoeff>());
     }
-
-    template class FEBasisOperations<dataTypes::number,
-                                     double,
-                                     dftfe::utils::MemorySpace::HOST>;
-#ifdef USE_COMPLEX
-    template class FEBasisOperations<double,
-                                     double,
-                                     dftfe::utils::MemorySpace::HOST>;
-#endif
-
   } // namespace basis
 } // namespace dftfe

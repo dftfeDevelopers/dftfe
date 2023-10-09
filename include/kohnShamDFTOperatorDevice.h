@@ -648,13 +648,15 @@ namespace dftfe
 
     /// pointer to dft class
     dftClass<FEOrder, FEOrderElectro> *dftPtr;
-    std::unique_ptr<
-      dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
       basisOperationsPtrDevice;
-    std::unique_ptr<
-      dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
       basisOperationsPtrHost;
 
 
@@ -694,17 +696,6 @@ namespace dftfe
       d_shapeFunctionValueLpspDevice;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunctionValueTransposedLpspDevice;
-
-    /// storage for shapefunction gradients
-    // std::vector<double> d_shapeFunctionGradientValueX;
-    // std::vector<double> d_shapeFunctionGradientValueXTransposed;
-
-    // std::vector<double> d_shapeFunctionGradientValueY;
-    // std::vector<double> d_shapeFunctionGradientValueYTransposed;
-
-    // std::vector<double> d_shapeFunctionGradientValueZ;
-    // std::vector<double> d_shapeFunctionGradientValueZTransposed;
-
 
     std::vector<double> d_cellJxWValues;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>

@@ -23,39 +23,40 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
-
+#include <FEBasisOperationsKernelsDevice.h>
 namespace dftfe
 {
-  namespace
-  {
-    template <typename ValueType1, typename ValueType2>
-    __global__ void
-    reshapeNonAffineCaseDeviceKernel(const dftfe::size_type numVecs,
-                                     const dftfe::size_type numQuads,
-                                     const dftfe::size_type numCells,
-                                     const ValueType1 *     copyFromVec,
-                                     ValueType2 *           copyToVec)
-    {
-      const dftfe::size_type globalThreadId =
-        blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::size_type numberEntries = numQuads * numCells * numVecs * 3;
+  // namespace
+  // {
+  //   template <typename ValueType1, typename ValueType2>
+  //   __global__ void
+  //   reshapeNonAffineCaseDeviceKernel(const dftfe::size_type numVecs,
+  //                                    const dftfe::size_type numQuads,
+  //                                    const dftfe::size_type numCells,
+  //                                    const ValueType1 *     copyFromVec,
+  //                                    ValueType2 *           copyToVec)
+  //   {
+  //     const dftfe::size_type globalThreadId =
+  //       blockIdx.x * blockDim.x + threadIdx.x;
+  //     const dftfe::size_type numberEntries = numQuads * numCells * numVecs *
+  //     3;
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          dftfe::size_type blockIndex  = index / numVecs;
-          dftfe::size_type iVec        = index - blockIndex * numVecs;
-          dftfe::size_type blockIndex2 = blockIndex / numQuads;
-          dftfe::size_type iQuad       = blockIndex - blockIndex2 * numQuads;
-          dftfe::size_type iCell       = blockIndex2 / 3;
-          dftfe::size_type iDim        = blockIndex2 - iCell * 3;
-          dftfe::utils::copyValue(
-            copyToVec + index,
-            copyFromVec[iVec + iDim * numVecs + iQuad * 3 * numVecs +
-                        iCell * 3 * numQuads * numVecs]);
-        }
-    }
-  } // namespace
+  //     for (dftfe::size_type index = globalThreadId; index < numberEntries;
+  //          index += blockDim.x * gridDim.x)
+  //       {
+  //         dftfe::size_type blockIndex  = index / numVecs;
+  //         dftfe::size_type iVec        = index - blockIndex * numVecs;
+  //         dftfe::size_type blockIndex2 = blockIndex / numQuads;
+  //         dftfe::size_type iQuad       = blockIndex - blockIndex2 * numQuads;
+  //         dftfe::size_type iCell       = blockIndex2 / 3;
+  //         dftfe::size_type iDim        = blockIndex2 - iCell * 3;
+  //         dftfe::utils::copyValue(
+  //           copyToVec + index,
+  //           copyFromVec[iVec + iDim * numVecs + iQuad * 3 * numVecs +
+  //                       iCell * 3 * numQuads * numVecs]);
+  //       }
+  //   }
+  // } // namespace
 
   namespace basis
   {
@@ -265,38 +266,50 @@ namespace dftfe
                 d_nVectors * 3,
                 (cellRange.second - cellRange.first) *
                   d_nQuadsPerCell[d_quadratureID]);
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-              reshapeNonAffineCaseDeviceKernel<<<
-                (d_nVectors * (cellRange.second - cellRange.first) *
-                 d_nQuadsPerCell[d_quadratureID] * 3) /
-                    dftfe::utils::DEVICE_BLOCK_SIZE +
-                  1,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                d_nVectors,
-                d_nQuadsPerCell[d_quadratureID],
-                (cellRange.second - cellRange.first),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  tempQuadratureGradientsDataNonAffine.data()),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  quadratureGradients));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-              hipLaunchKernelGGL(reshapeNonAffineCaseDeviceKernel,
-                                 (d_nVectors *
-                                  (cellRange.second - cellRange.first) *
-                                  d_nQuadsPerCell[d_quadratureID] * 3) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 0,
-                                 0,
-                                 d_nVectors,
-                                 d_nQuadsPerCell[d_quadratureID],
-                                 (cellRange.second - cellRange.first),
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   tempQuadratureGradientsDataNonAffine.data()),
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   quadratureGradients), );
-#endif
+              dftfe::basis::FEBasisOperationsKernelsDevice::
+                reshapeNonAffineCase(
+                  d_nVectors,
+                  d_nQuadsPerCell[d_quadratureID],
+                  (cellRange.second - cellRange.first),
+                  tempQuadratureGradientsDataNonAffine.data(),
+                  quadratureGradients);
+              // #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+              //               reshapeNonAffineCaseDeviceKernel<<<
+              //                 (d_nVectors * (cellRange.second -
+              //                 cellRange.first) *
+              //                  d_nQuadsPerCell[d_quadratureID] * 3) /
+              //                     dftfe::utils::DEVICE_BLOCK_SIZE +
+              //                   1,
+              //                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+              //                 d_nVectors,
+              //                 d_nQuadsPerCell[d_quadratureID],
+              //                 (cellRange.second - cellRange.first),
+              //                 dftfe::utils::makeDataTypeDeviceCompatible(
+              //                   tempQuadratureGradientsDataNonAffine.data()),
+              //                 dftfe::utils::makeDataTypeDeviceCompatible(
+              //                   quadratureGradients));
+              // #elif DFTFE_WITH_DEVICE_LANG_HIP
+              //               hipLaunchKernelGGL(reshapeNonAffineCaseDeviceKernel,
+              //                                  (d_nVectors *
+              //                                   (cellRange.second -
+              //                                   cellRange.first) *
+              //                                   d_nQuadsPerCell[d_quadratureID]
+              //                                   * 3) /
+              //                                      dftfe::utils::DEVICE_BLOCK_SIZE
+              //                                      +
+              //                                    1,
+              //                                  dftfe::utils::DEVICE_BLOCK_SIZE,
+              //                                  0,
+              //                                  0,
+              //                                  d_nVectors,
+              //                                  d_nQuadsPerCell[d_quadratureID],
+              //                                  (cellRange.second -
+              //                                  cellRange.first),
+              //                                  dftfe::utils::makeDataTypeDeviceCompatible(
+              //                                    tempQuadratureGradientsDataNonAffine.data()),
+              //                                  dftfe::utils::makeDataTypeDeviceCompatible(
+              //                                    quadratureGradients));
+              // #endif
             }
         }
     }
@@ -375,14 +388,5 @@ namespace dftfe
     {
       return *d_deviceBlasHandlePtr;
     }
-    template class FEBasisOperations<dataTypes::number,
-                                     double,
-                                     dftfe::utils::MemorySpace::DEVICE>;
-#ifdef USE_COMPLEX
-    template class FEBasisOperations<double,
-                                     double,
-                                     dftfe::utils::MemorySpace::DEVICE>;
-#endif
-
   } // namespace basis
 } // namespace dftfe

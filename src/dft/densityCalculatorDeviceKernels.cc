@@ -140,7 +140,7 @@ namespace dftfe
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
@@ -228,7 +228,7 @@ namespace dftfe
   }
   template void
   computeRhoGradRhoFromInterpolatedValues(
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>

@@ -458,7 +458,10 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelChebyBlockVectorDevice()
   {
-    return d_parallelChebyBlockVectorDevice;
+    const unsigned int BVec =
+      std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize,
+               dftPtr->d_numEigenValues);
+    return basisOperationsPtrDevice->getMultiVector(BVec);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -466,7 +469,10 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelChebyBlockVector2Device()
   {
-    return d_parallelChebyBlockVector2Device;
+    const unsigned int BVec =
+      std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize,
+               dftPtr->d_numEigenValues);
+    return basisOperationsPtrDevice->getMultiVector(BVec, 1);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -495,26 +501,8 @@ namespace dftfe
   {
     computing_timer.enter_subsection("kohnShamDFTOperatorDeviceClass setup");
 
-    basisOperationsPtrDevice = std::make_unique<
-      dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>(
-      dftPtr->matrix_free_data, dftPtr->d_constraintsVector);
-    basisOperationsPtrHost = std::make_unique<
-      dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
-      dftPtr->matrix_free_data, dftPtr->d_constraintsVector);
-    dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
-                                            dftfe::basis::update_gradients |
-                                            dftfe::basis::update_transpose;
-    std::vector<unsigned int> quadratureIndices(4, 0);
-    for (auto i = 0; i < 4; ++i)
-      quadratureIndices[i] = i;
-    basisOperationsPtrHost->init(dftPtr->d_densityDofHandlerIndex,
-                                 quadratureIndices,
-                                 updateFlags);
-    basisOperationsPtrDevice->init(dftPtr->d_densityDofHandlerIndex,
-                                   quadratureIndices,
-                                   updateFlags);
+    basisOperationsPtrDevice = dftPtr->basisOperationsPtrDevice;
+    basisOperationsPtrHost   = dftPtr->basisOperationsPtrHost;
 
     dftPtr->matrix_free_data.initialize_dof_vector(
       d_invSqrtMassVector, dftPtr->d_densityDofHandlerIndex);
@@ -589,25 +577,6 @@ namespace dftfe
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, numberWaveFunctions);
 
 
-    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
-      dftPtr->matrix_free_data.get_vector_partitioner(
-        dftPtr->d_densityDofHandlerIndex),
-      BVec,
-      d_parallelChebyBlockVectorDevice);
-
-    if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-      d_parallelChebyBlockVector2Device.reinit(
-        d_parallelChebyBlockVectorDevice);
-
-    if (std::is_same<dataTypes::number, std::complex<double>>::value)
-      {
-        d_tempRealVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
-                              d_parallelChebyBlockVectorDevice.numVectors()),
-                             0.0);
-        d_tempImagVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
-                              d_parallelChebyBlockVectorDevice.numVectors()),
-                             0.0);
-      }
 
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -617,6 +586,11 @@ namespace dftfe
       dftPtr->matrix_free_data
         .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
         ->local_size();
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      {
+        d_tempRealVec.resize(((localSize + n_ghosts) * BVec), 0.0);
+        d_tempImagVec.resize(((localSize + n_ghosts) * BVec), 0.0);
+      }
 
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::HOST>
       locallyOwnedProcBoundaryNodesVector(localSize, 0);

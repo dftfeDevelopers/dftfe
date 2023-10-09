@@ -419,7 +419,7 @@ namespace dftfe
 
       void
       interpolatePsiComputeELocWfcEshelbyTensorD(
-        std::unique_ptr<
+        std::shared_ptr<
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>
@@ -934,7 +934,7 @@ namespace dftfe
 
       void
       devicePortedForceKernelsAllD(
-        std::unique_ptr<
+        std::shared_ptr<
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>
@@ -1138,7 +1138,7 @@ namespace dftfe
 
     void
     wfcContractionsForceKernelsAllH(
-      std::unique_ptr<
+      std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::DEVICE>>

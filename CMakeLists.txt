@@ -108,8 +108,6 @@ SET(TARGET_SRC
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
-  ./utils/FEBasisOperations.cc
-  ./utils/FEBasisOperationsHost.cc
   ./src/dft/dftd.cc
   ./src/mdi/MDIEngine.cpp
   ./src/mdi/libraryMDI.cpp
@@ -187,7 +185,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
-  ./utils/FEBasisOperationsDevice.cc
+  ./utils/FEBasisOperationsKernelsDevice.cc
   )
 
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
@@ -216,7 +214,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
-  ./utils/FEBasisOperationsDevice.cc
+  ./utils/FEBasisOperationsKernelsDevice.cc
   )
 
 ENDIF()

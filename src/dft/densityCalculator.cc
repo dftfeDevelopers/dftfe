@@ -45,7 +45,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &                                            basisOperationsPtr,
     const unsigned int                             matrixFreeDofhandlerIndex,
@@ -172,12 +172,8 @@ namespace dftfe
     auto &partialOccupVec = partialOccupVecHost;
 #endif
 
-    std::vector<dftfe::linearAlgebra::MultiVector<NumberType, memorySpace>>
+    std::vector<dftfe::linearAlgebra::MultiVector<NumberType, memorySpace> *>
       flattenedArrayBlock(numSpinComponents);
-    for (unsigned int spinIndex = 0; spinIndex < numSpinComponents; ++spinIndex)
-      basisOperationsPtr->createMultiVector(matrixFreeDofhandlerIndex,
-                                            BVec,
-                                            flattenedArrayBlock[spinIndex]);
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> cellWaveFunctionMatrix(
       cellsBlockSize * numNodesPerElement * BVec);
@@ -198,12 +194,10 @@ namespace dftfe
               std::min(BVec, totalNumWaveFunctions - jvec);
             for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                  ++spinIndex)
-              if (currentBlockSize !=
-                  flattenedArrayBlock[spinIndex].numVectors())
-                basisOperationsPtr->createMultiVector(
-                  matrixFreeDofhandlerIndex,
-                  currentBlockSize,
-                  flattenedArrayBlock[spinIndex]);
+              flattenedArrayBlock[spinIndex] =
+                &(basisOperationsPtr->getMultiVector(currentBlockSize,
+                                                     spinIndex));
+
             if ((jvec + currentBlockSize) <=
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
                 (jvec + currentBlockSize) >
@@ -267,7 +261,7 @@ namespace dftfe
                      ++spinIndex)
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
-                      std::memcpy(flattenedArrayBlock[spinIndex].data() +
+                      std::memcpy(flattenedArrayBlock[spinIndex]->data() +
                                     iNode * currentBlockSize,
                                   X->data() +
                                     numLocalDofs * totalNumWaveFunctions *
@@ -284,7 +278,7 @@ namespace dftfe
                         jvec,
                         X->data() + numLocalDofs * totalNumWaveFunctions *
                                       (numSpinComponents * kPoint + spinIndex),
-                        flattenedArrayBlock[spinIndex].begin());
+                        flattenedArrayBlock[spinIndex]->data());
 #endif
 
 
@@ -297,9 +291,9 @@ namespace dftfe
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                      ++spinIndex)
                   {
-                    flattenedArrayBlock[spinIndex].updateGhostValues();
+                    flattenedArrayBlock[spinIndex]->updateGhostValues();
                     basisOperationsPtr->distribute(
-                      flattenedArrayBlock[spinIndex]);
+                      *(flattenedArrayBlock[spinIndex]));
                   }
 
                 for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
@@ -316,7 +310,7 @@ namespace dftfe
                              spinIndex < numSpinComponents;
                              ++spinIndex)
                           basisOperationsPtr->interpolateKernel(
-                            flattenedArrayBlock[spinIndex],
+                            *(flattenedArrayBlock[spinIndex]),
                             wfcQuadPointData[spinIndex].data(),
                             isEvaluateGradRho ?
                               gradWfcQuadPointData[spinIndex].data() :
@@ -357,12 +351,9 @@ namespace dftfe
               const unsigned int currentBlockSize = std::min(BVec, Nfr - jvec);
               for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                    ++spinIndex)
-                if (currentBlockSize !=
-                    flattenedArrayBlock[spinIndex].numVectors())
-                  basisOperationsPtr->createMultiVector(
-                    matrixFreeDofhandlerIndex,
-                    currentBlockSize,
-                    flattenedArrayBlock[spinIndex]);
+                flattenedArrayBlock[spinIndex] =
+                  &(basisOperationsPtr->getMultiVector(currentBlockSize,
+                                                       spinIndex));
               if ((jvec + totalNumWaveFunctions - Nfr + currentBlockSize) <=
                     bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
                   (jvec + totalNumWaveFunctions - Nfr + currentBlockSize) >
@@ -430,7 +421,7 @@ namespace dftfe
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       for (unsigned int iNode = 0; iNode < numLocalDofs;
                            ++iNode)
-                        std::memcpy(flattenedArrayBlock[spinIndex].data() +
+                        std::memcpy(flattenedArrayBlock[spinIndex]->data() +
                                       iNode * currentBlockSize,
                                     XFrac->data() +
                                       numLocalDofs * Nfr *
@@ -438,15 +429,6 @@ namespace dftfe
                                          spinIndex) +
                                       iNode * Nfr + jvec,
                                     currentBlockSize * sizeof(NumberType));
-                        // for (unsigned int iWave = 0; iWave <
-                        // currentBlockSize;
-                        //      ++iWave)
-                        //   flattenedArrayBlock[spinIndex]
-                        //     .data()[iNode * currentBlockSize + iWave] =
-                        //     (XFrac->data())[numLocalDofs * Nfr *
-                        //                       (numSpinComponents * kPoint +
-                        //                        spinIndex) +
-                        //                     iNode * Nfr + jvec + iWave];
 #if defined(DFTFE_WITH_DEVICE)
                     else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
                       dftfe::utils::deviceKernelsGeneric::
@@ -458,7 +440,7 @@ namespace dftfe
                           XFrac->data() +
                             numLocalDofs * Nfr *
                               (numSpinComponents * kPoint + spinIndex),
-                          flattenedArrayBlock[spinIndex].begin());
+                          flattenedArrayBlock[spinIndex]->data());
 #endif
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
@@ -470,9 +452,9 @@ namespace dftfe
                        spinIndex < numSpinComponents;
                        ++spinIndex)
                     {
-                      flattenedArrayBlock[spinIndex].updateGhostValues();
+                      flattenedArrayBlock[spinIndex]->updateGhostValues();
                       basisOperationsPtr->distribute(
-                        flattenedArrayBlock[spinIndex]);
+                        *(flattenedArrayBlock[spinIndex]));
                     }
 
                   for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
@@ -488,7 +470,7 @@ namespace dftfe
                                spinIndex < numSpinComponents;
                                ++spinIndex)
                             basisOperationsPtr->interpolateKernel(
-                              flattenedArrayBlock[spinIndex],
+                              *(flattenedArrayBlock[spinIndex]),
                               wfcQuadPointData[spinIndex].data(),
                               isEvaluateGradRho ?
                                 gradWfcQuadPointData[spinIndex].data() :
@@ -662,7 +644,7 @@ namespace dftfe
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
       &                                         basisOperationsPtr,
@@ -737,7 +719,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
@@ -769,7 +751,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>

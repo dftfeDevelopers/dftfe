@@ -262,7 +262,7 @@ namespace dftfe
                             d_constraintsVector,
                             quadratureVector,
                             additional_data);
-    basisOperationsPtrHost = std::make_unique<
+    basisOperationsPtrHost = std::make_shared<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>(
@@ -276,10 +276,29 @@ namespace dftfe
     basisOperationsPtrHost->init(d_densityDofHandlerIndex,
                                  quadratureIndices,
                                  updateFlags);
+    if (!d_dftParamsPtr->useDevice)
+      {
+        std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+        dftUtils::createBandParallelizationIndices(
+          interBandGroupComm, d_numEigenValues, bandGroupLowHighPlusOneIndices);
+
+        unsigned int BVec = std::min(d_dftParamsPtr->chebyWfcBlockSize,
+                                     bandGroupLowHighPlusOneIndices[1]);
+
+        basisOperationsPtrHost->createScratchMultiVectors(
+          BVec, (d_dftParamsPtr->spinPolarized + 1));
+        if (d_numEigenValues % BVec != 0)
+          basisOperationsPtrHost->createScratchMultiVectors(
+            d_numEigenValues % BVec, (d_dftParamsPtr->spinPolarized + 1));
+        if (d_numEigenValues != d_numEigenValuesRR &&
+            d_numEigenValuesRR % BVec != 0)
+          basisOperationsPtrHost->createScratchMultiVectors(
+            d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1));
+      }
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice)
       {
-        basisOperationsPtrDevice = std::make_unique<
+        basisOperationsPtrDevice = std::make_shared<
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>(
@@ -287,6 +306,14 @@ namespace dftfe
         basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
                                        quadratureIndices,
                                        updateFlags);
+        const unsigned int BVec =
+          std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
+
+        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+          basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
+        else
+          basisOperationsPtrDevice->createScratchMultiVectors(
+            BVec, (d_dftParamsPtr->spinPolarized + 1));
       }
 #endif
 

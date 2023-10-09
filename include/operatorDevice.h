@@ -443,10 +443,6 @@ namespace dftfe
                                 dftfe::utils::MemorySpace::DEVICE>
       d_cellWaveFunctionMatrix;
 
-    distributedDeviceVec<dataTypes::number> d_parallelChebyBlockVectorDevice;
-
-    distributedDeviceVec<dataTypes::number> d_parallelChebyBlockVector2Device;
-
     distributedDeviceVec<dataTypes::number>
       d_parallelProjectorKetTimesBlockVectorDevice;
 

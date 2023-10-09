@@ -36,7 +36,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &                                            basisOperationsPtr,
     const unsigned int                             matrixFreeDofhandlerIndex,
@@ -56,7 +56,7 @@ namespace dftfe
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
       &                                         basisOperationsPtr,
@@ -75,7 +75,7 @@ namespace dftfe
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
-    std::unique_ptr<
+    std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>

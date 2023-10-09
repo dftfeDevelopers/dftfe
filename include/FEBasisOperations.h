@@ -115,6 +115,7 @@ namespace dftfe
 
       void
       initializeIndexMaps();
+
       void
       initializeFlattenedIndexMaps();
 
@@ -122,7 +123,13 @@ namespace dftfe
       initializeConstraints();
 
       void
+      initializeMPIPattern();
+
+      void
       initializeShapeFunctionAndJacobianData();
+
+      void
+      initializeShapeFunctionAndJacobianBasisData();
 
       void
       resizeTempStorage();
@@ -142,17 +149,61 @@ namespace dftfe
       unsigned int
       nOwnedDofs() const;
 
-      const ValueTypeBasisCoeff *
+      const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       shapeFunctionData(bool transpose = false) const;
 
-      const ValueTypeBasisCoeff *
+      const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       shapeFunctionGradientData(bool transpose = false) const;
 
-      const ValueTypeBasisCoeff *
+      const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       inverseJacobians() const;
 
-      const ValueTypeBasisCoeff *
+      const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       JxW() const;
+
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      shapeFunctionBasisData(bool transpose = false) const;
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      shapeFunctionBasisData(bool transpose = false) const;
+
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      shapeFunctionGradientBasisData(bool transpose = false) const;
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      shapeFunctionGradientBasisData(bool transpose = false) const;
+
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      inverseJacobiansBasisData() const;
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      inverseJacobiansBasisData() const;
+
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      JxWBasisData() const;
+      template <typename A = ValueTypeBasisCoeff,
+                typename B = ValueTypeBasisData,
+                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
+      JxWBasisData() const;
 
       unsigned int
       cellsTypeFlag() const;
@@ -162,7 +213,23 @@ namespace dftfe
 
       void
       createMultiVector(
-        const unsigned int dofHandlerIndex,
+        const unsigned int blocksize,
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &multiVector) const;
+
+      void
+      createScratchMultiVectors(const unsigned int vecBlockSize,
+                                const unsigned int numMultiVecs = 1) const;
+
+      void
+      clearScratchMultiVectors() const;
+
+      dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
+      getMultiVector(const unsigned int vecBlockSize,
+                     const unsigned int index = 0) const;
+
+      void
+      getMultiVector(
         const unsigned int blocksize,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &multiVector) const;
@@ -199,6 +266,26 @@ namespace dftfe
       std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientDataTranspose;
 
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_inverseJacobianBasisData;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_JxWBasisData;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_shapeFunctionBasisData;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_shapeFunctionGradientBasisData;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_shapeFunctionBasisDataTranspose;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+        d_shapeFunctionGradientBasisDataTranspose;
+
+
+      mutable std::map<
+        unsigned int,
+        std::vector<
+          dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>>>
+        scratchMultiVectors;
+
       std::vector<unsigned int> d_quadratureIDsVector;
       unsigned int              d_quadratureID;
       std::vector<unsigned int> d_nQuadsPerCell;
@@ -212,6 +299,9 @@ namespace dftfe
       bool                      areAllCellsAffine;
       bool                      areAllCellsCartesian;
       UpdateFlags               d_updateFlags;
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        mpiPatternP2P;
     };
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -598,6 +688,11 @@ namespace dftfe
     };
 #endif
   } // end of namespace basis
-
 } // end of namespace dftfe
+#include "../utils/FEBasisOperations.t.cc"
+#include "../utils/FEBasisOperationsHost.t.cc"
+#if defined(DFTFE_WITH_DEVICE)
+#  include "../utils/FEBasisOperationsDevice.t.cc"
+#endif
+
 #endif // dftfeBasisOperations_h
