@@ -576,13 +576,13 @@ namespace dftfe
                        trans,
                        m,
                        n,
-                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       makeDataTypeHipBlasCompatible(alpha),
+                       makeDataTypeHipBlasCompatible(A),
                        lda,
-                       dftfe::utils::makeDataTypeDeviceCompatible(x),
+                       makeDataTypeHipBlasCompatible(x),
                        incx,
-                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                       dftfe::utils::makeDataTypeDeviceCompatible(y),
+                       makeDataTypeHipBlasCompatible(beta),
+                       makeDataTypeHipBlasCompatible(y),
                        incy);
         DEVICEBLAS_API_CHECK(status);
         return status;
@@ -607,13 +607,13 @@ namespace dftfe
                        trans,
                        m,
                        n,
-                       dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                       dftfe::utils::makeDataTypeDeviceCompatible(A),
+                       makeDataTypeHipBlasCompatible(alpha),
+                       makeDataTypeHipBlasCompatible(A),
                        lda,
-                       dftfe::utils::makeDataTypeDeviceCompatible(x),
+                       makeDataTypeHipBlasCompatible(x),
                        incx,
-                       dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                       dftfe::utils::makeDataTypeDeviceCompatible(y),
+                       makeDataTypeHipBlasCompatible(beta),
+                       makeDataTypeHipBlasCompatible(y),
                        incy);
         DEVICEBLAS_API_CHECK(status);
         return status;
