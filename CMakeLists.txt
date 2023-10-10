@@ -194,7 +194,6 @@ SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
-  ./src/dft/densityCalculatorDevice.cc
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
