@@ -289,7 +289,7 @@ namespace dftfe
            int                   incy);
 
       deviceBlasStatus_t
-      gemm(deviceBlasHandle_t          handle,
+      gemv(deviceBlasHandle_t          handle,
            deviceBlasOperation_t       trans,
            int                         m,
            int                         n,
@@ -303,7 +303,7 @@ namespace dftfe
            int                         incy);
 
       deviceBlasStatus_t
-      gemm(deviceBlasHandle_t         handle,
+      gemv(deviceBlasHandle_t         handle,
            deviceBlasOperation_t      trans,
            int                        m,
            int                        n,
