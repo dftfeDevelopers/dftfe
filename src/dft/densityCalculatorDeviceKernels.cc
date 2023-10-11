@@ -185,7 +185,7 @@ namespace dftfe
       dftfe::utils::DEVICE_BLOCK_SIZE,
       0,
       0,
-      cellsBlockSize * nQuadsPerCell * vectorsBlockSize,
+      vectorsBlockSize,
       cellsBlockSize,
       nQuadsPerCell,
       dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
