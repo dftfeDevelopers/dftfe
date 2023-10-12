@@ -17,127 +17,225 @@
 
 #ifndef BLASWrapperClass_h
 #define BLASWrapperClass_h
-
-#    include <complex>
-#    include <TypeConfig.h>
-#    include <DeviceTypeConfig.h>
-#    include "process_grid.h"
-#    include "scalapackWrapper.h"
-#    include <liearAlgebraOperations.h>
-
+#include <elpaScalaManager.h>
+#include <headers.h>
+#include <complex>
+#include <TypeConfig.h>
+#include <DeviceTypeConfig.h>
+#include "process_grid.h"
+#include "scalapackWrapper.h"
 
 namespace dftfe
 {
-    template<dftfe::utils::MemorySpace memorySpace>    
+  namespace linearAlgebra
+  {
+    template <dftfe::utils::MemorySpace memorySpace>
     class BLASWrapperClassBase
     {
-        public:
-        //Real-Single Precision GEMM
-        void
-        xgemm(const char *        transA,
-        const char *        transB,
-        const unsigned int *m,
-        const unsigned int *n,
-        const unsigned int *k,
-        const float *       alpha,
-        const float *       A,
-        const unsigned int *lda,
-        const float *       B,
-        const unsigned int *ldb,
-        const float *       beta,
-        float *             C,
-        const unsigned int *ldc);
-        //Complex-Single Precision GEMM
-        void
-        xgemm(const char *               transA,
-        const char *               transB,
-        const unsigned int *       m,
-        const unsigned int *       n,
-        const unsigned int *       k,
-        const std::complex<float> *alpha,
-        const std::complex<float> *A,
-        const unsigned int *       lda,
-        const std::complex<float> *B,
-        const unsigned int *       ldb,
-        const std::complex<float> *beta,
-        std::complex<float> *      C,
-        const unsigned int *       ldc);
-        
-        //Real-double precison GEMM
-        void
-        xgemm(const char *        transA,
-        const char *        transB,
-        const unsigned int *m,
-        const unsigned int *n,
-        const unsigned int *k,
-        const double *      alpha,
-        const double *      A,
-        const unsigned int *lda,
-        const double *      B,
-        const unsigned int *ldb,
-        const double *      beta,
-        double *            C,
-        const unsigned int *ldc);
+    public:
+      // Real-Single Precision GEMM
+      void
+      xgemm(const char *        transA,
+            const char *        transB,
+            const unsigned int *m,
+            const unsigned int *n,
+            const unsigned int *k,
+            const float *       alpha,
+            const float *       A,
+            const unsigned int *lda,
+            const float *       B,
+            const unsigned int *ldb,
+            const float *       beta,
+            float *             C,
+            const unsigned int *ldc);
+      // Complex-Single Precision GEMM
+      void
+      xgemm(const char *               transA,
+            const char *               transB,
+            const unsigned int *       m,
+            const unsigned int *       n,
+            const unsigned int *       k,
+            const std::complex<float> *alpha,
+            const std::complex<float> *A,
+            const unsigned int *       lda,
+            const std::complex<float> *B,
+            const unsigned int *       ldb,
+            const std::complex<float> *beta,
+            std::complex<float> *      C,
+            const unsigned int *       ldc);
+
+      // Real-double precison GEMM
+      void
+      xgemm(const char *        transA,
+            const char *        transB,
+            const unsigned int *m,
+            const unsigned int *n,
+            const unsigned int *k,
+            const double *      alpha,
+            const double *      A,
+            const unsigned int *lda,
+            const double *      B,
+            const unsigned int *ldb,
+            const double *      beta,
+            double *            C,
+            const unsigned int *ldc);
 
 
-        //Complex-double precision GEMM
-        void
-        xgemm(const char *                transA,
-        const char *                transB,
-        const unsigned int *        m,
-        const unsigned int *        n,
-        const unsigned int *        k,
-        const std::complex<double> *alpha,
-        const std::complex<double> *A,
-        const unsigned int *        lda,
-        const std::complex<double> *B,
-        const unsigned int *        ldb,
-        const std::complex<double> *beta,
-        std::complex<double> *      C,
-        const unsigned int *        ldc);
+      // Complex-double precision GEMM
+      void
+      xgemm(const char *                transA,
+            const char *                transB,
+            const unsigned int *        m,
+            const unsigned int *        n,
+            const unsigned int *        k,
+            const std::complex<double> *alpha,
+            const std::complex<double> *A,
+            const unsigned int *        lda,
+            const std::complex<double> *B,
+            const unsigned int *        ldb,
+            const std::complex<double> *beta,
+            std::complex<double> *      C,
+            const unsigned int *        ldc);
 
-        //Real-Double scaling of Real-vector
-        void
-        xscal(const unsigned int *n,
-           const double *      alpha,
-           double *            x,
-           const unsigned int *inc);
+      // Real-Double scaling of Real-vector
+      void
+      xscal(const unsigned int *n,
+            const double *      alpha,
+            double *            x,
+            const unsigned int *inc);
 
-        //Real-Float scaling of Real-vector
-        void
-        xscal(const unsigned int *n,
-           const float *       alpha,
-           float *             x,
-           const unsigned int *inc);
+      // Real-Float scaling of Real-vector
+      void
+      xscal(const unsigned int *n,
+            const float *       alpha,
+            float *             x,
+            const unsigned int *inc);
 
-        //Complex-double scaling of complex-vector
-        void
-        xscal(const unsigned int *        n,
-           const std::complex<double> *alpha,
-           std::complex<double> *      x,
-           const unsigned int *        inc);
-        
-        //Real-double scaling of complex-vector
-        void
-        xscal(const unsigned int *  n,
+      // Complex-double scaling of complex-vector
+      void
+      xscal(const unsigned int *        n,
+            const std::complex<double> *alpha,
+            std::complex<double> *      x,
+            const unsigned int *        inc);
+
+      // Real-double scaling of complex-vector
+      void
+      xscal(const unsigned int *  n,
             const double *        alpha,
             std::complex<double> *x,
             const unsigned int *  inc);
 
-        private:
+      // Real double Norm2
+      void
+      xnrm2(const unsigned int *n, const double *x, const unsigned int *incx);
 
+      // Real dot product
+      void
+      xdot(const unsigned int *N,
+           const double *      X,
+           const unsigned int *INCX,
+           const double *      Y,
+           const unsigned int *INCY);
+
+      // Real double Ax+y
+      void
+      xaxpy(const unsigned int *n,
+            const double *      alpha,
+            double *            x,
+            const unsigned int *incx,
+            double *            y,
+            const unsigned int *incy);
+
+      // Complex double Ax+y
+      void
+      xaxpy(const unsigned int *        n,
+            const std::complex<double> *alpha,
+            std::complex<double> *      x,
+            const unsigned int *        incx,
+            std::complex<double> *      y,
+            const unsigned int *        incy);
+
+      // Real copy of double data
+      void
+      xcopy(const unsigned int *n,
+            const double *      x,
+            const unsigned int *incx,
+            double *            y,
+            const unsigned int *incy);
+
+      // Complex double copy of data
+      void
+      xcopy(const unsigned int *        n,
+            const std::complex<double> *x,
+            const unsigned int *        incx,
+            std::complex<double> *      y,
+            const unsigned int *        incy);
+
+      // Real copy of float data
+      void
+      xcopy(const unsigned int *n,
+            const float *       x,
+            const unsigned int *incx,
+            float *             y,
+            const unsigned int *incy);
+
+       //Real double symmetric matrix-vector product
+       void
+       xsymv(const char *        UPLO,
+           const unsigned int *N,
+           const double *      alpha,
+           const double *      A,
+           const unsigned int *LDA,
+           const double *      X,
+           const unsigned int *INCX,
+           const double *      beta,
+           double *            C,
+           const unsigned int *INCY);     
+
+    private:
     };
 
-    class BLASWrapperClass<dftfe::utils::MemorySpace::HOST> : public BLASWrapperClassBase<dftfe::utils::MemorySpace::HOST>
+    class BLASWrapperClass<dftfe::utils::MemorySpace::HOST>
+      : public BLASWrapperClassBase<dftfe::utils::MemorySpace::HOST>
     {};
 
 #if defined(DFTFE_WITH_DEVICE)
-    class BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE> : public BLASWrapperClassBase<dftfe::utils::MemorySpace::DEVICE>
-    {}; 
+    class BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>
+      : public BLASWrapperClassBase<dftfe::utils::MemorySpace::DEVICE>
+    {
+#  ifdef DFTFE_WITH_DEVICE_AMD
+      void
+      initialize();
+#  endif
+
+      deviceBlasStatus_t
+      create(deviceBlasHandle_t *pHandle);
+
+      deviceBlasStatus_t
+      destroy(deviceBlasHandle_t handle);
+
+      deviceBlasStatus_t
+      setStream(deviceBlasHandle_t handle, deviceStream_t stream);
+
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      deviceBlasStatus_t
+      setMathMode(deviceBlasHandle_t handle, deviceBlasMath_t mathMode);
+#  endif
+    };
 
 #endif
 
-}
+  } // end of namespace linearAlgebra
 
-
+} // end of namespace dftfe
+#include "../utils/BLASWrapperClass.t.cc"
+#include "../utils/BLASWrapperClassHost.t.cc"
+#if defined(DFTFE_WITH_DEVICE)
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#    include "../utils/BLASWrapperClassDevice.t.cu.cc"
+#  elif
+#    include "../utils/BLASWrapperClassDevice.t.hip.cc"
+#  endif
 #endif
+
+#endif // BLASWrapperClass_h
