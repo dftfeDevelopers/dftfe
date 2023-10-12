@@ -16,7 +16,11 @@
 //
 
 #include <BLASWrapperClass.h>
-
+#include <deviceKernelsGeneric.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
 namespace dftfe
 {
   namespace linearAlgebra
