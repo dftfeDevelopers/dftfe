@@ -25,6 +25,14 @@ namespace dftfe
 {
   namespace linearAlgebra
   {
+#ifdef DFTFE_WITH_DEVICE_AMD
+    void
+    initialize()
+    {
+      rocblas_initialize();
+    }
+#endif
+
     void
     BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>::xgemm()
     {}

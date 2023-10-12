@@ -17,13 +17,14 @@
 
 #ifndef BLASWrapperClass_h
 #define BLASWrapperClass_h
-#include <elpaScalaManager.h>
+
+#include <dftfeDataTypes.h>
+#include <MemorySpaceType.h>
 #include <headers.h>
 #include <complex>
 #include <TypeConfig.h>
 #include <DeviceTypeConfig.h>
-#include "process_grid.h"
-#include "scalapackWrapper.h"
+
 
 namespace dftfe
 {
@@ -179,18 +180,89 @@ namespace dftfe
             float *             y,
             const unsigned int *incy);
 
-       //Real double symmetric matrix-vector product
-       void
-       xsymv(const char *        UPLO,
-           const unsigned int *N,
-           const double *      alpha,
-           const double *      A,
-           const unsigned int *LDA,
-           const double *      X,
-           const unsigned int *INCX,
-           const double *      beta,
-           double *            C,
-           const unsigned int *INCY);     
+      // Real double symmetric matrix-vector product
+      void
+      xsymv(const char *        UPLO,
+            const unsigned int *N,
+            const double *      alpha,
+            const double *      A,
+            const unsigned int *LDA,
+            const double *      X,
+            const unsigned int *INCX,
+            const double *      beta,
+            double *            C,
+            const unsigned int *INCY);
+
+      void
+      xgemmBatched(const char *        transA,
+                   const char *        transB,
+                   const unsigned int *m,
+                   const unsigned int *n,
+                   const unsigned int *k,
+                   const double *      alpha,
+                   const double *      A,
+                   const unsigned int *lda,
+                   const double *      B,
+                   const unsigned int *ldb,
+                   const double *      beta,
+                   double *            C,
+                   const unsigned int *ldc,
+                   const int *         batchCount);
+
+      void
+      xgemmBatched(const char *               transA,
+                   const char *               transB,
+                   const unsigned int *       m,
+                   const unsigned int *       n,
+                   const unsigned int *       k,
+                   const std::complex<double> e *alpha,
+                   const std::complex<double> *  A,
+                   const unsigned int *          lda,
+                   const std::complex<double> *  B,
+                   const unsigned int *          ldb,
+                   const std::complex<double> *  beta,
+                   std::complex<double> e *C,
+                   const unsigned int *    ldc,
+                   const int *             batchCount);
+
+
+      void
+      xgemmStridedBatched(const char *        transA,
+                          const char *        transB,
+                          const unsigned int *m,
+                          const unsigned int *n,
+                          const unsigned int *k,
+                          const double *      alpha,
+                          const double *      A,
+                          const unsigned int *lda,
+                          long long int *     strideA,
+                          const double *      B,
+                          const unsigned int *ldb,
+                          long long int *     strideB,
+                          const double *      beta,
+                          double *            C,
+                          const unsigned int *ldc,
+                          const int *         batchCount,
+                          long long int *     strideC);
+
+      void
+      xgemmStridedBatched(const char *                transA,
+                          const char *                transB,
+                          const unsigned int *        m,
+                          const unsigned int *        n,
+                          const unsigned int *        k,
+                          const std::complex<double> *alpha,
+                          const std::complex<double> *A,
+                          const unsigned int *        lda,
+                          long long int *             strideA,
+                          const std::complex<double> *B,
+                          const unsigned int *        ldb,
+                          long long int *             strideB,
+                          const std::complex<double> *beta,
+                          std::complex<double> *      C,
+                          const unsigned int *        ldc,
+                          const int *                 batchCount,
+                          long long int *             strideC);
 
     private:
     };
