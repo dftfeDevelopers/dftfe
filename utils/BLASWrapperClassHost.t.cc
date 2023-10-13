@@ -136,7 +136,6 @@ namespace dftfe
              const unsigned int *incy);
     }
 
-#ifdef USE_COMPLEX
     void
     BLASWrapperClass<dftfe::utils::MemorySpace::HOST>::xgemm(
       const char *               transA,
@@ -239,7 +238,6 @@ namespace dftfe
     }
 
 
-#endif
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

@@ -269,16 +269,29 @@ namespace dftfe
 
     class BLASWrapperClass<dftfe::utils::MemorySpace::HOST>
       : public BLASWrapperClassBase<dftfe::utils::MemorySpace::HOST>
-    {};
+    {
+    public:
+      BLASWrapperClass();
+
+    private:
+    };
 
 #if defined(DFTFE_WITH_DEVICE)
     class BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>
       : public BLASWrapperClassBase<dftfe::utils::MemorySpace::DEVICE>
     {
+    public:
+      BLASWrapperClass();
+
+    private:
 #  ifdef DFTFE_WITH_DEVICE_AMD
       void
       initialize();
 #  endif
+
+      /// storage for deviceblas handle
+      dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
+
 
       deviceBlasStatus_t
       create(deviceBlasHandle_t *pHandle);
