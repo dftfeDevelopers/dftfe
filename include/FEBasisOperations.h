@@ -82,18 +82,47 @@ namespace dftfe
         tempQuadratureGradientsDataNonAffine;
 
     public:
+      /**
+       * @brief Constructor, fills required data structures using deal.ii's MatrixFree and AffineConstraints objects
+       * @param[in] matrixFreeData MatrixFree object.
+       * @param[in] constraintsVector std::vector of AffineConstraints, should
+       * be the same vector which was passed for the construction of the given
+       * MatrixFree object.
+       */
       FEBasisOperationsBase(
         dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
           &constraintsVector);
 
+      /**
+       * @brief Default Destructor
+       */
       ~FEBasisOperationsBase() = default;
 
+      /**
+       * @brief fills required data structures for the given dofHandlerID
+       * @param[in] dofHandlerID dofHandler index to be used for getting data
+       * from the MatrixFree object.
+       * @param[in] quadratureID std::vector of quadratureIDs to be used, should
+       * be the same IDs which were used during the construction of the given
+       * MatrixFree object.
+       */
       void
       init(const unsigned int &             dofHandlerID,
            const std::vector<unsigned int> &quadratureID,
            const UpdateFlags                updateFlags = update_values);
 
+      /**
+       * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
+       * @param[in] vecBlockSize block size to used for operations on vectors,
+       * this has to be set to the exact value before any such operations are
+       * called.
+       * @param[in] cellBlockSize block size to used for cells, this has to be
+       * set to a value greater than or equal to the required value before any
+       * such operations are called
+       * @param[in] quadratureID Quadrature index to be used.
+       * @param[in] isResizeTempStorage whether to resize internal tempstorage.
+       */
       void
       reinit(const unsigned int &vecBlockSize,
              const unsigned int &cellBlockSize,
@@ -113,54 +142,119 @@ namespace dftfe
 
 
 
+      /**
+       * @brief Initializes indexset maps from process level indices to cell level indices for a single vector, also initializes cell index to cellid map.
+       */
       void
       initializeIndexMaps();
 
+      /**
+       * @brief Initializes indexset maps from process level indices to cell level indices for multivectors.
+       */
       void
       initializeFlattenedIndexMaps();
 
+      /**
+       * @brief Initializes the constraintMatrixInfo object.
+       */
       void
       initializeConstraints();
 
+      /**
+       * @brief Constructs the MPIPatternP2P object.
+       */
       void
       initializeMPIPattern();
 
+      /**
+       * @brief Fill the shape function data and jacobian data in the ValueTypeBasisCoeff datatype.
+       */
       void
       initializeShapeFunctionAndJacobianData();
 
+      /**
+       * @brief Fill the shape function data and jacobian data in the ValueTypeBasisData datatype.
+       */
       void
       initializeShapeFunctionAndJacobianBasisData();
 
+      /**
+       * @brief Resizes the internal temp storage to be sufficient for the vector and cell block sizes provided in reinit.
+       */
       void
       resizeTempStorage();
 
+      /**
+       * @brief Number of quadrature points per cell for the quadratureID set in reinit.
+       */
       unsigned int
       nQuadsPerCell() const;
 
+      /**
+       * @brief Number of DoFs per cell for the dofHandlerID set in init.
+       */
       unsigned int
       nDofsPerCell() const;
 
+      /**
+       * @brief Number of locally owned cells on the current processor.
+       */
       unsigned int
       nCells() const;
 
+      /**
+       * @brief Number of DoFs on the current processor, locally owned + ghosts.
+       */
       unsigned int
       nRelaventDofs() const;
 
+      /**
+       * @brief Number of locally owned DoFs on the current processor.
+       */
       unsigned int
       nOwnedDofs() const;
 
+      /**
+       * @brief Shape function values at quadrature points.
+       * @param[in] transpose if false the the data is indexed as [iQuad *
+       * d_nDofsPerCell + iNode] and if true it is indexed as [iNode *
+       * d_nQuadsPerCell + iQuad].
+       */
       const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       shapeFunctionData(bool transpose = false) const;
 
+      /**
+       * @brief Shape function gradient values at quadrature points.
+       * @param[in] transpose if false the the data is indexed as [iDim *
+       * d_nQuadsPerCell * d_nDofsPerCell + iQuad * d_nDofsPerCell + iNode] and
+       * if true it is indexed as [iDim * d_nQuadsPerCell * d_nDofsPerCell +
+       * iNode * d_nQuadsPerCell + iQuad].
+       */
       const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       shapeFunctionGradientData(bool transpose = false) const;
 
+      /**
+       * @brief Inverse Jacobian matrices, for cartesian cells returns the
+       * diagonal elements of the inverse Jacobian matrices for each cell, for
+       * affine cells returns the 3x3 inverse Jacobians for each cell otherwise
+       * returns the 3x3 inverse Jacobians at each quad point for each cell.
+       */
       const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       inverseJacobians() const;
 
+      /**
+       * @brief determinant of Jacobian times the quadrature weight at each
+       * quad point for each cell.
+       */
       const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
       JxW() const;
 
+      /**
+       * @brief Shape function values at quadrature points in ValueTypeBasisData.
+       * @param[in] transpose if false the the data is indexed as [iQuad *
+       * d_nDofsPerCell + iNode] and if true it is indexed as [iNode *
+       * d_nQuadsPerCell + iQuad].
+       */
       template <typename A = ValueTypeBasisCoeff,
                 typename B = ValueTypeBasisData,
                 typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
@@ -172,6 +266,13 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       shapeFunctionBasisData(bool transpose = false) const;
 
+      /**
+       * @brief Shape function gradient values at quadrature points in ValueTypeBasisData.
+       * @param[in] transpose if false the the data is indexed as [iDim *
+       * d_nQuadsPerCell * d_nDofsPerCell + iQuad * d_nDofsPerCell + iNode] and
+       * if true it is indexed as [iDim * d_nQuadsPerCell * d_nDofsPerCell +
+       * iNode * d_nQuadsPerCell + iQuad].
+       */
       template <typename A = ValueTypeBasisCoeff,
                 typename B = ValueTypeBasisData,
                 typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
@@ -183,6 +284,12 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       shapeFunctionGradientBasisData(bool transpose = false) const;
 
+      /**
+       * @brief Inverse Jacobian matrices in ValueTypeBasisData, for cartesian cells returns the
+       * diagonal elements of the inverse Jacobian matrices for each cell, for
+       * affine cells returns the 3x3 inverse Jacobians for each cell otherwise
+       * returns the 3x3 inverse Jacobians at each quad point for each cell.
+       */
       template <typename A = ValueTypeBasisCoeff,
                 typename B = ValueTypeBasisData,
                 typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
@@ -194,6 +301,10 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       inverseJacobiansBasisData() const;
 
+      /**
+       * @brief determinant of Jacobian times the quadrature weight in ValueTypeBasisData at each
+       * quad point for each cell.
+       */
       template <typename A = ValueTypeBasisCoeff,
                 typename B = ValueTypeBasisData,
                 typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
@@ -205,35 +316,61 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       JxWBasisData() const;
 
+      /**
+       * @brief returns 2 if all cells on current processor are Cartesian,
+       * 1 if all cells on current processor are affine and 0 otherwise.
+       */
       unsigned int
       cellsTypeFlag() const;
 
+      /**
+       * @brief returns the deal.ii cellID corresponing to given cell Index.
+       * @param[in] iElem cell Index
+       */
       dealii::CellId
       cellID(const unsigned int iElem) const;
 
+      /**
+       * @brief Creates a multivector.
+       * @param[in] blocksize Number of vectors in the multivector.
+       * @param[out] multiVector the created multivector.
+       */
       void
       createMultiVector(
         const unsigned int blocksize,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &multiVector) const;
 
+      /**
+       * @brief Creates scratch multivectors.
+       * @param[in] vecBlockSize Number of vectors in the multivector.
+       * @param[out] numMultiVecs number of scratch multivectors needed with
+       * this vecBlockSize.
+       */
       void
       createScratchMultiVectors(const unsigned int vecBlockSize,
                                 const unsigned int numMultiVecs = 1) const;
 
+      /**
+       * @brief Clears scratch multivectors.
+       */
       void
       clearScratchMultiVectors() const;
 
+      /**
+       * @brief Gets scratch multivectors.
+       * @param[in] vecBlockSize Number of vectors in the multivector.
+       * @param[out] numMultiVecs index of the multivector among those with the
+       * same vecBlockSize.
+       */
       dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
       getMultiVector(const unsigned int vecBlockSize,
                      const unsigned int index = 0) const;
 
-      void
-      getMultiVector(
-        const unsigned int blocksize,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &multiVector) const;
-
+      /**
+       * @brief Apply constraints on given multivector.
+       * @param[inout] multiVector the given multivector.
+       */
       void
       distribute(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
@@ -419,6 +556,16 @@ namespace dftfe
         dftfe::utils::MemorySpace::HOST>::d_constraintsVector;
 
 
+      /**
+       * @brief Interpolate process level nodal data to cell level quadrature data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       */
       void
       interpolate(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
@@ -427,7 +574,16 @@ namespace dftfe
         ValueTypeBasisCoeff *quadratureValues,
         ValueTypeBasisCoeff *quadratureGradients = NULL) const;
 
-
+      // FIXME Untested function
+      /**
+       * @brief Integrate cell level quadrature data times shape functions to process level nodal data.
+       * @param[in] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       */
       void
       integrateWithBasis(
         ValueTypeBasisCoeff *quadratureValues,
@@ -436,13 +592,26 @@ namespace dftfe
                                           dftfe::utils::MemorySpace::HOST>
           &nodalData) const;
 
+      /**
+       * @brief Get cell level nodal data from process level nodal data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       */
       void
       extractToCellNodalData(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                           dftfe::utils::MemorySpace::HOST>
           &                  nodalData,
         ValueTypeBasisCoeff *cellNodalDataPtr) const;
-
+      // FIXME Untested function
+      /**
+       * @brief Accumulate cell level nodal data into process level nodal data.
+       * @param[in] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       */
       void
       accumulateFromCellNodalData(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
@@ -450,6 +619,18 @@ namespace dftfe
                                           dftfe::utils::MemorySpace::HOST>
           &nodalData) const;
 
+      /**
+       * @brief Interpolate process level nodal data to cell level quadrature data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] cellRange the range of cells for which interpolation has to
+       * be done.
+       */
       void
       interpolateKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
@@ -458,6 +639,19 @@ namespace dftfe
         ValueTypeBasisCoeff *                       quadratureValues,
         ValueTypeBasisCoeff *                       quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
+
+      /**
+       * @brief Interpolate cell level nodal data to cell level quadrature data.
+       * @param[in] nodalData cell level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] cellRange the range of cells for which interpolation has to
+       * be done.
+       */
       void
       interpolateKernel(
         const ValueTypeBasisCoeff *                 nodalData,
@@ -465,6 +659,18 @@ namespace dftfe
         ValueTypeBasisCoeff *                       quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
+      // FIXME Untested function
+      /**
+       * @brief Integrate cell level quadrature data times shape functions to process level nodal data.
+       * @param[in] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       * @param[in] cellRange the range of cells for which integration has to be
+       * done.
+       */
       void
       integrateWithBasisKernel(
         const ValueTypeBasisCoeff *quadratureValues,
@@ -475,6 +681,15 @@ namespace dftfe
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
 
+      /**
+       * @brief Get cell level nodal data from process level nodal data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       * @param[in] cellRange the range of cells for which extraction has to be
+       * done.
+       */
       void
       extractToCellNodalDataKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
@@ -483,6 +698,15 @@ namespace dftfe
         ValueTypeBasisCoeff *                       cellNodalDataPtr,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
+      // FIXME Untested function
+      /**
+       * @brief Accumulate cell level nodal data into process level nodal data.
+       * @param[in] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       * @param[in] cellRange the range of cells for which extraction has to be
+       * done.
+       */
       void
       accumulateFromCellNodalDataKernel(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
@@ -604,16 +828,34 @@ namespace dftfe
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_constraintsVector;
 
+      // FIXME has to be removed in a future PR
+      /**
+       * @brief sets device blas handle for internal blas operations.
+       */
       dftfe::utils::deviceBlasHandle_t *d_deviceBlasHandlePtr;
       void
       setDeviceBLASHandle(
         dftfe::utils::deviceBlasHandle_t *deviceBlasHandlePtr);
 
+      // FIXME has to be removed in a future PR
+      /**
+       * @brief gets device blas handle for blas operations.
+       */
       dftfe::utils::deviceBlasHandle_t &
       getDeviceBLASHandle();
 
 
 
+      /**
+       * @brief Interpolate process level nodal data to cell level quadrature data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       */
       void
       interpolate(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
@@ -623,6 +865,16 @@ namespace dftfe
         ValueTypeBasisCoeff *quadratureGradients = NULL) const;
 
 
+      // FIXME Untested function
+      /**
+       * @brief Integrate cell level quadrature data times shape functions to process level nodal data.
+       * @param[in] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       */
       void
       integrateWithBasis(
         ValueTypeBasisCoeff *quadratureValues,
@@ -631,6 +883,13 @@ namespace dftfe
                                           dftfe::utils::MemorySpace::DEVICE>
           &nodalData) const;
 
+      /**
+       * @brief Get cell level nodal data from process level nodal data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       */
       void
       extractToCellNodalData(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
@@ -638,6 +897,13 @@ namespace dftfe
           &                  nodalData,
         ValueTypeBasisCoeff *cellNodalDataPtr) const;
 
+      // FIXME Untested function
+      /**
+       * @brief Accumulate cell level nodal data into process level nodal data.
+       * @param[in] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       */
       void
       accumulateFromCellNodalData(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
@@ -645,6 +911,18 @@ namespace dftfe
                                           dftfe::utils::MemorySpace::DEVICE>
           &nodalData) const;
 
+      /**
+       * @brief Interpolate process level nodal data to cell level quadrature data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] cellRange the range of cells for which interpolation has to
+       * be done.
+       */
       void
       interpolateKernel(
         const dftfe::linearAlgebra::MultiVector<
@@ -653,6 +931,19 @@ namespace dftfe
         ValueTypeBasisCoeff *                       quadratureValues,
         ValueTypeBasisCoeff *                       quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
+
+      /**
+       * @brief Interpolate cell level nodal data to cell level quadrature data.
+       * @param[in] nodalData cell level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] cellRange the range of cells for which interpolation has to
+       * be done.
+       */
       void
       interpolateKernel(
         const ValueTypeBasisCoeff *                 nodalData,
@@ -660,6 +951,18 @@ namespace dftfe
         ValueTypeBasisCoeff *                       quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
+      // FIXME Untested function
+      /**
+       * @brief Integrate cell level quadrature data times shape functions to process level nodal data.
+       * @param[in] quadratureValues Cell level quadrature values, indexed by
+       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] quadratureGradients Cell level quadrature gradients,
+       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       * @param[in] cellRange the range of cells for which integration has to be
+       * done.
+       */
       void
       integrateWithBasisKernel(
         const ValueTypeBasisCoeff *quadratureValues,
@@ -670,6 +973,15 @@ namespace dftfe
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
 
+      /**
+       * @brief Get cell level nodal data from process level nodal data.
+       * @param[in] nodalData process level nodal data, the multivector should
+       * already have ghost data and constraints should have been applied.
+       * @param[out] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       * @param[in] cellRange the range of cells for which extraction has to be
+       * done.
+       */
       void
       extractToCellNodalDataKernel(
         const dftfe::linearAlgebra::MultiVector<
@@ -678,6 +990,15 @@ namespace dftfe
         ValueTypeBasisCoeff *                       cellNodalDataPtr,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
+      // FIXME Untested function
+      /**
+       * @brief Accumulate cell level nodal data into process level nodal data.
+       * @param[in] cellNodalDataPtr Cell level nodal values, indexed by
+       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
+       * @param[out] nodalData process level nodal data.
+       * @param[in] cellRange the range of cells for which extraction has to be
+       * done.
+       */
       void
       accumulateFromCellNodalDataKernel(
         const ValueTypeBasisCoeff *cellNodalDataPtr,

@@ -26,6 +26,15 @@ namespace dftfe
   {
     namespace FEBasisOperationsKernelsDevice
     {
+      /**
+       * @brief rehsape gradient data from [iCell * 3 * d_nQuadsPerCell * d_nVectors + iQuad * 3 * d_nVectors + iDim * d_nVectors + iVec] to [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
+       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
+       * @param[in] numVecs number of vectors.
+       * @param[in] numQuads number of quadrature points per cell.
+       * @param[in] numCells number of locally owned cells.
+       * @param[in] copyFromVec source data pointer.
+       * @param[out] copyToVec destination data pointer.
+       */
       template <typename ValueType1, typename ValueType2>
       void
       reshapeNonAffineCase(const dftfe::size_type numVecs,
