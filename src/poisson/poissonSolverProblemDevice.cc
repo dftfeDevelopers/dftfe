@@ -785,10 +785,6 @@ namespace dftfe
     d_constraintsTotalPotentialInfo.initialize(
       d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent),
       *d_constraintMatrixPtr);
-    d_constraintsTotalPotentialInfo.precomputeMaps(
-      d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent),
-      d_xPtr->get_partitioner(),
-      1);
   }
 
 

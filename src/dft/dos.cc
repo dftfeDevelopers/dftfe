@@ -445,7 +445,7 @@ namespace dftfe
     std::vector<double> tempQuadPointValues(n_q_points);
 
     const unsigned int localVectorSize =
-      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
+      matrix_free_data.get_vector_partitioner()->locally_owned_size();
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
       (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
     std::vector<distributedCPUVec<dataTypes::number>>
@@ -475,11 +475,6 @@ namespace dftfe
                   eigenVectorsFlattenedBlock[kPoint]);
                 eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
               }
-
-            constraintsNoneDataInfo.precomputeMaps(
-              matrix_free_data.get_vector_partitioner(),
-              eigenVectorsFlattenedBlock[0].get_partitioner(),
-              currentBlockSize);
           }
 
 
@@ -507,8 +502,10 @@ namespace dftfe
               for (unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
                 eigenVectorsFlattenedBlock[kPoint].local_element(
                   iNode * currentBlockSize + iWave) =
-                  d_eigenVectorsFlattenedSTL[kPoint][iNode * d_numEigenValues +
-                                                     ivec + iWave];
+                  d_eigenVectorsFlattenedHost[kPoint * d_numEigenValues *
+                                                localVectorSize +
+                                              iNode * d_numEigenValues + ivec +
+                                              iWave];
 
             constraintsNoneDataInfo.distribute(
               eigenVectorsFlattenedBlock[kPoint], currentBlockSize);
@@ -987,7 +984,7 @@ namespace dftfe
     std::vector<double> tempQuadPointValues(n_q_points);
 
     const unsigned int localVectorSize =
-      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
+      matrix_free_data.get_vector_partitioner()->locally_owned_size();
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
       (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
     std::vector<distributedCPUVec<dataTypes::number>>
@@ -1022,11 +1019,6 @@ namespace dftfe
                   eigenVectorsFlattenedBlock[kPoint]);
                 eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
               }
-
-            constraintsNoneDataInfo.precomputeMaps(
-              matrix_free_data.get_vector_partitioner(),
-              eigenVectorsFlattenedBlock[0].get_partitioner(),
-              currentBlockSize);
           }
 
 
@@ -1056,8 +1048,10 @@ namespace dftfe
               for (unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
                 eigenVectorsFlattenedBlock[kPoint].local_element(
                   iNode * currentBlockSize + iWave) =
-                  d_eigenVectorsFlattenedSTL[kPoint][iNode * d_numEigenValues +
-                                                     ivec + iWave];
+                  d_eigenVectorsFlattenedHost[kPoint * localVectorSize *
+                                                d_numEigenValues +
+                                              iNode * d_numEigenValues + ivec +
+                                              iWave];
 
             constraintsNoneDataInfo.distribute(
               eigenVectorsFlattenedBlock[kPoint], currentBlockSize);

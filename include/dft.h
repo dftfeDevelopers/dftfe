@@ -23,6 +23,7 @@
 #include <headers.h>
 #include <MemorySpaceType.h>
 #include <MemoryStorage.h>
+#include <FEBasisOperations.h>
 
 #include <complex>
 #include <deque>
@@ -1284,6 +1285,18 @@ namespace dftfe
     unsigned int                  d_densityQuadratureId;
     unsigned int                  d_densityQuadratureIdElectro;
     dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+      basisOperationsPtrHost;
+#if defined(DFTFE_WITH_DEVICE)
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
+      basisOperationsPtrDevice;
+#endif
     std::map<dealii::types::global_dof_index, dealii::Point<3>> d_supportPoints,
       d_supportPointsPRefined, d_supportPointsEigen;
     std::vector<const dealii::AffineConstraints<double> *> d_constraintsVector;
@@ -1394,14 +1407,24 @@ namespace dftfe
     std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
 
     /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
-    std::vector<std::vector<double>>                  eigenValuesRRSplit;
-    std::vector<distributedCPUVec<dataTypes::number>> d_eigenVectorsFlattened;
-    std::vector<std::vector<dataTypes::number>> d_eigenVectorsFlattenedSTL;
-    std::vector<std::vector<dataTypes::number>>
-      d_eigenVectorsRotFracDensityFlattenedSTL;
+    std::vector<std::vector<double>> eigenValuesRRSplit;
 
-    std::vector<std::vector<dataTypes::number>>
-      d_eigenVectorsDensityMatrixPrimeSTL;
+    /**
+     * The indexing of d_eigenVectorsFlattenedHost and
+     * d_eigenVectorsFlattenedDevice [kPoint * numSpinComponents *
+     * numLocallyOwnedNodes * numWaveFunctions + iSpin * numLocallyOwnedNodes *
+     * numWaveFunctions + iNode * numWaveFunctions + iWaveFunction]
+     */
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::HOST>
+      d_eigenVectorsFlattenedHost;
+
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::HOST>
+      d_eigenVectorsRotFracDensityFlattenedHost;
+    dftfe::utils::MemoryStorage<dataTypes::number,
+                                dftfe::utils::MemorySpace::HOST>
+      d_eigenVectorsDensityMatrixPrimeHost;
 
     /// device eigenvectors
 #ifdef DFTFE_WITH_DEVICE

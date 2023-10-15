@@ -28,14 +28,14 @@ namespace dftfe
   {
     void
     wfcContractionsForceKernelsAllH(
-      operatorDFTClass &                                 operatorMatrix,
-      const std::vector<std::vector<dataTypes::number>> &X,
-      const unsigned int                                 spinPolarizedFlag,
-      const unsigned int                                 spinIndex,
-      const std::vector<std::vector<double>> &           eigenValuesH,
-      const std::vector<std::vector<double>> &           partialOccupanciesH,
-      const std::vector<double> &                        kPointCoordinates,
-      const unsigned int *nonTrivialIdToElemIdMapH,
+      operatorDFTClass &                      operatorMatrix,
+      const dataTypes::number *               X,
+      const unsigned int                      spinPolarizedFlag,
+      const unsigned int                      spinIndex,
+      const std::vector<std::vector<double>> &eigenValuesH,
+      const std::vector<std::vector<double>> &partialOccupanciesH,
+      const std::vector<double> &             kPointCoordinates,
+      const unsigned int *                    nonTrivialIdToElemIdMapH,
       const unsigned int *projecterKetTimesFlattenedVectorLocalIdsH,
       const unsigned int  MLoc,
       const unsigned int  N,

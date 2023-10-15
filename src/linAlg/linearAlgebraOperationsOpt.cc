@@ -516,12 +516,12 @@ namespace dftfe
 
     template <typename T>
     void
-    gramSchmidtOrthogonalization(std::vector<T> &   X,
+    gramSchmidtOrthogonalization(T *                X,
                                  const unsigned int numberVectors,
+                                 const unsigned int localVectorSize,
                                  const MPI_Comm &   mpiComm)
     {
 #ifdef USE_PETSC
-      const unsigned int localVectorSize = X.size() / numberVectors;
 
       //
       // Create template PETSc vector to create BV object later
@@ -614,8 +614,9 @@ namespace dftfe
     void
     rayleighRitzGEP(operatorDFTClass &   operatorMatrix,
                     elpaScalaManager &   elpaScala,
-                    std::vector<T> &     X,
+                    T *                  X,
                     const unsigned int   numberWaveFunctions,
+                    const unsigned int   localVectorSize,
                     const MPI_Comm &     mpiCommParent,
                     const MPI_Comm &     interBandGroupComm,
                     const MPI_Comm &     mpi_communicator,
@@ -660,8 +661,9 @@ namespace dftfe
       // SConj=X^{T}*XConj.
       if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
-          internal::fillParallelOverlapMatrix(&X[0],
-                                              X.size(),
+          internal::fillParallelOverlapMatrix(X,
+                                              numberWaveFunctions *
+                                                localVectorSize,
                                               numberWaveFunctions,
                                               processGrid,
                                               interBandGroupComm,
@@ -674,8 +676,8 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -684,8 +686,8 @@ namespace dftfe
               dftParams);
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -791,7 +793,8 @@ namespace dftfe
                   T(0.0));
 
 
-      operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
+      operatorMatrix.XtHX(
+        X, numberWaveFunctions, localVectorSize, processGrid, projHamPar);
       computing_timer.leave_subsection("Compute ProjHam, RR step");
 
       computing_timer.enter_subsection(
@@ -918,8 +921,8 @@ namespace dftfe
       projHamParCopy.mmult(projHamPar, LMatPar);
 
       if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrec))
-        internal::subspaceRotation(&X[0],
-                                   X.size(),
+        internal::subspaceRotation(X,
+                                   numberWaveFunctions * localVectorSize,
                                    numberWaveFunctions,
                                    processGrid,
                                    interBandGroupComm,
@@ -933,8 +936,8 @@ namespace dftfe
         {
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationMixedPrec<T, std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -944,8 +947,9 @@ namespace dftfe
               false,
               false);
           else
-            internal::subspaceRotationMixedPrec<T, float>(&X[0],
-                                                          X.size(),
+            internal::subspaceRotationMixedPrec<T, float>(X,
+                                                          numberWaveFunctions *
+                                                            localVectorSize,
                                                           numberWaveFunctions,
                                                           processGrid,
                                                           interBandGroupComm,
@@ -968,8 +972,9 @@ namespace dftfe
     void
     rayleighRitz(operatorDFTClass &   operatorMatrix,
                  elpaScalaManager &   elpaScala,
-                 std::vector<T> &     X,
+                 T *                  X,
                  const unsigned int   numberWaveFunctions,
+                 const unsigned int   localVectorSize,
                  const MPI_Comm &     mpiCommParent,
                  const MPI_Comm &     interBandGroupComm,
                  const MPI_Comm &     mpi_communicator,
@@ -1006,7 +1011,8 @@ namespace dftfe
                   T(0.0));
 
       computing_timer.enter_subsection("Blocked XtHX, RR step");
-      operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
+      operatorMatrix.XtHX(
+        X, numberWaveFunctions, localVectorSize, processGrid, projHamPar);
       computing_timer.leave_subsection("Blocked XtHX, RR step");
 
       //
@@ -1116,8 +1122,8 @@ namespace dftfe
                                                processGrid,
                                                rowsBlockSize);
       projHamParCopy.copy_conjugate_transposed(projHamPar);
-      internal::subspaceRotation(&X[0],
-                                 X.size(),
+      internal::subspaceRotation(X,
+                                 numberWaveFunctions * localVectorSize,
                                  numberWaveFunctions,
                                  processGrid,
                                  interBandGroupComm,
@@ -1135,9 +1141,10 @@ namespace dftfe
     void
     rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
                                        elpaScalaManager &   elpaScala,
-                                       std::vector<T> &     X,
-                                       std::vector<T> &     Y,
+                                       T *                  X,
+                                       T *                  Y,
                                        const unsigned int   numberWaveFunctions,
+                                       const unsigned int   localVectorSize,
                                        const unsigned int   numberCoreStates,
                                        const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
@@ -1183,8 +1190,9 @@ namespace dftfe
       // SConj=X^{T}*XConj
       if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
-          internal::fillParallelOverlapMatrix(&X[0],
-                                              X.size(),
+          internal::fillParallelOverlapMatrix(X,
+                                              numberWaveFunctions *
+                                                localVectorSize,
                                               numberWaveFunctions,
                                               processGrid,
                                               interBandGroupComm,
@@ -1197,8 +1205,8 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -1207,8 +1215,8 @@ namespace dftfe
               dftParams);
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -1319,12 +1327,17 @@ namespace dftfe
 
       if (useMixedPrec && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
-          operatorMatrix.XtHXMixedPrec(
-            X, numberWaveFunctions, numberCoreStates, processGrid, projHamPar);
+          operatorMatrix.XtHXMixedPrec(X,
+                                       numberWaveFunctions,
+                                       numberCoreStates,
+                                       localVectorSize,
+                                       processGrid,
+                                       projHamPar);
         }
       else
         {
-          operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
+          operatorMatrix.XtHX(
+            X, numberWaveFunctions, localVectorSize, processGrid, projHamPar);
         }
 
 
@@ -1497,9 +1510,10 @@ namespace dftfe
       computing_timer.enter_subsection(
         "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
 
-      internal::subspaceRotationSpectrumSplit(&X[0],
-                                              &Y[0],
-                                              X.size(),
+      internal::subspaceRotationSpectrumSplit(X,
+                                              Y,
+                                              numberWaveFunctions *
+                                                localVectorSize,
                                               numberWaveFunctions,
                                               processGrid,
                                               numberWaveFunctions -
@@ -1517,8 +1531,8 @@ namespace dftfe
       if (!(dftParams.useMixedPrecCGS_SR && useMixedPrec))
         {
           computing_timer.enter_subsection("X^{T}=Lconj^{-1}*X^{T}, RR step");
-          internal::subspaceRotation(&X[0],
-                                     X.size(),
+          internal::subspaceRotation(X,
+                                     numberWaveFunctions * localVectorSize,
                                      numberWaveFunctions,
                                      processGrid,
                                      interBandGroupComm,
@@ -1536,8 +1550,8 @@ namespace dftfe
             "X^{T}=Lconj^{-1}*X^{T} mixed prec, RR step");
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationCGSMixedPrec<T, std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -1548,8 +1562,8 @@ namespace dftfe
               false);
           else
             internal::subspaceRotationCGSMixedPrec<T, float>(
-              &X[0],
-              X.size(),
+              X,
+              numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
               interBandGroupComm,
@@ -1566,18 +1580,19 @@ namespace dftfe
 
     template <typename T>
     void
-    rayleighRitzSpectrumSplitDirect(operatorDFTClass &    operatorMatrix,
-                                    elpaScalaManager &    elpaScala,
-                                    const std::vector<T> &X,
-                                    std::vector<T> &      Y,
-                                    const unsigned int    numberWaveFunctions,
-                                    const unsigned int    numberCoreStates,
-                                    const MPI_Comm &      mpiCommParent,
-                                    const MPI_Comm &      interBandGroupComm,
-                                    const MPI_Comm &      mpi_communicator,
-                                    const bool            useMixedPrec,
-                                    std::vector<double> & eigenValues,
-                                    const dftParameters & dftParams)
+    rayleighRitzSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
+                                    elpaScalaManager &   elpaScala,
+                                    const T *            X,
+                                    T *                  Y,
+                                    const unsigned int   numberWaveFunctions,
+                                    const unsigned int   localVectorSize,
+                                    const unsigned int   numberCoreStates,
+                                    const MPI_Comm &     mpiCommParent,
+                                    const MPI_Comm &     interBandGroupComm,
+                                    const MPI_Comm &     mpi_communicator,
+                                    const bool           useMixedPrec,
+                                    std::vector<double> &eigenValues,
+                                    const dftParameters &dftParams)
 
     {
       dealii::ConditionalOStream pcout(
@@ -1611,15 +1626,20 @@ namespace dftfe
       if (useMixedPrec && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
           computing_timer.enter_subsection("Blocked XtHX Mixed Prec, RR step");
-          operatorMatrix.XtHXMixedPrec(
-            X, numberWaveFunctions, numberCoreStates, processGrid, projHamPar);
+          operatorMatrix.XtHXMixedPrec(X,
+                                       numberWaveFunctions,
+                                       numberCoreStates,
+                                       localVectorSize,
+                                       processGrid,
+                                       projHamPar);
 
           computing_timer.leave_subsection("Blocked XtHX Mixed Prec, RR step");
         }
       else
         {
           computing_timer.enter_subsection("Blocked XtHX, RR step");
-          operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
+          operatorMatrix.XtHX(
+            X, numberWaveFunctions, localVectorSize, processGrid, projHamPar);
           computing_timer.leave_subsection("Blocked XtHX, RR step");
         }
 
@@ -1766,9 +1786,10 @@ namespace dftfe
 
       computing_timer.enter_subsection("Blocked subspace rotation, RR step");
 
-      internal::subspaceRotationSpectrumSplit(&X[0],
-                                              &Y[0],
-                                              X.size(),
+      internal::subspaceRotationSpectrumSplit(X,
+                                              Y,
+                                              numberWaveFunctions *
+                                                localVectorSize,
                                               numberWaveFunctions,
                                               processGrid,
                                               numberWaveFunctions -
@@ -2373,8 +2394,10 @@ namespace dftfe
     template <typename T>
     void
     computeEigenResidualNorm(operatorDFTClass &         operatorMatrix,
-                             std::vector<T> &           X,
+                             T *                        X,
                              const std::vector<double> &eigenValues,
+                             const unsigned int         totalNumberVectors,
+                             const unsigned int         localVectorSize,
                              const MPI_Comm &           mpiCommParent,
                              const MPI_Comm &           mpiCommDomain,
                              const MPI_Comm &           interBandGroupComm,
@@ -2385,8 +2408,6 @@ namespace dftfe
       //
       // get the number of eigenVectors
       //
-      const unsigned int  totalNumberVectors = eigenValues.size();
-      const unsigned int  localVectorSize    = X.size() / totalNumberVectors;
       std::vector<double> residualNormSquare(totalNumberVectors, 0.0);
 
       // band group parallelization data structures
@@ -3006,8 +3027,9 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTClass &         operatorMatrix,
-      std::vector<T> &           X,
+      T *                        X,
       const unsigned int         N,
+      const unsigned int         numberLocalDofs,
       const MPI_Comm &           mpiCommParent,
       const MPI_Comm &           mpiCommDomain,
       const MPI_Comm &           interBandGroupComm,
@@ -3050,10 +3072,11 @@ namespace dftfe
       if (dftParams.singlePrecLRD)
         {
           operatorMatrix.XtHXMixedPrec(
-            X, N, N, processGrid, projHamPrimePar, true);
+            X, N, N, numberLocalDofs, processGrid, projHamPrimePar, true);
         }
       else
-        operatorMatrix.XtHX(X, N, processGrid, projHamPrimePar, true);
+        operatorMatrix.XtHX(
+          X, N, numberLocalDofs, processGrid, projHamPrimePar, true);
       computing_timer.leave_subsection("Compute ProjHamPrime, DMFOR step");
 
 
@@ -3165,8 +3188,8 @@ namespace dftfe
         {
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationMixedPrec<T, std::complex<float>>(
-              &X[0],
-              X.size(),
+              X,
+              numberLocalDofs * N,
               N,
               processGrid,
               interBandGroupComm,
@@ -3177,8 +3200,8 @@ namespace dftfe
               false);
           else
             internal::subspaceRotationMixedPrec<T, float>(
-              &X[0],
-              X.size(),
+              X,
+              numberLocalDofs * N,
               N,
               processGrid,
               interBandGroupComm,
@@ -3190,8 +3213,8 @@ namespace dftfe
         }
       else
         {
-          internal::subspaceRotation(&X[0],
-                                     X.size(),
+          internal::subspaceRotation(X,
+                                     numberLocalDofs * N,
                                      N,
                                      processGrid,
                                      interBandGroupComm,
@@ -3237,14 +3260,16 @@ namespace dftfe
 
 
     template void
-    gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
+    gramSchmidtOrthogonalization(dataTypes::number *,
                                  const unsigned int,
+                                 const unsigned int localVectorSize,
                                  const MPI_Comm &);
 
     template unsigned int
     pseudoGramSchmidtOrthogonalization(elpaScalaManager &elpaScala,
-                                       std::vector<dataTypes::number> &,
+                                       dataTypes::number *,
                                        const unsigned int,
+                                       const unsigned int localVectorSize,
                                        const MPI_Comm &,
                                        const MPI_Comm &,
                                        const MPI_Comm &     mpiComm,
@@ -3254,8 +3279,9 @@ namespace dftfe
     template void
     rayleighRitz(operatorDFTClass &operatorMatrix,
                  elpaScalaManager &elpaScala,
-                 std::vector<dataTypes::number> &,
+                 dataTypes::number *,
                  const unsigned int numberWaveFunctions,
+                 const unsigned int localVectorSize,
                  const MPI_Comm &,
                  const MPI_Comm &,
                  const MPI_Comm &,
@@ -3266,8 +3292,9 @@ namespace dftfe
     template void
     rayleighRitzGEP(operatorDFTClass &operatorMatrix,
                     elpaScalaManager &elpaScala,
-                    std::vector<dataTypes::number> &,
+                    dataTypes::number *,
                     const unsigned int numberWaveFunctions,
+                    const unsigned int localVectorSize,
                     const MPI_Comm &,
                     const MPI_Comm &,
                     const MPI_Comm &,
@@ -3279,9 +3306,10 @@ namespace dftfe
     template void
     rayleighRitzSpectrumSplitDirect(operatorDFTClass &operatorMatrix,
                                     elpaScalaManager &elpaScala,
-                                    const std::vector<dataTypes::number> &,
-                                    std::vector<dataTypes::number> &,
+                                    const dataTypes::number *,
+                                    dataTypes::number *,
                                     const unsigned int numberWaveFunctions,
+                                    const unsigned int localVectorSize,
                                     const unsigned int numberCoreStates,
                                     const MPI_Comm &,
                                     const MPI_Comm &,
@@ -3291,11 +3319,12 @@ namespace dftfe
                                     const dftParameters &dftParams);
 
     template void
-    rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &operatorMatrix,
-                                       elpaScalaManager &elpaScala,
-                                       std::vector<dataTypes::number> &X,
-                                       std::vector<dataTypes::number> &Y,
+    rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
+                                       elpaScalaManager &   elpaScala,
+                                       dataTypes::number *  X,
+                                       dataTypes::number *  Y,
                                        const unsigned int   numberWaveFunctions,
+                                       const unsigned int   localVectorSize,
                                        const unsigned int   numberCoreStates,
                                        const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
@@ -3305,28 +3334,31 @@ namespace dftfe
                                        const dftParameters &dftParams);
 
     template void
-    computeEigenResidualNorm(operatorDFTClass &              operatorMatrix,
-                             std::vector<dataTypes::number> &X,
-                             const std::vector<double> &     eigenValues,
-                             const MPI_Comm &                mpiCommParent,
-                             const MPI_Comm &                mpiCommDomain,
-                             const MPI_Comm &                interBandGroupComm,
-                             std::vector<double> &           residualNorm,
-                             const dftParameters &           dftParams);
+    computeEigenResidualNorm(operatorDFTClass &         operatorMatrix,
+                             dataTypes::number *        X,
+                             const std::vector<double> &eigenValues,
+                             const unsigned int         totalNumberVectors,
+                             const unsigned int         localVectorSize,
+                             const MPI_Comm &           mpiCommParent,
+                             const MPI_Comm &           mpiCommDomain,
+                             const MPI_Comm &           interBandGroupComm,
+                             std::vector<double> &      residualNorm,
+                             const dftParameters &      dftParams);
 
     template void
     densityMatrixEigenBasisFirstOrderResponse(
-      operatorDFTClass &              operatorMatrix,
-      std::vector<dataTypes::number> &X,
-      const unsigned int              N,
-      const MPI_Comm &                mpiCommParent,
-      const MPI_Comm &                mpiCommDomain,
-      const MPI_Comm &                interBandGroupComm,
-      const std::vector<double> &     eigenValues,
-      const double                    fermiEnergy,
-      std::vector<double> &           densityMatDerFermiEnergy,
-      elpaScalaManager &              elpaScala,
-      const dftParameters &           dftParams);
+      operatorDFTClass &         operatorMatrix,
+      dataTypes::number *        X,
+      const unsigned int         N,
+      const unsigned int         numberLocalDofs,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      elpaScalaManager &         elpaScala,
+      const dftParameters &      dftParams);
 
   } // namespace linearAlgebraOperations
 

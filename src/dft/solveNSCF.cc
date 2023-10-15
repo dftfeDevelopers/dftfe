@@ -1130,17 +1130,7 @@ namespace dftfe
     if (d_dftParamsPtr->useDevice &&
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
-      for (unsigned int kPoint = 0;
-           kPoint <
-           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-           ++kPoint)
-        {
-          d_eigenVectorsFlattenedDevice.copyTo<dftfe::utils::MemorySpace::HOST>(
-            &d_eigenVectorsFlattenedSTL[kPoint][0],
-            d_eigenVectorsFlattenedSTL[kPoint].size(),
-            (kPoint * d_eigenVectorsFlattenedSTL[0].size()),
-            0);
-        }
+      d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
 #endif
 
     //#ifdef USE_COMPLEX

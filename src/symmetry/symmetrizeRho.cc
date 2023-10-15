@@ -223,18 +223,13 @@ namespace dftfe
       dftPtr->d_kPointWeights.size());
 
     const unsigned int localVectorSize =
-      dftPtr->d_eigenVectorsFlattenedSTL[0].size() / dftPtr->d_numEigenValues;
+      dftPtr->matrix_free_data.get_vector_partitioner()->locally_owned_size();
 
     distributedCPUVec<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
     vectorTools::createDealiiVector<dataTypes::number>(
       dftPtr->matrix_free_data.get_vector_partitioner(),
       dftPtr->d_numEigenValues,
       eigenVectorsFlattenedArrayFullBlock);
-
-    dftPtr->constraintsNoneDataInfo.precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      eigenVectorsFlattenedArrayFullBlock.get_partitioner(),
-      dftPtr->d_numEigenValues);
 
     for (unsigned int kPoint = 0;
          kPoint < (1 + dftPtr->getParametersObject().spinPolarized) *
@@ -250,8 +245,9 @@ namespace dftfe
                ++iWave)
             eigenVectorsFlattenedArrayFullBlock.local_element(
               iNode * dftPtr->d_numEigenValues + iWave) =
-              dftPtr->d_eigenVectorsFlattenedSTL
-                [kPoint][iNode * dftPtr->d_numEigenValues + iWave];
+              dftPtr->d_eigenVectorsFlattenedHost
+                [kPoint * localVectorSize * dftPtr->d_numEigenValues +
+                 iNode * dftPtr->d_numEigenValues + iWave];
 
         dftPtr->constraintsNoneDataInfo.distribute(
           eigenVectorsFlattenedArrayFullBlock, dftPtr->d_numEigenValues);

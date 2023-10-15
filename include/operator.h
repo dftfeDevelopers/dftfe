@@ -171,9 +171,10 @@ namespace dftfe
      * @param ProjMatrix projected small matrix
      */
     virtual void
-    XtHX(const std::vector<dataTypes::number> &X,
-         const unsigned int                    numberComponents,
-         std::vector<dataTypes::number> &      ProjHam) = 0;
+    XtHX(const dataTypes::number *       X,
+         const unsigned int              numberComponents,
+         const unsigned int              numberLocalDofs,
+         std::vector<dataTypes::number> &ProjHam) = 0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
@@ -185,8 +186,9 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHX(const std::vector<dataTypes::number> &           X,
+    XtHX(const dataTypes::number *                        X,
          const unsigned int                               numberComponents,
+         const unsigned int                               numberLocalDofs,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
@@ -207,9 +209,10 @@ namespace dftfe
      */
     virtual void
     XtHXMixedPrec(
-      const std::vector<dataTypes::number> &           X,
+      const dataTypes::number *                        X,
       const unsigned int                               totalNumberComponents,
       const unsigned int                               singlePrecComponents,
+      const unsigned int                               numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;

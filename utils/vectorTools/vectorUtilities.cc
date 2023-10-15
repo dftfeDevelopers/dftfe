@@ -682,8 +682,9 @@ namespace dftfe
 #ifdef USE_COMPLEX
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<std::complex<double>> &   flattenedArray,
+      const std::complex<double> *                flattenedArray,
       const unsigned int                          totalNumberComponents,
+      const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<dealii::types::global_dof_index>
         &localProcDofIndicesReal,
@@ -699,8 +700,6 @@ namespace dftfe
              dealii::ExcMessage(
                "componentIndexRange doesn't lie within totalNumberComponents"));
 
-      const unsigned int localVectorSize =
-        flattenedArray.size() / totalNumberComponents;
       for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
         for (unsigned int icomp = componentIndexRange.first;
              icomp < componentIndexRange.second;
@@ -720,8 +719,9 @@ namespace dftfe
 
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<std::complex<double>> &   flattenedArray,
+      const std::complex<double> *                flattenedArray,
       const unsigned int                          totalNumberComponents,
+      const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       std::vector<distributedCPUVec<double>> &    componentVectors)
     {
@@ -733,8 +733,6 @@ namespace dftfe
              dealii::ExcMessage(
                "componentIndexRange doesn't lie within totalNumberComponents"));
 
-      const unsigned int localVectorSize =
-        flattenedArray.size() / totalNumberComponents;
       for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
         for (unsigned int icomp = componentIndexRange.first;
              icomp < componentIndexRange.second;
@@ -750,8 +748,9 @@ namespace dftfe
 #else
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::vector<double> &flattenedArray,
+      const double *flattenedArray,
       const unsigned int totalNumberComponents,
+      const unsigned int localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       std::vector<distributedCPUVec<double>> &componentVectors)
     {
@@ -762,8 +761,6 @@ namespace dftfe
                componentIndexRange.second <= totalNumberComponents,
              dealii::ExcMessage(
                "componentIndexRange doesn't lie within totalNumberComponents"));
-      const unsigned int localVectorSize =
-        flattenedArray.size() / totalNumberComponents;
       for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
         for (unsigned int icomp = componentIndexRange.first;
              icomp < componentIndexRange.second;

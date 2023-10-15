@@ -260,6 +260,62 @@ namespace dftfe
                          long long int              strideC,
                          int                        batchCount);
 
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t    handle,
+           deviceBlasOperation_t trans,
+           int                   m,
+           int                   n,
+           const double *        alpha,
+           const double *        A,
+           int                   lda,
+           const double *        x,
+           int                   incx,
+           const double *        beta,
+           double *              y,
+           int                   incy);
+
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t    handle,
+           deviceBlasOperation_t trans,
+           int                   m,
+           int                   n,
+           const float *         alpha,
+           const float *         A,
+           int                   lda,
+           const float *         x,
+           int                   incx,
+           const float *         beta,
+           float *               y,
+           int                   incy);
+
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t          handle,
+           deviceBlasOperation_t       trans,
+           int                         m,
+           int                         n,
+           const std::complex<double> *alpha,
+           const std::complex<double> *A,
+           int                         lda,
+           const std::complex<double> *x,
+           int                         incx,
+           const std::complex<double> *beta,
+           std::complex<double> *      y,
+           int                         incy);
+
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t         handle,
+           deviceBlasOperation_t      trans,
+           int                        m,
+           int                        n,
+           const std::complex<float> *alpha,
+           const std::complex<float> *A,
+           int                        lda,
+           const std::complex<float> *x,
+           int                        incx,
+           const std::complex<float> *beta,
+           std::complex<float> *      y,
+           int                        incy);
+
 
     } // namespace deviceBlasWrapper
   }   // namespace utils

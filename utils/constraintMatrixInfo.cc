@@ -171,66 +171,6 @@ namespace dftfe
         }
     }
 
-
-    void
-    constraintMatrixInfo::precomputeMaps(
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &unFlattenedPartitioner,
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                flattenedPartitioner,
-      const unsigned int blockSize)
-    {
-      //
-      // Get required sizes
-      //
-      const unsigned int n_ghosts  = unFlattenedPartitioner->n_ghost_indices();
-      const unsigned int localSize = unFlattenedPartitioner->local_size();
-      const unsigned int totalSize = n_ghosts + localSize;
-
-      d_localIndexMapUnflattenedToFlattened.clear();
-      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
-
-      //
-      // fill the data array
-      //
-      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
-        {
-          const dealii::types::global_dof_index globalIndex =
-            unFlattenedPartitioner->local_to_global(ilocalDof);
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
-            flattenedPartitioner->global_to_local(globalIndex * blockSize);
-        }
-    }
-
-    void
-    constraintMatrixInfo::precomputeMaps(
-      const std::shared_ptr<
-        const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-        &                mpiPattern,
-      const unsigned int blockSize)
-    {
-      //
-      // Get required sizes
-      //
-      const unsigned int totalSize =
-        mpiPattern->localOwnedSize() + mpiPattern->localGhostSize();
-
-      d_localIndexMapUnflattenedToFlattened.clear();
-      d_localIndexMapUnflattenedToFlattened.resize(totalSize);
-
-      //
-      // fill the data array
-      //
-      for (unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
-        {
-          d_localIndexMapUnflattenedToFlattened[ilocalDof] =
-            (dealii::types::global_dof_index)ilocalDof *
-            (dealii::types::global_dof_index)blockSize;
-        }
-    }
-
-
-
     //
     // set the constrained degrees of freedom to values so that constraints
     // are satisfied
@@ -273,7 +213,7 @@ namespace dftfe
                     d_inhomogenities[i]);
 
           const dealii::types::global_dof_index startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+            d_rowIdsLocal[i] * blockSize;
 
           for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
             {
@@ -284,8 +224,7 @@ namespace dftfe
 
               const dealii::types::global_dof_index
                 startingLocalDofIndexColumn =
-                  d_localIndexMapUnflattenedToFlattened
-                    [d_columnIdsLocal[count]];
+                  d_columnIdsLocal[count] * blockSize;
 
               T alpha = d_columnValues[count];
 
@@ -323,7 +262,7 @@ namespace dftfe
                     d_inhomogenities[i]);
 
           const dealii::types::global_dof_index startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+            d_rowIdsLocal[i] * blockSize;
 
           for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
             {
@@ -334,8 +273,7 @@ namespace dftfe
 
               const dealii::types::global_dof_index
                 startingLocalDofIndexColumn =
-                  d_localIndexMapUnflattenedToFlattened
-                    [d_columnIdsLocal[count]];
+                  d_columnIdsLocal[count] * blockSize;
 
               T alpha = d_columnValues[count];
 
@@ -371,13 +309,12 @@ namespace dftfe
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
         {
           const dealii::types::global_dof_index startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+            d_rowIdsLocal[i] * blockSize;
           for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
             {
               const dealii::types::global_dof_index
                 startingLocalDofIndexColumn =
-                  d_localIndexMapUnflattenedToFlattened
-                    [d_columnIdsLocal[count]];
+                  d_columnIdsLocal[count] * blockSize;
 
               T alpha = d_columnValues[count];
               callaxpy(&blockSize,
@@ -411,13 +348,12 @@ namespace dftfe
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
         {
           const dealii::types::global_dof_index startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+            d_rowIdsLocal[i] * blockSize;
           for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
             {
               const dealii::types::global_dof_index
                 startingLocalDofIndexColumn =
-                  d_localIndexMapUnflattenedToFlattened
-                    [d_columnIdsLocal[count]];
+                  d_columnIdsLocal[count] * blockSize;
 
               T alpha = d_columnValues[count];
               callaxpy(&blockSize,
@@ -448,7 +384,7 @@ namespace dftfe
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
         {
           const dealii::types::global_dof_index startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+            d_rowIdsLocal[i] * blockSize;
 
           // set constrained nodes to zero
           std::fill(fieldVector.begin() + startingLocalDofIndexRow,
@@ -465,7 +401,7 @@ namespace dftfe
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
         {
           const dealii::types::global_dof_index startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+            d_rowIdsLocal[i] * blockSize;
 
           // set constrained nodes to zero
           std::fill(fieldVector.data() + startingLocalDofIndexRow,
@@ -488,7 +424,6 @@ namespace dftfe
       d_columnValues.clear();
       d_inhomogenities.clear();
       d_rowSizes.clear();
-      d_localIndexMapUnflattenedToFlattened.clear();
     }
 
 
@@ -509,8 +444,13 @@ namespace dftfe
 
     template void
     constraintMatrixInfo::distribute(
-      distributedCPUMultiVec<dataTypes::number> &fieldVector,
-      const unsigned int                         blockSize) const;
+      distributedCPUMultiVec<double> &fieldVector,
+      const unsigned int              blockSize) const;
+
+    template void
+    constraintMatrixInfo::distribute(
+      distributedCPUMultiVec<std::complex<double>> &fieldVector,
+      const unsigned int                            blockSize) const;
 
     template void
     constraintMatrixInfo::distribute_slave_to_master(

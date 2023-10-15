@@ -47,7 +47,7 @@ SET(TARGET_SRC
   ./src/dft/dft.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
-  ./src/dft/densityCalculatorCPU.cc
+  ./src/dft/densityCalculator.cc
   ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
   ./src/excManager/excDensityBaseClass.cpp
   ./src/excManager/excDensityLDAClass.cpp
@@ -166,7 +166,7 @@ SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
-  ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
   ./src/dftOperator/kohnShamDFTOperatorDevice.cc
@@ -185,6 +185,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./utils/FEBasisOperationsKernelsDevice.cc
   )
 
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
@@ -193,7 +194,7 @@ SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
-  ./src/dft/densityCalculatorDevice.cc
+  ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
   ./src/dftOperator/operatorDevice.cc
   ./src/dftOperator/kohnShamDFTOperatorDevice.cc
@@ -212,6 +213,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./utils/FEBasisOperationsKernelsDevice.cc
   )
 
 ENDIF()
@@ -222,7 +224,11 @@ IF (WITH_GPU)
        set_source_files_properties(${DEVICE_SRC} PROPERTIES LANGUAGE CUDA)
     ELSEIF ("${GPU_LANG}" STREQUAL "hip")
        set_source_files_properties(${DEVICE_SRC} PROPERTIES LANGUAGE HIP)
-       ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+       IF ("${GPU_VENDOR}" STREQUAL "amd")
+          ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+       ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+          ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
+       ENDIF()
     ENDIF()
 ENDIF()
 IF (WITH_GPU)

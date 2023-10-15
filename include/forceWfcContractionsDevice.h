@@ -22,6 +22,7 @@
 #    include "headers.h"
 #    include "operatorDevice.h"
 #    include "dftParameters.h"
+#    include "FEBasisOperations.h"
 
 namespace dftfe
 {
@@ -29,6 +30,11 @@ namespace dftfe
   {
     void
     wfcContractionsForceKernelsAllH(
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::DEVICE>>
+        &                                     basisOperationsPtr,
       operatorDFTDeviceClass &                operatorMatrix,
       const dataTypes::number *               X,
       const unsigned int                      spinPolarizedFlag,

@@ -114,17 +114,18 @@ namespace dftfe
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(
-    operatorDFTClass &              operatorMatrix,
-    elpaScalaManager &              elpaScala,
-    std::vector<dataTypes::number> &eigenVectorsFlattened,
-    std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
-    const unsigned int              totalNumberWaveFunctions,
-    std::vector<double> &           eigenValues,
-    std::vector<double> &           residualNorms,
-    const MPI_Comm &                interBandGroupComm,
-    const bool                      computeResidual,
-    const bool                      useMixedPrec,
-    const bool                      isFirstScf)
+    operatorDFTClass &   operatorMatrix,
+    elpaScalaManager &   elpaScala,
+    dataTypes::number *  eigenVectorsFlattened,
+    dataTypes::number *  eigenVectorsRotFracDensityFlattened,
+    const unsigned int   totalNumberWaveFunctions,
+    const unsigned int   localVectorSize,
+    std::vector<double> &eigenValues,
+    std::vector<double> &residualNorms,
+    const MPI_Comm &     interBandGroupComm,
+    const bool           computeResidual,
+    const bool           useMixedPrec,
+    const bool           isFirstScf)
   {
     dealii::TimerOutput computingTimerStandard(
       operatorMatrix.getMPICommunicator(),
@@ -185,8 +186,6 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
                                         "Before starting chebyshev filtering");
 
-    const unsigned int localVectorSize =
-      eigenVectorsFlattened.size() / totalNumberWaveFunctions;
 
 
     // band group parallelization data structures
@@ -244,9 +243,9 @@ namespace dftfe
             computing_timer.enter_subsection(
               "Copy from full to block flattened array");
             for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-              std::copy(eigenVectorsFlattened.data() +
+              std::copy(eigenVectorsFlattened +
                           iNode * totalNumberWaveFunctions + jvec,
-                        eigenVectorsFlattened.data() +
+                        eigenVectorsFlattened +
                           iNode * totalNumberWaveFunctions + jvec + BVec,
                         eigenVectorsFlattenedArrayBlock.data() + iNode * BVec);
             computing_timer.leave_subsection(
@@ -321,7 +320,7 @@ namespace dftfe
               std::copy(eigenVectorsFlattenedArrayBlock.data() + iNode * BVec,
                         eigenVectorsFlattenedArrayBlock.data() +
                           (iNode + 1) * BVec,
-                        eigenVectorsFlattened.data() +
+                        eigenVectorsFlattened +
                           iNode * totalNumberWaveFunctions + jvec);
 
             computing_timer.leave_subsection(
@@ -358,9 +357,9 @@ namespace dftfe
                   std::min(blockSize,
                            totalNumberWaveFunctions * localVectorSize - i);
                 MPI_Allreduce(MPI_IN_PLACE,
-                              &eigenVectorsFlattened[0] + i,
+                              eigenVectorsFlattened + i,
                               currentBlockSize,
-                              dataTypes::mpi_type_id(&eigenVectorsFlattened[0]),
+                              dataTypes::mpi_type_id(eigenVectorsFlattened),
                               MPI_SUM,
                               interBandGroupComm);
               }
@@ -446,6 +445,7 @@ namespace dftfe
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
+              localVectorSize,
               totalNumberWaveFunctions - eigenValues.size(),
               d_mpiCommParent,
               interBandGroupComm,
@@ -461,6 +461,7 @@ namespace dftfe
               elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
+              localVectorSize,
               d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
@@ -477,6 +478,8 @@ namespace dftfe
               operatorMatrix,
               eigenVectorsRotFracDensityFlattened,
               eigenValues,
+              eigenValues.size(),
+              localVectorSize,
               d_mpiCommParent,
               operatorMatrix.getMPICommunicator(),
               interBandGroupComm,
@@ -489,6 +492,8 @@ namespace dftfe
               operatorMatrix,
               eigenVectorsFlattened,
               eigenValues,
+              totalNumberWaveFunctions,
+              localVectorSize,
               d_mpiCommParent,
               operatorMatrix.getMPICommunicator(),
               interBandGroupComm,
@@ -503,6 +508,7 @@ namespace dftfe
         linearAlgebraOperations::gramSchmidtOrthogonalization(
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
+          localVectorSize,
           operatorMatrix.getMPICommunicator());
         computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
@@ -519,6 +525,7 @@ namespace dftfe
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
+              localVectorSize,
               totalNumberWaveFunctions - eigenValues.size(),
               d_mpiCommParent,
               interBandGroupComm,
@@ -534,6 +541,7 @@ namespace dftfe
               elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
+              localVectorSize,
               d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
@@ -561,6 +569,8 @@ namespace dftfe
                   operatorMatrix,
                   eigenVectorsRotFracDensityFlattened,
                   eigenValues,
+                  eigenValues.size(),
+                  localVectorSize,
                   d_mpiCommParent,
                   operatorMatrix.getMPICommunicator(),
                   interBandGroupComm,
@@ -572,6 +582,8 @@ namespace dftfe
                 operatorMatrix,
                 eigenVectorsFlattened,
                 eigenValues,
+                totalNumberWaveFunctions,
+                localVectorSize,
                 d_mpiCommParent,
                 operatorMatrix.getMPICommunicator(),
                 interBandGroupComm,

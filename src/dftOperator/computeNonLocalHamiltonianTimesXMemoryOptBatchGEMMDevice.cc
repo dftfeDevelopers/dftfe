@@ -253,8 +253,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   if (std::is_same<dataTypes::number, std::complex<double>>::value)
     {
       utils::deviceKernelsGeneric::copyComplexArrToRealArrsDevice(
-        (d_parallelChebyBlockVectorDevice.localSize() *
-         d_parallelChebyBlockVectorDevice.numVectors()),
+        (d_tempRealVec.size()),
         dst,
         d_tempRealVec.begin(),
         d_tempImagVec.begin());
@@ -269,8 +268,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
 
 
       utils::deviceKernelsGeneric::copyRealArrsToComplexArrDevice(
-        (d_parallelChebyBlockVectorDevice.localSize() *
-         d_parallelChebyBlockVectorDevice.numVectors()),
+        (d_tempRealVec.size()),
         d_tempRealVec.begin(),
         d_tempImagVec.begin(),
         dst);
