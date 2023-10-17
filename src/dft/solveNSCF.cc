@@ -243,12 +243,9 @@ namespace dftfe
 
     computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+        d_dftParamsPtr->floatingNuclearCharges and
         not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-    if (false)
-#endif
       {
 #ifdef DFTFE_WITH_DEVICE
         CGSolverDevice.solve(
@@ -266,6 +263,7 @@ namespace dftfe
                        d_dftParamsPtr->maxLinearSolverIterations,
                        d_dftParamsPtr->verbosity);
       }
+
 
     d_phiTotRhoIn.update_ghost_values();
 
