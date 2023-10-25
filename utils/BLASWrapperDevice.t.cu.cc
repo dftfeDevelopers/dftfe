@@ -26,6 +26,8 @@ namespace dftfe
 {
   namespace linearAlgebra
   {
+
+
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
       const char *        transA,
