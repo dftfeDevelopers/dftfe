@@ -215,13 +215,13 @@ namespace dftfe
                    const unsigned int *       m,
                    const unsigned int *       n,
                    const unsigned int *       k,
-                   const std::complex<double> e *alpha,
+                   const std::complex<double>  *alpha,
                    const std::complex<double> *  A,
                    const unsigned int *          lda,
                    const std::complex<double> *  B,
                    const unsigned int *          ldb,
                    const std::complex<double> *  beta,
-                   std::complex<double> e *C,
+                   std::complex<double>  *C,
                    const unsigned int *    ldc,
                    const int *             batchCount);
 
@@ -266,21 +266,28 @@ namespace dftfe
 
     private:
     };
+  
+   template <dftfe::utils::MemorySpace memorySpace> 
+    class BLASWrapperClass: public BLASWrapperClassBase<memorySpace>
+    {};  
 
     class BLASWrapperClass<dftfe::utils::MemorySpace::HOST>
       : public BLASWrapperClassBase<dftfe::utils::MemorySpace::HOST>
     {
     public:
+
       BLASWrapperClass();
 
     private:
     };
 
 #if defined(DFTFE_WITH_DEVICE)
+
     class BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>
       : public BLASWrapperClassBase<dftfe::utils::MemorySpace::DEVICE>
     {
     public:
+
       BLASWrapperClass();
 
     private:
@@ -293,18 +300,18 @@ namespace dftfe
       dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
 
 
-      deviceBlasStatus_t
-      create(deviceBlasHandle_t *pHandle);
+      dftfe::utils::deviceBlasStatus_t
+      create(dftfe::utils::deviceBlasHandle_t *pHandle);
 
-      deviceBlasStatus_t
-      destroy(deviceBlasHandle_t handle);
+      dftfe::utils::deviceBlasStatus_t
+      destroy(dftfe::utils::deviceBlasHandle_t handle);
 
-      deviceBlasStatus_t
-      setStream(deviceBlasHandle_t handle, deviceStream_t stream);
+      dftfe::utils::deviceBlasStatus_t
+      setStream(dftfe::utils::deviceBlasHandle_t handle, dftfe::utils::deviceStream_t stream);
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      deviceBlasStatus_t
-      setMathMode(deviceBlasHandle_t handle, deviceBlasMath_t mathMode);
+      dftfe::utils::deviceBlasStatus_t
+      setMathMode(dftfe::utils::deviceBlasHandle_t handle, dftfe::utils::deviceBlasMath_t mathMode);
 #  endif
     };
 

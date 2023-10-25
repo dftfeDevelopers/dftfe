@@ -88,7 +88,7 @@ namespace dftfe
       float *             C,
       const unsigned int *ldc)
     {
-      deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
+      dftfe::utils::deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
                                               transA,
                                               transB,
                                               m,
@@ -121,7 +121,7 @@ namespace dftfe
       std::complex<float> *      C,
       const unsigned int *       ldc)
     {
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasCgemm(d_deviceBlasHandle,
                     transA,
                     transB,
@@ -155,7 +155,7 @@ namespace dftfe
       double *            C,
       const unsigned int *ldc)
     {
-      deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
+      dftfe::utils::deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
                                               transA,
                                               transB,
                                               m,
@@ -188,7 +188,7 @@ namespace dftfe
       std::complex<double> *      C,
       const unsigned int *        ldc)
     {
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasZgemm(d_deviceBlasHandle,
                     transA,
                     transB,
@@ -205,36 +205,36 @@ namespace dftfe
                     ldc);
       DEVICEBLAS_API_CHECK(status);
     }
-    deviceBlasStatus_t
+    dftfe::utils::deviceBlasStatus_t
     BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>::create()
     {
-      deviceBlasStatus_t status = hipblasCreate(d_deviceBlasHandle);
+      dftfe::utils::deviceBlasStatus_t status = hipblasCreate(d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
 
-    deviceBlasStatus_t
+    dftfe::utils::deviceBlasStatus_t
     BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>::destroy()
     {
-      deviceBlasStatus_t status = hipblasDestroy(d_deviceBlasHandle);
+      dftfe::utils::deviceBlasStatus_t status = hipblasDestroy(d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
 
-    deviceBlasStatus_t
+    dftfe::utils::deviceBlasStatus_t
     BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>::setStream(
       deviceStream_t stream)
     {
-      deviceBlasStatus_t status = hipblasSetStream(d_deviceBlasHandle, stream);
+      dftfe::utils::deviceBlasStatus_t status = hipblasSetStream(d_deviceBlasHandle, stream);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
 
-    deviceBlasStatus_t
+    dftfe::utils::deviceBlasStatus_t
     BLASWrapperClass<dftfe::utils::MemorySpace::DEVICE>::setMathMode(
       deviceBlasMath_t mathMode)
     {
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasSetMathMode(d_deviceBlasHandle, mathMode);
       DEVICEBLAS_API_CHECK(status);
       return status;
@@ -249,7 +249,7 @@ namespace dftfe
       double *            y,
       const unsigned int *incy)
     {
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasDaxpy(d_deviceBlasHandle, n, alpha, x, incx, y, incy);
       DEVICEBLAS_API_CHECK(status);
     }
@@ -263,7 +263,7 @@ namespace dftfe
       std::complex<double> *      y,
       const unsigned int *        incy)
     {
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasZaxpy(d_deviceBlasHandle,
                     n,
                     makeDataTypeHipBlasCompatible(alpha),
@@ -281,7 +281,7 @@ namespace dftfe
            const double *      Y,
            const unsigned int *INCY)
     {
-              deviceBlasStatus_t status =
+              dftfe::utils::deviceBlasStatus_t status =
           hipblasDdot(d_deviceBlasHandle, n, x, incx, y, incy, result);
         DEVICEBLAS_API_CHECK(status);
     }
