@@ -103,7 +103,7 @@ SET(TARGET_SRC
   ./utils/MPICommunicatorP2P.cc
   ./utils/MPICommunicatorP2PKernels.cc
   ./utils/MemoryManager.cc
-  ./utils/BLASWrapperClassHost.t.cc
+  ./utils/BLASWrapperHost.t.cc
   ./utils/MPIWriteOnFile.cpp
   ./utils/QuadDataCompositeWrite.cpp
   ./pseudoConverters/upfToxml.cc
@@ -180,7 +180,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
   ./utils/DeviceBlasWrapper.cu.cc
-  ./utils/BLASWrapperClassDevice.t.cu.cc
+  ./utils/BLASWrapperDevice.t.cu.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
@@ -209,7 +209,7 @@ SET(DEVICE_SRC
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.hip.cc
   ./utils/DeviceBlasWrapper.hip.cc
-  ./utils/BLASWrapperClassDevice.t.hip.cc
+  ./utils/BLASWrapperDevice.t.hip.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
   ./src/solvers/linearSolverCGDevice.cc
