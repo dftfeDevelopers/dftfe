@@ -1,0 +1,32 @@
+#!/ccs/home/dsambit/frontier/bin/rc
+#SBATCH -A mat239
+#SBATCH -J gputests
+#SBATCH -t 1:00:00
+#SBATCH -p batch
+#SBATCH -N 1
+#SBATCH --gpus-per-node 6
+#SBATCH --ntasks-per-gpu 1
+#SBATCH --gpu-bind closest
+
+OMP_NUM_THREADS = 1
+MPICH_VERSION_DISPLAY=1
+MPICH_ENV_DISPLAY=1
+MPICH_OFI_NIC_POLICY = NUMA 
+MPICH_GPU_SUPPORT_ENABLED=1
+MPICH_SMP_SINGLE_COPY_MODE=NONE
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INST/lib
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INST/lib/lib64
+LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
+
+
+BASE = $WD/src/dftfeDebug/build/release/complex
+n=`{echo $SLURM_JOB_NUM_NODES '*' 8 | bc}
+
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_2.prm > outputMg2x_2
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_3.prm > outputMg2x_3
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_4.prm > outputMg2x_4
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_5.prm > outputMg2x_5
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_6.prm > outputMg2x_6
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBe.prm > outputBe

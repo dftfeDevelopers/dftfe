@@ -86,6 +86,17 @@ namespace dftfe
                                        ValueType2 *           copyToVec);
 
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyConstantStride(const dftfe::size_type blockSize,
+                                const dftfe::size_type strideTo,
+                                const dftfe::size_type strideFrom,
+                                const dftfe::size_type numBlocks,
+                                const dftfe::size_type startingToId,
+                                const dftfe::size_type startingFromId,
+                                const ValueType1 *     copyFromVec,
+                                ValueType2 *           copyToVec);
+
 
       template <typename ValueType1, typename ValueType2>
       void

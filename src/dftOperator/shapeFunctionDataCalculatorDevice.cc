@@ -368,8 +368,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       //
       // resize data members
       //
-      // d_cellShapeFunctionGradientIntegralFlattened.clear();
-      // d_cellShapeFunctionGradientIntegralFlattened.resize(numberPhysicalCells*numberDofsPerElement*numberDofsPerElement);
 
       d_cellJxWValues.clear();
       d_cellJxWValues.resize(numberPhysicalCells * numberQuadraturePoints);
@@ -379,33 +377,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       d_shapeFunctionValueTransposed.resize(numberQuadraturePoints *
                                               numberDofsPerElement,
                                             0.0);
-
-      d_shapeFunctionGradientValueX.resize(numberPhysicalCells *
-                                             numberQuadraturePoints *
-                                             numberDofsPerElement,
-                                           0.0);
-      d_shapeFunctionGradientValueXTransposed.resize(numberPhysicalCells *
-                                                       numberQuadraturePoints *
-                                                       numberDofsPerElement,
-                                                     0.0);
-
-      d_shapeFunctionGradientValueY.resize(numberPhysicalCells *
-                                             numberQuadraturePoints *
-                                             numberDofsPerElement,
-                                           0.0);
-      d_shapeFunctionGradientValueYTransposed.resize(numberPhysicalCells *
-                                                       numberQuadraturePoints *
-                                                       numberDofsPerElement,
-                                                     0.0);
-
-      d_shapeFunctionGradientValueZ.resize(numberPhysicalCells *
-                                             numberQuadraturePoints *
-                                             numberDofsPerElement,
-                                           0.0);
-      d_shapeFunctionGradientValueZTransposed.resize(numberPhysicalCells *
-                                                       numberQuadraturePoints *
-                                                       numberDofsPerElement,
-                                                     0.0);
 
       std::vector<double> shapeFunctionValueLpsp(numberQuadraturePointsLpsp *
                                                    numberDofsPerElement,
@@ -434,38 +405,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                  ++q_point)
               d_cellJxWValues[iElem * numberQuadraturePoints + q_point] =
                 fe_values.JxW(q_point);
-
-            for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-              for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
-                   ++q_point)
-                {
-                  const dealii::Tensor<1, 3, double> &shape_grad =
-                    fe_values.shape_grad(iNode, q_point);
-
-                  d_shapeFunctionGradientValueX[iElem * numberDofsPerElement *
-                                                  numberQuadraturePoints +
-                                                iNode * numberQuadraturePoints +
-                                                q_point] = shape_grad[0];
-                  d_shapeFunctionGradientValueXTransposed
-                    [iElem * numberQuadraturePoints * numberDofsPerElement +
-                     q_point * numberDofsPerElement + iNode] = shape_grad[0];
-
-                  d_shapeFunctionGradientValueY[iElem * numberDofsPerElement *
-                                                  numberQuadraturePoints +
-                                                iNode * numberQuadraturePoints +
-                                                q_point] = shape_grad[1];
-                  d_shapeFunctionGradientValueYTransposed
-                    [iElem * numberQuadraturePoints * numberDofsPerElement +
-                     q_point * numberDofsPerElement + iNode] = shape_grad[1];
-
-                  d_shapeFunctionGradientValueZ[iElem * numberDofsPerElement *
-                                                  numberQuadraturePoints +
-                                                iNode * numberQuadraturePoints +
-                                                q_point] = shape_grad[2];
-                  d_shapeFunctionGradientValueZTransposed
-                    [iElem * numberQuadraturePoints * numberDofsPerElement +
-                     q_point * numberDofsPerElement + iNode] = shape_grad[2];
-                }
 
             if (iElem == 0)
               {
@@ -511,21 +450,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
         d_shapeFunctionValueTransposed.size());
       d_shapeFunctionValueTransposedDevice.copyFrom(
         d_shapeFunctionValueTransposed);
-
-      d_shapeFunctionGradientValueXTransposedDevice.resize(
-        d_shapeFunctionGradientValueXTransposed.size());
-      d_shapeFunctionGradientValueXTransposedDevice.copyFrom(
-        d_shapeFunctionGradientValueXTransposed);
-
-      d_shapeFunctionGradientValueYTransposedDevice.resize(
-        d_shapeFunctionGradientValueYTransposed.size());
-      d_shapeFunctionGradientValueYTransposedDevice.copyFrom(
-        d_shapeFunctionGradientValueYTransposed);
-
-      d_shapeFunctionGradientValueZTransposedDevice.resize(
-        d_shapeFunctionGradientValueZTransposed.size());
-      d_shapeFunctionGradientValueZTransposedDevice.copyFrom(
-        d_shapeFunctionGradientValueZTransposed);
 
       d_shapeFunctionValueLpspDevice.resize(shapeFunctionValueLpsp.size());
       d_shapeFunctionValueLpspDevice.copyFrom(shapeFunctionValueLpsp);

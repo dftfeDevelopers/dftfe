@@ -48,7 +48,7 @@ withTorch=OFF
 withCustomizedDealii=ON
 
 #Compiler options and flags
-cxx_compiler=mpicxx  #sets DCMAKE_CXX_COMPILER
+cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.6rc2/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
 cxx_flags="-std=c++14 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
 device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 

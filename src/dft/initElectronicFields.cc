@@ -104,16 +104,17 @@ namespace dftfe
          kPoint < (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
          ++kPoint)
       {
-        d_eigenVectorsFlattenedSTL[kPoint].resize(
-          d_numEigenValues *
-            matrix_free_data.get_vector_partitioner()->local_size(),
+        d_eigenVectorsFlattenedHost.resize(
+          (d_numEigenValues *
+           matrix_free_data.get_vector_partitioner()->local_size()) *
+            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
           dataTypes::number(0.0));
-
         if (d_numEigenValuesRR != d_numEigenValues)
           {
-            d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(
+            d_eigenVectorsRotFracDensityFlattenedHost.resize(
               d_numEigenValuesRR *
-                matrix_free_data.get_vector_partitioner()->local_size(),
+                matrix_free_data.get_vector_partitioner()->local_size() *
+                (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
               dataTypes::number(0.0));
           }
       }
@@ -145,40 +146,26 @@ namespace dftfe
     if (d_dftParamsPtr->useDevice)
       {
         d_eigenVectorsFlattenedDevice.resize(
-          d_eigenVectorsFlattenedSTL[0].size() *
-          (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
+          d_eigenVectorsFlattenedHost.size());
 
         if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
-            d_eigenVectorsFlattenedSTL[0].size() *
-            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
+            d_eigenVectorsFlattenedHost.size());
 
         if (d_numEigenValuesRR != d_numEigenValues)
           d_eigenVectorsRotFracFlattenedDevice.resize(
-            d_eigenVectorsRotFracDensityFlattenedSTL[0].size() *
-            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
+            d_eigenVectorsRotFracDensityFlattenedHost.size());
         else
           d_eigenVectorsRotFracFlattenedDevice.resize(1);
 
-        for (unsigned int kPoint = 0;
-             kPoint <
-             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-             ++kPoint)
-          {
-            d_eigenVectorsFlattenedDevice
-              .copyFrom<dftfe::utils::MemorySpace::HOST>(
-                &d_eigenVectorsFlattenedSTL[kPoint][0],
-                d_eigenVectorsFlattenedSTL[0].size(),
-                0,
-                kPoint * d_eigenVectorsFlattenedSTL[0].size());
-          }
+        d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
       }
 #endif
 
     if (!d_dftParamsPtr->useDevice &&
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
-        d_eigenVectorsDensityMatrixPrimeSTL = d_eigenVectorsFlattenedSTL;
+        d_eigenVectorsDensityMatrixPrimeHost = d_eigenVectorsFlattenedHost;
       }
 
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)

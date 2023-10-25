@@ -57,8 +57,9 @@ namespace dftfe
     for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
       {
         vectorTools::copyFlattenedSTLVecToSingleCompVec(
-          d_eigenVectorsFlattenedSTL[0],
+          d_eigenVectorsFlattenedHost.data(),
           d_numEigenValues,
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
           std::make_pair(iWave, iWave + 1),
           tempVec);
 

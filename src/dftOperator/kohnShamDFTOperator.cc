@@ -170,11 +170,6 @@ namespace dftfe
       d_normalCellIdToMacroCellIdMap,
       d_macroCellIdToNormalCellIdMap,
       d_FullflattenedArrayCellLocalProcIndexIdMap);
-
-    getOverloadedConstraintMatrix()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      flattenedArray.get_partitioner(),
-      numberWaveFunctions);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -217,9 +212,6 @@ namespace dftfe
       d_normalCellIdToMacroCellIdMap,
       d_macroCellIdToNormalCellIdMap,
       d_FullflattenedArrayCellLocalProcIndexIdMap);
-
-    getOverloadedConstraintMatrix()->precomputeMaps(
-      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -1239,14 +1231,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHX(
-    const std::vector<dataTypes::number> &X,
-    const unsigned int                    numberWaveFunctions,
-    std::vector<dataTypes::number> &      ProjHam)
+    const dataTypes::number *       X,
+    const unsigned int              numberWaveFunctions,
+    const unsigned int              numberDofs,
+    std::vector<dataTypes::number> &ProjHam)
   {
     //
     // Get access to number of locally owned nodes on the current processor
     //
-    const unsigned int numberDofs = X.size() / numberWaveFunctions;
 
     //
     // Resize ProjHam
@@ -1326,8 +1318,9 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHX(
-    const std::vector<dataTypes::number> &           X,
+    const dataTypes::number *                        X,
     const unsigned int                               numberWaveFunctions,
+    const unsigned int                               numberDofs,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
@@ -1335,7 +1328,6 @@ namespace dftfe
     //
     // Get access to number of locally owned nodes on the current processor
     //
-    const unsigned int numberDofs = X.size() / numberWaveFunctions;
 
     // create temporary arrays XBlock,Hx
     distributedCPUMultiVec<dataTypes::number> XBlock, HXBlock;
@@ -1500,9 +1492,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHXMixedPrec(
-    const std::vector<dataTypes::number> &           X,
+    const dataTypes::number *                        X,
     const unsigned int                               N,
     const unsigned int                               Ncore,
+    const unsigned int                               numberDofs,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
@@ -1510,7 +1503,6 @@ namespace dftfe
     //
     // Get access to number of locally owned nodes on the current processor
     //
-    const unsigned int numberDofs = X.size() / N;
 
     // create temporary arrays XBlock,Hx
     distributedCPUMultiVec<dataTypes::number> XBlock, HXBlock;
@@ -1558,7 +1550,7 @@ namespace dftfe
 
     std::vector<dataTypes::numberFP32> HXBlockSinglePrec;
 
-    std::vector<dataTypes::numberFP32> XSinglePrec(&X[0], &X[0] + X.size());
+    std::vector<dataTypes::numberFP32> XSinglePrec(X, X + numberDofs * N);
 
     if (dftPtr->d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(

@@ -64,17 +64,18 @@ namespace dftfe
      * @brief Solve a generalized eigen problem.
      */
     void
-    solve(operatorDFTClass &              operatorMatrix,
-          elpaScalaManager &              elpaScala,
-          std::vector<dataTypes::number> &eigenVectorsFlattened,
-          std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
-          const unsigned int              totalNumberWaveFunctions,
-          std::vector<double> &           eigenValues,
-          std::vector<double> &           residuals,
-          const MPI_Comm &                interBandGroupComm,
-          const bool                      computeResidual,
-          const bool                      useMixedPrec = false,
-          const bool                      isFirstScf   = false);
+    solve(operatorDFTClass &   operatorMatrix,
+          elpaScalaManager &   elpaScala,
+          dataTypes::number *  eigenVectorsFlattened,
+          dataTypes::number *  eigenVectorsRotFracDensityFlattened,
+          const unsigned int   totalNumberWaveFunctions,
+          const unsigned int   localVectorSize,
+          std::vector<double> &eigenValues,
+          std::vector<double> &residuals,
+          const MPI_Comm &     interBandGroupComm,
+          const bool           computeResidual,
+          const bool           useMixedPrec = false,
+          const bool           isFirstScf   = false);
 
     /**
      * @brief Solve a generalized eigen problem.

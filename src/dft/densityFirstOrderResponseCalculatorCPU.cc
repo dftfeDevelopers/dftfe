@@ -31,8 +31,8 @@ namespace dftfe
   template <typename T>
   void
   computeRhoFirstOrderResponseCPU(
-    const std::vector<std::vector<T>> &            X,
-    const std::vector<std::vector<T>> &            XPrime,
+    const T *                                      X,
+    const T *                                      XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
@@ -149,11 +149,13 @@ namespace dftfe
 
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
           {
-            const std::vector<T> &XCurrentKPoint =
-              X[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
+            const T *XCurrentKPoint =
+              X + ((dftParams.spinPolarized + 1) * kPoint + spinIndex) *
+                    numLocalDofs * totalNumWaveFunctions;
 
-            const std::vector<T> &XPrimeCurrentKPoint =
-              XPrime[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
+            const T *XPrimeCurrentKPoint =
+              XPrime + ((dftParams.spinPolarized + 1) * kPoint + spinIndex) *
+                         numLocalDofs * totalNumWaveFunctions;
 
             const std::vector<double> &densityMatDerFermiEnergyVec =
               densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) * kPoint +
@@ -420,8 +422,8 @@ namespace dftfe
   template <typename T, typename TLowPrec>
   void
   computeRhoFirstOrderResponseCPUMixedPrec(
-    const std::vector<std::vector<T>> &            X,
-    const std::vector<std::vector<T>> &            XPrime,
+    const T *                                      X,
+    const T *                                      XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
@@ -543,11 +545,13 @@ namespace dftfe
 
         for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
           {
-            const std::vector<T> &XCurrentKPoint =
-              X[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
+            const T *XCurrentKPoint =
+              X + ((dftParams.spinPolarized + 1) * kPoint + spinIndex) *
+                    numLocalDofs * totalNumWaveFunctions;
 
-            const std::vector<T> &XPrimeCurrentKPoint =
-              XPrime[(dftParams.spinPolarized + 1) * kPoint + spinIndex];
+            const T *XPrimeCurrentKPoint =
+              XPrime + ((dftParams.spinPolarized + 1) * kPoint + spinIndex) *
+                         numLocalDofs * totalNumWaveFunctions;
 
             const std::vector<double> &densityMatDerFermiEnergyVec =
               densityMatDerFermiEnergy[(dftParams.spinPolarized + 1) * kPoint +
@@ -815,12 +819,12 @@ namespace dftfe
 
   template void
   computeRhoFirstOrderResponseCPU(
-    const std::vector<std::vector<dataTypes::number>> &X,
-    const std::vector<std::vector<dataTypes::number>> &XPrime,
-    const std::vector<std::vector<double>> &           densityMatDerFermiEnergy,
-    const unsigned int                                 totalNumWaveFunctions,
-    const unsigned int                                 numLocalDofs,
-    operatorDFTClass &                                 operatorMatrix,
+    const dataTypes::number *                      X,
+    const dataTypes::number *                      XPrime,
+    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const unsigned int                             totalNumWaveFunctions,
+    const unsigned int                             numLocalDofs,
+    operatorDFTClass &                             operatorMatrix,
     const unsigned int                             matrixFreeDofhandlerIndex,
     const dealii::DoFHandler<3> &                  dofHandler,
     const unsigned int                             totalLocallyOwnedCells,
@@ -841,12 +845,12 @@ namespace dftfe
   template void
   computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
                                            dataTypes::numberFP32>(
-    const std::vector<std::vector<dataTypes::number>> &X,
-    const std::vector<std::vector<dataTypes::number>> &XPrime,
-    const std::vector<std::vector<double>> &           densityMatDerFermiEnergy,
-    const unsigned int                                 totalNumWaveFunctions,
-    const unsigned int                                 numLocalDofs,
-    operatorDFTClass &                                 operatorMatrix,
+    const dataTypes::number *                      X,
+    const dataTypes::number *                      XPrime,
+    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const unsigned int                             totalNumWaveFunctions,
+    const unsigned int                             numLocalDofs,
+    operatorDFTClass &                             operatorMatrix,
     const unsigned int                             matrixFreeDofhandlerIndex,
     const dealii::DoFHandler<3> &                  dofHandler,
     const unsigned int                             totalLocallyOwnedCells,

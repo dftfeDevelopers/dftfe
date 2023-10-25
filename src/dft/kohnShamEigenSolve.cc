@@ -20,22 +20,17 @@
 #include <vector>
 #include <dft.h>
 #include <linearAlgebraOperations.h>
-#include <densityCalculatorCPU.h>
 
 namespace dftfe
 {
   namespace internal
   {
     void
-    pointWiseScaleWithDiagonal(
-      const distributedCPUVec<double> &diagonal,
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                             singleComponentPartitioner,
-      const unsigned int              numberFields,
-      std::vector<dataTypes::number> &fieldsArrayFlattened)
+    pointWiseScaleWithDiagonal(const distributedCPUVec<double> &diagonal,
+                               const unsigned int               numberFields,
+                               const unsigned int               numberDofs,
+                               dataTypes::number *fieldsArrayFlattened)
     {
-      const unsigned int numberDofs =
-        fieldsArrayFlattened.size() / numberFields;
       const unsigned int inc = 1;
 
       for (unsigned int i = 0; i < numberDofs; ++i)
@@ -178,9 +173,9 @@ namespace dftfe
     // by M^{1/2}
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_sqrtMassVector,
-      matrix_free_data.get_vector_partitioner(),
       d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[0]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data());
 
 
     //
@@ -188,9 +183,11 @@ namespace dftfe
     //
     std::vector<dataTypes::number> ProjHam;
 
-    kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
-                                  d_numEigenValues,
-                                  ProjHam);
+    kohnShamDFTEigenOperator.XtHX(
+      d_eigenVectorsFlattenedHost.data(),
+      d_numEigenValues,
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      ProjHam);
 
     //
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
@@ -198,9 +195,9 @@ namespace dftfe
     //
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_invSqrtMassVector,
-      matrix_free_data.get_vector_partitioner(),
       d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[0]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data());
 
 
     dataTypes::number trXtHX = 0.0;
@@ -243,25 +240,30 @@ namespace dftfe
     // by M^{1/2}
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_sqrtMassVector,
-      matrix_free_data.get_vector_partitioner(),
       d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[0]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data());
 
 
     //
     // orthogonalize the vectors
     //
     linearAlgebraOperations::gramSchmidtOrthogonalization(
-      d_eigenVectorsFlattenedSTL[0], d_numEigenValues, mpi_communicator);
+      d_eigenVectorsFlattenedHost.data(),
+      d_numEigenValues,
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      mpi_communicator);
 
     //
     // compute projected Hamiltonian
     //
     std::vector<dataTypes::number> ProjHam;
 
-    kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
-                                  d_numEigenValues,
-                                  ProjHam);
+    kohnShamDFTEigenOperator.XtHX(
+      d_eigenVectorsFlattenedHost.data(),
+      d_numEigenValues,
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      ProjHam);
 
     //
     // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
@@ -269,9 +271,9 @@ namespace dftfe
     //
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_invSqrtMassVector,
-      matrix_free_data.get_vector_partitioner(),
       d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[0]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data());
 
     double trXtKX = 0.0;
 #ifdef USE_COMPLEX
@@ -319,11 +321,12 @@ namespace dftfe
     // by M^{1/2}
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_sqrtMassVector,
-      matrix_free_data.get_vector_partitioner(),
       d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                   kPointIndex +
-                                 spinType]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size());
 
     std::vector<double> eigenValuesTemp(isSpectrumSplit ? d_numEigenValuesRR :
                                                           d_numEigenValues,
@@ -387,12 +390,16 @@ namespace dftfe
     subspaceIterationSolver.solve(
       kohnShamDFTEigenOperator,
       elpaScala,
-      d_eigenVectorsFlattenedSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                   kPointIndex +
-                                 spinType],
-      d_eigenVectorsRotFracDensityFlattenedSTL
-        [(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType],
+      d_eigenVectorsFlattenedHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsRotFracDensityFlattenedHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValuesRR *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       eigenValuesTemp,
       residualNormWaveFunctions,
       interBandGroupComm,
@@ -406,20 +413,23 @@ namespace dftfe
     //
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_invSqrtMassVector,
-      matrix_free_data.get_vector_partitioner(),
       d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                   kPointIndex +
-                                 spinType]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size());
 
     if (isSpectrumSplit && d_numEigenValuesRR != d_numEigenValues)
       {
         internal::pointWiseScaleWithDiagonal(
           kohnShamDFTEigenOperator.d_invSqrtMassVector,
-          matrix_free_data.get_vector_partitioner(),
           d_numEigenValuesRR,
-          d_eigenVectorsRotFracDensityFlattenedSTL
-            [(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType]);
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+          d_eigenVectorsRotFracDensityFlattenedHost.data() +
+            ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+              d_numEigenValuesRR *
+              matrix_free_data.get_vector_partitioner()->locally_owned_size());
       }
 
     //
@@ -537,8 +547,10 @@ namespace dftfe
           elpaScala,
           d_eigenVectorsFlattenedDevice.begin() +
             ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-              d_eigenVectorsFlattenedSTL[0].size(),
-          d_eigenVectorsFlattenedSTL[0].size(),
+              d_numEigenValues *
+              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+          d_numEigenValues *
+            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
           d_numEigenValues,
           eigenValuesDummy,
           *d_devicecclMpiCommDomainPtr,
@@ -556,11 +568,14 @@ namespace dftfe
             elpaScala,
             d_eigenVectorsFlattenedDevice.begin() +
               ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-                d_eigenVectorsFlattenedSTL[0].size(),
+                d_numEigenValues *
+                matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             d_eigenVectorsRotFracFlattenedDevice.begin() +
               ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-                d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
-            d_eigenVectorsFlattenedSTL[0].size(),
+                d_numEigenValuesRR *
+                matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+            d_numEigenValues *
+              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             d_numEigenValues,
             eigenValuesTemp,
             residualNormWaveFunctions,
@@ -662,11 +677,12 @@ namespace dftfe
     // multiply by M^{1/2}
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_sqrtMassVector,
-      matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
       d_numEigenValues,
-      d_eigenVectorsDensityMatrixPrimeSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                            kPointIndex +
-                                          spinType]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsDensityMatrixPrimeHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size());
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
     for (unsigned int i = 0; i < d_numEigenValues; i++)
@@ -678,10 +694,12 @@ namespace dftfe
 
     linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
-      d_eigenVectorsDensityMatrixPrimeSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                            kPointIndex +
-                                          spinType],
+      d_eigenVectorsDensityMatrixPrimeHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_mpiCommParent,
       kohnShamDFTEigenOperator.getMPICommunicator(),
       interBandGroupComm,
@@ -700,11 +718,12 @@ namespace dftfe
     //
     internal::pointWiseScaleWithDiagonal(
       kohnShamDFTEigenOperator.d_invSqrtMassVector,
-      matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
       d_numEigenValues,
-      d_eigenVectorsDensityMatrixPrimeSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                            kPointIndex +
-                                          spinType]);
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsDensityMatrixPrimeHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size());
   }
 
 #ifdef DFTFE_WITH_DEVICE
@@ -739,8 +758,10 @@ namespace dftfe
       kohnShamDFTEigenOperator,
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_eigenVectorsFlattenedSTL[0].size(),
-      d_eigenVectorsFlattenedSTL[0].size(),
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_numEigenValues *
+        matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
       eigenValuesTemp,
       fermiEnergy,
@@ -779,11 +800,12 @@ namespace dftfe
     if (ipass == 1)
       internal::pointWiseScaleWithDiagonal(
         kohnShamDFTEigenOperator.d_invSqrtMassVector,
-        matrix_free_data.get_vector_partitioner(),
         d_numEigenValues,
-        d_eigenVectorsFlattenedSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                     kPointIndex +
-                                   spinType]);
+        matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+        d_eigenVectorsFlattenedHost.data() +
+          ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+            d_numEigenValues *
+            matrix_free_data.get_vector_partitioner()->locally_owned_size());
 
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
@@ -834,13 +856,16 @@ namespace dftfe
     subspaceIterationSolver.solve(
       kohnShamDFTEigenOperator,
       *d_elpaScala,
-      d_eigenVectorsFlattenedSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                   kPointIndex +
-                                 spinType],
-      d_eigenVectorsFlattenedSTL[(1 + d_dftParamsPtr->spinPolarized) *
-                                   kPointIndex +
-                                 spinType],
+      d_eigenVectorsFlattenedHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data() +
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
+      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       eigenValuesTemp,
       residualNormWaveFunctions,
       interBandGroupComm,

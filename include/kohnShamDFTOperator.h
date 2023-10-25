@@ -121,9 +121,10 @@ node is stored
      * @return ProjMatrix projected small matrix
      */
     void
-    XtHX(const std::vector<dataTypes::number> &src,
-         const unsigned int                    numberComponents,
-         std::vector<dataTypes::number> &      ProjHam);
+    XtHX(const dataTypes::number *       src,
+         const unsigned int              numberComponents,
+         const unsigned int              numberLocalDofs,
+         std::vector<dataTypes::number> &ProjHam);
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
@@ -139,8 +140,9 @@ node is stored
      * also avoids creation of another full X memory.
      */
     void
-    XtHX(const std::vector<dataTypes::number> &           X,
+    XtHX(const dataTypes::number *                        X,
          const unsigned int                               numberComponents,
+         const unsigned int                               numberLocalDofs,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
@@ -161,9 +163,10 @@ node is stored
      */
     void
     XtHXMixedPrec(
-      const std::vector<dataTypes::number> &           X,
+      const dataTypes::number *                        X,
       const unsigned int                               N,
       const unsigned int                               Ncore,
+      const unsigned int                               numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);

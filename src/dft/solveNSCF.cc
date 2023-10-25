@@ -243,12 +243,9 @@ namespace dftfe
 
     computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+        d_dftParamsPtr->floatingNuclearCharges and
         not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-    if (false)
-#endif
       {
 #ifdef DFTFE_WITH_DEVICE
         CGSolverDevice.solve(
@@ -266,6 +263,7 @@ namespace dftfe
                        d_dftParamsPtr->maxLinearSolverIterations,
                        d_dftParamsPtr->verbosity);
       }
+
 
     d_phiTotRhoIn.update_ghost_values();
 
@@ -943,12 +941,9 @@ namespace dftfe
 
     computing_timer.enter_subsection("phiTot solve");
 
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+        d_dftParamsPtr->floatingNuclearCharges and
         not d_dftParamsPtr->pinnedNodeForPBC)
-#else
-    if (false)
-#endif
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
@@ -1007,6 +1002,7 @@ namespace dftfe
                        d_dftParamsPtr->maxLinearSolverIterations,
                        d_dftParamsPtr->verbosity);
       }
+
 
 
     computing_timer.leave_subsection("phiTot solve");
@@ -1130,17 +1126,7 @@ namespace dftfe
     if (d_dftParamsPtr->useDevice &&
         (d_dftParamsPtr->writeWfcSolutionFields ||
          d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
-      for (unsigned int kPoint = 0;
-           kPoint <
-           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-           ++kPoint)
-        {
-          d_eigenVectorsFlattenedDevice.copyTo<dftfe::utils::MemorySpace::HOST>(
-            &d_eigenVectorsFlattenedSTL[kPoint][0],
-            d_eigenVectorsFlattenedSTL[kPoint].size(),
-            (kPoint * d_eigenVectorsFlattenedSTL[0].size()),
-            0);
-        }
+      d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
 #endif
 
     //#ifdef USE_COMPLEX

@@ -515,10 +515,6 @@ namespace dftfe
         matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
         hangingPeriodicConstraintMatrix);
 
-
-      constraintsMatrixDataInfoDevice.precomputeMaps(
-        flattenedArray.getMPIPatternP2P(), blockSize);
-
       constraintsMatrixDataInfoDevice.set_zero(xD, blockSize);
 
       dftfe::utils::deviceSynchronize();

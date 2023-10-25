@@ -386,29 +386,29 @@ namespace dftfe
     return d_shapeFunctionValueNLPTransposedDevice;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesXTransposed()
-  {
-    return d_shapeFunctionGradientValueXTransposedDevice;
-  }
+  // template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+  // kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
+  //   getShapeFunctionGradientValuesXTransposed()
+  // {
+  //   return d_shapeFunctionGradientValueXTransposedDevice;
+  // }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesYTransposed()
-  {
-    return d_shapeFunctionGradientValueYTransposedDevice;
-  }
+  // template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+  // kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
+  //   getShapeFunctionGradientValuesYTransposed()
+  // {
+  //   return d_shapeFunctionGradientValueYTransposedDevice;
+  // }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZTransposed()
-  {
-    return d_shapeFunctionGradientValueZTransposedDevice;
-  }
+  // template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
+  // kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
+  //   getShapeFunctionGradientValuesZTransposed()
+  // {
+  //   return d_shapeFunctionGradientValueZTransposedDevice;
+  // }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
@@ -458,7 +458,10 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelChebyBlockVectorDevice()
   {
-    return d_parallelChebyBlockVectorDevice;
+    const unsigned int BVec =
+      std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize,
+               dftPtr->d_numEigenValues);
+    return basisOperationsPtrDevice->getMultiVector(BVec);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -466,7 +469,10 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getParallelChebyBlockVector2Device()
   {
-    return d_parallelChebyBlockVector2Device;
+    const unsigned int BVec =
+      std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize,
+               dftPtr->d_numEigenValues);
+    return basisOperationsPtrDevice->getMultiVector(BVec, 1);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -495,6 +501,8 @@ namespace dftfe
   {
     computing_timer.enter_subsection("kohnShamDFTOperatorDeviceClass setup");
 
+    basisOperationsPtrDevice = dftPtr->basisOperationsPtrDevice;
+    basisOperationsPtrHost   = dftPtr->basisOperationsPtrHost;
 
     dftPtr->matrix_free_data.initialize_dof_vector(
       d_invSqrtMassVector, dftPtr->d_densityDofHandlerIndex);
@@ -569,25 +577,6 @@ namespace dftfe
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize, numberWaveFunctions);
 
 
-    dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
-      dftPtr->matrix_free_data.get_vector_partitioner(
-        dftPtr->d_densityDofHandlerIndex),
-      BVec,
-      d_parallelChebyBlockVectorDevice);
-
-    if (dftPtr->d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-      d_parallelChebyBlockVector2Device.reinit(
-        d_parallelChebyBlockVectorDevice);
-
-    if (std::is_same<dataTypes::number, std::complex<double>>::value)
-      {
-        d_tempRealVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
-                              d_parallelChebyBlockVectorDevice.numVectors()),
-                             0.0);
-        d_tempImagVec.resize((d_parallelChebyBlockVectorDevice.localSize() *
-                              d_parallelChebyBlockVectorDevice.numVectors()),
-                             0.0);
-      }
 
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -597,6 +586,11 @@ namespace dftfe
       dftPtr->matrix_free_data
         .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
         ->local_size();
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      {
+        d_tempRealVec.resize(((localSize + n_ghosts) * BVec), 0.0);
+        d_tempImagVec.resize(((localSize + n_ghosts) * BVec), 0.0);
+      }
 
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::HOST>
       locallyOwnedProcBoundaryNodesVector(localSize, 0);
@@ -640,16 +634,6 @@ namespace dftfe
       d_flattenedArrayCellLocalProcIndexIdMap.size());
     d_flattenedArrayCellLocalProcIndexIdMapDevice.copyFrom(
       d_flattenedArrayCellLocalProcIndexIdMap);
-
-
-
-    getOverloadedConstraintMatrix()->precomputeMaps(
-      flattenedArray.getMPIPatternP2P(), numberWaveFunctions);
-
-    getOverloadedConstraintMatrixHost()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      dftPtr->matrix_free_data.get_vector_partitioner(),
-      1);
 
 
     const unsigned int totalLocallyOwnedCells =

@@ -474,6 +474,108 @@ namespace dftfe
         return status;
       }
 
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t    handle,
+           deviceBlasOperation_t trans,
+           int                   m,
+           int                   n,
+           const double *        alpha,
+           const double *        A,
+           int                   lda,
+           const double *        x,
+           int                   incx,
+           const double *        beta,
+           double *              y,
+           int                   incy)
+      {
+        deviceBlasStatus_t status = cublasDgemv(
+          handle, trans, m, n, alpha, A, lda, x, incx, beta, y, incy);
+        DEVICEBLAS_API_CHECK(status);
+        return status;
+      }
+
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t    handle,
+           deviceBlasOperation_t trans,
+           int                   m,
+           int                   n,
+           const float *         alpha,
+           const float *         A,
+           int                   lda,
+           const float *         x,
+           int                   incx,
+           const float *         beta,
+           float *               y,
+           int                   incy)
+      {
+        deviceBlasStatus_t status = cublasSgemv(
+          handle, trans, m, n, alpha, A, lda, x, incx, beta, y, incy);
+        DEVICEBLAS_API_CHECK(status);
+        return status;
+      }
+
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t          handle,
+           deviceBlasOperation_t       trans,
+           int                         m,
+           int                         n,
+           const std::complex<double> *alpha,
+           const std::complex<double> *A,
+           int                         lda,
+           const std::complex<double> *x,
+           int                         incx,
+           const std::complex<double> *beta,
+           std::complex<double> *      y,
+           int                         incy)
+      {
+        deviceBlasStatus_t status =
+          cublasZgemv(handle,
+                      trans,
+                      m,
+                      n,
+                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                      dftfe::utils::makeDataTypeDeviceCompatible(A),
+                      lda,
+                      dftfe::utils::makeDataTypeDeviceCompatible(x),
+                      incx,
+                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                      dftfe::utils::makeDataTypeDeviceCompatible(y),
+                      incy);
+        DEVICEBLAS_API_CHECK(status);
+        return status;
+      }
+
+      deviceBlasStatus_t
+      gemv(deviceBlasHandle_t         handle,
+           deviceBlasOperation_t      trans,
+           int                        m,
+           int                        n,
+           const std::complex<float> *alpha,
+           const std::complex<float> *A,
+           int                        lda,
+           const std::complex<float> *x,
+           int                        incx,
+           const std::complex<float> *beta,
+           std::complex<float> *      y,
+           int                        incy)
+      {
+        deviceBlasStatus_t status =
+          cublasCgemv(handle,
+                      trans,
+                      m,
+                      n,
+                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                      dftfe::utils::makeDataTypeDeviceCompatible(A),
+                      lda,
+                      dftfe::utils::makeDataTypeDeviceCompatible(x),
+                      incx,
+                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                      dftfe::utils::makeDataTypeDeviceCompatible(y),
+                      incy);
+        DEVICEBLAS_API_CHECK(status);
+        return status;
+      }
+
     } // namespace deviceBlasWrapper
   }   // namespace utils
 } // namespace dftfe

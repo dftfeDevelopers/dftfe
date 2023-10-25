@@ -584,8 +584,9 @@ namespace dftfe
      */
     template <typename T>
     void
-    gramSchmidtOrthogonalization(std::vector<T> &   X,
+    gramSchmidtOrthogonalization(T *                X,
                                  const unsigned int numberComponents,
+                                 const unsigned int numberDofs,
                                  const MPI_Comm &   mpiComm);
 
 
@@ -621,8 +622,9 @@ namespace dftfe
     template <typename T>
     unsigned int
     pseudoGramSchmidtOrthogonalization(elpaScalaManager &   elpaScala,
-                                       std::vector<T> &     X,
+                                       T *                  X,
                                        const unsigned int   numberComponents,
+                                       const unsigned int   numberDofs,
                                        const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiCommDomain,
@@ -647,8 +649,9 @@ namespace dftfe
     void
     rayleighRitzGEP(operatorDFTClass &   operatorMatrix,
                     elpaScalaManager &   elpaScala,
-                    std::vector<T> &     X,
+                    T *                  X,
                     const unsigned int   numberComponents,
+                    const unsigned int   numberDofs,
                     const MPI_Comm &     mpiCommParent,
                     const MPI_Comm &     interBandGroupComm,
                     const MPI_Comm &     mpiCommDomain,
@@ -674,8 +677,9 @@ namespace dftfe
     void
     rayleighRitz(operatorDFTClass &   operatorMatrix,
                  elpaScalaManager &   elpaScala,
-                 std::vector<T> &     X,
+                 T *                  X,
                  const unsigned int   numberComponents,
+                 const unsigned int   numberDofs,
                  const MPI_Comm &     mpiCommParent,
                  const MPI_Comm &     interBandGroupComm,
                  const MPI_Comm &     mpiCommDomain,
@@ -702,9 +706,10 @@ namespace dftfe
     void
     rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
                                        elpaScalaManager &   elpaScala,
-                                       std::vector<T> &     X,
-                                       std::vector<T> &     Y,
+                                       T *                  X,
+                                       T *                  Y,
                                        const unsigned int   numberComponents,
+                                       const unsigned int   numberDofs,
                                        const unsigned int   numberCoreStates,
                                        const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
@@ -731,18 +736,19 @@ namespace dftfe
      */
     template <typename T>
     void
-    rayleighRitzSpectrumSplitDirect(operatorDFTClass &    operatorMatrix,
-                                    elpaScalaManager &    elpaScala,
-                                    const std::vector<T> &X,
-                                    std::vector<T> &      Y,
-                                    const unsigned int    numberComponents,
-                                    const unsigned int    numberCoreStates,
-                                    const MPI_Comm &      mpiCommParent,
-                                    const MPI_Comm &      interBandGroupComm,
-                                    const MPI_Comm &      mpiCommDomain,
-                                    const bool            useMixedPrec,
-                                    std::vector<double> & eigenValues,
-                                    const dftParameters & dftParams);
+    rayleighRitzSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
+                                    elpaScalaManager &   elpaScala,
+                                    const T *            X,
+                                    T *                  Y,
+                                    const unsigned int   numberComponents,
+                                    const unsigned int   numberDofs,
+                                    const unsigned int   numberCoreStates,
+                                    const MPI_Comm &     mpiCommParent,
+                                    const MPI_Comm &     interBandGroupComm,
+                                    const MPI_Comm &     mpiCommDomain,
+                                    const bool           useMixedPrec,
+                                    std::vector<double> &eigenValues,
+                                    const dftParameters &dftParams);
 
 
     /** @brief Compute residual norm associated with eigenValue problem of the given operator
@@ -757,8 +763,10 @@ namespace dftfe
     template <typename T>
     void
     computeEigenResidualNorm(operatorDFTClass &         operatorMatrix,
-                             std::vector<T> &           X,
+                             T *                        X,
                              const std::vector<double> &eigenValues,
+                             const unsigned int         numberComponents,
+                             const unsigned int         numberDofs,
                              const MPI_Comm &           mpiCommParent,
                              const MPI_Comm &           mpiCommDomain,
                              const MPI_Comm &           interBandGroupComm,
@@ -772,8 +780,9 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTClass &         operatorMatrix,
-      std::vector<T> &           X,
+      T *                        X,
       const unsigned int         N,
+      const unsigned int         numberLocalDofs,
       const MPI_Comm &           mpiCommParent,
       const MPI_Comm &           mpiCommDomain,
       const MPI_Comm &           interBandGroupComm,
