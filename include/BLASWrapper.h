@@ -33,7 +33,7 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpace>
     class BLASWrapper;
 
-    template<>
+    template <>
     class BLASWrapper<dftfe::utils::MemorySpace::HOST>
     {
     public:
@@ -134,8 +134,18 @@ namespace dftfe
       void
       xnrm2(const unsigned int *n,
             const double *      x,
-            const unsigned int *incx) const;
+            const unsigned int *incx,
+            const MPI_Comm &    mpi_communicator,
+            double *            result) const;
 
+
+      // Comples double Norm2
+      void
+      xnrm2(const unsigned int *        n,
+            const std::complex<double> *x,
+            const unsigned int *        incx,
+            const MPI_Comm &            mpi_communicator,
+            double *                    result) const;
       // Real dot product
       void
       xdot(const unsigned int *N,
@@ -143,7 +153,17 @@ namespace dftfe
            const unsigned int *INCX,
            const double *      Y,
            const unsigned int *INCY,
-           double * result) const;
+           double *            result) const;
+
+
+      // Complex dot product
+      void
+      xdot(const unsigned int *        N,
+           const std::complex<double> *X,
+           const unsigned int *        INCX,
+           const std::complex<double> *Y,
+           const unsigned int *        INCY,
+           std::complex<double> *      result) const;
 
       // Real double Ax+y
       void
@@ -207,12 +227,12 @@ namespace dftfe
                    const unsigned int *n,
                    const unsigned int *k,
                    const double *      alpha,
-                   const double *      A,
+                   const double *      A[],
                    const unsigned int *lda,
-                   const double *      B,
+                   const double *      B[],
                    const unsigned int *ldb,
                    const double *      beta,
-                   double *            C,
+                   double *            C[],
                    const unsigned int *ldc,
                    const int *         batchCount) const;
 
@@ -223,14 +243,47 @@ namespace dftfe
                    const unsigned int *        n,
                    const unsigned int *        k,
                    const std::complex<double> *alpha,
-                   const std::complex<double> *A,
+                   const std::complex<double> *A[],
                    const unsigned int *        lda,
-                   const std::complex<double> *B,
+                   const std::complex<double> *B[],
                    const unsigned int *        ldb,
                    const std::complex<double> *beta,
-                   std::complex<double> *      C,
+                   std::complex<double> *      C[],
                    const unsigned int *        ldc,
                    const int *                 batchCount) const;
+
+
+      void
+      xgemmBatched(const char *        transA,
+                   const char *        transB,
+                   const unsigned int *m,
+                   const unsigned int *n,
+                   const unsigned int *k,
+                   const float *       alpha,
+                   const float *       A[],
+                   const unsigned int *lda,
+                   const float *       B[],
+                   const unsigned int *ldb,
+                   const float *       beta,
+                   float *             C[],
+                   const unsigned int *ldc,
+                   const int *         batchCount) const;
+
+      void
+      xgemmBatched(const char *               transA,
+                   const char *               transB,
+                   const unsigned int *       m,
+                   const unsigned int *       n,
+                   const unsigned int *       k,
+                   const std::complex<float> *alpha,
+                   const std::complex<float> *A[],
+                   const unsigned int *       lda,
+                   const std::complex<float> *B[],
+                   const unsigned int *       ldb,
+                   const std::complex<float> *beta,
+                   std::complex<float> *      C[],
+                   const unsigned int *       ldc,
+                   const int *                batchCount) const;
 
 
       void
@@ -270,6 +323,45 @@ namespace dftfe
                           const unsigned int *        ldc,
                           const int *                 batchCount,
                           long long int *             strideC) const;
+
+      void
+      xgemmStridedBatched(const char *               transA,
+                          const char *               transB,
+                          const unsigned int *       m,
+                          const unsigned int *       n,
+                          const unsigned int *       k,
+                          const std::complex<float> *alpha,
+                          const std::complex<float> *A,
+                          const unsigned int *       lda,
+                          long long int *            strideA,
+                          const std::complex<float> *B,
+                          const unsigned int *       ldb,
+                          long long int *            strideB,
+                          const std::complex<float> *beta,
+                          std::complex<float> *      C,
+                          const unsigned int *       ldc,
+                          const int *                batchCount,
+                          long long int *            strideC) const;
+
+      void
+      xgemmStridedBatched(const char *        transA,
+                          const char *        transB,
+                          const unsigned int *m,
+                          const unsigned int *n,
+                          const unsigned int *k,
+                          const float *       alpha,
+                          const float *       A,
+                          const unsigned int *lda,
+                          long long int *     strideA,
+                          const float *       B,
+                          const unsigned int *ldb,
+                          long long int *     strideB,
+                          const float *       beta,
+                          float *             C,
+                          const unsigned int *ldc,
+                          const int *         batchCount,
+                          long long int *     strideC) const;
+
 
     private:
     };
@@ -366,16 +458,27 @@ namespace dftfe
 
       // Real-double scaling of complex-vector
       void
-      xscal(const unsigned int *  n,
-            const double *        alpha,
-            std::complex<double> *x,
-            const unsigned int *  inc) const;
+      xscal(const unsigned int *       n,
+            const std::complex<float> *alpha,
+            std::complex<float> *      x,
+            const unsigned int *       inc) const;
 
       // Real double Norm2
       void
       xnrm2(const unsigned int *n,
             const double *      x,
-            const unsigned int *incx) const;
+            const unsigned int *incx,
+            const MPI_Comm &    mpi_communicator,
+            double *            result) const;
+
+
+      // Complex double Norm2
+      void
+      xnrm2(const unsigned int *        n,
+            const std::complex<double> *x,
+            const unsigned int *        incx,
+            const MPI_Comm &            mpi_communicator,
+            double *                    result) const;
 
       // Real dot product
       void
@@ -384,7 +487,16 @@ namespace dftfe
            const unsigned int *INCX,
            const double *      Y,
            const unsigned int *INCY,
-           double * result) const;
+           double *            result) const;
+
+      // Complex dot product
+      void
+      xdot(const unsigned int *        N,
+           const std::complex<double> *X,
+           const unsigned int *        INCX,
+           const std::complex<double> *Y,
+           const unsigned int *        INCY,
+           std::complex<double> *      result) const;
 
       // Real double Ax+y
       void
@@ -448,12 +560,12 @@ namespace dftfe
                    const unsigned int *n,
                    const unsigned int *k,
                    const double *      alpha,
-                   const double *      A,
+                   const double *      A[],
                    const unsigned int *lda,
-                   const double *      B,
+                   const double *      B[],
                    const unsigned int *ldb,
                    const double *      beta,
-                   double *            C,
+                   double *            C[],
                    const unsigned int *ldc,
                    const int *         batchCount) const;
 
@@ -464,15 +576,46 @@ namespace dftfe
                    const unsigned int *        n,
                    const unsigned int *        k,
                    const std::complex<double> *alpha,
-                   const std::complex<double> *A,
+                   const std::complex<double> *A[],
                    const unsigned int *        lda,
-                   const std::complex<double> *B,
+                   const std::complex<double> *B[],
                    const unsigned int *        ldb,
                    const std::complex<double> *beta,
-                   std::complex<double> *      C,
+                   std::complex<double> *      C[],
                    const unsigned int *        ldc,
                    const int *                 batchCount) const;
 
+      void
+      xgemmBatched(const char *        transA,
+                   const char *        transB,
+                   const unsigned int *m,
+                   const unsigned int *n,
+                   const unsigned int *k,
+                   const float *       alpha,
+                   const float *       A[],
+                   const unsigned int *lda,
+                   const float *       B[],
+                   const unsigned int *ldb,
+                   const float *       beta,
+                   float *             C[],
+                   const unsigned int *ldc,
+                   const int *         batchCount) const;
+
+      void
+      xgemmBatched(const char *               transA,
+                   const char *               transB,
+                   const unsigned int *       m,
+                   const unsigned int *       n,
+                   const unsigned int *       k,
+                   const std::complex<float> *alpha,
+                   const std::complex<float> *A[],
+                   const unsigned int *       lda,
+                   const std::complex<float> *B[],
+                   const unsigned int *       ldb,
+                   const std::complex<float> *beta,
+                   std::complex<float> *      C[],
+                   const unsigned int *       ldc,
+                   const int *                batchCount) const;
 
       void
       xgemmStridedBatched(const char *        transA,
@@ -512,10 +655,48 @@ namespace dftfe
                           const int *                 batchCount,
                           long long int *             strideC) const;
 
+      void
+      xgemmStridedBatched(const char *               transA,
+                          const char *               transB,
+                          const unsigned int *       m,
+                          const unsigned int *       n,
+                          const unsigned int *       k,
+                          const std::complex<float> *alpha,
+                          const std::complex<float> *A,
+                          const unsigned int *       lda,
+                          long long int *            strideA,
+                          const std::complex<float> *B,
+                          const unsigned int *       ldb,
+                          long long int *            strideB,
+                          const std::complex<float> *beta,
+                          std::complex<float> *      C,
+                          const unsigned int *       ldc,
+                          const int *                batchCount,
+                          long long int *            strideC) const;
+
+      void
+      xgemmStridedBatched(const char *        transA,
+                          const char *        transB,
+                          const unsigned int *m,
+                          const unsigned int *n,
+                          const unsigned int *k,
+                          const float *       alpha,
+                          const float *       A,
+                          const unsigned int *lda,
+                          long long int *     strideA,
+                          const float *       B,
+                          const unsigned int *ldb,
+                          long long int *     strideB,
+                          const float *       beta,
+                          float *             C,
+                          const unsigned int *ldc,
+                          const int *         batchCount,
+                          long long int *     strideC) const;
+
     private:
 #  ifdef DFTFE_WITH_DEVICE_AMD
       void
-      initialize() ;
+      initialize();
 #  endif
 
       /// storage for deviceblas handle
@@ -523,17 +704,17 @@ namespace dftfe
 
 
       dftfe::utils::deviceBlasStatus_t
-      create() ;
+      create();
 
       dftfe::utils::deviceBlasStatus_t
-      destroy() ;
+      destroy();
 
       dftfe::utils::deviceBlasStatus_t
-      setStream(dftfe::utils::deviceStream_t     stream) ;
+      setStream(dftfe::utils::deviceStream_t stream);
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t
-      setMathMode(dftfe::utils::deviceBlasMath_t   mathMode) ;
+      setMathMode(dftfe::utils::deviceBlasMath_t mathMode);
 #  endif
     };
 #endif
