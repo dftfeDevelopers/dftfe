@@ -14,14 +14,15 @@
 //
 // ---------------------------------------------------------------------
 //
-
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #include <BLASWrapper.h>
 #include <deviceKernelsGeneric.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
-
+#include <Exceptions.h>
+#include <cublas_v2.h>
 namespace dftfe
 {
   namespace linearAlgebra
@@ -42,26 +43,41 @@ namespace dftfe
       const unsigned int *ldb,
       const float *       beta,
       float *             C,
-      const unsigned int *ldc)
+      const unsigned int *ldc) const
     {
-      dftfe::utils::DEVICEBLAS_OP_N;
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if(*transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transA =='T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else
+        {
+          //Assert Statement
+        }      
+      if(*transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transB =='T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+      else
+        {
+          //Assert Statement
+        } 
+
       dftfe::utils::deviceBlasStatus_t status =
         cublasSgemm(d_deviceBlasHandle,
-                    transA == 'N' ? dftfe::utils::DEVICEBLAS_OP_N :
-                                    dftfe::utils::DEVICEBLAS_OP_T,
-                    transB == 'N' ? dftfe::utils::DEVICEBLAS_OP_N :
-                                    dftfe::utils::DEVICEBLAS_OP_T,
-                    m,
-                    n,
-                    k,
+                    transa,
+                    transb,
+                    int(*m),
+                    int(*n),
+                    int(*k),
                     alpha,
                     A,
-                    lda,
+                    int(*lda),
                     B,
-                    ldb,
+                    int(*ldb),
                     beta,
                     C,
-                    ldc);
+                    int(*ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -80,25 +96,45 @@ namespace dftfe
       const unsigned int *       ldb,
       const std::complex<float> *beta,
       std::complex<float> *      C,
-      const unsigned int *       ldc)
+      const unsigned int *       ldc) const
     {
+            dftfe::utils::deviceBlasOperation_t transa, transb;
+      if(*transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transA =='T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else if(*transA =='C')
+        transa = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          //Assert Statement
+        }      
+      if(*transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transB =='T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (*transB =='C')
+        transb = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          //Assert Statement
+        } 
+
       dftfe::utils::deviceBlasStatus_t status =
         cublasCgemm(d_deviceBlasHandle,
-                    transA == 'N' ? dftfe::utils::DEVICEBLAS_OP_N :
-                                    dftfe::utils::DEVICEBLAS_OP_T,
-                    transT == 'N' ? dftfe::utils::DEVICEBLAS_OP_N :
-                                    dftfe::utils::DEVICEBLAS_OP_T,
-                    m,
-                    n,
-                    k,
+                    transa,
+                    transb,
+                    int(*m),
+                    int(*n),
+                    int(*k),
                     dftfe::utils::makeDataTypeDeviceCompatible(alpha),
                     dftfe::utils::makeDataTypeDeviceCompatible(A),
-                    lda,
+                    int(*lda),
                     dftfe::utils::makeDataTypeDeviceCompatible(B),
-                    ldb,
+                    int(*ldb),
                     dftfe::utils::makeDataTypeDeviceCompatible(beta),
                     dftfe::utils::makeDataTypeDeviceCompatible(C),
-                    ldc);
+                    int(*ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -116,22 +152,43 @@ namespace dftfe
       const unsigned int *ldb,
       const double *      beta,
       double *            C,
-      const unsigned int *ldc)
+      const unsigned int *ldc) const
     {
+            dftfe::utils::deviceBlasOperation_t transa, transb;
+      if(*transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transA =='T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+
+      else
+        {
+          //Assert Statement
+        }      
+      if(*transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transB =='T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+
+      else
+        {
+          //Assert Statement
+        } 
+
+
       dftfe::utils::deviceBlasStatus_t status = cublasDgemm(d_deviceBlasHandle,
-                                                            transA,
-                                                            transB,
-                                                            m,
-                                                            n,
-                                                            k,
+                                                            transa,
+                                                            transb,
+                                                            int(*m),
+                                                            int(*n),
+                                                            int(*k),
                                                             alpha,
                                                             A,
-                                                            lda,
+                                                            int(*lda),
                                                             B,
-                                                            ldb,
+                                                            int(*ldb),
                                                             beta,
                                                             C,
-                                                            ldc);
+                                                            int(*ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -149,23 +206,46 @@ namespace dftfe
       const unsigned int *        ldb,
       const std::complex<double> *beta,
       std::complex<double> *      C,
-      const unsigned int *        ldc)
+      const unsigned int *        ldc) const
     {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if(*transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transA =='T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else if(*transA =='C')
+        transa = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          //Assert Statement
+        }      
+      if(*transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if(*transB =='T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (*transB =='C')
+        transb = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          //Assert Statement
+        } 
+
+
       dftfe::utils::deviceBlasStatus_t status =
         cublasZgemm(d_deviceBlasHandle,
-                    transA,
-                    transB,
-                    m,
-                    n,
-                    k,
+                    transa,
+                    transb,
+                    int(*m),
+                    int(*n),
+                    int(*k),
                     dftfe::utils::makeDataTypeDeviceCompatible(alpha),
                     dftfe::utils::makeDataTypeDeviceCompatible(A),
-                    lda,
+                    int(*lda),
                     dftfe::utils::makeDataTypeDeviceCompatible(B),
-                    ldb,
+                    int(*ldb),
                     dftfe::utils::makeDataTypeDeviceCompatible(beta),
                     dftfe::utils::makeDataTypeDeviceCompatible(C),
-                    ldc);
+                    int(*ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -173,7 +253,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::create()
     {
       dftfe::utils::deviceBlasStatus_t status =
-        cublasCreate(d_deviceBlasHandle);
+        cublasCreate(&d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
@@ -199,7 +279,7 @@ namespace dftfe
 
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::setMathMode(
-      deviceBlasMath_t mathMode)
+      dftfe::utils::deviceBlasMath_t mathMode)
     {
       dftfe::utils::deviceBlasStatus_t status =
         cublasSetMathMode(d_deviceBlasHandle, mathMode);
@@ -214,10 +294,10 @@ namespace dftfe
       double *            x,
       const unsigned int *incx,
       double *            y,
-      const unsigned int *incy)
+      const unsigned int *incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
-        cublasDaxpy(d_deviceBlasHandle, n, alpha, x, incx, y, incy);
+        cublasDaxpy(d_deviceBlasHandle, int(*n), alpha, x, int(*incx), y, int(*incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -228,16 +308,16 @@ namespace dftfe
       std::complex<double> *      x,
       const unsigned int *        incx,
       std::complex<double> *      y,
-      const unsigned int *        incy)
+      const unsigned int *        incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         cublasZaxpy(d_deviceBlasHandle,
-                    n,
+                    int(*n),
                     dftfe::utils::makeDataTypeDeviceCompatible(alpha),
                     dftfe::utils::makeDataTypeDeviceCompatible(x),
-                    incx,
+                    int(*incx),
                     dftfe::utils::makeDataTypeDeviceCompatible(y),
-                    incy);
+                    int(*incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -247,13 +327,15 @@ namespace dftfe
       const double *      X,
       const unsigned int *INCX,
       const double *      Y,
-      const unsigned int *INCY)
+      const unsigned int *INCY,
+      double * result  ) const
     {
       dftfe::utils::deviceBlasStatus_t status =
-        cublasDdot(d_deviceBlasHandle, n, x, incx, y, incy, result);
+        cublasDdot(d_deviceBlasHandle, int(*N), X, int(*INCX), Y, int(*INCY), result);
       DEVICEBLAS_API_CHECK(status);
     }
 
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe
+#endif

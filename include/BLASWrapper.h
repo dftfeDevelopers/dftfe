@@ -142,7 +142,8 @@ namespace dftfe
            const double *      X,
            const unsigned int *INCX,
            const double *      Y,
-           const unsigned int *INCY) const;
+           const unsigned int *INCY,
+           double * result) const;
 
       // Real double Ax+y
       void
@@ -382,7 +383,8 @@ namespace dftfe
            const double *      X,
            const unsigned int *INCX,
            const double *      Y,
-           const unsigned int *INCY) const;
+           const unsigned int *INCY,
+           double * result) const;
 
       // Real double Ax+y
       void
@@ -513,7 +515,7 @@ namespace dftfe
     private:
 #  ifdef DFTFE_WITH_DEVICE_AMD
       void
-      initialize() const;
+      initialize() ;
 #  endif
 
       /// storage for deviceblas handle
@@ -521,19 +523,17 @@ namespace dftfe
 
 
       dftfe::utils::deviceBlasStatus_t
-      create(dftfe::utils::deviceBlasHandle_t *pHandle) const;
+      create() ;
 
       dftfe::utils::deviceBlasStatus_t
-      destroy(dftfe::utils::deviceBlasHandle_t handle) const;
+      destroy() ;
 
       dftfe::utils::deviceBlasStatus_t
-      setStream(dftfe::utils::deviceBlasHandle_t handle,
-                dftfe::utils::deviceStream_t     stream) const;
+      setStream(dftfe::utils::deviceStream_t     stream) ;
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t
-      setMathMode(dftfe::utils::deviceBlasHandle_t handle,
-                  dftfe::utils::deviceBlasMath_t   mathMode) const;
+      setMathMode(dftfe::utils::deviceBlasMath_t   mathMode) ;
 #  endif
     };
 #endif
@@ -543,12 +543,12 @@ namespace dftfe
 } // end of namespace dftfe
 //#include "../utils/BLASWrapper.t.cc"
 //#include "../utils/BLASWrapperHost.t.cc"
-#if defined(DFTFE_WITH_DEVICE)
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-#    include "../utils/BLASWrapperDevice.t.cu.cc"
-#  elif
-#    include "../utils/BLASWrapperDevice.t.hip.cc"
-#  endif
-#endif
+// #if defined(DFTFE_WITH_DEVICE)
+// #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+// #    include "../utils/BLASWrapperDevice.t.cu.cc"
+// #  elif
+// #    include "../utils/BLASWrapperDevice.t.hip.cc"
+// #  endif
+// #endif
 
 #endif // BLASWrapper_h

@@ -86,7 +86,7 @@ namespace dftfe
       const unsigned int *ldb,
       const float *       beta,
       float *             C,
-      const unsigned int *ldc)
+      const unsigned int *ldc) const
     {
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
                                                              transA,
@@ -119,7 +119,7 @@ namespace dftfe
       const unsigned int *       ldb,
       const std::complex<float> *beta,
       std::complex<float> *      C,
-      const unsigned int *       ldc)
+      const unsigned int *       ldc) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasCgemm(d_deviceBlasHandle,
@@ -153,7 +153,7 @@ namespace dftfe
       const unsigned int *ldb,
       const double *      beta,
       double *            C,
-      const unsigned int *ldc)
+      const unsigned int *ldc) const
     {
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
                                                              transA,
@@ -186,7 +186,7 @@ namespace dftfe
       const unsigned int *        ldb,
       const std::complex<double> *beta,
       std::complex<double> *      C,
-      const unsigned int *        ldc)
+      const unsigned int *        ldc) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZgemm(d_deviceBlasHandle,
