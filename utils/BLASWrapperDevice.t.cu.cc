@@ -23,6 +23,7 @@
 #  include <DeviceDataTypeOverloads.h>
 #  include <Exceptions.h>
 #  include <cublas_v2.h>
+#  include "BLASWrapperDeviceKernels.cc"
 namespace dftfe
 {
   namespace linearAlgebra
@@ -265,11 +266,10 @@ namespace dftfe
     }
 
     dftfe::utils::deviceBlasStatus_t
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::setStream(
-      dftfe::utils::deviceStream_t stream)
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::setStream()
     {
       dftfe::utils::deviceBlasStatus_t status =
-        cublasSetStream(d_deviceBlasHandle, stream);
+        cublasSetStream(d_deviceBlasHandle, d_streamId);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
@@ -930,7 +930,170 @@ namespace dftfe
                     int(*inc));
     }
 
+    template <typename ValueTypeComplex, typename ValueTypeReal>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyComplexArrToRealArrs(
+      const dftfe::size_type  size,
+      const ValueTypeComplex *complexArr,
+      ValueTypeReal *         realArr,
+      ValueTypeReal *         imagArr)
+    {
+      copyComplexArrToRealArrsDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(complexArr),
+        realArr,
+        imagArr);
+    }
 
+
+
+    template <typename ValueTypeComplex, typename ValueTypeReal>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyRealArrsToComplexArr(
+      const dftfe::size_type size,
+      const ValueTypeReal *  realArr,
+      const ValueTypeReal *  imagArr,
+      ValueTypeComplex *     complexArr)
+    {
+      copyRealArrsToComplexArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        size,
+        realArr,
+        imagArr,
+        dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                       const ValueType1 *     valueType1Arr,
+                                       ValueType2 *           valueType2Arr)
+    {
+      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        d_streamId>>>(size,
+                      dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        valueType2Arr));
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const ValueType1 *             copyFromVec,
+      ValueType2 *                   copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+    {
+      stridedCopyToBlockDeviceKernel<<<(contiguousBlockSize *
+                                        numContiguousBlocks) /
+                                           dftfe::utils::DEVICE_BLOCK_SIZE +
+                                         1,
+                                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
+        copyFromVecStartingContiguousBlockIds);
+    }
+
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyFromBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const ValueType1 *             copyFromVecBlock,
+      ValueType2 *                   copyToVec,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+    {
+      stridedCopyFromBlockDeviceKernel<<<(contiguousBlockSize *
+                                          numContiguousBlocks) /
+                                             dftfe::utils::DEVICE_BLOCK_SIZE +
+                                           1,
+                                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVecBlock),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVec),
+        copyFromVecStartingContiguousBlockIds);
+    }
+
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const ValueType1 *     copyFromVec,
+                                       ValueType2 *           copyToVec)
+    {
+      stridedCopyToBlockConstantStrideDeviceKernel<<<
+        (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        blockSizeTo,
+        blockSizeFrom,
+        numBlocks,
+        startingId,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyConstantStride(
+      const dftfe::size_type blockSize,
+      const dftfe::size_type strideTo,
+      const dftfe::size_type strideFrom,
+      const dftfe::size_type numBlocks,
+      const dftfe::size_type startingToId,
+      const dftfe::size_type startingFromId,
+      const ValueType1 *     copyFromVec,
+      ValueType2 *           copyToVec)
+    {
+      stridedCopyConstantStrideDeviceKernel<<<
+        (blockSize * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        blockSize,
+        strideTo,
+        strideFrom,
+        numBlocks,
+        startingToId,
+        startingFromId,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+    }
+
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                         const dftfe::size_type blockSizeFrom,
+                                         const dftfe::size_type numBlocks,
+                                         const dftfe::size_type startingId,
+                                         const ValueType1 *     copyFromVec,
+                                         ValueType2 *           copyToVec)
+    {
+      stridedCopyFromBlockConstantStrideDeviceKernel<<<
+        (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        blockSizeTo,
+        blockSizeFrom,
+        numBlocks,
+        startingId,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
+    }
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

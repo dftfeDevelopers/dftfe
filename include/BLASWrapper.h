@@ -362,6 +362,118 @@ namespace dftfe
                           const int *         batchCount,
                           long long int *     strideC) const;
 
+      template <typename ValueTypeComplex, typename ValueTypeReal>
+      void
+      copyComplexArrToRealArrs(const dftfe::size_type  size,
+                               const ValueTypeComplex *complexArr,
+                               ValueTypeReal *         realArr,
+                               ValueTypeReal *         imagArr);
+
+
+      template <typename ValueTypeComplex, typename ValueTypeReal>
+      void
+      copyRealArrsToComplexArr(const dftfe::size_type size,
+                               const ValueTypeReal *  realArr,
+                               const ValueTypeReal *  imagArr,
+                               ValueTypeComplex *     complexArr);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                       const ValueType1 *     valueType1Arr,
+                                       ValueType2 *           valueType2Arr);
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyToBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1 *             copyFromVec,
+        ValueType2 *                   copyToVecBlock,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyFromBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1 *             copyFromVecBlock,
+        ValueType2 *                   copyToVec,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const ValueType1 *     copyFromVec,
+                                       ValueType2 *           copyToVec);
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyConstantStride(const dftfe::size_type blockSize,
+                                const dftfe::size_type strideTo,
+                                const dftfe::size_type strideFrom,
+                                const dftfe::size_type numBlocks,
+                                const dftfe::size_type startingToId,
+                                const dftfe::size_type startingFromId,
+                                const ValueType1 *     copyFromVec,
+                                ValueType2 *           copyToVec);
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                         const dftfe::size_type blockSizeFrom,
+                                         const dftfe::size_type numBlocks,
+                                         const dftfe::size_type startingId,
+                                         const ValueType1 *     copyFromVec,
+                                         ValueType2 *           copyToVec);
+
+      template <typename ValueType>
+      void
+      axpyStridedBlockAtomicAdd(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        ValueType *                    addToVec,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
+
+      template <typename ValueType>
+      void
+      axpyStridedBlockAtomicAdd(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        double *                       addToVecReal,
+        double *                       addToVecImag,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1       a,
+                        const ValueType1 *     s,
+                        ValueType2 *           x);
+
+      void
+      add(double *               y,
+          const double *         x,
+          const double           alpha,
+          const dftfe::size_type size);
+
+      template <typename ValueType>
+      void
+      sadd(ValueType *            y,
+           ValueType *            x,
+           const ValueType        beta,
+           const dftfe::size_type size);
 
     private:
     };
@@ -693,6 +805,119 @@ namespace dftfe
                           const int *         batchCount,
                           long long int *     strideC) const;
 
+      template <typename ValueTypeComplex, typename ValueTypeReal>
+      void
+      copyComplexArrToRealArrs(const dftfe::size_type  size,
+                               const ValueTypeComplex *complexArr,
+                               ValueTypeReal *         realArr,
+                               ValueTypeReal *         imagArr);
+
+
+      template <typename ValueTypeComplex, typename ValueTypeReal>
+      void
+      copyRealArrsToComplexArr(const dftfe::size_type size,
+                               const ValueTypeReal *  realArr,
+                               const ValueTypeReal *  imagArr,
+                               ValueTypeComplex *     complexArr);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                       const ValueType1 *     valueType1Arr,
+                                       ValueType2 *           valueType2Arr);
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyToBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1 *             copyFromVec,
+        ValueType2 *                   copyToVecBlock,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyFromBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType1 *             copyFromVecBlock,
+        ValueType2 *                   copyToVec,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const ValueType1 *     copyFromVec,
+                                       ValueType2 *           copyToVec);
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyConstantStride(const dftfe::size_type blockSize,
+                                const dftfe::size_type strideTo,
+                                const dftfe::size_type strideFrom,
+                                const dftfe::size_type numBlocks,
+                                const dftfe::size_type startingToId,
+                                const dftfe::size_type startingFromId,
+                                const ValueType1 *     copyFromVec,
+                                ValueType2 *           copyToVec);
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                         const dftfe::size_type blockSizeFrom,
+                                         const dftfe::size_type numBlocks,
+                                         const dftfe::size_type startingId,
+                                         const ValueType1 *     copyFromVec,
+                                         ValueType2 *           copyToVec);
+
+      template <typename ValueType>
+      void
+      axpyStridedBlockAtomicAdd(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        ValueType *                    addToVec,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
+
+      template <typename ValueType>
+      void
+      axpyStridedBlockAtomicAdd(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const ValueType *              addFromVec,
+        double *                       addToVecReal,
+        double *                       addToVecImag,
+        const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockScale(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1       a,
+                        const ValueType1 *     s,
+                        ValueType2 *           x);
+
+      void
+      add(double *               y,
+          const double *         x,
+          const double           alpha,
+          const dftfe::size_type size);
+
+      template <typename ValueType>
+      void
+      sadd(ValueType *            y,
+           ValueType *            x,
+           const ValueType        beta,
+           const dftfe::size_type size);
+
     private:
 #  ifdef DFTFE_WITH_DEVICE_AMD
       void
@@ -701,6 +926,7 @@ namespace dftfe
 
       /// storage for deviceblas handle
       dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
+      dftfe::utils::deviceStream_t     d_streamId;
 
 
       dftfe::utils::deviceBlasStatus_t
@@ -710,7 +936,7 @@ namespace dftfe
       destroy();
 
       dftfe::utils::deviceBlasStatus_t
-      setStream(dftfe::utils::deviceStream_t stream);
+      setStream();
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t

@@ -21,6 +21,7 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include "BLASWrapperDeviceKernels.cc"
 
 namespace dftfe
 {
