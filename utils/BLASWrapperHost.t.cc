@@ -21,164 +21,172 @@ namespace dftfe
 {
   namespace linearAlgebra
   {
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::BLASWrapper()
+    {}
+
+
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemm(
-      const char *        transA,
-      const char *        transB,
-      const unsigned int *m,
-      const unsigned int *n,
-      const unsigned int *k,
-      const float *       alpha,
-      const float *       A,
-      const unsigned int *lda,
-      const float *       B,
-      const unsigned int *ldb,
-      const float *       beta,
-      float *             C,
-      const unsigned int *ldc) const
+      const char         transA,
+      const char         transB,
+      const unsigned int m,
+      const unsigned int n,
+      const unsigned int k,
+      const float *      alpha,
+      const float *      A,
+      const unsigned int lda,
+      const float *      B,
+      const unsigned int ldb,
+      const float *      beta,
+      float *            C,
+      const unsigned int ldc) const
     {
-      sgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+      sgemm_(
+        &transA, &transB, &m, &n, &k, alpha, A, &lda, B, &ldb, beta, C, &ldc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemm(
-      const char *        transA,
-      const char *        transB,
-      const unsigned int *m,
-      const unsigned int *n,
-      const unsigned int *k,
-      const double *      alpha,
-      const double *      A,
-      const unsigned int *lda,
-      const double *      B,
-      const unsigned int *ldb,
-      const double *      beta,
-      double *            C,
-      const unsigned int *ldc) const
+      const char         transA,
+      const char         transB,
+      const unsigned int m,
+      const unsigned int n,
+      const unsigned int k,
+      const double *     alpha,
+      const double *     A,
+      const unsigned int lda,
+      const double *     B,
+      const unsigned int ldb,
+      const double *     beta,
+      double *           C,
+      const unsigned int ldc) const
     {
-      dgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+      dgemm_(
+        &transA, &transB, &m, &n, &k, alpha, A, &lda, B, &ldb, beta, C, &ldc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int *n,
-      const double *      alpha,
-      double *            x,
-      const unsigned int *inc) const
+      const unsigned int n,
+      const double *     alpha,
+      double *           x,
+      const unsigned int inc) const
     {
-      dscal_(n, alpha, x, inc);
+      dscal_(&n, alpha, x, &inc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int *n,
-      const float *       alpha,
-      float *             x,
-      const unsigned int *inc) const
+      const unsigned int n,
+      const float *      alpha,
+      float *            x,
+      const unsigned int inc) const
     {
-      sscal_(n, alpha, x, inc);
+      sscal_(&n, alpha, x, &inc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
-      const unsigned int *n,
-      const double *      x,
-      const unsigned int *incx,
-      double *            y,
-      const unsigned int *incy) const
+      const unsigned int n,
+      const double *     x,
+      const unsigned int incx,
+      double *           y,
+      const unsigned int incy) const
     {
-      dcopy_(n, x, incx, y, incy);
+      dcopy_(&n, x, &incx, y, &incy);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
-      const unsigned int *n,
-      const float *       x,
-      const unsigned int *incx,
-      float *             y,
-      const unsigned int *incy) const
+      const unsigned int n,
+      const float *      x,
+      const unsigned int incx,
+      float *            y,
+      const unsigned int incy) const
     {
-      scopy_(n, x, incx, y, incy);
+      scopy_(&n, x, &incx, y, &incy);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemm(
-      const char *               transA,
-      const char *               transB,
-      const unsigned int *       m,
-      const unsigned int *       n,
-      const unsigned int *       k,
+      const char                 transA,
+      const char                 transB,
+      const unsigned int         m,
+      const unsigned int         n,
+      const unsigned int         k,
       const std::complex<float> *alpha,
       const std::complex<float> *A,
-      const unsigned int *       lda,
+      const unsigned int         lda,
       const std::complex<float> *B,
-      const unsigned int *       ldb,
+      const unsigned int         ldb,
       const std::complex<float> *beta,
       std::complex<float> *      C,
-      const unsigned int *       ldc) const
+      const unsigned int         ldc) const
     {
-      cgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+      cgemm_(
+        &transA, &transB, &m, &n, &k, alpha, A, &lda, B, &ldb, beta, C, &ldc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemm(
-      const char *                transA,
-      const char *                transB,
-      const unsigned int *        m,
-      const unsigned int *        n,
-      const unsigned int *        k,
+      const char                  transA,
+      const char                  transB,
+      const unsigned int          m,
+      const unsigned int          n,
+      const unsigned int          k,
       const std::complex<double> *alpha,
       const std::complex<double> *A,
-      const unsigned int *        lda,
+      const unsigned int          lda,
       const std::complex<double> *B,
-      const unsigned int *        ldb,
+      const unsigned int          ldb,
       const std::complex<double> *beta,
       std::complex<double> *      C,
-      const unsigned int *        ldc) const
+      const unsigned int          ldc) const
     {
-      zgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+      zgemm_(
+        &transA, &transB, &m, &n, &k, alpha, A, &lda, B, &ldb, beta, C, &ldc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int *        n,
+      const unsigned int          n,
       const std::complex<double> *alpha,
       std::complex<double> *      x,
-      const unsigned int *        inc) const
+      const unsigned int          inc) const
     {
-      zscal_(n, alpha, x, inc);
+      zscal_(&n, alpha, x, &inc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int *  n,
+      const unsigned int    n,
       const double *        alpha,
       std::complex<double> *x,
-      const unsigned int *  inc) const
+      const unsigned int    inc) const
     {
-      zdscal_(n, alpha, x, inc);
+      zdscal_(&n, alpha, x, &inc);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
-      const unsigned int *        n,
+      const unsigned int          n,
       const std::complex<double> *x,
-      const unsigned int *        incx,
+      const unsigned int          incx,
       std::complex<double> *      y,
-      const unsigned int *        incy) const
+      const unsigned int          incy) const
     {
-      zcopy_(n, x, incx, y, incy);
+      zcopy_(&n, x, &incx, y, &incy);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xnrm2(
-      const unsigned int *n,
-      const double *      x,
-      const unsigned int *incx,
-      const MPI_Comm &    mpi_communicator,
-      double *            result) const
+      const unsigned int n,
+      const double *     x,
+      const unsigned int incx,
+      const MPI_Comm &   mpi_communicator,
+      double *           result) const
     {
-      double localresult = dnrm2_(n, x, incx);
+      double localresult = dnrm2_(&n, x, &incx);
       localresult *= localresult;
       MPI_Allreduce(
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -186,13 +194,13 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xnrm2(
-      const unsigned int *        n,
+      const unsigned int          n,
       const std::complex<double> *x,
-      const unsigned int *        incx,
+      const unsigned int          incx,
       const MPI_Comm &            mpi_communicator,
       double *                    result) const
     {
-      double localresult = dznrm2_(n, x, incx);
+      double localresult = dznrm2_(&n, x, &incx);
       localresult *= localresult;
       MPI_Allreduce(
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -200,151 +208,151 @@ namespace dftfe
 
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(const unsigned int *N,
-                                                       const double *      X,
-                                                       const unsigned int *INCX,
-                                                       const double *      Y,
-                                                       const unsigned int *INCY,
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(const unsigned int N,
+                                                       const double *     X,
+                                                       const unsigned int INCX,
+                                                       const double *     Y,
+                                                       const unsigned int INCY,
                                                        double *result) const
     {
-      *result = ddot_(N, X, INCX, Y, INCY);
+      *result = ddot_(&N, X, &INCX, Y, &INCY);
     }
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
-      const unsigned int *        N,
+      const unsigned int          N,
       const std::complex<double> *X,
-      const unsigned int *        INCX,
+      const unsigned int          INCX,
       const std::complex<double> *Y,
-      const unsigned int *        INCY,
+      const unsigned int          INCY,
       std::complex<double> *      result) const
     {
-      *result = zdotc_(N, X, INCX, Y, INCY);
+      *result = zdotc_(&N, X, &INCX, Y, &INCY);
     }
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
-      const unsigned int *n,
-      const double *      alpha,
-      double *            x,
-      const unsigned int *incx,
-      double *            y,
-      const unsigned int *incy) const
+      const unsigned int n,
+      const double *     alpha,
+      double *           x,
+      const unsigned int incx,
+      double *           y,
+      const unsigned int incy) const
     {
-      daxpy_(n, alpha, x, incx, y, incy);
+      daxpy_(&n, alpha, x, &incx, y, &incy);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
-      const unsigned int *        n,
+      const unsigned int          n,
       const std::complex<double> *alpha,
       std::complex<double> *      x,
-      const unsigned int *        incx,
+      const unsigned int          incx,
       std::complex<double> *      y,
-      const unsigned int *        incy) const
+      const unsigned int          incy) const
     {
-      zaxpy_(n, alpha, x, incx, y, incy);
+      zaxpy_(&n, alpha, x, &incx, y, &incy);
     }
 
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xsymv(
-      const char *        UPLO,
-      const unsigned int *N,
-      const double *      alpha,
-      const double *      A,
-      const unsigned int *LDA,
-      const double *      X,
-      const unsigned int *INCX,
-      const double *      beta,
-      double *            C,
-      const unsigned int *INCY) const
+      const char         UPLO,
+      const unsigned int N,
+      const double *     alpha,
+      const double *     A,
+      const unsigned int LDA,
+      const double *     X,
+      const unsigned int INCX,
+      const double *     beta,
+      double *           C,
+      const unsigned int INCY) const
     {
-      dsymv_(UPLO, N, alpha, A, LDA, X, INCX, beta, C, INCY);
+      dsymv_(&UPLO, &N, alpha, A, &LDA, X, &INCX, beta, C, &INCY);
     }
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
-      const char *        transA,
-      const char *        transB,
-      const unsigned int *m,
-      const unsigned int *n,
-      const unsigned int *k,
-      const double *      alpha,
-      const double *      A[],
-      const unsigned int *lda,
-      const double *      B[],
-      const unsigned int *ldb,
-      const double *      beta,
-      double *            C[],
-      const unsigned int *ldc,
-      const int *         batchCount) const
+      const char         transA,
+      const char         transB,
+      const unsigned int m,
+      const unsigned int n,
+      const unsigned int k,
+      const double *     alpha,
+      const double *     A[],
+      const unsigned int lda,
+      const double *     B[],
+      const unsigned int ldb,
+      const double *     beta,
+      double *           C[],
+      const unsigned int ldc,
+      const int          batchCount) const
     {}
 
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
-      const char *                transA,
-      const char *                transB,
-      const unsigned int *        m,
-      const unsigned int *        n,
-      const unsigned int *        k,
+      const char                  transA,
+      const char                  transB,
+      const unsigned int          m,
+      const unsigned int          n,
+      const unsigned int          k,
       const std::complex<double> *alpha,
       const std::complex<double> *A[],
-      const unsigned int *        lda,
+      const unsigned int          lda,
       const std::complex<double> *B[],
-      const unsigned int *        ldb,
+      const unsigned int          ldb,
       const std::complex<double> *beta,
       std::complex<double> *      C[],
-      const unsigned int *        ldc,
-      const int *                 batchCount) const
+      const unsigned int          ldc,
+      const int                   batchCount) const
     {}
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmStridedBatched(
-      const char *        transA,
-      const char *        transB,
-      const unsigned int *m,
-      const unsigned int *n,
-      const unsigned int *k,
-      const double *      alpha,
-      const double *      A,
-      const unsigned int *lda,
-      long long int *     strideA,
-      const double *      B,
-      const unsigned int *ldb,
-      long long int *     strideB,
-      const double *      beta,
-      double *            C,
-      const unsigned int *ldc,
-      const int *         batchCount,
-      long long int *     strideC) const
+      const char         transA,
+      const char         transB,
+      const unsigned int m,
+      const unsigned int n,
+      const unsigned int k,
+      const double *     alpha,
+      const double *     A,
+      const unsigned int lda,
+      long long int      strideA,
+      const double *     B,
+      const unsigned int ldb,
+      long long int      strideB,
+      const double *     beta,
+      double *           C,
+      const unsigned int ldc,
+      const int          batchCount,
+      long long int      strideC) const
     {}
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmStridedBatched(
-      const char *                transA,
-      const char *                transB,
-      const unsigned int *        m,
-      const unsigned int *        n,
-      const unsigned int *        k,
+      const char                  transA,
+      const char                  transB,
+      const unsigned int          m,
+      const unsigned int          n,
+      const unsigned int          k,
       const std::complex<double> *alpha,
       const std::complex<double> *A,
-      const unsigned int *        lda,
-      long long int *             strideA,
+      const unsigned int          lda,
+      long long int               strideA,
       const std::complex<double> *B,
-      const unsigned int *        ldb,
-      long long int *             strideB,
+      const unsigned int          ldb,
+      long long int               strideB,
       const std::complex<double> *beta,
       std::complex<double> *      C,
-      const unsigned int *        ldc,
-      const int *                 batchCount,
-      long long int *             strideC) const
+      const unsigned int          ldc,
+      const int                   batchCount,
+      long long int               strideC) const
     {}
 
     template <typename ValueTypeComplex, typename ValueTypeReal>

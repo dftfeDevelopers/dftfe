@@ -29,10 +29,13 @@ namespace dftfe
       FEBasisOperationsBase(
         dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-          &constraintsVector)
+          &constraintsVector,
+        std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+          BLASWrapperPtr)
     {
       d_matrixFreeDataPtr = &matrixFreeData;
       d_constraintsVector = &constraintsVector;
+      d_BLASWrapperPtr    = BLASWrapperPtr;
       d_dofHandlerID      = 0;
       d_nVectors          = 0;
       d_updateFlags       = update_default;

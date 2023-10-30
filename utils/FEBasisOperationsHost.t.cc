@@ -138,44 +138,84 @@ namespace dftfe
           const char transA = 'N', transB = 'N';
 
           if (quadratureValues != NULL)
-            xgemm(&transA,
-                  &transB,
-                  &d_nVectors,
-                  &d_nQuadsPerCell[d_quadratureID],
-                  &d_nDofsPerCell,
-                  &scalarCoeffAlpha,
-                  cellNodalValues +
-                    d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
-                  &d_nVectors,
-                  d_shapeFunctionData[d_quadratureID].data(),
-                  &d_nDofsPerCell,
-                  &scalarCoeffBeta,
-                  quadratureValues + d_nQuadsPerCell[d_quadratureID] *
-                                       (iCell - cellRange.first) * d_nVectors,
-                  &d_nVectors);
+            // xgemm(&transA,
+            //       &transB,
+            //       &d_nVectors,
+            //       &d_nQuadsPerCell[d_quadratureID],
+            //       &d_nDofsPerCell,
+            //       &scalarCoeffAlpha,
+            //       cellNodalValues +
+            //         d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
+            //       &d_nVectors,
+            //       d_shapeFunctionData[d_quadratureID].data(),
+            //       &d_nDofsPerCell,
+            //       &scalarCoeffBeta,
+            //       quadratureValues + d_nQuadsPerCell[d_quadratureID] *
+            //                            (iCell - cellRange.first) *
+            //                            d_nVectors,
+            //       &d_nVectors);
+            d_BLASWrapperPtr->xgemm(transA,
+                                    transB,
+                                    d_nVectors,
+                                    d_nQuadsPerCell[d_quadratureID],
+                                    d_nDofsPerCell,
+                                    &scalarCoeffAlpha,
+                                    cellNodalValues +
+                                      d_nDofsPerCell *
+                                        (iCell - cellRange.first) * d_nVectors,
+                                    d_nVectors,
+                                    d_shapeFunctionData[d_quadratureID].data(),
+                                    d_nDofsPerCell,
+                                    &scalarCoeffBeta,
+                                    quadratureValues +
+                                      d_nQuadsPerCell[d_quadratureID] *
+                                        (iCell - cellRange.first) * d_nVectors,
+                                    d_nVectors);
           if (quadratureGradients != NULL)
             {
               const unsigned int d_nQuadsPerCellTimesThree =
                 d_nQuadsPerCell[d_quadratureID] * 3;
-              xgemm(&transA,
-                    &transB,
-                    &d_nVectors,
-                    &d_nQuadsPerCellTimesThree,
-                    &d_nDofsPerCell,
-                    &scalarCoeffAlpha,
-                    cellNodalValues +
-                      d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
-                    &d_nVectors,
-                    d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
-                      .data(),
-                    &d_nDofsPerCell,
-                    &scalarCoeffBeta,
-                    areAllCellsCartesian ?
-                      (quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
-                                               d_nVectors * 3 *
-                                               (iCell - cellRange.first)) :
-                      (tempQuadratureGradientsData.data()),
-                    &d_nVectors);
+              d_BLASWrapperPtr->xgemm(
+                transA,
+                transB,
+                d_nVectors,
+                d_nQuadsPerCellTimesThree,
+                d_nDofsPerCell,
+                &scalarCoeffAlpha,
+                cellNodalValues +
+                  d_nDofsPerCell * (iCell - cellRange.first) * d_nVectors,
+                d_nVectors,
+                d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
+                  .data(),
+                d_nDofsPerCell,
+                &scalarCoeffBeta,
+                areAllCellsCartesian ?
+                  (quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
+                                           d_nVectors * 3 *
+                                           (iCell - cellRange.first)) :
+                  (tempQuadratureGradientsData.data()),
+                d_nVectors);
+              // xgemm(&transA,
+              //       &transB,
+              //       &d_nVectors,
+              //       &d_nQuadsPerCellTimesThree,
+              //       &d_nDofsPerCell,
+              //       &scalarCoeffAlpha,
+              //       cellNodalValues +
+              //         d_nDofsPerCell * (iCell - cellRange.first) *
+              //         d_nVectors,
+              //       &d_nVectors,
+              //       d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
+              //         .data(),
+              //       &d_nDofsPerCell,
+              //       &scalarCoeffBeta,
+              //       areAllCellsCartesian ?
+              //         (quadratureGradients + d_nQuadsPerCell[d_quadratureID]
+              //         *
+              //                                  d_nVectors * 3 *
+              //                                  (iCell - cellRange.first)) :
+              //         (tempQuadratureGradientsData.data()),
+              //       &d_nVectors);
               if (areAllCellsCartesian)
                 {
                   const unsigned int d_nQuadsPerCellTimesnVectors =
@@ -195,21 +235,40 @@ namespace dftfe
                   const unsigned int d_nQuadsPerCellTimesnVectors =
                     d_nQuadsPerCell[d_quadratureID] * d_nVectors;
                   const unsigned int three = 3;
-                  xgemm(&transA,
-                        &transB,
-                        &d_nQuadsPerCellTimesnVectors,
-                        &three,
-                        &three,
-                        &scalarCoeffAlpha,
-                        tempQuadratureGradientsData.data(),
-                        &d_nQuadsPerCellTimesnVectors,
-                        d_inverseJacobianData[0].data() + 9 * iCell,
-                        &three,
-                        &scalarCoeffBeta,
-                        quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
-                                                d_nVectors * 3 *
-                                                (iCell - cellRange.first),
-                        &d_nQuadsPerCellTimesnVectors);
+                  d_BLASWrapperPtr->xgemm(transA,
+                                          transB,
+                                          d_nQuadsPerCellTimesnVectors,
+                                          three,
+                                          three,
+                                          &scalarCoeffAlpha,
+                                          tempQuadratureGradientsData.data(),
+                                          d_nQuadsPerCellTimesnVectors,
+                                          d_inverseJacobianData[0].data() +
+                                            9 * iCell,
+                                          three,
+                                          &scalarCoeffBeta,
+                                          quadratureGradients +
+                                            d_nQuadsPerCell[d_quadratureID] *
+                                              d_nVectors * 3 *
+                                              (iCell - cellRange.first),
+                                          d_nQuadsPerCellTimesnVectors);
+
+                  // xgemm(&transA,
+                  //       &transB,
+                  //       &d_nQuadsPerCellTimesnVectors,
+                  //       &three,
+                  //       &three,
+                  //       &scalarCoeffAlpha,
+                  //       tempQuadratureGradientsData.data(),
+                  //       &d_nQuadsPerCellTimesnVectors,
+                  //       d_inverseJacobianData[0].data() + 9 * iCell,
+                  //       &three,
+                  //       &scalarCoeffBeta,
+                  //       quadratureGradients + d_nQuadsPerCell[d_quadratureID]
+                  //       *
+                  //                               d_nVectors * 3 *
+                  //                               (iCell - cellRange.first),
+                  //       &d_nQuadsPerCellTimesnVectors);
                 }
               else
                 {
@@ -217,23 +276,41 @@ namespace dftfe
                   for (unsigned int iQuad = 0;
                        iQuad < d_nQuadsPerCell[d_quadratureID];
                        ++iQuad)
-                    xgemm(&transA,
-                          &transB,
-                          &d_nVectors,
-                          &three,
-                          &three,
-                          &scalarCoeffAlpha,
-                          tempQuadratureGradientsData.data() +
-                            iQuad * d_nVectors * 3,
-                          &d_nVectors,
-                          d_inverseJacobianData[d_quadratureID].data() +
-                            9 * d_nQuadsPerCell[d_quadratureID] * iCell +
-                            9 * iQuad,
-                          &three,
-                          &scalarCoeffBeta,
-                          tempQuadratureGradientsDataNonAffine.data() +
-                            iQuad * d_nVectors * 3,
-                          &d_nVectors);
+                    // xgemm(&transA,
+                    //       &transB,
+                    //       &d_nVectors,
+                    //       &three,
+                    //       &three,
+                    //       &scalarCoeffAlpha,
+                    //       tempQuadratureGradientsData.data() +
+                    //         iQuad * d_nVectors * 3,
+                    //       &d_nVectors,
+                    //       d_inverseJacobianData[d_quadratureID].data() +
+                    //         9 * d_nQuadsPerCell[d_quadratureID] * iCell +
+                    //         9 * iQuad,
+                    //       &three,
+                    //       &scalarCoeffBeta,
+                    //       tempQuadratureGradientsDataNonAffine.data() +
+                    //         iQuad * d_nVectors * 3,
+                    //       &d_nVectors);
+                    d_BLASWrapperPtr->xgemm(
+                      transA,
+                      transB,
+                      d_nVectors,
+                      three,
+                      three,
+                      &scalarCoeffAlpha,
+                      tempQuadratureGradientsData.data() +
+                        iQuad * d_nVectors * 3,
+                      d_nVectors,
+                      d_inverseJacobianData[d_quadratureID].data() +
+                        9 * d_nQuadsPerCell[d_quadratureID] * iCell + 9 * iQuad,
+                      three,
+                      &scalarCoeffBeta,
+                      tempQuadratureGradientsDataNonAffine.data() +
+                        iQuad * d_nVectors * 3,
+                      d_nVectors);
+
                   for (unsigned int iQuad = 0;
                        iQuad < d_nQuadsPerCell[d_quadratureID];
                        ++iQuad)
@@ -289,20 +366,33 @@ namespace dftfe
           const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                     scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
           const char transA = 'N', transB = 'T';
-
-          xgemm(&transA,
-                &transB,
-                &d_nVectors,
-                &d_nDofsPerCell,
-                &d_nQuadsPerCell[d_quadratureID],
-                &scalarCoeffAlpha,
-                quadratureValues + d_nQuadsPerCell[d_quadratureID] * iCell,
-                &d_nVectors,
-                d_shapeFunctionData[d_quadratureID].data(),
-                &d_nQuadsPerCell[d_quadratureID],
-                &scalarCoeffBeta,
-                cellNodalData.data() + d_nDofsPerCell * iCell,
-                &d_nVectors);
+          d_BLASWrapperPtr->xgemm(transA,
+                                  transB,
+                                  d_nVectors,
+                                  d_nDofsPerCell,
+                                  d_nQuadsPerCell[d_quadratureID],
+                                  &scalarCoeffAlpha,
+                                  quadratureValues +
+                                    d_nQuadsPerCell[d_quadratureID] * iCell,
+                                  d_nVectors,
+                                  d_shapeFunctionData[d_quadratureID].data(),
+                                  d_nQuadsPerCell[d_quadratureID],
+                                  &scalarCoeffBeta,
+                                  cellNodalData.data() + d_nDofsPerCell * iCell,
+                                  d_nVectors);
+          // xgemm(&transA,
+          //       &transB,
+          //       &d_nVectors,
+          //       &d_nDofsPerCell,
+          //       &d_nQuadsPerCell[d_quadratureID],
+          //       &scalarCoeffAlpha,
+          //       quadratureValues + d_nQuadsPerCell[d_quadratureID] * iCell,
+          //       &d_nVectors,
+          //       d_shapeFunctionData[d_quadratureID].data(),
+          //       &d_nQuadsPerCell[d_quadratureID],
+          //       &scalarCoeffBeta,
+          //       cellNodalData.data() + d_nDofsPerCell * iCell,
+          //       &d_nVectors);
           if (quadratureGradients != NULL)
             {
               if (areAllCellsCartesian)
@@ -328,20 +418,37 @@ namespace dftfe
                   const unsigned int d_nQuadsPerCellTimesnVectors =
                     d_nQuadsPerCell[d_quadratureID] * d_nVectors;
                   const unsigned int three = 3;
-                  xgemm(&transA,
-                        &transB,
-                        &d_nQuadsPerCellTimesnVectors,
-                        &three,
-                        &three,
-                        &scalarCoeffAlpha,
-                        quadratureGradients + d_nQuadsPerCell[d_quadratureID] *
-                                                d_nVectors * 3 * iCell,
-                        &d_nQuadsPerCellTimesnVectors,
-                        d_inverseJacobianData[0].data() + 9 * iCell,
-                        &three,
-                        &scalarCoeffBeta,
-                        tempQuadratureGradientsData.data(),
-                        &d_nQuadsPerCellTimesnVectors);
+                  // xgemm(&transA,
+                  //       &transB,
+                  //       &d_nQuadsPerCellTimesnVectors,
+                  //       &three,
+                  //       &three,
+                  //       &scalarCoeffAlpha,
+                  //       quadratureGradients + d_nQuadsPerCell[d_quadratureID]
+                  //       *
+                  //                               d_nVectors * 3 * iCell,
+                  //       &d_nQuadsPerCellTimesnVectors,
+                  //       d_inverseJacobianData[0].data() + 9 * iCell,
+                  //       &three,
+                  //       &scalarCoeffBeta,
+                  //       tempQuadratureGradientsData.data(),
+                  //       &d_nQuadsPerCellTimesnVectors);
+                  d_BLASWrapperPtr->xgemm(transA,
+                                          transB,
+                                          d_nQuadsPerCellTimesnVectors,
+                                          three,
+                                          three,
+                                          &scalarCoeffAlpha,
+                                          quadratureGradients +
+                                            d_nQuadsPerCell[d_quadratureID] *
+                                              d_nVectors * 3 * iCell,
+                                          d_nQuadsPerCellTimesnVectors,
+                                          d_inverseJacobianData[0].data() +
+                                            9 * iCell,
+                                          three,
+                                          &scalarCoeffBeta,
+                                          tempQuadratureGradientsData.data(),
+                                          d_nQuadsPerCellTimesnVectors);
                 }
               else
                 {
@@ -362,40 +469,72 @@ namespace dftfe
                   for (unsigned int iQuad = 0;
                        iQuad < d_nQuadsPerCell[d_quadratureID];
                        ++iQuad)
-                    xgemm(&transA,
-                          &transB,
-                          &d_nVectors,
-                          &three,
-                          &three,
-                          &scalarCoeffAlpha,
-                          tempQuadratureGradientsDataNonAffine.data() +
-                            d_nVectors * 3 * iQuad,
-                          &d_nVectors,
-                          d_inverseJacobianData[d_quadratureID].data() +
-                            9 * d_nQuadsPerCell[d_quadratureID] * iCell +
-                            9 * iQuad,
-                          &three,
-                          &scalarCoeffBeta,
-                          tempQuadratureGradientsData.data() +
-                            d_nVectors * 3 * iQuad,
-                          &d_nVectors);
+                    d_BLASWrapperPtr->xgemm(
+                      transA,
+                      transB,
+                      d_nVectors,
+                      three,
+                      three,
+                      &scalarCoeffAlpha,
+                      tempQuadratureGradientsDataNonAffine.data() +
+                        d_nVectors * 3 * iQuad,
+                      d_nVectors,
+                      d_inverseJacobianData[d_quadratureID].data() +
+                        9 * d_nQuadsPerCell[d_quadratureID] * iCell + 9 * iQuad,
+                      three,
+                      &scalarCoeffBeta,
+                      tempQuadratureGradientsData.data() +
+                        d_nVectors * 3 * iQuad,
+                      d_nVectors);
+                  // xgemm(&transA,
+                  //       &transB,
+                  //       &d_nVectors,
+                  //       &three,
+                  //       &three,
+                  //       &scalarCoeffAlpha,
+                  //       tempQuadratureGradientsDataNonAffine.data() +
+                  //         d_nVectors * 3 * iQuad,
+                  //       &d_nVectors,
+                  //       d_inverseJacobianData[d_quadratureID].data() +
+                  //         9 * d_nQuadsPerCell[d_quadratureID] * iCell +
+                  //         9 * iQuad,
+                  //       &three,
+                  //       &scalarCoeffBeta,
+                  //       tempQuadratureGradientsData.data() +
+                  //         d_nVectors * 3 * iQuad,
+                  //       &d_nVectors);
                 }
               const unsigned int d_nQuadsPerCellTimesThree =
                 d_nQuadsPerCell[d_quadratureID] * 3;
-              xgemm(&transA,
-                    &transB,
-                    &d_nVectors,
-                    &d_nQuadsPerCellTimesThree,
-                    &d_nDofsPerCell,
-                    &scalarCoeffAlpha,
-                    tempQuadratureGradientsData.data(),
-                    &d_nVectors,
-                    d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
-                      .data(),
-                    &d_nDofsPerCell,
-                    &scalarCoeffBeta,
-                    cellNodalData.data() + d_nDofsPerCell * iCell,
-                    &d_nVectors);
+              d_BLASWrapperPtr->xgemm(
+                transA,
+                transB,
+                d_nVectors,
+                d_nQuadsPerCellTimesThree,
+                d_nDofsPerCell,
+                &scalarCoeffAlpha,
+                tempQuadratureGradientsData.data(),
+                d_nVectors,
+                d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
+                  .data(),
+                d_nDofsPerCell,
+                &scalarCoeffBeta,
+                cellNodalData.data() + d_nDofsPerCell * iCell,
+                d_nVectors);
+              // xgemm(&transA,
+              //       &transB,
+              //       &d_nVectors,
+              //       &d_nQuadsPerCellTimesThree,
+              //       &d_nDofsPerCell,
+              //       &scalarCoeffAlpha,
+              //       tempQuadratureGradientsData.data(),
+              //       &d_nVectors,
+              //       d_shapeFunctionGradientDataInternalLayout[d_quadratureID]
+              //         .data(),
+              //       &d_nDofsPerCell,
+              //       &scalarCoeffBeta,
+              //       cellNodalData.data() + d_nDofsPerCell * iCell,
+              //       &d_nVectors);
             }
           accumulateFromCellNodalDataKernel(
             cellNodalData.data(),

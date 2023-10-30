@@ -37,330 +37,330 @@ namespace dftfe
     class BLASWrapper<dftfe::utils::MemorySpace::HOST>
     {
     public:
-      // BLASWrapper()const;
+      BLASWrapper();
       // Real-Single Precision GEMM
       void
-      xgemm(const char *        transA,
-            const char *        transB,
-            const unsigned int *m,
-            const unsigned int *n,
-            const unsigned int *k,
-            const float *       alpha,
-            const float *       A,
-            const unsigned int *lda,
-            const float *       B,
-            const unsigned int *ldb,
-            const float *       beta,
-            float *             C,
-            const unsigned int *ldc) const;
+      xgemm(const char         transA,
+            const char         transB,
+            const unsigned int m,
+            const unsigned int n,
+            const unsigned int k,
+            const float *      alpha,
+            const float *      A,
+            const unsigned int lda,
+            const float *      B,
+            const unsigned int ldb,
+            const float *      beta,
+            float *            C,
+            const unsigned int ldc) const;
       // Complex-Single Precision GEMM
       void
-      xgemm(const char *               transA,
-            const char *               transB,
-            const unsigned int *       m,
-            const unsigned int *       n,
-            const unsigned int *       k,
+      xgemm(const char                 transA,
+            const char                 transB,
+            const unsigned int         m,
+            const unsigned int         n,
+            const unsigned int         k,
             const std::complex<float> *alpha,
             const std::complex<float> *A,
-            const unsigned int *       lda,
+            const unsigned int         lda,
             const std::complex<float> *B,
-            const unsigned int *       ldb,
+            const unsigned int         ldb,
             const std::complex<float> *beta,
             std::complex<float> *      C,
-            const unsigned int *       ldc) const;
+            const unsigned int         ldc) const;
 
       // Real-double precison GEMM
       void
-      xgemm(const char *        transA,
-            const char *        transB,
-            const unsigned int *m,
-            const unsigned int *n,
-            const unsigned int *k,
-            const double *      alpha,
-            const double *      A,
-            const unsigned int *lda,
-            const double *      B,
-            const unsigned int *ldb,
-            const double *      beta,
-            double *            C,
-            const unsigned int *ldc) const;
+      xgemm(const char         transA,
+            const char         transB,
+            const unsigned int m,
+            const unsigned int n,
+            const unsigned int k,
+            const double *     alpha,
+            const double *     A,
+            const unsigned int lda,
+            const double *     B,
+            const unsigned int ldb,
+            const double *     beta,
+            double *           C,
+            const unsigned int ldc) const;
 
 
       // Complex-double precision GEMM
       void
-      xgemm(const char *                transA,
-            const char *                transB,
-            const unsigned int *        m,
-            const unsigned int *        n,
-            const unsigned int *        k,
+      xgemm(const char                  transA,
+            const char                  transB,
+            const unsigned int          m,
+            const unsigned int          n,
+            const unsigned int          k,
             const std::complex<double> *alpha,
             const std::complex<double> *A,
-            const unsigned int *        lda,
+            const unsigned int          lda,
             const std::complex<double> *B,
-            const unsigned int *        ldb,
+            const unsigned int          ldb,
             const std::complex<double> *beta,
             std::complex<double> *      C,
-            const unsigned int *        ldc) const;
+            const unsigned int          ldc) const;
 
       // Real-Double scaling of Real-vector
       void
-      xscal(const unsigned int *n,
-            const double *      alpha,
-            double *            x,
-            const unsigned int *inc) const;
+      xscal(const unsigned int n,
+            const double *     alpha,
+            double *           x,
+            const unsigned int inc) const;
 
       // Real-Float scaling of Real-vector
       void
-      xscal(const unsigned int *n,
-            const float *       alpha,
-            float *             x,
-            const unsigned int *inc) const;
+      xscal(const unsigned int n,
+            const float *      alpha,
+            float *            x,
+            const unsigned int inc) const;
 
       // Complex-double scaling of complex-vector
       void
-      xscal(const unsigned int *        n,
+      xscal(const unsigned int          n,
             const std::complex<double> *alpha,
             std::complex<double> *      x,
-            const unsigned int *        inc) const;
+            const unsigned int          inc) const;
 
       // Real-double scaling of complex-vector
       void
-      xscal(const unsigned int *  n,
+      xscal(const unsigned int    n,
             const double *        alpha,
             std::complex<double> *x,
-            const unsigned int *  inc) const;
+            const unsigned int    inc) const;
 
       // Real double Norm2
       void
-      xnrm2(const unsigned int *n,
-            const double *      x,
-            const unsigned int *incx,
-            const MPI_Comm &    mpi_communicator,
-            double *            result) const;
+      xnrm2(const unsigned int n,
+            const double *     x,
+            const unsigned int incx,
+            const MPI_Comm &   mpi_communicator,
+            double *           result) const;
 
 
       // Comples double Norm2
       void
-      xnrm2(const unsigned int *        n,
+      xnrm2(const unsigned int          n,
             const std::complex<double> *x,
-            const unsigned int *        incx,
+            const unsigned int          incx,
             const MPI_Comm &            mpi_communicator,
             double *                    result) const;
       // Real dot product
       void
-      xdot(const unsigned int *N,
-           const double *      X,
-           const unsigned int *INCX,
-           const double *      Y,
-           const unsigned int *INCY,
-           double *            result) const;
+      xdot(const unsigned int N,
+           const double *     X,
+           const unsigned int INCX,
+           const double *     Y,
+           const unsigned int INCY,
+           double *           result) const;
 
 
       // Complex dot product
       void
-      xdot(const unsigned int *        N,
+      xdot(const unsigned int          N,
            const std::complex<double> *X,
-           const unsigned int *        INCX,
+           const unsigned int          INCX,
            const std::complex<double> *Y,
-           const unsigned int *        INCY,
+           const unsigned int          INCY,
            std::complex<double> *      result) const;
 
       // Real double Ax+y
       void
-      xaxpy(const unsigned int *n,
-            const double *      alpha,
-            double *            x,
-            const unsigned int *incx,
-            double *            y,
-            const unsigned int *incy) const;
+      xaxpy(const unsigned int n,
+            const double *     alpha,
+            double *           x,
+            const unsigned int incx,
+            double *           y,
+            const unsigned int incy) const;
 
       // Complex double Ax+y
       void
-      xaxpy(const unsigned int *        n,
+      xaxpy(const unsigned int          n,
             const std::complex<double> *alpha,
             std::complex<double> *      x,
-            const unsigned int *        incx,
+            const unsigned int          incx,
             std::complex<double> *      y,
-            const unsigned int *        incy) const;
+            const unsigned int          incy) const;
 
       // Real copy of double data
       void
-      xcopy(const unsigned int *n,
-            const double *      x,
-            const unsigned int *incx,
-            double *            y,
-            const unsigned int *incy) const;
+      xcopy(const unsigned int n,
+            const double *     x,
+            const unsigned int incx,
+            double *           y,
+            const unsigned int incy) const;
 
       // Complex double copy of data
       void
-      xcopy(const unsigned int *        n,
+      xcopy(const unsigned int          n,
             const std::complex<double> *x,
-            const unsigned int *        incx,
+            const unsigned int          incx,
             std::complex<double> *      y,
-            const unsigned int *        incy) const;
+            const unsigned int          incy) const;
 
       // Real copy of float data
       void
-      xcopy(const unsigned int *n,
-            const float *       x,
-            const unsigned int *incx,
-            float *             y,
-            const unsigned int *incy) const;
+      xcopy(const unsigned int n,
+            const float *      x,
+            const unsigned int incx,
+            float *            y,
+            const unsigned int incy) const;
 
       // Real double symmetric matrix-vector product
       void
-      xsymv(const char *        UPLO,
-            const unsigned int *N,
-            const double *      alpha,
-            const double *      A,
-            const unsigned int *LDA,
-            const double *      X,
-            const unsigned int *INCX,
-            const double *      beta,
-            double *            C,
-            const unsigned int *INCY) const;
+      xsymv(const char         UPLO,
+            const unsigned int N,
+            const double *     alpha,
+            const double *     A,
+            const unsigned int LDA,
+            const double *     X,
+            const unsigned int INCX,
+            const double *     beta,
+            double *           C,
+            const unsigned int INCY) const;
 
       void
-      xgemmBatched(const char *        transA,
-                   const char *        transB,
-                   const unsigned int *m,
-                   const unsigned int *n,
-                   const unsigned int *k,
-                   const double *      alpha,
-                   const double *      A[],
-                   const unsigned int *lda,
-                   const double *      B[],
-                   const unsigned int *ldb,
-                   const double *      beta,
-                   double *            C[],
-                   const unsigned int *ldc,
-                   const int *         batchCount) const;
+      xgemmBatched(const char         transA,
+                   const char         transB,
+                   const unsigned int m,
+                   const unsigned int n,
+                   const unsigned int k,
+                   const double *     alpha,
+                   const double *     A[],
+                   const unsigned int lda,
+                   const double *     B[],
+                   const unsigned int ldb,
+                   const double *     beta,
+                   double *           C[],
+                   const unsigned int ldc,
+                   const int          batchCount) const;
 
       void
-      xgemmBatched(const char *                transA,
-                   const char *                transB,
-                   const unsigned int *        m,
-                   const unsigned int *        n,
-                   const unsigned int *        k,
+      xgemmBatched(const char                  transA,
+                   const char                  transB,
+                   const unsigned int          m,
+                   const unsigned int          n,
+                   const unsigned int          k,
                    const std::complex<double> *alpha,
                    const std::complex<double> *A[],
-                   const unsigned int *        lda,
+                   const unsigned int          lda,
                    const std::complex<double> *B[],
-                   const unsigned int *        ldb,
+                   const unsigned int          ldb,
                    const std::complex<double> *beta,
                    std::complex<double> *      C[],
-                   const unsigned int *        ldc,
-                   const int *                 batchCount) const;
+                   const unsigned int          ldc,
+                   const int                   batchCount) const;
 
 
       void
-      xgemmBatched(const char *        transA,
-                   const char *        transB,
-                   const unsigned int *m,
-                   const unsigned int *n,
-                   const unsigned int *k,
-                   const float *       alpha,
-                   const float *       A[],
-                   const unsigned int *lda,
-                   const float *       B[],
-                   const unsigned int *ldb,
-                   const float *       beta,
-                   float *             C[],
-                   const unsigned int *ldc,
-                   const int *         batchCount) const;
+      xgemmBatched(const char         transA,
+                   const char         transB,
+                   const unsigned int m,
+                   const unsigned int n,
+                   const unsigned int k,
+                   const float *      alpha,
+                   const float *      A[],
+                   const unsigned int lda,
+                   const float *      B[],
+                   const unsigned int ldb,
+                   const float *      beta,
+                   float *            C[],
+                   const unsigned int ldc,
+                   const int          batchCount) const;
 
       void
-      xgemmBatched(const char *               transA,
-                   const char *               transB,
-                   const unsigned int *       m,
-                   const unsigned int *       n,
-                   const unsigned int *       k,
+      xgemmBatched(const char                 transA,
+                   const char                 transB,
+                   const unsigned int         m,
+                   const unsigned int         n,
+                   const unsigned int         k,
                    const std::complex<float> *alpha,
                    const std::complex<float> *A[],
-                   const unsigned int *       lda,
+                   const unsigned int         lda,
                    const std::complex<float> *B[],
-                   const unsigned int *       ldb,
+                   const unsigned int         ldb,
                    const std::complex<float> *beta,
                    std::complex<float> *      C[],
-                   const unsigned int *       ldc,
-                   const int *                batchCount) const;
+                   const unsigned int         ldc,
+                   const int                  batchCount) const;
 
 
       void
-      xgemmStridedBatched(const char *        transA,
-                          const char *        transB,
-                          const unsigned int *m,
-                          const unsigned int *n,
-                          const unsigned int *k,
-                          const double *      alpha,
-                          const double *      A,
-                          const unsigned int *lda,
-                          long long int *     strideA,
-                          const double *      B,
-                          const unsigned int *ldb,
-                          long long int *     strideB,
-                          const double *      beta,
-                          double *            C,
-                          const unsigned int *ldc,
-                          const int *         batchCount,
-                          long long int *     strideC) const;
+      xgemmStridedBatched(const char         transA,
+                          const char         transB,
+                          const unsigned int m,
+                          const unsigned int n,
+                          const unsigned int k,
+                          const double *     alpha,
+                          const double *     A,
+                          const unsigned int lda,
+                          long long int      strideA,
+                          const double *     B,
+                          const unsigned int ldb,
+                          long long int      strideB,
+                          const double *     beta,
+                          double *           C,
+                          const unsigned int ldc,
+                          const int          batchCount,
+                          long long int      strideC) const;
 
       void
-      xgemmStridedBatched(const char *                transA,
-                          const char *                transB,
-                          const unsigned int *        m,
-                          const unsigned int *        n,
-                          const unsigned int *        k,
+      xgemmStridedBatched(const char                  transA,
+                          const char                  transB,
+                          const unsigned int          m,
+                          const unsigned int          n,
+                          const unsigned int          k,
                           const std::complex<double> *alpha,
                           const std::complex<double> *A,
-                          const unsigned int *        lda,
-                          long long int *             strideA,
+                          const unsigned int          lda,
+                          long long int               strideA,
                           const std::complex<double> *B,
-                          const unsigned int *        ldb,
-                          long long int *             strideB,
+                          const unsigned int          ldb,
+                          long long int               strideB,
                           const std::complex<double> *beta,
                           std::complex<double> *      C,
-                          const unsigned int *        ldc,
-                          const int *                 batchCount,
-                          long long int *             strideC) const;
+                          const unsigned int          ldc,
+                          const int                   batchCount,
+                          long long int               strideC) const;
 
       void
-      xgemmStridedBatched(const char *               transA,
-                          const char *               transB,
-                          const unsigned int *       m,
-                          const unsigned int *       n,
-                          const unsigned int *       k,
+      xgemmStridedBatched(const char                 transA,
+                          const char                 transB,
+                          const unsigned int         m,
+                          const unsigned int         n,
+                          const unsigned int         k,
                           const std::complex<float> *alpha,
                           const std::complex<float> *A,
-                          const unsigned int *       lda,
-                          long long int *            strideA,
+                          const unsigned int         lda,
+                          long long int              strideA,
                           const std::complex<float> *B,
-                          const unsigned int *       ldb,
-                          long long int *            strideB,
+                          const unsigned int         ldb,
+                          long long int              strideB,
                           const std::complex<float> *beta,
                           std::complex<float> *      C,
-                          const unsigned int *       ldc,
-                          const int *                batchCount,
-                          long long int *            strideC) const;
+                          const unsigned int         ldc,
+                          const int                  batchCount,
+                          long long int              strideC) const;
 
       void
-      xgemmStridedBatched(const char *        transA,
-                          const char *        transB,
-                          const unsigned int *m,
-                          const unsigned int *n,
-                          const unsigned int *k,
-                          const float *       alpha,
-                          const float *       A,
-                          const unsigned int *lda,
-                          long long int *     strideA,
-                          const float *       B,
-                          const unsigned int *ldb,
-                          long long int *     strideB,
-                          const float *       beta,
-                          float *             C,
-                          const unsigned int *ldc,
-                          const int *         batchCount,
-                          long long int *     strideC) const;
+      xgemmStridedBatched(const char         transA,
+                          const char         transB,
+                          const unsigned int m,
+                          const unsigned int n,
+                          const unsigned int k,
+                          const float *      alpha,
+                          const float *      A,
+                          const unsigned int lda,
+                          long long int      strideA,
+                          const float *      B,
+                          const unsigned int ldb,
+                          long long int      strideB,
+                          const float *      beta,
+                          float *            C,
+                          const unsigned int ldc,
+                          const int          batchCount,
+                          long long int      strideC) const;
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
@@ -482,328 +482,328 @@ namespace dftfe
     class BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
     {
     public:
-      // BLASWrapper()const;
+      BLASWrapper();
       // Real-Single Precision GEMM
       void
-      xgemm(const char *        transA,
-            const char *        transB,
-            const unsigned int *m,
-            const unsigned int *n,
-            const unsigned int *k,
-            const float *       alpha,
-            const float *       A,
-            const unsigned int *lda,
-            const float *       B,
-            const unsigned int *ldb,
-            const float *       beta,
-            float *             C,
-            const unsigned int *ldc) const;
+      xgemm(const char         transA,
+            const char         transB,
+            const unsigned int m,
+            const unsigned int n,
+            const unsigned int k,
+            const float *      alpha,
+            const float *      A,
+            const unsigned int lda,
+            const float *      B,
+            const unsigned int ldb,
+            const float *      beta,
+            float *            C,
+            const unsigned int ldc) const;
       // Complex-Single Precision GEMM
       void
-      xgemm(const char *               transA,
-            const char *               transB,
-            const unsigned int *       m,
-            const unsigned int *       n,
-            const unsigned int *       k,
+      xgemm(const char                 transA,
+            const char                 transB,
+            const unsigned int         m,
+            const unsigned int         n,
+            const unsigned int         k,
             const std::complex<float> *alpha,
             const std::complex<float> *A,
-            const unsigned int *       lda,
+            const unsigned int         lda,
             const std::complex<float> *B,
-            const unsigned int *       ldb,
+            const unsigned int         ldb,
             const std::complex<float> *beta,
             std::complex<float> *      C,
-            const unsigned int *       ldc) const;
+            const unsigned int         ldc) const;
 
       // Real-double precison GEMM
       void
-      xgemm(const char *        transA,
-            const char *        transB,
-            const unsigned int *m,
-            const unsigned int *n,
-            const unsigned int *k,
-            const double *      alpha,
-            const double *      A,
-            const unsigned int *lda,
-            const double *      B,
-            const unsigned int *ldb,
-            const double *      beta,
-            double *            C,
-            const unsigned int *ldc) const;
+      xgemm(const char         transA,
+            const char         transB,
+            const unsigned int m,
+            const unsigned int n,
+            const unsigned int k,
+            const double *     alpha,
+            const double *     A,
+            const unsigned int lda,
+            const double *     B,
+            const unsigned int ldb,
+            const double *     beta,
+            double *           C,
+            const unsigned int ldc) const;
 
 
       // Complex-double precision GEMM
       void
-      xgemm(const char *                transA,
-            const char *                transB,
-            const unsigned int *        m,
-            const unsigned int *        n,
-            const unsigned int *        k,
+      xgemm(const char                  transA,
+            const char                  transB,
+            const unsigned int          m,
+            const unsigned int          n,
+            const unsigned int          k,
             const std::complex<double> *alpha,
             const std::complex<double> *A,
-            const unsigned int *        lda,
+            const unsigned int          lda,
             const std::complex<double> *B,
-            const unsigned int *        ldb,
+            const unsigned int          ldb,
             const std::complex<double> *beta,
             std::complex<double> *      C,
-            const unsigned int *        ldc) const;
+            const unsigned int          ldc) const;
 
       // Real-Double scaling of Real-vector
       void
-      xscal(const unsigned int *n,
-            const double *      alpha,
-            double *            x,
-            const unsigned int *inc) const;
+      xscal(const unsigned int n,
+            const double *     alpha,
+            double *           x,
+            const unsigned int inc) const;
 
       // Real-Float scaling of Real-vector
       void
-      xscal(const unsigned int *n,
-            const float *       alpha,
-            float *             x,
-            const unsigned int *inc) const;
+      xscal(const unsigned int n,
+            const float *      alpha,
+            float *            x,
+            const unsigned int inc) const;
 
       // Complex-double scaling of complex-vector
       void
-      xscal(const unsigned int *        n,
+      xscal(const unsigned int          n,
             const std::complex<double> *alpha,
             std::complex<double> *      x,
-            const unsigned int *        inc) const;
+            const unsigned int          inc) const;
 
       // Real-double scaling of complex-vector
       void
-      xscal(const unsigned int *       n,
+      xscal(const unsigned int         n,
             const std::complex<float> *alpha,
             std::complex<float> *      x,
-            const unsigned int *       inc) const;
+            const unsigned int         inc) const;
 
       // Real double Norm2
       void
-      xnrm2(const unsigned int *n,
-            const double *      x,
-            const unsigned int *incx,
-            const MPI_Comm &    mpi_communicator,
-            double *            result) const;
+      xnrm2(const unsigned int n,
+            const double *     x,
+            const unsigned int incx,
+            const MPI_Comm &   mpi_communicator,
+            double *           result) const;
 
 
       // Complex double Norm2
       void
-      xnrm2(const unsigned int *        n,
+      xnrm2(const unsigned int          n,
             const std::complex<double> *x,
-            const unsigned int *        incx,
+            const unsigned int          incx,
             const MPI_Comm &            mpi_communicator,
             double *                    result) const;
 
       // Real dot product
       void
-      xdot(const unsigned int *N,
-           const double *      X,
-           const unsigned int *INCX,
-           const double *      Y,
-           const unsigned int *INCY,
-           double *            result) const;
+      xdot(const unsigned int N,
+           const double *     X,
+           const unsigned int INCX,
+           const double *     Y,
+           const unsigned int INCY,
+           double *           result) const;
 
       // Complex dot product
       void
-      xdot(const unsigned int *        N,
+      xdot(const unsigned int          N,
            const std::complex<double> *X,
-           const unsigned int *        INCX,
+           const unsigned int          INCX,
            const std::complex<double> *Y,
-           const unsigned int *        INCY,
+           const unsigned int          INCY,
            std::complex<double> *      result) const;
 
       // Real double Ax+y
       void
-      xaxpy(const unsigned int *n,
-            const double *      alpha,
-            double *            x,
-            const unsigned int *incx,
-            double *            y,
-            const unsigned int *incy) const;
+      xaxpy(const unsigned int n,
+            const double *     alpha,
+            double *           x,
+            const unsigned int incx,
+            double *           y,
+            const unsigned int incy) const;
 
       // Complex double Ax+y
       void
-      xaxpy(const unsigned int *        n,
+      xaxpy(const unsigned int          n,
             const std::complex<double> *alpha,
             std::complex<double> *      x,
-            const unsigned int *        incx,
+            const unsigned int          incx,
             std::complex<double> *      y,
-            const unsigned int *        incy) const;
+            const unsigned int          incy) const;
 
       // Real copy of double data
       void
-      xcopy(const unsigned int *n,
-            const double *      x,
-            const unsigned int *incx,
-            double *            y,
-            const unsigned int *incy) const;
+      xcopy(const unsigned int n,
+            const double *     x,
+            const unsigned int incx,
+            double *           y,
+            const unsigned int incy) const;
 
       // Complex double copy of data
       void
-      xcopy(const unsigned int *        n,
+      xcopy(const unsigned int          n,
             const std::complex<double> *x,
-            const unsigned int *        incx,
+            const unsigned int          incx,
             std::complex<double> *      y,
-            const unsigned int *        incy) const;
+            const unsigned int          incy) const;
 
       // Real copy of float data
       void
-      xcopy(const unsigned int *n,
-            const float *       x,
-            const unsigned int *incx,
-            float *             y,
-            const unsigned int *incy) const;
+      xcopy(const unsigned int n,
+            const float *      x,
+            const unsigned int incx,
+            float *            y,
+            const unsigned int incy) const;
 
       // Real double symmetric matrix-vector product
       void
-      xsymv(const char *        UPLO,
-            const unsigned int *N,
-            const double *      alpha,
-            const double *      A,
-            const unsigned int *LDA,
-            const double *      X,
-            const unsigned int *INCX,
-            const double *      beta,
-            double *            C,
-            const unsigned int *INCY) const;
+      xsymv(const char         UPLO,
+            const unsigned int N,
+            const double *     alpha,
+            const double *     A,
+            const unsigned int LDA,
+            const double *     X,
+            const unsigned int INCX,
+            const double *     beta,
+            double *           C,
+            const unsigned int INCY) const;
 
       void
-      xgemmBatched(const char *        transA,
-                   const char *        transB,
-                   const unsigned int *m,
-                   const unsigned int *n,
-                   const unsigned int *k,
-                   const double *      alpha,
-                   const double *      A[],
-                   const unsigned int *lda,
-                   const double *      B[],
-                   const unsigned int *ldb,
-                   const double *      beta,
-                   double *            C[],
-                   const unsigned int *ldc,
-                   const int *         batchCount) const;
+      xgemmBatched(const char         transA,
+                   const char         transB,
+                   const unsigned int m,
+                   const unsigned int n,
+                   const unsigned int k,
+                   const double *     alpha,
+                   const double *     A[],
+                   const unsigned int lda,
+                   const double *     B[],
+                   const unsigned int ldb,
+                   const double *     beta,
+                   double *           C[],
+                   const unsigned int ldc,
+                   const int          batchCount) const;
 
       void
-      xgemmBatched(const char *                transA,
-                   const char *                transB,
-                   const unsigned int *        m,
-                   const unsigned int *        n,
-                   const unsigned int *        k,
+      xgemmBatched(const char                  transA,
+                   const char                  transB,
+                   const unsigned int          m,
+                   const unsigned int          n,
+                   const unsigned int          k,
                    const std::complex<double> *alpha,
                    const std::complex<double> *A[],
-                   const unsigned int *        lda,
+                   const unsigned int          lda,
                    const std::complex<double> *B[],
-                   const unsigned int *        ldb,
+                   const unsigned int          ldb,
                    const std::complex<double> *beta,
                    std::complex<double> *      C[],
-                   const unsigned int *        ldc,
-                   const int *                 batchCount) const;
+                   const unsigned int          ldc,
+                   const int                   batchCount) const;
 
       void
-      xgemmBatched(const char *        transA,
-                   const char *        transB,
-                   const unsigned int *m,
-                   const unsigned int *n,
-                   const unsigned int *k,
-                   const float *       alpha,
-                   const float *       A[],
-                   const unsigned int *lda,
-                   const float *       B[],
-                   const unsigned int *ldb,
-                   const float *       beta,
-                   float *             C[],
-                   const unsigned int *ldc,
-                   const int *         batchCount) const;
+      xgemmBatched(const char         transA,
+                   const char         transB,
+                   const unsigned int m,
+                   const unsigned int n,
+                   const unsigned int k,
+                   const float *      alpha,
+                   const float *      A[],
+                   const unsigned int lda,
+                   const float *      B[],
+                   const unsigned int ldb,
+                   const float *      beta,
+                   float *            C[],
+                   const unsigned int ldc,
+                   const int          batchCount) const;
 
       void
-      xgemmBatched(const char *               transA,
-                   const char *               transB,
-                   const unsigned int *       m,
-                   const unsigned int *       n,
-                   const unsigned int *       k,
+      xgemmBatched(const char                 transA,
+                   const char                 transB,
+                   const unsigned int         m,
+                   const unsigned int         n,
+                   const unsigned int         k,
                    const std::complex<float> *alpha,
                    const std::complex<float> *A[],
-                   const unsigned int *       lda,
+                   const unsigned int         lda,
                    const std::complex<float> *B[],
-                   const unsigned int *       ldb,
+                   const unsigned int         ldb,
                    const std::complex<float> *beta,
                    std::complex<float> *      C[],
-                   const unsigned int *       ldc,
-                   const int *                batchCount) const;
+                   const unsigned int         ldc,
+                   const int                  batchCount) const;
 
       void
-      xgemmStridedBatched(const char *        transA,
-                          const char *        transB,
-                          const unsigned int *m,
-                          const unsigned int *n,
-                          const unsigned int *k,
-                          const double *      alpha,
-                          const double *      A,
-                          const unsigned int *lda,
-                          long long int *     strideA,
-                          const double *      B,
-                          const unsigned int *ldb,
-                          long long int *     strideB,
-                          const double *      beta,
-                          double *            C,
-                          const unsigned int *ldc,
-                          const int *         batchCount,
-                          long long int *     strideC) const;
+      xgemmStridedBatched(const char         transA,
+                          const char         transB,
+                          const unsigned int m,
+                          const unsigned int n,
+                          const unsigned int k,
+                          const double *     alpha,
+                          const double *     A,
+                          const unsigned int lda,
+                          long long int      strideA,
+                          const double *     B,
+                          const unsigned int ldb,
+                          long long int      strideB,
+                          const double *     beta,
+                          double *           C,
+                          const unsigned int ldc,
+                          const int          batchCount,
+                          long long int      strideC) const;
 
       void
-      xgemmStridedBatched(const char *                transA,
-                          const char *                transB,
-                          const unsigned int *        m,
-                          const unsigned int *        n,
-                          const unsigned int *        k,
+      xgemmStridedBatched(const char                  transA,
+                          const char                  transB,
+                          const unsigned int          m,
+                          const unsigned int          n,
+                          const unsigned int          k,
                           const std::complex<double> *alpha,
                           const std::complex<double> *A,
-                          const unsigned int *        lda,
-                          long long int *             strideA,
+                          const unsigned int          lda,
+                          long long int               strideA,
                           const std::complex<double> *B,
-                          const unsigned int *        ldb,
-                          long long int *             strideB,
+                          const unsigned int          ldb,
+                          long long int               strideB,
                           const std::complex<double> *beta,
                           std::complex<double> *      C,
-                          const unsigned int *        ldc,
-                          const int *                 batchCount,
-                          long long int *             strideC) const;
+                          const unsigned int          ldc,
+                          const int                   batchCount,
+                          long long int               strideC) const;
 
       void
-      xgemmStridedBatched(const char *               transA,
-                          const char *               transB,
-                          const unsigned int *       m,
-                          const unsigned int *       n,
-                          const unsigned int *       k,
+      xgemmStridedBatched(const char                 transA,
+                          const char                 transB,
+                          const unsigned int         m,
+                          const unsigned int         n,
+                          const unsigned int         k,
                           const std::complex<float> *alpha,
                           const std::complex<float> *A,
-                          const unsigned int *       lda,
-                          long long int *            strideA,
+                          const unsigned int         lda,
+                          long long int              strideA,
                           const std::complex<float> *B,
-                          const unsigned int *       ldb,
-                          long long int *            strideB,
+                          const unsigned int         ldb,
+                          long long int              strideB,
                           const std::complex<float> *beta,
                           std::complex<float> *      C,
-                          const unsigned int *       ldc,
-                          const int *                batchCount,
-                          long long int *            strideC) const;
+                          const unsigned int         ldc,
+                          const int                  batchCount,
+                          long long int              strideC) const;
 
       void
-      xgemmStridedBatched(const char *        transA,
-                          const char *        transB,
-                          const unsigned int *m,
-                          const unsigned int *n,
-                          const unsigned int *k,
-                          const float *       alpha,
-                          const float *       A,
-                          const unsigned int *lda,
-                          long long int *     strideA,
-                          const float *       B,
-                          const unsigned int *ldb,
-                          long long int *     strideB,
-                          const float *       beta,
-                          float *             C,
-                          const unsigned int *ldc,
-                          const int *         batchCount,
-                          long long int *     strideC) const;
+      xgemmStridedBatched(const char         transA,
+                          const char         transB,
+                          const unsigned int m,
+                          const unsigned int n,
+                          const unsigned int k,
+                          const float *      alpha,
+                          const float *      A,
+                          const unsigned int lda,
+                          long long int      strideA,
+                          const float *      B,
+                          const unsigned int ldb,
+                          long long int      strideB,
+                          const float *      beta,
+                          float *            C,
+                          const unsigned int ldc,
+                          const int          batchCount,
+                          long long int      strideC) const;
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
@@ -936,7 +936,7 @@ namespace dftfe
       destroy();
 
       dftfe::utils::deviceBlasStatus_t
-      setStream();
+      setStream(dftfe::utils::deviceStream_t streamId);
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t
