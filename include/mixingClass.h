@@ -119,6 +119,7 @@ namespace dftfe
     computeMixingMatrices(const std::deque<std::vector<double>> &inHist,
                           const std::deque<std::vector<double>> &outHist,
                           const std::vector<double> &weightDotProducts,
+                          const bool                 isPerformMixing,
                           const bool                 isMPIAllReduce,
                           std::vector<double> &      A,
                           std::vector<double> &      c);
@@ -135,6 +136,7 @@ namespace dftfe
 
     std::map<mixingVariable, double> d_mixingParameter;
     unsigned int                     d_mixingHistory;
+    std::map<mixingVariable, bool>   d_performMixing;
   };
 } //  end of namespace dftfe
 #endif // DFTFE_MIXINGCLASS_H

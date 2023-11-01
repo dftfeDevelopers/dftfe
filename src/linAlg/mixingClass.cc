@@ -40,6 +40,21 @@ namespace dftfe
 
     d_performMPIReduce[mixingVariableList] = performMPIReduce;
     d_mixingParameter[mixingVariableList]  = mixingValue;
+    unsigned int weightDotProductsSize     = weightDotProducts.size();
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &weightDotProductsSize,
+                  1,
+                  MPI_UNSIGNED,
+                  MPI_MAX,
+                  d_mpi_comm_domain);
+    if (weightDotProductsSize > 0)
+      {
+        d_performMixing[mixingVariableList] = true;
+      }
+    else
+      {
+        d_performMixing[mixingVariableList] = false;
+      }
   }
 
   void
@@ -47,6 +62,7 @@ namespace dftfe
     const std::deque<std::vector<double>> &inHist,
     const std::deque<std::vector<double>> &outHist,
     const std::vector<double> &            weightDotProducts,
+    const bool                             isPerformMixing,
     const bool                             isMPIAllReduce,
     std::vector<double> &                  A,
     std::vector<double> &                  c)
@@ -64,7 +80,7 @@ namespace dftfe
     if (N > 0)
       numQuadPoints = inHist[0].size();
 
-    if (weightDotProducts.size() > 0)
+    if (isPerformMixing)
       {
         AssertThrow(numQuadPoints == weightDotProducts.size(),
                     dealii::ExcMessage(
@@ -156,6 +172,7 @@ namespace dftfe
         computeMixingMatrices(d_variableHistoryIn[key],
                               d_variableHistoryOut[key],
                               d_vectorDotProductWeights[key],
+                              d_performMixing[key],
                               d_performMPIReduce[key],
                               d_A,
                               d_c);
