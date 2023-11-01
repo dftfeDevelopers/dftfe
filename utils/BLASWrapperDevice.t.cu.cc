@@ -16,7 +16,6 @@
 //
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #  include <BLASWrapper.h>
-#  include <deviceKernelsGeneric.h>
 #  include <DeviceTypeConfig.h>
 #  include <DeviceKernelLauncherConstants.h>
 #  include <DeviceAPICalls.h>
@@ -381,8 +380,8 @@ namespace dftfe
       const double *     beta,
       double *           C,
       const unsigned int ldc,
-      const int          batchCount,
-      long long int      strideC) const
+      long long int      strideC,
+      const int          batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -444,8 +443,8 @@ namespace dftfe
       const std::complex<double> *beta,
       std::complex<double> *      C,
       const unsigned int          ldc,
-      const int                   batchCount,
-      long long int               strideC) const
+      long long int               strideC,
+      const int                   batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -509,8 +508,8 @@ namespace dftfe
       const float *      beta,
       float *            C,
       const unsigned int ldc,
-      const int          batchCount,
-      long long int      strideC) const
+      long long int      strideC,
+      const int          batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -572,8 +571,8 @@ namespace dftfe
       const std::complex<float> *beta,
       std::complex<float> *      C,
       const unsigned int         ldc,
-      const int                  batchCount,
-      long long int              strideC) const
+      long long int              strideC,
+      const int                  batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')

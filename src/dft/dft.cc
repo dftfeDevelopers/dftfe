@@ -3283,6 +3283,7 @@ namespace dftfe
         else
           {
 #ifdef DFTFE_WITH_DEVICE
+
             compute_rhoOut(
               kohnShamDFTEigenOperatorDevice,
               kohnShamDFTEigenOperator,
@@ -3301,6 +3302,7 @@ namespace dftfe
                 true,
               scfConverged ||
                 (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
+
 #endif
           }
         computing_timer.leave_subsection("compute rho");

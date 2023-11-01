@@ -302,8 +302,8 @@ namespace dftfe
                           const double *     beta,
                           double *           C,
                           const unsigned int ldc,
-                          const int          batchCount,
-                          long long int      strideC) const;
+                          long long int      strideC,
+                          const int          batchCount) const;
 
       void
       xgemmStridedBatched(const char                  transA,
@@ -321,8 +321,8 @@ namespace dftfe
                           const std::complex<double> *beta,
                           std::complex<double> *      C,
                           const unsigned int          ldc,
-                          const int                   batchCount,
-                          long long int               strideC) const;
+                          long long int               strideC,
+                          const int                   batchCount) const;
 
       void
       xgemmStridedBatched(const char                 transA,
@@ -340,8 +340,8 @@ namespace dftfe
                           const std::complex<float> *beta,
                           std::complex<float> *      C,
                           const unsigned int         ldc,
-                          const int                  batchCount,
-                          long long int              strideC) const;
+                          long long int              strideC,
+                          const int                  batchCount) const;
 
       void
       xgemmStridedBatched(const char         transA,
@@ -359,8 +359,8 @@ namespace dftfe
                           const float *      beta,
                           float *            C,
                           const unsigned int ldc,
-                          const int          batchCount,
-                          long long int      strideC) const;
+                          long long int      strideC,
+                          const int          batchCount) const;
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
@@ -745,8 +745,8 @@ namespace dftfe
                           const double *     beta,
                           double *           C,
                           const unsigned int ldc,
-                          const int          batchCount,
-                          long long int      strideC) const;
+                          long long int      strideC,
+                          const int          batchCount) const;
 
       void
       xgemmStridedBatched(const char                  transA,
@@ -764,8 +764,8 @@ namespace dftfe
                           const std::complex<double> *beta,
                           std::complex<double> *      C,
                           const unsigned int          ldc,
-                          const int                   batchCount,
-                          long long int               strideC) const;
+                          long long int               strideC,
+                          const int                   batchCount) const;
 
       void
       xgemmStridedBatched(const char                 transA,
@@ -783,8 +783,8 @@ namespace dftfe
                           const std::complex<float> *beta,
                           std::complex<float> *      C,
                           const unsigned int         ldc,
-                          const int                  batchCount,
-                          long long int              strideC) const;
+                          long long int              strideC,
+                          const int                  batchCount) const;
 
       void
       xgemmStridedBatched(const char         transA,
@@ -802,8 +802,8 @@ namespace dftfe
                           const float *      beta,
                           float *            C,
                           const unsigned int ldc,
-                          const int          batchCount,
-                          long long int      strideC) const;
+                          long long int      strideC,
+                          const int          batchCount) const;
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
