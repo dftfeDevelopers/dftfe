@@ -1307,7 +1307,7 @@ namespace dftfe
     std::shared_ptr<
 #if defined(DFTFE_WITH_DEVICE)
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-#elif
+#else
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
 #endif
       d_BLASWrapperPtr;
