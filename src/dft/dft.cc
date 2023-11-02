@@ -1011,6 +1011,15 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "Entering init");
 
+    d_BLASWrapperPtrHost = std::make_shared<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
+#if defined(DFTFE_WITH_DEVICE)
+    if (d_dftParamsPtr->useDevice)
+      {
+        d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
+          dftfe::utils::MemorySpace::DEVICE>>();
+      }
+#endif          
     initImageChargesUpdateKPoints();
 
     calculateNearestAtomDistances();
