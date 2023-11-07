@@ -102,33 +102,14 @@ namespace dftfe
             std::complex<double> *      C,
             const unsigned int          ldc) const;
 
-      // Real-Double scaling of Real-vector
+      template <typename ValueType1, typename ValueType2>
       void
-      xscal(const unsigned int n,
-            const double *     alpha,
-            double *           x,
-            const unsigned int inc) const;
+      xscal(ValueType1 *           x,
+            const ValueType2       alpha,
+            const dftfe::size_type n) const;
 
       // Real-Float scaling of Real-vector
-      void
-      xscal(const unsigned int n,
-            const float *      alpha,
-            float *            x,
-            const unsigned int inc) const;
 
-      // Complex-double scaling of complex-vector
-      void
-      xscal(const unsigned int          n,
-            const std::complex<double> *alpha,
-            std::complex<double> *      x,
-            const unsigned int          inc) const;
-
-      // Real-double scaling of complex-vector
-      void
-      xscal(const unsigned int    n,
-            const double *        alpha,
-            std::complex<double> *x,
-            const unsigned int    inc) const;
 
       // Real double Norm2
       void
@@ -547,33 +528,14 @@ namespace dftfe
             std::complex<double> *      C,
             const unsigned int          ldc) const;
 
-      // Real-Double scaling of Real-vector
-      void
-      xscal(const unsigned int n,
-            const double *     alpha,
-            double *           x,
-            const unsigned int inc) const;
 
-      // Real-Float scaling of Real-vector
+      template <typename ValueType1, typename ValueType2>
       void
-      xscal(const unsigned int n,
-            const float *      alpha,
-            float *            x,
-            const unsigned int inc) const;
+      xscal(ValueType1 *           x,
+            const ValueType2       alpha,
+            const dftfe::size_type n) const;
 
-      // Complex-double scaling of complex-vector
-      void
-      xscal(const unsigned int          n,
-            const std::complex<double> *alpha,
-            std::complex<double> *      x,
-            const unsigned int          inc) const;
 
-      // Real-double scaling of complex-vector
-      void
-      xscal(const unsigned int         n,
-            const std::complex<float> *alpha,
-            std::complex<float> *      x,
-            const unsigned int         inc) const;
 
       // Real double Norm2
       void

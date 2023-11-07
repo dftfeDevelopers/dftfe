@@ -887,58 +887,45 @@ namespace dftfe
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
     }
 
+
+    template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      const unsigned int n,
-      const double *     alpha,
-      double *           x,
-      const unsigned int inc) const
+      ValueType1 *           x,
+      const ValueType2       alpha,
+      const dftfe::size_type n) const
     {
-      dftfe::utils::deviceBlasStatus_t status =
-        cublasDscal(d_deviceBlasHandle, int(n), alpha, x, int(inc));
+      ascalDeviceKernel<<<n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        n,
+        dftfe::utils::makeDataTypeDeviceCompatible(x),
+        dftfe::utils::makeDataTypeDeviceCompatible(alpha));
     }
-
-    void
+    // for xscal
+    template void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      const unsigned int n,
-      const float *      alpha,
-      float *            x,
-      const unsigned int inc) const
-    {
-      dftfe::utils::deviceBlasStatus_t status =
-        cublasSscal(d_deviceBlasHandle, int(n), alpha, x, int(inc));
-    }
+      double *               x,
+      const double           a,
+      const dftfe::size_type n) const;
 
-
-    void
+    template void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      const unsigned int          n,
-      const std::complex<double> *alpha,
-      std::complex<double> *      x,
-      const unsigned int          inc) const
-    {
-      dftfe::utils::deviceBlasStatus_t status =
-        cublasZscal(d_deviceBlasHandle,
-                    int(n),
-                    dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                    dftfe::utils::makeDataTypeDeviceCompatible(x),
-                    int(inc));
-    }
+      float *                x,
+      const float            a,
+      const dftfe::size_type n) const;
 
-    void
+    template void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      const unsigned int         n,
-      const std::complex<float> *alpha,
-      std::complex<float> *      x,
-      const unsigned int         inc) const
-    {
-      dftfe::utils::deviceBlasStatus_t status =
-        cublasCscal(d_deviceBlasHandle,
-                    int(n),
-                    dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                    dftfe::utils::makeDataTypeDeviceCompatible(x),
-                    int(inc));
-    }
+      std::complex<double> *     x,
+      const std::complex<double> a,
+      const dftfe::size_type     n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      std::complex<float> *     x,
+      const std::complex<float> a,
+      const dftfe::size_type    n) const;
+
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
@@ -1104,6 +1091,107 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
         dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
     }
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1       a,
+      const ValueType1 *     s,
+      ValueType2 *           x)
+    {
+      stridedBlockScaleDeviceKernel<<<(contiguousBlockSize *
+                                       numContiguousBlocks) /
+                                          dftfe::utils::DEVICE_BLOCK_SIZE +
+                                        1,
+                                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(s),
+        dftfe::utils::makeDataTypeDeviceCompatible(x));
+    }
+    // stridedBlockScale
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      double *               x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float            a,
+      const float *          s,
+      float *                x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double>  a,
+      const std::complex<double> *s,
+      std::complex<double> *      x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type     contiguousBlockSize,
+      const dftfe::size_type     numContiguousBlocks,
+      const std::complex<float>  a,
+      const std::complex<float> *s,
+      std::complex<float> *      x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      float *                x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float            a,
+      const float *          s,
+      double *               x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double>  a,
+      const std::complex<double> *s,
+      std::complex<float> *       x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type     contiguousBlockSize,
+      const dftfe::size_type     numContiguousBlocks,
+      const std::complex<float>  a,
+      const std::complex<float> *s,
+      std::complex<double> *     x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      std::complex<double> * x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      std::complex<float> *  x);
+
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

@@ -228,13 +228,12 @@ namespace dftfe
                 {
                   for (unsigned int iDim = 0; iDim < 3; ++iDim)
                     d_BLASWrapperPtr->xscal(
-                      d_nQuadsPerCellTimesnVectors,
-                      d_inverseJacobianData[0].data() + 3 * iCell + iDim,
                       quadratureGradients +
                         d_nQuadsPerCell[d_quadratureID] * d_nVectors * 3 *
                           (iCell - cellRange.first) +
                         d_nQuadsPerCell[d_quadratureID] * d_nVectors * iDim,
-                      one);
+                      *(d_inverseJacobianData[0].data() + 3 * iCell + iDim),
+                      d_nQuadsPerCellTimesnVectors);
                 }
             }
           else if (areAllCellsAffine)
@@ -422,11 +421,13 @@ namespace dftfe
                               3 * d_nQuadsPerCellTimesnVectors *
                                 sizeof(ValueTypeBasisCoeff));
                   for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                    xscal(&d_nQuadsPerCellTimesnVectors,
-                          d_inverseJacobianData[0].data() + 3 * iCell + iDim,
-                          tempQuadratureGradientsData.data() +
-                            d_nQuadsPerCell[d_quadratureID] * d_nVectors * iDim,
-                          &one);
+                    {
+                      d_BLASWrapperPtr->xscal(
+                        tempQuadratureGradientsData.data() +
+                          d_nQuadsPerCell[d_quadratureID] * d_nVectors * iDim,
+                        *(d_inverseJacobianData[0].data() + 3 * iCell + iDim),
+                        d_nQuadsPerCellTimesnVectors);
+                    }
                 }
               else if (areAllCellsAffine)
                 {

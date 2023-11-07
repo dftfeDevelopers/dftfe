@@ -254,7 +254,7 @@ namespace dftfe
             cellRange.second - cellRange.first);
           if (areAllCellsCartesian)
             {
-              dftfe::utils::deviceKernelsGeneric::stridedBlockScale(
+              d_BLASWrapperPtr->stridedBlockScale(
                 d_nQuadsPerCell[d_quadratureID] * d_nVectors,
                 3 * (cellRange.second - cellRange.first),
                 ValueTypeBasisCoeff(1.0),

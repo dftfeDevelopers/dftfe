@@ -65,25 +65,39 @@ namespace dftfe
         &transA, &transB, &m, &n, &k, alpha, A, &lda, B, &ldb, beta, C, &ldc);
     }
 
+    template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int n,
-      const double *     alpha,
-      double *           x,
-      const unsigned int inc) const
+      ValueType1 *           x,
+      const ValueType2       alpha,
+      const dftfe::size_type n) const
     {
-      dscal_(&n, alpha, x, &inc);
+      std::transform(x, x + n, x, [&](auto &c) { return alpha * c; });
     }
+    // for xscal
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
+      double *               x,
+      const double           a,
+      const dftfe::size_type n) const;
 
-    void
+    template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int n,
-      const float *      alpha,
-      float *            x,
-      const unsigned int inc) const
-    {
-      sscal_(&n, alpha, x, &inc);
-    }
+      float *                x,
+      const float            a,
+      const dftfe::size_type n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
+      std::complex<double> *     x,
+      const std::complex<double> a,
+      const dftfe::size_type     n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
+      std::complex<float> *     x,
+      const std::complex<float> a,
+      const dftfe::size_type    n) const;
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
@@ -147,25 +161,7 @@ namespace dftfe
         &transA, &transB, &m, &n, &k, alpha, A, &lda, B, &ldb, beta, C, &ldc);
     }
 
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int          n,
-      const std::complex<double> *alpha,
-      std::complex<double> *      x,
-      const unsigned int          inc) const
-    {
-      zscal_(&n, alpha, x, &inc);
-    }
 
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      const unsigned int    n,
-      const double *        alpha,
-      std::complex<double> *x,
-      const unsigned int    inc) const
-    {
-      zdscal_(&n, alpha, x, &inc);
-    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
@@ -474,7 +470,101 @@ namespace dftfe
                                          const ValueType1 *     copyFromVec,
                                          ValueType2 *           copyToVec)
     {}
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1       a,
+      const ValueType1 *     s,
+      ValueType2 *           x)
+    {
+      for (int iBatch = 0; iBatch < numContiguousBlocks; iBatch++)
+        {
+          ValueType1 alpha = a * s[iBatch];
+          xscal(x + iBatch * contiguousBlockSize, alpha, contiguousBlockSize);
+        }
+    }
+    // stridedBlockScale
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      double *               x);
 
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float            a,
+      const float *          s,
+      float *                x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double>  a,
+      const std::complex<double> *s,
+      std::complex<double> *      x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type     contiguousBlockSize,
+      const dftfe::size_type     numContiguousBlocks,
+      const std::complex<float>  a,
+      const std::complex<float> *s,
+      std::complex<float> *      x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      float *                x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float            a,
+      const float *          s,
+      double *               x);
+
+    // template void
+    // BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+    //   const dftfe::size_type      contiguousBlockSize,
+    //   const dftfe::size_type      numContiguousBlocks,
+    //   const std::complex<double>  a,
+    //   const std::complex<double> *s,
+    //   std::complex<float> *       x);
+
+    // template void
+    // BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+    //   const dftfe::size_type     contiguousBlockSize,
+    //   const dftfe::size_type     numContiguousBlocks,
+    //   const std::complex<float>  a,
+    //   const std::complex<float> *s,
+    //   std::complex<double> *     x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      std::complex<double> * x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      std::complex<float> *  x);
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe
