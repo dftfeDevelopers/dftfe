@@ -1019,7 +1019,7 @@ namespace dftfe
         d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
           dftfe::utils::MemorySpace::DEVICE>>();
       }
-#endif          
+#endif
     initImageChargesUpdateKPoints();
 
     calculateNearestAtomDistances();

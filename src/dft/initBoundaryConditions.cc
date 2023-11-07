@@ -300,7 +300,8 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice)
       {
-        // d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
+        // d_BLASWrapperPtr =
+        // std::make_shared<dftfe::linearAlgebra::BLASWrapper<
         //   dftfe::utils::MemorySpace::DEVICE>>();
 
         basisOperationsPtrDevice = std::make_shared<
