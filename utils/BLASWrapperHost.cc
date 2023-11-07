@@ -331,7 +331,24 @@ namespace dftfe
       const unsigned int ldc,
       long long int      strideC,
       const int          batchCount) const
-    {}
+    {
+      for (int iBatch = 0; iBatch < batchCount; iBatch++)
+        {
+          xgemm(transA,
+                transB,
+                m,
+                n,
+                k,
+                alpha,
+                A + iBatch * strideA,
+                lda,
+                B + iBatch * strideB,
+                ldb,
+                beta,
+                C + iBatch * strideC,
+                ldc);
+        }
+    }
 
 
     void
@@ -353,7 +370,24 @@ namespace dftfe
       const unsigned int          ldc,
       long long int               strideC,
       const int                   batchCount) const
-    {}
+    {
+      for (int iBatch = 0; iBatch < batchCount; iBatch++)
+        {
+          xgemm(transA,
+                transB,
+                m,
+                n,
+                k,
+                alpha,
+                A + iBatch * strideA,
+                lda,
+                B + iBatch * strideB,
+                ldb,
+                beta,
+                C + iBatch * strideC,
+                ldc);
+        }
+    }
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
