@@ -285,7 +285,7 @@ namespace dftfe
       double *           C[],
       const unsigned int ldc,
       const int          batchCount) const
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
 
 
@@ -305,7 +305,7 @@ namespace dftfe
       std::complex<double> *      C[],
       const unsigned int          ldc,
       const int                   batchCount) const
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
 
     void
@@ -392,7 +392,7 @@ namespace dftfe
       const ValueTypeComplex *complexArr,
       ValueTypeReal *         realArr,
       ValueTypeReal *         imagArr)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
 
 
@@ -403,7 +403,7 @@ namespace dftfe
       const ValueTypeReal *  realArr,
       const ValueTypeReal *  imagArr,
       ValueTypeComplex *     complexArr)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -411,7 +411,7 @@ namespace dftfe
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -421,7 +421,7 @@ namespace dftfe
       const ValueType1 *             copyFromVec,
       ValueType2 *                   copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
 
     template <typename ValueType1, typename ValueType2>
@@ -432,7 +432,7 @@ namespace dftfe
       const ValueType1 *             copyFromVecBlock,
       ValueType2 *                   copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
 
     template <typename ValueType1, typename ValueType2>
@@ -444,7 +444,7 @@ namespace dftfe
                                        const dftfe::size_type startingId,
                                        const ValueType1 *     copyFromVec,
                                        ValueType2 *           copyToVec)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -457,7 +457,7 @@ namespace dftfe
       const dftfe::size_type startingFromId,
       const ValueType1 *     copyFromVec,
       ValueType2 *           copyToVec)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
 
 
     template <typename ValueType1, typename ValueType2>
@@ -469,7 +469,7 @@ namespace dftfe
                                          const dftfe::size_type startingId,
                                          const ValueType1 *     copyFromVec,
                                          ValueType2 *           copyToVec)
-    {}
+    {AssertThrow(false, dftUtils::ExcNotImplementedYet());}
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
@@ -558,13 +558,13 @@ namespace dftfe
       const double *         s,
       std::complex<double> * x);
 
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const double           a,
-      const double *         s,
-      std::complex<float> *  x);
+    // template void
+    // BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
+    //   const dftfe::size_type contiguousBlockSize,
+    //   const dftfe::size_type numContiguousBlocks,
+    //   const double           a,
+    //   const double *         s,
+    //   std::complex<float> *  x);
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe
