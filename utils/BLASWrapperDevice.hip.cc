@@ -21,8 +21,8 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include <hipblas.h>
 #include "BLASWrapperDeviceKernels.cc"
-
 namespace dftfe
 {
   namespace linearAlgebra
@@ -50,128 +50,210 @@ namespace dftfe
       float *             C,
       const unsigned int *ldc) const
     {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else
+        {
+          // Assert Statement
+        }
+      if (transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transB == 'T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+      else
+        {
+          // Assert Statement
+        }
+
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
-                                                             transA,
-                                                             transB,
-                                                             m,
-                                                             n,
-                                                             k,
+                                                             transa,
+                                                             transb,
+                                                             int(m),
+                                                             int(n),
+                                                             int(k),
                                                              alpha,
                                                              A,
-                                                             lda,
+                                                             int(lda),
                                                              B,
-                                                             ldb,
+                                                             int(ldb),
                                                              beta,
                                                              C,
-                                                             ldc);
+                                                             int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char *               transA,
-      const char *               transB,
-      const unsigned int *       m,
-      const unsigned int *       n,
-      const unsigned int *       k,
+      const char                 transA,
+      const char                 transB,
+      const unsigned int         m,
+      const unsigned int         n,
+      const unsigned int         k,
       const std::complex<float> *alpha,
       const std::complex<float> *A,
-      const unsigned int *       lda,
+      const unsigned int         lda,
       const std::complex<float> *B,
-      const unsigned int *       ldb,
+      const unsigned int         ldb,
       const std::complex<float> *beta,
       std::complex<float> *      C,
-      const unsigned int *       ldc) const
+      const unsigned int         ldc) const
     {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (transA == 'C')
+        transa = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          // Assert Statement
+        }
+      if (transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transB == 'T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (transB == 'C')
+        transb = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          // Assert Statement
+        }
+
       dftfe::utils::deviceBlasStatus_t status =
         hipblasCgemm(d_deviceBlasHandle,
-                     transA,
-                     transB,
-                     m,
-                     n,
-                     k,
+                     transa,
+                     transb,
+                     int(m),
+                     int(n),
+                     int(k),
                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
                      dftfe::utils::makeDataTypeDeviceCompatible(A),
-                     lda,
+                     int(lda),
                      dftfe::utils::makeDataTypeDeviceCompatible(B),
-                     ldb,
+                     int(ldb),
                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
                      dftfe::utils::makeDataTypeDeviceCompatible(C),
-                     ldc);
+                     int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char *        transA,
-      const char *        transB,
-      const unsigned int *m,
-      const unsigned int *n,
-      const unsigned int *k,
-      const double *      alpha,
-      const double *      A,
-      const unsigned int *lda,
-      const double *      B,
-      const unsigned int *ldb,
-      const double *      beta,
-      double *            C,
-      const unsigned int *ldc) const
+      const char         transA,
+      const char         transB,
+      const unsigned int m,
+      const unsigned int n,
+      const unsigned int k,
+      const double *     alpha,
+      const double *     A,
+      const unsigned int lda,
+      const double *     B,
+      const unsigned int ldb,
+      const double *     beta,
+      double *           C,
+      const unsigned int ldc) const
     {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+
+      else
+        {
+          // Assert Statement
+        }
+      if (transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transB == 'T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+
+      else
+        {
+          // Assert Statement
+        }
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
-                                                             transA,
-                                                             transB,
-                                                             m,
-                                                             n,
-                                                             k,
+                                                             transa,
+                                                             transb,
+                                                             int(m),
+                                                             int(n),
+                                                             int(k),
                                                              alpha,
                                                              A,
-                                                             lda,
+                                                             int(lda),
                                                              B,
-                                                             ldb,
+                                                             int(ldb),
                                                              beta,
                                                              C,
-                                                             ldc);
+                                                             int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char *                transA,
-      const char *                transB,
-      const unsigned int *        m,
-      const unsigned int *        n,
-      const unsigned int *        k,
+      const char                  transA,
+      const char                  transB,
+      const unsigned int          m,
+      const unsigned int          n,
+      const unsigned int          k,
       const std::complex<double> *alpha,
       const std::complex<double> *A,
-      const unsigned int *        lda,
+      const unsigned int          lda,
       const std::complex<double> *B,
-      const unsigned int *        ldb,
+      const unsigned int          ldb,
       const std::complex<double> *beta,
       std::complex<double> *      C,
-      const unsigned int *        ldc) const
+      const unsigned int          ldc) const
     {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (transA == 'C')
+        transa = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          // Assert Statement
+        }
+      if (transB == 'N')
+        transb = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transB == 'T')
+        transb = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (transB == 'C')
+        transb = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          // Assert Statement
+        }
+
+
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZgemm(d_deviceBlasHandle,
-                     transA,
-                     transB,
-                     m,
-                     n,
-                     k,
+                     transa,
+                     transb,
+                     int(m),
+                     int(n),
+                     int(k),
                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
                      dftfe::utils::makeDataTypeDeviceCompatible(A),
-                     lda,
+                     int(lda),
                      dftfe::utils::makeDataTypeDeviceCompatible(B),
-                     ldb,
+                     int(ldb),
                      dftfe::utils::makeDataTypeDeviceCompatible(beta),
                      dftfe::utils::makeDataTypeDeviceCompatible(C),
-                     ldc);
+                     int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::create()
     {
       dftfe::utils::deviceBlasStatus_t status =
-        hipblasCreate(d_deviceBlasHandle);
+        hipblasCreate(&d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
@@ -187,8 +269,9 @@ namespace dftfe
 
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::setStream(
-      deviceStream_t stream)
+      dftfe::utils::deviceStream_t streamId)
     {
+      d_streamId = streamId;
       dftfe::utils::deviceBlasStatus_t status =
         hipblasSetStream(d_deviceBlasHandle, stream);
       DEVICEBLAS_API_CHECK(status);
@@ -197,7 +280,7 @@ namespace dftfe
 
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::setMathMode(
-      deviceBlasMath_t mathMode)
+      dftfe::utils::deviceBlasMath_t mathMode)
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasSetMathMode(d_deviceBlasHandle, mathMode);
@@ -207,48 +290,49 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
-      const unsigned int *n,
-      const double *      alpha,
-      double *            x,
-      const unsigned int *incx,
-      double *            y,
-      const unsigned int *incy)
+      const unsigned int n,
+      const double *     alpha,
+      double *           x,
+      const unsigned int incx,
+      double *           y,
+      const unsigned int incy) const
     {
-      dftfe::utils::deviceBlasStatus_t status =
-        hipblasDaxpy(d_deviceBlasHandle, n, alpha, x, incx, y, incy);
+      dftfe::utils::deviceBlasStatus_t status = hipblasDaxpy(
+        d_deviceBlasHandle, int(n), alpha, x, int(incx), y, int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
-      const unsigned int *        n,
+      const unsigned int          n,
       const std::complex<double> *alpha,
       std::complex<double> *      x,
-      const unsigned int *        incx,
+      const unsigned int          incx,
       std::complex<double> *      y,
-      const unsigned int *        incy)
+      const unsigned int          incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZaxpy(d_deviceBlasHandle,
-                     n,
+                     int(n),
                      dftfe::utils::makeDataTypeDeviceCompatible(alpha),
                      dftfe::utils::makeDataTypeDeviceCompatible(x),
-                     incx,
+                     int(incx),
                      dftfe::utils::makeDataTypeDeviceCompatible(y),
-                     incy);
+                     int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
-      const unsigned int *N,
-      const double *      X,
-      const unsigned int *INCX,
-      const double *      Y,
-      const unsigned int *INCY)
+      const unsigned int N,
+      const double *     X,
+      const unsigned int INCX,
+      const double *     Y,
+      const unsigned int INCY,
+      double *           result) const
     {
-      dftfe::utils::deviceBlasStatus_t status =
-        hipblasDdot(d_deviceBlasHandle, n, x, incx, y, incy, result);
+      dftfe::utils::deviceBlasStatus_t status = hipblasDdot(
+        d_deviceBlasHandle, int(N), X, int(INCX), Y, int(INCY), result);
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -812,30 +896,7 @@ namespace dftfe
                          dftfe::utils::makeDataTypeDeviceCompatible(x),
                          dftfe::utils::makeDataTypeDeviceCompatible(alpha));
     }
-    // for xscal
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      double *               x,
-      const double           a,
-      const dftfe::size_type n) const;
 
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      float *                x,
-      const float            a,
-      const dftfe::size_type n) const;
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      std::complex<double> *     x,
-      const std::complex<double> a,
-      const dftfe::size_type     n) const;
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      std::complex<float> *     x,
-      const std::complex<float> a,
-      const dftfe::size_type    n) const;
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyComplexArrToRealArrs(
@@ -1041,6 +1102,112 @@ namespace dftfe
                          dftfe::utils::makeDataTypeDeviceCompatible(s),
                          dftfe::utils::makeDataTypeDeviceCompatible(x));
     }
+    // for stridedBlockScale
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      double *               x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float            a,
+      const float *          s,
+      float *                x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double>  a,
+      const std::complex<double> *s,
+      std::complex<double> *      x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type     contiguousBlockSize,
+      const dftfe::size_type     numContiguousBlocks,
+      const std::complex<float>  a,
+      const std::complex<float> *s,
+      std::complex<float> *      x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      float *                x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float            a,
+      const float *          s,
+      double *               x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double>  a,
+      const std::complex<double> *s,
+      std::complex<float> *       x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type     contiguousBlockSize,
+      const dftfe::size_type     numContiguousBlocks,
+      const std::complex<float>  a,
+      const std::complex<float> *s,
+      std::complex<double> *     x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      std::complex<double> * x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double           a,
+      const double *         s,
+      std::complex<float> *  x);
+
+
+    // for xscal
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      double *               x,
+      const double           a,
+      const dftfe::size_type n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      float *                x,
+      const float            a,
+      const dftfe::size_type n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      std::complex<double> *     x,
+      const std::complex<double> a,
+      const dftfe::size_type     n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      std::complex<float> *     x,
+      const std::complex<float> a,
+      const dftfe::size_type    n) const;
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

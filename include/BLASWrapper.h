@@ -20,7 +20,6 @@
 
 #include <dftfeDataTypes.h>
 #include <MemorySpaceType.h>
-#include <headers.h>
 #include <complex>
 #include <TypeConfig.h>
 #include <DeviceTypeConfig.h>
@@ -910,14 +909,6 @@ namespace dftfe
   } // end of namespace linearAlgebra
 
 } // end of namespace dftfe
-//#include "../utils/BLASWrapper.t.cc"
-//#include "../utils/BLASWrapperHost.t.cc"
-// #if defined(DFTFE_WITH_DEVICE)
-// #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-// #    include "../utils/BLASWrapperDevice.t.cu.cc"
-// #  elif
-// #    include "../utils/BLASWrapperDevice.t.hip.cc"
-// #  endif
-// #endif
+
 
 #endif // BLASWrapper_h

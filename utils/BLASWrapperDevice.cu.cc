@@ -14,15 +14,15 @@
 //
 // ---------------------------------------------------------------------
 //
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-#  include <BLASWrapper.h>
-#  include <DeviceTypeConfig.h>
-#  include <DeviceKernelLauncherConstants.h>
-#  include <DeviceAPICalls.h>
-#  include <DeviceDataTypeOverloads.h>
-#  include <Exceptions.h>
-#  include <cublas_v2.h>
-#  include "BLASWrapperDeviceKernels.cc"
+
+#include <BLASWrapper.h>
+#include <deviceKernelsGeneric.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherConstants.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <cublas_v2.h>
+#include "BLASWrapperDeviceKernels.cc"
 namespace dftfe
 {
   namespace linearAlgebra
@@ -901,31 +901,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(x),
         dftfe::utils::makeDataTypeDeviceCompatible(alpha));
     }
-    // for xscal
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      double *               x,
-      const double           a,
-      const dftfe::size_type n) const;
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      float *                x,
-      const float            a,
-      const dftfe::size_type n) const;
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      std::complex<double> *     x,
-      const std::complex<double> a,
-      const dftfe::size_type     n) const;
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      std::complex<float> *     x,
-      const std::complex<float> a,
-      const dftfe::size_type    n) const;
-
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
@@ -1111,7 +1086,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(s),
         dftfe::utils::makeDataTypeDeviceCompatible(x));
     }
-    // stridedBlockScale
+    // for stridedBlockScale
     template void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
       const dftfe::size_type contiguousBlockSize,
@@ -1193,6 +1168,30 @@ namespace dftfe
       std::complex<float> *  x);
 
 
+    // for xscal
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      double *               x,
+      const double           a,
+      const dftfe::size_type n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      float *                x,
+      const float            a,
+      const dftfe::size_type n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      std::complex<double> *     x,
+      const std::complex<double> a,
+      const dftfe::size_type     n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
+      std::complex<float> *     x,
+      const std::complex<float> a,
+      const dftfe::size_type    n) const;
+
   } // End of namespace linearAlgebra
 } // End of namespace dftfe
-#endif
