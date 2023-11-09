@@ -94,6 +94,7 @@ namespace dftfe
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
           &constraintsVector);
 
+
       /**
        * @brief Default Destructor
        */
@@ -111,6 +112,15 @@ namespace dftfe
       init(const unsigned int &             dofHandlerID,
            const std::vector<unsigned int> &quadratureID,
            const UpdateFlags                updateFlags = update_values);
+      /**
+       * @brief fills required data structures from another FEBasisOperations object
+       * @param[in] basisOperationsSrc Source FEBasisOperations object.
+       */
+      template <dftfe::utils::MemorySpace memorySpaceSrc>
+      void
+      init(const FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                       ValueTypeBasisData,
+                                       memorySpaceSrc> &basisOperationsSrc);
 
       /**
        * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
@@ -250,6 +260,13 @@ namespace dftfe
       JxW() const;
 
       /**
+       * @brief quad point coordinates for each cell.
+       */
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                        dftfe::utils::MemorySpace::HOST> &
+      quadPoints() const;
+
+      /**
        * @brief Shape function values at quadrature points in ValueTypeBasisData.
        * @param[in] transpose if false the the data is indexed as [iQuad *
        * d_nDofsPerCell + iNode] and if true it is indexed as [iNode *
@@ -331,6 +348,13 @@ namespace dftfe
       cellID(const unsigned int iElem) const;
 
       /**
+       * @brief returns the cell index corresponding to given deal.ii cellID.
+       * @param[in] iElem cell Index
+       */
+      unsigned int
+      cellIndex(const dealii::CellId cellid) const;
+
+      /**
        * @brief Creates a multivector.
        * @param[in] blocksize Number of vectors in the multivector.
        * @param[out] multiVector the created multivector.
@@ -379,15 +403,20 @@ namespace dftfe
 
 
       constraintInfoClass d_constraintInfo;
+      unsigned int        d_nOMPThreads;
       std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
         *                                              d_constraintsVector;
       const dealii::MatrixFree<3, ValueTypeBasisData> *d_matrixFreeDataPtr;
       dftfe::utils::MemoryStorage<dftfe::global_size_type,
                                   dftfe::utils::MemorySpace::HOST>
         d_cellDofIndexToProcessDofIndexMap;
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                              dftfe::utils::MemorySpace::HOST>>
+        d_quadPoints;
       dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-                                  d_flattenedCellDofIndexToProcessDofIndexMap;
-      std::vector<dealii::CellId> d_cellIndexToCellIdMap;
+                                             d_flattenedCellDofIndexToProcessDofIndexMap;
+      std::vector<dealii::CellId>            d_cellIndexToCellIdMap;
+      std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
       std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_inverseJacobianData;
       std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>

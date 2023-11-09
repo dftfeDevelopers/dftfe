@@ -1153,7 +1153,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->inverseJacobiansBasisData().data(),
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
             d_cellHamiltonianMatrixFlattenedDevice.begin() +
@@ -1178,7 +1178,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->inverseJacobiansBasisData().data(),
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
             d_cellHamiltonianMatrixFlattenedDevice.begin() +
@@ -1203,7 +1203,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->inverseJacobiansBasisData().data(),
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
             d_cellHamiltonianMatrixFlattenedDevice.begin() +
             spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
@@ -1227,7 +1227,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->inverseJacobiansBasisData().data(),
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
             d_cellHamiltonianMatrixFlattenedDevice.begin() +
             spinIndex * d_numLocallyOwnedCells * d_numberNodesPerElement *
@@ -1258,7 +1258,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
           d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -1290,7 +1290,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           d_derExcWithSigmaTimesGradRhoJxWDevice.begin(),
           d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -1321,7 +1321,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
             d_cellHamiltonianMatrixFlattenedDevice.begin()),
@@ -1352,7 +1352,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
           basisOperationsPtrDevice->cellsTypeFlag(),
           d_cellShapeFunctionGradientIntegralFlattenedDevice.begin(),
           d_vEffJxWDevice.begin(),
-          d_cellJxWValuesDevice.begin(),
+          basisOperationsPtrDevice->JxWBasisData().begin(),
           d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.begin(),
           dftfe::utils::makeDataTypeDeviceCompatible(
             d_cellHamiltonianMatrixFlattenedDevice.begin()),

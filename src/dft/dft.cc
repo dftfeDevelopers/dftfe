@@ -156,7 +156,8 @@ namespace dftfe
 #endif
     , d_phiTotalSolverProblem(mpi_comm_domain)
   {
-    d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
+    d_nOMPThreads = std::stoi(std::getenv("DFTFE_NUM_THREADS"));
+    d_elpaScala   = new dftfe::elpaScalaManager(mpi_comm_domain);
 
     forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
                                                        mpi_comm_parent,
@@ -1263,7 +1264,7 @@ namespace dftfe
     // false option reinitializes vself bins from scratch wheras true option
     // only updates the boundary conditions
     const bool updateOnlyBinsBc = !updateImagesAndKPointsAndVselfBins;
-    initBoundaryConditions(updateOnlyBinsBc);
+    initBoundaryConditions(isMeshDeformed, updateOnlyBinsBc);
 
     MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime() - init_bc;
@@ -1597,7 +1598,7 @@ namespace dftfe
 
         // first true option only updates the boundary conditions
         // second true option signals update is only for vself perturbation
-        initBoundaryConditions(true, true);
+        initBoundaryConditions(true, true, true);
 
         MPI_Barrier(d_mpiCommParent);
         init_bc = MPI_Wtime() - init_bc;
@@ -1783,7 +1784,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::trivialSolveForStress()
   {
-    initBoundaryConditions(false);
+    initBoundaryConditions();
     noRemeshRhoDataInit();
     solve(false, true);
   }

@@ -26,6 +26,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
+    const bool recomputeBasisData,
     const bool meshOnlyDeformed,
     const bool vselfPerturbationUpdateForStress)
   {
@@ -222,11 +223,13 @@ namespace dftfe
     quadratureVector.push_back(
       dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                            C_numCopies1DQuadLPSP()));
+    quadratureVector.push_back(dealii::QGauss<1>(C_num1DQuad<FEOrder>()));
 
-    d_densityQuadratureId = 0;
-    d_nlpspQuadratureId   = 1;
-    d_gllQuadratureId     = 2;
-    d_lpspQuadratureId    = 3;
+    d_densityQuadratureId        = 0;
+    d_nlpspQuadratureId          = 1;
+    d_gllQuadratureId            = 2;
+    d_lpspQuadratureId           = 3;
+    d_feOrderPlusOneQuadratureId = 4;
 
     double init_force;
     MPI_Barrier(d_mpiCommParent);
@@ -262,21 +265,22 @@ namespace dftfe
                             d_constraintsVector,
                             quadratureVector,
                             additional_data);
-    basisOperationsPtrHost = std::make_shared<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::HOST>>(
-      matrix_free_data, d_constraintsVector);
-    dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
-                                            dftfe::basis::update_gradients |
-                                            dftfe::basis::update_transpose;
-    std::vector<unsigned int> quadratureIndices(4, 0);
-    for (auto i = 0; i < 4; ++i)
-      quadratureIndices[i] = i;
-    basisOperationsPtrHost->init(d_densityDofHandlerIndex,
-                                 quadratureIndices,
-                                 updateFlags);
-    if (!d_dftParamsPtr->useDevice)
+    if (recomputeBasisData)
+      {
+        basisOperationsPtrHost = std::make_shared<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::HOST>>(
+          matrix_free_data, d_constraintsVector);
+        dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
+                                                dftfe::basis::update_gradients |
+                                                dftfe::basis::update_transpose;
+        std::vector<unsigned int> quadratureIndices{0, 1, 2, 3, 4};
+        basisOperationsPtrHost->init(d_densityDofHandlerIndex,
+                                     quadratureIndices,
+                                     updateFlags);
+      }
+    if (!d_dftParamsPtr->useDevice && recomputeBasisData)
       {
         std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
         dftUtils::createBandParallelizationIndices(
@@ -296,16 +300,26 @@ namespace dftfe
             d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1));
       }
 #if defined(DFTFE_WITH_DEVICE)
-    if (d_dftParamsPtr->useDevice)
+    if (d_dftParamsPtr->useDevice && recomputeBasisData)
       {
         basisOperationsPtrDevice = std::make_shared<
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>(
           matrix_free_data, d_constraintsVector);
-        basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
-                                       quadratureIndices,
-                                       updateFlags);
+        basisOperationsPtrDevice->init(*basisOperationsPtrHost);
+        const unsigned int BVec =
+          std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
+
+        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+          basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
+        else
+          basisOperationsPtrDevice->createScratchMultiVectors(
+            BVec, (d_dftParamsPtr->spinPolarized + 1));
+      }
+    else
+      {
+        basisOperationsPtrDevice->clearScratchMultiVectors();
         const unsigned int BVec =
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
@@ -337,7 +351,9 @@ namespace dftfe
     // init 2p matrix-free objects using appropriate constraint matrix and
     // quadrature rule
     //
-    initpRefinedObjects(meshOnlyDeformed, vselfPerturbationUpdateForStress);
+    initpRefinedObjects(recomputeBasisData,
+                        meshOnlyDeformed,
+                        vselfPerturbationUpdateForStress);
 
 
     MPI_Barrier(d_mpiCommParent);

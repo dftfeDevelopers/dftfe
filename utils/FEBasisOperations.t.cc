@@ -15,7 +15,6 @@
 // ---------------------------------------------------------------------
 //
 
-#include <FEBasisOperations.h>
 namespace dftfe
 {
   namespace basis
@@ -37,6 +36,7 @@ namespace dftfe
       d_nVectors          = 0;
       d_updateFlags       = update_default;
       areAllCellsAffine   = true;
+      d_nOMPThreads       = std::stoi(std::getenv("DFTFE_NUM_THREADS"));
       for (unsigned int iMacroCell = 0;
            iMacroCell < d_matrixFreeDataPtr->n_cell_batches();
            ++iMacroCell)
@@ -80,6 +80,159 @@ namespace dftfe
         initializeShapeFunctionAndJacobianBasisData();
     }
 
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    template <dftfe::utils::MemorySpace memorySpaceSrc>
+    void
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::
+      init(const FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                       ValueTypeBasisData,
+                                       memorySpaceSrc> &basisOperationsSrc)
+    {
+      d_matrixFreeDataPtr   = basisOperationsSrc.d_matrixFreeDataPtr;
+      d_constraintsVector   = basisOperationsSrc.d_constraintsVector;
+      areAllCellsAffine     = basisOperationsSrc.areAllCellsAffine;
+      d_nOMPThreads         = basisOperationsSrc.d_nOMPThreads;
+      areAllCellsCartesian  = basisOperationsSrc.areAllCellsCartesian;
+      d_dofHandlerID        = basisOperationsSrc.d_dofHandlerID;
+      d_quadratureIDsVector = basisOperationsSrc.d_quadratureIDsVector;
+      d_updateFlags         = basisOperationsSrc.d_updateFlags;
+      d_nVectors            = basisOperationsSrc.d_nVectors;
+      d_nCells              = basisOperationsSrc.d_nCells;
+      d_nDofsPerCell        = basisOperationsSrc.d_nDofsPerCell;
+      d_locallyOwnedSize    = basisOperationsSrc.d_locallyOwnedSize;
+      d_localSize           = basisOperationsSrc.d_localSize;
+      d_cellDofIndexToProcessDofIndexMap =
+        basisOperationsSrc.d_cellDofIndexToProcessDofIndexMap;
+      d_cellIndexToCellIdMap = basisOperationsSrc.d_cellIndexToCellIdMap;
+      d_cellIdToCellIndexMap = basisOperationsSrc.d_cellIdToCellIndexMap;
+      d_nQuadsPerCell        = basisOperationsSrc.d_nQuadsPerCell;
+      initializeMPIPattern();
+      initializeConstraints();
+      d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
+      d_quadPoints.resize(d_quadratureIDsVector.size());
+      d_inverseJacobianData.resize(
+        areAllCellsAffine ? 1 : d_quadratureIDsVector.size());
+      d_JxWData.resize(d_quadratureIDsVector.size());
+      if (d_updateFlags & update_values)
+        {
+          d_shapeFunctionData.resize(d_quadratureIDsVector.size());
+          if (d_updateFlags & update_transpose)
+            d_shapeFunctionDataTranspose.resize(d_quadratureIDsVector.size());
+        }
+      if (d_updateFlags & update_gradients)
+        {
+          d_shapeFunctionGradientDataInternalLayout.resize(
+            d_quadratureIDsVector.size());
+          d_shapeFunctionGradientData.resize(d_quadratureIDsVector.size());
+          if (d_updateFlags & update_transpose)
+            d_shapeFunctionGradientDataTranspose.resize(
+              d_quadratureIDsVector.size());
+        }
+      for (unsigned int iQuadID = 0; iQuadID < d_quadratureIDsVector.size();
+           ++iQuadID)
+        {
+          d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID].resize(
+            basisOperationsSrc
+              .d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID]
+              .size());
+          d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID].copyFrom(
+            basisOperationsSrc
+              .d_inverseJacobianData[areAllCellsAffine ? 0 : iQuadID]);
+          d_JxWData[iQuadID].resize(
+            basisOperationsSrc.d_JxWData[iQuadID].size());
+          d_JxWData[iQuadID].copyFrom(basisOperationsSrc.d_JxWData[iQuadID]);
+          d_shapeFunctionData[iQuadID].resize(
+            basisOperationsSrc.d_shapeFunctionData[iQuadID].size());
+          d_shapeFunctionData[iQuadID].copyFrom(
+            basisOperationsSrc.d_shapeFunctionData[iQuadID]);
+          d_shapeFunctionGradientDataInternalLayout[iQuadID].resize(
+            basisOperationsSrc
+              .d_shapeFunctionGradientDataInternalLayout[iQuadID]
+              .size());
+          d_shapeFunctionGradientDataInternalLayout[iQuadID].copyFrom(
+            basisOperationsSrc
+              .d_shapeFunctionGradientDataInternalLayout[iQuadID]);
+          d_shapeFunctionDataTranspose[iQuadID].resize(
+            basisOperationsSrc.d_shapeFunctionDataTranspose[iQuadID].size());
+          d_shapeFunctionDataTranspose[iQuadID].copyFrom(
+            basisOperationsSrc.d_shapeFunctionDataTranspose[iQuadID]);
+          d_shapeFunctionGradientData[iQuadID].resize(
+            basisOperationsSrc.d_shapeFunctionGradientData[iQuadID].size());
+          d_shapeFunctionGradientData[iQuadID].copyFrom(
+            basisOperationsSrc.d_shapeFunctionGradientData[iQuadID]);
+          d_shapeFunctionGradientDataTranspose[iQuadID].resize(
+            basisOperationsSrc.d_shapeFunctionGradientDataTranspose[iQuadID]
+              .size());
+          d_shapeFunctionGradientDataTranspose[iQuadID].copyFrom(
+            basisOperationsSrc.d_shapeFunctionGradientDataTranspose[iQuadID]);
+        }
+      if (!std::is_same<ValueTypeBasisCoeff, ValueTypeBasisData>::value)
+        {
+          d_inverseJacobianBasisData.resize(
+            areAllCellsAffine ? 1 : d_quadratureIDsVector.size());
+          d_JxWBasisData.resize(d_quadratureIDsVector.size());
+          if (d_updateFlags & update_values)
+            {
+              d_shapeFunctionBasisData.resize(d_quadratureIDsVector.size());
+              if (d_updateFlags & update_transpose)
+                d_shapeFunctionBasisDataTranspose.resize(
+                  d_quadratureIDsVector.size());
+            }
+          if (d_updateFlags & update_gradients)
+            {
+              d_shapeFunctionGradientBasisData.resize(
+                d_quadratureIDsVector.size());
+              if (d_updateFlags & update_transpose)
+                d_shapeFunctionGradientBasisDataTranspose.resize(
+                  d_quadratureIDsVector.size());
+            }
+          for (unsigned int iQuadID = 0; iQuadID < d_quadratureIDsVector.size();
+               ++iQuadID)
+            {
+              d_inverseJacobianBasisData[areAllCellsAffine ? 0 : iQuadID]
+                .resize(
+                  basisOperationsSrc
+                    .d_inverseJacobianBasisData[areAllCellsAffine ? 0 : iQuadID]
+                    .size());
+              d_inverseJacobianBasisData[areAllCellsAffine ? 0 : iQuadID]
+                .copyFrom(
+                  basisOperationsSrc
+                    .d_inverseJacobianBasisData[areAllCellsAffine ? 0 :
+                                                                    iQuadID]);
+              d_JxWBasisData[iQuadID].resize(
+                basisOperationsSrc.d_JxWBasisData[iQuadID].size());
+              d_JxWBasisData[iQuadID].copyFrom(
+                basisOperationsSrc.d_JxWBasisData[iQuadID]);
+              d_shapeFunctionBasisData[iQuadID].resize(
+                basisOperationsSrc.d_shapeFunctionBasisData[iQuadID].size());
+              d_shapeFunctionBasisData[iQuadID].copyFrom(
+                basisOperationsSrc.d_shapeFunctionBasisData[iQuadID]);
+              d_shapeFunctionBasisDataTranspose[iQuadID].resize(
+                basisOperationsSrc.d_shapeFunctionBasisDataTranspose[iQuadID]
+                  .size());
+              d_shapeFunctionBasisDataTranspose[iQuadID].copyFrom(
+                basisOperationsSrc.d_shapeFunctionBasisDataTranspose[iQuadID]);
+              d_shapeFunctionGradientBasisData[iQuadID].resize(
+                basisOperationsSrc.d_shapeFunctionGradientBasisData[iQuadID]
+                  .size());
+              d_shapeFunctionGradientBasisData[iQuadID].copyFrom(
+                basisOperationsSrc.d_shapeFunctionGradientBasisData[iQuadID]);
+              d_shapeFunctionGradientBasisDataTranspose[iQuadID].resize(
+                basisOperationsSrc
+                  .d_shapeFunctionGradientBasisDataTranspose[iQuadID]
+                  .size());
+              d_shapeFunctionGradientBasisDataTranspose[iQuadID].copyFrom(
+                basisOperationsSrc
+                  .d_shapeFunctionGradientBasisDataTranspose[iQuadID]);
+            }
+        }
+    }
+
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
@@ -92,9 +245,10 @@ namespace dftfe
                                                const unsigned int &quadratureID,
                                                const bool isResizeTempStorage)
     {
-      d_quadratureID   = quadratureID;
-      d_cellsBlockSize = cellsBlockSize;
-      if (d_nVectors != vecBlockSize)
+      d_quadratureID = quadratureID;
+      d_cellsBlockSize =
+        cellsBlockSize == 0 ? d_cellsBlockSize : cellsBlockSize;
+      if (d_nVectors != vecBlockSize && vecBlockSize != 0)
         {
           d_nVectors = vecBlockSize;
           initializeFlattenedIndexMaps();
@@ -197,12 +351,26 @@ namespace dftfe
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
+    const dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                      dftfe::utils::MemorySpace::HOST> &
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::quadPoints() const
+    {
+      return d_quadPoints[d_quadratureID];
+    }
+
+
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
     FEBasisOperationsBase<ValueTypeBasisCoeff,
                           ValueTypeBasisData,
                           memorySpace>::JxW() const
     {
-      return d_JxWData[areAllCellsAffine ? 0 : d_quadratureID];
+      return d_JxWData[d_quadratureID];
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -216,7 +384,7 @@ namespace dftfe
                           ValueTypeBasisData,
                           memorySpace>::JxWBasisData() const
     {
-      return d_JxWData[areAllCellsAffine ? 0 : d_quadratureID];
+      return d_JxWData[d_quadratureID];
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -230,7 +398,7 @@ namespace dftfe
                           ValueTypeBasisData,
                           memorySpace>::JxWBasisData() const
     {
-      return d_JxWBasisData[areAllCellsAffine ? 0 : d_quadratureID];
+      return d_JxWBasisData[d_quadratureID];
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -351,6 +519,18 @@ namespace dftfe
       return d_cellIndexToCellIdMap[iElem];
     }
 
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::cellIndex(const dealii::CellId cellid)
+      const
+    {
+      return d_cellIdToCellIndexMap.find(cellid)->second;
+    }
+
 
 
     template <typename ValueTypeBasisCoeff,
@@ -457,12 +637,12 @@ namespace dftfe
       d_cellIndexToCellIdMap.clear();
       d_cellIndexToCellIdMap.resize(d_nCells);
 
+      d_cellIdToCellIndexMap.clear();
       auto cellPtr =
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
       auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
 
-      std::vector<global_size_type>       cellDofIndicesGlobal(d_nDofsPerCell);
-      std::map<dealii::CellId, size_type> cellIdToCellIndexMap;
+      std::vector<global_size_type> cellDofIndicesGlobal(d_nDofsPerCell);
 
       unsigned int iCell = 0;
       for (; cellPtr != endcPtr; ++cellPtr)
@@ -476,7 +656,9 @@ namespace dftfe
                   ->global_to_local(cellDofIndicesGlobal[iDof]);
 
 
-            d_cellIndexToCellIdMap[iCell] = cellPtr->id();
+            d_cellIndexToCellIdMap[iCell]         = cellPtr->id();
+            d_cellIdToCellIndexMap[cellPtr->id()] = iCell;
+
 
             ++iCell;
           }
@@ -505,6 +687,7 @@ namespace dftfe
                           memorySpace>::initializeShapeFunctionAndJacobianData()
     {
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
+      d_quadPoints.resize(d_quadratureIDsVector.size());
       d_inverseJacobianData.resize(
         areAllCellsAffine ? 1 : d_quadratureIDsVector.size());
       d_JxWData.resize(d_quadratureIDsVector.size());
@@ -531,9 +714,15 @@ namespace dftfe
           dealii::FEValues<3> fe_values(
             d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
             quadrature,
-            dealii::update_values | dealii::update_gradients |
-              dealii::update_jacobians | dealii::update_JxW_values |
-              dealii::update_inverse_jacobians);
+            dealii::update_quadrature_points | dealii::update_jacobians |
+              dealii::update_JxW_values | dealii::update_inverse_jacobians);
+          dealii::FEValues<3> fe_values_reference(
+            d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
+            quadrature,
+            dealii::update_values | dealii::update_gradients);
+          dealii::Triangulation<3> reference_cell;
+          dealii::GridGenerator::hyper_cube(reference_cell, 0., 1.);
+          fe_values_reference.reinit(reference_cell.begin());
 
           d_nQuadsPerCell[iQuadID] = quadrature.size();
 
@@ -574,7 +763,8 @@ namespace dftfe
             d_shapeFunctionGradientDataTranspose[iQuadID];
 #endif
 
-
+          d_quadPoints[iQuadID].clear();
+          d_quadPoints[iQuadID].resize(d_nCells * d_nQuadsPerCell[iQuadID] * 3);
           d_shapeFunctionDataHost.clear();
           if (d_updateFlags & update_values)
             d_shapeFunctionDataHost.resize(d_nQuadsPerCell[iQuadID] *
@@ -616,11 +806,67 @@ namespace dftfe
           const unsigned int nJacobiansPerCell =
             areAllCellsAffine ? 1 : d_nQuadsPerCell[iQuadID];
 
+
+          if (d_updateFlags & update_values)
+            {
+              for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
+                for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadID];
+                     ++iQuad)
+                  d_shapeFunctionDataHost[iQuad * d_nDofsPerCell + iNode] =
+                    fe_values_reference.shape_value(iNode, iQuad);
+              if (d_updateFlags & update_transpose)
+                {
+                  for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
+                    for (unsigned int iQuad = 0;
+                         iQuad < d_nQuadsPerCell[iQuadID];
+                         ++iQuad)
+                      d_shapeFunctionDataTransposeHost
+                        [iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
+                          fe_values_reference.shape_value(iNode, iQuad);
+                }
+            }
+
+
+          if (d_updateFlags & update_gradients)
+            {
+              for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadID];
+                   ++iQuad)
+                for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
+                  {
+                    const auto &shape_grad_reference =
+                      fe_values_reference.shape_grad(iNode, iQuad);
+                    for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      if (areAllCellsAffine)
+                        d_shapeFunctionGradientDataInternalLayoutHost
+                          [d_nQuadsPerCell[iQuadID] * d_nDofsPerCell * iDim +
+                           d_nDofsPerCell * iQuad + iNode] =
+                            shape_grad_reference[iDim];
+                      else
+                        d_shapeFunctionGradientDataInternalLayoutHost
+                          [iQuad * d_nDofsPerCell * 3 + d_nDofsPerCell * iDim +
+                           iNode] = shape_grad_reference[iDim];
+
+
+                    for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      d_shapeFunctionGradientDataHost
+                        [iDim * d_nQuadsPerCell[iQuadID] * d_nDofsPerCell +
+                         iQuad * d_nDofsPerCell + iNode] =
+                          shape_grad_reference[iDim];
+                    if (d_updateFlags & update_transpose)
+                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        d_shapeFunctionGradientDataTransposeHost
+                          [iDim * d_nQuadsPerCell[iQuadID] * d_nDofsPerCell +
+                           iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
+                            shape_grad_reference[iDim];
+                  }
+            }
+
+
+
           auto cellPtr =
             d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
           auto endcPtr =
             d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
-
           unsigned int iCell = 0;
           for (; cellPtr != endcPtr; ++cellPtr)
             if (cellPtr->is_locally_owned())
@@ -628,71 +874,12 @@ namespace dftfe
                 fe_values.reinit(cellPtr);
                 auto &jacobians        = fe_values.get_jacobians();
                 auto &inverseJacobians = fe_values.get_inverse_jacobians();
-                if (iCell == 0)
-                  {
-                    if (d_updateFlags & update_values)
-                      {
-                        for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
-                             ++iNode)
-                          for (unsigned int iQuad = 0;
-                               iQuad < d_nQuadsPerCell[iQuadID];
-                               ++iQuad)
-                            d_shapeFunctionDataHost[iQuad * d_nDofsPerCell +
-                                                    iNode] =
-                              fe_values.shape_value(iNode, iQuad);
-                        if (d_updateFlags & update_transpose)
-                          for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
-                               ++iNode)
-                            for (unsigned int iQuad = 0;
-                                 iQuad < d_nQuadsPerCell[iQuadID];
-                                 ++iQuad)
-                              d_shapeFunctionDataTransposeHost
-                                [iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
-                                  fe_values.shape_value(iNode, iQuad);
-                      }
-
-
-                    if (d_updateFlags & update_gradients)
-                      for (unsigned int iQuad = 0;
-                           iQuad < d_nQuadsPerCell[iQuadID];
-                           ++iQuad)
-                        for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
-                             ++iNode)
-                          {
-                            const auto &shape_grad_real =
-                              fe_values.shape_grad(iNode, iQuad);
-                            const auto &shape_grad_reference =
-                              apply_transformation(jacobians[iQuad].transpose(),
-                                                   shape_grad_real);
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                              if (areAllCellsAffine)
-                                d_shapeFunctionGradientDataInternalLayoutHost
-                                  [d_nQuadsPerCell[iQuadID] * d_nDofsPerCell *
-                                     iDim +
-                                   d_nDofsPerCell * iQuad + iNode] =
-                                    shape_grad_reference[iDim];
-                              else
-                                d_shapeFunctionGradientDataInternalLayoutHost
-                                  [iQuad * d_nDofsPerCell * 3 +
-                                   d_nDofsPerCell * iDim + iNode] =
-                                    shape_grad_reference[iDim];
-
-
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                              d_shapeFunctionGradientDataHost
-                                [iDim * d_nQuadsPerCell[iQuadID] *
-                                   d_nDofsPerCell +
-                                 iQuad * d_nDofsPerCell + iNode] =
-                                  shape_grad_reference[iDim];
-                            if (d_updateFlags & update_transpose)
-                              for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                                d_shapeFunctionGradientDataTransposeHost
-                                  [iDim * d_nQuadsPerCell[iQuadID] *
-                                     d_nDofsPerCell +
-                                   iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
-                                    shape_grad_reference[iDim];
-                          }
-                  }
+                for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadID];
+                     ++iQuad)
+                  for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                    d_quadPoints[iQuadID][iCell * d_nQuadsPerCell[iQuadID] * 3 +
+                                          iQuad * 3 + iDim] =
+                      fe_values.quadrature_point(iQuad)[iDim];
                 for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadID];
                      ++iQuad)
                   d_JxWDataHost[iCell * d_nQuadsPerCell[iQuadID] + iQuad] =
@@ -777,10 +964,16 @@ namespace dftfe
           dealii::FEValues<3> fe_values(
             d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
             quadrature,
-            dealii::update_values | dealii::update_gradients |
-              dealii::update_jacobians | dealii::update_JxW_values |
+            dealii::update_jacobians | dealii::update_JxW_values |
               dealii::update_inverse_jacobians);
 
+          dealii::FEValues<3> fe_values_reference(
+            d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
+            quadrature,
+            dealii::update_values | dealii::update_gradients);
+          dealii::Triangulation<3> reference_cell;
+          dealii::GridGenerator::hyper_cube(reference_cell, 0., 1.);
+          fe_values_reference.reinit(reference_cell.begin());
 #if defined(DFTFE_WITH_DEVICE)
           dftfe::utils::MemoryStorage<ValueTypeBasisData,
                                       dftfe::utils::MemorySpace::HOST>
@@ -875,7 +1068,7 @@ namespace dftfe
                                ++iQuad)
                             d_shapeFunctionDataHost[iQuad * d_nDofsPerCell +
                                                     iNode] =
-                              fe_values.shape_value(iNode, iQuad);
+                              fe_values_reference.shape_value(iNode, iQuad);
                         if (d_updateFlags & update_transpose)
                           for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
                                ++iNode)
@@ -884,7 +1077,7 @@ namespace dftfe
                                  ++iQuad)
                               d_shapeFunctionDataTransposeHost
                                 [iNode * d_nQuadsPerCell[iQuadID] + iQuad] =
-                                  fe_values.shape_value(iNode, iQuad);
+                                  fe_values_reference.shape_value(iNode, iQuad);
                       }
 
 
@@ -895,11 +1088,8 @@ namespace dftfe
                         for (unsigned int iNode = 0; iNode < d_nDofsPerCell;
                              ++iNode)
                           {
-                            const auto &shape_grad_real =
-                              fe_values.shape_grad(iNode, iQuad);
                             const auto &shape_grad_reference =
-                              apply_transformation(jacobians[iQuad].transpose(),
-                                                   shape_grad_real);
+                              fe_values_reference.shape_grad(iNode, iQuad);
 
                             for (unsigned int iDim = 0; iDim < 3; ++iDim)
                               d_shapeFunctionGradientDataHost

@@ -15,7 +15,6 @@
 // ---------------------------------------------------------------------
 //
 
-#include <FEBasisOperations.h>
 #include <linearAlgebraOperations.h>
 #include <deviceKernelsGeneric.h>
 #include <DeviceBlasWrapper.h>

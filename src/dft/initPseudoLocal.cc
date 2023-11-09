@@ -144,11 +144,7 @@ namespace dftfe
     //
     // Initialize pseudopotential
     //
-    dealii::FEValues<3> fe_values(_dofHandler.get_fe(),
-                                  _matrix_free_data.get_quadrature(
-                                    lpspQuadratureId),
-                                  dealii::update_quadrature_points);
-    const unsigned int  n_q_points =
+    const unsigned int n_q_points =
       _matrix_free_data.get_quadrature(lpspQuadratureId).size();
 
     const int numberGlobalCharges = atomLocations.size();
@@ -191,13 +187,12 @@ namespace dftfe
     tempDisp[0] = cutOffForPsp;
     tempDisp[1] = cutOffForPsp;
     tempDisp[2] = cutOffForPsp;
-    std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
-      boundaryPoints;
 
     std::vector<double> atomsImagesPositions(
       (numberGlobalCharges + numberImageCharges) * 3);
     std::vector<double> atomsImagesCharges(
       (numberGlobalCharges + numberImageCharges));
+#pragma omp parallel for num_threads(d_nOMPThreads)
     for (unsigned int iAtom = 0;
          iAtom < numberGlobalCharges + numberImageCharges;
          iAtom++)
@@ -230,22 +225,13 @@ namespace dftfe
           }
       }
 
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = _dofHandler.begin_active(),
-      endc = _dofHandler.end();
-    int                                    numberElements = 0;
-    std::map<dealii::CellId, unsigned int> cellIdToElemIdMap;
-    std::map<unsigned int, dealii::CellId> elemIdToCellIdMap;
-    for (; cell != endc; ++cell)
-      if (cell->is_locally_owned())
-        {
-          cellIdToElemIdMap[cell->id()]     = numberElements;
-          elemIdToCellIdMap[numberElements] = cell->id();
-
-          std::vector<double> &pseudoVLoc = _pseudoValues[cell->id()];
-          pseudoVLoc.resize(n_q_points, 0.0);
-          numberElements++;
-        }
+    for (unsigned int iCell = 0; iCell < basisOperationsPtrHost->nCells();
+         ++iCell)
+      {
+        std::vector<double> &pseudoVLoc =
+          _pseudoValues[basisOperationsPtrHost->cellID(iCell)];
+        pseudoVLoc.resize(n_q_points, 0.0);
+      }
 
     const int numberDofs = phiExt.local_size();
     // kpoint group parallelization data structures
@@ -260,6 +246,7 @@ namespace dftfe
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndicesStep1);
 
+#pragma omp parallel for num_threads(d_nOMPThreads)
     for (unsigned int localDofId = 0; localDofId < phiExt.local_size();
          ++localDofId)
       {
@@ -375,17 +362,6 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_2 = MPI_Wtime();
 
-    dealii::FEEvaluation<3,
-                         FEOrderElectro,
-                         C_num1DQuadLPSP<FEOrderElectro>() *
-                           C_numCopies1DQuadLPSP()>
-      feEvalObj(_matrix_free_data, _phiExtDofHandlerIndex, lpspQuadratureId);
-    AssertThrow(
-      _matrix_free_data.get_quadrature(lpspQuadratureId).size() ==
-        feEvalObj.n_q_points,
-      dealii::ExcMessage(
-        "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
-
     const int numMacroCells = _matrix_free_data.n_cell_batches();
 
     std::vector<int> kptGroupLowHighPlusOneIndicesStep2;
@@ -393,7 +369,8 @@ namespace dftfe
     if (numMacroCells > 0)
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndicesStep2);
-
+    basisOperationsPtrHost->reinit(0, 0, lpspQuadratureId);
+#pragma omp parallel for num_threads(d_nOMPThreads)
     for (unsigned int macrocell = 0;
          macrocell < _matrix_free_data.n_cell_batches();
          ++macrocell)
@@ -402,10 +379,6 @@ namespace dftfe
               kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
             macrocell >= kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
           {
-            feEvalObj.reinit(macrocell);
-            feEvalObj.read_dof_values(phiExt);
-            feEvalObj.evaluate(true, false);
-
             dealii::Point<3> atom;
             int              atomicNumber;
             double           atomCharge;
@@ -423,18 +396,19 @@ namespace dftfe
                 dealii::CellId subCellId = subCellPtr->id();
 
                 std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-
-                dealii::Point<3> quadPoint;
-                double           value, distanceToAtom, distanceToAtomInv;
-
-                fe_values.reinit(subCellPtr);
-
+                unsigned int         cellIndex =
+                  basisOperationsPtrHost->cellIndex(subCellId);
+                double        value, distanceToAtom, distanceToAtomInv;
+                const double *quadPointPtr =
+                  basisOperationsPtrHost->quadPoints().data() +
+                  cellIndex * n_q_points * 3;
 
                 // loop over quad points
                 for (unsigned int q = 0; q < n_q_points; ++q)
                   {
-                    const dealii::Point<3> &quadPoint =
-                      fe_values.quadrature_point(q);
+                    const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
+                                                     quadPointPtr[q * 3 + 1],
+                                                     quadPointPtr[q * 3 + 2]);
 
                     double temp;
                     double tempVal = 0.0;
@@ -502,7 +476,31 @@ namespace dftfe
                     pseudoVLoc[q] = tempVal;
                   } // quad loop
               }     // subcell loop
+          }         // intercomm paral
+      }             // cell loop
 
+    dealii::FEEvaluation<3,
+                         FEOrderElectro,
+                         C_num1DQuadLPSP<FEOrderElectro>() *
+                           C_numCopies1DQuadLPSP()>
+      feEvalObj(_matrix_free_data, _phiExtDofHandlerIndex, lpspQuadratureId);
+    AssertThrow(
+      _matrix_free_data.get_quadrature(lpspQuadratureId).size() ==
+        feEvalObj.n_q_points,
+      dealii::ExcMessage(
+        "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
+
+    for (unsigned int macrocell = 0;
+         macrocell < _matrix_free_data.n_cell_batches();
+         ++macrocell)
+      {
+        if (macrocell <
+              kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId + 1] &&
+            macrocell >= kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
+          {
+            feEvalObj.reinit(macrocell);
+            feEvalObj.read_dof_values(phiExt);
+            feEvalObj.evaluate(true, false);
             for (unsigned int iSubCell = 0;
                  iSubCell <
                  _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
@@ -520,44 +518,40 @@ namespace dftfe
                     pseudoVLoc[q] -= feEvalObj.get_value(q)[iSubCell];
                   } // loop over quad points
               }     // subcell loop
-          }         // intercomm paral
-      }             // cell loop
-
+          }
+      }
     if (numMacroCells > 0 && numberKptGroups > 1)
       {
-        std::vector<double> tempPseudoValuesFlattened(numberElements *
-                                                        n_q_points,
-                                                      0.0);
+        std::vector<double> tempPseudoValuesFlattened(
+          basisOperationsPtrHost->nCells() * n_q_points, 0.0);
 
-        cell = _dofHandler.begin_active();
-        for (; cell != endc; ++cell)
-          if (cell->is_locally_owned())
-            {
-              const unsigned int   elemId     = cellIdToElemIdMap[cell->id()];
-              std::vector<double> &pseudoVLoc = _pseudoValues[cell->id()];
-              for (unsigned int q = 0; q < n_q_points; ++q)
-                tempPseudoValuesFlattened[elemId * n_q_points + q] =
-                  pseudoVLoc[q];
-            }
+#pragma omp parallel for num_threads(d_nOMPThreads)
+        for (unsigned int iCell = 0; iCell < basisOperationsPtrHost->nCells();
+             ++iCell)
+          {
+            std::vector<double> &pseudoVLoc =
+              _pseudoValues[basisOperationsPtrHost->cellID(iCell)];
+            for (unsigned int q = 0; q < n_q_points; ++q)
+              tempPseudoValuesFlattened[iCell * n_q_points + q] = pseudoVLoc[q];
+          }
 
         MPI_Allreduce(MPI_IN_PLACE,
                       &tempPseudoValuesFlattened[0],
-                      numberElements * n_q_points,
+                      basisOperationsPtrHost->nCells() * n_q_points,
                       MPI_DOUBLE,
                       MPI_SUM,
                       interpoolcomm);
         MPI_Barrier(interpoolcomm);
 
-        cell = _dofHandler.begin_active();
-        for (; cell != endc; ++cell)
-          if (cell->is_locally_owned())
-            {
-              const unsigned int   elemId     = cellIdToElemIdMap[cell->id()];
-              std::vector<double> &pseudoVLoc = _pseudoValues[cell->id()];
-              for (unsigned int q = 0; q < n_q_points; ++q)
-                pseudoVLoc[q] =
-                  tempPseudoValuesFlattened[elemId * n_q_points + q];
-            }
+#pragma omp parallel for num_threads(d_nOMPThreads)
+        for (unsigned int iCell = 0; iCell < basisOperationsPtrHost->nCells();
+             ++iCell)
+          {
+            std::vector<double> &pseudoVLoc =
+              _pseudoValues[basisOperationsPtrHost->cellID(iCell)];
+            for (unsigned int q = 0; q < n_q_points; ++q)
+              pseudoVLoc[q] = tempPseudoValuesFlattened[iCell * n_q_points + q];
+          }
       }
 
 
@@ -572,116 +566,116 @@ namespace dftfe
 
     std::vector<int> kptGroupLowHighPlusOneIndicesStep3;
 
-    if (numberElements > 0)
+    if (basisOperationsPtrHost->nCells() > 0)
       dftUtils::createKpointParallelizationIndices(
-        interpoolcomm, numberElements, kptGroupLowHighPlusOneIndicesStep3);
+        interpoolcomm,
+        basisOperationsPtrHost->nCells(),
+        kptGroupLowHighPlusOneIndicesStep3);
 
     std::vector<double> pseudoVLocAtom(n_q_points);
-    unsigned int        ielem = 0;
-    cell                      = _dofHandler.begin_active();
-    for (; cell != endc; ++cell)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom)
+    for (unsigned int iCell = 0; iCell < basisOperationsPtrHost->nCells();
+         ++iCell)
       {
-        if (cell->is_locally_owned())
+        if ((iCell <
+               kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
+             iCell >= kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
           {
-            if ((ielem <
-                   kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId + 1] &&
-                 ielem >=
-                   kptGroupLowHighPlusOneIndicesStep3[2 * kptGroupTaskId]))
+            // compute values for the current elements
+
+            dealii::Point<3> atom;
+            int              atomicNumber;
+            double           atomCharge;
+            const double *   quadPointPtr =
+              basisOperationsPtrHost->quadPoints().data() +
+              iCell * n_q_points * 3;
+
+            // loop over atoms
+            for (unsigned int iAtom = 0;
+                 iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
+                 iAtom++)
               {
-                // compute values for the current elements
-                fe_values.reinit(cell);
-
-                dealii::Point<3> atom;
-                int              atomicNumber;
-                double           atomCharge;
-
-                // loop over atoms
-                for (unsigned int iAtom = 0;
-                     iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
-                     iAtom++)
+                if (iAtom < numberGlobalCharges)
                   {
-                    if (iAtom < numberGlobalCharges)
-                      {
-                        atom[0] = atomLocations[iAtom][2];
-                        atom[1] = atomLocations[iAtom][3];
-                        atom[2] = atomLocations[iAtom][4];
-                        if (d_dftParamsPtr->isPseudopotential)
-                          atomCharge = atomLocations[iAtom][1];
-                        else
-                          atomCharge = atomLocations[iAtom][0];
-                        atomicNumber = std::round(atomLocations[iAtom][0]);
-                      }
+                    atom[0] = atomLocations[iAtom][2];
+                    atom[1] = atomLocations[iAtom][3];
+                    atom[2] = atomLocations[iAtom][4];
+                    if (d_dftParamsPtr->isPseudopotential)
+                      atomCharge = atomLocations[iAtom][1];
                     else
+                      atomCharge = atomLocations[iAtom][0];
+                    atomicNumber = std::round(atomLocations[iAtom][0]);
+                  }
+                else
+                  {
+                    const unsigned int iImageCharge =
+                      iAtom - numberGlobalCharges;
+                    atom[0] = d_imagePositionsTrunc[iImageCharge][0];
+                    atom[1] = d_imagePositionsTrunc[iImageCharge][1];
+                    atom[2] = d_imagePositionsTrunc[iImageCharge][2];
+                    if (d_dftParamsPtr->isPseudopotential)
+                      atomCharge =
+                        atomLocations[d_imageIdsTrunc[iImageCharge]][1];
+                    else
+                      atomCharge =
+                        atomLocations[d_imageIdsTrunc[iImageCharge]][0];
+                    atomicNumber = std::round(
+                      atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
+                  }
+
+                std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+                  boundaryPoints(atom - tempDisp, atom + tempDisp);
+
+                dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+                if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) ==
+                    dealii::NeighborType::not_neighbors)
+                  continue;
+                bool         isPseudoDataInCell = false;
+                double       value, distanceToAtom;
+                const double cutoff = outerMostDataPoint[atomicNumber];
+                // loop over quad points
+                for (unsigned int q = 0; q < n_q_points; ++q)
+                  {
+                    const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
+                                                     quadPointPtr[q * 3 + 1],
+                                                     quadPointPtr[q * 3 + 2]);
+                    distanceToAtom = quadPoint.distance(atom);
+                    if (distanceToAtom <= cutoff)
                       {
-                        const unsigned int iImageCharge =
-                          iAtom - numberGlobalCharges;
-                        atom[0] = d_imagePositionsTrunc[iImageCharge][0];
-                        atom[1] = d_imagePositionsTrunc[iImageCharge][1];
-                        atom[2] = d_imagePositionsTrunc[iImageCharge][2];
                         if (d_dftParamsPtr->isPseudopotential)
-                          atomCharge =
-                            atomLocations[d_imageIdsTrunc[iImageCharge]][1];
-                        else
-                          atomCharge =
-                            atomLocations[d_imageIdsTrunc[iImageCharge]][0];
-                        atomicNumber = std::round(
-                          atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
-                      }
-
-
-                    boundaryPoints.first  = atom - tempDisp;
-                    boundaryPoints.second = atom + tempDisp;
-                    dealii::BoundingBox<3> boundingBoxAroundAtom(
-                      boundaryPoints);
-
-                    if (boundingBoxTria.get_neighbor_type(
-                          boundingBoxAroundAtom) ==
-                        dealii::NeighborType::not_neighbors)
-                      continue;
-
-                    bool             isPseudoDataInCell = false;
-                    dealii::Point<3> quadPoint;
-                    double           value, distanceToAtom;
-                    const double     cutoff = outerMostDataPoint[atomicNumber];
-                    // loop over quad points
-                    for (unsigned int q = 0; q < n_q_points; ++q)
-                      {
-                        const dealii::Point<3> &quadPoint =
-                          fe_values.quadrature_point(q);
-                        distanceToAtom = quadPoint.distance(atom);
-                        if (distanceToAtom <= cutoff)
                           {
-                            if (d_dftParamsPtr->isPseudopotential)
-                              {
-                                value = alglib::spline1dcalc(
-                                  pseudoSpline[atomicNumber], distanceToAtom);
-                              }
-                            else
-                              {
-                                value = -atomCharge / distanceToAtom;
-                              }
+                            value =
+                              alglib::spline1dcalc(pseudoSpline[atomicNumber],
+                                                   distanceToAtom);
                           }
                         else
                           {
                             value = -atomCharge / distanceToAtom;
                           }
-
-                        if (distanceToAtom <= cutOffForPsp)
-                          isPseudoDataInCell = true;
-
-                        pseudoVLocAtom[q] = value;
-                      } // loop over quad points
-                    if (isPseudoDataInCell)
-                      {
-                        _pseudoValuesAtoms[iAtom][cell->id()] = pseudoVLocAtom;
                       }
-                  } // loop over atoms
-              }     // kpt paral loop
-            ielem++;
-          } // cell locally owned check
-      }     // cell loop
+                    else
+                      {
+                        value = -atomCharge / distanceToAtom;
+                      }
 
-    if (numberElements > 0 && numberKptGroups > 1)
+                    if (distanceToAtom <= cutOffForPsp)
+                      isPseudoDataInCell = true;
+
+                    pseudoVLocAtom[q] = value;
+                  } // loop over quad points
+                if (isPseudoDataInCell)
+                  {
+#pragma omp critical(pseudovalsatoms)
+                    _pseudoValuesAtoms[iAtom]
+                                      [basisOperationsPtrHost->cellID(iCell)] =
+                                        pseudoVLocAtom;
+                  }
+              } // loop over atoms
+          }     // kpt paral loop
+      }         // cell loop
+
+    if (basisOperationsPtrHost->nCells() > 0 && numberKptGroups > 1)
       {
         // arranged as iAtom, elemid, and quad data
         std::vector<double> sendData;
@@ -693,23 +687,23 @@ namespace dftfe
           {
             if (_pseudoValuesAtoms.find(iAtom) != _pseudoValuesAtoms.end())
               {
-                cell = _dofHandler.begin_active();
-                for (; cell != endc; ++cell)
-                  if (cell->is_locally_owned())
-                    {
-                      if (_pseudoValuesAtoms[iAtom].find(cell->id()) !=
-                          _pseudoValuesAtoms[iAtom].end())
-                        {
-                          sendCount++;
-                          pseudoVLocAtom =
-                            _pseudoValuesAtoms[iAtom][cell->id()];
-                          sendData.push_back(iAtom);
-                          sendData.push_back(cellIdToElemIdMap[cell->id()]);
-                          sendData.insert(sendData.end(),
-                                          pseudoVLocAtom.begin(),
-                                          pseudoVLocAtom.end());
-                        }
-                    } // cell locally owned loop
+                for (unsigned int iCell = 0;
+                     iCell < basisOperationsPtrHost->nCells();
+                     ++iCell)
+                  {
+                    auto cellid = basisOperationsPtrHost->cellID(iCell);
+                    if (_pseudoValuesAtoms[iAtom].find(cellid) !=
+                        _pseudoValuesAtoms[iAtom].end())
+                      {
+                        sendCount++;
+                        pseudoVLocAtom = _pseudoValuesAtoms[iAtom][cellid];
+                        sendData.push_back(iAtom);
+                        sendData.push_back(iCell);
+                        sendData.insert(sendData.end(),
+                                        pseudoVLocAtom.begin(),
+                                        pseudoVLocAtom.end());
+                      }
+                  } // cell locally owned loop
               }
           } // iatom loop
 
@@ -770,7 +764,8 @@ namespace dftfe
 
             if (iatom != -1)
               {
-                const dealii::CellId writeCellId = elemIdToCellIdMap[elementId];
+                const dealii::CellId writeCellId =
+                  basisOperationsPtrHost->cellID(elementId);
                 if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
                     _pseudoValuesAtoms[iatom].end())
                   {

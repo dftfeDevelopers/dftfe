@@ -55,7 +55,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::initRho()
   {
-    computing_timer.enter_subsection("initialize density");
+    computingTimerStandard.enter_subsection("initialize density");
 
     // clear existing data
     clearRhoData();
@@ -277,6 +277,7 @@ namespace dftfe
             interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
 
         d_rhoInNodalValues = 0;
+#pragma omp parallel for num_threads(d_nOMPThreads)
         for (unsigned int dof = 0; dof < numberDofs; ++dof)
           {
             if (dof < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
@@ -372,6 +373,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
+#pragma omp parallel for num_threads(d_nOMPThreads)
             for (unsigned int dof = 0; dof < numberDofs; ++dof)
               {
                 const dealii::types::global_dof_index dofID =
@@ -414,84 +416,86 @@ namespace dftfe
     else
       {
         // loop over elements
-        typename dealii::DoFHandler<3>::active_cell_iterator
-          cell = dofHandler.begin_active(),
-          endc = dofHandler.end();
-        for (; cell != endc; ++cell)
+        basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
+#pragma omp parallel for num_threads(d_nOMPThreads)
+        for (auto iCell = 0; iCell < basisOperationsPtrHost->nCells(); ++iCell)
           {
-            if (cell->is_locally_owned())
-              {
-                fe_values.reinit(cell);
-                (*rhoInValues)[cell->id()] = std::vector<double>(n_q_points);
-                double *rhoInValuesPtr     = &((*rhoInValues)[cell->id()][0]);
+            auto cellid = basisOperationsPtrHost->cellID(iCell);
+#pragma omp critical(rhoinvals)
+            (*rhoInValues)[cellid] = std::vector<double>(n_q_points);
+            double *rhoInValuesPtr = &((*rhoInValues)[cellid][0]);
 
-                double *rhoInValuesSpinPolarizedPtr;
+            double *rhoInValuesSpinPolarizedPtr;
+            if (d_dftParamsPtr->spinPolarized == 1)
+              {
+#pragma omp critical(rhoinvalsSP)
+                (*rhoInValuesSpinPolarized)[cellid] =
+                  std::vector<double>(2 * n_q_points);
+                rhoInValuesSpinPolarizedPtr =
+                  &((*rhoInValuesSpinPolarized)[cellid][0]);
+              }
+            const double *quadPointPtr =
+              basisOperationsPtrHost->quadPoints().data() +
+              iCell * n_q_points * 3;
+            for (unsigned int q = 0; q < n_q_points; ++q)
+              {
+                const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
+                                                 quadPointPtr[q * 3 + 1],
+                                                 quadPointPtr[q * 3 + 2]);
+                double                 rhoValueAtQuadPt = 0.0;
+
+                // loop over atoms
+                for (unsigned int n = 0; n < atomLocations.size(); n++)
+                  {
+                    dealii::Point<3> atom(atomLocations[n][2],
+                                          atomLocations[n][3],
+                                          atomLocations[n][4]);
+                    double           distanceToAtom = quadPoint.distance(atom);
+                    if (distanceToAtom <=
+                        outerMostPointDen[atomLocations[n][0]])
+                      {
+                        rhoValueAtQuadPt +=
+                          alglib::spline1dcalc(denSpline[atomLocations[n][0]],
+                                               distanceToAtom);
+                      }
+                    else
+                      {
+                        rhoValueAtQuadPt += 0.0;
+                      }
+                  }
+
+                // loop over image charges
+                for (int iImageCharge = 0; iImageCharge < numberImageCharges;
+                     ++iImageCharge)
+                  {
+                    dealii::Point<3> imageAtom(
+                      d_imagePositionsTrunc[iImageCharge][0],
+                      d_imagePositionsTrunc[iImageCharge][1],
+                      d_imagePositionsTrunc[iImageCharge][2]);
+                    double distanceToAtom = quadPoint.distance(imageAtom);
+                    int    masterAtomId   = d_imageIdsTrunc[iImageCharge];
+                    if (
+                      distanceToAtom <=
+                      outerMostPointDen
+                        [atomLocations
+                           [masterAtomId]
+                           [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
+                      {
+                        rhoValueAtQuadPt += alglib::spline1dcalc(
+                          denSpline[atomLocations[masterAtomId][0]],
+                          distanceToAtom);
+                      }
+                  }
+
+                rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    (*rhoInValuesSpinPolarized)[cell->id()] =
-                      std::vector<double>(2 * n_q_points);
-                    rhoInValuesSpinPolarizedPtr =
-                      &((*rhoInValuesSpinPolarized)[cell->id()][0]);
-                  }
-                for (unsigned int q = 0; q < n_q_points; ++q)
-                  {
-                    const dealii::Point<3> &quadPoint =
-                      fe_values.quadrature_point(q);
-                    double rhoValueAtQuadPt = 0.0;
-
-                    // loop over atoms
-                    for (unsigned int n = 0; n < atomLocations.size(); n++)
-                      {
-                        dealii::Point<3> atom(atomLocations[n][2],
-                                              atomLocations[n][3],
-                                              atomLocations[n][4]);
-                        double distanceToAtom = quadPoint.distance(atom);
-                        if (distanceToAtom <=
-                            outerMostPointDen[atomLocations[n][0]])
-                          {
-                            rhoValueAtQuadPt += alglib::spline1dcalc(
-                              denSpline[atomLocations[n][0]], distanceToAtom);
-                          }
-                        else
-                          {
-                            rhoValueAtQuadPt += 0.0;
-                          }
-                      }
-
-                    // loop over image charges
-                    for (int iImageCharge = 0;
-                         iImageCharge < numberImageCharges;
-                         ++iImageCharge)
-                      {
-                        dealii::Point<3> imageAtom(
-                          d_imagePositionsTrunc[iImageCharge][0],
-                          d_imagePositionsTrunc[iImageCharge][1],
-                          d_imagePositionsTrunc[iImageCharge][2]);
-                        double distanceToAtom = quadPoint.distance(imageAtom);
-                        int    masterAtomId   = d_imageIdsTrunc[iImageCharge];
-                        if (
-                          distanceToAtom <=
-                          outerMostPointDen
-                            [atomLocations
-                               [masterAtomId]
-                               [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
-                          {
-                            rhoValueAtQuadPt += alglib::spline1dcalc(
-                              denSpline[atomLocations[masterAtomId][0]],
-                              distanceToAtom);
-                          }
-                      }
-
-                    rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
-                    if (d_dftParamsPtr->spinPolarized == 1)
-                      {
-                        rhoInValuesSpinPolarizedPtr[2 * q + 1] =
-                          (0.5 + d_dftParamsPtr->start_magnetization) *
-                          (std::abs(rhoValueAtQuadPt));
-                        rhoInValuesSpinPolarizedPtr[2 * q] =
-                          (0.5 - d_dftParamsPtr->start_magnetization) *
-                          (std::abs(rhoValueAtQuadPt));
-                      }
+                    rhoInValuesSpinPolarizedPtr[2 * q + 1] =
+                      (0.5 + d_dftParamsPtr->start_magnetization) *
+                      (std::abs(rhoValueAtQuadPt));
+                    rhoInValuesSpinPolarizedPtr[2 * q] =
+                      (0.5 - d_dftParamsPtr->start_magnetization) *
+                      (std::abs(rhoValueAtQuadPt));
                   }
               }
           }
@@ -501,167 +505,168 @@ namespace dftfe
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-            //
-            cell = dofHandler.begin_active();
-            for (; cell != endc; ++cell)
+//
+#pragma omp parallel for num_threads(d_nOMPThreads)
+            for (unsigned int iCell = 0;
+                 iCell < basisOperationsPtrHost->nCells();
+                 ++iCell)
               {
-                if (cell->is_locally_owned())
+                auto cellid = basisOperationsPtrHost->cellID(iCell);
+#pragma omp critical(gradrhoinvals)
+                (*gradRhoInValues)[cellid] =
+                  std::vector<double>(3 * n_q_points, 0.0);
+                double *gradRhoInValuesPtr = &((*gradRhoInValues)[cellid][0]);
+
+                double *gradRhoInValuesSpinPolarizedPtr;
+                if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    fe_values.reinit(cell);
+#pragma omp critical(gradrhoinvalsSP)
+                    (*gradRhoInValuesSpinPolarized)[cellid] =
+                      std::vector<double>(6 * n_q_points, 0.0);
+                    gradRhoInValuesSpinPolarizedPtr =
+                      &((*gradRhoInValuesSpinPolarized)[cellid][0]);
+                  }
+                const double *quadPointPtr =
+                  basisOperationsPtrHost->quadPoints().data() +
+                  iCell * n_q_points * 3;
+                for (unsigned int q = 0; q < n_q_points; ++q)
+                  {
+                    const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
+                                                     quadPointPtr[q * 3 + 1],
+                                                     quadPointPtr[q * 3 + 2]);
+                    double                 gradRhoXValueAtQuadPt = 0.0;
+                    double                 gradRhoYValueAtQuadPt = 0.0;
+                    double                 gradRhoZValueAtQuadPt = 0.0;
+                    // loop over atoms
+                    for (unsigned int n = 0; n < atomLocations.size(); n++)
+                      {
+                        dealii::Point<3> atom(atomLocations[n][2],
+                                              atomLocations[n][3],
+                                              atomLocations[n][4]);
+                        double distanceToAtom = quadPoint.distance(atom);
 
-                    (*gradRhoInValues)[cell->id()] =
-                      std::vector<double>(3 * n_q_points, 0.0);
-                    double *gradRhoInValuesPtr =
-                      &((*gradRhoInValues)[cell->id()][0]);
+                        if (d_dftParamsPtr->floatingNuclearCharges &&
+                            distanceToAtom < 1.0e-3)
+                          continue;
 
-                    double *gradRhoInValuesSpinPolarizedPtr;
+                        if (distanceToAtom <=
+                            outerMostPointDen[atomLocations[n][0]])
+                          {
+                            // rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]],
+                            // distanceToAtom);
+                            double value, radialDensityFirstDerivative,
+                              radialDensitySecondDerivative;
+                            alglib::spline1ddiff(denSpline[atomLocations[n][0]],
+                                                 distanceToAtom,
+                                                 value,
+                                                 radialDensityFirstDerivative,
+                                                 radialDensitySecondDerivative);
+
+                            gradRhoXValueAtQuadPt +=
+                              radialDensityFirstDerivative *
+                              ((quadPoint[0] - atomLocations[n][2]) /
+                               distanceToAtom);
+                            gradRhoYValueAtQuadPt +=
+                              radialDensityFirstDerivative *
+                              ((quadPoint[1] - atomLocations[n][3]) /
+                               distanceToAtom);
+                            gradRhoZValueAtQuadPt +=
+                              radialDensityFirstDerivative *
+                              ((quadPoint[2] - atomLocations[n][4]) /
+                               distanceToAtom);
+                          }
+                      }
+
+                    for (int iImageCharge = 0;
+                         iImageCharge < numberImageCharges;
+                         ++iImageCharge)
+                      {
+                        dealii::Point<3> imageAtom(
+                          d_imagePositionsTrunc[iImageCharge][0],
+                          d_imagePositionsTrunc[iImageCharge][1],
+                          d_imagePositionsTrunc[iImageCharge][2]);
+                        double distanceToAtom = quadPoint.distance(imageAtom);
+
+                        if (d_dftParamsPtr->floatingNuclearCharges &&
+                            distanceToAtom < 1.0e-3)
+                          continue;
+
+                        int masterAtomId = d_imageIdsTrunc[iImageCharge];
+                        if (
+                          distanceToAtom <=
+                          outerMostPointDen
+                            [atomLocations
+                               [masterAtomId]
+                               [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
+                          {
+                            double value, radialDensityFirstDerivative,
+                              radialDensitySecondDerivative;
+                            alglib::spline1ddiff(
+                              denSpline[atomLocations[masterAtomId][0]],
+                              distanceToAtom,
+                              value,
+                              radialDensityFirstDerivative,
+                              radialDensitySecondDerivative);
+
+                            gradRhoXValueAtQuadPt +=
+                              radialDensityFirstDerivative *
+                              ((quadPoint[0] -
+                                d_imagePositionsTrunc[iImageCharge][0]) /
+                               distanceToAtom);
+                            gradRhoYValueAtQuadPt +=
+                              radialDensityFirstDerivative *
+                              ((quadPoint[1] -
+                                d_imagePositionsTrunc[iImageCharge][1]) /
+                               distanceToAtom);
+                            gradRhoZValueAtQuadPt +=
+                              radialDensityFirstDerivative *
+                              ((quadPoint[2] -
+                                d_imagePositionsTrunc[iImageCharge][2]) /
+                               distanceToAtom);
+                          }
+                      }
+
+                    int signRho = 0;
+                    /*
+                       if (std::abs((*rhoInValues)[cellid][q] )
+                       > 1.0E-7) signRho =
+                       (*rhoInValues)[cellid][q]>0.0?1:-1;
+                     */
+                    if (std::abs((*rhoInValues)[cellid][q]) > 1.0E-8)
+                      signRho = (*rhoInValues)[cellid][q] /
+                                std::abs((*rhoInValues)[cellid][q]);
+
+                    // KG: the fact that we are forcing gradRho to zero
+                    // whenever rho is zero is valid. Because rho is always
+                    // positive, so whenever it is zero, it must have a
+                    // local minima.
+                    //
+                    gradRhoInValuesPtr[3 * q + 0] =
+                      signRho * gradRhoXValueAtQuadPt;
+                    gradRhoInValuesPtr[3 * q + 1] =
+                      signRho * gradRhoYValueAtQuadPt;
+                    gradRhoInValuesPtr[3 * q + 2] =
+                      signRho * gradRhoZValueAtQuadPt;
                     if (d_dftParamsPtr->spinPolarized == 1)
                       {
-                        (*gradRhoInValuesSpinPolarized)[cell->id()] =
-                          std::vector<double>(6 * n_q_points, 0.0);
-                        gradRhoInValuesSpinPolarizedPtr =
-                          &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);
-                      }
-                    for (unsigned int q = 0; q < n_q_points; ++q)
-                      {
-                        const dealii::Point<3> &quadPoint =
-                          fe_values.quadrature_point(q);
-                        double gradRhoXValueAtQuadPt = 0.0;
-                        double gradRhoYValueAtQuadPt = 0.0;
-                        double gradRhoZValueAtQuadPt = 0.0;
-                        // loop over atoms
-                        for (unsigned int n = 0; n < atomLocations.size(); n++)
-                          {
-                            dealii::Point<3> atom(atomLocations[n][2],
-                                                  atomLocations[n][3],
-                                                  atomLocations[n][4]);
-                            double distanceToAtom = quadPoint.distance(atom);
-
-                            if (d_dftParamsPtr->floatingNuclearCharges &&
-                                distanceToAtom < 1.0e-3)
-                              continue;
-
-                            if (distanceToAtom <=
-                                outerMostPointDen[atomLocations[n][0]])
-                              {
-                                // rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]],
-                                // distanceToAtom);
-                                double value, radialDensityFirstDerivative,
-                                  radialDensitySecondDerivative;
-                                alglib::spline1ddiff(
-                                  denSpline[atomLocations[n][0]],
-                                  distanceToAtom,
-                                  value,
-                                  radialDensityFirstDerivative,
-                                  radialDensitySecondDerivative);
-
-                                gradRhoXValueAtQuadPt +=
-                                  radialDensityFirstDerivative *
-                                  ((quadPoint[0] - atomLocations[n][2]) /
-                                   distanceToAtom);
-                                gradRhoYValueAtQuadPt +=
-                                  radialDensityFirstDerivative *
-                                  ((quadPoint[1] - atomLocations[n][3]) /
-                                   distanceToAtom);
-                                gradRhoZValueAtQuadPt +=
-                                  radialDensityFirstDerivative *
-                                  ((quadPoint[2] - atomLocations[n][4]) /
-                                   distanceToAtom);
-                              }
-                          }
-
-                        for (int iImageCharge = 0;
-                             iImageCharge < numberImageCharges;
-                             ++iImageCharge)
-                          {
-                            dealii::Point<3> imageAtom(
-                              d_imagePositionsTrunc[iImageCharge][0],
-                              d_imagePositionsTrunc[iImageCharge][1],
-                              d_imagePositionsTrunc[iImageCharge][2]);
-                            double distanceToAtom =
-                              quadPoint.distance(imageAtom);
-
-                            if (d_dftParamsPtr->floatingNuclearCharges &&
-                                distanceToAtom < 1.0e-3)
-                              continue;
-
-                            int masterAtomId = d_imageIdsTrunc[iImageCharge];
-                            if (
-                              distanceToAtom <=
-                              outerMostPointDen
-                                [atomLocations
-                                   [masterAtomId]
-                                   [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
-                              {
-                                double value, radialDensityFirstDerivative,
-                                  radialDensitySecondDerivative;
-                                alglib::spline1ddiff(
-                                  denSpline[atomLocations[masterAtomId][0]],
-                                  distanceToAtom,
-                                  value,
-                                  radialDensityFirstDerivative,
-                                  radialDensitySecondDerivative);
-
-                                gradRhoXValueAtQuadPt +=
-                                  radialDensityFirstDerivative *
-                                  ((quadPoint[0] -
-                                    d_imagePositionsTrunc[iImageCharge][0]) /
-                                   distanceToAtom);
-                                gradRhoYValueAtQuadPt +=
-                                  radialDensityFirstDerivative *
-                                  ((quadPoint[1] -
-                                    d_imagePositionsTrunc[iImageCharge][1]) /
-                                   distanceToAtom);
-                                gradRhoZValueAtQuadPt +=
-                                  radialDensityFirstDerivative *
-                                  ((quadPoint[2] -
-                                    d_imagePositionsTrunc[iImageCharge][2]) /
-                                   distanceToAtom);
-                              }
-                          }
-
-                        int signRho = 0;
-                        /*
-                           if (std::abs((*rhoInValues)[cell->id()][q] )
-                           > 1.0E-7) signRho =
-                           (*rhoInValues)[cell->id()][q]>0.0?1:-1;
-                         */
-                        if (std::abs((*rhoInValues)[cell->id()][q]) > 1.0E-8)
-                          signRho = (*rhoInValues)[cell->id()][q] /
-                                    std::abs((*rhoInValues)[cell->id()][q]);
-
-                        // KG: the fact that we are forcing gradRho to zero
-                        // whenever rho is zero is valid. Because rho is always
-                        // positive, so whenever it is zero, it must have a
-                        // local minima.
-                        //
-                        gradRhoInValuesPtr[3 * q + 0] =
+                        gradRhoInValuesSpinPolarizedPtr[6 * q + 0] =
+                          (0.5 - d_dftParamsPtr->start_magnetization) *
                           signRho * gradRhoXValueAtQuadPt;
-                        gradRhoInValuesPtr[3 * q + 1] =
+                        gradRhoInValuesSpinPolarizedPtr[6 * q + 1] =
+                          (0.5 - d_dftParamsPtr->start_magnetization) *
                           signRho * gradRhoYValueAtQuadPt;
-                        gradRhoInValuesPtr[3 * q + 2] =
+                        gradRhoInValuesSpinPolarizedPtr[6 * q + 2] =
+                          (0.5 - d_dftParamsPtr->start_magnetization) *
                           signRho * gradRhoZValueAtQuadPt;
-                        if (d_dftParamsPtr->spinPolarized == 1)
-                          {
-                            gradRhoInValuesSpinPolarizedPtr[6 * q + 0] =
-                              (0.5 - d_dftParamsPtr->start_magnetization) *
-                              signRho * gradRhoXValueAtQuadPt;
-                            gradRhoInValuesSpinPolarizedPtr[6 * q + 1] =
-                              (0.5 - d_dftParamsPtr->start_magnetization) *
-                              signRho * gradRhoYValueAtQuadPt;
-                            gradRhoInValuesSpinPolarizedPtr[6 * q + 2] =
-                              (0.5 - d_dftParamsPtr->start_magnetization) *
-                              signRho * gradRhoZValueAtQuadPt;
-                            gradRhoInValuesSpinPolarizedPtr[6 * q + 3] =
-                              (0.5 + d_dftParamsPtr->start_magnetization) *
-                              signRho * gradRhoXValueAtQuadPt;
-                            gradRhoInValuesSpinPolarizedPtr[6 * q + 4] =
-                              (0.5 + d_dftParamsPtr->start_magnetization) *
-                              signRho * gradRhoYValueAtQuadPt;
-                            gradRhoInValuesSpinPolarizedPtr[6 * q + 5] =
-                              (0.5 + d_dftParamsPtr->start_magnetization) *
-                              signRho * gradRhoZValueAtQuadPt;
-                          }
+                        gradRhoInValuesSpinPolarizedPtr[6 * q + 3] =
+                          (0.5 + d_dftParamsPtr->start_magnetization) *
+                          signRho * gradRhoXValueAtQuadPt;
+                        gradRhoInValuesSpinPolarizedPtr[6 * q + 4] =
+                          (0.5 + d_dftParamsPtr->start_magnetization) *
+                          signRho * gradRhoYValueAtQuadPt;
+                        gradRhoInValuesSpinPolarizedPtr[6 * q + 5] =
+                          (0.5 + d_dftParamsPtr->start_magnetization) *
+                          signRho * gradRhoZValueAtQuadPt;
                       }
                   }
               }
@@ -670,7 +675,7 @@ namespace dftfe
         normalizeRhoInQuadValues();
       }
     //
-    computing_timer.leave_subsection("initialize density");
+    computingTimerStandard.leave_subsection("initialize density");
   }
 
   //
@@ -682,7 +687,7 @@ namespace dftfe
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 
   {
-    computing_timer.enter_subsection("initialize density");
+    computingTimerStandard.enter_subsection("initialize density");
 
     // clear existing data
     clearRhoData();
@@ -1169,7 +1174,7 @@ namespace dftfe
 
     normalizeRhoInQuadValues();
     //
-    computing_timer.leave_subsection("initialize density");
+    computingTimerStandard.leave_subsection("initialize density");
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

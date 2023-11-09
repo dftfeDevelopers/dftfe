@@ -580,7 +580,8 @@ namespace dftfe
     void initUnmovedTriangulation(
       dealii::parallel::distributed::Triangulation<3> &triangulation);
     void
-    initBoundaryConditions(const bool meshOnlyDeformed                 = false,
+    initBoundaryConditions(const bool recomputeBasisData               = true,
+                           const bool meshOnlyDeformed                 = false,
                            const bool vselfPerturbationUpdateForStress = false);
     void
     initElectronicFields();
@@ -595,7 +596,8 @@ namespace dftfe
     void createpRefinedDofHandler(
       dealii::parallel::distributed::Triangulation<3> &triangulation);
     void
-    initpRefinedObjects(const bool meshOnlyDeformed,
+    initpRefinedObjects(const bool recomputeBasisData,
+                        const bool meshOnlyDeformed,
                         const bool vselfPerturbationUpdateForStress = false);
 
     /**
@@ -1276,6 +1278,7 @@ namespace dftfe
     unsigned int                  d_smearedChargeQuadratureIdElectro;
     unsigned int                  d_nlpspQuadratureId;
     unsigned int                  d_lpspQuadratureId;
+    unsigned int                  d_feOrderPlusOneQuadratureId;
     unsigned int                  d_lpspQuadratureIdElectro;
     unsigned int                  d_gllQuadratureId;
     unsigned int                  d_phiTotDofHandlerIndexElectro;
@@ -1284,18 +1287,27 @@ namespace dftfe
     unsigned int                  d_binsStartDofHandlerIndexElectro;
     unsigned int                  d_densityQuadratureId;
     unsigned int                  d_densityQuadratureIdElectro;
+    unsigned int                  d_nOMPThreads;
     dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
       basisOperationsPtrHost;
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      basisOperationsPtrElectroHost;
 #if defined(DFTFE_WITH_DEVICE)
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
       basisOperationsPtrDevice;
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+      basisOperationsPtrElectroDevice;
 #endif
     std::map<dealii::types::global_dof_index, dealii::Point<3>> d_supportPoints,
       d_supportPointsPRefined, d_supportPointsEigen;

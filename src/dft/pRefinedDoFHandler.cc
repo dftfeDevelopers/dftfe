@@ -180,6 +180,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
+    const bool recomputeBasisData,
     const bool meshOnlyDeformed,
     const bool vselfPerturbationUpdateForStress)
   {
@@ -377,6 +378,31 @@ namespace dftfe
                                     d_constraintsVectorElectro,
                                     quadratureVector,
                                     additional_data);
+    if (recomputeBasisData)
+      {
+        basisOperationsPtrElectroHost = std::make_shared<
+          dftfe::basis::
+            FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
+          d_matrixFreeDataPRefined, d_constraintsVectorElectro);
+        dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
+                                                dftfe::basis::update_gradients |
+                                                dftfe::basis::update_transpose;
+        std::vector<unsigned int> quadratureIndices{0, 1, 2, 3};
+        basisOperationsPtrElectroHost->init(d_densityDofHandlerIndexElectro,
+                                            quadratureIndices,
+                                            updateFlags);
+      }
+#if defined(DFTFE_WITH_DEVICE)
+    if (d_dftParamsPtr->useDevice && recomputeBasisData)
+      {
+        basisOperationsPtrElectroDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<double,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_matrixFreeDataPRefined, d_constraintsVectorElectro);
+        basisOperationsPtrElectroDevice->init(*basisOperationsPtrElectroHost);
+      }
+#endif
 
     //
     // locate atom core nodes

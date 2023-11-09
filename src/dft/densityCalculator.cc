@@ -175,9 +175,6 @@ namespace dftfe
     std::vector<dftfe::linearAlgebra::MultiVector<NumberType, memorySpace> *>
       flattenedArrayBlock(numSpinComponents);
 
-    dftfe::utils::MemoryStorage<NumberType, memorySpace> cellWaveFunctionMatrix(
-      cellsBlockSize * numNodesPerElement * BVec);
-
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
         for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;

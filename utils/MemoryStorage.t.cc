@@ -282,10 +282,10 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpaceSrc>
     void
     MemoryStorage<ValueType, memorySpace>::copyFrom(
-      MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
-      const std::size_t                         N,
-      const std::size_t                         srcOffset,
-      const std::size_t                         dstOffset)
+      const MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
+      const std::size_t                               N,
+      const std::size_t                               srcOffset,
+      const std::size_t                               dstOffset)
     {
       throwException<LengthError>(
         srcOffset + N <= srcMemoryStorage.size(),
