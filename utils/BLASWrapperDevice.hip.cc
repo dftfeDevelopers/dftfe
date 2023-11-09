@@ -22,6 +22,9 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <hipblas.h>
+#  ifdef DFTFE_WITH_DEVICE_AMD
+#    include <rocblas.h>
+#  endif
 #include "BLASWrapperDeviceKernels.cc"
 namespace dftfe
 {
@@ -36,19 +39,19 @@ namespace dftfe
 #endif
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char *        transA,
-      const char *        transB,
-      const unsigned int *m,
-      const unsigned int *n,
-      const unsigned int *k,
-      const float *       alpha,
-      const float *       A,
-      const unsigned int *lda,
-      const float *       B,
-      const unsigned int *ldb,
-      const float *       beta,
-      float *             C,
-      const unsigned int *ldc) const
+      const char         transA,
+      const char         transB,
+      const unsigned int m,
+      const unsigned int n,
+      const unsigned int k,
+      const float *      alpha,
+      const float *      A,
+      const unsigned int lda,
+      const float *      B,
+      const unsigned int ldb,
+      const float *      beta,
+      float *            C,
+      const unsigned int ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
