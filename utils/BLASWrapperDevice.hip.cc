@@ -22,53 +22,53 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <hipblas.h>
-#  ifdef DFTFE_WITH_DEVICE_AMD
-#    include <rocblas.h>
-#  endif
+#ifdef DFTFE_WITH_DEVICE_AMD
+#  include <rocblas.h>
+#endif
 #include "BLASWrapperDeviceKernels.cc"
 namespace dftfe
 {
   namespace linearAlgebra
   {
-      namespace
+    namespace
+    {
+      inline hipblasDoubleComplex
+      makeDataTypeHipBlasCompatible(std::complex<double> a)
       {
-        inline hipblasDoubleComplex
-        makeDataTypeHipBlasCompatible(std::complex<double> a)
-        {
-          return hipblasDoubleComplex(a.real(), a.imag());
-        }
+        return hipblasDoubleComplex(a.real(), a.imag());
+      }
 
-        inline hipblasComplex
-        makeDataTypeHipBlasCompatible(std::complex<float> a)
-        {
-          return hipblasComplex(a.real(), a.imag());
-        }
+      inline hipblasComplex
+      makeDataTypeHipBlasCompatible(std::complex<float> a)
+      {
+        return hipblasComplex(a.real(), a.imag());
+      }
 
-        inline hipblasComplex *
-        makeDataTypeHipBlasCompatible(std::complex<float> *a)
-        {
-          return reinterpret_cast<hipblasComplex *>(a);
-        }
+      inline hipblasComplex *
+      makeDataTypeHipBlasCompatible(std::complex<float> *a)
+      {
+        return reinterpret_cast<hipblasComplex *>(a);
+      }
 
-        inline const hipblasComplex *
-        makeDataTypeHipBlasCompatible(const std::complex<float> *a)
-        {
-          return reinterpret_cast<const hipblasComplex *>(a);
-        }
+      inline const hipblasComplex *
+      makeDataTypeHipBlasCompatible(const std::complex<float> *a)
+      {
+        return reinterpret_cast<const hipblasComplex *>(a);
+      }
 
-        inline hipblasDoubleComplex *
-        makeDataTypeHipBlasCompatible(std::complex<double> *a)
-        {
-          return reinterpret_cast<hipblasDoubleComplex *>(a);
-        }
+      inline hipblasDoubleComplex *
+      makeDataTypeHipBlasCompatible(std::complex<double> *a)
+      {
+        return reinterpret_cast<hipblasDoubleComplex *>(a);
+      }
 
-        inline const hipblasDoubleComplex *
-        makeDataTypeHipBlasCompatible(const std::complex<double> *a)
-        {
-          return reinterpret_cast<const hipblasDoubleComplex *>(a);
-        }
+      inline const hipblasDoubleComplex *
+      makeDataTypeHipBlasCompatible(const std::complex<double> *a)
+      {
+        return reinterpret_cast<const hipblasDoubleComplex *>(a);
+      }
 
-      } // namespace
+    } // namespace
 
 #ifdef DFTFE_WITH_DEVICE_AMD
     void
@@ -77,6 +77,17 @@ namespace dftfe
       rocblas_initialize();
     }
 #endif
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::BLASWrapper()
+    {
+#ifdef DFTFE_WITH_DEVICE_AMD
+      initialize();
+#endif
+      dftfe::utils::deviceBlasStatus_t status;
+      status = create();
+      status = setStream(NULL);
+    }
+
+
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
       const char         transA,
@@ -496,25 +507,25 @@ namespace dftfe
           // Assert Statement
         }
 
-      dftfe::utils::deviceBlasStatus_t status = hipblasZgemmStridedBatched(
-        d_deviceBlasHandle,
-        transa,
-        transb,
-        int(m),
-        int(n),
-        int(k),
-        makeDataTypeHipBlasCompatible(alpha),
-        makeDataTypeHipBlasCompatible(A),
-        int(lda),
-        strideA,
-        makeDataTypeHipBlasCompatible(B),
-        int(ldb),
-        strideB,
-        makeDataTypeHipBlasCompatible(beta),
-        makeDataTypeHipBlasCompatible(C),
-        int(ldc),
-        strideC,
-        int(batchCount));
+      dftfe::utils::deviceBlasStatus_t status =
+        hipblasZgemmStridedBatched(d_deviceBlasHandle,
+                                   transa,
+                                   transb,
+                                   int(m),
+                                   int(n),
+                                   int(k),
+                                   makeDataTypeHipBlasCompatible(alpha),
+                                   makeDataTypeHipBlasCompatible(A),
+                                   int(lda),
+                                   strideA,
+                                   makeDataTypeHipBlasCompatible(B),
+                                   int(ldb),
+                                   strideB,
+                                   makeDataTypeHipBlasCompatible(beta),
+                                   makeDataTypeHipBlasCompatible(C),
+                                   int(ldc),
+                                   strideC,
+                                   int(batchCount));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -624,25 +635,25 @@ namespace dftfe
           // Assert Statement
         }
 
-      dftfe::utils::deviceBlasStatus_t status = hipblasCgemmStridedBatched(
-        d_deviceBlasHandle,
-        transa,
-        transb,
-        int(m),
-        int(n),
-        int(k),
-        makeDataTypeHipBlasCompatible(alpha),
-        makeDataTypeHipBlasCompatible(A),
-        int(lda),
-        strideA,
-        makeDataTypeHipBlasCompatible(B),
-        int(ldb),
-        strideB,
-        makeDataTypeHipBlasCompatible(beta),
-        makeDataTypeHipBlasCompatible(C),
-        int(ldc),
-        strideC,
-        int(batchCount));
+      dftfe::utils::deviceBlasStatus_t status =
+        hipblasCgemmStridedBatched(d_deviceBlasHandle,
+                                   transa,
+                                   transb,
+                                   int(m),
+                                   int(n),
+                                   int(k),
+                                   makeDataTypeHipBlasCompatible(alpha),
+                                   makeDataTypeHipBlasCompatible(A),
+                                   int(lda),
+                                   strideA,
+                                   makeDataTypeHipBlasCompatible(B),
+                                   int(ldb),
+                                   strideB,
+                                   makeDataTypeHipBlasCompatible(beta),
+                                   makeDataTypeHipBlasCompatible(C),
+                                   int(ldc),
+                                   strideC,
+                                   int(batchCount));
       DEVICEBLAS_API_CHECK(status);
     }
     void
@@ -962,15 +973,15 @@ namespace dftfe
       ValueTypeComplex *     complexArr)
     {
       hipLaunchKernelGGL(copyRealArrsToComplexArrDeviceKernel,
-                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                           0,
-                           0,
-                           size,
-                           realArr,
-                           imagArr,
-                           dftfe::utils::makeDataTypeDeviceCompatible(
-                             complexArr));
+                         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         size,
+                         realArr,
+                         imagArr,
+                         dftfe::utils::makeDataTypeDeviceCompatible(
+                           complexArr));
     }
 
     template <typename ValueType1, typename ValueType2>
@@ -986,8 +997,7 @@ namespace dftfe
         0,
         d_streamId>>>(size,
                       makeDataTypeHipBlasCompatible(valueType1Arr),
-                      makeDataTypeHipBlasCompatible(
-                        valueType2Arr));
+                      makeDataTypeHipBlasCompatible(valueType2Arr));
     }
 
     template <typename ValueType1, typename ValueType2>
@@ -999,19 +1009,18 @@ namespace dftfe
       ValueType2 *                   copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
-      hipLaunchKernelGGL(
-        stridedCopyToBlockDeviceKernel,
-        (contiguousBlockSize * numContiguousBlocks) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
-        contiguousBlockSize,
-        numContiguousBlocks,
-        makeDataTypeHipBlasCompatible(copyFromVec),
-        makeDataTypeHipBlasCompatible(copyToVecBlock),
-        copyFromVecStartingContiguousBlockIds);
+      hipLaunchKernelGGL(stridedCopyToBlockDeviceKernel,
+                         (contiguousBlockSize * numContiguousBlocks) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE +
+                           1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         contiguousBlockSize,
+                         numContiguousBlocks,
+                         makeDataTypeHipBlasCompatible(copyFromVec),
+                         makeDataTypeHipBlasCompatible(copyToVecBlock),
+                         copyFromVecStartingContiguousBlockIds);
     }
 
 
@@ -1033,8 +1042,7 @@ namespace dftfe
                          0,
                          contiguousBlockSize,
                          numContiguousBlocks,
-                         makeDataTypeHipBlasCompatible(
-                           copyFromVecBlock),
+                         makeDataTypeHipBlasCompatible(copyFromVecBlock),
                          makeDataTypeHipBlasCompatible(copyToVec),
                          copyFromVecStartingContiguousBlockIds);
     }
@@ -1050,18 +1058,19 @@ namespace dftfe
                                        const ValueType1 *     copyFromVec,
                                        ValueType2 *           copyToVec)
     {
-      hipLaunchKernelGGL(
-        stridedCopyToBlockConstantStrideDeviceKernel,
-        (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
-        blockSizeTo,
-        blockSizeFrom,
-        numBlocks,
-        startingId,
-        makeDataTypeHipBlasCompatible(copyFromVec),
-        makeDataTypeHipBlasCompatible(copyToVec));
+      hipLaunchKernelGGL(stridedCopyToBlockConstantStrideDeviceKernel,
+                         (blockSizeTo * numBlocks) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE +
+                           1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         blockSizeTo,
+                         blockSizeFrom,
+                         numBlocks,
+                         startingId,
+                         makeDataTypeHipBlasCompatible(copyFromVec),
+                         makeDataTypeHipBlasCompatible(copyToVec));
     }
 
     template <typename ValueType1, typename ValueType2>
@@ -1076,20 +1085,21 @@ namespace dftfe
       const ValueType1 *     copyFromVec,
       ValueType2 *           copyToVec)
     {
-      hipLaunchKernelGGL(
-        stridedCopyConstantStrideDeviceKernel,
-        (blockSize * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
-        blockSize,
-        strideTo,
-        strideFrom,
-        numBlocks,
-        startingToId,
-        startingFromId,
-        makeDataTypeHipBlasCompatible(copyFromVec),
-        makeDataTypeHipBlasCompatible(copyToVec));
+      hipLaunchKernelGGL(stridedCopyConstantStrideDeviceKernel,
+                         (blockSize * numBlocks) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE +
+                           1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         blockSize,
+                         strideTo,
+                         strideFrom,
+                         numBlocks,
+                         startingToId,
+                         startingFromId,
+                         makeDataTypeHipBlasCompatible(copyFromVec),
+                         makeDataTypeHipBlasCompatible(copyToVec));
     }
 
 
