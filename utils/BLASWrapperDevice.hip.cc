@@ -928,8 +928,8 @@ namespace dftfe
                          0,
                          0,
                          n,
-                         makeDataTypeHipBlasCompatible(x),
-                         makeDataTypeHipBlasCompatible(alpha));
+                         dftfe::utils::makeDataTypeDeviceCompatible(x),
+                         dftfe::utils::makeDataTypeDeviceCompatible(alpha));
     }
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
@@ -946,7 +946,7 @@ namespace dftfe
                          0,
                          0,
                          size,
-                         makeDataTypeHipBlasCompatible(complexArr),
+                         dftfe::utils::makeDataTypeDeviceCompatible(complexArr),
                          realArr,
                          imagArr);
     }
@@ -1113,8 +1113,8 @@ namespace dftfe
         blockSizeFrom,
         numBlocks,
         startingId,
-        makeDataTypeHipBlasCompatible(copyFromVec),
-        makeDataTypeHipBlasCompatible(copyToVec));
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
     }
     template <typename ValueType1, typename ValueType2>
     void
@@ -1134,9 +1134,9 @@ namespace dftfe
                          0,
                          contiguousBlockSize,
                          numContiguousBlocks,
-                         makeDataTypeHipBlasCompatible(a),
-                         makeDataTypeHipBlasCompatible(s),
-                         makeDataTypeHipBlasCompatible(x));
+                         dftfe::utils::makeDataTypeDeviceCompatible(a),
+                         dftfe::utils::makeDataTypeDeviceCompatible(s),
+                         dftfe::utils::makeDataTypeDeviceCompatible(x));
     }
     // for stridedBlockScale
     template void
