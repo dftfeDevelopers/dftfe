@@ -750,12 +750,12 @@ namespace dftfe
                             int(n),
                             int(k),
                             makeDataTypeHipBlasCompatible(alpha),
-                            (const dftfe::utils::deviceDoubleComplex **)A,
+                            (const hipblasDoubleComplex **)A,
                             int(lda),
-                            (const dftfe::utils::deviceDoubleComplex **)B,
+                            (const hipblasDoubleComplex **)B,
                             int(ldb),
                             makeDataTypeHipBlasCompatible(beta),
-                            (dftfe::utils::deviceDoubleComplex **)C,
+                            (hipblasDoubleComplex **)C,
                             int(ldc),
                             int(batchCount));
 
@@ -867,12 +867,12 @@ namespace dftfe
                             int(n),
                             int(k),
                             makeDataTypeHipBlasCompatible(alpha),
-                            (const dftfe::utils::deviceFloatComplex **)A,
+                            (const hipblasComplex **)A,
                             int(lda),
-                            (const dftfe::utils::deviceFloatComplex **)B,
+                            (const hipblasComplex **)B,
                             int(ldb),
                             makeDataTypeHipBlasCompatible(beta),
-                            (dftfe::utils::deviceFloatComplex **)C,
+                            (hipblasComplex **)C,
                             int(ldc),
                             int(batchCount));
 
@@ -961,15 +961,16 @@ namespace dftfe
       const ValueTypeReal *  imagArr,
       ValueTypeComplex *     complexArr)
     {
-      hipLaunchKernelGGL(
-        copyValueType1ArrToValueType2ArrDeviceKernel,
-        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        d_streamId,
-        size,
-        makeDataTypeHipBlasCompatible(valueType1Arr),
-        makeDataTypeHipBlasCompatible(valueType2Arr));
+      hipLaunchKernelGGL(copyRealArrsToComplexArrDeviceKernel,
+                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                           0,
+                           0,
+                           size,
+                           realArr,
+                           imagArr,
+                           dftfe::utils::makeDataTypeDeviceCompatible(
+                             complexArr));
     }
 
     template <typename ValueType1, typename ValueType2>
