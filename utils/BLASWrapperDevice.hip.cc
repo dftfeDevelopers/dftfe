@@ -276,20 +276,12 @@ namespace dftfe
     {
       d_streamId = streamId;
       dftfe::utils::deviceBlasStatus_t status =
-        hipblasSetStream(d_deviceBlasHandle, stream);
+        hipblasSetStream(d_deviceBlasHandle, d_streamId);
       DEVICEBLAS_API_CHECK(status);
       return status;
     }
 
-    dftfe::utils::deviceBlasStatus_t
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::setMathMode(
-      dftfe::utils::deviceBlasMath_t mathMode)
-    {
-      dftfe::utils::deviceBlasStatus_t status =
-        hipblasSetMathMode(d_deviceBlasHandle, mathMode);
-      DEVICEBLAS_API_CHECK(status);
-      return status;
-    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
