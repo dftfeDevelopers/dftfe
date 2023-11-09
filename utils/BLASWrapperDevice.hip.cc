@@ -72,7 +72,7 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE_AMD
     void
-    initialize()
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::initialize()
     {
       rocblas_initialize();
     }
