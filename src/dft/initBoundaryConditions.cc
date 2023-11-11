@@ -266,7 +266,7 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>(
-      matrix_free_data, d_constraintsVector);
+      matrix_free_data, d_constraintsVector, d_BLASWrapperPtrHost);
     dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
                                             dftfe::basis::update_gradients |
                                             dftfe::basis::update_transpose;
@@ -295,14 +295,20 @@ namespace dftfe
           basisOperationsPtrHost->createScratchMultiVectors(
             d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1));
       }
+      // d_BLASWrapperPtrHost =
+      // std::make_shared<dftfe::utils::MemorySpace::HOST>> ();
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice)
       {
+        // d_BLASWrapperPtr =
+        // std::make_shared<dftfe::linearAlgebra::BLASWrapper<
+        //   dftfe::utils::MemorySpace::DEVICE>>();
+
         basisOperationsPtrDevice = std::make_shared<
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>(
-          matrix_free_data, d_constraintsVector);
+          matrix_free_data, d_constraintsVector, d_BLASWrapperPtr);
         basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
                                        quadratureIndices,
                                        updateFlags);

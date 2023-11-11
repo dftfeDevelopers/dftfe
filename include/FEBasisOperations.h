@@ -23,6 +23,7 @@
 #include <constraintMatrixInfo.h>
 #include <constraintMatrixInfoDevice.h>
 #include <DeviceTypeConfig.h>
+#include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -81,6 +82,9 @@ namespace dftfe
         tempCellNodalData, tempQuadratureGradientsData,
         tempQuadratureGradientsDataNonAffine;
 
+      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        d_BLASWrapperPtr;
+
     public:
       /**
        * @brief Constructor, fills required data structures using deal.ii's MatrixFree and AffineConstraints objects
@@ -92,7 +96,9 @@ namespace dftfe
       FEBasisOperationsBase(
         dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-          &constraintsVector);
+          &constraintsVector,
+        std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+          BLASWrapperPtr);
 
       /**
        * @brief Default Destructor
@@ -490,6 +496,10 @@ namespace dftfe
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
+        dftfe::utils::MemorySpace::HOST>::d_BLASWrapperPtr;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
         dftfe::utils::MemorySpace::HOST>::d_quadratureID;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
@@ -744,6 +754,10 @@ namespace dftfe
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::tempCellNodalData;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::d_BLASWrapperPtr;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,

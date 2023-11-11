@@ -411,9 +411,9 @@ namespace dftfe
         // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
         dftfe::utils::deviceReset();
 
-#ifdef DFTFE_WITH_DEVICE_AMD
-        dftfe::utils::deviceBlasWrapper::initialize();
-#endif
+        // #ifdef DFTFE_WITH_DEVICE_AMD
+        //         dftfe::utils::deviceBlasWrapper::initialize();
+        // #endif
       }
 
 

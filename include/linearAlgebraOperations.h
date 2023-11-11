@@ -337,13 +337,12 @@ namespace dftfe
            const unsigned int *        incx,
            std::complex<double> *      y,
            const unsigned int *        incy);
-    void
-    zdotc_(std::complex<double> *      C,
-           const int *                 N,
+    std::complex<double>
+    zdotc_(const unsigned int *        N,
            const std::complex<double> *X,
-           const int *                 INCX,
+           const unsigned int *        INCX,
            const std::complex<double> *Y,
-           const int *                 INCY);
+           const unsigned int *        INCY);
     double
     ddot_(const unsigned int *N,
           const double *      X,
@@ -353,6 +352,11 @@ namespace dftfe
 
     double
     dnrm2_(const unsigned int *n, const double *x, const unsigned int *incx);
+
+    double
+    dznrm2_(const unsigned int *        n,
+            const std::complex<double> *x,
+            const unsigned int *        incx);
     void
     zaxpy_(const unsigned int *        n,
            const std::complex<double> *alpha,

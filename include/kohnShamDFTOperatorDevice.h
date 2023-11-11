@@ -22,6 +22,7 @@
 #include <headers.h>
 #include <operatorDevice.h>
 #include <FEBasisOperations.h>
+#include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -658,6 +659,15 @@ namespace dftfe
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
       basisOperationsPtrHost;
+
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      d_BLASWrapperPtrHost;
+
+
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      d_BLASWrapperPtr;
 
 
     /// data structures to store diagonal of inverse square root mass matrix and

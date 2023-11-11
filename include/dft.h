@@ -24,6 +24,7 @@
 #include <MemorySpaceType.h>
 #include <MemoryStorage.h>
 #include <FEBasisOperations.h>
+#include <BLASWrapper.h>
 
 #include <complex>
 #include <deque>
@@ -1297,6 +1298,20 @@ namespace dftfe
                                       dftfe::utils::MemorySpace::DEVICE>>
       basisOperationsPtrDevice;
 #endif
+
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      d_BLASWrapperPtrHost;
+
+
+    std::shared_ptr<
+#if defined(DFTFE_WITH_DEVICE)
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+#else
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+#endif
+      d_BLASWrapperPtr;
+
     std::map<dealii::types::global_dof_index, dealii::Point<3>> d_supportPoints,
       d_supportPointsPRefined, d_supportPointsEigen;
     std::vector<const dealii::AffineConstraints<double> *> d_constraintsVector;

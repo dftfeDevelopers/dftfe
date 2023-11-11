@@ -22,6 +22,7 @@
 #include <constraintMatrixInfo.h>
 #include <headers.h>
 #include <operator.h>
+#include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -533,6 +534,9 @@ node is stored
     /// pointer to dft class
     dftClass<FEOrder, FEOrderElectro> *dftPtr;
 
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      d_BLASWrapperPtrHost;
 
     /// data structures to store diagonal of inverse square root mass matrix and
     /// square root of mass matrix
