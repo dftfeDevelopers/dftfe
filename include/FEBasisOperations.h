@@ -396,14 +396,15 @@ namespace dftfe
        * @param[inout] multiVector the given multivector.
        */
       void
-      distribute(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &multiVector) const;
+      distribute(dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                   memorySpace> &multiVector,
+                 unsigned int constraintIndex =
+                   std::numeric_limits<unsigned int>::max()) const;
 
 
 
-      constraintInfoClass d_constraintInfo;
-      unsigned int        d_nOMPThreads;
+      std::vector<constraintInfoClass> d_constraintInfo;
+      unsigned int                     d_nOMPThreads;
       std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
         *                                              d_constraintsVector;
       const dealii::MatrixFree<3, ValueTypeBasisData> *d_matrixFreeDataPtr;

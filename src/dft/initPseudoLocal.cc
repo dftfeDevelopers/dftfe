@@ -349,7 +349,10 @@ namespace dftfe
                     interpoolcomm);
     MPI_Barrier(interpoolcomm);
 
-    _phiExtConstraintMatrix.distribute(phiExt);
+    // _phiExtConstraintMatrix.distribute(phiExt);
+    basisOperationsPtrElectroHost
+      ->d_constraintInfo[d_phiExtDofHandlerIndexElectro]
+      .distribute(phiExt);
     phiExt.update_ghost_values();
     // pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
 

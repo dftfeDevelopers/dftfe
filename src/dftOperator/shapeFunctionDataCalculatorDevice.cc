@@ -49,110 +49,135 @@ namespace shapeFuncDevice
 #pragma unroll
         for (unsigned int q = 0; q < numQuadPoints; ++q)
           {
-            double gradShapeXI, gradShapeXJ, gradShapeYI, gradShapeYJ,
-              gradShapeZI, gradShapeZJ;
-            const double gradShapeXIRef =
-              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexI];
-            const double gradShapeYIRef =
-              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                          numDofsPerCell * q + cellDofIndexI];
-            const double gradShapeZIRef =
-              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
-                                          numDofsPerCell * q + cellDofIndexI];
-            const double gradShapeXJRef =
-              shapeFunctionGradientValues[numDofsPerCell * q + cellDofIndexJ];
-            const double gradShapeYJRef =
-              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
-                                          numDofsPerCell * q + cellDofIndexJ];
-            const double gradShapeZJRef =
-              shapeFunctionGradientValues[numDofsPerCell * numQuadPoints * 2 +
-                                          numDofsPerCell * q + cellDofIndexJ];
-            if (areAllCellsAffineOrCartesianFlag == 0)
+            const double *jacobianPtr =
+              inverseJacobianValues +
+              (areAllCellsAffineOrCartesianFlag == 0 ?
+                 cellIndex * numQuadPoints * 9 + q * 9 :
+                 (areAllCellsAffineOrCartesianFlag == 1 ? cellIndex * 9 :
+                                                          cellIndex * 3));
+
+            if (areAllCellsAffineOrCartesianFlag == 2)
               {
-                const double Jxx =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        0];
-                const double Jxy =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        1];
-                const double Jxz =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        2];
-                const double Jyx =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        3];
-                const double Jyy =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        4];
-                const double Jyz =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        5];
-                const double Jzx =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        6];
-                const double Jzy =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        7];
-                const double Jzz =
-                  inverseJacobianValues[cellIndex * numQuadPoints * 9 + q * 9 +
-                                        8];
-
-                gradShapeXI = gradShapeXIRef * Jxx + gradShapeYIRef * Jxy +
-                              gradShapeZIRef * Jxz;
-                gradShapeYI = gradShapeXIRef * Jyx + gradShapeYIRef * Jyy +
-                              gradShapeZIRef * Jyz;
-                gradShapeZI = gradShapeXIRef * Jzx + gradShapeYIRef * Jzy +
-                              gradShapeZIRef * Jzz;
-                gradShapeXJ = gradShapeXJRef * Jxx + gradShapeYJRef * Jxy +
-                              gradShapeZJRef * Jxz;
-                gradShapeYJ = gradShapeXJRef * Jyx + gradShapeYJRef * Jyy +
-                              gradShapeZJRef * Jyz;
-                gradShapeZJ = gradShapeXJRef * Jzx + gradShapeYJRef * Jzy +
-                              gradShapeZJRef * Jzz;
+                double gradShapeXI =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexI] *
+                  jacobianPtr[0];
+                double gradShapeYI =
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                  jacobianPtr[1];
+                double gradShapeZI =
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                  jacobianPtr[2];
+                double gradShapeXJ =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                  jacobianPtr[0];
+                double gradShapeYJ =
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                  jacobianPtr[1];
+                double gradShapeZJ =
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                  jacobianPtr[2];
+                val +=
+                  ((gradShapeXI * gradShapeXJ) + (gradShapeYI * gradShapeYJ) +
+                   (gradShapeZI * gradShapeZJ)) *
+                  JxW[cellIndex * numQuadPoints + q];
               }
-            else if (areAllCellsAffineOrCartesianFlag == 1)
+            else
               {
-                const double Jxx = inverseJacobianValues[cellIndex * 9 + 0];
-                const double Jxy = inverseJacobianValues[cellIndex * 9 + 1];
-                const double Jxz = inverseJacobianValues[cellIndex * 9 + 2];
-                const double Jyx = inverseJacobianValues[cellIndex * 9 + 3];
-                const double Jyy = inverseJacobianValues[cellIndex * 9 + 4];
-                const double Jyz = inverseJacobianValues[cellIndex * 9 + 5];
-                const double Jzx = inverseJacobianValues[cellIndex * 9 + 6];
-                const double Jzy = inverseJacobianValues[cellIndex * 9 + 7];
-                const double Jzz = inverseJacobianValues[cellIndex * 9 + 8];
-
-                gradShapeXI = gradShapeXIRef * Jxx + gradShapeYIRef * Jxy +
-                              gradShapeZIRef * Jxz;
-                gradShapeYI = gradShapeXIRef * Jyx + gradShapeYIRef * Jyy +
-                              gradShapeZIRef * Jyz;
-                gradShapeZI = gradShapeXIRef * Jzx + gradShapeYIRef * Jzy +
-                              gradShapeZIRef * Jzz;
-                gradShapeXJ = gradShapeXJRef * Jxx + gradShapeYJRef * Jxy +
-                              gradShapeZJRef * Jxz;
-                gradShapeYJ = gradShapeXJRef * Jyx + gradShapeYJRef * Jyy +
-                              gradShapeZJRef * Jyz;
-                gradShapeZJ = gradShapeXJRef * Jzx + gradShapeYJRef * Jzy +
-                              gradShapeZJRef * Jzz;
+                double gradShapeXI =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[0] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[1] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[2];
+                double gradShapeYI =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[3] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[4] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[5];
+                double gradShapeZI =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[6] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[7] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexI] *
+                    jacobianPtr[8];
+                double gradShapeXJ =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[0] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[1] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[2];
+                double gradShapeYJ =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[3] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[4] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[5];
+                double gradShapeZJ =
+                  shapeFunctionGradientValues[numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[6] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[7] +
+                  shapeFunctionGradientValues[numDofsPerCell * numQuadPoints *
+                                                2 +
+                                              numDofsPerCell * q +
+                                              cellDofIndexJ] *
+                    jacobianPtr[8];
+                val +=
+                  ((gradShapeXI * gradShapeXJ) + (gradShapeYI * gradShapeYJ) +
+                   (gradShapeZI * gradShapeZJ)) *
+                  JxW[cellIndex * numQuadPoints + q];
               }
-            else if (areAllCellsAffineOrCartesianFlag == 2)
-              {
-                const double Jxx = inverseJacobianValues[cellIndex * 3 + 0];
-                const double Jyy = inverseJacobianValues[cellIndex * 3 + 1];
-                const double Jzz = inverseJacobianValues[cellIndex * 3 + 2];
-
-                gradShapeXI = gradShapeXIRef * Jxx;
-                gradShapeYI = gradShapeYIRef * Jyy;
-                gradShapeZI = gradShapeZIRef * Jzz;
-                gradShapeXJ = gradShapeXJRef * Jxx;
-                gradShapeYJ = gradShapeYJRef * Jyy;
-                gradShapeZJ = gradShapeZJRef * Jzz;
-              }
-
-
-            val += ((gradShapeXI * gradShapeXJ) + (gradShapeYI * gradShapeYJ) +
-                    (gradShapeZI * gradShapeZJ)) *
-                   JxW[cellIndex * numQuadPoints + q];
           }
 
         shapeGradNINJIntegralContribution[index] = val;

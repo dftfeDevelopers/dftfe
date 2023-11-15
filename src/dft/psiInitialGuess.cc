@@ -19,9 +19,16 @@
 #include <dft.h>
 #include <fileReaders.h>
 #include <vectorUtilities.h>
+#include <random>
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/random/normal_distribution.hpp>
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
+
 namespace dftfe
 {
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -401,161 +408,173 @@ namespace dftfe
 
     boost::math::normal normDist;
     bool                pp = false;
-    std::srand(this_mpi_process);
-    for (unsigned int dof = 0; dof < numberDofs; dof++)
-      {
-        const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-        dealii::Point<3>                      node  = d_supportPoints[dofID];
-        if (!constraintsNone.is_constrained(dofID))
-          {
-            //
-            // loop over wave functions
-            //
-            for (int kPoint = 0;
-                 kPoint < (d_dftParamsPtr->reproducible_output ?
-                             ((1 + d_dftParamsPtr->spinPolarized) *
-                              d_kPointWeights.size()) :
-                             (1 + d_dftParamsPtr->spinPolarized));
-                 ++kPoint)
-              {
-                // unsigned int waveFunction=0;
-                for (std::vector<orbital>::iterator it =
-                       waveFunctionsVectorTruncated.begin();
-                     it < waveFunctionsVectorTruncated.end();
-                     it++)
-                  {
-                    //
-                    // get the imageIdmap information corresponding to
-                    // globalChargeId (Fix me: Examine whether periodic image
-                    // contributions have to be included or not) currently not
-                    // including
-                    std::vector<int> imageIdsList;
-                    if (d_dftParamsPtr->periodicX ||
-                        d_dftParamsPtr->periodicY || d_dftParamsPtr->periodicZ)
-                      {
-                        imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
-                      }
-                    else
-                      {
-                        imageIdsList.push_back(it->atomID);
-                      }
+#pragma omp parallel num_threads(d_nOMPThreads)
+    {
+      std::mt19937 randomIntGenerator(this_mpi_process * d_nOMPThreads +
+                                      omp_get_thread_num());
+#pragma omp for
+      for (unsigned int dof = 0; dof < numberDofs; dof++)
+        {
+          const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+          dealii::Point<3>                      node  = d_supportPoints[dofID];
+          if (!constraintsNone.is_constrained(dofID))
+            {
+              //
+              // loop over wave functions
+              //
+              for (int kPoint = 0;
+                   kPoint < (d_dftParamsPtr->reproducible_output ?
+                               ((1 + d_dftParamsPtr->spinPolarized) *
+                                d_kPointWeights.size()) :
+                               (1 + d_dftParamsPtr->spinPolarized));
+                   ++kPoint)
+                {
+                  // unsigned int waveFunction=0;
+                  for (std::vector<orbital>::iterator it =
+                         waveFunctionsVectorTruncated.begin();
+                       it < waveFunctionsVectorTruncated.end();
+                       it++)
+                    {
+                      //
+                      // get the imageIdmap information corresponding to
+                      // globalChargeId (Fix me: Examine whether periodic image
+                      // contributions have to be included or not) currently not
+                      // including
+                      std::vector<int> imageIdsList;
+                      if (d_dftParamsPtr->periodicX ||
+                          d_dftParamsPtr->periodicY ||
+                          d_dftParamsPtr->periodicZ)
+                        {
+                          imageIdsList =
+                            d_globalChargeIdToImageIdMap[it->atomID];
+                        }
+                      else
+                        {
+                          imageIdsList.push_back(it->atomID);
+                        }
 
-                    const unsigned int waveId = it->waveID;
-                    for (int iImageAtomCount = 0;
-                         iImageAtomCount < imageIdsList.size();
-                         ++iImageAtomCount)
-                      {
-                        //
-                        // find coordinates of atom correspoding to this wave
-                        // function and imageAtom
-                        //
-                        int chargeId = imageIdsList[iImageAtomCount];
-                        dealii::Point<3> atomCoord;
+                      const unsigned int waveId = it->waveID;
+                      for (int iImageAtomCount = 0;
+                           iImageAtomCount < imageIdsList.size();
+                           ++iImageAtomCount)
+                        {
+                          //
+                          // find coordinates of atom correspoding to this wave
+                          // function and imageAtom
+                          //
+                          int chargeId = imageIdsList[iImageAtomCount];
+                          dealii::Point<3> atomCoord;
 
-                        if (chargeId < numberGlobalAtoms)
-                          {
-                            atomCoord[0] = atomLocations[chargeId][2];
-                            atomCoord[1] = atomLocations[chargeId][3];
-                            atomCoord[2] = atomLocations[chargeId][4];
-                          }
-                        else
-                          {
-                            atomCoord[0] =
-                              d_imagePositions[chargeId - numberGlobalAtoms][0];
-                            atomCoord[1] =
-                              d_imagePositions[chargeId - numberGlobalAtoms][1];
-                            atomCoord[2] =
-                              d_imagePositions[chargeId - numberGlobalAtoms][2];
-                          }
+                          if (chargeId < numberGlobalAtoms)
+                            {
+                              atomCoord[0] = atomLocations[chargeId][2];
+                              atomCoord[1] = atomLocations[chargeId][3];
+                              atomCoord[2] = atomLocations[chargeId][4];
+                            }
+                          else
+                            {
+                              atomCoord[0] =
+                                d_imagePositions[chargeId - numberGlobalAtoms]
+                                                [0];
+                              atomCoord[1] =
+                                d_imagePositions[chargeId - numberGlobalAtoms]
+                                                [1];
+                              atomCoord[2] =
+                                d_imagePositions[chargeId - numberGlobalAtoms]
+                                                [2];
+                            }
 
-                        double x = node[0] - atomCoord[0];
-                        double y = node[1] - atomCoord[1];
-                        double z = node[2] - atomCoord[2];
+                          double x = node[0] - atomCoord[0];
+                          double y = node[1] - atomCoord[1];
+                          double z = node[2] - atomCoord[2];
 
 
-                        double r     = sqrt(x * x + y * y + z * z);
-                        double theta = acos(z / r);
-                        double phi   = atan2(y, x);
+                          double r     = sqrt(x * x + y * y + z * z);
+                          double theta = acos(z / r);
+                          double phi   = atan2(y, x);
 
-                        if (r == 0)
-                          {
-                            theta = 0;
-                            phi   = 0;
-                          }
+                          if (r == 0)
+                            {
+                              theta = 0;
+                              phi   = 0;
+                            }
 
-                        double R = 0.0;
-                        if (
-                          r <=
-                          d_wfcInitTruncation) // outerValues[it->Z][it->n][it->l])
-                          {
-                            // radial part
-                            R = alglib::spline1dcalc((it->psi), r);
-                            // spherical part
-                            if (it->m > 0)
-                              {
-                                d_eigenVectorsFlattenedHost
-                                  [kPoint * d_numEigenValues * numberDofs +
-                                   dof * d_numEigenValues + waveId] +=
-                                  dataTypes::number(
-                                    R * std::sqrt(2) *
-                                    boost::math::spherical_harmonic_r(
-                                      it->l, it->m, theta, phi));
-                              }
-                            else if (it->m == 0)
-                              {
-                                d_eigenVectorsFlattenedHost
-                                  [kPoint * d_numEigenValues * numberDofs +
-                                   dof * d_numEigenValues + waveId] +=
-                                  dataTypes::number(
-                                    R * boost::math::spherical_harmonic_r(
-                                          it->l, it->m, theta, phi));
-                              }
-                            else
-                              {
-                                d_eigenVectorsFlattenedHost
-                                  [kPoint * d_numEigenValues * numberDofs +
-                                   dof * d_numEigenValues + waveId] +=
-                                  dataTypes::number(
-                                    R * std::sqrt(2) *
-                                    boost::math::spherical_harmonic_i(
-                                      it->l, -(it->m), theta, phi));
-                              }
-                          }
-                      }
-                    // waveFunction++;
-                  }
+                          double R = 0.0;
+                          if (
+                            r <=
+                            d_wfcInitTruncation) // outerValues[it->Z][it->n][it->l])
+                            {
+                              // radial part
+                              R = alglib::spline1dcalc((it->psi), r);
+                              // spherical part
+                              if (it->m > 0)
+                                {
+                                  d_eigenVectorsFlattenedHost
+                                    [kPoint * d_numEigenValues * numberDofs +
+                                     dof * d_numEigenValues + waveId] +=
+                                    dataTypes::number(
+                                      R * std::sqrt(2) *
+                                      boost::math::spherical_harmonic_r(
+                                        it->l, it->m, theta, phi));
+                                }
+                              else if (it->m == 0)
+                                {
+                                  d_eigenVectorsFlattenedHost
+                                    [kPoint * d_numEigenValues * numberDofs +
+                                     dof * d_numEigenValues + waveId] +=
+                                    dataTypes::number(
+                                      R * boost::math::spherical_harmonic_r(
+                                            it->l, it->m, theta, phi));
+                                }
+                              else
+                                {
+                                  d_eigenVectorsFlattenedHost
+                                    [kPoint * d_numEigenValues * numberDofs +
+                                     dof * d_numEigenValues + waveId] +=
+                                    dataTypes::number(
+                                      R * std::sqrt(2) *
+                                      boost::math::spherical_harmonic_i(
+                                        it->l, -(it->m), theta, phi));
+                                }
+                            }
+                        }
+                      // waveFunction++;
+                    }
 
-                d_nonAtomicWaveFunctions = 0;
-                if (waveFunctionsVector.size() < d_numEigenValues)
-                  {
-                    d_nonAtomicWaveFunctions =
-                      d_numEigenValues - waveFunctionsVector.size();
+                  d_nonAtomicWaveFunctions = 0;
+                  if (waveFunctionsVector.size() < d_numEigenValues)
+                    {
+                      d_nonAtomicWaveFunctions =
+                        d_numEigenValues - waveFunctionsVector.size();
 
-                    //
-                    // assign the rest of the wavefunctions using a standard
-                    // normal distribution
-                    //
-                    // boost::math::normal normDist;
+                      //
+                      // assign the rest of the wavefunctions using a standard
+                      // normal distribution
+                      //
+                      // boost::math::normal normDist;
 
-                    dataTypes::number *temp =
-                      d_eigenVectorsFlattenedHost.data() +
-                      kPoint * d_numEigenValues * numberDofs;
-                    for (unsigned int iWave = waveFunctionsVector.size();
-                         iWave < d_numEigenValues;
-                         ++iWave)
-                      {
-                        double z = (-0.5 + (rand() + 0.0) / (RAND_MAX)) * 3.0;
-                        double value = boost::math::pdf(normDist, z);
-                        if (rand() % 2 == 0)
-                          value = -1.0 * value;
+                      dataTypes::number *temp =
+                        d_eigenVectorsFlattenedHost.data() +
+                        kPoint * d_numEigenValues * numberDofs;
+                      for (unsigned int iWave = waveFunctionsVector.size();
+                           iWave < d_numEigenValues;
+                           ++iWave)
+                        {
+                          double z =
+                            (-0.5 + (randomIntGenerator() + 0.0) / (RAND_MAX)) *
+                            3.0;
+                          double value = boost::math::pdf(normDist, z);
+                          if (randomIntGenerator() % 2 == 0)
+                            value = -1.0 * value;
 
-                        temp[dof * d_numEigenValues + iWave] =
-                          dataTypes::number(value);
-                      }
-                  }
-              }
-          }
-      }
+                          temp[dof * d_numEigenValues + iWave] =
+                            dataTypes::number(value);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     if (!d_dftParamsPtr->reproducible_output)
       {
