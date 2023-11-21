@@ -277,7 +277,7 @@ namespace dftfe
             interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
 
         d_rhoInNodalValues = 0;
-#pragma omp parallel for num_threads(d_nOMPThreads)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
         for (unsigned int dof = 0; dof < numberDofs; ++dof)
           {
             if (dof < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
@@ -417,7 +417,7 @@ namespace dftfe
       {
         // loop over elements
         basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
-#pragma omp parallel for num_threads(d_nOMPThreads)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
         for (auto iCell = 0; iCell < basisOperationsPtrHost->nCells(); ++iCell)
           {
             auto cellid = basisOperationsPtrHost->cellID(iCell);
@@ -506,7 +506,7 @@ namespace dftfe
             densityFamilyType::GGA)
           {
 //
-#pragma omp parallel for num_threads(d_nOMPThreads)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
             for (unsigned int iCell = 0;
                  iCell < basisOperationsPtrHost->nCells();
                  ++iCell)

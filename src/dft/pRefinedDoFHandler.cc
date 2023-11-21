@@ -383,7 +383,7 @@ namespace dftfe
         basisOperationsPtrElectroHost = std::make_shared<
           dftfe::basis::
             FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
-          d_matrixFreeDataPRefined, d_constraintsVectorElectro);
+          d_matrixFreeDataPRefined, d_constraintsVectorElectro, d_BLASWrapperPtrHost);
         dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
                                                 dftfe::basis::update_gradients |
                                                 dftfe::basis::update_transpose;
@@ -399,7 +399,7 @@ namespace dftfe
           dftfe::basis::FEBasisOperations<double,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>(
-          d_matrixFreeDataPRefined, d_constraintsVectorElectro);
+          d_matrixFreeDataPRefined, d_constraintsVectorElectro, d_BLASWrapperPtr);
         basisOperationsPtrElectroDevice->init(*basisOperationsPtrElectroHost);
       }
 #endif
