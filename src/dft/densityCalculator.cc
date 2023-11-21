@@ -504,12 +504,15 @@ namespace dftfe
       }
 #if defined(DFTFE_WITH_DEVICE)
     rhoHost.resize(rho.size());
+
     rhoHost.copyFrom(rho);
+
     if (isEvaluateGradRho)
       {
         gradRhoHost.resize(gradRho.size());
         gradRhoHost.copyFrom(gradRho);
       }
+
 #endif
 
     int size;
