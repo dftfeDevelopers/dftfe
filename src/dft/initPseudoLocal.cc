@@ -179,7 +179,6 @@ namespace dftfe
       vselfBinManager.getAtomIdBinIdMapLocalAllImages();
 
     const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
-    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
     dealii::BoundingBox<3> boundingBoxTria(
       vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
@@ -373,7 +372,7 @@ namespace dftfe
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndicesStep2);
     basisOperationsPtrHost->reinit(0, 0, lpspQuadratureId);
-#pragma omp parallel for num_threads(d_nOMPThreads)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoSpline)
     for (unsigned int macrocell = 0;
          macrocell < _matrix_free_data.n_cell_batches();
          ++macrocell)
@@ -392,7 +391,7 @@ namespace dftfe
                  _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                  ++iSubCell)
               {
-                subCellPtr =
+                dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
                   _matrix_free_data.get_cell_iterator(macrocell,
                                                       iSubCell,
                                                       _phiExtDofHandlerIndex);
@@ -509,7 +508,7 @@ namespace dftfe
                  _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                  ++iSubCell)
               {
-                subCellPtr =
+                dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
                   _matrix_free_data.get_cell_iterator(macrocell,
                                                       iSubCell,
                                                       _phiExtDofHandlerIndex);
@@ -576,7 +575,7 @@ namespace dftfe
         kptGroupLowHighPlusOneIndicesStep3);
 
     std::vector<double> pseudoVLocAtom(n_q_points);
-#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom)
+#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom,pseudoSpline)
     for (unsigned int iCell = 0; iCell < basisOperationsPtrHost->nCells();
          ++iCell)
       {

@@ -317,7 +317,7 @@ namespace dftfe
           basisOperationsPtrDevice->createScratchMultiVectors(
             BVec, (d_dftParamsPtr->spinPolarized + 1));
       }
-    else
+    else if (d_dftParamsPtr->useDevice)
       {
         basisOperationsPtrDevice->clearScratchMultiVectors();
         const unsigned int BVec =

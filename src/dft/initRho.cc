@@ -130,17 +130,7 @@ namespace dftfe
           maxRhoTail = outerMostPointDen[*it];
       }
 
-
-    // Initialize rho
-    const dealii::Quadrature<3> &quadrature_formula =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-    dealii::FEValues<3> fe_values(FE,
-                                  quadrature_formula,
-                                  dealii::update_quadrature_points);
-    const unsigned int  n_q_points = quadrature_formula.size();
-
     // Initialize electron density table storage for rhoIn
-
     rhoInValues =
       std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
 
@@ -417,6 +407,7 @@ namespace dftfe
       {
         // loop over elements
         basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
+        const unsigned int  n_q_points = basisOperationsPtrHost->nQuadsPerCell();
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
         for (auto iCell = 0; iCell < basisOperationsPtrHost->nCells(); ++iCell)
           {
@@ -505,7 +496,6 @@ namespace dftfe
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-//
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
             for (unsigned int iCell = 0;
                  iCell < basisOperationsPtrHost->nCells();

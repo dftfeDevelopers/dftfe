@@ -682,7 +682,7 @@ namespace dftfe
            iConstraint < (*d_constraintsVector).size();
            ++iConstraint)
         d_constraintInfo[iConstraint].initialize(
-          d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID),
+          d_matrixFreeDataPtr->get_vector_partitioner(iConstraint),
           *((*d_constraintsVector)[iConstraint]));
     }
 

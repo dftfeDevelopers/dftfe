@@ -156,7 +156,34 @@ namespace dftfe
 #endif
     , d_phiTotalSolverProblem(mpi_comm_domain)
   {
-    d_nOMPThreads = std::stoi(std::getenv("DFTFE_NUM_THREADS"));
+    d_nOMPThreads = 1;
+    if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
+      {
+        d_nOMPThreads = std::numeric_limits<unsigned int>::max();
+        try
+          {
+            d_nOMPThreads = std::stoi(std::string(penv));
+          }
+        catch (...)
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                std::string(
+                  "When specifying the <DFTFE_NUM_THREADS> environment "
+                  "variable, it needs to be something that can be interpreted "
+                  "as an integer. The text you have in the environment "
+                  "variable is <") +
+                penv + ">"));
+          }
+
+        AssertThrow(d_nOMPThreads > 0,
+                    dealii::ExcMessage(
+                      "When specifying the <DFTFE_NUM_THREADS> environment "
+                      "variable, it needs to be a positive number."));
+      }
+    if (d_dftParamsPtr->verbosity > 0)
+    pcout<<"Threads per MPI task: "<<d_nOMPThreads<<std::endl;
     d_elpaScala   = new dftfe::elpaScalaManager(mpi_comm_domain);
 
     forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
@@ -813,8 +840,6 @@ namespace dftfe
       {
         dealii::TimerOutput::Scope scope(computing_timer, "psp init");
         pcout << std::endl << "Pseudopotential initalization...." << std::endl;
-        const dealii::Quadrature<3> &quadrature =
-          matrix_free_data.get_quadrature(d_densityQuadratureId);
 
         double init_core;
         MPI_Barrier(d_mpiCommParent);
@@ -1607,7 +1632,7 @@ namespace dftfe
 
         // first true option only updates the boundary conditions
         // second true option signals update is only for vself perturbation
-        initBoundaryConditions(true, true, true);
+        initBoundaryConditions(false, true, true);
 
         MPI_Barrier(d_mpiCommParent);
         init_bc = MPI_Wtime() - init_bc;
