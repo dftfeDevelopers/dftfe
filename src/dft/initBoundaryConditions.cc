@@ -267,18 +267,34 @@ namespace dftfe
                             additional_data);
     if (recomputeBasisData)
       {
-        basisOperationsPtrHost = std::make_shared<
-          dftfe::basis::FEBasisOperations<dataTypes::number,
-                                          double,
-                                          dftfe::utils::MemorySpace::HOST>>(
-          matrix_free_data, d_constraintsVector, d_BLASWrapperPtrHost);
-        dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
-                                                dftfe::basis::update_gradients |
-                                                dftfe::basis::update_transpose;
-        std::vector<unsigned int> quadratureIndices{0, 1, 2, 3, 4};
-        basisOperationsPtrHost->init(d_densityDofHandlerIndex,
-                                     quadratureIndices,
-                                     updateFlags);
+        if (!vselfPerturbationUpdateForStress)
+          {
+            basisOperationsPtrHost = std::make_shared<
+              dftfe::basis::FEBasisOperations<dataTypes::number,
+                                              double,
+                                              dftfe::utils::MemorySpace::HOST>>(
+              matrix_free_data, d_constraintsVector, d_BLASWrapperPtrHost);
+            dftfe::basis::UpdateFlags updateFlagsAll =
+              dftfe::basis::update_values | dftfe::basis::update_jxw |
+              dftfe::basis::update_inversejacobians |
+              dftfe::basis::update_gradients | dftfe::basis::update_quadpoints |
+              dftfe::basis::update_transpose;
+
+            std::vector<unsigned int> quadratureIndices{
+              d_densityQuadratureId,
+              d_nlpspQuadratureId,
+              d_gllQuadratureId,
+              d_lpspQuadratureId,
+              d_feOrderPlusOneQuadratureId};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{updateFlagsAll,
+                                                               updateFlagsAll,
+                                                               updateFlagsAll,
+                                                               updateFlagsAll,
+                                                               updateFlagsAll};
+            basisOperationsPtrHost->init(d_densityDofHandlerIndex,
+                                         quadratureIndices,
+                                         updateFlags);
+          }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
       {
@@ -302,20 +318,45 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice && recomputeBasisData)
       {
-        basisOperationsPtrDevice = std::make_shared<
-          dftfe::basis::FEBasisOperations<dataTypes::number,
-                                          double,
-                                          dftfe::utils::MemorySpace::DEVICE>>(
-          matrix_free_data, d_constraintsVector, d_BLASWrapperPtr);
-        basisOperationsPtrDevice->init(*basisOperationsPtrHost);
-        const unsigned int BVec =
-          std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
+        if (!vselfPerturbationUpdateForStress)
+          {
+            basisOperationsPtrDevice =
+              std::make_shared<dftfe::basis::FEBasisOperations<
+                dataTypes::number,
+                double,
+                dftfe::utils::MemorySpace::DEVICE>>(matrix_free_data,
+                                                    d_constraintsVector,
+                                                    d_BLASWrapperPtr);
+            basisOperationsPtrDevice->init(*basisOperationsPtrHost);
+            const unsigned int BVec =
+              std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-          basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
+            if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+              basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
+            else
+              basisOperationsPtrDevice->createScratchMultiVectors(
+                BVec, (d_dftParamsPtr->spinPolarized + 1));
+          }
         else
-          basisOperationsPtrDevice->createScratchMultiVectors(
-            BVec, (d_dftParamsPtr->spinPolarized + 1));
+          {
+            dftfe::basis::UpdateFlags updateFlagsGradientsAndInvJacobians =
+              dftfe::basis::update_inversejacobians | dftfe::basis::update_jxw |
+              dftfe::basis::update_gradients;
+            dftfe::basis::UpdateFlags updateFlagsAll =
+              dftfe::basis::update_values | dftfe::basis::update_jxw |
+              dftfe::basis::update_inversejacobians |
+              dftfe::basis::update_gradients | dftfe::basis::update_transpose;
+            dftfe::basis::UpdateFlags updateFlagsValuesGradients =
+              dftfe::basis::update_values | dftfe::basis::update_gradients | dftfe::basis::update_transpose;
+
+            std::vector<unsigned int> quadratureIndices{d_nlpspQuadratureId,
+              d_densityQuadratureId, d_feOrderPlusOneQuadratureId};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{updateFlagsValuesGradients,
+              updateFlagsAll, updateFlagsGradientsAndInvJacobians};
+            basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
+                                           quadratureIndices,
+                                           updateFlags);
+          }
       }
     else if (d_dftParamsPtr->useDevice)
       {

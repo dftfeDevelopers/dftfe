@@ -383,24 +383,61 @@ namespace dftfe
         basisOperationsPtrElectroHost = std::make_shared<
           dftfe::basis::
             FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
-          d_matrixFreeDataPRefined, d_constraintsVectorElectro, d_BLASWrapperPtrHost);
-        dftfe::basis::UpdateFlags updateFlags = dftfe::basis::update_values |
-                                                dftfe::basis::update_gradients |
-                                                dftfe::basis::update_transpose;
-        std::vector<unsigned int> quadratureIndices{0, 1, 2, 3};
-        basisOperationsPtrElectroHost->init(d_densityDofHandlerIndexElectro,
-                                            quadratureIndices,
-                                            updateFlags);
+          d_matrixFreeDataPRefined,
+          d_constraintsVectorElectro,
+          d_BLASWrapperPtrHost);
+        if (!vselfPerturbationUpdateForStress)
+          {
+            dftfe::basis::UpdateFlags updateFlagsAll =
+              dftfe::basis::update_values | dftfe::basis::update_jxw |
+              dftfe::basis::update_inversejacobians |
+              dftfe::basis::update_gradients | dftfe::basis::update_quadpoints |
+              dftfe::basis::update_transpose;
+
+            std::vector<unsigned int> quadratureIndices{
+              d_densityQuadratureIdElectro,
+              d_lpspQuadratureIdElectro,
+              d_smearedChargeQuadratureIdElectro,
+              d_phiTotAXQuadratureIdElectro};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{
+              updateFlagsAll,
+              updateFlagsAll,
+              dftfe::basis::update_quadpoints,
+              updateFlagsAll};
+            basisOperationsPtrElectroHost->init(d_baseDofHandlerIndexElectro,
+                                                quadratureIndices,
+                                                updateFlags);
+          }
       }
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice && recomputeBasisData)
       {
-        basisOperationsPtrElectroDevice = std::make_shared<
-          dftfe::basis::FEBasisOperations<double,
-                                          double,
-                                          dftfe::utils::MemorySpace::DEVICE>>(
-          d_matrixFreeDataPRefined, d_constraintsVectorElectro, d_BLASWrapperPtr);
-        basisOperationsPtrElectroDevice->init(*basisOperationsPtrElectroHost);
+        if (!vselfPerturbationUpdateForStress)
+          {
+            basisOperationsPtrElectroDevice =
+              std::make_shared<dftfe::basis::FEBasisOperations<
+                double,
+                double,
+                dftfe::utils::MemorySpace::DEVICE>>(d_matrixFreeDataPRefined,
+                                                    d_constraintsVectorElectro,
+                                                    d_BLASWrapperPtr);
+            basisOperationsPtrElectroDevice->init(
+              *basisOperationsPtrElectroHost);
+          }
+        else
+          {
+            dftfe::basis::UpdateFlags updateFlagsGradientsAndInvJacobians =
+              dftfe::basis::update_inversejacobians | dftfe::basis::update_jxw |
+              dftfe::basis::update_gradients;
+
+            std::vector<unsigned int> quadratureIndices{
+              d_phiTotAXQuadratureIdElectro};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{
+              updateFlagsGradientsAndInvJacobians};
+            basisOperationsPtrElectroDevice->init(d_baseDofHandlerIndexElectro,
+                                                  quadratureIndices,
+                                                  updateFlags);
+          }
       }
 #endif
 

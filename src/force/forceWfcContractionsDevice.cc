@@ -471,9 +471,6 @@ namespace dftfe
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::DEVICE>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
-        dftfe::basis::UpdateFlags updateFlags =
-          dftfe::basis::update_values | dftfe::basis::update_gradients;
-        basisOperationsPtr->reinit(BVec, cellsBlockSize, 0);
 
         const int blockSize    = cellsBlockSize;
         const int numberBlocks = numCells / blockSize;
@@ -510,7 +507,7 @@ namespace dftfe
               .size(),
             0,
             i * numQuadsNLP * 3 * numNodesPerElement);
-
+        basisOperationsPtr->reinit(BVec, cellsBlockSize, 0);
         basisOperationsPtr->extractToCellNodalDataKernel(
           Xb,
           cellWaveFunctionMatrix.data(),

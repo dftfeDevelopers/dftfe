@@ -37,7 +37,13 @@ namespace dftfe
 
       update_gradients = 0x0002,
 
-      update_transpose = 0x0004
+      update_transpose = 0x0004,
+
+      update_quadpoints = 0x0008,
+
+      update_inversejacobians = 0x0010,
+
+      update_jxw = 0x0020,
     };
 
     inline UpdateFlags
@@ -117,7 +123,7 @@ namespace dftfe
       void
       init(const unsigned int &             dofHandlerID,
            const std::vector<unsigned int> &quadratureID,
-           const UpdateFlags                updateFlags = update_values);
+           const std::vector<UpdateFlags>   updateFlags = update_values);
       /**
        * @brief fills required data structures from another FEBasisOperations object
        * @param[in] basisOperationsSrc Source FEBasisOperations object.
@@ -417,39 +423,53 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dftfe::global_size_type,
                                   dftfe::utils::MemorySpace::HOST>
         d_cellDofIndexToProcessDofIndexMap;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData,
-                                              dftfe::utils::MemorySpace::HOST>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                           dftfe::utils::MemorySpace::HOST>>
         d_quadPoints;
       dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
                                              d_flattenedCellDofIndexToProcessDofIndexMap;
       std::vector<dealii::CellId>            d_cellIndexToCellIdMap;
       std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_inverseJacobianData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_JxWData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientDataInternalLayout;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionDataTranspose;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientDataTranspose;
 
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_inverseJacobianBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_JxWBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionGradientBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionBasisDataTranspose;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionGradientBasisDataTranspose;
 
 
@@ -461,6 +481,7 @@ namespace dftfe
 
       std::vector<unsigned int> d_quadratureIDsVector;
       unsigned int              d_quadratureID;
+      unsigned int              d_quadratureIndex;
       std::vector<unsigned int> d_nQuadsPerCell;
       unsigned int              d_dofHandlerID;
       unsigned int              d_nVectors;
@@ -471,7 +492,7 @@ namespace dftfe
       unsigned int              d_locallyOwnedSize;
       bool                      areAllCellsAffine;
       bool                      areAllCellsCartesian;
-      UpdateFlags               d_updateFlags;
+      std::vector<UpdateFlags>  d_updateFlags;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         mpiPatternP2P;
@@ -531,6 +552,10 @@ namespace dftfe
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::HOST>::d_quadratureID;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::HOST>::d_quadratureIndex;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
@@ -808,6 +833,10 @@ namespace dftfe
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_quadratureID;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::d_quadratureIndex;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,

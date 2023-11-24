@@ -407,7 +407,7 @@ namespace dftfe
       {
         // loop over elements
         basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
-        const unsigned int  n_q_points = basisOperationsPtrHost->nQuadsPerCell();
+        const unsigned int n_q_points = basisOperationsPtrHost->nQuadsPerCell();
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
         for (auto iCell = 0; iCell < basisOperationsPtrHost->nCells(); ++iCell)
           {

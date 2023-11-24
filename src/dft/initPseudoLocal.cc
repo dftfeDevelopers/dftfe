@@ -575,7 +575,8 @@ namespace dftfe
         kptGroupLowHighPlusOneIndicesStep3);
 
     std::vector<double> pseudoVLocAtom(n_q_points);
-#pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom,pseudoSpline)
+#pragma omp parallel for num_threads(d_nOMPThreads) \
+  firstprivate(pseudoVLocAtom, pseudoSpline)
     for (unsigned int iCell = 0; iCell < basisOperationsPtrHost->nCells();
          ++iCell)
       {

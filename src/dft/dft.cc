@@ -159,7 +159,6 @@ namespace dftfe
     d_nOMPThreads = 1;
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
-        d_nOMPThreads = std::numeric_limits<unsigned int>::max();
         try
           {
             d_nOMPThreads = std::stoi(std::string(penv));
@@ -183,8 +182,8 @@ namespace dftfe
                       "variable, it needs to be a positive number."));
       }
     if (d_dftParamsPtr->verbosity > 0)
-    pcout<<"Threads per MPI task: "<<d_nOMPThreads<<std::endl;
-    d_elpaScala   = new dftfe::elpaScalaManager(mpi_comm_domain);
+      pcout << "Threads per MPI task: " << d_nOMPThreads << std::endl;
+    d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
 
     forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
                                                        mpi_comm_parent,
@@ -1632,7 +1631,7 @@ namespace dftfe
 
         // first true option only updates the boundary conditions
         // second true option signals update is only for vself perturbation
-        initBoundaryConditions(false, true, true);
+        initBoundaryConditions(true, true, true);
 
         MPI_Barrier(d_mpiCommParent);
         init_bc = MPI_Wtime() - init_bc;

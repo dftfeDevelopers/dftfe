@@ -408,7 +408,8 @@ namespace dftfe
 
     boost::math::normal normDist;
     bool                pp = false;
-#pragma omp parallel num_threads(d_nOMPThreads) firstprivate(waveFunctionsVectorTruncated)
+#pragma omp parallel num_threads(d_nOMPThreads) \
+  firstprivate(waveFunctionsVectorTruncated)
     {
       std::mt19937 randomIntGenerator(this_mpi_process * d_nOMPThreads +
                                       omp_get_thread_num());
