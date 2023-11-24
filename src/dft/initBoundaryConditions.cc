@@ -347,12 +347,17 @@ namespace dftfe
               dftfe::basis::update_inversejacobians |
               dftfe::basis::update_gradients | dftfe::basis::update_transpose;
             dftfe::basis::UpdateFlags updateFlagsValuesGradients =
-              dftfe::basis::update_values | dftfe::basis::update_gradients | dftfe::basis::update_transpose;
+              dftfe::basis::update_values | dftfe::basis::update_gradients |
+              dftfe::basis::update_transpose;
 
-            std::vector<unsigned int> quadratureIndices{d_nlpspQuadratureId,
-              d_densityQuadratureId, d_feOrderPlusOneQuadratureId};
-            std::vector<dftfe::basis::UpdateFlags> updateFlags{updateFlagsValuesGradients,
-              updateFlagsAll, updateFlagsGradientsAndInvJacobians};
+            std::vector<unsigned int> quadratureIndices{
+              d_nlpspQuadratureId,
+              d_densityQuadratureId,
+              d_feOrderPlusOneQuadratureId};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{
+              updateFlagsValuesGradients,
+              updateFlagsAll,
+              updateFlagsGradientsAndInvJacobians};
             basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
                                            quadratureIndices,
                                            updateFlags);

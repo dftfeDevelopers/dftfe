@@ -126,7 +126,8 @@ namespace dftfe
       initializeConstraints();
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints = basisOperationsSrc.d_quadPoints;
-      for (unsigned int iQuadIndex = 0; iQuadIndex < d_quadratureIDsVector.size();
+      for (unsigned int iQuadIndex = 0;
+           iQuadIndex < d_quadratureIDsVector.size();
            ++iQuadIndex)
         {
           unsigned int quadIndex = d_quadratureIDsVector[iQuadIndex];
@@ -197,7 +198,8 @@ namespace dftfe
             }
         }
       if (!std::is_same<ValueTypeBasisCoeff, ValueTypeBasisData>::value)
-        for (unsigned int iQuadIndex = 0; iQuadIndex < d_quadratureIDsVector.size();
+        for (unsigned int iQuadIndex = 0;
+             iQuadIndex < d_quadratureIDsVector.size();
              ++iQuadIndex)
           {
             unsigned int quadIndex = d_quadratureIDsVector[iQuadIndex];
@@ -746,7 +748,8 @@ namespace dftfe
                           memorySpace>::initializeShapeFunctionAndJacobianData()
     {
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
-      for (unsigned int iQuadIndex = 0; iQuadIndex < d_quadratureIDsVector.size();
+      for (unsigned int iQuadIndex = 0;
+           iQuadIndex < d_quadratureIDsVector.size();
            ++iQuadIndex)
         {
           unsigned int quadID = d_quadratureIDsVector[iQuadIndex];
@@ -808,7 +811,7 @@ namespace dftfe
             {
               d_quadPoints[quadID].clear();
               d_quadPoints[quadID].resize(d_nCells *
-                                             d_nQuadsPerCell[iQuadIndex] * 3);
+                                          d_nQuadsPerCell[iQuadIndex] * 3);
             }
           d_shapeFunctionDataHost.clear();
           if (d_updateFlags[iQuadIndex] & update_values)
@@ -818,9 +821,8 @@ namespace dftfe
           d_shapeFunctionDataTransposeHost.clear();
           if ((d_updateFlags[iQuadIndex] & update_values) &&
               (d_updateFlags[iQuadIndex] & update_transpose))
-            d_shapeFunctionDataTransposeHost.resize(d_nQuadsPerCell[iQuadIndex] *
-                                                      d_nDofsPerCell,
-                                                    0.0);
+            d_shapeFunctionDataTransposeHost.resize(
+              d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell, 0.0);
           d_shapeFunctionGradientDataInternalLayoutHost.clear();
           d_shapeFunctionGradientDataHost.clear();
           d_shapeFunctionGradientDataTransposeHost.clear();
@@ -828,9 +830,8 @@ namespace dftfe
             {
               d_shapeFunctionGradientDataInternalLayoutHost.resize(
                 d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell * 3, 0.0);
-              d_shapeFunctionGradientDataHost.resize(d_nQuadsPerCell[iQuadIndex] *
-                                                       d_nDofsPerCell * 3,
-                                                     0.0);
+              d_shapeFunctionGradientDataHost.resize(
+                d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell * 3, 0.0);
               if (d_updateFlags[iQuadIndex] & update_transpose)
                 d_shapeFunctionGradientDataTransposeHost.resize(
                   d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell * 3, 0.0);
@@ -845,8 +846,9 @@ namespace dftfe
             d_inverseJacobianDataHost.resize(
               areAllCellsCartesian ?
                 d_nCells * 3 :
-                (areAllCellsAffine ? d_nCells * 9 :
-                                     d_nCells * 9 * d_nQuadsPerCell[iQuadIndex]));
+                (areAllCellsAffine ?
+                   d_nCells * 9 :
+                   d_nCells * 9 * d_nQuadsPerCell[iQuadIndex]));
           const unsigned int nJacobiansPerCell =
             areAllCellsAffine ? 1 : d_nQuadsPerCell[iQuadIndex];
 
@@ -874,7 +876,8 @@ namespace dftfe
           if (d_updateFlags[iQuadIndex] & update_gradients)
             {
               for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                for (unsigned int iQuad = 0;
+                     iQuad < d_nQuadsPerCell[iQuadIndex];
                      ++iQuad)
                   for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
                     d_shapeFunctionGradientDataHost
@@ -887,7 +890,8 @@ namespace dftfe
                   d_shapeFunctionGradientDataHost;
               else
                 for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[iQuadIndex];
                        ++iQuad)
                     std::memcpy(
                       d_shapeFunctionGradientDataInternalLayoutHost.data() +
@@ -922,7 +926,8 @@ namespace dftfe
               {
                 fe_values.reinit(cellPtr);
                 if (d_updateFlags[iQuadIndex] & update_quadpoints)
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[iQuadIndex];
                        ++iQuad)
                     for (unsigned int iDim = 0; iDim < 3; ++iDim)
                       d_quadPoints[quadID]
@@ -930,7 +935,8 @@ namespace dftfe
                                    iQuad * 3 + iDim] =
                                     fe_values.quadrature_point(iQuad)[iDim];
                 if (d_updateFlags[iQuadIndex] & update_jxw)
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[iQuadIndex];
                        ++iQuad)
                     d_JxWDataHost[iCell * d_nQuadsPerCell[iQuadIndex] + iQuad] =
                       fe_values.JxW(iQuad);
@@ -996,7 +1002,8 @@ namespace dftfe
       ValueTypeBasisData,
       memorySpace>::initializeShapeFunctionAndJacobianBasisData()
     {
-      for (unsigned int iQuadIndex = 0; iQuadIndex < d_quadratureIDsVector.size();
+      for (unsigned int iQuadIndex = 0;
+           iQuadIndex < d_quadratureIDsVector.size();
            ++iQuadIndex)
         {
           unsigned int quadID = d_quadratureIDsVector[iQuadIndex];
@@ -1056,16 +1063,14 @@ namespace dftfe
           d_shapeFunctionDataTransposeHost.clear();
           if ((d_updateFlags[iQuadIndex] & update_values) &&
               (d_updateFlags[iQuadIndex] & update_transpose))
-            d_shapeFunctionDataTransposeHost.resize(d_nQuadsPerCell[iQuadIndex] *
-                                                      d_nDofsPerCell,
-                                                    0.0);
+            d_shapeFunctionDataTransposeHost.resize(
+              d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell, 0.0);
           d_shapeFunctionGradientDataHost.clear();
           d_shapeFunctionGradientDataTransposeHost.clear();
           if (d_updateFlags[iQuadIndex] & update_gradients)
             {
-              d_shapeFunctionGradientDataHost.resize(d_nQuadsPerCell[iQuadIndex] *
-                                                       d_nDofsPerCell * 3,
-                                                     0.0);
+              d_shapeFunctionGradientDataHost.resize(
+                d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell * 3, 0.0);
               if (d_updateFlags[iQuadIndex] & update_transpose)
                 d_shapeFunctionGradientDataTransposeHost.resize(
                   d_nQuadsPerCell[iQuadIndex] * d_nDofsPerCell * 3, 0.0);
@@ -1080,21 +1085,24 @@ namespace dftfe
             d_inverseJacobianDataHost.resize(
               areAllCellsCartesian ?
                 d_nCells * 3 :
-                (areAllCellsAffine ? d_nCells * 9 :
-                                     d_nCells * 9 * d_nQuadsPerCell[iQuadIndex]));
+                (areAllCellsAffine ?
+                   d_nCells * 9 :
+                   d_nCells * 9 * d_nQuadsPerCell[iQuadIndex]));
           const unsigned int nJacobiansPerCell =
             areAllCellsAffine ? 1 : d_nQuadsPerCell[iQuadIndex];
 
           if (d_updateFlags[iQuadIndex] & update_values)
             {
               for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
-                for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                for (unsigned int iQuad = 0;
+                     iQuad < d_nQuadsPerCell[iQuadIndex];
                      ++iQuad)
                   d_shapeFunctionDataHost[iQuad * d_nDofsPerCell + iNode] =
                     fe_values_reference.shape_value(iNode, iQuad);
               if (d_updateFlags[iQuadIndex] & update_transpose)
                 for (unsigned int iNode = 0; iNode < d_nDofsPerCell; ++iNode)
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[iQuadIndex];
                        ++iQuad)
                     d_shapeFunctionDataTransposeHost
                       [iNode * d_nQuadsPerCell[iQuadIndex] + iQuad] =
@@ -1135,7 +1143,8 @@ namespace dftfe
               {
                 fe_values.reinit(cellPtr);
                 if (d_updateFlags[iQuadIndex] & update_jxw)
-                  for (unsigned int iQuad = 0; iQuad < d_nQuadsPerCell[iQuadIndex];
+                  for (unsigned int iQuad = 0;
+                       iQuad < d_nQuadsPerCell[iQuadIndex];
                        ++iQuad)
                     d_JxWDataHost[iCell * d_nQuadsPerCell[iQuadIndex] + iQuad] =
                       fe_values.JxW(iQuad);
@@ -1165,8 +1174,8 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
           d_inverseJacobianBasisData[areAllCellsAffine ? 0 : quadID].resize(
             d_inverseJacobianDataHost.size());
-          d_inverseJacobianBasisData[areAllCellsAffine ? 0 : quadID]
-            .copyFrom(d_inverseJacobianDataHost);
+          d_inverseJacobianBasisData[areAllCellsAffine ? 0 : quadID].copyFrom(
+            d_inverseJacobianDataHost);
           d_JxWBasisData[quadID].resize(d_JxWDataHost.size());
           d_JxWBasisData[quadID].copyFrom(d_JxWDataHost);
           d_shapeFunctionBasisData[quadID].resize(

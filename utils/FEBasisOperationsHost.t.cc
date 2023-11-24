@@ -259,7 +259,8 @@ namespace dftfe
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         std::memcpy(
                           quadratureGradients +
-                            d_nVectors * 3 * d_nQuadsPerCell[d_quadratureIndex] *
+                            d_nVectors * 3 *
+                              d_nQuadsPerCell[d_quadratureIndex] *
                               (iCell - cellRange.first) +
                             d_nVectors * d_nQuadsPerCell[d_quadratureIndex] *
                               iDim +
@@ -332,15 +333,16 @@ namespace dftfe
                   const unsigned int one = 1;
                   std::memcpy(tempQuadratureGradientsData.data(),
                               quadratureGradients +
-                                d_nQuadsPerCell[d_quadratureIndex] * d_nVectors *
-                                  3 * iCell,
+                                d_nQuadsPerCell[d_quadratureIndex] *
+                                  d_nVectors * 3 * iCell,
                               3 * d_nQuadsPerCellTimesnVectors *
                                 sizeof(ValueTypeBasisCoeff));
                   for (unsigned int iDim = 0; iDim < 3; ++iDim)
                     {
                       d_BLASWrapperPtr->xscal(
                         tempQuadratureGradientsData.data() +
-                          d_nQuadsPerCell[d_quadratureIndex] * d_nVectors * iDim,
+                          d_nQuadsPerCell[d_quadratureIndex] * d_nVectors *
+                            iDim,
                         *(d_inverseJacobianData.find(0)->second.data() +
                           3 * iCell + iDim),
                         d_nQuadsPerCellTimesnVectors);
@@ -358,8 +360,8 @@ namespace dftfe
                     three,
                     three,
                     &scalarCoeffAlpha,
-                    quadratureGradients +
-                      d_nQuadsPerCell[d_quadratureIndex] * d_nVectors * 3 * iCell,
+                    quadratureGradients + d_nQuadsPerCell[d_quadratureIndex] *
+                                            d_nVectors * 3 * iCell,
                     d_nQuadsPerCellTimesnVectors,
                     d_inverseJacobianData.find(0)->second.data() + 9 * iCell,
                     three,
@@ -377,9 +379,11 @@ namespace dftfe
                                     d_nVectors * 3 * iQuad + d_nVectors * iDim,
                                   quadratureGradients +
                                     d_nVectors * 3 *
-                                      d_nQuadsPerCell[d_quadratureIndex] * iCell +
+                                      d_nQuadsPerCell[d_quadratureIndex] *
+                                      iCell +
                                     d_nVectors *
-                                      d_nQuadsPerCell[d_quadratureIndex] * iDim +
+                                      d_nQuadsPerCell[d_quadratureIndex] *
+                                      iDim +
                                     d_nVectors * iQuad,
                                   d_nVectors * sizeof(ValueTypeBasisCoeff));
                   const unsigned int three = 3;
@@ -398,7 +402,8 @@ namespace dftfe
                       d_nVectors,
                       d_inverseJacobianData.find(d_quadratureID)
                           ->second.data() +
-                        9 * d_nQuadsPerCell[d_quadratureIndex] * iCell + 9 * iQuad,
+                        9 * d_nQuadsPerCell[d_quadratureIndex] * iCell +
+                        9 * iQuad,
                       three,
                       &scalarCoeffBeta,
                       tempQuadratureGradientsData.data() +
