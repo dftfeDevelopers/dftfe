@@ -70,7 +70,6 @@ namespace dftfe
      *  @param domainBoundingVectors vector of domain bounding vectors (refer to
      *  description of input parameters.
      *  @param generateSerialMesh bool to toggle to generation of serial tria
-     *  @param generateElectrostaticsTria bool to toggle to generate separate tria for electrostatics
      */
     void
     generateSerialUnmovedAndParallelMovedUnmovedMesh(
@@ -79,8 +78,7 @@ namespace dftfe
       const std::vector<int> &                imageIds,
       const std::vector<double> &             nearestAtomDistances,
       const std::vector<std::vector<double>> &domainBoundingVectors,
-      const bool                              generateSerialTria,
-      const bool                              generateElectrostaticsTria);
+      const bool                              generateSerialTria);
 
 
 
@@ -111,15 +109,13 @@ namespace dftfe
      * @param parallelTriangulation corresponds to starting triangulation
      * @param eigenVectorsArrayIn solution vectors used to compute errors in each cell required for refinement
      * @param FEOrder finite-element interpolating polynomial
-     * @param generateElectrostaticsTria required for generating electrostatics triangulation
      */
     void
     generateAutomaticMeshApriori(
       const dealii::DoFHandler<3> &                    dofHandler,
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
       const std::vector<distributedCPUVec<double>> &   eigenVectorsArrayIn,
-      const unsigned int                               FEOrder,
-      const bool generateElectrostaticsTria);
+      const unsigned int                               FEOrder);
 
 
     /**
@@ -128,13 +124,6 @@ namespace dftfe
      */
     dealii::parallel::distributed::Triangulation<3> &
     getSerialMeshUnmoved();
-
-    /**
-     * @brief returns constant reference to serial unmoved triangulation
-     *
-     */
-    dealii::parallel::distributed::Triangulation<3> &
-    getSerialMeshElectrostatics();
 
     /**
      * @brief returns reference to parallel moved triangulation
@@ -149,30 +138,6 @@ namespace dftfe
      */
     dealii::parallel::distributed::Triangulation<3> &
     getParallelMeshUnmoved();
-
-
-    /**
-     * @brief returns constant reference to triangulation to compute electrostatics
-     *
-     */
-    dealii::parallel::distributed::Triangulation<3> &
-    getElectrostaticsMeshRho();
-
-
-    /**
-     * @brief returns constant reference to triangulation to compute electrostatics
-     *
-     */
-    dealii::parallel::distributed::Triangulation<3> &
-    getElectrostaticsMeshDisp();
-
-
-    /**
-     * @brief returns constant reference to triangulation to compute electrostatics
-     *
-     */
-    dealii::parallel::distributed::Triangulation<3> &
-    getElectrostaticsMeshForce();
 
     /**
      * @brief resets the vertices of meshB moved to vertices of meshA.
@@ -189,8 +154,7 @@ namespace dftfe
     void
     generateResetMeshes(
       const std::vector<std::vector<double>> &domainBoundingVectors,
-      const bool                              generateSerialTria,
-      const bool                              generateElectrostaticsTria);
+      const bool                              generateSerialTria);
 
 
     /**
@@ -241,15 +205,6 @@ namespace dftfe
     void generateMesh(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
       dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
-      dealii::parallel::distributed::Triangulation<3>
-        &serialTriangulationElectrostatics,
-      dealii::parallel::distributed::Triangulation<3>
-        &electrostaticsTriangulationRho,
-      dealii::parallel::distributed::Triangulation<3>
-        &electrostaticsTriangulationDisp,
-      dealii::parallel::distributed::Triangulation<3>
-        &        electrostaticsTriangulationForce,
-      const bool generateElectrostaticsTria,
       const bool generateSerialTria = false);
 
 
@@ -268,13 +223,6 @@ namespace dftfe
      */
     bool refinementAlgorithmA(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      dealii::parallel::distributed::Triangulation<3>
-        &electrostaticsTriangulationRho,
-      dealii::parallel::distributed::Triangulation<3>
-        &electrostaticsTriangulationDisp,
-      dealii::parallel::distributed::Triangulation<3>
-        &                                     electrostaticsTriangulationForce,
-      const bool                              generateElectrostaticsTria,
       std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
       std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal,
       const bool   smoothenCellsOnPeriodicBoundary = false,
@@ -288,13 +236,6 @@ namespace dftfe
      */
     bool consistentPeriodicBoundaryRefinement(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      dealii::parallel::distributed::Triangulation<3>
-        &electrostaticsTriangulationRho,
-      dealii::parallel::distributed::Triangulation<3>
-        &electrostaticsTriangulationDisp,
-      dealii::parallel::distributed::Triangulation<3>
-        &                                     electrostaticsTriangulationForce,
-      const bool                              generateElectrostaticsTria,
       std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
       std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal);
 
@@ -351,15 +292,7 @@ namespace dftfe
     dealii::parallel::distributed::Triangulation<3>
       d_parallelTriangulationMoved;
     dealii::parallel::distributed::Triangulation<3>
-      d_triangulationElectrostaticsRho;
-    dealii::parallel::distributed::Triangulation<3>
-      d_triangulationElectrostaticsDisp;
-    dealii::parallel::distributed::Triangulation<3>
-      d_triangulationElectrostaticsForce;
-    dealii::parallel::distributed::Triangulation<3>
       d_serialTriangulationUnmoved;
-    dealii::parallel::distributed::Triangulation<3>
-      d_serialTriangulationElectrostatics;
 
     std::vector<std::vector<bool>> d_parallelTriaCurrentRefinement;
     std::vector<std::vector<bool>> d_serialTriaCurrentRefinement;

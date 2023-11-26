@@ -129,7 +129,7 @@ namespace dftfe
                       pcout,
                       dftParams.reproducible_output || dftParams.verbosity < 4 ?
                         dealii::TimerOutput::never :
-                        dealii::TimerOutput::summary,
+                        dealii::TimerOutput::every_call_and_summary,
                       dealii::TimerOutput::wall_times)
     , computingTimerStandard(mpi_comm_domain,
                              pcout,
@@ -1079,8 +1079,7 @@ namespace dftfe
           d_nearestAtomDistances,
           d_domainBoundingVectors,
           d_dftParamsPtr->useSymm ||
-            d_dftParamsPtr->createConstraintsFromSerialDofhandler,
-          d_dftParamsPtr->electrostaticsHRefinement);
+            d_dftParamsPtr->createConstraintsFromSerialDofhandler);
       }
     computing_timer.leave_subsection("mesh generation");
 
@@ -1696,12 +1695,10 @@ namespace dftfe
               }
 
 
-            d_mesh.generateAutomaticMeshApriori(
-              dofHandler,
-              triangulationPar,
-              eigenVectorsArray,
-              FEOrder,
-              d_dftParamsPtr->electrostaticsHRefinement);
+            d_mesh.generateAutomaticMeshApriori(dofHandler,
+                                                triangulationPar,
+                                                eigenVectorsArray,
+                                                FEOrder);
           }
 
 
@@ -3887,15 +3884,6 @@ namespace dftfe
             computing_timer.leave_subsection("Cell stress computation");
           }
       }
-
-    if (d_dftParamsPtr->electrostaticsHRefinement)
-      computeElectrostaticEnergyHRefined(
-#ifdef DFTFE_WITH_DEVICE
-        kohnShamDFTEigenOperatorDevice
-#endif
-      );
-
-
     return std::make_tuple(scfConverged, norm);
   }
 

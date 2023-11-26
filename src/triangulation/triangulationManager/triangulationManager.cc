@@ -45,16 +45,12 @@ namespace dftfe
     const dftParameters &dftParams)
     : d_parallelTriangulationUnmoved(mpi_comm_domain)
     , d_parallelTriangulationMoved(mpi_comm_domain)
-    , d_triangulationElectrostaticsRho(mpi_comm_domain)
-    , d_triangulationElectrostaticsDisp(mpi_comm_domain)
-    , d_triangulationElectrostaticsForce(mpi_comm_domain)
     , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(interpoolcomm)
     , interBandGroupComm(interbandgroup_comm)
     , d_dftParams(dftParams)
     , d_serialTriangulationUnmoved(MPI_COMM_SELF)
-    , d_serialTriangulationElectrostatics(MPI_COMM_SELF)
     , d_FEOrder(FEOrder)
     , this_mpi_process(
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
@@ -83,8 +79,7 @@ namespace dftfe
     const std::vector<int> &                imageIds,
     const std::vector<double> &             nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
-    const bool                              generateSerialTria,
-    const bool                              generateElectrostaticsTria)
+    const bool                              generateSerialTria)
   {
     //
     // set the data members before generating mesh
@@ -99,32 +94,15 @@ namespace dftfe
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();
     d_parallelTriangulationMoved.clear();
-    if (generateElectrostaticsTria)
-      {
-        d_triangulationElectrostaticsRho.clear();
-        d_triangulationElectrostaticsDisp.clear();
-        d_triangulationElectrostaticsForce.clear();
-        d_serialTriangulationElectrostatics.clear();
-      }
     //
     // generate mesh data members
     //
     generateMesh(d_parallelTriangulationUnmoved,
                  d_serialTriangulationUnmoved,
-                 d_serialTriangulationElectrostatics,
-                 d_triangulationElectrostaticsRho,
-                 d_triangulationElectrostaticsDisp,
-                 d_triangulationElectrostaticsForce,
-                 generateElectrostaticsTria,
                  generateSerialTria);
 
     generateMesh(d_parallelTriangulationMoved,
                  d_serialTriangulationUnmoved,
-                 d_serialTriangulationElectrostatics,
-                 d_triangulationElectrostaticsRho,
-                 d_triangulationElectrostaticsDisp,
-                 d_triangulationElectrostaticsForce,
-                 false,
                  false);
   }
 
@@ -133,8 +111,7 @@ namespace dftfe
   void
   triangulationManager::generateResetMeshes(
     const std::vector<std::vector<double>> &domainBoundingVectors,
-    const bool                              generateSerialTria,
-    const bool                              generateElectrostaticsTria)
+    const bool                              generateSerialTria)
   {
     //
     // set the data members before generating mesh
@@ -145,13 +122,6 @@ namespace dftfe
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();
     d_parallelTriangulationMoved.clear();
-    if (generateElectrostaticsTria)
-      {
-        d_triangulationElectrostaticsRho.clear();
-        d_triangulationElectrostaticsDisp.clear();
-        d_triangulationElectrostaticsForce.clear();
-        d_serialTriangulationElectrostatics.clear();
-      }
 
     //
     // generate mesh data members using cell refine flags
@@ -166,20 +136,6 @@ namespace dftfe
               d_serialTriaCurrentRefinement[i]);
             d_serialTriangulationUnmoved.execute_coarsening_and_refinement();
           }
-
-
-        if (generateElectrostaticsTria)
-          {
-            generateCoarseMesh(d_serialTriangulationElectrostatics);
-            for (unsigned int i = 0; i < d_parallelTriaCurrentRefinement.size();
-                 ++i)
-              {
-                d_serialTriangulationElectrostatics.load_refine_flags(
-                  d_serialTriaCurrentRefinement[i]);
-                d_serialTriangulationElectrostatics
-                  .execute_coarsening_and_refinement();
-              }
-          }
       }
 
     generateCoarseMesh(d_parallelTriangulationUnmoved);
@@ -193,31 +149,6 @@ namespace dftfe
         d_parallelTriangulationMoved.load_refine_flags(
           d_parallelTriaCurrentRefinement[i]);
         d_parallelTriangulationMoved.execute_coarsening_and_refinement();
-      }
-
-    if (generateElectrostaticsTria)
-      {
-        generateCoarseMesh(d_triangulationElectrostaticsRho);
-        generateCoarseMesh(d_triangulationElectrostaticsDisp);
-        generateCoarseMesh(d_triangulationElectrostaticsForce);
-        for (unsigned int i = 0; i < d_parallelTriaCurrentRefinement.size();
-             ++i)
-          {
-            d_triangulationElectrostaticsDisp.load_refine_flags(
-              d_parallelTriaCurrentRefinement[i]);
-            d_triangulationElectrostaticsDisp
-              .execute_coarsening_and_refinement();
-
-            d_triangulationElectrostaticsRho.load_refine_flags(
-              d_parallelTriaCurrentRefinement[i]);
-            d_triangulationElectrostaticsRho
-              .execute_coarsening_and_refinement();
-
-            d_triangulationElectrostaticsForce.load_refine_flags(
-              d_parallelTriaCurrentRefinement[i]);
-            d_triangulationElectrostaticsForce
-              .execute_coarsening_and_refinement();
-          }
       }
   }
 
@@ -267,15 +198,6 @@ namespace dftfe
   }
 
   //
-  // get serial mesh for electrostatics
-  //
-  dealii::parallel::distributed::Triangulation<3> &
-  triangulationManager::getSerialMeshElectrostatics()
-  {
-    return d_serialTriangulationElectrostatics;
-  }
-
-  //
   // get moved parallel mesh
   //
   dealii::parallel::distributed::Triangulation<3> &
@@ -291,27 +213,6 @@ namespace dftfe
   triangulationManager::getParallelMeshUnmoved()
   {
     return d_parallelTriangulationUnmoved;
-  }
-
-  //
-  // get electrostatics mesh
-  //
-  dealii::parallel::distributed::Triangulation<3> &
-  triangulationManager::getElectrostaticsMeshRho()
-  {
-    return d_triangulationElectrostaticsRho;
-  }
-
-  dealii::parallel::distributed::Triangulation<3> &
-  triangulationManager::getElectrostaticsMeshDisp()
-  {
-    return d_triangulationElectrostaticsDisp;
-  }
-
-  dealii::parallel::distributed::Triangulation<3> &
-  triangulationManager::getElectrostaticsMeshForce()
-  {
-    return d_triangulationElectrostaticsForce;
   }
 
   // reset MeshB to MeshA

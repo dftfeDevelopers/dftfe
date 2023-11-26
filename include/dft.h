@@ -978,23 +978,6 @@ namespace dftfe
       const unsigned int scfIter);
 
     /**
-     * Re solves the all electrostatics on a h refined mesh, and computes
-     * the corresponding energy. This function
-     * is called after reaching the ground state electron density. Currently the
-     * h refinement is hardcoded to a one subdivison of carser mesh
-     * FIXME: The function is not yet extened to the case when point group
-     * symmetry is used. However, it works for time reversal symmetry.
-     *
-     */
-    void
-    computeElectrostaticEnergyHRefined(
-#ifdef DFTFE_WITH_DEVICE
-      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator
-#endif
-    );
-
-    /**
      *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
      */
     void

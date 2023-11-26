@@ -116,7 +116,6 @@ SET(TARGET_SRC
   ./src/dft/charge.cc
   ./src/dft/density.cc
   ./src/dft/dos.cc
-  ./src/dft/electrostaticHRefinedEnergy.cc
   ./src/dft/femUtilityFunctions.cc
   ./src/dft/fermiEnergy.cc
   ./src/dft/generateImageCharges.cc
