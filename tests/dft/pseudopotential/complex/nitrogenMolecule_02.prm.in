@@ -69,4 +69,3 @@ subsection SCF parameters
       set USE ELPA=true
   end
 end
-set H REFINED ELECTROSTATICS=false

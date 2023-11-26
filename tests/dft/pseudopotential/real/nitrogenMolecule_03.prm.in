@@ -56,4 +56,3 @@ subsection SCF parameters
       set USE MIXED PREC CGS O=true
   end
 end
-set H REFINED ELECTROSTATICS=false

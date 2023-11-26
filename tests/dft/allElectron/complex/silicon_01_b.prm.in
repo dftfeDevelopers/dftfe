@@ -93,4 +93,3 @@ subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 10000
   set TOLERANCE          = 1e-10
 end
-set H REFINED ELECTROSTATICS=false
