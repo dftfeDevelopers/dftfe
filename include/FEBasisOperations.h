@@ -123,7 +123,7 @@ namespace dftfe
       void
       init(const unsigned int &             dofHandlerID,
            const std::vector<unsigned int> &quadratureID,
-           const std::vector<UpdateFlags>   updateFlags = update_values);
+           const std::vector<UpdateFlags>   updateFlags);
       /**
        * @brief fills required data structures from another FEBasisOperations object
        * @param[in] basisOperationsSrc Source FEBasisOperations object.
