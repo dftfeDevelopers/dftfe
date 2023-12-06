@@ -61,6 +61,7 @@ namespace dftfe
             (d_matrixFreeDataPtr->get_mapping_info().get_cell_type(
                iMacroCell) == dealii::internal::MatrixFreeFunctions::cartesian);
         }
+      initializeConstraints();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -85,7 +86,6 @@ namespace dftfe
       d_updateFlags         = updateFlags;
       initializeIndexMaps();
       initializeMPIPattern();
-      initializeConstraints();
       initializeShapeFunctionAndJacobianData();
       if (!std::is_same<ValueTypeBasisCoeff, ValueTypeBasisData>::value)
         initializeShapeFunctionAndJacobianBasisData();
@@ -123,7 +123,6 @@ namespace dftfe
       d_cellIdToCellIndexMap = basisOperationsSrc.d_cellIdToCellIndexMap;
       d_nQuadsPerCell        = basisOperationsSrc.d_nQuadsPerCell;
       initializeMPIPattern();
-      initializeConstraints();
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints = basisOperationsSrc.d_quadPoints;
       for (unsigned int iQuadIndex = 0;
@@ -718,6 +717,22 @@ namespace dftfe
 
             ++iCell;
           }
+    }
+
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::
+      reinitializeConstraints(
+        std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+          &constraintsVector)
+    {
+      d_constraintsVector = &constraintsVector;
+      initializeConstraints();
     }
 
 

@@ -183,6 +183,14 @@ namespace dftfe
       initializeConstraints();
 
       /**
+       * @brief Reinitializes the constraintMatrixInfo object.
+       */
+      void
+      reinitializeConstraints(
+        std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+          &constraintsVector);
+
+      /**
        * @brief Constructs the MPIPatternP2P object.
        */
       void

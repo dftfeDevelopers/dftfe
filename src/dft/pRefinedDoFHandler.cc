@@ -409,6 +409,9 @@ namespace dftfe
                                                 updateFlags);
           }
       }
+    else
+      basisOperationsPtrElectroHost->reinitializeConstraints(
+        d_constraintsVectorElectro);
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice && recomputeBasisData)
       {
