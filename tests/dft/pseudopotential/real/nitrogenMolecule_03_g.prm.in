@@ -70,4 +70,3 @@ subsection SCF parameters
       set SPECTRUM SPLIT STARTING SCF ITER=0
   end
 end
-set H REFINED ELECTROSTATICS=false

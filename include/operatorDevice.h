@@ -85,25 +85,31 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientIntegralElectro() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionValues() = 0;
+    virtual const dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionValues() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false) = 0;
+    virtual const dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionValuesTransposed(
+        const bool use2pPlusOneGLQuad = false) = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionValuesNLPTransposed() = 0;
+    virtual const dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionValuesNLPTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientValuesNLPTransposed() = 0;
+    virtual const dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionGradientValuesNLPTransposed() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getInverseJacobiansNLP() = 0;
+    virtual const dftfe::utils::MemoryStorage<double,
+                                              dftfe::utils::MemorySpace::DEVICE>
+      &
+      getInverseJacobiansNLP() = 0;
 
     virtual dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                         dftfe::utils::MemorySpace::DEVICE> &
@@ -406,34 +412,10 @@ namespace dftfe
       d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunctionValueDevice;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunctionValueTransposedDevice;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunctionValueNLPTransposedDevice;
-
-    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-    //   d_shapeFunctionGradientValueXTransposedDevice;
-
-    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-    //   d_shapeFunctionGradientValueYTransposedDevice;
-
-    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-    //   d_shapeFunctionGradientValueZTransposedDevice;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunctionGradientValueNLPTransposedDevice;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_inverseJacobiansNLPDevice;
-
-    /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
-    /// gradients
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_glShapeFunctionValueTransposedDevice;
-
 
     dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                 dftfe::utils::MemorySpace::DEVICE>

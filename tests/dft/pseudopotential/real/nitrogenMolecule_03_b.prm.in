@@ -64,4 +64,3 @@ subsection SCF parameters
       set SUBSPACE ROT DOFS BLOCK SIZE=500
   end
 end
-set H REFINED ELECTROSTATICS=false

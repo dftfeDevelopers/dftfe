@@ -43,14 +43,6 @@ namespace dftfe
         dealii::Patterns::Bool(),
         "[Developer] Limit output to what is reproducible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.");
 
-
-      prm.declare_entry(
-        "H REFINED ELECTROSTATICS",
-        "false",
-        dealii::Patterns::Bool(),
-        "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
-
-
       prm.declare_entry(
         "KEEP SCRATCH FOLDER",
         "false",
@@ -1197,17 +1189,16 @@ namespace dftfe
     toleranceKinetic       = 1e-03;
     cellConstraintType     = 12; // all cell components to be relaxed
 
-    verbosity                 = 0;
-    keepScratchFolder         = false;
-    restartFolder             = ".";
-    saveRhoData               = false;
-    loadRhoData               = false;
-    restartSpinFromNoSpin     = false;
-    reproducible_output       = false;
-    electrostaticsHRefinement = false;
-    meshAdaption              = false;
-    pinnedNodeForPBC          = true;
-    HXOptimFlag               = false;
+    verbosity             = 0;
+    keepScratchFolder     = false;
+    restartFolder         = ".";
+    saveRhoData           = false;
+    loadRhoData           = false;
+    restartSpinFromNoSpin = false;
+    reproducible_output   = false;
+    meshAdaption          = false;
+    pinnedNodeForPBC      = true;
+    HXOptimFlag           = false;
 
     startingWFCType                                = "";
     restrictToOnePass                              = false;
@@ -1326,12 +1317,11 @@ namespace dftfe
     internalDftParameters::declare_parameters(prm);
     // prm.parse_input(parameter_file);
     prm.parse_input(parameter_file, "", true);
-    solverMode                = mode;
-    verbosity                 = _verbosity;
-    reproducible_output       = prm.get_bool("REPRODUCIBLE OUTPUT");
-    keepScratchFolder         = prm.get_bool("KEEP SCRATCH FOLDER");
-    electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
-    restartFolder             = restartFilesPath;
+    solverMode          = mode;
+    verbosity           = _verbosity;
+    reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
+    keepScratchFolder   = prm.get_bool("KEEP SCRATCH FOLDER");
+    restartFolder       = restartFilesPath;
     writeStructreEnergyForcesFileForPostProcess =
       prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
 

@@ -1,7 +1,6 @@
 set SOLVER MODE = GS
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
-set H REFINED ELECTROSTATICS = false
 
 subsection GPU
   set USE GPU = true

@@ -1,6 +1,5 @@
 set VERBOSITY=0
 set REPRODUCIBLE OUTPUT=true
-set H REFINED ELECTROSTATICS=true
 subsection GPU
   set USE GPU = true
   set AUTO GPU BLOCK SIZES=false

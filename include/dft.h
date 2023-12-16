@@ -581,7 +581,8 @@ namespace dftfe
     void initUnmovedTriangulation(
       dealii::parallel::distributed::Triangulation<3> &triangulation);
     void
-    initBoundaryConditions(const bool meshOnlyDeformed                 = false,
+    initBoundaryConditions(const bool recomputeBasisData               = true,
+                           const bool meshOnlyDeformed                 = false,
                            const bool vselfPerturbationUpdateForStress = false);
     void
     initElectronicFields();
@@ -596,7 +597,8 @@ namespace dftfe
     void createpRefinedDofHandler(
       dealii::parallel::distributed::Triangulation<3> &triangulation);
     void
-    initpRefinedObjects(const bool meshOnlyDeformed,
+    initpRefinedObjects(const bool recomputeBasisData,
+                        const bool meshOnlyDeformed,
                         const bool vselfPerturbationUpdateForStress = false);
 
     /**
@@ -976,23 +978,6 @@ namespace dftfe
       const unsigned int scfIter);
 
     /**
-     * Re solves the all electrostatics on a h refined mesh, and computes
-     * the corresponding energy. This function
-     * is called after reaching the ground state electron density. Currently the
-     * h refinement is hardcoded to a one subdivison of carser mesh
-     * FIXME: The function is not yet extened to the case when point group
-     * symmetry is used. However, it works for time reversal symmetry.
-     *
-     */
-    void
-    computeElectrostaticEnergyHRefined(
-#ifdef DFTFE_WITH_DEVICE
-      kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator
-#endif
-    );
-
-    /**
      *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
      */
     void
@@ -1277,6 +1262,7 @@ namespace dftfe
     unsigned int                  d_smearedChargeQuadratureIdElectro;
     unsigned int                  d_nlpspQuadratureId;
     unsigned int                  d_lpspQuadratureId;
+    unsigned int                  d_feOrderPlusOneQuadratureId;
     unsigned int                  d_lpspQuadratureIdElectro;
     unsigned int                  d_gllQuadratureId;
     unsigned int                  d_phiTotDofHandlerIndexElectro;
@@ -1285,18 +1271,27 @@ namespace dftfe
     unsigned int                  d_binsStartDofHandlerIndexElectro;
     unsigned int                  d_densityQuadratureId;
     unsigned int                  d_densityQuadratureIdElectro;
+    unsigned int                  d_nOMPThreads;
     dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
       basisOperationsPtrHost;
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      basisOperationsPtrElectroHost;
 #if defined(DFTFE_WITH_DEVICE)
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
       basisOperationsPtrDevice;
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+      basisOperationsPtrElectroDevice;
 #endif
 
     std::shared_ptr<

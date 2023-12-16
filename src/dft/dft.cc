@@ -129,7 +129,7 @@ namespace dftfe
                       pcout,
                       dftParams.reproducible_output || dftParams.verbosity < 4 ?
                         dealii::TimerOutput::never :
-                        dealii::TimerOutput::summary,
+                        dealii::TimerOutput::every_call_and_summary,
                       dealii::TimerOutput::wall_times)
     , computingTimerStandard(mpi_comm_domain,
                              pcout,
@@ -156,6 +156,33 @@ namespace dftfe
 #endif
     , d_phiTotalSolverProblem(mpi_comm_domain)
   {
+    d_nOMPThreads = 1;
+    if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
+      {
+        try
+          {
+            d_nOMPThreads = std::stoi(std::string(penv));
+          }
+        catch (...)
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                std::string(
+                  "When specifying the <DFTFE_NUM_THREADS> environment "
+                  "variable, it needs to be something that can be interpreted "
+                  "as an integer. The text you have in the environment "
+                  "variable is <") +
+                penv + ">"));
+          }
+
+        AssertThrow(d_nOMPThreads > 0,
+                    dealii::ExcMessage(
+                      "When specifying the <DFTFE_NUM_THREADS> environment "
+                      "variable, it needs to be a positive number."));
+      }
+    if (d_dftParamsPtr->verbosity > 0)
+      pcout << "Threads per MPI task: " << d_nOMPThreads << std::endl;
     d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
 
     forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
@@ -812,8 +839,6 @@ namespace dftfe
       {
         dealii::TimerOutput::Scope scope(computing_timer, "psp init");
         pcout << std::endl << "Pseudopotential initalization...." << std::endl;
-        const dealii::Quadrature<3> &quadrature =
-          matrix_free_data.get_quadrature(d_densityQuadratureId);
 
         double init_core;
         MPI_Barrier(d_mpiCommParent);
@@ -1054,8 +1079,7 @@ namespace dftfe
           d_nearestAtomDistances,
           d_domainBoundingVectors,
           d_dftParamsPtr->useSymm ||
-            d_dftParamsPtr->createConstraintsFromSerialDofhandler,
-          d_dftParamsPtr->electrostaticsHRefinement);
+            d_dftParamsPtr->createConstraintsFromSerialDofhandler);
       }
     computing_timer.leave_subsection("mesh generation");
 
@@ -1272,7 +1296,7 @@ namespace dftfe
     // false option reinitializes vself bins from scratch wheras true option
     // only updates the boundary conditions
     const bool updateOnlyBinsBc = !updateImagesAndKPointsAndVselfBins;
-    initBoundaryConditions(updateOnlyBinsBc);
+    initBoundaryConditions(isMeshDeformed, updateOnlyBinsBc);
 
     MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime() - init_bc;
@@ -1606,7 +1630,7 @@ namespace dftfe
 
         // first true option only updates the boundary conditions
         // second true option signals update is only for vself perturbation
-        initBoundaryConditions(true, true);
+        initBoundaryConditions(true, true, true);
 
         MPI_Barrier(d_mpiCommParent);
         init_bc = MPI_Wtime() - init_bc;
@@ -1671,12 +1695,10 @@ namespace dftfe
               }
 
 
-            d_mesh.generateAutomaticMeshApriori(
-              dofHandler,
-              triangulationPar,
-              eigenVectorsArray,
-              FEOrder,
-              d_dftParamsPtr->electrostaticsHRefinement);
+            d_mesh.generateAutomaticMeshApriori(dofHandler,
+                                                triangulationPar,
+                                                eigenVectorsArray,
+                                                FEOrder);
           }
 
 
@@ -1792,7 +1814,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::trivialSolveForStress()
   {
-    initBoundaryConditions(false);
+    initBoundaryConditions();
     noRemeshRhoDataInit();
     solve(false, true);
   }
@@ -3862,15 +3884,6 @@ namespace dftfe
             computing_timer.leave_subsection("Cell stress computation");
           }
       }
-
-    if (d_dftParamsPtr->electrostaticsHRefinement)
-      computeElectrostaticEnergyHRefined(
-#ifdef DFTFE_WITH_DEVICE
-        kohnShamDFTEigenOperatorDevice
-#endif
-      );
-
-
     return std::make_tuple(scfConverged, norm);
   }
 

@@ -56,4 +56,3 @@ subsection SCF parameters
       set CHEBYSHEV FILTER TOLERANCE=5e-4
   end
 end
-set H REFINED ELECTROSTATICS=false

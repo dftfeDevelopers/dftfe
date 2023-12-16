@@ -37,7 +37,13 @@ namespace dftfe
 
       update_gradients = 0x0002,
 
-      update_transpose = 0x0004
+      update_transpose = 0x0004,
+
+      update_quadpoints = 0x0008,
+
+      update_inversejacobians = 0x0010,
+
+      update_jxw = 0x0020,
     };
 
     inline UpdateFlags
@@ -100,6 +106,7 @@ namespace dftfe
         std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           BLASWrapperPtr);
 
+
       /**
        * @brief Default Destructor
        */
@@ -116,7 +123,16 @@ namespace dftfe
       void
       init(const unsigned int &             dofHandlerID,
            const std::vector<unsigned int> &quadratureID,
-           const UpdateFlags                updateFlags = update_values);
+           const std::vector<UpdateFlags>   updateFlags);
+      /**
+       * @brief fills required data structures from another FEBasisOperations object
+       * @param[in] basisOperationsSrc Source FEBasisOperations object.
+       */
+      template <dftfe::utils::MemorySpace memorySpaceSrc>
+      void
+      init(const FEBasisOperationsBase<ValueTypeBasisCoeff,
+                                       ValueTypeBasisData,
+                                       memorySpaceSrc> &basisOperationsSrc);
 
       /**
        * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
@@ -165,6 +181,14 @@ namespace dftfe
        */
       void
       initializeConstraints();
+
+      /**
+       * @brief Reinitializes the constraintMatrixInfo object.
+       */
+      void
+      reinitializeConstraints(
+        std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+          &constraintsVector);
 
       /**
        * @brief Constructs the MPIPatternP2P object.
@@ -256,6 +280,13 @@ namespace dftfe
       JxW() const;
 
       /**
+       * @brief quad point coordinates for each cell.
+       */
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                        dftfe::utils::MemorySpace::HOST> &
+      quadPoints() const;
+
+      /**
        * @brief Shape function values at quadrature points in ValueTypeBasisData.
        * @param[in] transpose if false the the data is indexed as [iQuad *
        * d_nDofsPerCell + iNode] and if true it is indexed as [iNode *
@@ -337,6 +368,13 @@ namespace dftfe
       cellID(const unsigned int iElem) const;
 
       /**
+       * @brief returns the cell index corresponding to given deal.ii cellID.
+       * @param[in] iElem cell Index
+       */
+      unsigned int
+      cellIndex(const dealii::CellId cellid) const;
+
+      /**
        * @brief Creates a multivector.
        * @param[in] blocksize Number of vectors in the multivector.
        * @param[out] multiVector the created multivector.
@@ -378,48 +416,68 @@ namespace dftfe
        * @param[inout] multiVector the given multivector.
        */
       void
-      distribute(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &multiVector) const;
+      distribute(dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                   memorySpace> &multiVector,
+                 unsigned int constraintIndex =
+                   std::numeric_limits<unsigned int>::max()) const;
 
 
 
-      constraintInfoClass d_constraintInfo;
+      std::vector<constraintInfoClass> d_constraintInfo;
+      unsigned int                     d_nOMPThreads;
       std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
         *                                              d_constraintsVector;
       const dealii::MatrixFree<3, ValueTypeBasisData> *d_matrixFreeDataPtr;
       dftfe::utils::MemoryStorage<dftfe::global_size_type,
                                   dftfe::utils::MemorySpace::HOST>
         d_cellDofIndexToProcessDofIndexMap;
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                           dftfe::utils::MemorySpace::HOST>>
+        d_quadPoints;
       dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-                                  d_flattenedCellDofIndexToProcessDofIndexMap;
-      std::vector<dealii::CellId> d_cellIndexToCellIdMap;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+                                             d_flattenedCellDofIndexToProcessDofIndexMap;
+      std::vector<dealii::CellId>            d_cellIndexToCellIdMap;
+      std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_inverseJacobianData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_JxWData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientDataInternalLayout;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionDataTranspose;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
         d_shapeFunctionGradientDataTranspose;
 
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_inverseJacobianBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_JxWBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionGradientBasisData;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionBasisDataTranspose;
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
+      std::map<unsigned int,
+               dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionGradientBasisDataTranspose;
 
 
@@ -431,6 +489,7 @@ namespace dftfe
 
       std::vector<unsigned int> d_quadratureIDsVector;
       unsigned int              d_quadratureID;
+      unsigned int              d_quadratureIndex;
       std::vector<unsigned int> d_nQuadsPerCell;
       unsigned int              d_dofHandlerID;
       unsigned int              d_nVectors;
@@ -441,7 +500,7 @@ namespace dftfe
       unsigned int              d_locallyOwnedSize;
       bool                      areAllCellsAffine;
       bool                      areAllCellsCartesian;
-      UpdateFlags               d_updateFlags;
+      std::vector<UpdateFlags>  d_updateFlags;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         mpiPatternP2P;
@@ -501,6 +560,10 @@ namespace dftfe
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::HOST>::d_quadratureID;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::HOST>::d_quadratureIndex;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
@@ -778,6 +841,10 @@ namespace dftfe
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         dftfe::utils::MemorySpace::DEVICE>::d_quadratureID;
+      using FEBasisOperationsBase<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        dftfe::utils::MemorySpace::DEVICE>::d_quadratureIndex;
       using FEBasisOperationsBase<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,

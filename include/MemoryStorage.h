@@ -296,10 +296,10 @@ namespace dftfe
        */
       template <dftfe::utils::MemorySpace memorySpaceSrc>
       void
-      copyFrom(MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
-               const std::size_t                         N,
-               const std::size_t                         srcOffset,
-               const std::size_t                         dstOffset);
+      copyFrom(const MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
+               const std::size_t                               N,
+               const std::size_t                               srcOffset,
+               const std::size_t                               dstOffset);
 
       /**
        * @brief Copies the data to a memory pointed by a raw pointer

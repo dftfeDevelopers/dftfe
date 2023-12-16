@@ -447,8 +447,7 @@ namespace dftfe
                 << atomsloop_time << std::endl;
 
 
-        const bool useHybridMeshUpdateScheme =
-          true; // d_dftParamsPtr->electrostaticsHRefinement?false:true;
+        const bool useHybridMeshUpdateScheme = true;
 
         if (!useHybridMeshUpdateScheme) // always remesh
           {
@@ -483,14 +482,12 @@ namespace dftfe
             resetmesh_time = MPI_Wtime();
 
             if (d_dftParamsPtr->useSymm ||
-                d_dftParamsPtr->createConstraintsFromSerialDofhandler ||
-                d_dftParamsPtr->electrostaticsHRefinement)
+                d_dftParamsPtr->createConstraintsFromSerialDofhandler)
               {
                 d_mesh.generateResetMeshes(
                   d_domainBoundingVectors,
                   d_dftParamsPtr->useSymm ||
-                    d_dftParamsPtr->createConstraintsFromSerialDofhandler,
-                  d_dftParamsPtr->electrostaticsHRefinement);
+                    d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
                 // initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 

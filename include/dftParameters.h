@@ -92,7 +92,6 @@ namespace dftfe
     bool        saveRhoData;
     bool        loadRhoData;
     bool        restartSpinFromNoSpin;
-    bool        electrostaticsHRefinement;
 
     bool reproducible_output;
 

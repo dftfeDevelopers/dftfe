@@ -78,29 +78,25 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
     getShapeFunctionGradientIntegralElectro();
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionValues();
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionValues();
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false);
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad = false);
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionValuesNLPTransposed();
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionValuesNLPTransposed();
 
-    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    // getShapeFunctionGradientValuesXTransposed();
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &
+      getShapeFunctionGradientValuesNLPTransposed();
 
-    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    // getShapeFunctionGradientValuesYTransposed();
-
-    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    // getShapeFunctionGradientValuesZTransposed();
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientValuesNLPTransposed();
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getInverseJacobiansNLP();
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &
+      getInverseJacobiansNLP();
 
     dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                 dftfe::utils::MemorySpace::DEVICE> &
@@ -696,20 +692,6 @@ namespace dftfe
     /**
      * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(\nabla N_i \cdot \nabla N_j))
      */
-    std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
-
-    /// storage for shapefunctions
-    std::vector<double> d_shapeFunctionValue;
-    std::vector<double> d_shapeFunctionValueTransposed;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunctionValueLpspDevice;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_shapeFunctionValueTransposedLpspDevice;
-
-    std::vector<double> d_cellJxWValues;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_cellJxWValuesDevice;
 
     // storage for  matrix-free cell data
     const unsigned int        d_numberNodesPerElement;
