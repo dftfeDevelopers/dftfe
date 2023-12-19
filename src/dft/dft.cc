@@ -4472,7 +4472,7 @@ namespace dftfe
       {
         FILE *pFile;
         pFile = fopen("bands.out", "w");
-        fprintf(pFile, "%d %d\n", totkPoints, numberEigenValues);
+        fprintf(pFile, "%d %d %.14g\n", totkPoints, numberEigenValues, FE);
         for (unsigned int kPoint = 0;
              kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
              ++kPoint)
@@ -4487,7 +4487,7 @@ namespace dftfe
                   C_kb,
                   d_dftParamsPtr->TVal);
 
-                    double occupanceyDown = dftUtils::getPartialOccupancy(
+                    double occupancyDown = dftUtils::getPartialOccupancy(
                   eigenValuesFlattenedGlobal[(2*kPoint+1) * d_numEigenValues + iWave],
                   FE,
                   C_kb,
@@ -4563,7 +4563,7 @@ namespace dftfe
                                      (occupancy)) /
                           1000000000.0;                          
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenTrunc<<" "<<occupancyTrunc<<
+                              << std::setprecision(8) << eigenTrunc<<" "<<occupancyTrunc
                               << std::endl;
                       }
                   }
