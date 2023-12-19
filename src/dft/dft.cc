@@ -4482,17 +4482,20 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized)
                   {
                     double occupancyUp = dftUtils::getPartialOccupancy(
-                  eigenValuesFlattenedGlobal[2*kPoint * d_numEigenValues + iWave],
-                  FE,
-                  C_kb,
-                  d_dftParamsPtr->TVal);
+                      eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
+                                                 iWave],
+                      FE,
+                      C_kb,
+                      d_dftParamsPtr->TVal);
 
                     double occupancyDown = dftUtils::getPartialOccupancy(
-                  eigenValuesFlattenedGlobal[(2*kPoint+1) * d_numEigenValues + iWave],
-                  FE,
-                  C_kb,
-                  d_dftParamsPtr->TVal);
-                    
+                      eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                   d_numEigenValues +
+                                                 iWave],
+                      FE,
+                      C_kb,
+                      d_dftParamsPtr->TVal);
+
                     fprintf(
                       pFile,
                       "%d  %d   %.14g   %.14g   %.14g   %.14g\n",
@@ -4521,35 +4524,32 @@ namespace dftfe
                                [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
                           1000000000.0;
                         double occupancyUpTrunc =
-                          std::floor(
-                            1000000000 *
-                            (occupancyUp)) /
-                          1000000000.0;
+                          std::floor(1000000000 * (occupancyUp)) / 1000000000.0;
                         double occupancyDownTrunc =
-                          std::floor(
-                            1000000000 *
-                            (occupancyDown)) /
+                          std::floor(1000000000 * (occupancyDown)) /
                           1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
                               << std::setprecision(8) << eigenUpTrunc << "  "
-                              << eigenDownTrunc <<"  "<<occupancyUpTrunc<<"  "<<occupancyDownTrunc<< std::endl;
+                              << eigenDownTrunc << "  " << occupancyUpTrunc
+                              << "  " << occupancyDownTrunc << std::endl;
                       }
                   }
                 else
                   {
-  
-                     double occupancy = dftUtils::getPartialOccupancy(
-                  eigenValuesFlattenedGlobal[kPoint * d_numEigenValues + iWave],
-                  FE,
-                  C_kb,
-                  d_dftParamsPtr->TVal);
+                    double occupancy = dftUtils::getPartialOccupancy(
+                      eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
+                                                 iWave],
+                      FE,
+                      C_kb,
+                      d_dftParamsPtr->TVal);
                     fprintf(
                       pFile,
                       "%d  %d %.14g %.14g\n",
                       kPoint,
                       iWave,
                       eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                 iWave],occupancy);
+                                                 iWave],
+                      occupancy);
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
                       {
@@ -4559,12 +4559,10 @@ namespace dftfe
                                         [kPoint * d_numEigenValues + iWave])) /
                           1000000000.0;
                         double occupancyTrunc =
-                          std::floor(1000000000 *
-                                     (occupancy)) /
-                          1000000000.0;                          
+                          std::floor(1000000000 * (occupancy)) / 1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenTrunc<<" "<<occupancyTrunc
-                              << std::endl;
+                              << std::setprecision(8) << eigenTrunc << " "
+                              << occupancyTrunc << std::endl;
                       }
                   }
               }
