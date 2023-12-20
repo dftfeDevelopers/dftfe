@@ -4831,11 +4831,9 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                rhoValuesVector[iElem * numQuadPoints + iQuad] =
-                  (*rhoValues)[cell->id()][iQuad];
-              }
+            std::memcpy(rhoValuesVector.data() + iElem * numQuadPoints,
+                        (*rhoValues)[cell->id()].data(),
+                        numQuadPoints * sizeof(double));
             iElem++;
           }
       }
@@ -4871,11 +4869,9 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                (*rhoValues)[cell->id()][iQuad] =
-                  rhoValuesVector[iElem * numQuadPoints + iQuad];
-              }
+            std::memcpy((*rhoValues)[cell->id()].data(),
+                        rhoValuesVector.data() + iElem * numQuadPoints,
+                        numQuadPoints * sizeof(double));
             iElem++;
           }
       }
@@ -4915,11 +4911,9 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                gradRhoValuesVector[iElem * numQuadPoints + iQuad] =
-                  (*gradRhoValues)[cell->id()][iQuad];
-              }
+            std::memcpy(gradRhoValuesVector.data() + iElem * numQuadPoints,
+                        (*gradRhoValues)[cell->id()].data(),
+                        numQuadPoints * sizeof(double));
             iElem++;
           }
       }
@@ -4956,11 +4950,9 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                (*gradRhoValues)[cell->id()][iQuad] =
-                  gradRhoValuesVector[iElem * numQuadPoints + iQuad];
-              }
+            std::memcpy((*gradRhoValues)[cell->id()].data(),
+                        gradRhoValuesVector.data() + iElem * numQuadPoints,
+                        numQuadPoints * sizeof(double));
             iElem++;
           }
       }
@@ -4992,11 +4984,11 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
+            auto rho     = (*rhoValues)[cell->id()];
+            auto rhoSpin = (*rhoSpinValues)[cell->id()];
             for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
               {
-                (*rhoValues)[cell->id()][iQuad] =
-                  (*rhoSpinValues)[cell->id()][2 * iQuad + 0] +
-                  (*rhoSpinValues)[cell->id()][2 * iQuad + 1];
+                rho[iQuad] = rhoSpin[2 * iQuad + 0] + rhoSpin[2 * iQuad + 1];
               }
             iElem++;
           }
@@ -5030,17 +5022,16 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
+            auto gradRho     = (*gradRhoValues)[cell->id()];
+            auto gradRhoSpin = (*gradRhoSpinValues)[cell->id()];
             for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
               {
-                ((*gradRhoValues)[cell->id()][3 * iQuad + 0]) =
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 0]) +
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 3]);
-                ((*gradRhoValues)[cell->id()][3 * iQuad + 1]) =
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 1]) +
-                  ((*gradRhoInValuesSpinPolarized)[cell->id()][6 * iQuad + 4]);
-                ((*gradRhoValues)[cell->id()][3 * iQuad + 2]) =
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 2]) +
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 5]);
+                gradRho[3 * iQuad + 0] =
+                  (gradRhoSpin[6 * iQuad + 0]) + (gradRhoSpin[6 * iQuad + 3]);
+                gradRho[3 * iQuad + 1] =
+                  (gradRhoSpin[6 * iQuad + 1]) + (gradRhoSpin[6 * iQuad + 4]);
+                gradRho[3 * iQuad + 2] =
+                  (gradRhoSpin[6 * iQuad + 2]) + (gradRhoSpin[6 * iQuad + 5]);
               }
             iElem++;
           }
