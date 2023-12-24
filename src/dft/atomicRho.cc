@@ -497,44 +497,43 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::addAtomicRhoQuadValuesGradients(
-    std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-    std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
-    const bool                                     isConsiderGradData)
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadratureValueData,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &        quadratureGradValueData,
+    const bool isConsiderGradData)
   {
-    const dealii::Quadrature<3> &quadrature_formula =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-    const unsigned int n_q_points = quadrature_formula.size();
+    basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    const unsigned int nQuadsPerCell = basisOperationsPtrHost->nQuadsPerCell();
+    const unsigned int nCells        = basisOperationsPtrHost->nCells();
 
-    dealii::DoFHandler<3>::active_cell_iterator cell =
-                                                  dofHandler.begin_active(),
-                                                endc = dofHandler.end();
-    for (; cell != endc; ++cell)
-      if (cell->is_locally_owned())
-        {
-          std::vector<double> &rhoValues =
-            quadratureValueData.find(cell->id())->second;
-          const std::vector<double> &rhoAtomicValues =
-            d_rhoAtomsValues.find(cell->id())->second;
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-            rhoValues[q_point] += rhoAtomicValues[q_point];
+    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+      {
+        const std::vector<double> &rhoAtomicValues =
+          d_rhoAtomsValues.find(basisOperationsPtrHost->cellID(iCell))->second;
+        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+          quadratureValueData[iCell * nQuadsPerCell + iQuad] +=
+            rhoAtomicValues[iQuad];
 
-          if (isConsiderGradData)
-            {
-              std::vector<double> &gradRhoValues =
-                quadratureGradValueData.find(cell->id())->second;
-              const std::vector<double> &gradRhoAtomicValues =
-                d_gradRhoAtomsValues.find(cell->id())->second;
-              for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-                {
-                  gradRhoValues[3 * q_point + 0] +=
-                    gradRhoAtomicValues[3 * q_point + 0];
-                  gradRhoValues[3 * q_point + 1] +=
-                    gradRhoAtomicValues[3 * q_point + 1];
-                  gradRhoValues[3 * q_point + 2] +=
-                    gradRhoAtomicValues[3 * q_point + 2];
-                }
-            }
-        }
+        if (isConsiderGradData)
+          {
+            const std::vector<double> &gradRhoAtomicValues =
+              d_gradRhoAtomsValues.find(basisOperationsPtrHost->cellID(iCell))
+                ->second;
+            for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+              {
+                quadratureGradValueData[iCell * nQuadsPerCell * 3 + 3 * iQuad +
+                                        0] +=
+                  gradRhoAtomicValues[3 * iQuad + 0];
+                quadratureGradValueData[iCell * nQuadsPerCell * 3 + 3 * iQuad +
+                                        1] +=
+                  gradRhoAtomicValues[3 * iQuad + 1];
+                quadratureGradValueData[iCell * nQuadsPerCell * 3 + 3 * iQuad +
+                                        2] +=
+                  gradRhoAtomicValues[3 * iQuad + 2];
+              }
+          }
+      }
   }
 
   //
@@ -588,27 +587,36 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::l2ProjectionQuadDensityMinusAtomicDensity(
-    const dealii::MatrixFree<3, double> &                matrixFreeDataObject,
-    const dealii::AffineConstraints<double> &            constraintMatrix,
-    const unsigned int                                   dofHandlerId,
-    const unsigned int                                   quadratureId,
-    const std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-    distributedCPUVec<double> &                          nodalField)
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                                      basisOperationsPtr,
+    const dealii::AffineConstraints<double> &constraintMatrix,
+    const unsigned int                       dofHandlerId,
+    const unsigned int                       quadratureId,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                        quadratureValueData,
+    distributedCPUVec<double> &nodalField)
   {
+    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     std::function<
       double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
              const unsigned int                                          q)>
       funcRho =
         [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
             const unsigned int                                          q) {
-          return (quadratureValueData.find(cell->id())->second[q] -
-                  d_rhoAtomsValues.find(cell->id())->second[q]);
+          return (
+            quadratureValueData[basisOperationsPtr->cellIndex(cell->id()) *
+                                  nQuadsPerCell +
+                                q] -
+            d_rhoAtomsValues.find(cell->id())->second[q]);
         };
     dealii::VectorTools::project<3, distributedCPUVec<double>>(
       dealii::MappingQ1<3, 3>(),
-      matrixFreeDataObject.get_dof_handler(dofHandlerId),
+      basisOperationsPtr->matrixFreeData().get_dof_handler(dofHandlerId),
       constraintMatrix,
-      matrixFreeDataObject.get_quadrature(quadratureId),
+      basisOperationsPtr->matrixFreeData().get_quadrature(quadratureId),
       funcRho,
       nodalField);
   }

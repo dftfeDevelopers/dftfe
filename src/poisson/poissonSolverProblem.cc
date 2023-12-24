@@ -65,7 +65,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::reinit(
-    const dealii::MatrixFree<3, double> &    matrixFreeData,
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                                      basisOperationsPtr,
     distributedCPUVec<double> &              x,
     const dealii::AffineConstraints<double> &constraintMatrix,
     const unsigned int                       matrixFreeVectorComponent,
@@ -74,8 +77,9 @@ namespace dftfe
     const std::map<dealii::types::global_dof_index, double> &atoms,
     const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
     const unsigned int smearedChargeQuadratureId,
-    const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-    const bool                                           isComputeDiagonalA,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                rhoValues,
+    const bool         isComputeDiagonalA,
     const bool         isComputeMeanValueConstraint,
     const bool         smearedNuclearCharges,
     const bool         isRhoValues,
@@ -90,7 +94,8 @@ namespace dftfe
     MPI_Barrier(mpi_communicator);
     double time = MPI_Wtime();
 
-    d_matrixFreeDataPtr         = &matrixFreeData;
+    d_basisOperationsPtr        = basisOperationsPtr;
+    d_matrixFreeDataPtr         = &(basisOperationsPtr->matrixFreeData());
     d_xPtr                      = &x;
     d_constraintMatrixPtr       = &constraintMatrix;
     d_matrixFreeVectorComponent = matrixFreeVectorComponent;
@@ -123,9 +128,10 @@ namespace dftfe
 
     if (!d_isFastConstraintsInitialized || reinitializeFastConstraints)
       {
-        d_constraintsInfo.initialize(matrixFreeData.get_vector_partitioner(
-                                       matrixFreeVectorComponent),
-                                     constraintMatrix);
+        d_constraintsInfo.initialize(
+          d_matrixFreeDataPtr->get_vector_partitioner(
+            matrixFreeVectorComponent),
+          constraintMatrix);
 
         d_isFastConstraintsInitialized = true;
       }
@@ -239,9 +245,11 @@ namespace dftfe
               {
                 subCellPtr = d_matrixFreeDataPtr->get_cell_iterator(
                   macrocell, iSubCell, d_matrixFreeVectorComponent);
-                dealii::CellId             subCellId = subCellPtr->id();
-                const std::vector<double> &tempVec =
-                  d_rhoValuesPtr->find(subCellId)->second;
+                dealii::CellId subCellId = subCellPtr->id();
+                unsigned int   cellIndex =
+                  d_basisOperationsPtr->cellIndex(subCellId);
+                const double *tempVec = d_rhoValuesPtr->data() +
+                                        cellIndex * fe_eval_density.n_q_points;
 
                 for (unsigned int q = 0; q < fe_eval_density.n_q_points; ++q)
                   rhoQuads[q][iSubCell] = tempVec[q];

@@ -345,12 +345,15 @@ namespace dftfe
     double normValue = 0.0;
 
     distributedCPUVec<double> residualRho;
-    residualRho.reinit(d_rhoInNodalValues);
+    residualRho.reinit(d_densityInNodalValues[0]);
     residualRho = 0.0;
 
 
     // compute residual = rhoOut - rhoIn
-    residualRho.add(1.0, d_rhoOutNodalValues, -1.0, d_rhoInNodalValues);
+    residualRho.add(1.0,
+                    d_densityOutNodalValues[0],
+                    -1.0,
+                    d_densityInNodalValues[0]);
 
     residualRho.update_ghost_values();
 
@@ -685,23 +688,20 @@ namespace dftfe
                                              d_densityDofHandlerIndexElectro,
                                              d_densityQuadratureIdElectro);
 
-    d_rhoInNodalValues.add(const2, kernelAction);
+    d_densityInNodalValues[0].add(const2, kernelAction);
 
-    d_rhoInNodalValues.update_ghost_values();
+    d_densityInNodalValues[0].update_ghost_values();
 
     // interpolate nodal data to quadrature data
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+    interpolateDensityNodalDataToQuadratureDataGeneral(
+      basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      d_rhoInNodalValues,
-      *rhoInValues,
-      *gradRhoInValues,
-      *gradRhoInValues,
+      d_densityInNodalValues[0],
+      d_densityInQuadValues[0],
+      d_gradDensityInQuadValues[0],
+      d_gradDensityInQuadValues[0],
       d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
-
-    // push the rhoIn to deque storing the history of nodal values
-    d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

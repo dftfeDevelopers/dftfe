@@ -604,6 +604,33 @@ namespace dftfe
     /**
      *@brief interpolate rho nodal data to quadrature data using FEEvaluation
      *
+     *@param[in] basisOperationsPtr basisoperationsPtr object
+     *@param[in] nodalField nodal data to be interpolated
+     *@param[out] quadratureValueData to be computed at quadrature points
+     *@param[out] quadratureGradValueData to be computed at quadrature points
+     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
+     */
+    void
+    interpolateDensityNodalDataToQuadratureDataGeneral(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                              basisOperationsPtr,
+      const unsigned int               dofHandlerId,
+      const unsigned int               quadratureId,
+      const distributedCPUVec<double> &nodalField,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureGradValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &        quadratureHessianValueData,
+      const bool isEvaluateGradData    = false,
+      const bool isEvaluateHessianData = false);
+
+    /**
+     *@brief interpolate density nodal data to quadrature data using FEEvaluation
+     *
      *@param[in] matrixFreeData matrix free data object
      *@param[in] nodalField nodal data to be interpolated
      *@param[out] quadratureValueData to be computed at quadrature points
@@ -682,8 +709,10 @@ namespace dftfe
      */
     void
     addAtomicRhoQuadValuesGradients(
-      std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &        quadratureGradValueData,
       const bool isConsiderGradData = false);
 
     /**
@@ -741,12 +770,6 @@ namespace dftfe
       std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
     void
     clearRhoData();
-
-    /**
-     *@brief computes nodal electron-density from cell quadrature data using project function of dealii
-     */
-    void
-    computeNodalRhoFromQuadData();
 
 
     /**
@@ -842,6 +865,12 @@ namespace dftfe
       const dealii::DoFHandler<3> &                        dofHandlerOfField,
       const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues);
 
+    double
+    totalCharge(
+      const dealii::DoFHandler<3> &dofHandlerOfField,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoQuadValues);
+
 
     double
     totalCharge(const dealii::MatrixFree<3, double> &matrixFreeDataObject,
@@ -888,20 +917,41 @@ namespace dftfe
      *@brief l2 projection
      */
     void
+    l2ProjectionQuadToNodal(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                                      basisOperationsPtr,
+      const dealii::AffineConstraints<double> &constraintMatrix,
+      const unsigned int                       dofHandlerId,
+      const unsigned int                       quadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                        quadratureValueData,
+      distributedCPUVec<double> &nodalField);
+
+    /**
+     *@brief l2 projection
+     */
+    void
     l2ProjectionQuadDensityMinusAtomicDensity(
-      const dealii::MatrixFree<3, double> &                matrixFreeDataObject,
-      const dealii::AffineConstraints<double> &            constraintMatrix,
-      const unsigned int                                   dofHandlerId,
-      const unsigned int                                   quadratureId,
-      const std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-      distributedCPUVec<double> &                          nodalField);
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                                      basisOperationsPtr,
+      const dealii::AffineConstraints<double> &constraintMatrix,
+      const unsigned int                       dofHandlerId,
+      const unsigned int                       quadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                        quadratureValueData,
+      distributedCPUVec<double> &nodalField);
 
     /**
      *@brief Computes net magnetization from the difference of local spin densities
      */
     double
     totalMagnetization(
-      const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues);
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &magQuadValues);
 
     /**
      *@brief normalize the input electron density
@@ -944,9 +994,6 @@ namespace dftfe
      */
     double
     mixing_simple();
-
-    double
-    mixing_simple_spinPolarized();
 
     double
     nodalDensity_mixing_simple_kerker(
@@ -1461,31 +1508,23 @@ namespace dftfe
     dealii::Timer d_globalTimer;
 
     // dft related objects
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> rhoInValues,
-      rhoOutValues, rhoInValuesSpinPolarized, rhoOutValuesSpinPolarized;
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+                                           d_densityInQuadValues, d_densityOutQuadValues;
+    std::vector<distributedCPUVec<double>> d_densityInNodalValues,
+      d_densityOutNodalValues;
 
     std::map<dealii::CellId, std::vector<double>> d_phiInValues, d_phiOutValues;
 
     MixingScheme d_mixingScheme;
 
-    distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues,
-      d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector,
-      d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
-    std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
+    distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoOutNodalValuesSplit,
+      d_preCondResidualVector, d_rhoNodalFieldRefined,
+      d_rhoOutNodalValuesDistributed;
 
-    distributedCPUVec<double> d_rhoInSpin0NodalValues;
-    distributedCPUVec<double> d_rhoInSpin1NodalValues;
 
-    distributedCPUVec<double> d_rhoInSpin0NodalValuesRead;
-    distributedCPUVec<double> d_rhoInSpin1NodalValuesRead;
+    distributedCPUVec<double> d_magInNodalValuesRead;
 
-    distributedCPUVec<double> d_rhoOutSpin0NodalValues,
-      d_rhoOutSpin1NodalValues;
-
-    std::deque<distributedCPUVec<double>> d_rhoInSpin0NodalVals,
-      d_rhoOutSpin0NodalVals;
-    std::deque<distributedCPUVec<double>> d_rhoInSpin1NodalVals,
-      d_rhoOutSpin1NodalVals;
 
     std::map<dealii::CellId, std::vector<double>> d_rhoOutValuesLpspQuad,
       d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad,
@@ -1515,7 +1554,9 @@ namespace dftfe
       gradRhoInValues, gradRhoInValuesSpinPolarized;
     std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
       gradRhoOutValues, gradRhoOutValuesSpinPolarized;
-
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      d_gradDensityInQuadValues, d_gradDensityOutQuadValues;
 
     // storage for total electrostatic potential solution vector corresponding
     // to input scf electron density
@@ -1527,15 +1568,6 @@ namespace dftfe
 
     // storage for sum of nuclear electrostatic potential
     distributedCPUVec<double> d_phiExt;
-
-    // storage for projection of rho cell quadrature data to nodal field
-    distributedCPUVec<double> d_rhoNodalField;
-
-    // storage for projection of rho cell quadrature data to nodal field
-    distributedCPUVec<double> d_rhoNodalFieldSpin0;
-
-    // storage for projection of rho cell quadrature data to nodal field
-    distributedCPUVec<double> d_rhoNodalFieldSpin1;
 
     // storage of densities for xl-bomd
     std::deque<distributedCPUVec<double>> d_groundStateDensityHistory;

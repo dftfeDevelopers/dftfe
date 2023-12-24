@@ -45,23 +45,14 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoNodalData()
   {
+    basisOperationsPtrElectroHost->reinit(0,
+                                          0,
+                                          d_densityQuadratureIdElectro,
+                                          false);
+    unsigned int nQuadsPerCell = basisOperationsPtrElectroHost->nQuadsPerCell();
     std::vector<const distributedCPUVec<double> *> solutionVectors;
 
-    dealii::IndexSet locally_relevant_dofs_;
-    dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal,
-                                                    locally_relevant_dofs_);
 
-    const dealii::IndexSet &locally_owned_dofs_ =
-      d_dofHandlerRhoNodal.locally_owned_dofs();
-    dealii::IndexSet ghost_indices_ = locally_relevant_dofs_;
-    ghost_indices_.subtract_set(locally_owned_dofs_);
-
-    distributedCPUVec<double> tempVec =
-      distributedCPUVec<double>(locally_owned_dofs_,
-                                ghost_indices_,
-                                mpi_communicator);
-
-    distributedCPUVec<double> tempVecSpin0, tempVecSpin1;
 
     //
     // compute nodal electron-density from quad data through l2 projection
@@ -76,7 +67,10 @@ namespace dftfe
       funcRho =
         [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
             const unsigned int                                          q) {
-          return (*rhoOutValues).find(cell->id())->second[q];
+          return d_densityOutQuadValues[0][basisOperationsPtrElectroHost
+                                               ->cellIndex(cell->id()) *
+                                             nQuadsPerCell +
+                                           q];
         };
     dealii::VectorTools::project<3, distributedCPUVec<double>>(
       dealii::MappingQ1<3, 3>(),
@@ -87,79 +81,38 @@ namespace dftfe
       rhoNodalField);
     rhoNodalField.update_ghost_values();
 
-    distributedCPUVec<double> rhoNodalFieldSpin0;
-    distributedCPUVec<double> rhoNodalFieldSpin1;
+    distributedCPUVec<double> magNodalField;
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        rhoNodalFieldSpin0.reinit(rhoNodalField);
-        rhoNodalFieldSpin0 = 0;
+        magNodalField.reinit(rhoNodalField);
+        magNodalField = 0;
         std::function<double(
           const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
           const unsigned int                                          q)>
-          funcRhoSpin0 = [&](const typename dealii::DoFHandler<
-                               3>::active_cell_iterator &cell,
-                             const unsigned int          q) {
-            return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2 * q];
-          };
-        dealii::VectorTools::project<3, distributedCPUVec<double>>(
-          dealii::MappingQ1<3, 3>(),
-          d_dofHandlerRhoNodal,
-          d_constraintsRhoNodal,
-          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
-          funcRhoSpin0,
-          rhoNodalFieldSpin0);
-        rhoNodalFieldSpin0.update_ghost_values();
-
-
-        rhoNodalFieldSpin1.reinit(rhoNodalField);
-        rhoNodalFieldSpin1 = 0;
-        std::function<double(
-          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-          const unsigned int                                          q)>
-          funcRhoSpin1 =
+          funcMag =
             [&](
               const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
               const unsigned int                                          q) {
-              return (*rhoOutValuesSpinPolarized)
-                .find(cell->id())
-                ->second[2 * q + 1];
+              return d_densityOutQuadValues[1][basisOperationsPtrElectroHost
+                                                   ->cellIndex(cell->id()) *
+                                                 nQuadsPerCell +
+                                               q];
             };
         dealii::VectorTools::project<3, distributedCPUVec<double>>(
           dealii::MappingQ1<3, 3>(),
           d_dofHandlerRhoNodal,
           d_constraintsRhoNodal,
           d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
-          funcRhoSpin1,
-          rhoNodalFieldSpin1);
-        rhoNodalFieldSpin1.update_ghost_values();
+          funcMag,
+          magNodalField);
+        magNodalField.update_ghost_values();
       }
 
-    tempVec = 0.0;
-    for (unsigned int i = 0; i < rhoNodalField.local_size(); i++)
-      tempVec.local_element(i) = rhoNodalField.local_element(i);
-
-    tempVec.update_ghost_values();
-    solutionVectors.push_back(&tempVec);
+    solutionVectors.push_back(&rhoNodalField);
 
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        tempVecSpin0.reinit(tempVec);
-        tempVecSpin1.reinit(tempVec);
-
-        tempVecSpin0 = 0.0;
-        tempVecSpin1 = 0.0;
-
-        for (unsigned int i = 0; i < rhoNodalFieldSpin0.local_size(); i++)
-          {
-            tempVecSpin0.local_element(i) = rhoNodalFieldSpin0.local_element(i);
-            tempVecSpin1.local_element(i) = rhoNodalFieldSpin1.local_element(i);
-          }
-
-        tempVecSpin0.update_ghost_values();
-        tempVecSpin1.update_ghost_values();
-
-        solutionVectors.push_back(&tempVecSpin0);
-        solutionVectors.push_back(&tempVecSpin1);
+        solutionVectors.push_back(&magNodalField);
       }
 
     pcout << "Checkpointing tria info and rho data in progress..." << std::endl;
@@ -190,8 +143,7 @@ namespace dftfe
     if (d_dftParamsPtr->spinPolarized == 1 &&
         !d_dftParamsPtr->restartSpinFromNoSpin)
       {
-        solutionVectors.push_back(&d_rhoInSpin0NodalValuesRead);
-        solutionVectors.push_back(&d_rhoInSpin1NodalValuesRead);
+        solutionVectors.push_back(&d_magInNodalValuesRead);
       }
 
     d_mesh.loadTriangulationsSolutionVectors(
@@ -205,19 +157,14 @@ namespace dftfe
     if (d_dftParamsPtr->spinPolarized == 1 &&
         d_dftParamsPtr->restartSpinFromNoSpin)
       {
-        d_rhoInSpin0NodalValuesRead.reinit(d_rhoInNodalValuesRead);
-        d_rhoInSpin1NodalValuesRead.reinit(d_rhoInNodalValuesRead);
+        d_magInNodalValuesRead.reinit(d_rhoInNodalValuesRead);
 
-        d_rhoInSpin0NodalValuesRead = 0;
-        d_rhoInSpin1NodalValuesRead = 0;
+        d_magInNodalValuesRead = 0;
 
         for (unsigned int i = 0; i < d_rhoInNodalValuesRead.local_size(); i++)
           {
-            d_rhoInSpin0NodalValuesRead.local_element(i) =
-              (0.5 - d_dftParamsPtr->start_magnetization) *
-              d_rhoInNodalValuesRead.local_element(i);
-            d_rhoInSpin1NodalValuesRead.local_element(i) =
-              (0.5 + d_dftParamsPtr->start_magnetization) *
+            d_magInNodalValuesRead.local_element(i) =
+              -2.0 * (d_dftParamsPtr->start_magnetization) *
               d_rhoInNodalValuesRead.local_element(i);
           }
       }

@@ -26,6 +26,7 @@
 #    include <deviceKernelsGeneric.h>
 #    include <dftUtils.h>
 #    include <headers.h>
+#    include "FEBasisOperations.h"
 
 namespace dftfe
 {
@@ -62,7 +63,10 @@ namespace dftfe
      */
     void
     reinit(
-      const dealii::MatrixFree<3, double> &    matrixFreeData,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                                      basisOperationsPtr,
       distributedCPUVec<double> &              x,
       const dealii::AffineConstraints<double> &constraintMatrix,
       const unsigned int                       matrixFreeVectorComponent,
@@ -71,17 +75,18 @@ namespace dftfe
       const std::map<dealii::types::global_dof_index, double> &atoms,
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const unsigned int smearedChargeQuadratureId,
-      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-      dftfe::utils::deviceBlasHandle_t &                   deviceBlasHandle,
-      const bool         isComputeDiagonalA               = true,
-      const bool         isComputeMeanValueConstraints    = false,
-      const bool         smearedNuclearCharges            = false,
-      const bool         isRhoValues                      = true,
-      const bool         isGradSmearedChargeRhs           = false,
-      const unsigned int smearedChargeGradientComponentId = 0,
-      const bool         storeSmearedChargeRhs            = false,
-      const bool         reuseSmearedChargeRhs            = false,
-      const bool         reinitializeFastConstraints      = false);
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                               rhoValues,
+      dftfe::utils::deviceBlasHandle_t &deviceBlasHandle,
+      const bool                        isComputeDiagonalA            = true,
+      const bool                        isComputeMeanValueConstraints = false,
+      const bool                        smearedNuclearCharges         = false,
+      const bool                        isRhoValues                   = true,
+      const bool                        isGradSmearedChargeRhs        = false,
+      const unsigned int                smearedChargeGradientComponentId = 0,
+      const bool                        storeSmearedChargeRhs       = false,
+      const bool                        reuseSmearedChargeRhs       = false,
+      const bool                        reinitializeFastConstraints = false);
 
     /**
      * @brief Compute A matrix multipled by x.
@@ -261,7 +266,8 @@ namespace dftfe
     unsigned int d_matrixFreeQuadratureComponentAX;
 
     /// pointer to electron density cell quadrature data
-    const std::map<dealii::CellId, std::vector<double>> *d_rhoValuesPtr;
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *d_rhoValuesPtr;
 
     /// pointer to smeared charge cell quadrature data
     const std::map<dealii::CellId, std::vector<double>>
@@ -311,7 +317,10 @@ namespace dftfe
 
     /// duplicate constraints object with flattened maps for faster access
     dftUtils::constraintMatrixInfo d_constraintsInfo;
-
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      d_basisOperationsPtr;
     ///
     bool d_isFastConstraintsInitialized;
 

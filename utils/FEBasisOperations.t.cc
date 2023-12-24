@@ -587,6 +587,18 @@ namespace dftfe
     }
 
 
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const dealii::MatrixFree<3, ValueTypeBasisData> &
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::matrixFreeData() const
+    {
+      return *d_matrixFreeDataPtr;
+    }
+
+
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,

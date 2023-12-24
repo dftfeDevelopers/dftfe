@@ -45,23 +45,23 @@ namespace dftfe
     d_matrixFreeDataPRefined.initialize_dof_vector(
       d_phiExt, d_phiExtDofHandlerIndexElectro);
 
-    d_matrixFreeDataPRefined.initialize_dof_vector(
-      d_rhoInNodalValues, d_densityDofHandlerIndexElectro);
-    d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
-    d_rhoOutNodalValuesSplit.reinit(d_rhoInNodalValues);
-    d_rhoOutSpin0NodalValues.reinit(d_rhoInNodalValues);
-    d_rhoOutSpin1NodalValues.reinit(d_rhoInNodalValues);
-    d_rhoInSpin0NodalValues.reinit(d_rhoInNodalValues);
-    d_rhoInSpin1NodalValues.reinit(d_rhoInNodalValues);
-    // d_atomicRho.reinit(d_rhoInNodalValues);
+    d_densityInNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    d_densityOutNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
 
-    d_rhoInNodalValues       = 0;
-    d_rhoOutNodalValues      = 0;
-    d_rhoOutNodalValuesSplit = 0;
-    d_rhoOutSpin0NodalValues = 0;
-    d_rhoOutSpin1NodalValues = 0;
-    d_rhoInSpin0NodalValues  = 0;
-    d_rhoInSpin1NodalValues  = 0;
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      d_densityInNodalValues[0], d_densityDofHandlerIndexElectro);
+    for (unsigned int iComp = 1; iComp < d_densityInNodalValues.size(); ++iComp)
+      d_densityInNodalValues[iComp].reinit(d_densityInNodalValues[0]);
+    for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
+         ++iComp)
+      d_densityOutNodalValues[iComp].reinit(d_densityInNodalValues[0]);
+
+    for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
+      d_densityInNodalValues[iComp] = 0;
+    for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
+         ++iComp)
+      d_densityOutNodalValues[iComp] = 0;
+
 
     if ((d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
          d_dftParamsPtr->solverMode == "GEOOPT") ||
@@ -171,7 +171,7 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
       pcout << std::endl
             << "net magnetization: "
-            << totalMagnetization(rhoInValuesSpinPolarized.get()) << std::endl;
+            << totalMagnetization(d_densityInQuadValues[1]) << std::endl;
   }
 #include "dft.inst.cc"
 } // namespace dftfe

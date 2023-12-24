@@ -34,13 +34,12 @@ namespace dftfe
   {
     d_mixingScheme.clearHistory();
 
-
-    d_rhoInNodalVals.clear();
-    d_rhoOutNodalVals.clear();
-    d_rhoInSpin0NodalVals.clear();
-    d_rhoOutSpin0NodalVals.clear();
-    d_rhoInSpin1NodalVals.clear();
-    d_rhoOutSpin1NodalVals.clear();
+    d_densityInQuadValues.clear();
+    d_densityOutQuadValues.clear();
+    d_gradDensityInQuadValues.clear();
+    d_gradDensityOutQuadValues.clear();
+    d_densityInNodalValues.clear();
+    d_densityOutNodalValues.clear();
 
     // related to low rank jacobian inverse scf preconditioning
     d_vcontainerVals.clear();
@@ -131,25 +130,21 @@ namespace dftfe
       }
 
     // Initialize electron density table storage for rhoIn
-    rhoInValues =
-      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+    basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    const unsigned int n_q_points = basisOperationsPtrHost->nQuadsPerCell();
+    const unsigned int nCells     = basisOperationsPtrHost->nCells();
+    d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
+      d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        rhoInValuesSpinPolarized =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-      }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        gradRhoInValues =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-        //
-        if (d_dftParamsPtr->spinPolarized == 1)
-          {
-            gradRhoInValuesSpinPolarized =
-              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-          }
+        d_gradDensityInQuadValues.resize(
+          d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+             ++iComp)
+          d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
       }
 
     // Initialize electron density table storage for rhoOut only for Anderson
@@ -158,27 +153,15 @@ namespace dftfe
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
-        rhoOutValues =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+        d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
+
 
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-            gradRhoOutValues =
-              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-          }
-
-        if (d_dftParamsPtr->spinPolarized == 1)
-          {
-            rhoOutValuesSpinPolarized =
-              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-
-            if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA)
-              {
-                gradRhoOutValuesSpinPolarized = std::make_shared<
-                  std::map<dealii::CellId, std::vector<double>>>();
-              }
+            d_gradDensityOutQuadValues.resize(
+              d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
           }
       }
 
@@ -212,7 +195,6 @@ namespace dftfe
         tempDisp[1] = maxRhoTail;
         tempDisp[2] = maxRhoTail;
 
-        // d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
         std::vector<double> atomsImagesPositions;
         std::vector<double> atomsImagesChargeIds;
         for (unsigned int iAtom = 0;
@@ -265,8 +247,9 @@ namespace dftfe
         if (numberDofs > 0)
           dftUtils::createKpointParallelizationIndices(
             interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
-
-        d_rhoInNodalValues = 0;
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          d_densityInNodalValues[iComp] = 0;
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
         for (unsigned int dof = 0; dof < numberDofs; ++dof)
           {
@@ -311,7 +294,7 @@ namespace dftfe
                             distanceToAtom);
                       }
 
-                    d_rhoInNodalValues.local_element(dof) =
+                    d_densityInNodalValues[0].local_element(dof) =
                       std::abs(rhoNodalValue);
                   }
               }
@@ -319,45 +302,43 @@ namespace dftfe
 
         if (numberDofs > 0 && numberKptGroups > 1)
           MPI_Allreduce(MPI_IN_PLACE,
-                        d_rhoInNodalValues.begin(),
+                        d_densityInNodalValues[0].begin(),
                         numberDofs,
                         MPI_DOUBLE,
                         MPI_SUM,
                         interpoolcomm);
         MPI_Barrier(interpoolcomm);
 
-        d_rhoInNodalValues.update_ghost_values();
+        d_densityInNodalValues[0].update_ghost_values();
 
         // normalize rho
         const double charge =
-          totalCharge(d_matrixFreeDataPRefined, d_rhoInNodalValues);
+          totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[0]);
 
 
         const double scalingFactor = ((double)numElectrons) / charge;
 
         // scale nodal vector with scalingFactor
-        d_rhoInNodalValues *= scalingFactor;
-
-        // push the rhoIn to deque storing the history of nodal values
-        d_rhoInNodalVals.push_back(d_rhoInNodalValues);
+        d_densityInNodalValues[0] *= scalingFactor;
 
         if (d_dftParamsPtr->verbosity >= 3)
           {
             pcout << "Total Charge before Normalizing nodal Rho:  " << charge
                   << std::endl;
             pcout << "Total Charge after Normalizing nodal Rho: "
-                  << totalCharge(d_matrixFreeDataPRefined, d_rhoInNodalValues)
+                  << totalCharge(d_matrixFreeDataPRefined,
+                                 d_densityInNodalValues[0])
                   << std::endl;
           }
 
-        interpolateRhoNodalDataToQuadratureDataGeneral(
-          d_matrixFreeDataPRefined,
+        interpolateDensityNodalDataToQuadratureDataGeneral(
+          basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
-          d_rhoInNodalValues,
-          *rhoInValues,
-          *gradRhoInValues,
-          *gradRhoInValues,
+          d_densityInNodalValues[0],
+          d_densityInQuadValues[0],
+          d_gradDensityInQuadValues[0],
+          d_gradDensityInQuadValues[0],
           d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA);
 
@@ -372,31 +353,22 @@ namespace dftfe
                   supportPointsRhoNodal[dofID];
                 if (!d_constraintsRhoNodal.is_constrained(dofID))
                   {
-                    d_rhoInSpin0NodalValues.local_element(dof) =
-                      (0.5 - d_dftParamsPtr->start_magnetization) *
-                      d_rhoInNodalValues.local_element(dof);
-                    d_rhoInSpin1NodalValues.local_element(dof) =
-                      (0.5 + d_dftParamsPtr->start_magnetization) *
-                      d_rhoInNodalValues.local_element(dof);
+                    d_densityInNodalValues[1].local_element(dof) =
+                      -2.0 * d_dftParamsPtr->start_magnetization *
+                      d_densityInNodalValues[0].local_element(dof);
                   }
               }
 
-            d_rhoInSpin0NodalValues.update_ghost_values();
-            d_rhoInSpin1NodalValues.update_ghost_values();
+            d_densityInNodalValues[1].update_ghost_values();
 
-            // push the rhoIn to deque storing the history of nodal values
-            d_rhoInSpin0NodalVals.push_back(d_rhoInSpin0NodalValues);
-            d_rhoInSpin1NodalVals.push_back(d_rhoInSpin1NodalValues);
-
-            interpolateRhoSpinNodalDataToQuadratureDataGeneral(
-              d_matrixFreeDataPRefined,
+            interpolateDensityNodalDataToQuadratureDataGeneral(
+              basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_rhoInSpin0NodalValues,
-              d_rhoInSpin1NodalValues,
-              *rhoInValuesSpinPolarized,
-              *gradRhoInValuesSpinPolarized,
-              *gradRhoInValuesSpinPolarized,
+              d_densityInNodalValues[1],
+              d_densityInQuadValues[1],
+              d_gradDensityInQuadValues[1],
+              d_gradDensityInQuadValues[1],
               d_excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA);
           }
@@ -406,24 +378,18 @@ namespace dftfe
     else
       {
         // loop over elements
-        basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
-        const unsigned int n_q_points = basisOperationsPtrHost->nQuadsPerCell();
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-        for (auto iCell = 0; iCell < basisOperationsPtrHost->nCells(); ++iCell)
+        for (auto iCell = 0; iCell < nCells; ++iCell)
           {
-            auto cellid = basisOperationsPtrHost->cellID(iCell);
-#pragma omp critical(rhoinvals)
-            (*rhoInValues)[cellid] = std::vector<double>(n_q_points);
-            double *rhoInValuesPtr = &((*rhoInValues)[cellid][0]);
+            auto    cellid = basisOperationsPtrHost->cellID(iCell);
+            double *rhoInValuesPtr =
+              &(d_densityInQuadValues[0][iCell * n_q_points]);
 
-            double *rhoInValuesSpinPolarizedPtr;
+            double *magInValuesPtr;
             if (d_dftParamsPtr->spinPolarized == 1)
               {
-#pragma omp critical(rhoinvalsSP)
-                (*rhoInValuesSpinPolarized)[cellid] =
-                  std::vector<double>(2 * n_q_points);
-                rhoInValuesSpinPolarizedPtr =
-                  &((*rhoInValuesSpinPolarized)[cellid][0]);
+                magInValuesPtr =
+                  &(d_densityInQuadValues[1][iCell * n_q_points]);
               }
             const double *quadPointPtr =
               basisOperationsPtrHost->quadPoints().data() +
@@ -481,12 +447,9 @@ namespace dftfe
                 rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    rhoInValuesSpinPolarizedPtr[2 * q + 1] =
-                      (0.5 + d_dftParamsPtr->start_magnetization) *
-                      (std::abs(rhoValueAtQuadPt));
-                    rhoInValuesSpinPolarizedPtr[2 * q] =
-                      (0.5 - d_dftParamsPtr->start_magnetization) *
-                      (std::abs(rhoValueAtQuadPt));
+                    magInValuesPtr[q] = -2.0 *
+                                        (d_dftParamsPtr->start_magnetization) *
+                                        (std::abs(rhoValueAtQuadPt));
                   }
               }
           }
@@ -501,20 +464,15 @@ namespace dftfe
                  iCell < basisOperationsPtrHost->nCells();
                  ++iCell)
               {
-                auto cellid = basisOperationsPtrHost->cellID(iCell);
-#pragma omp critical(gradrhoinvals)
-                (*gradRhoInValues)[cellid] =
-                  std::vector<double>(3 * n_q_points, 0.0);
-                double *gradRhoInValuesPtr = &((*gradRhoInValues)[cellid][0]);
+                auto    cellid = basisOperationsPtrHost->cellID(iCell);
+                double *gradRhoInValuesPtr =
+                  &(d_gradDensityInQuadValues[0][3 * iCell * n_q_points]);
 
-                double *gradRhoInValuesSpinPolarizedPtr;
+                double *gradMagInValuesPtr;
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-#pragma omp critical(gradrhoinvalsSP)
-                    (*gradRhoInValuesSpinPolarized)[cellid] =
-                      std::vector<double>(6 * n_q_points, 0.0);
-                    gradRhoInValuesSpinPolarizedPtr =
-                      &((*gradRhoInValuesSpinPolarized)[cellid][0]);
+                    gradMagInValuesPtr =
+                      &(d_gradDensityInQuadValues[1][3 * iCell * n_q_points]);
                   }
                 const double *quadPointPtr =
                   basisOperationsPtrHost->quadPoints().data() +
@@ -622,9 +580,13 @@ namespace dftfe
                        > 1.0E-7) signRho =
                        (*rhoInValues)[cellid][q]>0.0?1:-1;
                      */
-                    if (std::abs((*rhoInValues)[cellid][q]) > 1.0E-8)
-                      signRho = (*rhoInValues)[cellid][q] /
-                                std::abs((*rhoInValues)[cellid][q]);
+                    if (std::abs(
+                          d_densityInQuadValues[0][iCell * n_q_points + q]) >
+                        1.0E-8)
+                      signRho =
+                        d_densityInQuadValues[0][iCell * n_q_points + q] /
+                        std::abs(
+                          d_densityInQuadValues[0][iCell * n_q_points + q]);
 
                     // KG: the fact that we are forcing gradRho to zero
                     // whenever rho is zero is valid. Because rho is always
@@ -639,23 +601,14 @@ namespace dftfe
                       signRho * gradRhoZValueAtQuadPt;
                     if (d_dftParamsPtr->spinPolarized == 1)
                       {
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 0] =
-                          (0.5 - d_dftParamsPtr->start_magnetization) *
+                        gradMagInValuesPtr[3 * q + 0] =
+                          -2.0 * (d_dftParamsPtr->start_magnetization) *
                           signRho * gradRhoXValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 1] =
-                          (0.5 - d_dftParamsPtr->start_magnetization) *
+                        gradMagInValuesPtr[3 * q + 1] =
+                          -2.0 * (d_dftParamsPtr->start_magnetization) *
                           signRho * gradRhoYValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 2] =
-                          (0.5 - d_dftParamsPtr->start_magnetization) *
-                          signRho * gradRhoZValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 3] =
-                          (0.5 + d_dftParamsPtr->start_magnetization) *
-                          signRho * gradRhoXValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 4] =
-                          (0.5 + d_dftParamsPtr->start_magnetization) *
-                          signRho * gradRhoYValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 5] =
-                          (0.5 + d_dftParamsPtr->start_magnetization) *
+                        gradMagInValuesPtr[3 * q + 2] =
+                          -2.0 * (d_dftParamsPtr->start_magnetization) *
                           signRho * gradRhoZValueAtQuadPt;
                       }
                   }
@@ -687,26 +640,25 @@ namespace dftfe
     dealii::FEValues<3> fe_values(
       FEEigen, quadrature, dealii::update_values | dealii::update_gradients);
     const unsigned int num_quad_points = quadrature.size();
+    const unsigned int numCells        = matrix_free_data.n_physical_cells();
 
     // Initialize electron density table storage
-    rhoInValues =
-      std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
-
+    d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    d_densityInQuadValues[0].resize(numCells * num_quad_points);
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        rhoInValuesSpinPolarized =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+        d_densityInQuadValues[1].resize(numCells * num_quad_points);
       }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        gradRhoInValues =
-          std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+        d_gradDensityInQuadValues.resize(
+          d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        d_gradDensityInQuadValues[0].resize(3 * numCells * num_quad_points);
         //
         if (d_dftParamsPtr->spinPolarized == 1)
           {
-            gradRhoInValuesSpinPolarized =
-              std::make_shared<std::map<dealii::CellId, std::vector<double>>>();
+            d_gradDensityInQuadValues[1].resize(3 * numCells * num_quad_points);
           }
       }
 
@@ -721,20 +673,18 @@ namespace dftfe
 
     // loop over locally owned elements
     typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandlerEigen.begin_active(),
-      endc = dofHandlerEigen.end();
+      cell             = dofHandlerEigen.begin_active(),
+      endc             = dofHandlerEigen.end();
+    unsigned int iCell = 0;
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
           fe_values.reinit(cell);
 
-          (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
           std::fill(rhoTemp.begin(), rhoTemp.end(), 0.0);
           std::fill(rhoIn.begin(), rhoIn.end(), 0.0);
           if (d_dftParamsPtr->spinPolarized == 1)
             {
-              (*rhoInValuesSpinPolarized)[cell->id()] =
-                std::vector<double>(2 * num_quad_points);
               std::fill(rhoTempSpinPolarized.begin(),
                         rhoTempSpinPolarized.end(),
                         0.0);
@@ -758,13 +708,9 @@ namespace dftfe
           if (d_excManagerPtr->getDensityBasedFamilyType() ==
               densityFamilyType::GGA) // GGA
             {
-              (*gradRhoInValues)[cell->id()] =
-                std::vector<double>(3 * num_quad_points);
               std::fill(gradRhoTemp.begin(), gradRhoTemp.end(), 0.0);
               if (d_dftParamsPtr->spinPolarized == 1)
                 {
-                  (*gradRhoInValuesSpinPolarized)[cell->id()] =
-                    std::vector<double>(6 * num_quad_points);
                   std::fill(gradRhoTempSpinPolarized.begin(),
                             gradRhoTempSpinPolarized.end(),
                             0.0);
@@ -1004,51 +950,36 @@ namespace dftfe
                 {
                   if (d_dftParamsPtr->spinPolarized == 1)
                     {
-                      (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
-                        rhoInSpinPolarized[2 * q_point];
-                      (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] =
-                        rhoInSpinPolarized[2 * q_point + 1];
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  0] =
-                        gradRhoInSpinPolarized[6 * q_point + 0];
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  1] =
-                        gradRhoInSpinPolarized[6 * q_point + 1];
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  2] =
-                        gradRhoInSpinPolarized[6 * q_point + 2];
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  3] =
-                        gradRhoInSpinPolarized[6 * q_point + 3];
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  4] =
-                        gradRhoInSpinPolarized[6 * q_point + 4];
-                      (*gradRhoInValuesSpinPolarized)[cell->id()][6 * q_point +
-                                                                  5] =
-                        gradRhoInSpinPolarized[6 * q_point + 5];
-                      //
-                      (*rhoInValues)[cell->id()][q_point] =
+                      d_densityInQuadValues[0][iCell * num_quad_points +
+                                               q_point] =
                         rhoInSpinPolarized[2 * q_point] +
                         rhoInSpinPolarized[2 * q_point + 1];
-                      (*gradRhoInValues)[cell->id()][3 * q_point + 0] =
-                        gradRhoInSpinPolarized[6 * q_point + 0] +
-                        gradRhoInSpinPolarized[6 * q_point + 3];
-                      (*gradRhoInValues)[cell->id()][3 * q_point + 1] =
-                        gradRhoInSpinPolarized[6 * q_point + 1] +
-                        gradRhoInSpinPolarized[6 * q_point + 4];
-                      (*gradRhoInValues)[cell->id()][3 * q_point + 2] =
-                        gradRhoInSpinPolarized[6 * q_point + 2] +
-                        gradRhoInSpinPolarized[6 * q_point + 5];
+                      d_densityInQuadValues[1][iCell * num_quad_points +
+                                               q_point] =
+                        rhoInSpinPolarized[2 * q_point] -
+                        rhoInSpinPolarized[2 * q_point + 1];
+                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        d_gradDensityInQuadValues[0][iCell * num_quad_points *
+                                                       3 +
+                                                     3 * q_point + iDim] =
+                          gradRhoInSpinPolarized[6 * q_point + iDim] +
+                          gradRhoInSpinPolarized[6 * q_point + iDim + 3];
+                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        d_gradDensityInQuadValues[1][iCell * num_quad_points *
+                                                       3 +
+                                                     3 * q_point + iDim] =
+                          gradRhoInSpinPolarized[6 * q_point + iDim] -
+                          gradRhoInSpinPolarized[6 * q_point + iDim + 3];
                     }
                   else
                     {
-                      (*rhoInValues)[cell->id()][q_point] = rhoIn[q_point];
-                      (*gradRhoInValues)[cell->id()][3 * q_point + 0] =
-                        gradRhoIn[3 * q_point + 0];
-                      (*gradRhoInValues)[cell->id()][3 * q_point + 1] =
-                        gradRhoIn[3 * q_point + 1];
-                      (*gradRhoInValues)[cell->id()][3 * q_point + 2] =
-                        gradRhoIn[3 * q_point + 2];
+                      d_densityInQuadValues[0][iCell * num_quad_points +
+                                               q_point] = rhoIn[q_point];
+                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        d_gradDensityInQuadValues[0][iCell * num_quad_points *
+                                                       3 +
+                                                     3 * q_point + iDim] =
+                          gradRhoIn[3 * q_point + iDim];
                     }
                 }
             }
@@ -1148,111 +1079,26 @@ namespace dftfe
                 {
                   if (d_dftParamsPtr->spinPolarized == 1)
                     {
-                      (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
-                        rhoInSpinPolarized[2 * q_point];
-                      (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point + 1] =
-                        rhoInSpinPolarized[2 * q_point + 1];
-                      (*rhoInValues)[cell->id()][q_point] =
+                      d_densityInQuadValues[0][iCell * num_quad_points +
+                                               q_point] =
                         rhoInSpinPolarized[2 * q_point] +
+                        rhoInSpinPolarized[2 * q_point + 1];
+                      d_densityInQuadValues[1][iCell * num_quad_points +
+                                               q_point] =
+                        rhoInSpinPolarized[2 * q_point] -
                         rhoInSpinPolarized[2 * q_point + 1];
                     }
                   else
-                    (*rhoInValues)[cell->id()][q_point] = rhoIn[q_point];
+                    d_densityInQuadValues[0][iCell * num_quad_points +
+                                             q_point] = rhoIn[q_point];
                 }
             }
+          ++iCell;
         }
 
     normalizeRhoInQuadValues();
     //
     computingTimerStandard.leave_subsection("initialize density");
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::computeNodalRhoFromQuadData()
-  {
-    //
-    // compute nodal electron-density from cell quadrature data
-    //
-    matrix_free_data.initialize_dof_vector(d_rhoNodalField,
-                                           d_densityDofHandlerIndex);
-    d_rhoNodalField = 0;
-
-    std::function<
-      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-             const unsigned int                                          q)>
-      funcRho =
-        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-            const unsigned int                                          q) {
-          return (*rhoOutValues).find(cell->id())->second[q];
-        };
-
-
-    dealii::VectorTools::project<3, distributedCPUVec<double>>(
-      dealii::MappingQ1<3, 3>(),
-      dofHandler,
-      constraintsNone,
-      matrix_free_data.get_quadrature(d_densityQuadratureId),
-      funcRho,
-      d_rhoNodalField);
-
-
-    d_rhoNodalField.update_ghost_values();
-
-
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin0,
-                                               d_densityDofHandlerIndex);
-        d_rhoNodalFieldSpin0 = 0;
-
-        std::function<double(
-          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-          const unsigned int                                          q)>
-          funcRhoSpin0 = [&](const typename dealii::DoFHandler<
-                               3>::active_cell_iterator &cell,
-                             const unsigned int          q) {
-            return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2 * q];
-          };
-
-
-        dealii::VectorTools::project<3, distributedCPUVec<double>>(
-          dealii::MappingQ1<3, 3>(),
-          dofHandler,
-          constraintsNone,
-          matrix_free_data.get_quadrature(d_densityQuadratureId),
-          funcRhoSpin0,
-          d_rhoNodalFieldSpin0);
-
-
-        d_rhoNodalFieldSpin0.update_ghost_values();
-
-        matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin1,
-                                               d_densityDofHandlerIndex);
-        d_rhoNodalFieldSpin1 = 0;
-
-        std::function<double(
-          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-          const unsigned int                                          q)>
-          funcRhoSpin1 =
-            [&](
-              const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-              const unsigned int                                          q) {
-              return (*rhoOutValuesSpinPolarized)
-                .find(cell->id())
-                ->second[2 * q + 1];
-            };
-
-        dealii::VectorTools::project<3, distributedCPUVec<double>>(
-          dealii::MappingQ1<3, 3>(),
-          dofHandler,
-          constraintsNone,
-          matrix_free_data.get_quadrature(d_densityQuadratureId),
-          funcRhoSpin1,
-          d_rhoNodalFieldSpin1);
-
-        d_rhoNodalFieldSpin1.update_ghost_values();
-      }
   }
 
 
@@ -1266,8 +1112,9 @@ namespace dftfe
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const unsigned int n_q_points = quadrature_formula.size();
-
-    const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoInValues.get());
+    const unsigned int nCells     = matrix_free_data.n_physical_cells();
+    const double       charge =
+      totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
     const double scaling = ((double)numElectrons) / charge;
 
     if (d_dftParamsPtr->verbosity >= 2)
@@ -1276,43 +1123,25 @@ namespace dftfe
         << charge << std::endl;
 
     // scaling rho
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler.begin_active(),
-      endc = dofHandler.end();
-    for (; cell != endc; ++cell)
+    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
       {
-        if (cell->is_locally_owned())
+        for (unsigned int q = 0; q < n_q_points; ++q)
           {
-            for (unsigned int q = 0; q < n_q_points; ++q)
-              {
-                (*rhoInValues)[cell->id()][q] *= scaling;
-
-                if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA)
-                  for (unsigned int idim = 0; idim < 3; ++idim)
-                    (*gradRhoInValues)[cell->id()][3 * q + idim] *= scaling;
-                if (d_dftParamsPtr->spinPolarized == 1)
-                  {
-                    (*rhoInValuesSpinPolarized)[cell->id()][2 * q + 1] *=
-                      scaling;
-                    (*rhoInValuesSpinPolarized)[cell->id()][2 * q] *= scaling;
-                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        {
-                          (*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                         [6 * q + idim] *=
-                            scaling;
-                          (*gradRhoInValuesSpinPolarized)[cell->id()]
-                                                         [6 * q + 3 + idim] *=
-                            scaling;
-                        }
-                  }
-              }
+            for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+                 ++iComp)
+              d_densityInQuadValues[iComp][iCell * n_q_points + q] *= scaling;
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA)
+              for (unsigned int iComp = 0;
+                   iComp < d_gradDensityInQuadValues.size();
+                   ++iComp)
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  d_gradDensityInQuadValues[iComp][3 * iCell * n_q_points +
+                                                   3 * q + idim] *= scaling;
           }
       }
     double chargeAfterScaling =
-      totalCharge(d_dofHandlerRhoNodal, rhoInValues.get());
+      totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Initial total charge: " << chargeAfterScaling << std::endl;
@@ -1328,8 +1157,10 @@ namespace dftfe
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const unsigned int n_q_points = quadrature_formula.size();
+    const unsigned int nCells     = matrix_free_data.n_physical_cells();
 
-    const double charge = totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
+    const double charge =
+      totalCharge(d_dofHandlerRhoNodal, d_densityOutQuadValues[0]);
     const double scaling = ((double)numElectrons) / charge;
 
     if (d_dftParamsPtr->verbosity >= 2)
@@ -1337,43 +1168,25 @@ namespace dftfe
             << charge << std::endl;
 
     // scaling rho
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler.begin_active(),
-      endc = dofHandler.end();
-    for (; cell != endc; ++cell)
+    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
       {
-        if (cell->is_locally_owned())
+        for (unsigned int q = 0; q < n_q_points; ++q)
           {
-            for (unsigned int q = 0; q < n_q_points; ++q)
-              {
-                (*rhoOutValues)[cell->id()][q] *= scaling;
-
-                if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA)
-                  for (unsigned int idim = 0; idim < 3; ++idim)
-                    (*gradRhoOutValues)[cell->id()][3 * q + idim] *= scaling;
-                if (d_dftParamsPtr->spinPolarized == 1)
-                  {
-                    (*rhoOutValuesSpinPolarized)[cell->id()][2 * q + 1] *=
-                      scaling;
-                    (*rhoOutValuesSpinPolarized)[cell->id()][2 * q] *= scaling;
-                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        {
-                          (*gradRhoOutValuesSpinPolarized)[cell->id()]
-                                                          [6 * q + idim] *=
-                            scaling;
-                          (*gradRhoOutValuesSpinPolarized)[cell->id()]
-                                                          [6 * q + 3 + idim] *=
-                            scaling;
-                        }
-                  }
-              }
+            for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
+                 ++iComp)
+              d_densityOutQuadValues[iComp][iCell * n_q_points + q] *= scaling;
+            if (d_excManagerPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA)
+              for (unsigned int iComp = 0;
+                   iComp < d_gradDensityOutQuadValues.size();
+                   ++iComp)
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  d_gradDensityOutQuadValues[iComp][3 * iCell * n_q_points +
+                                                    3 * q + idim] *= scaling;
           }
       }
     double chargeAfterScaling =
-      totalCharge(d_dofHandlerRhoNodal, rhoOutValues.get());
+      totalCharge(d_dofHandlerRhoNodal, d_densityOutQuadValues[0]);
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total charge out after scaling: " << chargeAfterScaling
