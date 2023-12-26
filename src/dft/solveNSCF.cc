@@ -75,7 +75,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       d_vselfBinsManager.solveVselfInBinsDevice(
-        d_matrixFreeDataPRefined,
+        basisOperationsPtrElectroHost,
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_binsStartDofHandlerIndexElectro,
@@ -98,7 +98,7 @@ namespace dftfe
         d_dftParamsPtr->smearedNuclearCharges);
     else
       d_vselfBinsManager.solveVselfInBins(
-        d_matrixFreeDataPRefined,
+        basisOperationsPtrElectroHost,
         d_binsStartDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_constraintsPRefined,
@@ -118,7 +118,7 @@ namespace dftfe
         d_smearedChargeQuadratureIdElectro,
         d_dftParamsPtr->smearedNuclearCharges);
 #else
-    d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+    d_vselfBinsManager.solveVselfInBins(basisOperationsPtrElectroHost,
                                         d_binsStartDofHandlerIndexElectro,
                                         d_phiTotAXQuadratureIdElectro,
                                         d_constraintsPRefined,
@@ -194,7 +194,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
-          d_matrixFreeDataPRefined,
+          basisOperationsPtrElectroHost,
           d_phiTotRhoIn,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -203,7 +203,7 @@ namespace dftfe
           d_atomNodeIdToChargeMap,
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
-          *rhoInValues,
+          d_densityInQuadValues[0],
           kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
           true,
           d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
@@ -220,7 +220,7 @@ namespace dftfe
     else
       {
         d_phiTotalSolverProblem.reinit(
-          d_matrixFreeDataPRefined,
+          basisOperationsPtrElectroHost,
           d_phiTotRhoIn,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -229,7 +229,7 @@ namespace dftfe
           d_atomNodeIdToChargeMap,
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
-          *rhoInValues,
+          d_densityInQuadValues[0],
           true,
           d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
             d_dftParamsPtr->periodicZ && !d_dftParamsPtr->pinnedNodeForPBC,
@@ -317,7 +317,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized.get(),
+                    d_densityInQuadValues,
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -326,7 +326,7 @@ namespace dftfe
 #endif
                 if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized.get(),
+                    d_densityInQuadValues,
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -341,8 +341,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized.get(),
-                    gradRhoInValuesSpinPolarized.get(),
+                    d_densityInQuadValues,
+                    d_gradDensityInQuadValues,
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -352,8 +352,8 @@ namespace dftfe
 #endif
                 if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
-                    rhoInValuesSpinPolarized.get(),
-                    gradRhoInValuesSpinPolarized.get(),
+                    d_densityInQuadValues,
+                    d_gradDensityInQuadValues,
                     d_phiInValues,
                     s,
                     d_pseudoVLoc,
@@ -639,14 +639,14 @@ namespace dftfe
             computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
             if (d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues.get(),
+              kohnShamDFTEigenOperatorDevice.computeVEff(d_densityInQuadValues,
                                                          d_phiInValues,
                                                          d_pseudoVLoc,
                                                          d_rhoCore,
                                                          d_lpspQuadratureId);
 #endif
             if (!d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
+              kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
                                                    d_phiInValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
@@ -659,17 +659,18 @@ namespace dftfe
             computing_timer.enter_subsection("VEff Computation");
 #ifdef DFTFE_WITH_DEVICE
             if (d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperatorDevice.computeVEff(rhoInValues.get(),
-                                                         gradRhoInValues.get(),
-                                                         d_phiInValues,
-                                                         d_pseudoVLoc,
-                                                         d_rhoCore,
-                                                         d_gradRhoCore,
-                                                         d_lpspQuadratureId);
+              kohnShamDFTEigenOperatorDevice.computeVEff(
+                d_densityInQuadValues,
+                d_gradDensityInQuadValues,
+                d_phiInValues,
+                d_pseudoVLoc,
+                d_rhoCore,
+                d_gradRhoCore,
+                d_lpspQuadratureId);
 #endif
             if (!d_dftParamsPtr->useDevice)
-              kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
-                                                   gradRhoInValues.get(),
+              kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
+                                                   d_gradDensityInQuadValues,
                                                    d_phiInValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
@@ -909,7 +910,7 @@ namespace dftfe
     // compute integral rhoOut
     //
     const double integralRhoValue =
-      totalCharge(d_dofHandlerPRefined, rhoOutValues.get());
+      totalCharge(d_dofHandlerPRefined, d_densityOutQuadValues[0]);
 
     if (d_dftParamsPtr->verbosity >= 2)
       {
@@ -920,7 +921,7 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 1 && d_dftParamsPtr->spinPolarized == 1)
       pcout << std::endl
             << "net magnetization: "
-            << totalMagnetization(rhoOutValuesSpinPolarized.get()) << std::endl;
+            << totalMagnetization(d_densityOutQuadValues[1]) << std::endl;
 
 
     local_timer.stop();
@@ -947,7 +948,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
-          d_matrixFreeDataPRefined,
+          basisOperationsPtrElectroHost,
           d_phiTotRhoOut,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -956,7 +957,7 @@ namespace dftfe
           d_atomNodeIdToChargeMap,
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
-          *rhoOutValues,
+          d_densityInQuadValues[0],
           kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
           false,
           false,
@@ -978,7 +979,7 @@ namespace dftfe
     else
       {
         d_phiTotalSolverProblem.reinit(
-          d_matrixFreeDataPRefined,
+          basisOperationsPtrElectroHost,
           d_phiTotRhoOut,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -987,7 +988,7 @@ namespace dftfe
           d_atomNodeIdToChargeMap,
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
-          *rhoOutValues,
+          d_densityInQuadValues[0],
           false,
           false,
           d_dftParamsPtr->smearedNuclearCharges,

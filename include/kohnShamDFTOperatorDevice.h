@@ -302,7 +302,9 @@ namespace dftfe
      */
     void
     computeVEff(
-      const std::map<dealii::CellId, std::vector<double>> *rhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  rhoValues,
       const std::map<dealii::CellId, std::vector<double>> &phiValues,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
@@ -321,7 +323,9 @@ namespace dftfe
      */
     void
     computeVEffSpinPolarized(
-      const std::map<dealii::CellId, std::vector<double>> *rhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  rhoValues,
       const std::map<dealii::CellId, std::vector<double>> &phiValues,
       unsigned int                                         spinIndex,
       const std::map<dealii::CellId, std::vector<double>>
@@ -340,8 +344,12 @@ namespace dftfe
      */
     void
     computeVEff(
-      const std::map<dealii::CellId, std::vector<double>> *rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  gradRhoValues,
       const std::map<dealii::CellId, std::vector<double>> &phiValues,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
@@ -362,8 +370,12 @@ namespace dftfe
      */
     void
     computeVEffSpinPolarized(
-      const std::map<dealii::CellId, std::vector<double>> *rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  gradRhoValues,
       const std::map<dealii::CellId, std::vector<double>> &phiValues,
       const unsigned int                                   spinIndex,
       const std::map<dealii::CellId, std::vector<double>>

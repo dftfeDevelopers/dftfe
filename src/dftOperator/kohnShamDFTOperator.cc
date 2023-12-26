@@ -567,6 +567,7 @@ namespace dftfe
     // allocate storage for exchange potential
     std::vector<double> exchangePotentialVal(numberQuadraturePoints);
     std::vector<double> corrPotentialVal(numberQuadraturePoints);
+    std::vector<double> densityValue(numberQuadraturePoints);
 
     //
     // loop over cell block
@@ -582,8 +583,9 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            const double *densityValue =
-              rhoValues[0].data() + iElemCount * numberQuadraturePoints;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              densityValue[q] =
+                rhoValues[0][iElemCount * numberQuadraturePoints + q];
 
             const std::vector<double> &tempPhi =
               phiValues.find(cellPtr->id())->second;
@@ -676,6 +678,8 @@ namespace dftfe
     std::vector<double> derCorrEnergyWithSigmaVal(numberQuadraturePoints);
     std::vector<double> derExchEnergyWithDensityVal(numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> densityValue(numberQuadraturePoints);
+    std::vector<double> gradDensityValue(3 * numberQuadraturePoints);
 
     typename dealii::DoFHandler<3>::active_cell_iterator
       cellPtr = dftPtr->matrix_free_data
@@ -698,11 +702,14 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-            const double *densityValue =
-              rhoValues[0].data() + iElemCount * numberQuadraturePoints;
-            const double *gradDensityValue =
-              gradRrhoValues[0].data() +
-              3 * iElemCount * numberQuadraturePoints;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              densityValue[q] =
+                rhoValues[0][iElemCount * numberQuadraturePoints + q];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                gradDensityValue[3 * q + iDim] =
+                  rhoValues[0][iElemCount * numberQuadraturePoints * 3 + 3 * q +
+                               iDim];
 
 
             const std::vector<double> &tempPhi =

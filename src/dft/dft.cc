@@ -2072,7 +2072,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       d_vselfBinsManager.solveVselfInBinsDevice(
-        d_matrixFreeDataPRefined,
+        basisOperationsPtrElectroHost,
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_binsStartDofHandlerIndexElectro,
@@ -2095,7 +2095,7 @@ namespace dftfe
         d_dftParamsPtr->smearedNuclearCharges);
     else
       d_vselfBinsManager.solveVselfInBins(
-        d_matrixFreeDataPRefined,
+        basisOperationsPtrElectroHost,
         d_binsStartDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_constraintsPRefined,
@@ -2115,7 +2115,7 @@ namespace dftfe
         d_smearedChargeQuadratureIdElectro,
         d_dftParamsPtr->smearedNuclearCharges);
 #else
-    d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+    d_vselfBinsManager.solveVselfInBins(basisOperationsPtrElectroHost,
                                         d_binsStartDofHandlerIndexElectro,
                                         d_phiTotAXQuadratureIdElectro,
                                         d_constraintsPRefined,
@@ -3986,7 +3986,7 @@ namespace dftfe
             "Nuclear self-potential perturbation solve");
 
           d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
-            d_matrixFreeDataPRefined,
+            basisOperationsPtrElectroHost,
             d_baseDofHandlerIndexElectro,
             d_phiTotAXQuadratureIdElectro,
             d_binsStartDofHandlerIndexElectro,
@@ -4038,7 +4038,7 @@ namespace dftfe
             "Nuclear self-potential perturbation solve");
 
           d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
-            d_matrixFreeDataPRefined,
+            basisOperationsPtrElectroHost,
             d_baseDofHandlerIndexElectro,
             d_phiTotAXQuadratureIdElectro,
             d_binsStartDofHandlerIndexElectro,

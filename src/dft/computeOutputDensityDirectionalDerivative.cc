@@ -69,8 +69,8 @@ namespace dftfe
 #endif
 
 
-    std::map<dealii::CellId, std::vector<double>> charge;
-    std::map<dealii::CellId, std::vector<double>> dummy;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> charge;
+    std::map<dealii::CellId, std::vector<double>>                        dummy;
     v.update_ghost_values();
     interpolateRhoNodalDataToQuadratureDataGeneral(
       d_matrixFreeDataPRefined,
@@ -92,7 +92,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
-          d_matrixFreeDataPRefined,
+          basisOperationsPtrElectroHost,
           electrostaticPotPrime,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -110,7 +110,7 @@ namespace dftfe
     else
       {
         d_phiTotalSolverProblem.reinit(
-          d_matrixFreeDataPRefined,
+          basisOperationsPtrElectroHost,
           electrostaticPotPrime,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
