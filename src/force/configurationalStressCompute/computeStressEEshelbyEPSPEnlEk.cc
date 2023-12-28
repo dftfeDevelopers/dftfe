@@ -47,14 +47,10 @@ namespace dftfe
     const distributedCPUVec<double> &    phiTotRhoOutElectro,
     const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-    const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
     const std::map<dealii::CellId, std::vector<double>>
-      &rhoOutValuesElectroLpsp,
+      &rhoOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesElectro,
-    const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesElectroLpsp,
+      &gradRhoOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &                                                  pseudoVLocAtomsElectro,
@@ -549,7 +545,7 @@ namespace dftfe
                         dealii::CellId subCellId = subCellPtr->id();
 
                         const std::vector<double> &temp =
-                          (*dftPtr->rhoOutValues).find(subCellId)->second;
+                          (rhoOutValues).find(subCellId)->second;
                         const std::vector<double> &temp1 =
                           (*dftPtr->rhoOutValuesSpinPolarized)
                             .find(subCellId)
@@ -1179,10 +1175,10 @@ namespace dftfe
                                             smearedChargeQuadratureId,
                                             lpspQuadratureIdElectro,
                                             phiTotRhoOutElectro,
-                                            rhoOutValuesElectro,
-                                            rhoOutValuesElectroLpsp,
-                                            gradRhoOutValuesElectro,
-                                            gradRhoOutValuesElectroLpsp,
+                                            rhoOutValues,
+                                            rhoOutValuesLpsp,
+                                            gradRhoOutValues,
+                                            gradRhoOutValuesLpsp,
                                             pseudoVLocElectro,
                                             pseudoVLocAtomsElectro,
                                             vselfBinsManagerElectro);
@@ -1216,13 +1212,13 @@ namespace dftfe
     const unsigned int                   smearedChargeQuadratureId,
     const unsigned int                   lpspQuadratureIdElectro,
     const distributedCPUVec<double> &    phiTotRhoOutElectro,
-    const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
+    const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
     const std::map<dealii::CellId, std::vector<double>>
-      &rhoOutValuesElectroLpsp,
+      &rhoOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesElectro,
+      &gradRhoOutValues,
     const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesElectroLpsp,
+      &gradRhoOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &                                              pseudoVLocAtomsElectro,
@@ -1409,7 +1405,7 @@ namespace dftfe
                 dealii::CellId subCellId = subCellPtr->id();
                 for (unsigned int q = 0; q < numQuadPoints; ++q)
                   rhoQuadsElectro[q][iSubCell] =
-                    rhoOutValuesElectro.find(subCellId)->second[q];
+                    rhoOutValues.find(subCellId)->second[q];
 
 
                 if (d_dftParams.isPseudopotential ||
@@ -1418,9 +1414,9 @@ namespace dftfe
                     const std::vector<double> &tempPseudoVal =
                       pseudoVLocElectro.find(subCellId)->second;
                     const std::vector<double> &tempLpspRhoVal =
-                      rhoOutValuesElectroLpsp.find(subCellId)->second;
+                      rhoOutValuesLpsp.find(subCellId)->second;
                     const std::vector<double> &tempLpspGradRhoVal =
-                      gradRhoOutValuesElectroLpsp.find(subCellId)->second;
+                      gradRhoOutValuesLpsp.find(subCellId)->second;
                     for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
                       {
                         pseudoVLocQuadsElectro[q][iSubCell] = tempPseudoVal[q];

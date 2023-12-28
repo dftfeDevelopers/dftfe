@@ -39,14 +39,10 @@ namespace dftfe
     const distributedCPUVec<double> &    phiTotRhoOutElectro,
     const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-    const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
     const std::map<dealii::CellId, std::vector<double>>
-      &rhoOutValuesElectroLpsp,
+      &rhoOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesElectro,
-    const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesElectroLpsp,
+      &gradRhoOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &                                                  pseudoVLocAtomsElectro,
@@ -97,11 +93,8 @@ namespace dftfe
                                    phiTotRhoOutElectro,
                                    rhoOutValues,
                                    gradRhoOutValues,
+                                   rhoOutValuesLpsp,
                                    gradRhoOutValuesLpsp,
-                                   rhoOutValuesElectro,
-                                   rhoOutValuesElectroLpsp,
-                                   gradRhoOutValuesElectro,
-                                   gradRhoOutValuesElectroLpsp,
                                    pseudoVLocElectro,
                                    pseudoVLocAtomsElectro,
                                    rhoCoreValues,

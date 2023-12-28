@@ -146,14 +146,10 @@ namespace dftfe
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
       const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+        &gradRhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -225,14 +221,10 @@ namespace dftfe
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
       const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+        &gradRhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -328,14 +320,10 @@ namespace dftfe
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
       const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+        &gradRhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -363,13 +351,13 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
+      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
+        &gradRhoOutValues,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+        &gradRhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -409,14 +397,10 @@ namespace dftfe
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
       const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+        &gradRhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -711,14 +695,10 @@ namespace dftfe
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
       const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+        &gradRhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -741,9 +721,9 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
+      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
       const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
+        &rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>>
         &gradRhoOutValuesElectro,
       const std::map<dealii::CellId, std::vector<double>>
