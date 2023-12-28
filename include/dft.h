@@ -733,7 +733,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureGradValueData,
+        &        quadratureGradValueData,
       const bool isEvaluateGradData);
 
 
@@ -1561,9 +1561,9 @@ namespace dftfe
     distributedCPUVec<double> d_magInNodalValuesRead;
 
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> d_densityTotalOutValuesLpspQuad,
-      d_densityTotalInValuesLpspQuad, d_gradDensityTotalOutValuesLpspQuad,
-      d_gradDensityTotalInValuesLpspQuad;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      d_densityTotalOutValuesLpspQuad, d_densityTotalInValuesLpspQuad,
+      d_gradDensityTotalOutValuesLpspQuad, d_gradDensityTotalInValuesLpspQuad;
 
     /// for low rank jacobian inverse approximation
     std::deque<distributedCPUVec<double>> d_vcontainerVals;

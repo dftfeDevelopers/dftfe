@@ -144,12 +144,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoOutValues,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &gradRhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &gradRhoTotalOutValuesLpsp,      
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -219,12 +223,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoOutValues,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &gradRhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &gradRhoTotalOutValuesLpsp,      
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -318,8 +326,12 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoOutValues,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &gradRhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -351,7 +363,8 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> &rhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -395,8 +408,12 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoOutValues,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &gradRhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -693,8 +710,12 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoOutValues,
-      const std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &gradRhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -721,7 +742,8 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> &rhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValuesLpsp,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>

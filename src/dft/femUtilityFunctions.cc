@@ -582,7 +582,7 @@ namespace dftfe
         quadratureGradValueData.clear();
         quadratureGradValueData.resize(3 * nQuadsPerCell * nCells);
       }
- 
+
 
 
     dealii::FEEvaluation<3,
@@ -590,7 +590,7 @@ namespace dftfe
                          C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                          1,
                          double>
-                       feEvalObj(matrixFreeData, dofHandlerId, quadratureId);
+      feEvalObj(matrixFreeData, dofHandlerId, quadratureId);
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
@@ -610,9 +610,7 @@ namespace dftfe
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values(nodalField);
-        feEvalObj.evaluate(true,
-                           isEvaluateGradData ? true : false,
-                           false);
+        feEvalObj.evaluate(true, isEvaluateGradData ? true : false, false);
 
         for (unsigned int iSubCell = 0;
              iSubCell < basisOperationsPtr->matrixFreeData()
@@ -647,7 +645,6 @@ namespace dftfe
                     tempVec2[3 * q_point + 2] = gradVals[2][iSubCell];
                   }
               }
-
           }
       }
   }

@@ -286,12 +286,16 @@ namespace dftfe
     const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
     const unsigned int                   phiTotDofHandlerIndexElectro,
     const distributedCPUVec<double> &    phiTotRhoOutElectro,
-    const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-    const std::map<dealii::CellId, std::vector<double>>
-      &rhoOutValuesLpsp,
-    const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesLpsp,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoOutValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &rhoTotalOutValuesLpsp,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -335,8 +339,8 @@ namespace dftfe
                                           phiTotRhoOutElectro,
                                           rhoOutValues,
                                           gradRhoOutValues,
-                                          rhoOutValuesLpsp,
-                                          gradRhoOutValuesLpsp,
+                                          rhoTotalOutValuesLpsp,
+                                          gradRhoTotalOutValuesLpsp,
                                           rhoCoreValues,
                                           gradRhoCoreValues,
                                           hessianRhoCoreValues,
@@ -470,12 +474,16 @@ namespace dftfe
     const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
     const unsigned int                   phiTotDofHandlerIndexElectro,
     const distributedCPUVec<double> &    phiTotRhoOutElectro,
-    const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-    const std::map<dealii::CellId, std::vector<double>>
-      &rhoOutValuesLpsp,
-    const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoOutValuesLpsp,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoOutValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &rhoTotalOutValuesLpsp,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -511,8 +519,8 @@ namespace dftfe
       phiTotRhoOutElectro,
       rhoOutValues,
       gradRhoOutValues,
-      rhoOutValuesLpsp,
-      gradRhoOutValuesLpsp,
+      rhoTotalOutValuesLpsp,
+      gradRhoTotalOutValuesLpsp,
       rhoCoreValues,
       gradRhoCoreValues,
       hessianRhoCoreValues,
