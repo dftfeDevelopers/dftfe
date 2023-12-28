@@ -553,6 +553,104 @@ namespace dftfe
       }
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::
+    interpolateDensityNodalDataToQuadratureDataLpsp(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                              basisOperationsPtr,
+      const unsigned int               dofHandlerId,
+      const unsigned int               quadratureId,
+      const distributedCPUVec<double> &nodalField,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureGradValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &        quadratureHessianValueData,
+      const bool isEvaluateGradData)
+  {
+    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    const unsigned int nCells        = basisOperationsPtr->nCells();
+    quadratureValueData.clear();
+    quadratureValueData.resize(nQuadsPerCell * nCells);
+    if (isEvaluateGradData)
+      {
+        quadratureGradValueData.clear();
+        quadratureGradValueData.resize(3 * nQuadsPerCell * nCells);
+      }
+ 
+
+
+    dealii::FEEvaluation<3,
+                         C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+                         C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
+                         1,
+                         double>
+                       feEvalObj(matrixFreeData, dofHandlerId, quadratureId);
+
+    // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+    //        dealii::ExcMessage("DFT-FE Error: mismatch in
+    //        partitioner/dofHandler."));
+
+    AssertThrow(
+      basisOperationsPtr->matrixFreeData()
+          .get_quadrature(quadratureId)
+          .size() == nQuadsPerCell,
+      dealii::ExcMessage(
+        "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
+    for (unsigned int cell = 0;
+         cell < basisOperationsPtr->matrixFreeData().n_cell_batches();
+         ++cell)
+      {
+        feEvalObj.reinit(cell);
+        feEvalObj.read_dof_values(nodalField);
+        feEvalObj.evaluate(true,
+                           isEvaluateGradData ? true : false,
+                           false);
+
+        for (unsigned int iSubCell = 0;
+             iSubCell < basisOperationsPtr->matrixFreeData()
+                          .n_active_entries_per_cell_batch(cell);
+             ++iSubCell)
+          {
+            subCellPtr = basisOperationsPtr->matrixFreeData().get_cell_iterator(
+              cell, iSubCell, dofHandlerId);
+            dealii::CellId subCellId = subCellPtr->id();
+            unsigned int   cellIndex = basisOperationsPtr->cellIndex(subCellId);
+
+            double *tempVec =
+              quadratureValueData.data() + cellIndex * nQuadsPerCell;
+
+            for (unsigned int q_point = 0; q_point < nQuadsPerCell; ++q_point)
+              {
+                tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+              }
+
+            if (isEvaluateGradData)
+              {
+                double *tempVec2 = quadratureGradValueData.data() +
+                                   3 * cellIndex * nQuadsPerCell;
+
+                for (unsigned int q_point = 0; q_point < nQuadsPerCell;
+                     ++q_point)
+                  {
+                    const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+                      &gradVals               = feEvalObj.get_gradient(q_point);
+                    tempVec2[3 * q_point + 0] = gradVals[0][iSubCell];
+                    tempVec2[3 * q_point + 1] = gradVals[1][iSubCell];
+                    tempVec2[3 * q_point + 2] = gradVals[2][iSubCell];
+                  }
+              }
+
+          }
+      }
+  }
 
 
   //

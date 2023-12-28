@@ -3131,12 +3131,12 @@ namespace dftfe
             d_densityOutNodalValues[0].update_ghost_values();
 
             interpolateRhoNodalDataToQuadratureDataLpsp(
-              d_matrixFreeDataPRefined,
+              basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_lpspQuadratureIdElectro,
               d_densityOutNodalValues[0],
-              d_rhoOutValuesLpspQuad,
-              d_gradRhoOutValuesLpspQuad,
+              d_densityTotalOutValuesLpspQuad,
+              d_gradDensityTotalOutValuesLpspQuad,
               true);
 #endif
           }
@@ -3670,8 +3670,8 @@ namespace dftfe
                                          d_phiTotRhoOut,
                                          d_densityOutQuadValues,
                                          d_gradDensityOutQuadValues,
-                                         d_rhoOutValuesLpspQuad,
-                                         d_gradRhoOutValuesLpspQuad,
+                                         d_densityTotalOutValuesLpspQuad,
+                                         d_gradDensityTotalOutValuesLpspQuad,
                                          d_rhoCore,
                                          d_gradRhoCore,
                                          d_hessianRhoCore,
@@ -3753,8 +3753,8 @@ namespace dftfe
                             d_phiTotRhoOut,
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
-                            d_rhoOutValuesLpspQuad,
-                            d_gradRhoOutValuesLpspQuad,
+                            d_densityTotalOutValuesLpspQuad,
+                            d_gradDensityTotalOutValuesLpspQuad,
                             d_pseudoVLoc,
                             d_pseudoVLocAtoms,
                             d_rhoCore,

@@ -713,6 +713,31 @@ namespace dftfe
       const bool                                     isEvaluateGradData);
 
     /**
+     *@brief interpolate rho nodal data to quadrature data using FEEvaluation
+     *
+     *@param[in] basisOperationsPtr basisoperationsPtr object
+     *@param[in] nodalField nodal data to be interpolated
+     *@param[out] quadratureValueData to be computed at quadrature points
+     *@param[out] quadratureGradValueData to be computed at quadrature points
+     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
+     */
+    void
+    interpolateDensityNodalDataToQuadratureDataLpsp(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                              basisOperationsPtr,
+      const unsigned int               dofHandlerId,
+      const unsigned int               quadratureId,
+      const distributedCPUVec<double> &nodalField,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureGradValueData,
+      const bool isEvaluateGradData);
+
+
+    /**
      *@brief add atomic densities at quadrature points
      *
      */
