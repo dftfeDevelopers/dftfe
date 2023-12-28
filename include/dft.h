@@ -1560,10 +1560,6 @@ namespace dftfe
       d_rhoAtomsValuesSeparate, d_gradRhoAtomsValuesSeparate,
       d_hessianRhoAtomsValuesSeparate;
 
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      gradRhoInValues, gradRhoInValuesSpinPolarized;
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      gradRhoOutValues, gradRhoOutValuesSpinPolarized;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       d_gradDensityInQuadValues, d_gradDensityOutQuadValues,
