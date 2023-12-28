@@ -218,6 +218,15 @@ namespace dftfe
       distributedCPUVec<double> &      fvSpin1);
 
     /**
+     * @brief Copies the residual residualValues=outValues-inValues
+     */
+    void
+    computeResidual(const double *     outValues,
+                    const double *     inValues,
+                    double *           residualValues,
+                    const unsigned int size);
+
+    /**
      * @brief Copies the density stored in std::map<dealii:cellId, std::vector<double>> into a flattened std::vector<double> format
      *
      *
@@ -1510,13 +1519,14 @@ namespace dftfe
     // dft related objects
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                                           d_densityInQuadValues, d_densityOutQuadValues;
+      d_densityInQuadValues, d_densityOutQuadValues,
+      d_densityResidualQuadValues;
     std::vector<distributedCPUVec<double>> d_densityInNodalValues,
-      d_densityOutNodalValues;
+      d_densityOutNodalValues, d_densityResidualNodalValues;
 
     std::map<dealii::CellId, std::vector<double>> d_phiInValues, d_phiOutValues;
 
-    MixingScheme d_mixingScheme;
+    std::vector<std::unique_ptr<MixingScheme>> d_mixingSchemePtrs;
 
     distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoOutNodalValuesSplit,
       d_preCondResidualVector, d_rhoNodalFieldRefined,
@@ -1556,7 +1566,8 @@ namespace dftfe
       gradRhoOutValues, gradRhoOutValuesSpinPolarized;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      d_gradDensityInQuadValues, d_gradDensityOutQuadValues;
+      d_gradDensityInQuadValues, d_gradDensityOutQuadValues,
+      d_gradDensityResidualQuadValues;
 
     // storage for total electrostatic potential solution vector corresponding
     // to input scf electron density

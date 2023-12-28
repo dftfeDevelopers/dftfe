@@ -598,6 +598,17 @@ namespace dftfe
       return *d_matrixFreeDataPtr;
     }
 
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const dealii::DoFHandler<3> &
+    FEBasisOperationsBase<ValueTypeBasisCoeff,
+                          ValueTypeBasisData,
+                          memorySpace>::getDofHandler() const
+    {
+      return d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID);
+    }
+
 
 
     template <typename ValueTypeBasisCoeff,

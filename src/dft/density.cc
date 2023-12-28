@@ -287,7 +287,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
   {
-    if (d_mixingScheme.lengthOfHistory() > 0)
+    if (d_mixingSchemePtrs[0]->lengthOfHistory() > 0)
       {
         // create temporary copies of rho Out data
         std::vector<

@@ -429,6 +429,12 @@ namespace dftfe
       const dealii::MatrixFree<3, ValueTypeBasisData> &
       matrixFreeData() const;
 
+      /**
+       * @brief Return the underlying deal.II dofhandler object.
+       */
+      const dealii::DoFHandler<3> &
+      getDofHandler() const;
+
 
 
       std::vector<constraintInfoClass> d_constraintInfo;

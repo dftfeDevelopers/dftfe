@@ -32,7 +32,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::clearRhoData()
   {
-    d_mixingScheme.clearHistory();
+    for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
+      d_mixingSchemePtrs[iComp]->clearHistory();
 
     d_densityInQuadValues.clear();
     d_densityOutQuadValues.clear();

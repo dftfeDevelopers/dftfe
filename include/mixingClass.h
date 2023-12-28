@@ -79,34 +79,40 @@ namespace dftfe
      *
      */
     void
-    addMixingVariable(const mixingVariable       mixingVariableList,
-                      const std::vector<double> &weightDotProducts,
-                      const bool                 performMPIReduce,
-                      const double               mixingValue);
+    addMixingVariable(
+      const mixingVariable mixingVariableList,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &          weightDotProducts,
+      const bool   performMPIReduce,
+      const double mixingValue);
 
     /**
      * @brief Adds to the input history
      *
      */
     void
-    addVariableToInHist(const mixingVariable       mixingVariableName,
-                        const std::vector<double> &inputVariableToInHist);
+    addVariableToInHist(const mixingVariable mixingVariableName,
+                        const double *       inputVariableToInHist,
+                        const unsigned int   length);
 
     /**
-     * @brief Adds to the output history
+     * @brief Adds to the residual history
      *
      */
     void
-    addVariableToOutHist(const mixingVariable       mixingVariableName,
-                         const std::vector<double> &inputVariableToOutHist);
+    addVariableToResidualHist(const mixingVariable mixingVariableName,
+                              const double *       inputVariableToResidualHist,
+                              const unsigned int   length);
 
     /**
      * @brief Computes the input for the next iteration based on the anderson coefficients
      *
      */
     double
-    mixVariable(const mixingVariable mixingVariableName,
-                std::vector<double> &outputVariable);
+    mixVariable(
+      const mixingVariable mixingVariableName,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &outputVariable);
 
 
   private:
@@ -116,21 +122,33 @@ namespace dftfe
      * then added up in computeAndersonMixingCoeff()
      */
     void
-    computeMixingMatrices(const std::deque<std::vector<double>> &inHist,
-                          const std::deque<std::vector<double>> &outHist,
-                          const std::vector<double> &weightDotProducts,
-                          const bool                 isPerformMixing,
-                          const bool                 isMPIAllReduce,
-                          std::vector<double> &      A,
-                          std::vector<double> &      c);
+    computeMixingMatrices(
+      const std::deque<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &inHist,
+      const std::deque<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &outHist,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                  weightDotProducts,
+      const bool           isPerformMixing,
+      const bool           isMPIAllReduce,
+      std::vector<double> &A,
+      std::vector<double> &c);
 
     std::vector<double> d_A, d_c;
     double              d_cFinal;
 
-    std::map<mixingVariable, std::deque<std::vector<double>>>
-                                                  d_variableHistoryIn, d_variableHistoryOut;
-    std::map<mixingVariable, std::vector<double>> d_vectorDotProductWeights;
-    std::map<mixingVariable, bool>                d_performMPIReduce;
+    std::map<
+      mixingVariable,
+      std::deque<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>>
+      d_variableHistoryIn, d_variableHistoryResidual;
+    std::map<
+      mixingVariable,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+                                   d_vectorDotProductWeights;
+    std::map<mixingVariable, bool> d_performMPIReduce;
 
     const MPI_Comm d_mpi_comm_domain;
 

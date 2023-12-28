@@ -61,24 +61,12 @@ namespace dftfe
     d_matrixFreeDataPRefined.initialize_dof_vector(
       rhoNodalField, d_densityDofHandlerIndexElectro);
     rhoNodalField = 0;
-    std::function<
-      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-             const unsigned int                                          q)>
-      funcRho =
-        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-            const unsigned int                                          q) {
-          return d_densityOutQuadValues[0][basisOperationsPtrElectroHost
-                                               ->cellIndex(cell->id()) *
-                                             nQuadsPerCell +
-                                           q];
-        };
-    dealii::VectorTools::project<3, distributedCPUVec<double>>(
-      dealii::MappingQ1<3, 3>(),
-      d_dofHandlerRhoNodal,
-      d_constraintsRhoNodal,
-      d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
-      funcRho,
-      rhoNodalField);
+    l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+                            d_constraintsRhoNodal,
+                            d_densityDofHandlerIndexElectro,
+                            d_densityQuadratureIdElectro,
+                            d_densityOutQuadValues[0],
+                            rhoNodalField);
     rhoNodalField.update_ghost_values();
 
     distributedCPUVec<double> magNodalField;
@@ -86,25 +74,12 @@ namespace dftfe
       {
         magNodalField.reinit(rhoNodalField);
         magNodalField = 0;
-        std::function<double(
-          const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-          const unsigned int                                          q)>
-          funcMag =
-            [&](
-              const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-              const unsigned int                                          q) {
-              return d_densityOutQuadValues[1][basisOperationsPtrElectroHost
-                                                   ->cellIndex(cell->id()) *
-                                                 nQuadsPerCell +
-                                               q];
-            };
-        dealii::VectorTools::project<3, distributedCPUVec<double>>(
-          dealii::MappingQ1<3, 3>(),
-          d_dofHandlerRhoNodal,
-          d_constraintsRhoNodal,
-          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
-          funcMag,
-          magNodalField);
+        l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+                                d_constraintsRhoNodal,
+                                d_densityDofHandlerIndexElectro,
+                                d_densityQuadratureIdElectro,
+                                d_densityOutQuadValues[1],
+                                magNodalField);
         magNodalField.update_ghost_values();
       }
 

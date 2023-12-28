@@ -28,14 +28,17 @@ namespace dftfe
   {}
 
   void
-  MixingScheme::addMixingVariable(const mixingVariable       mixingVariableList,
-                                  const std::vector<double> &weightDotProducts,
-                                  const bool                 performMPIReduce,
-                                  const double               mixingValue)
+  MixingScheme::addMixingVariable(
+    const mixingVariable mixingVariableList,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &          weightDotProducts,
+    const bool   performMPIReduce,
+    const double mixingValue)
   {
-    d_variableHistoryIn[mixingVariableList] = std::deque<std::vector<double>>();
-    d_variableHistoryOut[mixingVariableList] =
-      std::deque<std::vector<double>>();
+    d_variableHistoryIn[mixingVariableList] = std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>();
+    d_variableHistoryResidual[mixingVariableList] = std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>();
     d_vectorDotProductWeights[mixingVariableList] = weightDotProducts;
 
     d_performMPIReduce[mixingVariableList] = performMPIReduce;
@@ -59,13 +62,18 @@ namespace dftfe
 
   void
   MixingScheme::computeMixingMatrices(
-    const std::deque<std::vector<double>> &inHist,
-    const std::deque<std::vector<double>> &outHist,
-    const std::vector<double> &            weightDotProducts,
-    const bool                             isPerformMixing,
-    const bool                             isMPIAllReduce,
-    std::vector<double> &                  A,
-    std::vector<double> &                  c)
+    const std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &inHist,
+    const std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &residualHist,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                  weightDotProducts,
+    const bool           isPerformMixing,
+    const bool           isMPIAllReduce,
+    std::vector<double> &A,
+    std::vector<double> &c)
   {
     std::vector<double> Adensity;
     Adensity.resize(A.size());
@@ -89,15 +97,13 @@ namespace dftfe
                       "Please resize the vectors appropriately."));
         for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
           {
-            double Fn = outHist[N][iQuad] - inHist[N][iQuad];
+            double Fn = residualHist[N][iQuad];
             for (int m = 0; m < N; m++)
               {
-                double Fnm =
-                  outHist[N - 1 - m][iQuad] - inHist[N - 1 - m][iQuad];
+                double Fnm = residualHist[N - 1 - m][iQuad];
                 for (int k = 0; k < N; k++)
                   {
-                    double Fnk =
-                      outHist[N - 1 - k][iQuad] - inHist[N - 1 - k][iQuad];
+                    double Fnk = residualHist[N - 1 - k][iQuad];
                     Adensity[k * N + m] +=
                       (Fn - Fnm) * (Fn - Fnk) *
                       weightDotProducts[iQuad]; // (m,k)^th entry
@@ -166,17 +172,17 @@ namespace dftfe
       d_A[i] = 0.0;
     for (int i = 0; i < ldb * NRHS; i++)
       d_c[i] = 0.0;
-
-    for (const auto &[key, value] : d_variableHistoryIn)
-      {
-        computeMixingMatrices(d_variableHistoryIn[key],
-                              d_variableHistoryOut[key],
-                              d_vectorDotProductWeights[key],
-                              d_performMixing[key],
-                              d_performMPIReduce[key],
-                              d_A,
-                              d_c);
-      }
+    if (N > 0)
+      for (const auto &[key, value] : d_variableHistoryIn)
+        {
+          computeMixingMatrices(d_variableHistoryIn[key],
+                                d_variableHistoryResidual[key],
+                                d_vectorDotProductWeights[key],
+                                d_performMixing[key],
+                                d_performMPIReduce[key],
+                                d_A,
+                                d_c);
+        }
 
     dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
 
@@ -187,26 +193,39 @@ namespace dftfe
 
   // Fucntions to add to the history
   void
-  MixingScheme::addVariableToInHist(
-    const mixingVariable       mixingVariableName,
-    const std::vector<double> &inputVariableToInHist)
+  MixingScheme::addVariableToInHist(const mixingVariable mixingVariableName,
+                                    const double *       inputVariableToInHist,
+                                    const unsigned int   length)
   {
-    d_variableHistoryIn[mixingVariableName].push_back(inputVariableToInHist);
+    d_variableHistoryIn[mixingVariableName].push_back(
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>());
+    d_variableHistoryIn[mixingVariableName].back().resize(length);
+    std::memcpy(d_variableHistoryIn[mixingVariableName].back().data(),
+                inputVariableToInHist,
+                length * sizeof(double));
   }
 
   void
-  MixingScheme::addVariableToOutHist(
-    const mixingVariable       mixingVariableName,
-    const std::vector<double> &inputVariableToOutHist)
+  MixingScheme::addVariableToResidualHist(
+    const mixingVariable mixingVariableName,
+    const double *       inputVariableToResidualHist,
+    const unsigned int   length)
   {
-    d_variableHistoryOut[mixingVariableName].push_back(inputVariableToOutHist);
+    d_variableHistoryResidual[mixingVariableName].push_back(
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>());
+    d_variableHistoryResidual[mixingVariableName].back().resize(length);
+    std::memcpy(d_variableHistoryResidual[mixingVariableName].back().data(),
+                inputVariableToResidualHist,
+                length * sizeof(double));
   }
 
   // Computes the new variable after mixing. It returns the L2 norm of
   // the difference between the old and new input variables
   double
-  MixingScheme::mixVariable(mixingVariable       mixingVariableName,
-                            std::vector<double> &outputVariable)
+  MixingScheme::mixVariable(
+    mixingVariable mixingVariableName,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &outputVariable)
   {
     double       normValue = 0.0;
     unsigned int N         = d_variableHistoryIn[mixingVariableName].size() - 1;
@@ -217,8 +236,7 @@ namespace dftfe
         for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
           {
             double rhodiff =
-              std::abs(d_variableHistoryIn[mixingVariableName][N][iQuad] -
-                       d_variableHistoryOut[mixingVariableName][N][iQuad]);
+              std::abs(d_variableHistoryResidual[mixingVariableName][N][iQuad]);
 
             normValue += rhodiff * rhodiff *
                          d_vectorDotProductWeights[mixingVariableName][iQuad];
@@ -235,23 +253,22 @@ namespace dftfe
 
     for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
       {
-        double varOutBar =
-          d_cFinal * d_variableHistoryOut[mixingVariableName][N][iQuad];
+        double varResidualBar =
+          d_cFinal * d_variableHistoryResidual[mixingVariableName][N][iQuad];
         double varInBar =
           d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
         for (int i = 0; i < N; i++)
           {
-            varOutBar +=
+            varResidualBar +=
               d_c[i] *
-              d_variableHistoryOut[mixingVariableName][N - 1 - i][iQuad];
+              d_variableHistoryResidual[mixingVariableName][N - 1 - i][iQuad];
             varInBar +=
               d_c[i] *
               d_variableHistoryIn[mixingVariableName][N - 1 - i][iQuad];
           }
         outputVariable[iQuad] =
-          ((1 - d_mixingParameter[mixingVariableName]) * varInBar +
-           d_mixingParameter[mixingVariableName] * varOutBar);
+          (varInBar + d_mixingParameter[mixingVariableName] * varResidualBar);
       }
 
     double totalNormValue = 0.0;
@@ -281,7 +298,7 @@ namespace dftfe
     for (const auto &[key, value] : d_variableHistoryIn)
       {
         d_variableHistoryIn[key].clear();
-        d_variableHistoryOut[key].clear();
+        d_variableHistoryResidual[key].clear();
       }
   }
 
@@ -298,7 +315,7 @@ namespace dftfe
         for (const auto &[key, value] : d_variableHistoryIn)
           {
             d_variableHistoryIn[key].pop_front();
-            d_variableHistoryOut[key].pop_front();
+            d_variableHistoryResidual[key].pop_front();
           }
       }
   }
