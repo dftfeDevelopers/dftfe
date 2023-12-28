@@ -754,38 +754,6 @@ namespace dftfe
         &                                              pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
-    void
-    computeStressSpinPolarizedEEshelbyEPSPEnlEk(
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   eigenDofHandlerIndex,
-      const unsigned int                   smearedChargeQuadratureId,
-      const unsigned int                   lpspQuadratureIdElectro,
-      const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &pseudoVLocAtomsElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &                                              hessianRhoCoreAtoms,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
-
     void addEPSPStressContribution(
       dealii::FEValues<3> &                feValues,
       dealii::FEFaceValues<3> &            feFaceValues,
