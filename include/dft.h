@@ -1536,9 +1536,9 @@ namespace dftfe
     distributedCPUVec<double> d_magInNodalValuesRead;
 
 
-    std::map<dealii::CellId, std::vector<double>> d_rhoOutValuesLpspQuad,
-      d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad,
-      d_gradRhoInValuesLpspQuad;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> d_densityTotalOutValuesLpspQuad,
+      d_densityTotalInValuesLpspQuad, d_gradDensityTotalOutValuesLpspQuad,
+      d_gradDensityTotalInValuesLpspQuad;
 
     /// for low rank jacobian inverse approximation
     std::deque<distributedCPUVec<double>> d_vcontainerVals;
