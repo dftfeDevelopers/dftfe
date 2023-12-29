@@ -565,7 +565,7 @@ namespace dftfe
                           rhoOutValues[0];
                         const std::vector<double> &rhoMagOutValues =
                           rhoOutValues[1];
-                        for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+                        for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
                             rhoTotalCellQuadValues[q] =
                               rhoTotalOutValues[subCellIndex * numQuadPoints +

@@ -1158,7 +1158,7 @@ namespace dftfe
                           dftPtr->basisOperationsPtrHost->cellIndex(subCellId);
                         const std::vector<double> &rhoTotalOutValues =
                           rhoOutValues[0];
-                        for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+                        for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
                             rhoTotalCellQuadValues[q] =
                               rhoTotalOutValues[subCellIndex * numQuadPoints +
