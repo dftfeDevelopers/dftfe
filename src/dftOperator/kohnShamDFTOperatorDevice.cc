@@ -1756,7 +1756,7 @@ namespace dftfe
           {
             // std::vector<double> densityValue =
             //  (rhoValues).find(cellPtr->id())->second;
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityTotalValues = rhoValues[0];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               densityValue[q] =
                 tempDensityTotalValues[iElemCount * numberQuadraturePoints + q];
@@ -1869,8 +1869,8 @@ namespace dftfe
             // std::vector<double> densityValue =
             //  (rhoValues).find(cellPtr->id())->second;
 
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -1960,8 +1960,8 @@ namespace dftfe
             // std::vector<double> densityValue =
             //  (rhoValues).find(cellPtr->id())->second;
 
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -2057,8 +2057,8 @@ namespace dftfe
             // std::vector<double> densityValue =
             //  (rhoValues).find(cellPtr->id())->second;
 
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -2150,8 +2150,8 @@ namespace dftfe
             // std::vector<double> densityValue =
             //  (rhoValues).find(cellPtr->id())->second;
 
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -2305,9 +2305,8 @@ namespace dftfe
           // std::vector<double> gradDensityValue =
           //  (gradRhoValues).find(cellPtr->id())->second;
 
-          const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-          const std::vector<double> &tempGradDensityTotalValues =
-            gradRhoValues[0];
+          const auto &tempDensityTotalValues     = rhoValues[0];
+          const auto &tempGradDensityTotalValues = gradRhoValues[0];
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
               densityValue[q] =
@@ -2568,12 +2567,10 @@ namespace dftfe
       {
         if (cellPtr->is_locally_owned())
           {
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
-            const std::vector<double> &tempGradDensityTotalValues =
-              gradRhoValues[0];
-            const std::vector<double> &tempGradDensityMagValues =
-              gradRhoValues[1];
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -2772,12 +2769,10 @@ namespace dftfe
       {
         if (cellPtr->is_locally_owned())
           {
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
-            const std::vector<double> &tempGradDensityTotalValues =
-              gradRhoValues[0];
-            const std::vector<double> &tempGradDensityMagValues =
-              gradRhoValues[1];
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -2970,12 +2965,10 @@ namespace dftfe
       {
         if (cellPtr->is_locally_owned())
           {
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
-            const std::vector<double> &tempGradDensityTotalValues =
-              gradRhoValues[0];
-            const std::vector<double> &tempGradDensityMagValues =
-              gradRhoValues[1];
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =
@@ -3171,12 +3164,10 @@ namespace dftfe
       {
         if (cellPtr->is_locally_owned())
           {
-            const std::vector<double> &tempDensityTotalValues = rhoValues[0];
-            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
-            const std::vector<double> &tempGradDensityTotalValues =
-              gradRhoValues[0];
-            const std::vector<double> &tempGradDensityMagValues =
-              gradRhoValues[1];
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 densityValue[2 * q + 0] =

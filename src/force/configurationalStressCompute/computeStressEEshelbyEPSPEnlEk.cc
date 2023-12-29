@@ -561,10 +561,8 @@ namespace dftfe
 
                         const unsigned int subCellIndex =
                           dftPtr->basisOperationsPtrHost->cellIndex(subCellId);
-                        const std::vector<double> &rhoTotalOutValues =
-                          rhoOutValues[0];
-                        const std::vector<double> &rhoMagOutValues =
-                          rhoOutValues[1];
+                        const auto &rhoTotalOutValues = rhoOutValues[0];
+                        const auto &rhoMagOutValues   = rhoOutValues[1];
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
                             rhoTotalCellQuadValues[q] =
@@ -969,8 +967,7 @@ namespace dftfe
 
                         const unsigned int subCellIndex =
                           dftPtr->basisOperationsPtrHost->cellIndex(subCellId);
-                        const std::vector<double> &rhoTotalOutValues =
-                          rhoOutValues[0];
+                        const auto &rhoTotalOutValues = rhoOutValues[0];
                         for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
                           {
                             rhoTotalCellQuadValues[q] =
