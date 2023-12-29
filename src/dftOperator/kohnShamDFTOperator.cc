@@ -3018,8 +3018,8 @@ namespace dftfe
                                                     numberQuadraturePoints * 3,
                                                   0.0);
 
-    std::vector<double> densityValue(numberQuadraturePoints);
-    std::vector<double> gradDensityValue(3 * numberQuadraturePoints);
+    std::vector<double> densityValue(2 * numberQuadraturePoints);
+    std::vector<double> gradDensityValue(6 * numberQuadraturePoints);
     std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
     std::vector<double> derExchEnergyWithSigma(3 * numberQuadraturePoints);
@@ -3054,25 +3054,44 @@ namespace dftfe
             //  (gradRhoValues).find(cellPtr->id())->second;
 
             const std::vector<double> &tempDensityTotalValues = rhoValues[0];
+            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
             const std::vector<double> &tempGradDensityTotalValues =
               gradRhoValues[0];
+            const std::vector<double> &tempGradDensityMagValues =
+              gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[q] =
-                  tempDensityTotalValues[iElemCount * numberQuadraturePoints +
-                                         q];
-                gradDensityValue[3 * q + 0] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 0];
-                gradDensityValue[3 * q + 1] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 1];
-                gradDensityValue[3 * q + 2] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 2];
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + 2 * idim + 0] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 2 * idim + 1] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
               }
 
 
@@ -3261,32 +3280,45 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-
-            // std::vector<double> densityValue =
-            //  (rhoValues).find(cellPtr->id())->second;
-            // std::vector<double> gradDensityValue =
-            //  (gradRhoValues).find(cellPtr->id())->second;
-
             const std::vector<double> &tempDensityTotalValues = rhoValues[0];
+            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
             const std::vector<double> &tempGradDensityTotalValues =
               gradRhoValues[0];
+            const std::vector<double> &tempGradDensityMagValues =
+              gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[q] =
-                  tempDensityTotalValues[iElemCount * numberQuadraturePoints +
-                                         q];
-                gradDensityValue[3 * q + 0] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 0];
-                gradDensityValue[3 * q + 1] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 1];
-                gradDensityValue[3 * q + 2] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 2];
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + 2 * idim + 0] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 2 * idim + 1] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
               }
 
             const std::vector<double> &tempPhiPrime =
@@ -3472,31 +3504,45 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-            // std::vector<double> densityValue =
-            //  (rhoValues).find(cellPtr->id())->second;
-            // std::vector<double> gradDensityValue =
-            //  (gradRhoValues).find(cellPtr->id())->second;
-
             const std::vector<double> &tempDensityTotalValues = rhoValues[0];
+            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
             const std::vector<double> &tempGradDensityTotalValues =
               gradRhoValues[0];
+            const std::vector<double> &tempGradDensityMagValues =
+              gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[q] =
-                  tempDensityTotalValues[iElemCount * numberQuadraturePoints +
-                                         q];
-                gradDensityValue[3 * q + 0] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 0];
-                gradDensityValue[3 * q + 1] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 1];
-                gradDensityValue[3 * q + 2] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 2];
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + 2 * idim + 0] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 2 * idim + 1] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
               }
 
 
@@ -3686,32 +3732,45 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-
-            // std::vector<double> densityValue =
-            //  (rhoValues).find(cellPtr->id())->second;
-            // std::vector<double> gradDensityValue =
-            //  (gradRhoValues).find(cellPtr->id())->second;
-
             const std::vector<double> &tempDensityTotalValues = rhoValues[0];
+            const std::vector<double> &tempDensityMagValues   = rhoValues[1];
             const std::vector<double> &tempGradDensityTotalValues =
               gradRhoValues[0];
+            const std::vector<double> &tempGradDensityMagValues =
+              gradRhoValues[1];
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[q] =
-                  tempDensityTotalValues[iElemCount * numberQuadraturePoints +
-                                         q];
-                gradDensityValue[3 * q + 0] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 0];
-                gradDensityValue[3 * q + 1] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 1];
-                gradDensityValue[3 * q + 2] =
-                  tempGradDensityTotalValues[3 * iElemCount *
-                                               numberQuadraturePoints +
-                                             3 * q + 2];
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + 2 * idim + 0] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 2 * idim + 1] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
               }
 
 
