@@ -99,22 +99,6 @@ namespace dftfe
         &derExcGradRho);
 
 
-    /// exchange-correlation part of the shadow potential (XL-BOMD) Eshelby
-    /// tensor
-    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-    getShadowPotentialForceRhoDiffXcEshelbyTensor(
-      const dealii::VectorizedArray<double> &shadowKSRhoMinMinusRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-        &shadowKSGradRhoMinMinusGradRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
-      const dealii::VectorizedArray<double> &                      vxc,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-        &derVxcGradRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-        &derExcGradRho,
-      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-        &der2ExcGradRho);
-
     /// psp part of the ELoc Eshelby tensor
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocPspEshelbyTensor(const dealii::VectorizedArray<double> &rho,

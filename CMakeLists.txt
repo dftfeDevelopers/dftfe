@@ -141,7 +141,6 @@ SET(TARGET_SRC
   ./src/dft/computeOutputDensityDirectionalDerivative.cc
   ./src/force/configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc
-  ./src/force/configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FnlGammaElementalContribution.cc
   ./src/force/configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc

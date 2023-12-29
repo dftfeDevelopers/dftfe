@@ -168,12 +168,7 @@ namespace dftfe
                      std::map<dealii::CellId, std::vector<double>>>
         &                                      pseudoVLocAtomsElectro,
       const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     /** @brief returns a copy of the configurational force on all global atoms.
      *
@@ -349,12 +344,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     computeConfigurationalForceEEshelbyEElectroPhiTot(
@@ -375,10 +365,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const distributedCPUVec<double> &                    phiRhoMinusApproxRho,
-      const bool shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     computeConfigurationalForcePhiExtLinFE();
@@ -431,12 +418,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     FPSPLocalGammaAtomsElementalContribution(
@@ -489,65 +471,6 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
         &smearedbQuads);
-
-    void
-    FShadowLocalGammaAtomsElementalContributionElectronic(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionLocalGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>>
-        &derVxcWithRhoTimesRhoDiffQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoAtomsQuadsSeparate,
-      const dealii::AlignedVector<
-        dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
-        &der2ExcWithGradRhoOutQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &derVxcWithGradRhoOutQuads,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>>
-        &shadowKSRhoMinMinusGradRhoQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &shadowKSGradRhoMinMinusGradRhoQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &hessianRhoAtomsQuadsSeparate,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &        hessianRhoCoreAtoms,
-      const bool isAtomicRhoSplitting = false,
-      const bool isXCGGA              = false,
-      const bool isNLCC               = false);
-
-    void
-    FShadowLocalGammaAtomsElementalContributionElectrostatic(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionLocalGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &gradPhiRhoMinusApproxRhoElectroQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &rhoAtomsQuadsSeparate);
-
 
     void
     FNonlinearCoreCorrectionGammaAtomsElementalContribution(

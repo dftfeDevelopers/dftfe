@@ -25,24 +25,27 @@ namespace dftfe
   // implement nodal anderson mixing scheme with Kerker
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  dftClass<FEOrder, FEOrderElectro>::applyKerkerPreconditionerToTotalDensityResidual(
+  dftClass<FEOrder, FEOrderElectro>::
+    applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
-    kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-      &                   kerkerPreconditionedResidualSolverProblemDevice,
-    linearSolverCGDevice &CGSolverDevice,
+      kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                   kerkerPreconditionedResidualSolverProblemDevice,
+      linearSolverCGDevice &CGSolverDevice,
 #endif
-    kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-      &                 kerkerPreconditionedResidualSolverProblem,
-    dealiiLinearSolver &CGSolver)
+      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
+        &                 kerkerPreconditionedResidualSolverProblem,
+      dealiiLinearSolver &CGSolver)
   {
-
     distributedCPUVec<double> residualRho;
     residualRho.reinit(d_densityInNodalValues[0]);
 
     residualRho = 0.0;
 
     // compute residual = rhoIn - rhoOut
-    residualRho.add(1.0,d_densityInNodalValues[0], -1.0, d_densityOutNodalValues[0]);
+    residualRho.add(1.0,
+                    d_densityInNodalValues[0],
+                    -1.0,
+                    d_densityOutNodalValues[0]);
 
     residualRho.update_ghost_values();
 
@@ -61,7 +64,8 @@ namespace dftfe
     unsigned int numQuadPoints = fe_evalHelm.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    // preparation for rhs of Helmholtz solve by computing gradients of residualRho
+    // preparation for rhs of Helmholtz solve by computing gradients of
+    // residualRho
     std::map<dealii::CellId, std::vector<double>> gradDensityResidualValuesMap;
     for (unsigned int cell = 0;
          cell < d_matrixFreeDataPRefined.n_cell_batches();

@@ -2246,11 +2246,11 @@ namespace dftfe
                 // Fill in New Kerker framework here
                 applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
-                          kerkerPreconditionedResidualSolverProblemDevice,
-                          CGSolverDevice,
+                  kerkerPreconditionedResidualSolverProblemDevice,
+                  CGSolverDevice,
 #endif
-                          kerkerPreconditionedResidualSolverProblem,
-                          CGSolver);
+                  kerkerPreconditionedResidualSolverProblem,
+                  CGSolver);
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
               {
@@ -3619,10 +3619,7 @@ namespace dftfe
                                          d_pseudoVLoc,
                                          d_pseudoVLocAtoms,
                                          d_constraintsPRefined,
-                                         d_vselfBinsManager,
-                                         *rhoOutValues,
-                                         *gradRhoOutValues,
-                                         d_phiTotRhoIn);
+                                         d_vselfBinsManager);
             if (d_dftParamsPtr->verbosity >= 0)
               forcePtr->printAtomsForces();
             computingTimerStandard.leave_subsection("Ion force computation");

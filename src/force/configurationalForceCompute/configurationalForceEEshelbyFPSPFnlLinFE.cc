@@ -71,12 +71,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce)
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     int this_process;
     MPI_Comm_rank(d_mpiCommParent, &this_process);
@@ -1478,10 +1473,7 @@ namespace dftfe
           gradRhoTotalOutValuesLpsp,
           pseudoVLocElectro,
           pseudoVLocAtomsElectro,
-          vselfBinsManagerElectro,
-          shadowKSRhoMinValues,
-          phiRhoMinusApproxRho,
-          shadowPotentialForce);
+          vselfBinsManagerElectro);
       }
 
     MPI_Barrier(d_mpiCommParent);
@@ -1524,10 +1516,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRhoElectro,
-      const bool                       shadowPotentialForce)
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     dealii::FEEvaluation<
       3,
@@ -1644,14 +1633,6 @@ namespace dftfe
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-      gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads(
-        numQuadPointsSmearedb, zeroTensor);
-    dealii::AlignedVector<dealii::VectorizedArray<double>>
-      shadowKSRhoMinQuadsElectro(numQuadPoints,
-                                 dealii::make_vectorized_array(0.0));
-    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-      gradPhiRhoMinusApproxRhoQuadsElectro(numQuadPoints, zeroTensor);
-    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       gradRhoQuadsElectro(numQuadPoints, zeroTensor);
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       gradRhoQuadsElectroLpsp(numQuadPointsLpsp, zeroTensor);
@@ -1724,19 +1705,6 @@ namespace dftfe
             std::fill(gradPhiTotSmearedChargeQuads.begin(),
                       gradPhiTotSmearedChargeQuads.end(),
                       zeroTensor);
-            if (shadowPotentialForce)
-              {
-                std::fill(shadowKSRhoMinQuadsElectro.begin(),
-                          shadowKSRhoMinQuadsElectro.end(),
-                          dealii::make_vectorized_array(0.0));
-                std::fill(gradPhiRhoMinusApproxRhoQuadsElectro.begin(),
-                          gradPhiRhoMinusApproxRhoQuadsElectro.end(),
-                          zeroTensor);
-                std::fill(
-                  gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.begin(),
-                  gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.end(),
-                  zeroTensor);
-              }
             std::fill(gradRhoQuadsElectro.begin(),
                       gradRhoQuadsElectro.end(),
                       zeroTensor);

@@ -199,14 +199,14 @@ namespace dftfe
               {
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
-                    *rhoInValuesSpinPolarized,
+                    d_densityInQuadValues,
                     rhoPrimeValuesSpinPolarized,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore);
                 else
                   kohnShamDFTEigenOperatorDevice.computeVEffPrime(
-                    *rhoInValues,
+                    d_densityInQuadValues[0],
                     rhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore);
@@ -216,14 +216,14 @@ namespace dftfe
               {
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
-                    *rhoInValuesSpinPolarized,
+                    d_densityInQuadValues,
                     rhoPrimeValuesSpinPolarized,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore);
                 else
                   kohnShamDFTEigenOperator.computeVEffPrime(
-                    *rhoInValues,
+                    d_densityInQuadValues[0],
                     rhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore);
@@ -240,9 +240,9 @@ namespace dftfe
               {
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
-                    *rhoInValuesSpinPolarized,
+                    d_densityInQuadValues,
                     rhoPrimeValuesSpinPolarized,
-                    *gradRhoInValuesSpinPolarized,
+                    d_gradDensityInQuadValues,
                     gradRhoPrimeValuesSpinPolarized,
                     electrostaticPotPrimeValues,
                     s,
@@ -250,9 +250,9 @@ namespace dftfe
                     d_gradRhoCore);
                 else
                   kohnShamDFTEigenOperatorDevice.computeVEffPrime(
-                    *rhoInValues,
+                    d_densityInQuadValues[0],
                     rhoPrimeValues,
-                    *gradRhoInValues,
+                    d_gradDensityInQuadValues[0],
                     gradRhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore,
@@ -263,9 +263,9 @@ namespace dftfe
               {
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
-                    *rhoInValuesSpinPolarized,
+                    d_densityInQuadValues,
                     rhoPrimeValuesSpinPolarized,
-                    *gradRhoInValuesSpinPolarized,
+                    d_gradDensityInQuadValues,
                     gradRhoPrimeValuesSpinPolarized,
                     electrostaticPotPrimeValues,
                     s,
@@ -273,9 +273,9 @@ namespace dftfe
                     d_gradRhoCore);
                 else
                   kohnShamDFTEigenOperator.computeVEffPrime(
-                    *rhoInValues,
+                    d_densityInQuadValues[0],
                     rhoPrimeValues,
-                    *gradRhoInValues,
+                    d_gradDensityInQuadValues[0],
                     gradRhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore,

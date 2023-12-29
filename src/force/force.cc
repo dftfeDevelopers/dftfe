@@ -307,12 +307,7 @@ namespace dftfe
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &                                      pseudoVLocAtomsElectro,
     const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
-    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-    const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-    const std::map<dealii::CellId, std::vector<double>>
-      &                              shadowKSGradRhoMinValues,
-    const distributedCPUVec<double> &phiRhoMinusApproxRho,
-    const bool                       shadowPotentialForce)
+    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(
                             phiTotDofHandlerIndexElectro),
@@ -348,11 +343,7 @@ namespace dftfe
                                           hessianRhoCoreAtoms,
                                           pseudoVLocElectro,
                                           pseudoVLocAtomsElectro,
-                                          vselfBinsManagerElectro,
-                                          shadowKSRhoMinValues,
-                                          shadowKSGradRhoMinValues,
-                                          phiRhoMinusApproxRho,
-                                          shadowPotentialForce);
+                                          vselfBinsManagerElectro);
 
     MPI_Barrier(d_mpiCommParent);
     double gaussian_time = MPI_Wtime();
@@ -494,12 +485,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &                                              pseudoVLocAtomsElectro,
-    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-    const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-    const std::map<dealii::CellId, std::vector<double>>
-      &                              shadowKSGradRhoMinValues,
-    const distributedCPUVec<double> &phiRhoMinusApproxRho,
-    const bool                       shadowPotentialForce)
+    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     configForceLinFEInit(matrixFreeData, matrixFreeDataElectro);
 
@@ -528,11 +514,7 @@ namespace dftfe
       hessianRhoCoreAtoms,
       pseudoVLocElectro,
       pseudoVLocAtomsElectro,
-      vselfBinsManagerElectro,
-      shadowKSRhoMinValues,
-      shadowKSGradRhoMinValues,
-      phiRhoMinusApproxRho,
-      shadowPotentialForce);
+      vselfBinsManagerElectro);
 
     // configurational force contribution from nuclear self energy. This is
     // handled separately as it involves
