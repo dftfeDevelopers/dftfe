@@ -206,7 +206,7 @@ namespace dftfe
                     d_rhoCore);
                 else
                   kohnShamDFTEigenOperatorDevice.computeVEffPrime(
-                    d_densityInQuadValues[0],
+                    d_densityInQuadValues,
                     rhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore);
@@ -223,7 +223,7 @@ namespace dftfe
                     d_rhoCore);
                 else
                   kohnShamDFTEigenOperator.computeVEffPrime(
-                    d_densityInQuadValues[0],
+                    d_densityInQuadValues,
                     rhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore);
@@ -250,9 +250,9 @@ namespace dftfe
                     d_gradRhoCore);
                 else
                   kohnShamDFTEigenOperatorDevice.computeVEffPrime(
-                    d_densityInQuadValues[0],
+                    d_densityInQuadValues,
                     rhoPrimeValues,
-                    d_gradDensityInQuadValues[0],
+                    d_gradDensityInQuadValues,
                     gradRhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore,
@@ -273,9 +273,9 @@ namespace dftfe
                     d_gradRhoCore);
                 else
                   kohnShamDFTEigenOperator.computeVEffPrime(
-                    d_densityInQuadValues[0],
+                    d_densityInQuadValues,
                     rhoPrimeValues,
-                    d_gradDensityInQuadValues[0],
+                    d_gradDensityInQuadValues,
                     gradRhoPrimeValues,
                     electrostaticPotPrimeValues,
                     d_rhoCore,
