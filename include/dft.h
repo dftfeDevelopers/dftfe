@@ -976,19 +976,6 @@ namespace dftfe
     /**
      *@brief Mixing schemes for mixing electron-density
      */
-    double
-    mixing_simple();
-
-    double
-    nodalDensity_mixing_simple_kerker(
-#ifdef DFTFE_WITH_DEVICE
-      kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                   kerkerPreconditionedResidualSolverProblemDevice,
-      linearSolverCGDevice &CGSolverDevice,
-#endif
-      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 kerkerPreconditionedResidualSolverProblem,
-      dealiiLinearSolver &CGSolver);
 
     double
     nodalDensity_mixing_anderson_kerker(
