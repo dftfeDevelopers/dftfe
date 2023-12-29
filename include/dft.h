@@ -1493,7 +1493,7 @@ namespace dftfe
     std::vector<std::unique_ptr<MixingScheme>> d_mixingSchemePtrs;
 
     distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoOutNodalValuesSplit,
-      d_preCondResidualVector, d_rhoNodalFieldRefined,
+      d_preCondTotalDensityResidualVector, d_rhoNodalFieldRefined,
       d_rhoOutNodalValuesDistributed;
 
 

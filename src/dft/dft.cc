@@ -2044,7 +2044,7 @@ namespace dftfe
             kerkerPreconditionedResidualSolverProblemDevice.init(
               d_matrixFreeDataPRefined,
               d_constraintsForHelmholtzRhoNodal,
-              d_preCondResidualVector,
+              d_preCondTotalDensityResidualVector,
               d_dftParamsPtr->kerkerParameter,
               d_helmholtzDofHandlerIndexElectro,
               d_densityQuadratureIdElectro);
@@ -2054,7 +2054,7 @@ namespace dftfe
           kerkerPreconditionedResidualSolverProblem.init(
             d_matrixFreeDataPRefined,
             d_constraintsForHelmholtzRhoNodal,
-            d_preCondResidualVector,
+            d_preCondTotalDensityResidualVector,
             d_dftParamsPtr->kerkerParameter,
             d_helmholtzDofHandlerIndexElectro,
             d_densityQuadratureIdElectro);
