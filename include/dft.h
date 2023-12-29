@@ -1027,8 +1027,8 @@ namespace dftfe
      *@brief Mixing schemes for mixing electron-density
      */
 
-    double
-    nodalDensity_mixing_anderson_kerker(
+    void
+    applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
       kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                   kerkerPreconditionedResidualSolverProblemDevice,

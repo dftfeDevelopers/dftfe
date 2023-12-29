@@ -2244,6 +2244,13 @@ namespace dftfe
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
               {
                 // Fill in New Kerker framework here
+                applyKerkerPreconditionerToTotalDensityResidual(
+#ifdef DFTFE_WITH_DEVICE
+                          kerkerPreconditionedResidualSolverProblemDevice,
+                          CGSolverDevice,
+#endif
+                          kerkerPreconditionedResidualSolverProblem,
+                          CGSolver);
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
               {

@@ -130,7 +130,7 @@ SET(TARGET_SRC
   ./src/dft/localizationLength.cc
   ./src/dft/moveAtoms.cc
   ./src/dft/moveMeshToAtoms.cc
-  ./src/dft/nodalDensityMixingSchemes.cc
+  ./src/dft/kerker.cc
   ./src/dft/pRefinedDoFHandler.cc
   ./src/dft/psiInitialGuess.cc
   ./src/dft/publicMethods.cc
