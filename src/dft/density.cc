@@ -213,13 +213,13 @@ namespace dftfe
       {
         d_rhoOutNodalValuesDistributed = d_densityOutNodalValues[0];
         d_constraintsRhoNodalInfo.distribute(d_rhoOutNodalValuesDistributed);
-        interpolateRhoNodalDataToQuadratureDataLpsp(
+        interpolateDensityNodalDataToQuadratureDataLpsp(
           basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_lpspQuadratureIdElectro,
           d_densityOutNodalValues[0],
+          d_densityTotalOutValuesLpspQuad,
           d_gradDensityTotalOutValuesLpspQuad,
-          d_gradRhoOutValuesLpspQuad,
           true);
       }
     else if (d_dftParamsPtr->computeEnergyEverySCF)
@@ -236,7 +236,7 @@ namespace dftfe
             d_densityOutNodalValues[0].update_ghost_values();
           }
 
-        interpolateRhoNodalDataToQuadratureDataLpsp(
+        interpolateDensityNodalDataToQuadratureDataLpsp(
           basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_lpspQuadratureIdElectro,

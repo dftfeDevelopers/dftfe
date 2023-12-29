@@ -1085,8 +1085,9 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::computeVEff(
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+      &rhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
@@ -1126,8 +1127,8 @@ namespace dftfe
                 densityValue[q] += temp2[q];
             }
 
-          const std::vector<double> &tempPhi =
-            phiValues.find(cellPtr->id())->second;
+          const double *tempPhi =
+            phiValues.data() + iElemCount * numberQuadraturePoints;
 
           std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
@@ -1182,8 +1183,9 @@ namespace dftfe
       &rhoValues,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  gradRhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+      &gradRhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
@@ -1245,8 +1247,8 @@ namespace dftfe
                 }
             }
 
-          const std::vector<double> &tempPhi =
-            phiValues.find(cellPtr->id())->second;
+          const double *tempPhi =
+            phiValues.data() + iElemCount * numberQuadraturePoints;
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
@@ -1348,9 +1350,10 @@ namespace dftfe
     computeVEffSpinPolarized(
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                                                  rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiValues,
-      const unsigned int                                   spinIndex,
+        &rhoValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                phiValues,
+      const unsigned int spinIndex,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -1389,8 +1392,8 @@ namespace dftfe
                  rhoValues[1][iElemCount * numberQuadraturePoints + q]) /
                 2.0;
             }
-          const std::vector<double> &tempPhi =
-            phiValues.find(cellPtr->id())->second;
+          const double *tempPhi =
+            phiValues.data() + iElemCount * numberQuadraturePoints;
 
           if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
             {
@@ -1461,9 +1464,10 @@ namespace dftfe
         &rhoValues,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                                                  gradRhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiValues,
-      const unsigned int                                   spinIndex,
+        &gradRhoValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                phiValues,
+      const unsigned int spinIndex,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -1526,8 +1530,8 @@ namespace dftfe
                                     3 * q + iDim]) /
                   2.0;
             }
-          const std::vector<double> &tempPhi =
-            phiValues.find(cellPtr->id())->second;
+          const double *tempPhi =
+            phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
           if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)

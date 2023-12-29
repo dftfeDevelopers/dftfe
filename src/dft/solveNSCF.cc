@@ -267,13 +267,13 @@ namespace dftfe
 
     d_phiTotRhoIn.update_ghost_values();
 
-    std::map<dealii::CellId, std::vector<double>> dummy;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+      basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,
-      d_phiInValues,
+      d_phiInQuadValues,
       dummy);
 
     //
@@ -318,7 +318,7 @@ namespace dftfe
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
                     d_densityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -327,7 +327,7 @@ namespace dftfe
                 if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
                     d_densityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -343,7 +343,7 @@ namespace dftfe
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
                     d_densityInQuadValues,
                     d_gradDensityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -354,7 +354,7 @@ namespace dftfe
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
                     d_densityInQuadValues,
                     d_gradDensityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -640,14 +640,14 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if (d_dftParamsPtr->useDevice)
               kohnShamDFTEigenOperatorDevice.computeVEff(d_densityInQuadValues,
-                                                         d_phiInValues,
+                                                         d_phiInQuadValues,
                                                          d_pseudoVLoc,
                                                          d_rhoCore,
                                                          d_lpspQuadratureId);
 #endif
             if (!d_dftParamsPtr->useDevice)
               kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
-                                                   d_phiInValues,
+                                                   d_phiInQuadValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
                                                    d_lpspQuadratureId);
@@ -662,7 +662,7 @@ namespace dftfe
               kohnShamDFTEigenOperatorDevice.computeVEff(
                 d_densityInQuadValues,
                 d_gradDensityInQuadValues,
-                d_phiInValues,
+                d_phiInQuadValues,
                 d_pseudoVLoc,
                 d_rhoCore,
                 d_gradRhoCore,
@@ -671,7 +671,7 @@ namespace dftfe
             if (!d_dftParamsPtr->useDevice)
               kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
                                                    d_gradDensityInQuadValues,
-                                                   d_phiInValues,
+                                                   d_phiInQuadValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
                                                    d_gradRhoCore,
@@ -1005,6 +1005,15 @@ namespace dftfe
       }
 
 
+    d_phiTotRhoOut.update_ghost_values();
+
+    interpolateElectroNodalDataToQuadratureDataGeneral(
+      basisOperationsPtrElectroHost,
+      d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+      d_phiTotRhoOut,
+      d_phiOutQuadValues,
+      dummy);
 
     computing_timer.leave_subsection("phiTot solve");
 
@@ -1012,84 +1021,40 @@ namespace dftfe
     // matrix_free_data.get_quadrature(d_densityQuadratureId);
     d_dispersionCorr.computeDispresionCorrection(atomLocations,
                                                  d_domainBoundingVectors);
-    const double totalEnergy =
-      d_dftParamsPtr->spinPolarized == 0 ?
-        energyCalc.computeEnergy(d_dofHandlerPRefined,
-                                 dofHandler,
-                                 quadrature,
-                                 quadrature,
-                                 d_matrixFreeDataPRefined.get_quadrature(
-                                   d_smearedChargeQuadratureIdElectro),
-                                 d_matrixFreeDataPRefined.get_quadrature(
-                                   d_lpspQuadratureIdElectro),
-                                 eigenValues,
-                                 d_kPointWeights,
-                                 fermiEnergy,
-                                 d_excManagerPtr,
-                                 d_dispersionCorr,
-                                 d_phiInValues,
-                                 d_phiTotRhoOut,
-                                 *rhoInValues,
-                                 *rhoOutValues,
-                                 d_rhoOutValuesLpspQuad,
-                                 *rhoOutValues,
-                                 d_rhoOutValuesLpspQuad,
-                                 *gradRhoInValues,
-                                 *gradRhoOutValues,
-                                 d_rhoCore,
-                                 d_gradRhoCore,
-                                 d_bQuadValuesAllAtoms,
-                                 d_bCellNonTrivialAtomIds,
-                                 d_localVselfs,
-                                 d_pseudoVLoc,
-                                 d_pseudoVLoc,
-                                 d_atomNodeIdToChargeMap,
-                                 atomLocations.size(),
-                                 lowerBoundKindex,
-                                 0,
-                                 d_dftParamsPtr->verbosity >= 2,
-                                 d_dftParamsPtr->smearedNuclearCharges) :
-        energyCalc.computeEnergySpinPolarized(
-          d_dofHandlerPRefined,
-          dofHandler,
-          quadrature,
-          quadrature,
-          d_matrixFreeDataPRefined.get_quadrature(
-            d_smearedChargeQuadratureIdElectro),
-          d_matrixFreeDataPRefined.get_quadrature(d_lpspQuadratureIdElectro),
-          eigenValues,
-          d_kPointWeights,
-          fermiEnergy,
-          fermiEnergyUp,
-          fermiEnergyDown,
-          d_excManagerPtr,
-          d_dispersionCorr,
-          d_phiInValues,
-          d_phiTotRhoOut,
-          *rhoInValues,
-          *rhoOutValues,
-          d_rhoOutValuesLpspQuad,
-          *rhoOutValues,
-          d_rhoOutValuesLpspQuad,
-          *gradRhoInValues,
-          *gradRhoOutValues,
-          *rhoInValuesSpinPolarized,
-          *rhoOutValuesSpinPolarized,
-          *gradRhoInValuesSpinPolarized,
-          *gradRhoOutValuesSpinPolarized,
-          d_rhoCore,
-          d_gradRhoCore,
-          d_bQuadValuesAllAtoms,
-          d_bCellNonTrivialAtomIds,
-          d_localVselfs,
-          d_pseudoVLoc,
-          d_pseudoVLoc,
-          d_atomNodeIdToChargeMap,
-          atomLocations.size(),
-          lowerBoundKindex,
-          0,
-          d_dftParamsPtr->verbosity >= 2,
-          d_dftParamsPtr->smearedNuclearCharges);
+    const double totalEnergy = energyCalc.computeEnergy(
+      basisOperationsPtrHost,
+      basisOperationsPtrElectroHost,
+      d_densityQuadratureId,
+      d_densityQuadratureIdElectro,
+      d_smearedChargeQuadratureIdElectro,
+      d_lpspQuadratureIdElectro,
+      eigenValues,
+      d_kPointWeights,
+      fermiEnergy,
+      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
+      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyDown,
+      d_excManagerPtr,
+      d_dispersionCorr,
+      d_phiInQuadValues,
+      d_phiOutQuadValues,
+      d_phiTotRhoOut,
+      d_densityInQuadValues,
+      d_densityOutQuadValues,
+      d_gradDensityInQuadValues,
+      d_gradDensityOutQuadValues,
+      d_densityTotalOutValuesLpspQuad,
+      d_rhoCore,
+      d_gradRhoCore,
+      d_bQuadValuesAllAtoms,
+      d_bCellNonTrivialAtomIds,
+      d_localVselfs,
+      d_pseudoVLoc,
+      d_atomNodeIdToChargeMap,
+      atomLocations.size(),
+      lowerBoundKindex,
+      0,
+      d_dftParamsPtr->verbosity >= 0 ? true : false,
+      d_dftParamsPtr->smearedNuclearCharges);
 
     if (d_dftParamsPtr->verbosity <= 1)
       pcout << "Total energy  : " << totalEnergy << std::endl;

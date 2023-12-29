@@ -546,8 +546,9 @@ namespace dftfe
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEff(
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+      &rhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
@@ -587,8 +588,8 @@ namespace dftfe
               densityValue[q] =
                 rhoValues[0][iElemCount * numberQuadraturePoints + q];
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -649,8 +650,9 @@ namespace dftfe
       &rhoValues,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  gradRhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+      &gradRhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
@@ -712,8 +714,8 @@ namespace dftfe
                                iDim];
 
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -1743,8 +1745,9 @@ namespace dftfe
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffSpinPolarized(
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+      &rhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const unsigned int                                   spinIndex,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -1799,8 +1802,8 @@ namespace dftfe
                   2.0;
               }
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -1866,8 +1869,9 @@ namespace dftfe
       &rhoValues,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  gradRhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+      &gradRhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const unsigned int                                   spinIndex,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -1950,8 +1954,8 @@ namespace dftfe
                     2.0;
               }
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
