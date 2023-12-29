@@ -4185,7 +4185,7 @@ namespace dftfe
       {
         FILE *pFile;
         pFile = fopen("bands.out", "w");
-        fprintf(pFile, "%d %d\n", totkPoints, numberEigenValues);
+        fprintf(pFile, "%d %d %.14g\n", totkPoints, numberEigenValues, FE);
         for (unsigned int kPoint = 0;
              kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
              ++kPoint)
@@ -4194,16 +4194,33 @@ namespace dftfe
               {
                 if (d_dftParamsPtr->spinPolarized)
                   {
+                    double occupancyUp = dftUtils::getPartialOccupancy(
+                      eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
+                                                 iWave],
+                      FE,
+                      C_kb,
+                      d_dftParamsPtr->TVal);
+
+                    double occupancyDown = dftUtils::getPartialOccupancy(
+                      eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                   d_numEigenValues +
+                                                 iWave],
+                      FE,
+                      C_kb,
+                      d_dftParamsPtr->TVal);
+
                     fprintf(
                       pFile,
-                      "%d  %d   %.14g   %.14g\n",
+                      "%d  %d   %.14g   %.14g   %.14g   %.14g\n",
                       kPoint,
                       iWave,
                       eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
                                                  iWave],
                       eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
                                                    d_numEigenValues +
-                                                 iWave]);
+                                                 iWave],
+                      occupancyUp,
+                      occupancyDown);
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
                       {
@@ -4219,20 +4236,33 @@ namespace dftfe
                             (eigenValuesFlattenedGlobal
                                [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
                           1000000000.0;
+                        double occupancyUpTrunc =
+                          std::floor(1000000000 * (occupancyUp)) / 1000000000.0;
+                        double occupancyDownTrunc =
+                          std::floor(1000000000 * (occupancyDown)) /
+                          1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
                               << std::setprecision(8) << eigenUpTrunc << "  "
-                              << eigenDownTrunc << std::endl;
+                              << eigenDownTrunc << "  " << occupancyUpTrunc
+                              << "  " << occupancyDownTrunc << std::endl;
                       }
                   }
                 else
                   {
+                    double occupancy = dftUtils::getPartialOccupancy(
+                      eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
+                                                 iWave],
+                      FE,
+                      C_kb,
+                      d_dftParamsPtr->TVal);
                     fprintf(
                       pFile,
-                      "%d  %d %.14g\n",
+                      "%d  %d %.14g %.14g\n",
                       kPoint,
                       iWave,
                       eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                 iWave]);
+                                                 iWave],
+                      occupancy);
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
                       {
@@ -4241,9 +4271,11 @@ namespace dftfe
                                      (eigenValuesFlattenedGlobal
                                         [kPoint * d_numEigenValues + iWave])) /
                           1000000000.0;
+                        double occupancyTrunc =
+                          std::floor(1000000000 * (occupancy)) / 1000000000.0;
                         pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenTrunc
-                              << std::endl;
+                              << std::setprecision(8) << eigenTrunc << " "
+                              << occupancyTrunc << std::endl;
                       }
                   }
               }
@@ -4503,50 +4535,6 @@ namespace dftfe
         << std::endl;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::copyDensityToVector(
-    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &                  rhoValues,
-    std::vector<double> &rhoValuesVector)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = quadratureDensity.size();
-
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        numQuadPoints = 2 * numQuadPoints;
-      }
-
-    rhoValuesVector.resize(numCells * numQuadPoints);
-    std::fill(rhoValuesVector.begin(), rhoValuesVector.end(), 0.0);
-
-    unsigned int iElem = 0;
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler->begin_active(),
-      endc = dofHandler->end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                rhoValuesVector[iElem * numQuadPoints + iQuad] =
-                  (*rhoValues)[cell->id()][iQuad];
-              }
-            iElem++;
-          }
-      }
-  }
-
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -4559,276 +4547,6 @@ namespace dftfe
       outValues, outValues + size, inValues, residualValues, std::minus<>{});
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::copyDensityFromVector(
-    const std::vector<double> &rhoValuesVector,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = quadratureDensity.size();
-
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        numQuadPoints = 2 * numQuadPoints;
-      }
-
-    unsigned int iElem = 0;
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler->begin_active(),
-      endc = dofHandler->end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                (*rhoValues)[cell->id()][iQuad] =
-                  rhoValuesVector[iElem * numQuadPoints + iQuad];
-              }
-            iElem++;
-          }
-      }
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::copyGradDensityToVector(
-    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &                  gradRhoValues,
-    std::vector<double> &gradRhoValuesVector)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = 3 * quadratureDensity.size();
-
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        numQuadPoints = 2 * numQuadPoints;
-      }
-
-    gradRhoValuesVector.resize(numCells * numQuadPoints);
-    std::fill(gradRhoValuesVector.begin(), gradRhoValuesVector.end(), 0.0);
-
-    unsigned int iElem = 0;
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler->begin_active(),
-      endc = dofHandler->end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                gradRhoValuesVector[iElem * numQuadPoints + iQuad] =
-                  (*gradRhoValues)[cell->id()][iQuad];
-              }
-            iElem++;
-          }
-      }
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::copyGradDensityFromVector(
-    const std::vector<double> &gradRhoValuesVector,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &gradRhoValues)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = 3 * quadratureDensity.size();
-
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        numQuadPoints = 2 * numQuadPoints;
-      }
-
-    unsigned int iElem = 0;
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler->begin_active(),
-      endc = dofHandler->end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                (*gradRhoValues)[cell->id()][iQuad] =
-                  gradRhoValuesVector[iElem * numQuadPoints + iQuad];
-              }
-            iElem++;
-          }
-      }
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::computeTotalDensityFromSpinPolarised(
-    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &rhoSpinValues,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>> &rhoValues)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = quadratureDensity.size();
-
-    unsigned int iElem = 0;
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler->begin_active(),
-      endc = dofHandler->end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                (*rhoValues)[cell->id()][iQuad] =
-                  (*rhoSpinValues)[cell->id()][2 * iQuad + 0] +
-                  (*rhoSpinValues)[cell->id()][2 * iQuad + 1];
-              }
-            iElem++;
-          }
-      }
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::computeTotalGradDensityFromSpinPolarised(
-    const std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &gradRhoSpinValues,
-    std::shared_ptr<std::map<dealii::CellId, std::vector<double>>>
-      &gradRhoValues)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = quadratureDensity.size();
-
-    unsigned int iElem = 0;
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell = dofHandler->begin_active(),
-      endc = dofHandler->end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-              {
-                ((*gradRhoValues)[cell->id()][3 * iQuad + 0]) =
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 0]) +
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 3]);
-                ((*gradRhoValues)[cell->id()][3 * iQuad + 1]) =
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 1]) +
-                  ((*gradRhoInValuesSpinPolarized)[cell->id()][6 * iQuad + 4]);
-                ((*gradRhoValues)[cell->id()][3 * iQuad + 2]) =
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 2]) +
-                  ((*gradRhoSpinValues)[cell->id()][6 * iQuad + 5]);
-              }
-            iElem++;
-          }
-      }
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::computeJxWForRho(
-    std::vector<double> &vecJxW)
-  {
-    unsigned int numCells = matrix_free_data.n_physical_cells();
-
-    const dealii::Quadrature<3> &quadratureDensity =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    unsigned int numQuadPoints = quadratureDensity.size();
-
-
-
-    const dealii::DoFHandler<3> *dofHandler =
-      &matrix_free_data.get_dof_handler(d_densityDofHandlerIndex);
-
-    dealii::FEValues<3> fe_values(dofHandler->get_fe(),
-                                  quadratureDensity,
-                                  dealii::update_JxW_values);
-
-    typename dealii::DoFHandler<3>::active_cell_iterator
-      cell             = dofHandler->begin_active(),
-      endc             = dofHandler->end();
-    unsigned int iElem = 0;
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        vecJxW.resize(numCells * numQuadPoints * 2);
-        std::fill(vecJxW.begin(), vecJxW.end(), 0.0);
-        for (; cell != endc; ++cell)
-          {
-            if (cell->is_locally_owned())
-              {
-                fe_values.reinit(cell);
-                for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-                  {
-                    vecJxW[iElem * numQuadPoints * 2 + 2 * iQuad + 0] =
-                      fe_values.JxW(iQuad);
-                    vecJxW[iElem * numQuadPoints * 2 + 2 * iQuad + 1] =
-                      vecJxW[iElem * numQuadPoints * 2 + 2 * iQuad + 0];
-                  }
-                iElem++;
-              }
-          }
-      }
-    else
-      {
-        vecJxW.resize(numCells * numQuadPoints);
-        std::fill(vecJxW.begin(), vecJxW.end(), 0.0);
-        for (; cell != endc; ++cell)
-          {
-            if (cell->is_locally_owned())
-              {
-                fe_values.reinit(cell);
-                for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
-                  {
-                    vecJxW[iElem * numQuadPoints + iQuad] =
-                      fe_values.JxW(iQuad);
-                  }
-                iElem++;
-              }
-          }
-      }
-  }
 
 
 #include "dft.inst.cc"
