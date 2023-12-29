@@ -185,8 +185,9 @@ node is stored
     computeVEff(
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                                                  rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiValues,
+        &rhoValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &phiValues,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -205,9 +206,10 @@ node is stored
     computeVEffSpinPolarized(
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                                                  rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiValues,
-      unsigned int                                         spinIndex,
+        &rhoValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &          phiValues,
+      unsigned int spinIndex,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -228,8 +230,9 @@ node is stored
         &rhoValues,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                                                  gradRhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiValues,
+        &gradRhoValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &phiValues,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -253,9 +256,10 @@ node is stored
         &rhoValues,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                                                  gradRhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiValues,
-      const unsigned int                                   spinIndex,
+        &gradRhoValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                phiValues,
+      const unsigned int spinIndex,
       const std::map<dealii::CellId, std::vector<double>>
         &externalPotCorrValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,

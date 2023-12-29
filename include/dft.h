@@ -638,42 +638,6 @@ namespace dftfe
       const bool isEvaluateHessianData = false);
 
     /**
-     *@brief interpolate density nodal data to quadrature data using FEEvaluation
-     *
-     *@param[in] matrixFreeData matrix free data object
-     *@param[in] nodalField nodal data to be interpolated
-     *@param[out] quadratureValueData to be computed at quadrature points
-     *@param[out] quadratureGradValueData to be computed at quadrature points
-     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
-     */
-    void interpolateRhoNodalDataToQuadratureDataGeneral(
-      dealii::MatrixFree<3, double> &                matrixFreeData,
-      const unsigned int                             dofHandlerId,
-      const unsigned int                             quadratureId,
-      const distributedCPUVec<double> &              nodalField,
-      std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureHessianValueData,
-      const bool                                     isEvaluateGradData = false,
-      const bool isEvaluateHessianData = false);
-
-    /**
-     *@brief interpolate spin rho nodal data to quadrature data using FEEvaluation
-     *
-     */
-    void interpolateRhoSpinNodalDataToQuadratureDataGeneral(
-      dealii::MatrixFree<3, double> &                matrixFreeData,
-      const unsigned int                             dofHandlerId,
-      const unsigned int                             quadratureId,
-      const distributedCPUVec<double> &              nodalFieldSpin0,
-      const distributedCPUVec<double> &              nodalFieldSpin1,
-      std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureHessianValueData,
-      const bool                                     isEvaluateGradData = false,
-      const bool isEvaluateHessianData = false);
-
-    /**
      *@brief interpolate nodal data to quadrature data using FEEvaluation
      *
      *@param[in] matrixFreeData matrix free data object
@@ -682,35 +646,21 @@ namespace dftfe
      *@param[out] quadratureGradValueData to be computed at quadrature points
      *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
      */
-    void interpolateElectroNodalDataToQuadratureDataGeneral(
-      dealii::MatrixFree<3, double> &                matrixFreeData,
-      const unsigned int                             dofHandlerId,
-      const unsigned int                             quadratureId,
-      const distributedCPUVec<double> &              nodalField,
-      std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
+    void
+    interpolateElectroNodalDataToQuadratureDataGeneral(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                              basisOperationsPtr,
+      const unsigned int               dofHandlerId,
+      const unsigned int               quadratureId,
+      const distributedCPUVec<double> &nodalField,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &        quadratureGradValueData,
       const bool isEvaluateGradData = false);
 
-
-    /**
-     *@brief interpolate nodal data to quadrature data using FEEvaluation
-     *
-     *@param[in] matrixFreeData matrix free data object
-     *@param[in] nodalField nodal data to be interpolated
-     *@param[in] matrix free dofHandler id
-     *@param[in] matrix free quadrature id
-     *@param[out] quadratureValueData to be computed at quadrature points
-     *@param[out] quadratureGradValueData to be computed at quadrature points
-     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
-     */
-    void interpolateRhoNodalDataToQuadratureDataLpsp(
-      dealii::MatrixFree<3, double> &                matrixFreeData,
-      const unsigned int                             dofHandlerId,
-      const unsigned int                             quadratureId,
-      const distributedCPUVec<double> &              nodalField,
-      std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-      std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
-      const bool                                     isEvaluateGradData);
 
     /**
      *@brief interpolate rho nodal data to quadrature data using FEEvaluation
@@ -1549,8 +1499,10 @@ namespace dftfe
     std::vector<distributedCPUVec<double>> d_densityInNodalValues,
       d_densityOutNodalValues, d_densityResidualNodalValues;
 
-    std::map<dealii::CellId, std::vector<double>> d_phiInValues, d_phiOutValues;
-
+    // std::map<dealii::CellId, std::vector<double>> d_phiInValues,
+    // d_phiOutValues;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                                               d_phiInQuadValues, d_phiOutQuadValues;
     std::vector<std::unique_ptr<MixingScheme>> d_mixingSchemePtrs;
 
     distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoOutNodalValuesSplit,

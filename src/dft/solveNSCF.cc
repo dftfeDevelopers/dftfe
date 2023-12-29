@@ -269,11 +269,11 @@ namespace dftfe
 
     std::map<dealii::CellId, std::vector<double>> dummy;
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+      basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,
-      d_phiInValues,
+      d_phiInQuadValues,
       dummy);
 
     //
@@ -318,7 +318,7 @@ namespace dftfe
                 if (d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
                     d_densityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -327,7 +327,7 @@ namespace dftfe
                 if (!d_dftParamsPtr->useDevice)
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
                     d_densityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -343,7 +343,7 @@ namespace dftfe
                   kohnShamDFTEigenOperatorDevice.computeVEffSpinPolarized(
                     d_densityInQuadValues,
                     d_gradDensityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -354,7 +354,7 @@ namespace dftfe
                   kohnShamDFTEigenOperator.computeVEffSpinPolarized(
                     d_densityInQuadValues,
                     d_gradDensityInQuadValues,
-                    d_phiInValues,
+                    d_phiInQuadValues,
                     s,
                     d_pseudoVLoc,
                     d_rhoCore,
@@ -640,14 +640,14 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if (d_dftParamsPtr->useDevice)
               kohnShamDFTEigenOperatorDevice.computeVEff(d_densityInQuadValues,
-                                                         d_phiInValues,
+                                                         d_phiInQuadValues,
                                                          d_pseudoVLoc,
                                                          d_rhoCore,
                                                          d_lpspQuadratureId);
 #endif
             if (!d_dftParamsPtr->useDevice)
               kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
-                                                   d_phiInValues,
+                                                   d_phiInQuadValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
                                                    d_lpspQuadratureId);
@@ -662,7 +662,7 @@ namespace dftfe
               kohnShamDFTEigenOperatorDevice.computeVEff(
                 d_densityInQuadValues,
                 d_gradDensityInQuadValues,
-                d_phiInValues,
+                d_phiInQuadValues,
                 d_pseudoVLoc,
                 d_rhoCore,
                 d_gradRhoCore,
@@ -671,7 +671,7 @@ namespace dftfe
             if (!d_dftParamsPtr->useDevice)
               kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
                                                    d_gradDensityInQuadValues,
-                                                   d_phiInValues,
+                                                   d_phiInQuadValues,
                                                    d_pseudoVLoc,
                                                    d_rhoCore,
                                                    d_gradRhoCore,
@@ -1027,7 +1027,7 @@ namespace dftfe
                                  fermiEnergy,
                                  d_excManagerPtr,
                                  d_dispersionCorr,
-                                 d_phiInValues,
+                                 d_phiInQuadValues,
                                  d_phiTotRhoOut,
                                  *rhoInValues,
                                  *rhoOutValues,
@@ -1064,7 +1064,7 @@ namespace dftfe
           fermiEnergyDown,
           d_excManagerPtr,
           d_dispersionCorr,
-          d_phiInValues,
+          d_phiInQuadValues,
           d_phiTotRhoOut,
           *rhoInValues,
           *rhoOutValues,

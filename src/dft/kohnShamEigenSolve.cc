@@ -108,21 +108,23 @@ namespace dftfe
         d_dftParamsPtr->periodicZ && !d_dftParamsPtr->pinnedNodeForPBC,
       d_dftParamsPtr->smearedNuclearCharges);
 
-    std::map<dealii::CellId, std::vector<double>> phiInValues;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      phiInValues;
 
     CGSolver.solve(phiTotalSolverProblem,
                    d_dftParamsPtr->absLinearSolverTolerance,
                    d_dftParamsPtr->maxLinearSolverIterations,
                    d_dftParamsPtr->verbosity);
 
-    std::map<dealii::CellId, std::vector<double>> dummy;
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+    d_phiTotRhoIn.update_ghost_values();
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
+    interpolateElectroNodalDataToQuadratureDataGeneral(
+      basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,
       phiInValues,
-      dummy,
       dummy);
 
     //
