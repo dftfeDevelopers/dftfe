@@ -584,9 +584,10 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-              densityValue[q] =
-                rhoValues[0][iElemCount * numberQuadraturePoints + q];
+            std::memcpy(densityValue.data(),
+                        rhoValues[0].data() +
+                          iElemCount * numberQuadraturePoints,
+                        numberQuadraturePoints * sizeof(double));
 
             const double *tempPhi =
               phiValues.data() + iElemCount * numberQuadraturePoints;
@@ -594,10 +595,11 @@ namespace dftfe
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
-                const std::vector<double> &temp2 =
-                  rhoCoreValues.find(cellPtr->id())->second;
-                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-                  densityValue[q] += temp2[q];
+                std::transform(densityValue.data(),
+                               densityValue.data() + numberQuadraturePoints,
+                               rhoCoreValues.find(cellPtr->id())->second.data(),
+                               densityValue.data(),
+                               std::plus<>{});
               }
 
             std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
@@ -704,14 +706,14 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-              densityValue[q] =
-                rhoValues[0][iElemCount * numberQuadraturePoints + q];
-            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-              for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                gradDensityValue[3 * q + iDim] =
-                  rhoValues[0][iElemCount * numberQuadraturePoints * 3 + 3 * q +
-                               iDim];
+            std::memcpy(densityValue.data(),
+                        rhoValues[0].data() +
+                          iElemCount * numberQuadraturePoints,
+                        numberQuadraturePoints * sizeof(double));
+            std::memcpy(gradDensityValue.data(),
+                        gradRhoValues[0].data() +
+                          iElemCount * numberQuadraturePoints * 3,
+                        3 * numberQuadraturePoints * sizeof(double));
 
 
             const double *tempPhi =
@@ -720,17 +722,17 @@ namespace dftfe
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
-                const std::vector<double> &temp2 =
-                  rhoCoreValues.find(cellPtr->id())->second;
-                const std::vector<double> &temp3 =
-                  gradRhoCoreValues.find(cellPtr->id())->second;
-                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-                  {
-                    densityValue[q] += temp2[q];
-                    gradDensityValue[3 * q + 0] += temp3[3 * q + 0];
-                    gradDensityValue[3 * q + 1] += temp3[3 * q + 1];
-                    gradDensityValue[3 * q + 2] += temp3[3 * q + 2];
-                  }
+                std::transform(densityValue.data(),
+                               densityValue.data() + numberQuadraturePoints,
+                               rhoCoreValues.find(cellPtr->id())->second.data(),
+                               densityValue.data(),
+                               std::plus<>{});
+                std::transform(
+                  gradDensityValue.data(),
+                  gradDensityValue.data() + 3 * numberQuadraturePoints,
+                  gradRhoCoreValues.find(cellPtr->id())->second.data(),
+                  gradDensityValue.data(),
+                  std::plus<>{});
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -1789,17 +1791,16 @@ namespace dftfe
         if (cellPtr->is_locally_owned())
           {
             fe_values.reinit(cellPtr);
-
+            const double *cellRhoValues =
+              rhoValues[0].data() + iElemCount * numberQuadraturePoints;
+            const double *cellMagValues =
+              rhoValues[1].data() + iElemCount * numberQuadraturePoints;
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] =
-                  (rhoValues[0][iElemCount * numberQuadraturePoints + q] +
-                   rhoValues[1][iElemCount * numberQuadraturePoints + q]) /
-                  2.0;
-                densityValue[2 * q + 1] =
-                  (rhoValues[0][iElemCount * numberQuadraturePoints + q] -
-                   rhoValues[1][iElemCount * numberQuadraturePoints + q]) /
-                  2.0;
+                const double rhoByTwo   = cellRhoValues[q] / 2.0;
+                const double magByTwo   = cellMagValues[q] / 2.0;
+                densityValue[2 * q]     = rhoByTwo + magByTwo;
+                densityValue[2 * q + 1] = rhoByTwo - magByTwo;
               }
 
             const double *tempPhi =
@@ -1928,31 +1929,32 @@ namespace dftfe
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
+            const double *cellRhoValues =
+              rhoValues[0].data() + iElemCount * numberQuadraturePoints;
+            const double *cellMagValues =
+              rhoValues[1].data() + iElemCount * numberQuadraturePoints;
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] =
-                  (rhoValues[0][iElemCount * numberQuadraturePoints + q] +
-                   rhoValues[1][iElemCount * numberQuadraturePoints + q]) /
-                  2.0;
-                densityValue[2 * q + 1] =
-                  (rhoValues[0][iElemCount * numberQuadraturePoints + q] -
-                   rhoValues[1][iElemCount * numberQuadraturePoints + q]) /
-                  2.0;
-                for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                  gradDensityValue[6 * q + iDim] =
-                    (gradRhoValues[0][3 * iElemCount * numberQuadraturePoints +
-                                      3 * q] +
-                     gradRhoValues[1][3 * iElemCount * numberQuadraturePoints +
-                                      3 * q + iDim]) /
-                    2.0;
-                for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                  gradDensityValue[6 * q + 3 + iDim] =
-                    (gradRhoValues[0][3 * iElemCount * numberQuadraturePoints +
-                                      3 * q] -
-                     gradRhoValues[1][3 * iElemCount * numberQuadraturePoints +
-                                      3 * q + iDim]) /
-                    2.0;
+                const double rhoByTwo   = cellRhoValues[q] / 2.0;
+                const double magByTwo   = cellMagValues[q] / 2.0;
+                densityValue[2 * q]     = rhoByTwo + magByTwo;
+                densityValue[2 * q + 1] = rhoByTwo - magByTwo;
               }
+            const double *cellGradRhoValues =
+              gradRhoValues[0].data() + 3 * iElemCount * numberQuadraturePoints;
+            const double *cellGradMagValues =
+              gradRhoValues[1].data() + 3 * iElemCount * numberQuadraturePoints;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                {
+                  const double gradRhoByTwo =
+                    cellGradRhoValues[3 * q + iDim] / 2.0;
+                  const double gradMagByTwo =
+                    cellGradMagValues[3 * q + iDim] / 2.0;
+                  gradDensityValue[6 * q + iDim] = gradRhoByTwo + gradMagByTwo;
+                  gradDensityValue[6 * q + 3 + iDim] =
+                    gradRhoByTwo - gradMagByTwo;
+                }
 
             const double *tempPhi =
               phiValues.data() + iElemCount * numberQuadraturePoints;
