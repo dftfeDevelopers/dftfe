@@ -70,16 +70,17 @@ namespace dftfe
 
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> charge;
-    std::map<dealii::CellId, std::vector<double>>                        dummy;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     v.update_ghost_values();
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+    interpolateDensityNodalDataToQuadratureDataGeneral(
+      basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       v,
       charge,
       dummy,
       dummy,
+      false,
       false);
 
     distributedCPUVec<double> electrostaticPotPrime;
@@ -145,47 +146,96 @@ namespace dftfe
                        d_dftParamsPtr->verbosity);
       }
 
-    std::map<dealii::CellId, std::vector<double>> electrostaticPotPrimeValues;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      electrostaticPotPrimeValues;
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+      basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       electrostaticPotPrime,
       electrostaticPotPrimeValues,
-      dummy);
+      dummy,
+      false);
 
     // interpolate nodal data to quadrature data
-    std::map<dealii::CellId, std::vector<double>> rhoPrimeValues;
-    std::map<dealii::CellId, std::vector<double>> gradRhoPrimeValues;
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      rhoPrimeValues(2);
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      gradRhoPrimeValues(2);
+    interpolateDensityNodalDataToQuadratureDataGeneral(
+      basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       v,
-      rhoPrimeValues,
-      gradRhoPrimeValues,
+      rhoPrimeValues[0],
+      gradRhoPrimeValues[0],
       dummy,
       d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
-    std::map<dealii::CellId, std::vector<double>> rhoPrimeValuesSpinPolarized;
-    std::map<dealii::CellId, std::vector<double>>
-      gradRhoPrimeValuesSpinPolarized;
 
     if (d_dftParamsPtr->spinPolarized == 1)
       {
         vSpin0.update_ghost_values();
         vSpin1.update_ghost_values();
-        interpolateRhoSpinNodalDataToQuadratureDataGeneral(
-          d_matrixFreeDataPRefined,
+
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          vSpin0Values;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          gradvSpin0Values;
+
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          vSpin1Values;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          gradvSpin1Values;
+
+        interpolateDensityNodalDataToQuadratureDataGeneral(
+          basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           vSpin0,
-          vSpin1,
-          rhoPrimeValuesSpinPolarized,
-          gradRhoPrimeValuesSpinPolarized,
+          vSpin0Values,
+          gradvSpin0Values,
           dummy,
           d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA);
+            densityFamilyType::GGA,
+          false);
+
+        interpolateDensityNodalDataToQuadratureDataGeneral(
+          basisOperationsPtrElectroHost,
+          d_densityDofHandlerIndexElectro,
+          d_densityQuadratureIdElectro,
+          vSpin1,
+          vSpin1Values,
+          gradvSpin1Values,
+          dummy,
+          d_excManagerPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA,
+          false);
+
+        rhoPrimeValues[0].resize(vSpin0Values.size());
+        rhoPrimeValues[1].resize(vSpin0Values.size());
+        gradRhoPrimeValues[0].resize(gradvSpin0Values.size());
+        gradRhoPrimeValues[1].resize(gradvSpin0Values.size());
+
+        auto &rhoTotalPrimeQuadVals = rhoPrimeValues[0];
+        auto &rhoMagPrimeQuadVals   = rhoPrimeValues[1];
+        for (unsigned int i = 0; i < vSpin0Values.size(); ++i)
+          {
+            rhoTotalPrimeQuadVals[i] = vSpin0Values[i] + vSpin1Values[i];
+            rhoMagPrimeQuadVals[i]   = vSpin0Values[i] - vSpin1Values[i];
+          }
+
+        auto &gradRhoTotalPrimeQuadVals = gradRhoPrimeValues[0];
+        auto &gradRhoMagPrimeQuadVals   = gradRhoPrimeValues[1];
+        for (unsigned int i = 0; i < vSpin0Values.size(); ++i)
+          {
+            gradRhoTotalPrimeQuadVals[i] =
+              gradvSpin0Values[i] + gradvSpin1Values[i];
+            gradRhoMagPrimeQuadVals[i] =
+              gradvSpin0Values[i] - gradvSpin1Values[i];
+          }
       }
 
     for (unsigned int s = 0; s < (1 + d_dftParamsPtr->spinPolarized); ++s)
@@ -200,7 +250,7 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
                     d_densityInQuadValues,
-                    rhoPrimeValuesSpinPolarized,
+                    rhoPrimeValuesS,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore);
@@ -217,7 +267,7 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
                     d_densityInQuadValues,
-                    rhoPrimeValuesSpinPolarized,
+                    rhoPrimeValues,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore);
@@ -241,9 +291,9 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
                     d_densityInQuadValues,
-                    rhoPrimeValuesSpinPolarized,
+                    rhoPrimeValues,
                     d_gradDensityInQuadValues,
-                    gradRhoPrimeValuesSpinPolarized,
+                    gradRhoPrimeValues,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore,
@@ -264,9 +314,9 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperator.computeVEffPrimeSpinPolarized(
                     d_densityInQuadValues,
-                    rhoPrimeValuesSpinPolarized,
+                    rhoPrimeValues,
                     d_gradDensityInQuadValues,
-                    gradRhoPrimeValuesSpinPolarized,
+                    gradRhoPrimeValues,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore,
