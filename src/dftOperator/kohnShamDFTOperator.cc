@@ -3074,7 +3074,7 @@ namespace dftfe
                                         q]);
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   {
-                    gradDensityValue[6 * q + 2 * idim + 0] =
+                    gradDensityValue[6 * q + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3082,7 +3082,7 @@ namespace dftfe
                        tempGradDensityMagValues[3 * iElemCount *
                                                   numberQuadraturePoints +
                                                 3 * q + idim]);
-                    gradDensityValue[6 * q + 2 * idim + 1] =
+                    gradDensityValue[6 * q + 3 + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3299,7 +3299,7 @@ namespace dftfe
                                         q]);
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   {
-                    gradDensityValue[6 * q + 2 * idim + 0] =
+                    gradDensityValue[6 * q + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3307,7 +3307,7 @@ namespace dftfe
                        tempGradDensityMagValues[3 * iElemCount *
                                                   numberQuadraturePoints +
                                                 3 * q + idim]);
-                    gradDensityValue[6 * q + 2 * idim + 1] =
+                    gradDensityValue[6 * q + 3 + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3521,7 +3521,7 @@ namespace dftfe
                                         q]);
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   {
-                    gradDensityValue[6 * q + 2 * idim + 0] =
+                    gradDensityValue[6 * q + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3529,7 +3529,7 @@ namespace dftfe
                        tempGradDensityMagValues[3 * iElemCount *
                                                   numberQuadraturePoints +
                                                 3 * q + idim]);
-                    gradDensityValue[6 * q + 2 * idim + 1] =
+                    gradDensityValue[6 * q + 3 + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3747,7 +3747,7 @@ namespace dftfe
                                         q]);
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   {
-                    gradDensityValue[6 * q + 2 * idim + 0] =
+                    gradDensityValue[6 * q + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +
@@ -3755,7 +3755,7 @@ namespace dftfe
                        tempGradDensityMagValues[3 * iElemCount *
                                                   numberQuadraturePoints +
                                                 3 * q + idim]);
-                    gradDensityValue[6 * q + 2 * idim + 1] =
+                    gradDensityValue[6 * q + 3 + idim] =
                       0.5 *
                       (tempGradDensityTotalValues[3 * iElemCount *
                                                     numberQuadraturePoints +

@@ -448,6 +448,10 @@ namespace dftfe
         std::vector<double> rhoTotalCellQuadValues(numQuadPoints, 0);
         std::vector<double> rhoSpinPolarizedCellQuadValues(numQuadPoints * 2,
                                                            0);
+        std::vector<double> gradRhoSpinPolarizedCellQuadValues(numQuadPoints *
+                                                                 6,
+                                                               0);
+
 
         if (d_dftParams.spinPolarized == 1)
           {
@@ -605,21 +609,56 @@ namespace dftfe
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
-                            const std::vector<double> &temp3 =
-                              (*dftPtr->gradRhoOutValuesSpinPolarized)
-                                .find(subCellId)
-                                ->second;
+                            // const std::vector<double> &temp3 =
+                            //  (*dftPtr->gradRhoOutValuesSpinPolarized)
+                            //    .find(subCellId)
+                            //    ->second;
+                            const auto &gradRhoTotalOutValues =
+                              gradRhoOutValues[0];
+                            const auto &gradRhoMagOutValues =
+                              gradRhoOutValues[1];
+
+                            for (unsigned int q = 0; q < numQuadPoints; ++q)
+                              for (unsigned int idim = 0; idim < 3; idim++)
+                                {
+                                  gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                     idim] =
+                                    (gradRhoTotalOutValues[subCellIndex *
+                                                             numQuadPoints * 3 +
+                                                           q * 3 + idim] +
+                                     gradRhoMagOutValues[subCellIndex *
+                                                           numQuadPoints * 3 +
+                                                         q * 3 + idim]) /
+                                    2.0;
+                                  gradRhoSpinPolarizedCellQuadValues[6 * q + 3 +
+                                                                     idim] =
+                                    (gradRhoTotalOutValues[subCellIndex *
+                                                             numQuadPoints * 3 +
+                                                           q * 3 + idim] -
+                                     gradRhoMagOutValues[subCellIndex *
+                                                           numQuadPoints * 3 +
+                                                         q * 3 + idim]) /
+                                    2.0;
+                                }
+
+
                             for (unsigned int q = 0; q < numQuadPoints; ++q)
                               for (unsigned int idim = 0; idim < 3; idim++)
                                 {
                                   gradRhoOutQuadsXCSpin0[q][idim] =
-                                    temp3[6 * q + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       idim];
                                   gradRhoOutQuadsXCSpin1[q][idim] =
-                                    temp3[6 * q + 3 + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       3 +
+                                                                       idim];
                                   gradRhoSpin0QuadsVect[q][idim][iSubCell] =
-                                    temp3[6 * q + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       idim];
                                   gradRhoSpin1QuadsVect[q][idim][iSubCell] =
-                                    temp3[6 * q + 3 + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       3 +
+                                                                       idim];
                                 }
 
                             if (d_dftParams.nonLinearCoreCorrection)
