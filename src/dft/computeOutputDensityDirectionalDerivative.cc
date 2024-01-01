@@ -71,6 +71,7 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> charge;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
+    std::map<dealii::CellId, std::vector<double>> dummyMap;
     v.update_ghost_values();
     interpolateDensityNodalDataToQuadratureDataGeneral(
       basisOperationsPtrElectroHost,
@@ -100,7 +101,7 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
           std::map<dealii::types::global_dof_index, double>(),
-          dummy,
+          dummyMap,
           d_smearedChargeQuadratureIdElectro,
           charge,
           d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
@@ -118,7 +119,7 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
           std::map<dealii::types::global_dof_index, double>(),
-          dummy,
+          dummyMap,
           d_smearedChargeQuadratureIdElectro,
           charge,
           false,

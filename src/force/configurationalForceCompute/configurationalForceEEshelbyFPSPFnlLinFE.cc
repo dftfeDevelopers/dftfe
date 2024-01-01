@@ -534,6 +534,8 @@ namespace dftfe
         std::vector<double> rhoTotalCellQuadValues(numQuadPoints, 0);
         std::vector<double> rhoSpinPolarizedCellQuadValues(numQuadPoints * 2,
                                                            0);
+        std::vector<double> gradRhoTotalCellQuadValues(numQuadPoints * 3, 0);
+
         std::vector<double> gradRhoSpinPolarizedCellQuadValues(numQuadPoints *
                                                                  6,
                                                                0);
@@ -671,7 +673,7 @@ namespace dftfe
                           dftPtr->basisOperationsPtrHost->cellIndex(subCellId);
                         const auto &rhoTotalOutValues = rhoOutValues[0];
                         const auto &rhoMagOutValues   = rhoOutValues[1];
-                        for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+                        for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
                             rhoTotalCellQuadValues[q] =
                               rhoTotalOutValues[subCellIndex * numQuadPoints +
@@ -1216,15 +1218,25 @@ namespace dftfe
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
-                            const std::vector<double> &temp3 =
-                              gradRhoOutValues.find(subCellId)->second;
+                            // const std::vector<double> &temp3 =
+                            //  gradRhoOutValues.find(subCellId)->second;
+                            const auto &gradRhoTotalOutValuesTemp =
+                              gradRhoOutValues[0];
+                            for (unsigned int q = 0; q < numQuadPoints; ++q)
+                              for (unsigned int idim = 0; idim < 3; idim++)
+                                gradRhoTotalCellQuadValues[3 * q + idim] =
+                                  gradRhoTotalOutValuesTemp[subCellIndex *
+                                                              numQuadPoints *
+                                                              3 +
+                                                            q * 3 + idim];
+
                             for (unsigned int q = 0; q < numQuadPoints; ++q)
                               for (unsigned int idim = 0; idim < 3; idim++)
                                 {
                                   gradRhoOutQuadsXC[q][idim] =
-                                    temp3[3 * q + idim];
+                                    gradRhoTotalCellQuadValues[3 * q + idim];
                                   gradRhoQuads[q][idim][iSubCell] =
-                                    temp3[3 * q + idim];
+                                    gradRhoTotalCellQuadValues[3 * q + idim];
                                 }
 
                             if (d_dftParams.nonLinearCoreCorrection)
@@ -1613,11 +1625,12 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: mismatch in quadrature rule usage in force computation."));
 
-    if (gradRhoOutValuesLpsp.size() != 0)
-      AssertThrow(
-        gradRhoOutValuesLpsp.begin()->second.size() == 3 * numQuadPointsLpsp,
-        dealii::ExcMessage(
-          "DFT-FE Error: mismatch in quadrature rule usage in force computation."));
+    // if (gradRhoTotalOutValuesLpsp.size() != 0)
+    //  AssertThrow(
+    //    gradRhoTotalOutValuesLpsp.begin()->second.size() == 3 *
+    //    numQuadPointsLpsp, dealii::ExcMessage(
+    //      "DFT-FE Error: mismatch in quadrature rule usage in force
+    //      computation."));
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 

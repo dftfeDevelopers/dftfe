@@ -4119,7 +4119,7 @@ namespace dftfe
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] *=
                   1.0 / 12.0 / lambda;
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
-                  tempPhiPrime[q] * fe_values.JxW(q);
+                  phiPrimeValue[q] * fe_values.JxW(q);
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
