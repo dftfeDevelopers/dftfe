@@ -251,7 +251,7 @@ namespace dftfe
                 if (d_dftParamsPtr->spinPolarized == 1)
                   kohnShamDFTEigenOperatorDevice.computeVEffPrimeSpinPolarized(
                     d_densityInQuadValues,
-                    rhoPrimeValuesS,
+                    rhoPrimeValues,
                     electrostaticPotPrimeValues,
                     s,
                     d_rhoCore);

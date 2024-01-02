@@ -2186,7 +2186,7 @@ namespace dftfe
     for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
       d_mixingSchemePtrs[iComp]->addMixingVariable(
         mixingVariable::rho,
-        basisOperationsPtrHost->JxW(),
+        basisOperationsPtrHost->JxWBasisData(),
         true, // call MPI REDUCE while computing dot products
         d_dftParamsPtr->mixingParameter);
 
@@ -3138,7 +3138,7 @@ namespace dftfe
                                     d_densityOutNodalValues[0]);
             d_densityOutNodalValues[0].update_ghost_values();
 
-            interpolateRhoNodalDataToQuadratureDataLpsp(
+            interpolateDensityNodalDataToQuadratureDataLpsp(
               basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_lpspQuadratureIdElectro,

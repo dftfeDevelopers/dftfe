@@ -95,7 +95,7 @@ namespace dftfe
     computeEnergy(
       const std::shared_ptr<
         dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+          FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
         &basisOperationsPtr,
       const std::shared_ptr<
         dftfe::basis::
@@ -151,7 +151,7 @@ namespace dftfe
     computeXCEnergyTermsSpinPolarized(
       const std::shared_ptr<
         dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+          FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
         &                basisOperationsPtr,
       const unsigned int quadratureId,
       const excManager * excManagerPtr,
@@ -177,7 +177,7 @@ namespace dftfe
     computeXCEnergyTerms(
       const std::shared_ptr<
         dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+          FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
         &                basisOperationsPtr,
       const unsigned int quadratureId,
       const excManager * excManagerPtr,

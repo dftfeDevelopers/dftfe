@@ -27,11 +27,12 @@ namespace dftfe
 {
   namespace internal
   {
+    template <typename T>
     double
     computeFieldTimesDensity(
       const std::shared_ptr<
         dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
         &                                                  basisOperationsPtr,
       const unsigned int                                   quadratureId,
       const std::map<dealii::CellId, std::vector<double>> &fieldValues,
@@ -49,15 +50,16 @@ namespace dftfe
           for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
             result += cellFieldValues[iQuad] *
                       densityQuadValues[iCell * nQuadsPerCell + iQuad] *
-                      basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+                      basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
         }
       return result;
     }
+    template <typename T>
     double
     computeFieldTimesDensity(
       const std::shared_ptr<
         dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
         &                basisOperationsPtr,
       const unsigned int quadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -74,7 +76,7 @@ namespace dftfe
           for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
             result += fieldValues[iCell * nQuadsPerCell + iQuad] *
                       densityQuadValues[iCell * nQuadsPerCell + iQuad] *
-                      basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+                      basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
         }
       return result;
     }
@@ -426,7 +428,7 @@ namespace dftfe
   energyCalculator::computeEnergy(
     const std::shared_ptr<
       dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
       &basisOperationsPtr,
     const std::shared_ptr<
       dftfe::basis::
@@ -626,7 +628,7 @@ namespace dftfe
   energyCalculator::computeXCEnergyTermsSpinPolarized(
     const std::shared_ptr<
       dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
       &                basisOperationsPtr,
     const unsigned int quadratureId,
     const excManager * excManagerPtr,
@@ -834,7 +836,7 @@ namespace dftfe
               ((densityInValues[0][iCell * nQuadsPerCell + iQuad] +
                 densityInValues[1][iCell * nQuadsPerCell + iQuad]) /
                2.0) *
-              basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
             Vxc = derExchEnergyWithInputDensity[2 * iQuad + 1] +
                   derCorrEnergyWithInputDensity[2 * iQuad + 1];
             excCorrPotentialTimesRho +=
@@ -842,18 +844,18 @@ namespace dftfe
               ((densityInValues[0][iCell * nQuadsPerCell + iQuad] -
                 densityInValues[1][iCell * nQuadsPerCell + iQuad]) /
                2.0) *
-              basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
             exchangeEnergy +=
               (exchangeEnergyDensity[iQuad]) *
               (densityValueOutXC[2 * iQuad] +
                densityValueOutXC[2 * iQuad + 1]) *
-              basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
 
             correlationEnergy +=
               (corrEnergyDensity[iQuad]) *
               (densityValueOutXC[2 * iQuad] +
                densityValueOutXC[2 * iQuad + 1]) *
-              basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
             if (excManagerPtr->getDensityBasedFamilyType() ==
                 densityFamilyType::GGA)
               {
@@ -866,7 +868,206 @@ namespace dftfe
                     gradXCRhoInDotgradRhoOut[3 * iQuad + iDim];
                 excCorrPotentialTimesRho +=
                   VxcGrad *
-                  basisOperationsPtr->JxW()[iCell * nQuadsPerCell + iQuad];
+                  basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+              }
+          }
+      }
+  }
+
+
+  double
+  energyCalculator::computeXCEnergyTerms(
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
+      &                basisOperationsPtr,
+    const unsigned int quadratureId,
+    const excManager * excManagerPtr,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradDensityInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                                                  gradDensityOutValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
+    double &                                             exchangeEnergy,
+    double &                                             correlationEnergy,
+    double &excCorrPotentialTimesRho)
+  {
+    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    const unsigned int  nCells        = basisOperationsPtr->nCells();
+    const unsigned int  nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    std::vector<double> densityValueInXC(nQuadsPerCell, 0.0);
+    std::vector<double> densityValueOutXC(nQuadsPerCell, 0.0);
+    std::vector<double> exchangeEnergyDensity(nQuadsPerCell, 0.0);
+    std::vector<double> corrEnergyDensity(nQuadsPerCell, 0.0);
+    std::vector<double> derExchEnergyWithInputDensity(nQuadsPerCell, 0.0);
+    std::vector<double> derCorrEnergyWithInputDensity(nQuadsPerCell, 0.0);
+    std::vector<double> derExchEnergyWithSigmaGradDenInput,
+      derCorrEnergyWithSigmaGradDenInput;
+    std::vector<double> sigmaWithOutputGradDensity, sigmaWithInputGradDensity;
+    std::vector<double> gradXCRhoInDotgradRhoOut;
+    std::vector<std::vector<double>> gradRhoIn, gradRhoOut;
+    if (excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+      {
+        derExchEnergyWithSigmaGradDenInput.resize(nQuadsPerCell);
+        derCorrEnergyWithSigmaGradDenInput.resize(nQuadsPerCell);
+        sigmaWithOutputGradDensity.resize(nQuadsPerCell);
+        sigmaWithInputGradDensity.resize(nQuadsPerCell);
+        gradXCRhoInDotgradRhoOut.resize(nQuadsPerCell);
+      }
+    auto dot3 = [](const std::array<double, 3> &a,
+                   const std::array<double, 3> &b) {
+      double sum = 0.0;
+      for (unsigned int i = 0; i < 3; i++)
+        {
+          sum += a[i] * b[i];
+        }
+      return sum;
+    };
+    const std::vector<double> dummy;
+    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+      {
+        auto cellId = basisOperationsPtr->cellID(iCell);
+        std::map<rhoDataAttributes, const std::vector<double> *> rhoOutData;
+        std::map<rhoDataAttributes, const std::vector<double> *> rhoInData;
+
+        std::map<VeffOutputDataAttributes, std::vector<double> *>
+          outputDerExchangeEnergy;
+        std::map<VeffOutputDataAttributes, std::vector<double> *>
+                                   outputDerCorrEnergy;
+        const std::vector<double> &tempRhoCore =
+          d_dftParams.nonLinearCoreCorrection ?
+            rhoCoreValues.find(cellId)->second :
+            dummy;
+        const std::vector<double> &tempGradRhoCore =
+          (d_dftParams.nonLinearCoreCorrection &&
+           excManagerPtr->getDensityBasedFamilyType() ==
+             densityFamilyType::GGA) ?
+            gradRhoCoreValues.find(cellId)->second :
+            dummy;
+        if (d_dftParams.nonLinearCoreCorrection == true)
+          {
+            std::transform(densityInValues[0].data() + iCell * nQuadsPerCell,
+                           densityInValues[0].data() +
+                             (iCell + 1) * nQuadsPerCell,
+                           tempRhoCore.data(),
+                           densityValueInXC.data(),
+                           std::plus<>{});
+            std::transform(densityOutValues[0].data() + iCell * nQuadsPerCell,
+                           densityOutValues[0].data() +
+                             (iCell + 1) * nQuadsPerCell,
+                           tempRhoCore.data(),
+                           densityValueOutXC.data(),
+                           std::plus<>{});
+          }
+        else
+          {
+            std::memcpy(densityValueInXC.data(),
+                        densityInValues[0].data() + iCell * nQuadsPerCell,
+                        nQuadsPerCell * sizeof(double));
+            std::memcpy(densityValueOutXC.data(),
+                        densityOutValues[0].data() + iCell * nQuadsPerCell,
+                        nQuadsPerCell * sizeof(double));
+          }
+        rhoOutData[rhoDataAttributes::values] = &densityValueOutXC;
+
+        rhoInData[rhoDataAttributes::values] = &densityValueInXC;
+
+        outputDerExchangeEnergy
+          [VeffOutputDataAttributes::derEnergyWithDensity] =
+            &derExchEnergyWithInputDensity;
+
+        outputDerCorrEnergy[VeffOutputDataAttributes::derEnergyWithDensity] =
+          &derCorrEnergyWithInputDensity;
+
+        if (excManagerPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA)
+          {
+            std::array<double, 3> gradXCRhoIn, gradXCRhoOut,
+              gradRhoOut;
+            for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+              {
+                for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                  {
+                    gradXCRhoIn[iDim] =
+                      gradDensityInValues[0][iCell * 3 * nQuadsPerCell +
+                                              3 * iQuad + iDim];
+                    gradXCRhoOut[iDim] =
+                      gradDensityOutValues[0][iCell * 3 * nQuadsPerCell +
+                                               3 * iQuad + iDim];
+                  }
+                gradRhoOut = gradXCRhoOut;
+                if (d_dftParams.nonLinearCoreCorrection == true)
+                  {
+                    for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      {
+                        gradXCRhoIn[iDim] +=
+                          tempGradRhoCore[3 * iQuad + iDim];
+                        gradXCRhoOut[iDim] +=
+                          tempGradRhoCore[3 * iQuad + iDim];
+                      }
+                  }
+                sigmaWithInputGradDensity[iQuad] =
+                  dot3(gradXCRhoIn, gradXCRhoIn);
+                sigmaWithOutputGradDensity[iQuad] =
+                  dot3(gradXCRhoOut, gradXCRhoOut);
+                gradXCRhoInDotgradRhoOut[iQuad] =
+                  dot3(gradXCRhoIn, gradRhoOut);
+              }
+            rhoOutData[rhoDataAttributes::sigmaGradValue] =
+              &sigmaWithOutputGradDensity;
+            rhoInData[rhoDataAttributes::sigmaGradValue] =
+              &sigmaWithInputGradDensity;
+            outputDerExchangeEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derExchEnergyWithSigmaGradDenInput;
+            outputDerCorrEnergy
+              [VeffOutputDataAttributes::derEnergyWithSigmaGradDensity] =
+                &derCorrEnergyWithSigmaGradDenInput;
+          }
+        excManagerPtr->getExcDensityObj()->computeDensityBasedEnergyDensity(
+          nQuadsPerCell, rhoOutData, exchangeEnergyDensity, corrEnergyDensity);
+
+        excManagerPtr->getExcDensityObj()->computeDensityBasedVxc(
+          nQuadsPerCell,
+          rhoInData,
+          outputDerExchangeEnergy,
+          outputDerCorrEnergy);
+        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+          {
+            double Vxc = derExchEnergyWithInputDensity[iQuad] + derCorrEnergyWithInputDensity[iQuad];
+            excCorrPotentialTimesRho +=
+              Vxc *
+              (densityInValues[0][iCell * nQuadsPerCell + iQuad]) *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+            exchangeEnergy +=
+              (exchangeEnergyDensity[iQuad]) *
+              (densityValueOutXC[iQuad]) *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+
+            correlationEnergy +=
+              (corrEnergyDensity[iQuad]) *
+              (densityValueOutXC[iQuad]) *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+            if (excManagerPtr->getDensityBasedFamilyType() ==
+                densityFamilyType::GGA)
+              {
+                double VxcGrad =
+                    2.0 *
+                    (derExchEnergyWithSigmaGradDenInput[iQuad] +
+                     derCorrEnergyWithSigmaGradDenInput[iQuad]) *
+                    gradXCRhoInDotgradRhoOut[iQuad];
+                excCorrPotentialTimesRho +=
+                  VxcGrad *
+                  basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
               }
           }
       }
