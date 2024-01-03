@@ -2184,11 +2184,15 @@ namespace dftfe
     basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
     d_mixingSchemePtrs.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
     for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
-      d_mixingSchemePtrs[iComp]->addMixingVariable(
-        mixingVariable::rho,
-        basisOperationsPtrHost->JxWBasisData(),
-        true, // call MPI REDUCE while computing dot products
-        d_dftParamsPtr->mixingParameter);
+      {
+        d_mixingSchemePtrs[iComp] =
+          std::make_unique<MixingScheme>(mpi_communicator);
+        d_mixingSchemePtrs[iComp]->addMixingVariable(
+          mixingVariable::rho,
+          basisOperationsPtrHost->JxWBasisData(),
+          true, // call MPI REDUCE while computing dot products
+          d_dftParamsPtr->mixingParameter);
+      }
 
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
@@ -2255,13 +2259,20 @@ namespace dftfe
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
               {
                 // Update the history of mixing variables
+                d_densityResidualQuadValues.resize(
+                  d_densityOutQuadValues.size());
                 for (unsigned int iComp = 0;
                      iComp < d_densityOutQuadValues.size();
                      ++iComp)
-                  computeResidual(d_densityOutQuadValues[iComp].data(),
-                                  d_densityInQuadValues[iComp].data(),
-                                  d_densityResidualQuadValues[iComp].data(),
-                                  d_densityOutQuadValues[iComp].size());
+                  {
+                    if (scfIter == 1)
+                      d_densityResidualQuadValues[iComp].resize(
+                        d_densityOutQuadValues[iComp].size());
+                    computeResidual(d_densityOutQuadValues[iComp].data(),
+                                    d_densityInQuadValues[iComp].data(),
+                                    d_densityResidualQuadValues[iComp].data(),
+                                    d_densityOutQuadValues[iComp].size());
+                  }
                 for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size();
                      ++iComp)
                   {
@@ -2281,14 +2292,22 @@ namespace dftfe
                          iComp < d_mixingSchemePtrs.size();
                          ++iComp)
                       {
+                        if (scfIter == 1)
+                          d_gradDensityResidualQuadValues.resize(
+                            d_gradDensityOutQuadValues.size());
                         for (unsigned int iComp = 0;
                              iComp < d_densityOutQuadValues.size();
                              ++iComp)
-                          computeResidual(
-                            d_gradDensityOutQuadValues[iComp].data(),
-                            d_gradDensityInQuadValues[iComp].data(),
-                            d_gradDensityResidualQuadValues[iComp].data(),
-                            d_gradDensityOutQuadValues[iComp].size());
+                          {
+                            if (scfIter == 1)
+                              d_gradDensityResidualQuadValues[iComp].resize(
+                                d_gradDensityOutQuadValues[iComp].size());
+                            computeResidual(
+                              d_gradDensityOutQuadValues[iComp].data(),
+                              d_gradDensityInQuadValues[iComp].data(),
+                              d_gradDensityResidualQuadValues[iComp].data(),
+                              d_gradDensityOutQuadValues[iComp].size());
+                          }
 
                         d_mixingSchemePtrs[iComp]->addVariableToInHist(
                           mixingVariable::gradRho,
@@ -2325,10 +2344,12 @@ namespace dftfe
                 if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
-                    d_mixingSchemePtrs[0]->mixVariable(
-                      mixingVariable::gradRho, d_gradDensityOutQuadValues[0]);
-                    d_mixingSchemePtrs[1]->mixVariable(
-                      mixingVariable::gradRho, d_gradDensityOutQuadValues[1]);
+                    for (unsigned int iComp = 0;
+                         iComp < d_mixingSchemePtrs.size();
+                         ++iComp)
+                      d_mixingSchemePtrs[iComp]->mixVariable(
+                        mixingVariable::gradRho,
+                        d_gradDensityOutQuadValues[iComp]);
                   }
               }
 

@@ -94,8 +94,9 @@ namespace dftfe
     double
     computeEnergy(
       const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
         &basisOperationsPtr,
       const std::shared_ptr<
         dftfe::basis::
@@ -147,11 +148,12 @@ namespace dftfe
       const bool         smearedNuclearCharges = false);
 
 
-    double
+    void
     computeXCEnergyTermsSpinPolarized(
       const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
         &                basisOperationsPtr,
       const unsigned int quadratureId,
       const excManager * excManagerPtr,
@@ -173,11 +175,12 @@ namespace dftfe
       double &                                             correlationEnergy,
       double &excCorrPotentialTimesRho);
 
-    double
+    void
     computeXCEnergyTerms(
       const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<dataTypes::number, double, dftfe::utils::MemorySpace::HOST>>
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
         &                basisOperationsPtr,
       const unsigned int quadratureId,
       const excManager * excManagerPtr,

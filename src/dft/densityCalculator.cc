@@ -557,9 +557,6 @@ namespace dftfe
                         interBandGroupComm);
       }
 
-    densityValues[0] = rhoHost;
-    if (isEvaluateGradRho)
-      gradDensityValues[0] = gradRhoHost;
     if (dftParams.spinPolarized == 1)
       {
         std::transform(rhoHost.begin(),
@@ -592,8 +589,9 @@ namespace dftfe
       }
     else
       {
-        densityValues[0]     = rhoHost;
-        gradDensityValues[0] = gradRhoHost;
+        densityValues[0] = rhoHost;
+        if (isEvaluateGradRho)
+          gradDensityValues[0] = gradRhoHost;
       }
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::deviceSynchronize();

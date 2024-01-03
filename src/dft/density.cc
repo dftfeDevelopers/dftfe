@@ -377,9 +377,6 @@ namespace dftfe
       &  kohnShamDFTEigenOperatorCPU,
     bool isConsiderSpectrumSplitting)
   {
-    std::map<dealii::CellId, std::vector<double>> rhoPRefinedNodalData;
-    std::map<dealii::CellId, std::vector<double>>
-      rhoPRefinedSpinPolarizedNodalData;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityPRefinedNodalData;

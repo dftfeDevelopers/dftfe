@@ -90,6 +90,7 @@ namespace dftfe
               {
                 normValue += rhoValues[q_point] * fe_values.JxW(q_point);
               }
+            ++iCell;
           }
       }
     return dealii::Utilities::MPI::sum(normValue, mpi_communicator);

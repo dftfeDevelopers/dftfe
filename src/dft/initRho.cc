@@ -35,13 +35,6 @@ namespace dftfe
     for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
       d_mixingSchemePtrs[iComp]->clearHistory();
 
-    d_densityInQuadValues.clear();
-    d_densityOutQuadValues.clear();
-    d_gradDensityInQuadValues.clear();
-    d_gradDensityOutQuadValues.clear();
-    d_densityInNodalValues.clear();
-    d_densityOutNodalValues.clear();
-
     // related to low rank jacobian inverse scf preconditioning
     d_vcontainerVals.clear();
     d_fvcontainerVals.clear();

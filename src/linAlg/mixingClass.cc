@@ -163,29 +163,31 @@ namespace dftfe
   {
     // initialize data structures
     // assumes rho is a mixing variable
-    int              N    = d_variableHistoryIn[mixingVariable::rho].size() - 1;
-    int              NRHS = 1, lda = N, ldb = N, info;
-    std::vector<int> ipiv(N);
-    d_A.resize(lda * N);
-    d_c.resize(ldb * NRHS);
-    for (int i = 0; i < lda * N; i++)
-      d_A[i] = 0.0;
-    for (int i = 0; i < ldb * NRHS; i++)
-      d_c[i] = 0.0;
+    int N = d_variableHistoryIn[mixingVariable::rho].size() - 1;
     if (N > 0)
-      for (const auto &[key, value] : d_variableHistoryIn)
-        {
-          computeMixingMatrices(d_variableHistoryIn[key],
-                                d_variableHistoryResidual[key],
-                                d_vectorDotProductWeights[key],
-                                d_performMixing[key],
-                                d_performMPIReduce[key],
-                                d_A,
-                                d_c);
-        }
+      {
+        int              NRHS = 1, lda = N, ldb = N, info;
+        std::vector<int> ipiv(N);
+        d_A.resize(lda * N);
+        d_c.resize(ldb * NRHS);
+        for (int i = 0; i < lda * N; i++)
+          d_A[i] = 0.0;
+        for (int i = 0; i < ldb * NRHS; i++)
+          d_c[i] = 0.0;
 
-    dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
+        for (const auto &[key, value] : d_variableHistoryIn)
+          {
+            computeMixingMatrices(d_variableHistoryIn[key],
+                                  d_variableHistoryResidual[key],
+                                  d_vectorDotProductWeights[key],
+                                  d_performMixing[key],
+                                  d_performMPIReduce[key],
+                                  d_A,
+                                  d_c);
+          }
 
+        dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
+      }
     d_cFinal = 1.0;
     for (int i = 0; i < N; i++)
       d_cFinal -= d_c[i];
@@ -198,8 +200,8 @@ namespace dftfe
                                     const unsigned int   length)
   {
     d_variableHistoryIn[mixingVariableName].push_back(
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>());
-    d_variableHistoryIn[mixingVariableName].back().resize(length);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+        length));
     std::memcpy(d_variableHistoryIn[mixingVariableName].back().data(),
                 inputVariableToInHist,
                 length * sizeof(double));
@@ -212,8 +214,8 @@ namespace dftfe
     const unsigned int   length)
   {
     d_variableHistoryResidual[mixingVariableName].push_back(
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>());
-    d_variableHistoryResidual[mixingVariableName].back().resize(length);
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+        length));
     std::memcpy(d_variableHistoryResidual[mixingVariableName].back().data(),
                 inputVariableToResidualHist,
                 length * sizeof(double));
