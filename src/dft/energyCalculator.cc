@@ -837,8 +837,8 @@ namespace dftfe
                          derCorrEnergyWithInputDensity[2 * iQuad + 0];
             excCorrPotentialTimesRho +=
               Vxc *
-              ((densityInValues[0][iCell * nQuadsPerCell + iQuad] +
-                densityInValues[1][iCell * nQuadsPerCell + iQuad]) /
+              ((densityOutValues[0][iCell * nQuadsPerCell + iQuad] +
+                densityOutValues[1][iCell * nQuadsPerCell + iQuad]) /
                2.0) *
               basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
             Vxc = derExchEnergyWithInputDensity[2 * iQuad + 1] +
@@ -1047,7 +1047,7 @@ namespace dftfe
             double Vxc = derExchEnergyWithInputDensity[iQuad] +
                          derCorrEnergyWithInputDensity[iQuad];
             excCorrPotentialTimesRho +=
-              Vxc * (densityInValues[0][iCell * nQuadsPerCell + iQuad]) *
+              Vxc * (densityOutValues[0][iCell * nQuadsPerCell + iQuad]) *
               basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
             exchangeEnergy +=
               (exchangeEnergyDensity[iQuad]) * (densityValueOutXC[iQuad]) *
