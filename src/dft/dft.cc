@@ -2259,8 +2259,9 @@ namespace dftfe
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
               {
                 // Update the history of mixing variables
-                d_densityResidualQuadValues.resize(
-                  d_densityOutQuadValues.size());
+                if (scfIter == 1)
+                  d_densityResidualQuadValues.resize(
+                    d_densityOutQuadValues.size());
                 for (unsigned int iComp = 0;
                      iComp < d_densityOutQuadValues.size();
                      ++iComp)
@@ -2272,10 +2273,6 @@ namespace dftfe
                                     d_densityInQuadValues[iComp].data(),
                                     d_densityResidualQuadValues[iComp].data(),
                                     d_densityOutQuadValues[iComp].size());
-                  }
-                for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size();
-                     ++iComp)
-                  {
                     d_mixingSchemePtrs[iComp]->addVariableToInHist(
                       mixingVariable::rho,
                       d_densityInQuadValues[iComp].data(),
@@ -2288,27 +2285,21 @@ namespace dftfe
                 if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {
+                    if (scfIter == 1)
+                      d_gradDensityResidualQuadValues.resize(
+                        d_gradDensityOutQuadValues.size());
                     for (unsigned int iComp = 0;
-                         iComp < d_mixingSchemePtrs.size();
+                         iComp < d_gradDensityResidualQuadValues.size();
                          ++iComp)
                       {
                         if (scfIter == 1)
-                          d_gradDensityResidualQuadValues.resize(
-                            d_gradDensityOutQuadValues.size());
-                        for (unsigned int iComp = 0;
-                             iComp < d_densityOutQuadValues.size();
-                             ++iComp)
-                          {
-                            if (scfIter == 1)
-                              d_gradDensityResidualQuadValues[iComp].resize(
-                                d_gradDensityOutQuadValues[iComp].size());
-                            computeResidual(
-                              d_gradDensityOutQuadValues[iComp].data(),
-                              d_gradDensityInQuadValues[iComp].data(),
-                              d_gradDensityResidualQuadValues[iComp].data(),
-                              d_gradDensityOutQuadValues[iComp].size());
-                          }
-
+                          d_gradDensityResidualQuadValues[iComp].resize(
+                            d_gradDensityOutQuadValues[iComp].size());
+                        computeResidual(
+                          d_gradDensityOutQuadValues[iComp].data(),
+                          d_gradDensityInQuadValues[iComp].data(),
+                          d_gradDensityResidualQuadValues[iComp].data(),
+                          d_gradDensityOutQuadValues[iComp].size());
                         d_mixingSchemePtrs[iComp]->addVariableToInHist(
                           mixingVariable::gradRho,
                           d_gradDensityInQuadValues[iComp].data(),
@@ -2349,7 +2340,7 @@ namespace dftfe
                          ++iComp)
                       d_mixingSchemePtrs[iComp]->mixVariable(
                         mixingVariable::gradRho,
-                        d_gradDensityOutQuadValues[iComp]);
+                        d_gradDensityInQuadValues[iComp]);
                   }
               }
 
