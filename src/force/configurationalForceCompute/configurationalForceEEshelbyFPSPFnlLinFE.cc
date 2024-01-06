@@ -1564,6 +1564,9 @@ namespace dftfe
         &                                              pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
+    dftPtr->basisOperationsPtrElectroHost->reinit(
+      0, 0, dftPtr->d_densityQuadratureIdElectro, false);
+
     dealii::FEEvaluation<
       3,
       1,
@@ -1666,7 +1669,7 @@ namespace dftfe
         }
 
 
-    std::vector<double> tempRhoVal(numQuadPointsLpsp, 0);
+    std::vector<double> tempRhoVal(numQuadPoints, 0);
     std::vector<double> tempLpspRhoVal(numQuadPointsLpsp, 0);
     std::vector<double> tempLpspGradRhoVal(numQuadPointsLpsp * 3, 0);
 
