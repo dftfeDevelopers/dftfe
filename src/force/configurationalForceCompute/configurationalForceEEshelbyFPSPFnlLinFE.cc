@@ -1564,9 +1564,6 @@ namespace dftfe
         &                                              pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
-    dftPtr->basisOperationsPtrElectroHost->reinit(
-      0, 0, dftPtr->d_densityQuadratureIdElectro, false);
-
     dealii::FEEvaluation<
       3,
       1,
