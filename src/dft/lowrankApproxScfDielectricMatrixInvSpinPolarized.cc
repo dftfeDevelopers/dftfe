@@ -803,7 +803,7 @@ namespace dftfe
 
     for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
       interpolateDensityNodalDataToQuadratureDataGeneral(
-        basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost,
         d_densityDofHandlerIndexElectro,
         d_densityQuadratureIdElectro,
         d_densityInNodalValues[iComp],

@@ -96,7 +96,7 @@ namespace dftfe
         for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
           interpolateDensityNodalDataToQuadratureDataGeneral(
-            basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost,
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
             d_densityOutNodalValues[iComp],
@@ -116,10 +116,10 @@ namespace dftfe
       }
     else
       {
-        basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
         const unsigned int nQuadsPerCell =
-          basisOperationsPtrHost->nQuadsPerCell();
-        const unsigned int nCells = basisOperationsPtrHost->nCells();
+          d_basisOperationsPtrHost->nQuadsPerCell();
+        const unsigned int nCells = d_basisOperationsPtrHost->nCells();
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
@@ -147,7 +147,7 @@ namespace dftfe
                             fermiEnergy,
                             fermiEnergyUp,
                             fermiEnergyDown,
-                            basisOperationsPtrDevice,
+                            d_basisOperationsPtrDevice,
                             d_densityDofHandlerIndex,
                             d_densityQuadratureId,
                             d_kPointWeights,
@@ -171,7 +171,7 @@ namespace dftfe
                             fermiEnergy,
                             fermiEnergyUp,
                             fermiEnergyDown,
-                            basisOperationsPtrHost,
+                            d_basisOperationsPtrHost,
                             d_densityDofHandlerIndex,
                             d_densityQuadratureId,
                             d_kPointWeights,
@@ -214,7 +214,7 @@ namespace dftfe
         d_rhoOutNodalValuesDistributed = d_densityOutNodalValues[0];
         d_constraintsRhoNodalInfo.distribute(d_rhoOutNodalValuesDistributed);
         interpolateDensityNodalDataToQuadratureDataLpsp(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_lpspQuadratureIdElectro,
           d_densityOutNodalValues[0],
@@ -227,7 +227,7 @@ namespace dftfe
         if (d_dftParamsPtr->mixingMethod != "ANDERSON_WITH_KERKER" &&
             d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND")
           {
-            l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                     d_constraintsRhoNodal,
                                     d_densityDofHandlerIndexElectro,
                                     d_densityQuadratureIdElectro,
@@ -237,7 +237,7 @@ namespace dftfe
           }
 
         interpolateDensityNodalDataToQuadratureDataLpsp(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_lpspQuadratureIdElectro,
           d_densityOutNodalValues[0],
@@ -270,7 +270,7 @@ namespace dftfe
         for (unsigned int i = 0; i < rhoOutValuesCopy.size(); ++i)
           rhoOutValuesCopy[i] *= scaling;
         l2ProjectionQuadDensityMinusAtomicDensity(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_constraintsRhoNodal,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
@@ -333,7 +333,7 @@ namespace dftfe
             for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
                  ++iComp)
               interpolateDensityNodalDataToQuadratureDataGeneral(
-                basisOperationsPtrElectroHost,
+                d_basisOperationsPtrElectroHost,
                 d_densityDofHandlerIndexElectro,
                 d_densityQuadratureIdElectro,
                 d_densityInNodalValues[iComp],
@@ -435,7 +435,7 @@ namespace dftfe
                         fermiEnergy,
                         fermiEnergyUp,
                         fermiEnergyDown,
-                        basisOperationsPtrDevice,
+                        d_basisOperationsPtrDevice,
                         d_densityDofHandlerIndex,
                         d_gllQuadratureId,
                         d_kPointWeights,
@@ -458,7 +458,7 @@ namespace dftfe
                         fermiEnergy,
                         fermiEnergyUp,
                         fermiEnergyDown,
-                        basisOperationsPtrHost,
+                        d_basisOperationsPtrHost,
                         d_densityDofHandlerIndex,
                         d_gllQuadratureId,
                         d_kPointWeights,

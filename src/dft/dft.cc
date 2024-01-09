@@ -1177,7 +1177,7 @@ namespace dftfe
 
         d_densityInNodalValues[0].update_ghost_values();
         interpolateDensityNodalDataToQuadratureDataGeneral(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           d_densityInNodalValues[0],
@@ -1199,7 +1199,7 @@ namespace dftfe
 
             d_densityInNodalValues[1].update_ghost_values();
             interpolateDensityNodalDataToQuadratureDataGeneral(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
               d_densityInNodalValues[1],
@@ -1323,7 +1323,7 @@ namespace dftfe
                 initAtomicRho();
 
                 interpolateDensityNodalDataToQuadratureDataGeneral(
-                  basisOperationsPtrElectroHost,
+                  d_basisOperationsPtrElectroHost,
                   d_densityDofHandlerIndexElectro,
                   d_densityQuadratureIdElectro,
                   d_rhoOutNodalValuesSplit,
@@ -1341,7 +1341,7 @@ namespace dftfe
 
                 normalizeRhoInQuadValues();
 
-                l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+                l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                         d_constraintsRhoNodal,
                                         d_densityDofHandlerIndexElectro,
                                         d_densityQuadratureIdElectro,
@@ -1357,7 +1357,7 @@ namespace dftfe
                  d_dftParamsPtr->solverMode == "MD")
           {
             interpolateDensityNodalDataToQuadratureDataGeneral(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
               d_densityOutNodalValues[0],
@@ -1369,7 +1369,7 @@ namespace dftfe
 
             normalizeRhoInQuadValues();
 
-            l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                     d_constraintsRhoNodal,
                                     d_densityDofHandlerIndexElectro,
                                     d_densityQuadratureIdElectro,
@@ -1384,7 +1384,7 @@ namespace dftfe
           {
             initAtomicRho();
             interpolateDensityNodalDataToQuadratureDataGeneral(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
               d_rhoOutNodalValuesSplit,
@@ -1402,7 +1402,7 @@ namespace dftfe
 
             normalizeRhoInQuadValues();
 
-            l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                     d_constraintsRhoNodal,
                                     d_densityDofHandlerIndexElectro,
                                     d_densityQuadratureIdElectro,
@@ -1850,7 +1850,7 @@ namespace dftfe
         if (initializeCublas)
           {
             kohnShamDFTEigenOperatorDevice.createDeviceBlasHandle();
-            basisOperationsPtrDevice->setDeviceBLASHandle(
+            d_basisOperationsPtrDevice->setDeviceBLASHandle(
               &(kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle()));
           }
 
@@ -1953,7 +1953,7 @@ namespace dftfe
         d_kohnShamDFTOperatorDevicePtr->reinit(
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues), true);
 
-        basisOperationsPtrDevice->setDeviceBLASHandle(
+        d_basisOperationsPtrDevice->setDeviceBLASHandle(
           &(d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle()));
       }
 #endif
@@ -2071,7 +2071,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       d_vselfBinsManager.solveVselfInBinsDevice(
-        basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost,
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_binsStartDofHandlerIndexElectro,
@@ -2094,7 +2094,7 @@ namespace dftfe
         d_dftParamsPtr->smearedNuclearCharges);
     else
       d_vselfBinsManager.solveVselfInBins(
-        basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost,
         d_binsStartDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_constraintsPRefined,
@@ -2114,7 +2114,7 @@ namespace dftfe
         d_smearedChargeQuadratureIdElectro,
         d_dftParamsPtr->smearedNuclearCharges);
 #else
-    d_vselfBinsManager.solveVselfInBins(basisOperationsPtrElectroHost,
+    d_vselfBinsManager.solveVselfInBins(d_basisOperationsPtrElectroHost,
                                         d_binsStartDofHandlerIndexElectro,
                                         d_phiTotAXQuadratureIdElectro,
                                         d_constraintsPRefined,
@@ -2181,7 +2181,7 @@ namespace dftfe
     // call the mixing scheme with the mixing variables
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
-    basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
     d_mixingSchemePtrs.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
     for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
       {
@@ -2189,7 +2189,7 @@ namespace dftfe
           std::make_unique<MixingScheme>(mpi_communicator);
         d_mixingSchemePtrs[iComp]->addMixingVariable(
           mixingVariable::rho,
-          basisOperationsPtrHost->JxWBasisData(),
+          d_basisOperationsPtrHost->JxWBasisData(),
           true, // call MPI REDUCE while computing dot products
           d_dftParamsPtr->mixingParameter);
       }
@@ -2372,7 +2372,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if (scfIter > 0)
               d_phiTotalSolverProblemDevice.reinit(
-                basisOperationsPtrElectroHost,
+                d_basisOperationsPtrElectroHost,
                 d_phiTotRhoIn,
                 *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
                 d_phiTotDofHandlerIndexElectro,
@@ -2394,7 +2394,7 @@ namespace dftfe
             else
               {
                 d_phiTotalSolverProblemDevice.reinit(
-                  basisOperationsPtrElectroHost,
+                  d_basisOperationsPtrElectroHost,
                   d_phiTotRhoIn,
                   *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
                   d_phiTotDofHandlerIndexElectro,
@@ -2422,7 +2422,7 @@ namespace dftfe
           {
             if (scfIter > 0)
               d_phiTotalSolverProblem.reinit(
-                basisOperationsPtrElectroHost,
+                d_basisOperationsPtrElectroHost,
                 d_phiTotRhoIn,
                 *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
                 d_phiTotDofHandlerIndexElectro,
@@ -2442,7 +2442,7 @@ namespace dftfe
                 true);
             else
               d_phiTotalSolverProblem.reinit(
-                basisOperationsPtrElectroHost,
+                d_basisOperationsPtrElectroHost,
                 d_phiTotRhoIn,
                 *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
                 d_phiTotDofHandlerIndexElectro,
@@ -2492,7 +2492,7 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           dummy;
         interpolateElectroNodalDataToQuadratureDataGeneral(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_phiTotDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           d_phiTotRhoIn,
@@ -3142,7 +3142,7 @@ namespace dftfe
             symmetryPtr->computeLocalrhoOut();
             symmetryPtr->computeAndSymmetrize_rhoOut();
 
-            l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                     d_constraintsRhoNodal,
                                     d_densityDofHandlerIndexElectro,
                                     d_densityQuadratureIdElectro,
@@ -3151,7 +3151,7 @@ namespace dftfe
             d_densityOutNodalValues[0].update_ghost_values();
 
             interpolateDensityNodalDataToQuadratureDataLpsp(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_lpspQuadratureIdElectro,
               d_densityOutNodalValues[0],
@@ -3224,7 +3224,7 @@ namespace dftfe
               {
 #ifdef DFTFE_WITH_DEVICE
                 d_phiTotalSolverProblemDevice.reinit(
-                  basisOperationsPtrElectroHost,
+                  d_basisOperationsPtrElectroHost,
                   d_phiTotRhoOut,
                   *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
                   d_phiTotDofHandlerIndexElectro,
@@ -3255,7 +3255,7 @@ namespace dftfe
             else
               {
                 d_phiTotalSolverProblem.reinit(
-                  basisOperationsPtrElectroHost,
+                  d_basisOperationsPtrElectroHost,
                   d_phiTotRhoOut,
                   *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
                   d_phiTotDofHandlerIndexElectro,
@@ -3282,7 +3282,7 @@ namespace dftfe
             d_phiTotRhoOut.update_ghost_values();
 
             interpolateElectroNodalDataToQuadratureDataGeneral(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_phiTotDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
               d_phiTotRhoOut,
@@ -3310,8 +3310,8 @@ namespace dftfe
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
             const double totalEnergy = energyCalc.computeEnergy(
-              basisOperationsPtrHost,
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrHost,
+              d_basisOperationsPtrElectroHost,
               d_densityQuadratureId,
               d_densityQuadratureIdElectro,
               d_smearedChargeQuadratureIdElectro,
@@ -3444,7 +3444,7 @@ namespace dftfe
           {
 #ifdef DFTFE_WITH_DEVICE
             d_phiTotalSolverProblemDevice.reinit(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_phiTotRhoOut,
               *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
               d_phiTotDofHandlerIndexElectro,
@@ -3475,7 +3475,7 @@ namespace dftfe
         else
           {
             d_phiTotalSolverProblem.reinit(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_phiTotRhoOut,
               *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
               d_phiTotDofHandlerIndexElectro,
@@ -3506,7 +3506,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
 
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoOut,
@@ -3521,8 +3521,8 @@ namespace dftfe
     d_dispersionCorr.computeDispresionCorrection(atomLocations,
                                                  d_domainBoundingVectors);
     const double totalEnergy = energyCalc.computeEnergy(
-      basisOperationsPtrHost,
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrHost,
+      d_basisOperationsPtrElectroHost,
       d_densityQuadratureId,
       d_densityQuadratureIdElectro,
       d_smearedChargeQuadratureIdElectro,
@@ -3683,7 +3683,7 @@ namespace dftfe
       }
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
-      basisOperationsPtrDevice->setDeviceBLASHandle(
+      d_basisOperationsPtrDevice->setDeviceBLASHandle(
         &(d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle()));
 #endif
 
@@ -3784,7 +3784,7 @@ namespace dftfe
             "Nuclear self-potential perturbation solve");
 
           d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
-            basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost,
             d_baseDofHandlerIndexElectro,
             d_phiTotAXQuadratureIdElectro,
             d_binsStartDofHandlerIndexElectro,
@@ -3836,7 +3836,7 @@ namespace dftfe
             "Nuclear self-potential perturbation solve");
 
           d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
-            basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost,
             d_baseDofHandlerIndexElectro,
             d_phiTotAXQuadratureIdElectro,
             d_binsStartDofHandlerIndexElectro,
@@ -4032,7 +4032,7 @@ namespace dftfe
     d_matrixFreeDataPRefined.initialize_dof_vector(
       rhoNodalField, d_densityDofHandlerIndexElectro);
     rhoNodalField = 0;
-    l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+    l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                             d_constraintsRhoNodal,
                             d_densityDofHandlerIndexElectro,
                             d_densityQuadratureIdElectro,
@@ -4045,7 +4045,7 @@ namespace dftfe
       {
         magNodalField.reinit(rhoNodalField);
         magNodalField = 0;
-        l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+        l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                 d_constraintsRhoNodal,
                                 d_densityDofHandlerIndexElectro,
                                 d_densityQuadratureIdElectro,
@@ -4450,7 +4450,7 @@ namespace dftfe
               {
                 fe_values.reinit(cell);
                 const unsigned int cellIndex =
-                  basisOperationsPtrHost->cellIndex(cell->id());
+                  d_basisOperationsPtrHost->cellIndex(cell->id());
                 const double *rhoValues =
                   d_densityOutQuadValues[0].data() + cellIndex * n_q_points;
                 const double *magValues =
@@ -4509,7 +4509,7 @@ namespace dftfe
     d_matrixFreeDataPRefined.initialize_dof_vector(
       rhoNodalField, d_densityDofHandlerIndexElectro);
     rhoNodalField = 0;
-    l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+    l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                             d_constraintsRhoNodal,
                             d_densityDofHandlerIndexElectro,
                             d_densityQuadratureIdElectro,

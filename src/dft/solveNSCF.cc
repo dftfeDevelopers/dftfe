@@ -75,7 +75,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       d_vselfBinsManager.solveVselfInBinsDevice(
-        basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost,
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_binsStartDofHandlerIndexElectro,
@@ -98,7 +98,7 @@ namespace dftfe
         d_dftParamsPtr->smearedNuclearCharges);
     else
       d_vselfBinsManager.solveVselfInBins(
-        basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost,
         d_binsStartDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_constraintsPRefined,
@@ -118,7 +118,7 @@ namespace dftfe
         d_smearedChargeQuadratureIdElectro,
         d_dftParamsPtr->smearedNuclearCharges);
 #else
-    d_vselfBinsManager.solveVselfInBins(basisOperationsPtrElectroHost,
+    d_vselfBinsManager.solveVselfInBins(d_basisOperationsPtrElectroHost,
                                         d_binsStartDofHandlerIndexElectro,
                                         d_phiTotAXQuadratureIdElectro,
                                         d_constraintsPRefined,
@@ -194,7 +194,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_phiTotRhoIn,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -220,7 +220,7 @@ namespace dftfe
     else
       {
         d_phiTotalSolverProblem.reinit(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_phiTotRhoIn,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -269,7 +269,7 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,
@@ -948,7 +948,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_phiTotRhoOut,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -979,7 +979,7 @@ namespace dftfe
     else
       {
         d_phiTotalSolverProblem.reinit(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_phiTotRhoOut,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -1008,7 +1008,7 @@ namespace dftfe
     d_phiTotRhoOut.update_ghost_values();
 
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoOut,
@@ -1022,8 +1022,8 @@ namespace dftfe
     d_dispersionCorr.computeDispresionCorrection(atomLocations,
                                                  d_domainBoundingVectors);
     const double totalEnergy = energyCalc.computeEnergy(
-      basisOperationsPtrHost,
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrHost,
+      d_basisOperationsPtrElectroHost,
       d_densityQuadratureId,
       d_densityQuadratureIdElectro,
       d_smearedChargeQuadratureIdElectro,

@@ -70,7 +70,7 @@ namespace dftfe
     //
     // solve for vself and compute Tr(XtHX)
     //
-    d_vselfBinsManager.solveVselfInBins(basisOperationsPtrElectroHost,
+    d_vselfBinsManager.solveVselfInBins(d_basisOperationsPtrElectroHost,
                                         d_binsStartDofHandlerIndexElectro,
                                         d_phiTotAXQuadratureIdElectro,
                                         d_constraintsPRefined,
@@ -93,7 +93,7 @@ namespace dftfe
     // solve for potential corresponding to initial electron-density
     //
     phiTotalSolverProblem.reinit(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_phiTotRhoIn,
       *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
       d_phiTotDofHandlerIndexElectro,
@@ -120,7 +120,7 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,

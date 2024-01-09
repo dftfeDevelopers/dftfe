@@ -365,8 +365,8 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder,
                                  FEOrderElectro>::getShapeFunctionValues()
   {
-    basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_densityQuadratureId);
-    return basisOperationsPtrDevice->shapeFunctionBasisData(true);
+    d_basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    return d_basisOperationsPtrDevice->shapeFunctionBasisData(true);
   }
 
 
@@ -375,12 +375,12 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionValuesTransposed(const bool use2pPlusOneGLQuad)
   {
-    basisOperationsPtrDevice->reinit(0,
-                                     0,
-                                     use2pPlusOneGLQuad ?
-                                       dftPtr->d_gllQuadratureId :
-                                       dftPtr->d_densityQuadratureId);
-    return basisOperationsPtrDevice->shapeFunctionBasisData(false);
+    d_basisOperationsPtrDevice->reinit(0,
+                                       0,
+                                       use2pPlusOneGLQuad ?
+                                         dftPtr->d_gllQuadratureId :
+                                         dftPtr->d_densityQuadratureId);
+    return d_basisOperationsPtrDevice->shapeFunctionBasisData(false);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -388,8 +388,8 @@ namespace dftfe
   kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
     getShapeFunctionValuesNLPTransposed()
   {
-    basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_nlpspQuadratureId);
-    return basisOperationsPtrDevice->shapeFunctionBasisData(false);
+    d_basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_nlpspQuadratureId);
+    return d_basisOperationsPtrDevice->shapeFunctionBasisData(false);
   }
 
 
@@ -444,7 +444,7 @@ namespace dftfe
     const unsigned int BVec =
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize,
                dftPtr->d_numEigenValues);
-    return basisOperationsPtrDevice->getMultiVector(BVec);
+    return d_basisOperationsPtrDevice->getMultiVector(BVec);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -455,7 +455,7 @@ namespace dftfe
     const unsigned int BVec =
       std::min(dftPtr->d_dftParamsPtr->chebyWfcBlockSize,
                dftPtr->d_numEigenValues);
-    return basisOperationsPtrDevice->getMultiVector(BVec, 1);
+    return d_basisOperationsPtrDevice->getMultiVector(BVec, 1);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -484,8 +484,8 @@ namespace dftfe
   {
     computing_timer.enter_subsection("kohnShamDFTOperatorDeviceClass setup");
 
-    basisOperationsPtrDevice = dftPtr->basisOperationsPtrDevice;
-    basisOperationsPtrHost   = dftPtr->basisOperationsPtrHost;
+    d_basisOperationsPtrDevice = dftPtr->d_basisOperationsPtrDevice;
+    d_basisOperationsPtrHost   = dftPtr->d_basisOperationsPtrHost;
 
     dftPtr->matrix_free_data.initialize_dof_vector(
       d_invSqrtMassVector, dftPtr->d_densityDofHandlerIndex);
@@ -1092,7 +1092,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -1160,7 +1160,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
             }
 
@@ -1192,7 +1192,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -1292,7 +1292,7 @@ namespace dftfe
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
               const double jxw =
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX = gradDensityValue[3 * q + 0];
               const double gradRhoY = gradDensityValue[3 * q + 1];
@@ -1320,7 +1320,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
             }
 
@@ -1358,7 +1358,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const unsigned int externalPotCorrQuadratureId)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -1436,7 +1436,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
             }
 
@@ -1473,7 +1473,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const unsigned int externalPotCorrQuadratureId)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -1606,7 +1606,7 @@ namespace dftfe
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
               const double jxw =
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX =
                 gradDensityValue[6 * q + 0 + 3 * spinIndex];
@@ -1647,7 +1647,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
             }
 
@@ -1727,7 +1727,7 @@ namespace dftfe
       &                                                  phiPrimeValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
     const dealii::Quadrature<3> &quadrature_formula =
@@ -1819,7 +1819,7 @@ namespace dftfe
                   (phiPrimeValue[q] + (der2ExchEnergyWithDensityVal[q] +
                                        der2CorrEnergyWithDensityVal[q]) *
                                         densityPrimeValue[q]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
@@ -1848,7 +1848,7 @@ namespace dftfe
       const unsigned int                                   spinIndex,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
     const dealii::Quadrature<3> &quadrature_formula =
@@ -1968,7 +1968,7 @@ namespace dftfe
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                   -(derExchEnergyWithDensityVal[2 * q + spinIndex] +
                     derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
@@ -2076,7 +2076,7 @@ namespace dftfe
                   8.0 *
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
@@ -2183,7 +2183,7 @@ namespace dftfe
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] +=
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
@@ -2296,14 +2296,14 @@ namespace dftfe
                   8.0 *
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
 
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] *=
                   1.0 / 12.0 / lambda;
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] +=
                   phiPrimeValue[q] *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
@@ -2336,7 +2336,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -2508,7 +2508,7 @@ namespace dftfe
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
               const double jxw =
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX = gradDensityValue[3 * q + 0];
               const double gradRhoY = gradDensityValue[3 * q + 1];
@@ -2581,7 +2581,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                basisOperationsPtrHost
+                d_basisOperationsPtrHost
                   ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
             }
 
@@ -2621,7 +2621,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
   {
-    basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
+    d_basisOperationsPtrHost->reinit(0, 0, dftPtr->d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
     const dealii::Quadrature<3> &quadrature_formula =
@@ -2843,14 +2843,14 @@ namespace dftfe
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                   -(derExchEnergyWithDensityVal[2 * q + spinIndex] +
                     derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 const double jxw =
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
                 const double gradRhoX =
                   gradDensityValue[6 * q + 0 + 3 * spinIndex];
@@ -3081,14 +3081,14 @@ namespace dftfe
                   8.0 *
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 const double jxw =
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
                 const double gradRhoX =
                   gradDensityValue[6 * q + 0 + 3 * spinIndex];
@@ -3315,14 +3315,14 @@ namespace dftfe
                   8.0 *
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 const double jxw =
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
                 const double gradRhoX =
                   gradDensityValue[6 * q + 0 + 3 * spinIndex];
@@ -3554,21 +3554,21 @@ namespace dftfe
                   1.0 *
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
 
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] *=
                   1.0 / 12.0 / lambda;
                 d_vEffJxW[iElemCount * numberQuadraturePoints + q] +=
                   phiPrimeValue[q] *
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 const double jxw =
-                  basisOperationsPtrHost
+                  d_basisOperationsPtrHost
                     ->JxWBasisData()[iElemCount * numberQuadraturePoints + q];
                 const double gradRhoX =
                   gradDensityValue[6 * q + 0 + 3 * spinIndex];

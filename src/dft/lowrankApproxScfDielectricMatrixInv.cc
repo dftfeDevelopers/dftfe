@@ -694,7 +694,7 @@ namespace dftfe
 
     // interpolate nodal data to quadrature data
     interpolateDensityNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_densityInNodalValues[0],

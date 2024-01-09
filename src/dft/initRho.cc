@@ -124,9 +124,9 @@ namespace dftfe
       }
 
     // Initialize electron density table storage for rhoIn
-    basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-    const unsigned int n_q_points = basisOperationsPtrHost->nQuadsPerCell();
-    const unsigned int nCells     = basisOperationsPtrHost->nCells();
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
+    const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
     for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
@@ -326,7 +326,7 @@ namespace dftfe
           }
 
         interpolateDensityNodalDataToQuadratureDataGeneral(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           d_densityInNodalValues[0],
@@ -356,7 +356,7 @@ namespace dftfe
             d_densityInNodalValues[1].update_ghost_values();
 
             interpolateDensityNodalDataToQuadratureDataGeneral(
-              basisOperationsPtrElectroHost,
+              d_basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
               d_densityInNodalValues[1],
@@ -375,7 +375,7 @@ namespace dftfe
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
         for (auto iCell = 0; iCell < nCells; ++iCell)
           {
-            auto    cellid = basisOperationsPtrHost->cellID(iCell);
+            auto    cellid = d_basisOperationsPtrHost->cellID(iCell);
             double *rhoInValuesPtr =
               &(d_densityInQuadValues[0][iCell * n_q_points]);
 
@@ -386,7 +386,7 @@ namespace dftfe
                   &(d_densityInQuadValues[1][iCell * n_q_points]);
               }
             const double *quadPointPtr =
-              basisOperationsPtrHost->quadPoints().data() +
+              d_basisOperationsPtrHost->quadPoints().data() +
               iCell * n_q_points * 3;
             for (unsigned int q = 0; q < n_q_points; ++q)
               {
@@ -455,10 +455,10 @@ namespace dftfe
           {
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
             for (unsigned int iCell = 0;
-                 iCell < basisOperationsPtrHost->nCells();
+                 iCell < d_basisOperationsPtrHost->nCells();
                  ++iCell)
               {
-                auto    cellid = basisOperationsPtrHost->cellID(iCell);
+                auto    cellid = d_basisOperationsPtrHost->cellID(iCell);
                 double *gradRhoInValuesPtr =
                   &(d_gradDensityInQuadValues[0][3 * iCell * n_q_points]);
 
@@ -469,7 +469,7 @@ namespace dftfe
                       &(d_gradDensityInQuadValues[1][3 * iCell * n_q_points]);
                   }
                 const double *quadPointPtr =
-                  basisOperationsPtrHost->quadPoints().data() +
+                  d_basisOperationsPtrHost->quadPoints().data() +
                   iCell * n_q_points * 3;
                 for (unsigned int q = 0; q < n_q_points; ++q)
                   {

@@ -74,7 +74,7 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>> dummyMap;
     v.update_ghost_values();
     interpolateDensityNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       v,
@@ -94,7 +94,7 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         d_phiTotalSolverProblemDevice.reinit(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           electrostaticPotPrime,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -112,7 +112,7 @@ namespace dftfe
     else
       {
         d_phiTotalSolverProblem.reinit(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           electrostaticPotPrime,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
           d_phiTotDofHandlerIndexElectro,
@@ -150,7 +150,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       electrostaticPotPrimeValues;
     interpolateElectroNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       electrostaticPotPrime,
@@ -166,7 +166,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradRhoPrimeValues(2);
     interpolateDensityNodalDataToQuadratureDataGeneral(
-      basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       v,
@@ -192,7 +192,7 @@ namespace dftfe
           gradvSpin1Values;
 
         interpolateDensityNodalDataToQuadratureDataGeneral(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           vSpin0,
@@ -204,7 +204,7 @@ namespace dftfe
           false);
 
         interpolateDensityNodalDataToQuadratureDataGeneral(
-          basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           vSpin1,

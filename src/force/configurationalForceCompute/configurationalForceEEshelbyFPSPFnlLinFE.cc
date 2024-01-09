@@ -245,7 +245,7 @@ namespace dftfe
             double device_time = MPI_Wtime();
 
             forceDevice::wfcContractionsForceKernelsAllH(
-              dftPtr->basisOperationsPtrDevice,
+              dftPtr->d_basisOperationsPtrDevice,
               kohnShamDFTEigenOperatorDevice,
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,
@@ -670,7 +670,8 @@ namespace dftfe
                         //    ->second;
 
                         const unsigned int subCellIndex =
-                          dftPtr->basisOperationsPtrHost->cellIndex(subCellId);
+                          dftPtr->d_basisOperationsPtrHost->cellIndex(
+                            subCellId);
                         const auto &rhoTotalOutValues = rhoOutValues[0];
                         const auto &rhoMagOutValues   = rhoOutValues[1];
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
@@ -1187,7 +1188,8 @@ namespace dftfe
                         //  rhoOutValues.find(subCellId)->second;
 
                         const unsigned int subCellIndex =
-                          dftPtr->basisOperationsPtrHost->cellIndex(subCellId);
+                          dftPtr->d_basisOperationsPtrHost->cellIndex(
+                            subCellId);
                         const auto &rhoTotalOutValues = rhoOutValues[0];
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
@@ -1770,7 +1772,7 @@ namespace dftfe
                 dealii::CellId subCellId = subCellPtr->id();
 
                 const unsigned int subCellIndex =
-                  dftPtr->basisOperationsPtrElectroHost->cellIndex(subCellId);
+                  dftPtr->d_basisOperationsPtrElectroHost->cellIndex(subCellId);
 
                 for (unsigned int q = 0; q < numQuadPoints; ++q)
                   tempRhoVal[q] =

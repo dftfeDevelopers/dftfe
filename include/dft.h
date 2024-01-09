@@ -1223,21 +1223,21 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-      basisOperationsPtrHost;
+      d_basisOperationsPtrHost;
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      basisOperationsPtrElectroHost;
+      d_basisOperationsPtrElectroHost;
 #if defined(DFTFE_WITH_DEVICE)
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
-      basisOperationsPtrDevice;
+      d_basisOperationsPtrDevice;
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
-      basisOperationsPtrElectroDevice;
+      d_basisOperationsPtrElectroDevice;
 #endif
 
     std::shared_ptr<

@@ -503,14 +503,16 @@ namespace dftfe
       &        quadratureGradValueData,
     const bool isConsiderGradData)
   {
-    basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-    const unsigned int nQuadsPerCell = basisOperationsPtrHost->nQuadsPerCell();
-    const unsigned int nCells        = basisOperationsPtrHost->nCells();
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    const unsigned int nQuadsPerCell =
+      d_basisOperationsPtrHost->nQuadsPerCell();
+    const unsigned int nCells = d_basisOperationsPtrHost->nCells();
 
     for (unsigned int iCell = 0; iCell < nCells; ++iCell)
       {
         const std::vector<double> &rhoAtomicValues =
-          d_rhoAtomsValues.find(basisOperationsPtrHost->cellID(iCell))->second;
+          d_rhoAtomsValues.find(d_basisOperationsPtrHost->cellID(iCell))
+            ->second;
         for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
           quadratureValueData[iCell * nQuadsPerCell + iQuad] +=
             rhoAtomicValues[iQuad];
@@ -518,7 +520,8 @@ namespace dftfe
         if (isConsiderGradData)
           {
             const std::vector<double> &gradRhoAtomicValues =
-              d_gradRhoAtomsValues.find(basisOperationsPtrHost->cellID(iCell))
+              d_gradRhoAtomsValues
+                .find(d_basisOperationsPtrHost->cellID(iCell))
                 ->second;
             for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
               {

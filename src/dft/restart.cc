@@ -45,11 +45,12 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoNodalData()
   {
-    basisOperationsPtrElectroHost->reinit(0,
-                                          0,
-                                          d_densityQuadratureIdElectro,
-                                          false);
-    unsigned int nQuadsPerCell = basisOperationsPtrElectroHost->nQuadsPerCell();
+    d_basisOperationsPtrElectroHost->reinit(0,
+                                            0,
+                                            d_densityQuadratureIdElectro,
+                                            false);
+    unsigned int nQuadsPerCell =
+      d_basisOperationsPtrElectroHost->nQuadsPerCell();
     std::vector<const distributedCPUVec<double> *> solutionVectors;
 
 
@@ -61,7 +62,7 @@ namespace dftfe
     d_matrixFreeDataPRefined.initialize_dof_vector(
       rhoNodalField, d_densityDofHandlerIndexElectro);
     rhoNodalField = 0;
-    l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+    l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                             d_constraintsRhoNodal,
                             d_densityDofHandlerIndexElectro,
                             d_densityQuadratureIdElectro,
@@ -74,7 +75,7 @@ namespace dftfe
       {
         magNodalField.reinit(rhoNodalField);
         magNodalField = 0;
-        l2ProjectionQuadToNodal(basisOperationsPtrElectroHost,
+        l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                 d_constraintsRhoNodal,
                                 d_densityDofHandlerIndexElectro,
                                 d_densityQuadratureIdElectro,
