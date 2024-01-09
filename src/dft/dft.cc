@@ -2181,33 +2181,55 @@ namespace dftfe
     // call the mixing scheme with the mixing variables
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
     d_mixingSchemePtrs.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
-      {
-        d_mixingSchemePtrs[iComp] =
-          std::make_unique<MixingScheme>(mpi_communicator);
-        d_mixingSchemePtrs[iComp]->addMixingVariable(
-          mixingVariable::rho,
-          d_basisOperationsPtrHost->JxWBasisData(),
-          true, // call MPI REDUCE while computing dot products
-          d_dftParamsPtr->mixingParameter);
-      }
-
-    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
       {
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          gradRhoJxW;
-        gradRhoJxW.resize(0);
+          rhoNodalMassVec;
+        computeRhoNodalMassVector(rhoNodalMassVec);
         for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
-          d_mixingSchemePtrs[iComp]->addMixingVariable(
-            mixingVariable::gradRho,
-            gradRhoJxW, // this is just a dummy variable to make it compatible
-                        // with rho
-            false,      // call MPI REDUCE while computing dot products
-            d_dftParamsPtr->mixingParameter);
+          {
+            d_mixingSchemePtrs[iComp] =
+              std::make_unique<MixingScheme>(mpi_communicator);
+            d_mixingSchemePtrs[iComp]->addMixingVariable(
+              mixingVariable::rho,
+              rhoNodalMassVec,
+              true, // call MPI REDUCE while computing dot products
+              d_dftParamsPtr->mixingParameter);
+          }
       }
-
+    else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
+      {
+        d_basisOperationsPtrElectroHost->reinit(0,
+                                                0,
+                                                d_densityQuadratureIdElectro,
+                                                false);
+        for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
+          {
+            d_mixingSchemePtrs[iComp] =
+              std::make_unique<MixingScheme>(mpi_communicator);
+            d_mixingSchemePtrs[iComp]->addMixingVariable(
+              mixingVariable::rho,
+              d_basisOperationsPtrElectroHost->JxWBasisData(),
+              true, // call MPI REDUCE while computing dot products
+              d_dftParamsPtr->mixingParameter);
+          }
+        if (d_excManagerPtr->getDensityBasedFamilyType() ==
+            densityFamilyType::GGA)
+          {
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              gradRhoJxW;
+            gradRhoJxW.resize(0);
+            for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size();
+                 ++iComp)
+              d_mixingSchemePtrs[iComp]->addMixingVariable(
+                mixingVariable::gradRho,
+                gradRhoJxW, // this is just a dummy variable to make it
+                            // compatible with rho
+                false,      // call MPI REDUCE while computing dot products
+                d_dftParamsPtr->mixingParameter);
+          }
+      }
     //
     // Begin SCF iteration
     //
@@ -2248,16 +2270,88 @@ namespace dftfe
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
               {
                 // Fill in New Kerker framework here
+                std::vector<double> norms(d_mixingSchemePtrs.size());
+                if (scfIter == 1)
+                  d_densityResidualNodalValues.resize(
+                    d_densityOutNodalValues.size());
+                for (unsigned int iComp = 0;
+                     iComp < d_densityOutNodalValues.size();
+                     ++iComp)
+                  {
+                    norms[iComp] = computeResidualNodalData(
+                      d_densityOutNodalValues[iComp],
+                      d_densityInNodalValues[iComp],
+                      d_densityResidualNodalValues[iComp]);
+                  }
                 applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
                   kerkerPreconditionedResidualSolverProblemDevice,
                   CGSolverDevice,
 #endif
                   kerkerPreconditionedResidualSolverProblem,
-                  CGSolver);
+                  CGSolver,
+                  d_densityResidualNodalValues[0],
+                  d_preCondTotalDensityResidualVector);
+                d_mixingSchemePtrs[0]->addVariableToInHist(
+                  mixingVariable::rho,
+                  d_densityInNodalValues[0].begin(),
+                  d_densityInNodalValues[0].locally_owned_size());
+                d_mixingSchemePtrs[0]->addVariableToResidualHist(
+                  mixingVariable::rho,
+                  d_preCondTotalDensityResidualVector.begin(),
+                  d_preCondTotalDensityResidualVector.locally_owned_size());
+                for (unsigned int iComp = 1;
+                     iComp < d_densityOutQuadValues.size();
+                     ++iComp)
+                  {
+                    d_mixingSchemePtrs[iComp]->addVariableToInHist(
+                      mixingVariable::rho,
+                      d_densityInNodalValues[iComp].begin(),
+                      d_densityInNodalValues[iComp].locally_owned_size());
+                    d_mixingSchemePtrs[iComp]->addVariableToResidualHist(
+                      mixingVariable::rho,
+                      d_densityResidualNodalValues[iComp].begin(),
+                      d_densityResidualNodalValues[iComp].locally_owned_size());
+                  }
+                // Delete old history if it exceeds a pre-described
+                // length
+                for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size();
+                     ++iComp)
+                  d_mixingSchemePtrs[iComp]->popOldHistory(
+                    d_dftParamsPtr->mixingHistory);
+
+                // Compute the mixing coefficients
+                for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size();
+                     ++iComp)
+                  d_mixingSchemePtrs[iComp]->computeAndersonMixingCoeff();
+
+                // update the mixing variables
+                for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
+                  d_mixingSchemePtrs[iComp]->mixVariable(
+                    mixingVariable::rho,
+                    d_densityInNodalValues[iComp].begin(),
+                    d_densityInNodalValues[iComp].locally_owned_size());
+                norm = 0.0;
+                for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
+                  norm += norms[iComp] * norms[iComp];
+                norm = std::sqrt(norm);
+                // interpolate nodal data to quadrature data
+                for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size();
+                     ++iComp)
+                  interpolateDensityNodalDataToQuadratureDataGeneral(
+                    d_basisOperationsPtrElectroHost,
+                    d_densityDofHandlerIndexElectro,
+                    d_densityQuadratureIdElectro,
+                    d_densityInNodalValues[iComp],
+                    d_densityInQuadValues[iComp],
+                    d_gradDensityInQuadValues[iComp],
+                    d_gradDensityInQuadValues[iComp],
+                    d_excManagerPtr->getDensityBasedFamilyType() ==
+                      densityFamilyType::GGA);
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
               {
+                std::vector<double> norms(d_mixingSchemePtrs.size());
                 // Update the history of mixing variables
                 if (scfIter == 1)
                   d_densityResidualQuadValues.resize(
@@ -2269,10 +2363,14 @@ namespace dftfe
                     if (scfIter == 1)
                       d_densityResidualQuadValues[iComp].resize(
                         d_densityOutQuadValues[iComp].size());
-                    computeResidual(d_densityOutQuadValues[iComp].data(),
-                                    d_densityInQuadValues[iComp].data(),
-                                    d_densityResidualQuadValues[iComp].data(),
-                                    d_densityOutQuadValues[iComp].size());
+                    d_basisOperationsPtrElectroHost->reinit(
+                      0, 0, d_densityQuadratureIdElectro, false);
+                    norms[iComp] = computeResidualQuadData(
+                      d_densityOutQuadValues[iComp],
+                      d_densityInQuadValues[iComp],
+                      d_densityResidualQuadValues[iComp],
+                      d_basisOperationsPtrElectroHost->JxWBasisData(),
+                      true);
                     d_mixingSchemePtrs[iComp]->addVariableToInHist(
                       mixingVariable::rho,
                       d_densityInQuadValues[iComp].data(),
@@ -2295,11 +2393,12 @@ namespace dftfe
                         if (scfIter == 1)
                           d_gradDensityResidualQuadValues[iComp].resize(
                             d_gradDensityOutQuadValues[iComp].size());
-                        computeResidual(
-                          d_gradDensityOutQuadValues[iComp].data(),
-                          d_gradDensityInQuadValues[iComp].data(),
-                          d_gradDensityResidualQuadValues[iComp].data(),
-                          d_gradDensityOutQuadValues[iComp].size());
+                        computeResidualQuadData(
+                          d_gradDensityOutQuadValues[iComp],
+                          d_gradDensityInQuadValues[iComp],
+                          d_gradDensityResidualQuadValues[iComp],
+                          d_basisOperationsPtrElectroHost->JxWBasisData(),
+                          false);
                         d_mixingSchemePtrs[iComp]->addVariableToInHist(
                           mixingVariable::gradRho,
                           d_gradDensityInQuadValues[iComp].data(),
@@ -2324,10 +2423,11 @@ namespace dftfe
                   d_mixingSchemePtrs[iComp]->computeAndersonMixingCoeff();
 
                 // update the mixing variables
-                std::vector<double> norms(d_mixingSchemePtrs.size());
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
-                  norms[iComp] = d_mixingSchemePtrs[iComp]->mixVariable(
-                    mixingVariable::rho, d_densityInQuadValues[iComp]);
+                  d_mixingSchemePtrs[iComp]->mixVariable(
+                    mixingVariable::rho,
+                    d_densityInQuadValues[iComp].data(),
+                    d_densityInQuadValues[iComp].size());
                 norm = 0.0;
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                   norm += norms[iComp] * norms[iComp];
@@ -2340,7 +2440,8 @@ namespace dftfe
                          ++iComp)
                       d_mixingSchemePtrs[iComp]->mixVariable(
                         mixingVariable::gradRho,
-                        d_gradDensityInQuadValues[iComp]);
+                        d_gradDensityInQuadValues[iComp].data(),
+                        d_gradDensityInQuadValues[iComp].size());
                   }
               }
 
@@ -4549,16 +4650,58 @@ namespace dftfe
 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::computeResidual(const double *outValues,
-                                                     const double *inValues,
-                                                     double *residualValues,
-                                                     const unsigned int size)
+  double
+  dftClass<FEOrder, FEOrderElectro>::computeResidualQuadData(
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &outValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &inValues,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &residualValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &        JxW,
+    const bool computeNorm)
   {
-    std::transform(
-      outValues, outValues + size, inValues, residualValues, std::minus<>{});
+    std::transform(outValues.begin(),
+                   outValues.end(),
+                   inValues.begin(),
+                   residualValues.begin(),
+                   std::minus<>{});
+    double normValue = 0.0;
+    if (computeNorm)
+      {
+        for (unsigned int iQuad = 0; iQuad < residualValues.size(); ++iQuad)
+          normValue +=
+            residualValues[iQuad] * residualValues[iQuad] * JxW[iQuad];
+        MPI_Allreduce(
+          MPI_IN_PLACE, &normValue, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+      }
+    return std::sqrt(normValue);
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::computeResidualNodalData(
+    const distributedCPUVec<double> &outValues,
+    const distributedCPUVec<double> &inValues,
+    distributedCPUVec<double> &      residualValues)
+  {
+    residualValues.reinit(inValues);
+
+    residualValues = 0.0;
+
+    // compute residual = rhoOut - rhoIn
+    residualValues.add(1.0, outValues, -1.0, inValues);
+
+    residualValues.update_ghost_values();
+
+    // compute l2 norm of the field residual
+    double normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
+                                      residualValues,
+                                      d_densityDofHandlerIndexElectro,
+                                      d_densityQuadratureIdElectro);
+    return normValue;
+  }
 
 
 #include "dft.inst.cc"

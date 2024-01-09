@@ -223,35 +223,19 @@ namespace dftfe
 
   // Computes the new variable after mixing. It returns the L2 norm of
   // the difference between the old and new input variables
-  double
-  MixingScheme::mixVariable(
-    mixingVariable mixingVariableName,
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &outputVariable)
+  void
+  MixingScheme::mixVariable(mixingVariable     mixingVariableName,
+                            double *           outputVariable,
+                            const unsigned int lenVar)
   {
-    double       normValue = 0.0;
-    unsigned int N         = d_variableHistoryIn[mixingVariableName].size() - 1;
-    unsigned int lenVar = d_vectorDotProductWeights[mixingVariableName].size();
+    unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+    // Assumes the variable is present otherwise will lead to a seg fault
+    AssertThrow(
+      lenVar == d_variableHistoryIn[mixingVariableName][0].size(),
+      dealii::ExcMessage(
+        "DFT-FE Error: The size of the input variables in history does not match the provided size."));
 
-    if (lenVar > 0)
-      {
-        for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
-          {
-            double rhodiff =
-              std::abs(d_variableHistoryResidual[mixingVariableName][N][iQuad]);
-
-            normValue += rhodiff * rhodiff *
-                         d_vectorDotProductWeights[mixingVariableName][iQuad];
-          }
-      }
-    else
-      {
-        // Assumes the variable is present otherwise will lead to a seg fault
-        lenVar = d_variableHistoryIn[mixingVariableName][0].size();
-      }
-
-    outputVariable.resize(lenVar);
-    std::fill(outputVariable.begin(), outputVariable.end(), 0.0);
+    std::fill(outputVariable, outputVariable + lenVar, 0.0);
 
     for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
       {
@@ -272,23 +256,6 @@ namespace dftfe
         outputVariable[iQuad] =
           (varInBar + d_mixingParameter[mixingVariableName] * varResidualBar);
       }
-
-    double totalNormValue = 0.0;
-    if (d_performMPIReduce[mixingVariableName])
-      {
-        MPI_Allreduce(&normValue,
-                      &totalNormValue,
-                      1,
-                      MPI_DOUBLE,
-                      MPI_SUM,
-                      d_mpi_comm_domain);
-      }
-    else
-      {
-        totalNormValue = normValue;
-      }
-
-    return std::sqrt(totalNormValue);
   }
 
   // Clears the history

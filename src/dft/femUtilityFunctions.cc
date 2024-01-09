@@ -460,6 +460,71 @@ namespace dftfe
       nodalField);
     constraintMatrix.set_zero(nodalField);
   }
+  //
+  // compute mass Vector
+  //
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeRhoNodalMassVector(
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &massVec)
+  {
+    const unsigned int nLocalDoFs =
+      d_matrixFreeDataPRefined
+        .get_vector_partitioner(d_densityDofHandlerIndexElectro)
+        ->locally_owned_size();
+    massVec.clear();
+    massVec.resize(nLocalDoFs, 0.0);
+
+    distributedCPUVec<double> distributedMassVec;
+    d_matrixFreeDataPRefined.initialize_dof_vector(
+      distributedMassVec, d_densityDofHandlerIndexElectro);
+
+    dealii::QGaussLobatto<3> quadrature(
+      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
+    dealii::FEValues<3> fe_values(d_dofHandlerRhoNodal.get_fe(),
+                                  quadrature,
+                                  dealii::update_values |
+                                    dealii::update_JxW_values);
+    const unsigned int  dofs_per_cell =
+      (d_dofHandlerRhoNodal.get_fe()).dofs_per_cell;
+    const unsigned int     num_quad_points = quadrature.size();
+    dealii::Vector<double> massVectorLocal(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(
+      dofs_per_cell);
+
+
+    //
+    // parallel loop over all elements
+    //
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cell = d_dofHandlerRhoNodal.begin_active(),
+      endc = d_dofHandlerRhoNodal.end();
+    for (; cell != endc; ++cell)
+      if (cell->is_locally_owned())
+        {
+          // compute values for the current element
+          fe_values.reinit(cell);
+          massVectorLocal = 0.0;
+          for (unsigned int i = 0; i < dofs_per_cell; ++i)
+            for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+              massVectorLocal(i) += fe_values.shape_value(i, q_point) *
+                                    fe_values.shape_value(i, q_point) *
+                                    fe_values.JxW(q_point);
+
+          cell->get_dof_indices(local_dof_indices);
+          d_constraintsRhoNodal.distribute_local_to_global(massVectorLocal,
+                                                           local_dof_indices,
+                                                           distributedMassVec);
+        }
+
+    distributedMassVec.compress(dealii::VectorOperation::add);
+    d_constraintsRhoNodal.set_zero(distributedMassVec);
+    for (unsigned int iDoF = 0; iDoF < nLocalDoFs; ++iDoF)
+      massVec[iDoF] = distributedMassVec.local_element(iDoF);
+  }
+
+
 #include "dft.inst.cc"
 
 } // namespace dftfe

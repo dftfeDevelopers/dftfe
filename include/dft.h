@@ -220,11 +220,32 @@ namespace dftfe
     /**
      * @brief Copies the residual residualValues=outValues-inValues
      */
+    double
+    computeResidualQuadData(
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &outValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &inValues,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &residualValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &        JxW,
+      const bool computeNorm);
+
+
+    double
+    computeResidualNodalData(const distributedCPUVec<double> &outValues,
+                             const distributedCPUVec<double> &inValues,
+                             distributedCPUVec<double> &      residualValues);
+
+
+    /**
+     * @brief Computes the diagonal mass matrix for rho nodal grid, used for nodal mixing
+     */
     void
-    computeResidual(const double *     outValues,
-                    const double *     inValues,
-                    double *           residualValues,
-                    const unsigned int size);
+    computeRhoNodalMassVector(
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &massVec);
 
     void
     initializeKohnShamDFTOperator(const bool initializeCublas = true);
@@ -914,7 +935,9 @@ namespace dftfe
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 kerkerPreconditionedResidualSolverProblem,
-      dealiiLinearSolver &CGSolver);
+      dealiiLinearSolver &CGSolver,
+      const distributedCPUVec<double> &residualRho,
+      distributedCPUVec<double> &      preCondTotalDensityResidualVector);
 
     double
     lowrankApproxScfDielectricMatrixInv(const unsigned int scfIter);

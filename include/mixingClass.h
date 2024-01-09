@@ -108,11 +108,10 @@ namespace dftfe
      * @brief Computes the input for the next iteration based on the anderson coefficients
      *
      */
-    double
-    mixVariable(
-      const mixingVariable mixingVariableName,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &outputVariable);
+    void
+    mixVariable(const mixingVariable mixingVariableName,
+                double *             outputVariable,
+                const unsigned int   lenVar);
 
 
   private:

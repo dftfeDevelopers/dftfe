@@ -34,23 +34,10 @@ namespace dftfe
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 kerkerPreconditionedResidualSolverProblem,
-      dealiiLinearSolver &CGSolver)
+      dealiiLinearSolver &CGSolver,
+      const distributedCPUVec<double> &residualRho,
+      distributedCPUVec<double> &      preCondTotalDensityResidualVector)
   {
-    distributedCPUVec<double> residualRho;
-    residualRho.reinit(d_densityInNodalValues[0]);
-
-    residualRho = 0.0;
-
-    // compute residual = rhoIn - rhoOut
-    residualRho.add(1.0,
-                    d_densityInNodalValues[0],
-                    -1.0,
-                    d_densityOutNodalValues[0]);
-
-    residualRho.update_ghost_values();
-
-
-
     // create FEEval object to be used subsequently
     dealii::FEEvaluation<
       3,
@@ -114,12 +101,12 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         kerkerPreconditionedResidualSolverProblemDevice.reinit(
-          d_preCondTotalDensityResidualVector, gradDensityResidualValuesMap);
+          preCondTotalDensityResidualVector, gradDensityResidualValuesMap);
 #endif
       }
     else
       kerkerPreconditionedResidualSolverProblem.reinit(
-        d_preCondTotalDensityResidualVector, gradDensityResidualValuesMap);
+        preCondTotalDensityResidualVector, gradDensityResidualValuesMap);
 
     // solve the Helmholtz system to compute preconditioned residual
     if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
