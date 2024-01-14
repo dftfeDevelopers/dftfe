@@ -90,6 +90,10 @@ namespace dftfe
              ++iComp)
           d_densityOutNodalValues[iComp] *= scalingFactor;
 
+        for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
+             ++iComp)
+          d_densityOutNodalValues[iComp].update_ghost_values();
+
 
 
         // interpolate nodal rhoOut data to quadrature data
@@ -187,7 +191,7 @@ namespace dftfe
                               d_numEigenValues != d_numEigenValuesRR);
         // normalizeRhoOutQuadValues();
 
-        if (isGroundState)
+        if (d_dftParamsPtr->computeEnergyEverySCF || isGroundState)
           {
             computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_DEVICE
@@ -209,33 +213,10 @@ namespace dftfe
           }
       }
 
-    if (isGroundState)
+    if (d_dftParamsPtr->computeEnergyEverySCF || isGroundState)
       {
         d_rhoOutNodalValuesDistributed = d_densityOutNodalValues[0];
         d_constraintsRhoNodalInfo.distribute(d_rhoOutNodalValuesDistributed);
-        interpolateDensityNodalDataToQuadratureDataLpsp(
-          d_basisOperationsPtrElectroHost,
-          d_densityDofHandlerIndexElectro,
-          d_lpspQuadratureIdElectro,
-          d_densityOutNodalValues[0],
-          d_densityTotalOutValuesLpspQuad,
-          d_gradDensityTotalOutValuesLpspQuad,
-          true);
-      }
-    else if (d_dftParamsPtr->computeEnergyEverySCF)
-      {
-        if (d_dftParamsPtr->mixingMethod != "ANDERSON_WITH_KERKER" &&
-            d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND")
-          {
-            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
-                                    d_constraintsRhoNodal,
-                                    d_densityDofHandlerIndexElectro,
-                                    d_densityQuadratureIdElectro,
-                                    d_densityOutQuadValues[0],
-                                    d_densityOutNodalValues[0]);
-            d_densityOutNodalValues[0].update_ghost_values();
-          }
-
         interpolateDensityNodalDataToQuadratureDataLpsp(
           d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
@@ -287,7 +268,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
   {
-    if (d_mixingSchemePtrs[0]->lengthOfHistory() > 0)
+    if (d_mixingScheme.lengthOfHistory() > 0)
       {
         // create temporary copies of rho Out data
         std::vector<

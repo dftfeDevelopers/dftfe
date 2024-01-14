@@ -740,6 +740,12 @@ namespace dftfe
           "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
+          "ADAPT ANDERSON MIXING PARAMETER",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Boolean parameter specifying whether to adapt the Anderson mixing parameter based on algorithm 1 in [CPC. 292, 108865 (2023)].");
+
+        prm.declare_entry(
           "KERKER MIXING PARAMETER",
           "0.05",
           dealii::Patterns::Double(0.0, 1000.0),
@@ -1514,11 +1520,13 @@ namespace dftfe
       selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
       mixingHistory                 = prm.get_integer("MIXING HISTORY");
       mixingParameter               = prm.get_double("MIXING PARAMETER");
-      kerkerParameter               = prm.get_double("KERKER MIXING PARAMETER");
-      mixingMethod                  = prm.get("MIXING METHOD");
-      constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
-      startingWFCType               = prm.get("STARTING WFC");
-      computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
+      adaptAndersonMixingParameter =
+        prm.get_bool("ADAPT ANDERSON MIXING PARAMETER");
+      kerkerParameter         = prm.get_double("KERKER MIXING PARAMETER");
+      mixingMethod            = prm.get("MIXING METHOD");
+      constraintMagnetization = prm.get_bool("CONSTRAINT MAGNETIZATION");
+      startingWFCType         = prm.get("STARTING WFC");
+      computeEnergyEverySCF   = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
       prm.enter_subsection("LOW RANK DIELECM PRECOND");
       {
@@ -1682,11 +1690,12 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: Implementation of this feature is not completed yet."));
 
-    if (spinPolarized == 1 && mixingMethod == "ANDERSON_WITH_KERKER")
-      AssertThrow(
-        false,
-        dealii::ExcMessage(
-          "DFT-FE Error: Implementation of this feature is not completed yet."));
+    // if (spinPolarized == 1 && mixingMethod == "ANDERSON_WITH_KERKER")
+    //   AssertThrow(
+    //     false,
+    //     dealii::ExcMessage(
+    //       "DFT-FE Error: Implementation of this feature is not completed
+    //       yet."));
     if (spinPolarized == 1 &&
         (extrapolateDensity >= 1 || reuseDensityGeoOpt == 2))
       AssertThrow(

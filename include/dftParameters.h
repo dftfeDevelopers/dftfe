@@ -47,6 +47,7 @@ namespace dftfe
     std::string modelXCInputFile;
 
     double radiusAtomBall, mixingParameter;
+    bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       start_magnetization, absLinearSolverToleranceHelmholtz;
 

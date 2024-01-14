@@ -23,8 +23,15 @@
 
 namespace dftfe
 {
-  MixingScheme::MixingScheme(const MPI_Comm &mpi_comm_domain)
+  MixingScheme::MixingScheme(const MPI_Comm &   mpi_comm_parent,
+                             const MPI_Comm &   mpi_comm_domain,
+                             const unsigned int verbosity)
     : d_mpi_comm_domain(mpi_comm_domain)
+    , d_mpi_comm_parent(mpi_comm_parent)
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_verbosity(verbosity)
+
   {}
 
   void
@@ -33,7 +40,8 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &          weightDotProducts,
     const bool   performMPIReduce,
-    const double mixingValue)
+    const double mixingValue,
+    const bool   adaptMixingValue)
   {
     d_variableHistoryIn[mixingVariableList] = std::deque<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>();
@@ -41,9 +49,15 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>();
     d_vectorDotProductWeights[mixingVariableList] = weightDotProducts;
 
-    d_performMPIReduce[mixingVariableList] = performMPIReduce;
-    d_mixingParameter[mixingVariableList]  = mixingValue;
-    unsigned int weightDotProductsSize     = weightDotProducts.size();
+    d_performMPIReduce[mixingVariableList]     = performMPIReduce;
+    d_mixingParameter[mixingVariableList]      = mixingValue;
+    d_adaptMixingParameter[mixingVariableList] = adaptMixingValue;
+    d_anyMixingParameterAdaptive =
+      adaptMixingValue || d_anyMixingParameterAdaptive;
+    d_adaptiveMixingParameterDecLastIteration = false;
+    d_adaptiveMixingParameterDecAllIterations = true;
+    d_adaptiveMixingParameterIncAllIterations = true;
+    unsigned int weightDotProductsSize        = weightDotProducts.size();
     MPI_Allreduce(MPI_IN_PLACE,
                   &weightDotProductsSize,
                   1,
@@ -159,7 +173,8 @@ namespace dftfe
 
   // Fucntion to compute the mixing coefficients based on anderson scheme
   void
-  MixingScheme::computeAndersonMixingCoeff()
+  MixingScheme::computeAndersonMixingCoeff(
+    const std::vector<mixingVariable> mixingVariablesList)
   {
     // initialize data structures
     // assumes rho is a mixing variable
@@ -175,7 +190,7 @@ namespace dftfe
         for (int i = 0; i < ldb * NRHS; i++)
           d_c[i] = 0.0;
 
-        for (const auto &[key, value] : d_variableHistoryIn)
+        for (const auto &key : mixingVariablesList)
           {
             computeMixingMatrices(d_variableHistoryIn[key],
                                   d_variableHistoryResidual[key],
@@ -191,6 +206,67 @@ namespace dftfe
     d_cFinal = 1.0;
     for (int i = 0; i < N; i++)
       d_cFinal -= d_c[i];
+    computeAdaptiveAndersonMixingParameter();
+  }
+
+
+  // Fucntion to compute the mixing parameter based on an adaptive anderson
+  // scheme, algorithm 1 in [CPC. 292, 108865 (2023)]
+  void
+  MixingScheme::computeAdaptiveAndersonMixingParameter()
+  {
+    double ci = 1.0;
+    if (d_anyMixingParameterAdaptive &&
+        d_variableHistoryIn[mixingVariable::rho].size() > 1)
+      {
+        double bii   = std::abs(d_cFinal);
+        double gbase = 1.0;
+        double gpv   = 0.02;
+        double ggap  = 0.0;
+        double gi =
+          gpv * ((double)d_variableHistoryIn[mixingVariable::rho].size()) +
+          gbase;
+        double x = std::abs(bii) / gi;
+        if (x < 0.5)
+          ci = 1.0 / (2.0 + std::log(0.5 / x));
+        else if (x <= 2.0)
+          ci = x;
+        else
+          ci = 2.0 + std::log(x / 2.0);
+        double pi = 0.0;
+        if (ci < 1.0 == d_adaptiveMixingParameterDecLastIteration)
+          if (ci < 1.0)
+            if (d_adaptiveMixingParameterDecAllIterations)
+              pi = 1.0;
+            else
+              pi = 2.0;
+          else if (d_adaptiveMixingParameterIncAllIterations)
+            pi = 1.0;
+          else
+            pi = 2.0;
+        else
+          pi = 3.0;
+
+        ci                                        = std::pow(ci, 1.0 / pi);
+        d_adaptiveMixingParameterDecLastIteration = ci < 1.0;
+        d_adaptiveMixingParameterDecAllIterations =
+          d_adaptiveMixingParameterDecAllIterations & ci < 1.0;
+        d_adaptiveMixingParameterIncAllIterations =
+          d_adaptiveMixingParameterIncAllIterations & ci >= 1.0;
+      }
+    MPI_Bcast(&ci, 1, MPI_DOUBLE, 0, d_mpi_comm_parent);
+    for (const auto &[key, value] : d_variableHistoryIn)
+      if (d_adaptMixingParameter[key])
+        {
+          d_mixingParameter[key] *= ci;
+        }
+    if (d_verbosity > 0)
+      if (d_adaptMixingParameter[mixingVariable::rho])
+        pcout << "Adaptive Anderson mixing parameter for Rho: "
+              << d_mixingParameter[mixingVariable::rho] << std::endl;
+      else
+        pcout << "Anderson mixing parameter for Rho: "
+              << d_mixingParameter[mixingVariable::rho] << std::endl;
   }
 
   // Fucntions to add to the history
@@ -221,8 +297,7 @@ namespace dftfe
                 length * sizeof(double));
   }
 
-  // Computes the new variable after mixing. It returns the L2 norm of
-  // the difference between the old and new input variables
+  // Computes the new variable after mixing.
   void
   MixingScheme::mixVariable(mixingVariable     mixingVariableName,
                             double *           outputVariable,

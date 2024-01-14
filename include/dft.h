@@ -1440,8 +1440,8 @@ namespace dftfe
     // std::map<dealii::CellId, std::vector<double>> d_phiInValues,
     // d_phiOutValues;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                                               d_phiInQuadValues, d_phiOutQuadValues;
-    std::vector<std::unique_ptr<MixingScheme>> d_mixingSchemePtrs;
+                 d_phiInQuadValues, d_phiOutQuadValues;
+    MixingScheme d_mixingScheme;
 
     distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoOutNodalValuesSplit,
       d_preCondTotalDensityResidualVector, d_rhoNodalFieldRefined,

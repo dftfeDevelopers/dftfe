@@ -39,6 +39,8 @@ namespace dftfe
       distributedCPUVec<double> &      preCondTotalDensityResidualVector)
   {
     // create FEEval object to be used subsequently
+    residualRho.update_ghost_values();
+
     dealii::FEEvaluation<
       3,
       C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),

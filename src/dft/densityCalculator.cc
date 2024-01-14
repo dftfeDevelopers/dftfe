@@ -559,6 +559,8 @@ namespace dftfe
 
     if (dftParams.spinPolarized == 1)
       {
+        densityValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
+        densityValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
         std::transform(rhoHost.begin(),
                        rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
                        rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
@@ -571,6 +573,10 @@ namespace dftfe
                        std::minus<>{});
         if (isEvaluateGradRho)
           {
+            gradDensityValues[0].resize(3 * totalLocallyOwnedCells *
+                                        numQuadPoints);
+            gradDensityValues[1].resize(3 * totalLocallyOwnedCells *
+                                        numQuadPoints);
             std::transform(gradRhoHost.begin(),
                            gradRhoHost.begin() +
                              3 * totalLocallyOwnedCells * numQuadPoints,

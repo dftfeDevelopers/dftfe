@@ -32,8 +32,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::clearRhoData()
   {
-    for (unsigned int iComp = 0; iComp < d_mixingSchemePtrs.size(); ++iComp)
-      d_mixingSchemePtrs[iComp]->clearHistory();
+    d_mixingScheme.clearHistory();
 
     // related to low rank jacobian inverse scf preconditioning
     d_vcontainerVals.clear();

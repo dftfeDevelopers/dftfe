@@ -31,7 +31,9 @@ namespace dftfe
   enum class mixingVariable
   {
     rho,
-    gradRho
+    gradRho,
+    magZ,
+    gradMagZ
   };
 
   /**
@@ -44,7 +46,9 @@ namespace dftfe
   class MixingScheme
   {
   public:
-    MixingScheme(const MPI_Comm &mpi_comm_domain);
+    MixingScheme(const MPI_Comm &   mpi_comm_parent,
+                 const MPI_Comm &   mpi_comm_domain,
+                 const unsigned int verbosity);
 
     unsigned int
     lengthOfHistory();
@@ -54,7 +58,15 @@ namespace dftfe
      *
      */
     void
-    computeAndersonMixingCoeff();
+    computeAndersonMixingCoeff(
+      const std::vector<mixingVariable> mixingVariablesList);
+
+    /**
+     * @brief Computes the adaptive mixing parameter.
+     *
+     */
+    void
+    computeAdaptiveAndersonMixingParameter();
 
     /**
      * @brief Deletes the old history if the length exceeds max length of history
@@ -84,7 +96,8 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &          weightDotProducts,
       const bool   performMPIReduce,
-      const double mixingValue);
+      const double mixingValue,
+      const bool   adaptMixingValue);
 
     /**
      * @brief Adds to the input history
@@ -149,11 +162,21 @@ namespace dftfe
                                    d_vectorDotProductWeights;
     std::map<mixingVariable, bool> d_performMPIReduce;
 
-    const MPI_Comm d_mpi_comm_domain;
+    const MPI_Comm d_mpi_comm_domain, d_mpi_comm_parent;
 
     std::map<mixingVariable, double> d_mixingParameter;
+    std::map<mixingVariable, bool>   d_adaptMixingParameter;
+    bool                             d_anyMixingParameterAdaptive;
+    bool                             d_adaptiveMixingParameterDecLastIteration;
+    bool                             d_adaptiveMixingParameterDecAllIterations;
+    bool                             d_adaptiveMixingParameterIncAllIterations;
     unsigned int                     d_mixingHistory;
     std::map<mixingVariable, bool>   d_performMixing;
+    const unsigned int               d_verbosity;
+
+
+    /// conditional stream object
+    dealii::ConditionalOStream pcout;
   };
 } //  end of namespace dftfe
 #endif // DFTFE_MIXINGCLASS_H
