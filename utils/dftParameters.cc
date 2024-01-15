@@ -1704,12 +1704,6 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: Implementation of this feature is not completed yet."));
 
-    // if (spinPolarized == 1 && mixingMethod == "ANDERSON_WITH_KERKER")
-    //   AssertThrow(
-    //     false,
-    //     dealii::ExcMessage(
-    //       "DFT-FE Error: Implementation of this feature is not completed
-    //       yet."));
     if (spinPolarized == 1 &&
         (extrapolateDensity >= 1 || reuseDensityGeoOpt == 2))
       AssertThrow(
@@ -1959,7 +1953,8 @@ namespace dftfe
           chebyshevTolerance = 1.0e+4;
         else if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           chebyshevTolerance = 2.0e-3;
-        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+        else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
+                 mixingMethod == "ANDERSON_WITH_RESTA")
           chebyshevTolerance = 1.0e-2;
         else if (solverMode != "NSCF")
           chebyshevTolerance = 5.0e-2;
@@ -1969,7 +1964,8 @@ namespace dftfe
       {
         if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           mixingParameter = 0.5;
-        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+        else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
+                 mixingMethod == "ANDERSON_WITH_RESTA")
           mixingParameter = 0.5;
         else
           mixingParameter = 0.2;
