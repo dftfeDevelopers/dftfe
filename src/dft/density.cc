@@ -23,33 +23,6 @@
 
 namespace dftfe
 {
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::popOutRhoInRhoOutVals()
-  {
-    // pop out rhoInVals and rhoOutVals if their size exceeds mixing history
-    // size
-
-    // if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-    //     d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-    //   {
-    //     if (d_rhoInNodalVals.size() == d_dftParamsPtr->mixingHistory)
-    //       {
-    //         d_rhoInNodalVals.pop_front();
-    //         d_rhoOutNodalVals.pop_front();
-
-    //         if (d_dftParamsPtr->spinPolarized == 1)
-    //           {
-    //             d_rhoInSpin0NodalVals.pop_front();
-    //             d_rhoOutSpin0NodalVals.pop_front();
-    //             d_rhoInSpin1NodalVals.pop_front();
-    //             d_rhoOutSpin1NodalVals.pop_front();
-    //           }
-    //       }
-    //   }
-  }
-
-
   // calculate electron density
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -74,9 +47,6 @@ namespace dftfe
         computeRhoNodalFromPSI(kohnShamDFTEigenOperatorCPU,
                                isConsiderSpectrumSplitting);
 #endif
-        for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
-             ++iComp)
-          d_densityOutNodalValues[iComp].update_ghost_values();
 
         // normalize rho
         const double charge =
@@ -89,12 +59,6 @@ namespace dftfe
         for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
           d_densityOutNodalValues[iComp] *= scalingFactor;
-
-        for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
-             ++iComp)
-          d_densityOutNodalValues[iComp].update_ghost_values();
-
-
 
         // interpolate nodal rhoOut data to quadrature data
         for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
@@ -199,7 +163,6 @@ namespace dftfe
 #endif
               kohnShamDFTEigenOperatorCPU,
               isConsiderSpectrumSplitting);
-            d_densityOutNodalValues[0].update_ghost_values();
 
             // normalize rho
             const double charge =
@@ -226,8 +189,6 @@ namespace dftfe
           d_gradDensityTotalOutValuesLpspQuad,
           true);
       }
-
-    popOutRhoInRhoOutVals();
 
     if (isGroundState &&
         ((d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
@@ -257,7 +218,6 @@ namespace dftfe
           d_densityQuadratureIdElectro,
           rhoOutValuesCopy,
           d_rhoOutNodalValuesSplit);
-        d_rhoOutNodalValuesSplit.update_ghost_values();
       }
   }
 
@@ -268,83 +228,61 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::noRemeshRhoDataInit()
   {
-    if (d_mixingScheme.lengthOfHistory() > 0)
+    // cleanup of existing rho Out and rho In data
+    clearRhoData();
+    d_densityInQuadValues = d_densityOutQuadValues;
+    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
       {
-        // create temporary copies of rho Out data
-        std::vector<
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-          densityOutQuadValuesCopy = d_densityOutQuadValues;
-        std::vector<
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-          gradDensityOutQuadValuesCopy;
+        d_gradDensityInQuadValues = d_gradDensityOutQuadValues;
+      }
+
+    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+      {
+        d_densityInNodalValues = d_densityOutNodalValues;
+
+        // normalize rho
+        const double charge =
+          totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[0]);
+
+        const double scalingFactor = ((double)numElectrons) / charge;
+
+        // scale nodal vector with scalingFactor
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          d_densityInNodalValues[iComp] *= scalingFactor;
+
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          interpolateDensityNodalDataToQuadratureDataGeneral(
+            d_basisOperationsPtrElectroHost,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_densityInNodalValues[iComp],
+            d_densityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            d_excManagerPtr->getDensityBasedFamilyType() ==
+              densityFamilyType::GGA);
+
+        d_densityOutQuadValues.resize(d_densityInNodalValues.size());
+        for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
+             ++iComp)
+          d_densityOutQuadValues[iComp].resize(
+            d_densityInQuadValues[iComp].size());
         if (d_excManagerPtr->getDensityBasedFamilyType() ==
             densityFamilyType::GGA)
           {
-            gradDensityOutQuadValuesCopy = d_gradDensityOutQuadValues;
-          }
-
-        // cleanup of existing rho Out and rho In data
-        clearRhoData();
-        d_densityInQuadValues = densityOutQuadValuesCopy;
-        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
-          {
-            d_gradDensityInQuadValues = gradDensityOutQuadValuesCopy;
-          }
-
-        if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-            d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-          {
-            d_densityInNodalValues = d_densityOutNodalValues;
-            for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
-                 ++iComp)
-              d_densityInNodalValues[iComp].update_ghost_values();
-
-            // normalize rho
-            const double charge =
-              totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[0]);
-
-            const double scalingFactor = ((double)numElectrons) / charge;
-
-            // scale nodal vector with scalingFactor
-            for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
-                 ++iComp)
-              d_densityInNodalValues[iComp] *= scalingFactor;
-
-            for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
-                 ++iComp)
-              interpolateDensityNodalDataToQuadratureDataGeneral(
-                d_basisOperationsPtrElectroHost,
-                d_densityDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro,
-                d_densityInNodalValues[iComp],
-                d_densityInQuadValues[iComp],
-                d_gradDensityInQuadValues[iComp],
-                d_gradDensityInQuadValues[iComp],
-                d_excManagerPtr->getDensityBasedFamilyType() ==
-                  densityFamilyType::GGA);
-
-            d_densityOutQuadValues.resize(d_densityInNodalValues.size());
+            d_gradDensityOutQuadValues.resize(d_gradDensityInQuadValues.size());
             for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
                  ++iComp)
-              d_densityOutQuadValues[iComp].resize(
-                d_densityInQuadValues[iComp].size());
-            if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA)
-              {
-                d_gradDensityOutQuadValues.resize(
-                  d_gradDensityInQuadValues.size());
-                for (unsigned int iComp = 0;
-                     iComp < d_densityOutQuadValues.size();
-                     ++iComp)
-                  d_gradDensityOutQuadValues[iComp].resize(
-                    d_gradDensityInQuadValues[iComp].size());
-              }
+              d_gradDensityOutQuadValues[iComp].resize(
+                d_gradDensityInQuadValues[iComp].size());
           }
-
-        // scale quadrature values
-        normalizeRhoInQuadValues();
       }
+
+    // scale quadrature values
+    normalizeRhoInQuadValues();
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

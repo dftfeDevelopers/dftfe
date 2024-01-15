@@ -45,6 +45,7 @@ namespace dftfe
     const unsigned int nCells        = basisOperationsPtr->nCells();
     quadratureValueData.clear();
     quadratureValueData.resize(nQuadsPerCell * nCells);
+    nodalField.update_ghost_values();
     if (isEvaluateGradData)
       {
         quadratureGradValueData.clear();
@@ -169,6 +170,7 @@ namespace dftfe
     const unsigned int nCells        = basisOperationsPtr->nCells();
     quadratureValueData.clear();
     quadratureValueData.resize(nQuadsPerCell * nCells);
+    nodalField.update_ghost_values();
     if (isEvaluateGradData)
       {
         quadratureGradValueData.clear();
@@ -264,6 +266,7 @@ namespace dftfe
     const unsigned int nCells        = basisOperationsPtr->nCells();
     quadratureValueData.clear();
     quadratureValueData.resize(nQuadsPerCell * nCells);
+    nodalField.update_ghost_values();
     if (isEvaluateGradData)
       {
         quadratureGradValueData.clear();
@@ -357,6 +360,7 @@ namespace dftfe
       double>
                        fe_evalField(matrixFreeDataObject, 0, 0);
     const unsigned int numQuadPoints = fe_evalField.n_q_points;
+    nodalField.update_ghost_values();
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(0)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
@@ -424,6 +428,7 @@ namespace dftfe
       funcRho,
       nodalField);
     constraintMatrix.set_zero(nodalField);
+    nodalField.update_ghost_values();
   }
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -459,6 +464,7 @@ namespace dftfe
       funcRho,
       nodalField);
     constraintMatrix.set_zero(nodalField);
+    nodalField.update_ghost_values();
   }
   //
   // compute mass Vector

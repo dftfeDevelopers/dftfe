@@ -302,8 +302,6 @@ namespace dftfe
                         interpoolcomm);
         MPI_Barrier(interpoolcomm);
 
-        d_densityInNodalValues[0].update_ghost_values();
-
         // normalize rho
         const double charge =
           totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[0]);
@@ -351,8 +349,6 @@ namespace dftfe
                       d_densityInNodalValues[0].local_element(dof);
                   }
               }
-
-            d_densityInNodalValues[1].update_ghost_values();
 
             interpolateDensityNodalDataToQuadratureDataGeneral(
               d_basisOperationsPtrElectroHost,

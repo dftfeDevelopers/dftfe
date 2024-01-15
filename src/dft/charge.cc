@@ -115,7 +115,7 @@ namespace dftfe
                                     dealii::update_JxW_values);
     const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
     const unsigned int n_q_points    = quadrature_formula.size();
-
+    rhoNodalField.update_ghost_values();
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
                                                 endc = dofHandlerOfField.end();
@@ -155,6 +155,7 @@ namespace dftfe
                                     dealii::update_JxW_values);
     const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
     const unsigned int n_q_points    = quadrature_formula.size();
+    rhoNodalField.update_ghost_values();
     std::vector<double> tempRho(n_q_points);
 
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
@@ -198,7 +199,7 @@ namespace dftfe
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const unsigned int numQuadPoints = fe_evalField.n_q_points;
-
+    nodalField.update_ghost_values();
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(d_densityDofHandlerIndexElectro)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
     //        partitioner/dofHandler."));
@@ -297,7 +298,7 @@ namespace dftfe
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const unsigned int numQuadPoints = fe_evalField.n_q_points;
-
+    nodalField.update_ghost_values();
     AssertThrow(
       matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
       dealii::ExcMessage(
@@ -352,7 +353,8 @@ namespace dftfe
     dealii::VectorizedArray<double> valueVectorized =
       dealii::make_vectorized_array(0.0);
     const unsigned int numQuadPoints = fe_evalField.n_q_points;
-
+    nodalField1.update_ghost_values();
+    nodalField2.update_ghost_values();
     AssertThrow(
       matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
       dealii::ExcMessage(

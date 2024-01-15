@@ -918,10 +918,6 @@ namespace dftfe
       const bool isConsiderSpectrumSplitting,
       const bool isGroundState = false);
 
-
-    void
-    popOutRhoInRhoOutVals();
-
     /**
      *@brief Mixing schemes for mixing electron-density
      */

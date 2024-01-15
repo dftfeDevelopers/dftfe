@@ -264,9 +264,6 @@ namespace dftfe
                        d_dftParamsPtr->verbosity);
       }
 
-
-    d_phiTotRhoIn.update_ghost_values();
-
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     interpolateElectroNodalDataToQuadratureDataGeneral(
       d_basisOperationsPtrElectroHost,
@@ -1003,9 +1000,6 @@ namespace dftfe
                        d_dftParamsPtr->maxLinearSolverIterations,
                        d_dftParamsPtr->verbosity);
       }
-
-
-    d_phiTotRhoOut.update_ghost_values();
 
     interpolateElectroNodalDataToQuadratureDataGeneral(
       d_basisOperationsPtrElectroHost,

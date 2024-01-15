@@ -1176,7 +1176,6 @@ namespace dftfe
           d_densityInNodalValues[0].local_element(i) =
             d_rhoInNodalValuesRead.local_element(i);
 
-        d_densityInNodalValues[0].update_ghost_values();
         interpolateDensityNodalDataToQuadratureDataGeneral(
           d_basisOperationsPtrElectroHost,
           d_densityDofHandlerIndexElectro,
@@ -1198,7 +1197,6 @@ namespace dftfe
                   d_magInNodalValuesRead.local_element(i);
               }
 
-            d_densityInNodalValues[1].update_ghost_values();
             interpolateDensityNodalDataToQuadratureDataGeneral(
               d_basisOperationsPtrElectroHost,
               d_densityDofHandlerIndexElectro,
@@ -1348,8 +1346,6 @@ namespace dftfe
                                         d_densityQuadratureIdElectro,
                                         d_densityInQuadValues[0],
                                         d_densityInNodalValues[0]);
-
-                d_densityInNodalValues[0].update_ghost_values();
               }
           }
 
@@ -1376,8 +1372,6 @@ namespace dftfe
                                     d_densityQuadratureIdElectro,
                                     d_densityInQuadValues[0],
                                     d_densityInNodalValues[0]);
-
-            d_densityInNodalValues[0].update_ghost_values();
           }
         else if (d_dftParamsPtr->extrapolateDensity == 2 &&
                  d_dftParamsPtr->spinPolarized != 1 &&
@@ -1409,8 +1403,6 @@ namespace dftfe
                                     d_densityQuadratureIdElectro,
                                     d_densityInQuadValues[0],
                                     d_densityInNodalValues[0]);
-
-            d_densityInNodalValues[0].update_ghost_values();
           }
         else
           {
@@ -2278,6 +2270,10 @@ namespace dftfe
                     lowrankApproxScfDielectricMatrixInvSpinPolarized(scfIter);
                 else
                   norm = lowrankApproxScfDielectricMatrixInv(scfIter);
+                if (d_dftParamsPtr->verbosity >= 1)
+                  pcout << d_dftParamsPtr->mixingMethod
+                        << " mixing, L2 norm of electron-density difference: "
+                        << norm << std::endl;
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
               {
@@ -2313,21 +2309,27 @@ namespace dftfe
                   mixingVariable::rho,
                   d_preCondTotalDensityResidualVector.begin(),
                   d_preCondTotalDensityResidualVector.locally_owned_size());
-                d_mixingScheme.addVariableToInHist(
-                  mixingVariable::magZ,
-                  d_densityInNodalValues[1].begin(),
-                  d_densityInNodalValues[1].locally_owned_size());
-                d_mixingScheme.addVariableToResidualHist(
-                  mixingVariable::magZ,
-                  d_densityResidualNodalValues[1].begin(),
-                  d_densityResidualNodalValues[1].locally_owned_size());
+                if (d_dftParamsPtr->spinPolarized == 1)
+                  {
+                    d_mixingScheme.addVariableToInHist(
+                      mixingVariable::magZ,
+                      d_densityInNodalValues[1].begin(),
+                      d_densityInNodalValues[1].locally_owned_size());
+                    d_mixingScheme.addVariableToResidualHist(
+                      mixingVariable::magZ,
+                      d_densityResidualNodalValues[1].begin(),
+                      d_densityResidualNodalValues[1].locally_owned_size());
+                  }
                 // Delete old history if it exceeds a pre-described
                 // length
                 d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
 
                 // Compute the mixing coefficients
                 d_mixingScheme.computeAndersonMixingCoeff(
-                  std::vector<mixingVariable>{mixingVariable::rho});
+                  d_dftParamsPtr->spinPolarized == 1 ?
+                    std::vector<mixingVariable>{mixingVariable::rho,
+                                                mixingVariable::magZ} :
+                    std::vector<mixingVariable>{mixingVariable::rho});
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                   d_mixingScheme.mixVariable(
                     iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
@@ -2341,13 +2343,14 @@ namespace dftfe
                 if (d_dftParamsPtr->verbosity >= 1)
                   for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                     pcout << d_dftParamsPtr->mixingMethod
-                          << " mixing, L2 norm of electron-density difference: "
-                          << iComp << " " << norms[iComp] << std::endl;
+                          << " mixing, L2 norm of "
+                          << (iComp == 0 ? "electron" : "magnetization")
+                          << "-density difference: " << norms[iComp]
+                          << std::endl;
                 for (unsigned int iComp = 0;
                      iComp < d_densityInNodalValues.size();
                      ++iComp)
                   {
-                    d_densityInNodalValues[iComp].update_ghost_values();
                     interpolateDensityNodalDataToQuadratureDataGeneral(
                       d_basisOperationsPtrElectroHost,
                       d_densityDofHandlerIndexElectro,
@@ -2430,8 +2433,10 @@ namespace dftfe
 
                 // Compute the mixing coefficients
                 d_mixingScheme.computeAndersonMixingCoeff(
-                  std::vector<mixingVariable>{mixingVariable::rho,
-                                              mixingVariable::magZ});
+                  d_dftParamsPtr->spinPolarized == 1 ?
+                    std::vector<mixingVariable>{mixingVariable::rho,
+                                                mixingVariable::magZ} :
+                    std::vector<mixingVariable>{mixingVariable::rho});
 
                 // update the mixing variables
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
@@ -2456,14 +2461,17 @@ namespace dftfe
                 if (d_dftParamsPtr->verbosity >= 1)
                   for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                     pcout << d_dftParamsPtr->mixingMethod
-                          << " mixing, L2 norm of electron-density difference: "
-                          << iComp << " " << norms[iComp] << std::endl;
+                          << " mixing, L2 norm of "
+                          << (iComp == 0 ? "electron" : "magnetization")
+                          << "-density difference: " << norms[iComp]
+                          << std::endl;
               }
 
-            if (d_dftParamsPtr->verbosity >= 1)
+            if (d_dftParamsPtr->verbosity >= 1 &&
+                d_dftParamsPtr->spinPolarized == 1)
               pcout << d_dftParamsPtr->mixingMethod
-                    << " mixing, L2 norm of electron-density difference: "
-                    << norm << std::endl;
+                    << " mixing, L2 norm of total density difference: " << norm
+                    << std::endl;
           }
 
         if (d_dftParamsPtr->computeEnergyEverySCF &&
@@ -2602,8 +2610,6 @@ namespace dftfe
                            d_dftParamsPtr->maxLinearSolverIterations,
                            d_dftParamsPtr->verbosity);
           }
-
-        d_phiTotRhoIn.update_ghost_values();
 
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           dummy;
@@ -3264,7 +3270,6 @@ namespace dftfe
                                     d_densityQuadratureIdElectro,
                                     d_densityOutQuadValues[0],
                                     d_densityOutNodalValues[0]);
-            d_densityOutNodalValues[0].update_ghost_values();
 
             interpolateDensityNodalDataToQuadratureDataLpsp(
               d_basisOperationsPtrElectroHost,
@@ -3395,7 +3400,6 @@ namespace dftfe
                                d_dftParamsPtr->maxLinearSolverIterations,
                                d_dftParamsPtr->verbosity);
               }
-            d_phiTotRhoOut.update_ghost_values();
 
             interpolateElectroNodalDataToQuadratureDataGeneral(
               d_basisOperationsPtrElectroHost,
@@ -3618,7 +3622,6 @@ namespace dftfe
 
         computing_timer.leave_subsection("phiTot solve");
       }
-    d_phiTotRhoOut.update_ghost_values();
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
 
     interpolateElectroNodalDataToQuadratureDataGeneral(
@@ -4154,7 +4157,6 @@ namespace dftfe
                             d_densityQuadratureIdElectro,
                             d_densityOutQuadValues[0],
                             rhoNodalField);
-    rhoNodalField.update_ghost_values();
 
     distributedCPUVec<double> magNodalField;
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -4167,7 +4169,6 @@ namespace dftfe
                                 d_densityQuadratureIdElectro,
                                 d_densityOutQuadValues[1],
                                 magNodalField);
-        magNodalField.update_ghost_values();
       }
 
     //
@@ -4631,7 +4632,6 @@ namespace dftfe
                             d_densityQuadratureIdElectro,
                             d_densityOutQuadValues[0],
                             rhoNodalField);
-    rhoNodalField.update_ghost_values();
 
     //
     // only generate output for electron-density
@@ -4707,8 +4707,6 @@ namespace dftfe
 
     // compute residual = rhoOut - rhoIn
     residualValues.add(1.0, outValues, -1.0, inValues);
-
-    residualValues.update_ghost_values();
 
     // compute l2 norm of the field residual
     double normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,

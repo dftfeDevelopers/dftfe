@@ -622,6 +622,8 @@ namespace dftfe
       basisOperationsPtr->matrixFreeData().get_quadrature(quadratureId),
       funcRho,
       nodalField);
+    constraintMatrix.set_zero(nodalField);
+    nodalField.update_ghost_values();
   }
 #include "dft.inst.cc"
 

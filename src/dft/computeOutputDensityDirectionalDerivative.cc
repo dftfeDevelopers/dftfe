@@ -72,7 +72,6 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> charge;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     std::map<dealii::CellId, std::vector<double>> dummyMap;
-    v.update_ghost_values();
     interpolateDensityNodalDataToQuadratureDataGeneral(
       d_basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
@@ -178,9 +177,6 @@ namespace dftfe
 
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        vSpin0.update_ghost_values();
-        vSpin1.update_ghost_values();
-
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           vSpin0Values;
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -645,10 +641,6 @@ namespace dftfe
                 }
             }
         }
-
-
-    fvHam.update_ghost_values();
-    fvFermiEnergy.update_ghost_values();
 
     const double firstOrderResponseFermiEnergy =
       -totalCharge(d_matrixFreeDataPRefined, fvHam) /
