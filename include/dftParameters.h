@@ -75,10 +75,11 @@ namespace dftfe
 
     std::string coordinatesGaussianDispFile;
 
-    double      outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
-    bool        autoAdaptBaseMeshSize;
-    double      meshSizeInnerBall, meshSizeOuterBall;
-    double      chebyshevTolerance, topfrac, kerkerParameter;
+    double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
+    bool   autoAdaptBaseMeshSize;
+    double meshSizeInnerBall, meshSizeOuterBall;
+    double chebyshevTolerance, topfrac, kerkerParameter, restaScreeningLength,
+      restaFermiWavevector;
     std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
 

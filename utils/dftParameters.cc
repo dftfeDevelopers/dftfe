@@ -752,10 +752,22 @@ namespace dftfe
           "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).");
 
         prm.declare_entry(
+          "RESTA SCREENING LENGTH",
+          "6.61",
+          dealii::Patterns::Double(0.0, 1000.0),
+          "[Standard] Screening length estimate to be used in the Resta preconditioner.");
+
+        prm.declare_entry(
+          "RESTA FERMI WAVEVECTOR",
+          "5.81",
+          dealii::Patterns::Double(0.0, 1000.0),
+          "[Standard] Fermi wavevector estimate to be used in the Resta preconditioner.");
+
+        prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
           dealii::Patterns::Selection(
-            "ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
+            "ANDERSON|ANDERSON_WITH_KERKER|ANDERSON_WITH_RESTA|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -1523,6 +1535,8 @@ namespace dftfe
       adaptAndersonMixingParameter =
         prm.get_bool("ADAPT ANDERSON MIXING PARAMETER");
       kerkerParameter         = prm.get_double("KERKER MIXING PARAMETER");
+      restaFermiWavevector    = prm.get_double("RESTA FERMI WAVEVECTOR");
+      restaScreeningLength    = prm.get_double("RESTA SCREENING LENGTH");
       mixingMethod            = prm.get("MIXING METHOD");
       constraintMagnetization = prm.get_bool("CONSTRAINT MAGNETIZATION");
       startingWFCType         = prm.get("STARTING WFC");

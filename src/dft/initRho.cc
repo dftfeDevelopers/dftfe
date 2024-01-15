@@ -144,6 +144,7 @@ namespace dftfe
     // with Kerker for other mixing schemes it is done in density.cc as we need
     // to do this initialization every SCF
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
@@ -168,6 +169,7 @@ namespace dftfe
 
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
         const dealii::IndexSet &locallyOwnedSet =

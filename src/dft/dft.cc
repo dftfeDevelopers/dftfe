@@ -2028,7 +2028,8 @@ namespace dftfe
                                                       mpi_communicator);
 #endif
 
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
       {
         if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
             d_dftParamsPtr->floatingNuclearCharges)
@@ -2038,7 +2039,10 @@ namespace dftfe
               d_basisOperationsPtrElectroDevice,
               d_constraintsForHelmholtzRhoNodal,
               d_preCondTotalDensityResidualVector,
-              d_dftParamsPtr->kerkerParameter,
+              d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ?
+                d_dftParamsPtr->kerkerParameter :
+                (d_dftParamsPtr->restaFermiWavevector / 4.0 / M_PI / 4.0 /
+                 M_PI),
               d_helmholtzDofHandlerIndexElectro,
               d_densityQuadratureIdElectro);
 #endif
@@ -2048,7 +2052,9 @@ namespace dftfe
             d_basisOperationsPtrElectroHost,
             d_constraintsForHelmholtzRhoNodal,
             d_preCondTotalDensityResidualVector,
-            d_dftParamsPtr->kerkerParameter,
+            d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ?
+              d_dftParamsPtr->kerkerParameter :
+              (d_dftParamsPtr->restaFermiWavevector / 4.0 / M_PI / 4.0 / M_PI),
             d_helmholtzDofHandlerIndexElectro,
             d_densityQuadratureIdElectro);
       }
@@ -2159,7 +2165,10 @@ namespace dftfe
     double firstScfChebyTol =
       d_dftParamsPtr->restrictToOnePass ?
         1e+4 :
-        (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ? 1e-2 : 2e-2);
+        (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+             d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ?
+           1e-2 :
+           2e-2);
 
 
     if (d_dftParamsPtr->solverMode == "MD")
@@ -2174,7 +2183,8 @@ namespace dftfe
     // call the mixing scheme with the mixing variables
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
-    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
       {
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           rhoNodalMassVec;
@@ -2275,7 +2285,8 @@ namespace dftfe
                         << " mixing, L2 norm of electron-density difference: "
                         << norm << std::endl;
               }
-            else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
+            else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+                     d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
               {
                 // Fill in New Kerker framework here
                 std::vector<double> norms(

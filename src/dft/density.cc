@@ -37,6 +37,7 @@ namespace dftfe
     const bool isGroundState)
   {
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
 #ifdef DFTFE_WITH_DEVICE
@@ -237,6 +238,7 @@ namespace dftfe
       }
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
         d_densityInNodalValues = d_densityOutNodalValues;
