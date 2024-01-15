@@ -2035,7 +2035,7 @@ namespace dftfe
           {
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
-              d_matrixFreeDataPRefined,
+              d_basisOperationsPtrElectroDevice,
               d_constraintsForHelmholtzRhoNodal,
               d_preCondTotalDensityResidualVector,
               d_dftParamsPtr->kerkerParameter,
@@ -2045,7 +2045,7 @@ namespace dftfe
           }
         else
           kerkerPreconditionedResidualSolverProblem.init(
-            d_matrixFreeDataPRefined,
+            d_basisOperationsPtrElectroHost,
             d_constraintsForHelmholtzRhoNodal,
             d_preCondTotalDensityResidualVector,
             d_dftParamsPtr->kerkerParameter,

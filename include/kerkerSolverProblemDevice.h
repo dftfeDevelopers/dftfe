@@ -28,6 +28,7 @@
 #    include <deviceKernelsGeneric.h>
 #    include <MemoryStorage.h>
 #    include <dftUtils.h>
+#    include <FEBasisOperations.h>
 
 
 namespace dftfe
@@ -55,12 +56,17 @@ namespace dftfe
      * @param x vector to be initialized using matrix-free object
      *
      */
-    void init(dealii::MatrixFree<3, double> &    matrixFreeData,
-              dealii::AffineConstraints<double> &constraintMatrix,
-              distributedCPUVec<double> &        x,
-              double                             kerkerMixingParameter,
-              const unsigned int                 matrixFreeVectorComponent,
-              const unsigned int                 matrixFreeQuadratureComponent);
+    void
+    init(
+      std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+        &                                basisOperationsPtr,
+      dealii::AffineConstraints<double> &constraintMatrix,
+      distributedCPUVec<double> &        x,
+      double                             kerkerMixingParameter,
+      const unsigned int                 matrixFreeVectorComponent,
+      const unsigned int                 matrixFreeQuadratureComponent);
 
 
     /**
@@ -73,8 +79,9 @@ namespace dftfe
      */
     void
     reinit(
-      distributedCPUVec<double> &                          x,
-      const std::map<dealii::CellId, std::vector<double>> &gradResidualValues);
+      distributedCPUVec<double> &x,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadPointValues);
 
 
     /**
@@ -218,11 +225,17 @@ namespace dftfe
 
 
     /// pointer to electron density cell and grad residual data
-    const std::map<dealii::CellId, std::vector<double>>
-      *                                      d_quadGradResidualValuesPtr;
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      *                                      d_residualQuadValuesPtr;
     const dealii::DoFHandler<3> *            d_dofHandlerPRefinedPtr;
     const dealii::AffineConstraints<double> *d_constraintMatrixPRefinedPtr;
     const dealii::MatrixFree<3, double> *    d_matrixFreeDataPRefinedPtr;
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
+      d_basisOperationsPtr;
+
+
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;

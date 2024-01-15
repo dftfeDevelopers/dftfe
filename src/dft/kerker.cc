@@ -39,56 +39,20 @@ namespace dftfe
       distributedCPUVec<double> &      preCondTotalDensityResidualVector)
   {
     // create FEEval object to be used subsequently
-    residualRho.update_ghost_values();
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
 
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-                 fe_evalHelm(d_matrixFreeDataPRefined,
-                  d_densityDofHandlerIndexElectro,
-                  d_densityQuadratureIdElectro);
-    unsigned int numQuadPoints = fe_evalHelm.n_q_points;
-    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-
-    // preparation for rhs of Helmholtz solve by computing gradients of
-    // residualRho
-    std::map<dealii::CellId, std::vector<double>> gradDensityResidualValuesMap;
-    for (unsigned int cell = 0;
-         cell < d_matrixFreeDataPRefined.n_cell_batches();
-         ++cell)
-      {
-        fe_evalHelm.reinit(cell);
-        fe_evalHelm.read_dof_values(residualRho);
-        fe_evalHelm.evaluate(false, true);
-
-        for (unsigned int iSubCell = 0;
-             iSubCell <
-             d_matrixFreeDataPRefined.n_active_entries_per_cell_batch(cell);
-             ++iSubCell)
-          {
-            subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(
-              cell, iSubCell, d_densityDofHandlerIndexElectro);
-            dealii::CellId subCellId = subCellPtr->id();
-
-            gradDensityResidualValuesMap[subCellId] =
-              std::vector<double>(3 * numQuadPoints);
-            std::vector<double> &gradDensityResidualValues =
-              gradDensityResidualValuesMap.find(subCellId)->second;
-
-            for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-              {
-                gradDensityResidualValues[3 * q_point + 0] =
-                  fe_evalHelm.get_gradient(q_point)[0][iSubCell];
-                gradDensityResidualValues[3 * q_point + 1] =
-                  fe_evalHelm.get_gradient(q_point)[1][iSubCell];
-                gradDensityResidualValues[3 * q_point + 2] =
-                  fe_evalHelm.get_gradient(q_point)[2][iSubCell];
-              }
-          }
-      }
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      residualQuadValues;
+    d_densityResidualQuadValues.resize(1);
+    interpolateDensityNodalDataToQuadratureDataGeneral(
+      d_basisOperationsPtrElectroHost,
+      d_densityDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+      residualRho,
+      d_densityResidualQuadValues[0],
+      dummy,
+      dummy,
+      false);
 
     // initialize helmholtz solver function object with the quantity required
     // for computing rhs, solution vector and mixing constant
@@ -103,12 +67,12 @@ namespace dftfe
       {
 #ifdef DFTFE_WITH_DEVICE
         kerkerPreconditionedResidualSolverProblemDevice.reinit(
-          preCondTotalDensityResidualVector, gradDensityResidualValuesMap);
+          preCondTotalDensityResidualVector, d_densityResidualQuadValues[0]);
 #endif
       }
     else
       kerkerPreconditionedResidualSolverProblem.reinit(
-        preCondTotalDensityResidualVector, gradDensityResidualValuesMap);
+        preCondTotalDensityResidualVector, d_densityResidualQuadValues[0]);
 
     // solve the Helmholtz system to compute preconditioned residual
     if (d_dftParamsPtr->useDevice and d_dftParamsPtr->floatingNuclearCharges and
@@ -130,6 +94,8 @@ namespace dftfe
                      d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
                      d_dftParamsPtr->verbosity,
                      false);
+    preCondTotalDensityResidualVector.sadd(
+      4 * M_PI * d_dftParamsPtr->kerkerParameter, 1.0, residualRho);
   }
 #include "dft.inst.cc"
 } // namespace dftfe
