@@ -38,6 +38,7 @@ namespace dftfe
       const distributedCPUVec<double> &residualRho,
       distributedCPUVec<double> &      preCondTotalDensityResidualVector)
   {
+    preCondTotalDensityResidualVector = 0.0;
     // create FEEval object to be used subsequently
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
 
