@@ -180,6 +180,7 @@ namespace dftfe
     if (d_dftParamsPtr->computeEnergyEverySCF || isGroundState)
       {
         d_rhoOutNodalValuesDistributed = d_densityOutNodalValues[0];
+        d_rhoOutNodalValuesDistributed.update_ghost_values();
         d_constraintsRhoNodalInfo.distribute(d_rhoOutNodalValuesDistributed);
         interpolateDensityNodalDataToQuadratureDataLpsp(
           d_basisOperationsPtrElectroHost,

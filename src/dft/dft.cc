@@ -2037,25 +2037,25 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             kerkerPreconditionedResidualSolverProblemDevice.init(
               d_basisOperationsPtrElectroDevice,
-              d_constraintsForHelmholtzRhoNodal,
+              d_constraintsRhoNodal,
               d_preCondTotalDensityResidualVector,
               d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ?
                 d_dftParamsPtr->kerkerParameter :
                 (d_dftParamsPtr->restaFermiWavevector / 4.0 / M_PI / 4.0 /
                  M_PI),
-              d_helmholtzDofHandlerIndexElectro,
+              d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro);
 #endif
           }
         else
           kerkerPreconditionedResidualSolverProblem.init(
             d_basisOperationsPtrElectroHost,
-            d_constraintsForHelmholtzRhoNodal,
+            d_constraintsRhoNodal,
             d_preCondTotalDensityResidualVector,
             d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ?
               d_dftParamsPtr->kerkerParameter :
               (d_dftParamsPtr->restaFermiWavevector / 4.0 / M_PI / 4.0 / M_PI),
-            d_helmholtzDofHandlerIndexElectro,
+            d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro);
       }
 
