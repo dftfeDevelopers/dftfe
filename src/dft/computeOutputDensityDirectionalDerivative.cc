@@ -226,7 +226,7 @@ namespace dftfe
 
         auto &gradRhoTotalPrimeQuadVals = gradRhoPrimeValues[0];
         auto &gradRhoMagPrimeQuadVals   = gradRhoPrimeValues[1];
-        for (unsigned int i = 0; i < vSpin0Values.size(); ++i)
+        for (unsigned int i = 0; i < gradvSpin0Values.size(); ++i)
           {
             gradRhoTotalPrimeQuadVals[i] =
               gradvSpin0Values[i] + gradvSpin1Values[i];

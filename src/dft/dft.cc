@@ -2349,7 +2349,7 @@ namespace dftfe
                 norm = 0.0;
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                   norm += norms[iComp] * norms[iComp];
-                norm = std::sqrt(norm) / ((double)norms.size());
+                norm = std::sqrt(norm / ((double)norms.size()));
                 // interpolate nodal data to quadrature data
                 if (d_dftParamsPtr->verbosity >= 1)
                   for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
@@ -2458,7 +2458,7 @@ namespace dftfe
                 norm = 0.0;
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                   norm += norms[iComp] * norms[iComp];
-                norm = std::sqrt(norm) / ((double)norms.size());
+                norm = std::sqrt(norm / ((double)norms.size()));
                 if (d_excManagerPtr->getDensityBasedFamilyType() ==
                     densityFamilyType::GGA)
                   {

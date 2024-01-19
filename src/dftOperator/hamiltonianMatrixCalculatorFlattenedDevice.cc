@@ -105,10 +105,12 @@ namespace
               shapeFunctionValuesTransposed[q * numDofsPerCell + cellDofIndexJ];
           }
 
-        cellHamiltonianMatrixFlattened[index] =
+        const unsigned int startIndex =
+          (spinIndex)*numCells * numDofsPerCell * numDofsPerCell;
+        cellHamiltonianMatrixFlattened[startIndex + index] =
           0.5 * cellShapeFunctionGradientIntegral[index] + val;
         if (externalPotCorr)
-          cellHamiltonianMatrixFlattened[index] +=
+          cellHamiltonianMatrixFlattened[startIndex + index] +=
             cellHamiltonianMatrixExternalPotCorrFlattened[index];
       }
   }
