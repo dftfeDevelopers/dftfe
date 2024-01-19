@@ -67,7 +67,8 @@ namespace dftfe
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
 #if defined(DFTFE_WITH_DEVICE)
-    dftfe::utils::deviceSynchronize();
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
 #endif
     MPI_Barrier(mpiCommParent);
     double             computeRho_time = MPI_Wtime();
@@ -600,7 +601,8 @@ namespace dftfe
           gradDensityValues[0] = gradRhoHost;
       }
 #if defined(DFTFE_WITH_DEVICE)
-    dftfe::utils::deviceSynchronize();
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
 #endif
     MPI_Barrier(mpiCommParent);
     computeRho_time = MPI_Wtime() - computeRho_time;
