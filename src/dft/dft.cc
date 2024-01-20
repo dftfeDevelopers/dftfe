@@ -5016,8 +5016,8 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            auto rho     = (*rhoValues)[cell->id()];
-            auto rhoSpin = (*rhoSpinValues)[cell->id()];
+            auto &rho     = (*rhoValues)[cell->id()];
+            auto &rhoSpin = (*rhoSpinValues)[cell->id()];
             for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
               {
                 rho[iQuad] = rhoSpin[2 * iQuad + 0] + rhoSpin[2 * iQuad + 1];
@@ -5054,8 +5054,8 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            auto gradRho     = (*gradRhoValues)[cell->id()];
-            auto gradRhoSpin = (*gradRhoSpinValues)[cell->id()];
+            auto &gradRho     = (*gradRhoValues)[cell->id()];
+            auto &gradRhoSpin = (*gradRhoSpinValues)[cell->id()];
             for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
               {
                 gradRho[3 * iQuad + 0] =
