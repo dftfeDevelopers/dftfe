@@ -232,8 +232,7 @@ namespace dftfe
             const double targetBaseMeshSize =
               (std::min(std::min(domainBoundingVectorMag1,
                                  domainBoundingVectorMag2),
-                        domainBoundingVectorMag3) > 50.0) ?
-                (d_dftParams.reproducible_output ? 7.0 : 4.0) :
+                        domainBoundingVectorMag3) > 50.0) ?7.0 :
                 std::max(2.0, largestMeshSizeAroundAtom);
             baseMeshSize1 = std::pow(2,
                                      round(log2(targetBaseMeshSize /
@@ -253,25 +252,19 @@ namespace dftfe
             baseMeshSize1 =
               std::pow(2,
                        round(
-                         log2((d_dftParams.reproducible_output ?
-                                 std::min(domainBoundingVectorMag1 / 8.0, 8.0) :
-                                 4.0) /
+                         log2((std::min(domainBoundingVectorMag1 / 8.0, 8.0)) /
                               largestMeshSizeAroundAtom))) *
               largestMeshSizeAroundAtom;
             baseMeshSize2 =
               std::pow(2,
                        round(
-                         log2((d_dftParams.reproducible_output ?
-                                 std::min(domainBoundingVectorMag2 / 8.0, 8.0) :
-                                 4.0) /
+                         log2((std::min(domainBoundingVectorMag2 / 8.0, 8.0)) /
                               largestMeshSizeAroundAtom))) *
               largestMeshSizeAroundAtom;
             baseMeshSize3 =
               std::pow(2,
                        round(
-                         log2((d_dftParams.reproducible_output ?
-                                 std::min(domainBoundingVectorMag3 / 8.0, 8.0) :
-                                 4.0) /
+                         log2((std::min(domainBoundingVectorMag3 / 8.0, 8.0)) /
                               largestMeshSizeAroundAtom))) *
               largestMeshSizeAroundAtom;
           }
