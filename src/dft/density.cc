@@ -77,6 +77,7 @@ namespace dftfe
 
         if (d_dftParamsPtr->verbosity >= 3)
           {
+            pcout << "Total Charge before scaling: " << charge << std::endl;
             pcout << "Total Charge using nodal Rho out: "
                   << totalCharge(d_matrixFreeDataPRefined,
                                  d_densityOutNodalValues[0])
