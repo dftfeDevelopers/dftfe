@@ -172,7 +172,7 @@ namespace dftfe
     bool                             d_adaptiveMixingParameterIncAllIterations;
     unsigned int                     d_mixingHistory;
     std::map<mixingVariable, bool>   d_performMixing;
-    const int               d_verbosity;
+    const int                        d_verbosity;
 
 
     /// conditional stream object
