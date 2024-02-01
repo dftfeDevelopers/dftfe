@@ -1,8 +1,74 @@
 \subsection{Global parameters}
 \label{parameters:global}
 
-
 \begin{itemize}
+\item {\it Parameter name:} {\tt RESTART}
+\phantomsection\label{parameters:RESTART}
+
+
+\index[prmindex]{RESTART}
+\index[prmindexfull]{RESTART}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] If set to true solvermode triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt RESTART FOLDER}
+\phantomsection\label{parameters:RESTART FOLDER}
+\label{parameters:RESTART_20FOLDER}
+
+
+\index[prmindex]{RESTART FOLDER}
+\index[prmindexfull]{RESTART FOLDER}
+{\it Value:} .
+
+
+{\it Default:} .
+
+
+{\it Description:} [Standard] Folder to store restart files.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt SOLVER MODE}
+\phantomsection\label{parameters:SOLVER MODE}
+\label{parameters:SOLVER_20MODE}
+
+
+\index[prmindex]{SOLVER MODE}
+\index[prmindexfull]{SOLVER MODE}
+{\it Value:} GS
+
+
+{\it Default:} GS
+
+
+{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified
+
+
+{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF
+\item {\it Parameter name:} {\tt VERBOSITY}
+\phantomsection\label{parameters:VERBOSITY}
+
+
+\index[prmindex]{VERBOSITY}
+\index[prmindexfull]{VERBOSITY}
+{\it Value:} 1
+
+
+{\it Default:} 1
+
+
+{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.
+
+
+{\it Possible values:} An integer $n$ such that $-1\leq n \leq 5$
+
 \item {\it Parameter name:} {\tt KEEP SCRATCH FOLDER}
 \phantomsection\label{parameters:KEEP SCRATCH FOLDER}
 \label{parameters:KEEP_20SCRATCH_20FOLDER}
@@ -50,7 +116,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
+{\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -452,7 +518,7 @@
 {\it Default:} 
 
 
-{\it Description:} [Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.
+{\it Description:} [Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.
 
 
 {\it Possible values:} Any string
@@ -1058,7 +1124,7 @@
 {\it Default:} true
 
 
-{\it Description:} [Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI_Allreduce communication calls. Default: true.
+{\it Description:} [Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -1109,7 +1175,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Adavanced] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.
+{\it Description:} [Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -1193,7 +1259,7 @@
 
 \index[prmindex]{NATOMS}
 \index[prmindexfull]{Geometry!NATOMS}
-{\it Value:} 0
+{\it Value:} 1
 
 
 {\it Default:} 0
@@ -1210,7 +1276,7 @@
 
 \index[prmindex]{NATOM TYPES}
 \index[prmindexfull]{Geometry!NATOM TYPES}
-{\it Value:} 0
+{\it Value:} 1
 
 
 {\it Default:} 0
@@ -1837,7 +1903,7 @@
 {\it Default:} 100.0
 
 
-{\it Description:} [Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.
+{\it Description:} [Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
@@ -1983,7 +2049,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
+{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2068,7 +2134,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.
+{\it Description:} [Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2085,7 +2151,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
+{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2216,7 +2282,7 @@
 {\it Default:} 0.05
 
 
-{\it Description:} [Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k_{TF}**2).
+{\it Description:} [Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1000$
@@ -2301,7 +2367,7 @@
 {\it Default:} 5.81
 
 
-{\it Description:} [Standard] Fermi wavevector estimate (in Bohr^-1) to be used in the Resta preconditioner.
+{\it Description:} [Standard] Fermi wavevector estimate (in Bohr\^-1) to be used in the Resta preconditioner.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1000$
@@ -2910,7 +2976,7 @@
 {\it Default:} 0.1
 
 
-{\it Description:} [Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.
+{\it Description:} [Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
@@ -2944,7 +3010,7 @@
 {\it Default:} ADAPTIVE
 
 
-{\it Description:} [Advanced] Method subtype for LOW_RANK_DIELECM_PRECOND.
+{\it Description:} [Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.
 
 
 {\it Possible values:} Any one of ADAPTIVE, ACCUMULATED\_ADAPTIVE
@@ -2999,4 +3065,247 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\end{itemize}
+\subsection{Parameters in section \tt NEB}
+\label{parameters:NEB}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt ALLOW IMAGE FREEZING}
+\phantomsection\label{parameters:NEB/ALLOW IMAGE FREEZING}
+\label{parameters:NEB/ALLOW_20IMAGE_20FREEZING}
+
+
+\index[prmindex]{ALLOW IMAGE FREEZING}
+\index[prmindexfull]{NEB!ALLOW IMAGE FREEZING}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} If true images less than threshold will freeze for optimization step
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt BFGS STEP METHOD}
+\phantomsection\label{parameters:NEB/BFGS STEP METHOD}
+\label{parameters:NEB/BFGS_20STEP_20METHOD}
+
+
+\index[prmindex]{BFGS STEP METHOD}
+\index[prmindexfull]{NEB!BFGS STEP METHOD}
+{\it Value:} QN
+
+
+{\it Default:} QN
+
+
+{\it Description:} [Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.
+
+
+{\it Possible values:} Any one of QN, RFO
+\item {\it Parameter name:} {\tt ION RELAX FLAGS FILE}
+\phantomsection\label{parameters:NEB/ION RELAX FLAGS FILE}
+\label{parameters:NEB/ION_20RELAX_20FLAGS_20FILE}
+
+
+\index[prmindex]{ION RELAX FLAGS FILE}
+\index[prmindexfull]{NEB!ION RELAX FLAGS FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt LBFGS HISTORY}
+\phantomsection\label{parameters:NEB/LBFGS HISTORY}
+\label{parameters:NEB/LBFGS_20HISTORY}
+
+
+\index[prmindex]{LBFGS HISTORY}
+\index[prmindexfull]{NEB!LBFGS HISTORY}
+{\it Value:} 5
+
+
+{\it Default:} 5
+
+
+{\it Description:} [Standard] Number of previous steps to considered for the LBFGS update.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
+\item {\it Parameter name:} {\tt MAXIMUM ION UPDATE STEP}
+\phantomsection\label{parameters:NEB/MAXIMUM ION UPDATE STEP}
+\label{parameters:NEB/MAXIMUM_20ION_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM ION UPDATE STEP}
+\index[prmindexfull]{NEB!MAXIMUM ION UPDATE STEP}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
+\item {\it Parameter name:} {\tt MAXIMUM NUMBER OF NEB ITERATIONS}
+\phantomsection\label{parameters:NEB/MAXIMUM NUMBER OF NEB ITERATIONS}
+\label{parameters:NEB/MAXIMUM_20NUMBER_20OF_20NEB_20ITERATIONS}
+
+
+\index[prmindex]{MAXIMUM NUMBER OF NEB ITERATIONS}
+\index[prmindexfull]{NEB!MAXIMUM NUMBER OF NEB ITERATIONS}
+{\it Value:} 100
+
+
+{\it Default:} 100
+
+
+{\it Description:} [Standard] Maximum number of NEB iterations that will be performed in the simulation
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 250$
+\item {\it Parameter name:} {\tt MAXIMUM SPRING CONSTANT}
+\phantomsection\label{parameters:NEB/MAXIMUM SPRING CONSTANT}
+\label{parameters:NEB/MAXIMUM_20SPRING_20CONSTANT}
+
+
+\index[prmindex]{MAXIMUM SPRING CONSTANT}
+\index[prmindexfull]{NEB!MAXIMUM SPRING CONSTANT}
+{\it Value:} 5e-3
+
+
+{\it Default:} 5e-3
+
+
+{\it Description:} [Standard] Sets the maximum allowable spring constant in (Ha/bohr\^2)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt MAX LINE SEARCH ITER}
+\phantomsection\label{parameters:NEB/MAX LINE SEARCH ITER}
+\label{parameters:NEB/MAX_20LINE_20SEARCH_20ITER}
+
+
+\index[prmindex]{MAX LINE SEARCH ITER}
+\index[prmindexfull]{NEB!MAX LINE SEARCH ITER}
+{\it Value:} 5
+
+
+{\it Default:} 5
+
+
+{\it Description:} [Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
+\item {\it Parameter name:} {\tt MINIMUM SPRING CONSTANT}
+\phantomsection\label{parameters:NEB/MINIMUM SPRING CONSTANT}
+\label{parameters:NEB/MINIMUM_20SPRING_20CONSTANT}
+
+
+\index[prmindex]{MINIMUM SPRING CONSTANT}
+\index[prmindexfull]{NEB!MINIMUM SPRING CONSTANT}
+{\it Value:} 2e-3
+
+
+{\it Default:} 2e-3
+
+
+{\it Description:} [Standard] Sets the minimum allowable spring constant in (Ha/bohr\^2)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt NEB COORDINATES FILE}
+\phantomsection\label{parameters:NEB/NEB COORDINATES FILE}
+\label{parameters:NEB/NEB_20COORDINATES_20FILE}
+
+
+\index[prmindex]{NEB COORDINATES FILE}
+\index[prmindexfull]{NEB!NEB COORDINATES FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NEB DOMAIN VECTORS FILE}
+\phantomsection\label{parameters:NEB/NEB DOMAIN VECTORS FILE}
+\label{parameters:NEB/NEB_20DOMAIN_20VECTORS_20FILE}
+
+
+\index[prmindex]{NEB DOMAIN VECTORS FILE}
+\index[prmindexfull]{NEB!NEB DOMAIN VECTORS FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NEB OPT SOLVER}
+\phantomsection\label{parameters:NEB/NEB OPT SOLVER}
+\label{parameters:NEB/NEB_20OPT_20SOLVER}
+
+
+\index[prmindex]{NEB OPT SOLVER}
+\index[prmindexfull]{NEB!NEB OPT SOLVER}
+{\it Value:} LBFGS
+
+
+{\it Default:} LBFGS
+
+
+{\it Description:} [Standard] Method for Ion relaxation solver. LBFGS is the default
+
+
+{\it Possible values:} Any one of BFGS, LBFGS, CGPRP
+\item {\it Parameter name:} {\tt NUMBER OF IMAGES}
+\phantomsection\label{parameters:NEB/NUMBER OF IMAGES}
+\label{parameters:NEB/NUMBER_20OF_20IMAGES}
+
+
+\index[prmindex]{NUMBER OF IMAGES}
+\index[prmindexfull]{NEB!NUMBER OF IMAGES}
+{\it Value:} 7
+
+
+{\it Default:} 7
+
+
+{\it Description:} [Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 50$
+\item {\it Parameter name:} {\tt PATH THRESHOLD}
+\phantomsection\label{parameters:NEB/PATH THRESHOLD}
+\label{parameters:NEB/PATH_20THRESHOLD}
+
+
+\index[prmindex]{PATH THRESHOLD}
+\index[prmindexfull]{NEB!PATH THRESHOLD}
+{\it Value:} 5e-4
+
+
+{\it Default:} 5e-4
+
+
+{\it Description:} [Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD 
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
 \end{itemize}
