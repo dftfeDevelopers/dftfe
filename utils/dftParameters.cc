@@ -755,13 +755,13 @@ namespace dftfe
           "RESTA SCREENING LENGTH",
           "6.61",
           dealii::Patterns::Double(0.0, 1000.0),
-          "[Standard] Screening length estimate to be used in the Resta preconditioner.");
+          "[Standard] Screening length estimate (in Bohr) to be used in the Resta preconditioner.");
 
         prm.declare_entry(
           "RESTA FERMI WAVEVECTOR",
           "5.81",
           dealii::Patterns::Double(0.0, 1000.0),
-          "[Standard] Fermi wavevector estimate to be used in the Resta preconditioner.");
+          "[Standard] Fermi wavevector estimate (in Bohr^-1) to be used in the Resta preconditioner.");
 
         prm.declare_entry(
           "MIXING METHOD",
