@@ -808,7 +808,9 @@ namespace dftfe
                 gradXCRhoInDotgradRhoOut[3 * iQuad + 0] =
                   dot3(gradXCRhoIn1, gradRhoOut1);
                 gradXCRhoInDotgradRhoOut[3 * iQuad + 1] =
-                  dot3(gradXCRhoIn1, gradRhoOut2);
+                  (dot3(gradXCRhoIn1, gradRhoOut2) +
+                   dot3(gradXCRhoIn2, gradRhoOut1)) /
+                  2.0;
                 gradXCRhoInDotgradRhoOut[3 * iQuad + 2] =
                   dot3(gradXCRhoIn2, gradRhoOut2);
               }
