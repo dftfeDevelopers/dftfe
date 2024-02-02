@@ -144,7 +144,6 @@ namespace dftfe
           d_excDensityObjPtr = new excDensityGGAClass(d_funcXPtr,
                                                       d_funcCPtr,
                                                       isSpinPolarized,
-                                                      modelXCInputFile,
                                                       scaleExchange,
                                                       computeCorrelation,
                                                       scaleExchangeFactor);
@@ -160,7 +159,6 @@ namespace dftfe
           d_excDensityObjPtr = new excDensityGGAClass(d_funcXPtr,
                                                       d_funcCPtr,
                                                       isSpinPolarized,
-                                                      modelXCInputFile,
                                                       scaleExchange,
                                                       computeCorrelation,
                                                       scaleExchangeFactor);
