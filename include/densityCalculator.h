@@ -38,20 +38,22 @@ namespace dftfe
     const double                            fermiEnergyDown,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
-      &                                            basisOperationsPtr,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const unsigned int                             quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-    std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
-    const bool                                     isEvaluateGradRho,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &                               interpoolcomm,
-    const MPI_Comm &                               interBandGroupComm,
-    const dftParameters &                          dftParams,
-    const bool                                     spectrumSplit);
+      &                        basisOperationsPtr,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  gradDensityValues,
+    const bool           isEvaluateGradRho,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams,
+    const bool           spectrumSplit);
 
   template <typename NumberType>
   void

@@ -48,16 +48,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -71,12 +71,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce)
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     int this_process;
     MPI_Comm_rank(d_mpiCommParent, &this_process);
@@ -250,7 +245,7 @@ namespace dftfe
             double device_time = MPI_Wtime();
 
             forceDevice::wfcContractionsForceKernelsAllH(
-              dftPtr->basisOperationsPtrDevice,
+              dftPtr->d_basisOperationsPtrDevice,
               kohnShamDFTEigenOperatorDevice,
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,
@@ -536,6 +531,14 @@ namespace dftfe
             numMacroCells,
             kptGroupLowHighPlusOneIndices);
 
+        std::vector<double> rhoTotalCellQuadValues(numQuadPoints, 0);
+        std::vector<double> rhoSpinPolarizedCellQuadValues(numQuadPoints * 2,
+                                                           0);
+        std::vector<double> gradRhoTotalCellQuadValues(numQuadPoints * 3, 0);
+
+        std::vector<double> gradRhoSpinPolarizedCellQuadValues(numQuadPoints *
+                                                                 6,
+                                                               0);
         if (d_dftParams.spinPolarized == 1)
           {
             dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -659,17 +662,42 @@ namespace dftfe
                           matrixFreeData.get_cell_iterator(cell, iSubCell);
                         dealii::CellId subCellId = subCellPtr->id();
 
-                        const std::vector<double> &temp =
-                          (*dftPtr->rhoOutValues).find(subCellId)->second;
-                        const std::vector<double> &temp1 =
-                          (*dftPtr->rhoOutValuesSpinPolarized)
-                            .find(subCellId)
-                            ->second;
+                        // const std::vector<double> &temp =
+                        //  rhoOutValues.find(subCellId)->second;
+                        // const std::vector<double> &temp1 =
+                        //  (*dftPtr->rhoOutValuesSpinPolarized)
+                        //    .find(subCellId)
+                        //    ->second;
 
-                        rhoOutQuadsXC = temp1;
+                        const unsigned int subCellIndex =
+                          dftPtr->d_basisOperationsPtrHost->cellIndex(
+                            subCellId);
+                        const auto &rhoTotalOutValues = rhoOutValues[0];
+                        const auto &rhoMagOutValues   = rhoOutValues[1];
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
-                            rhoXCQuadsVect[q][iSubCell] = temp[q];
+                            rhoTotalCellQuadValues[q] =
+                              rhoTotalOutValues[subCellIndex * numQuadPoints +
+                                                q];
+                            rhoSpinPolarizedCellQuadValues[2 * q + 0] =
+                              (rhoTotalOutValues[subCellIndex * numQuadPoints +
+                                                 q] +
+                               rhoMagOutValues[subCellIndex * numQuadPoints +
+                                               q]) /
+                              2.0;
+                            rhoSpinPolarizedCellQuadValues[2 * q + 1] =
+                              (rhoTotalOutValues[subCellIndex * numQuadPoints +
+                                                 q] -
+                               rhoMagOutValues[subCellIndex * numQuadPoints +
+                                               q]) /
+                              2.0;
+                          }
+
+                        rhoOutQuadsXC = rhoSpinPolarizedCellQuadValues;
+                        for (unsigned int q = 0; q < numQuadPoints; ++q)
+                          {
+                            rhoXCQuadsVect[q][iSubCell] =
+                              rhoTotalCellQuadValues[q];
                           }
 
                         if (d_dftParams.nonLinearCoreCorrection)
@@ -688,21 +716,56 @@ namespace dftfe
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
-                            const std::vector<double> &temp3 =
-                              (*dftPtr->gradRhoOutValuesSpinPolarized)
-                                .find(subCellId)
-                                ->second;
+                            // const std::vector<double> &temp3 =
+                            //  (*dftPtr->gradRhoOutValuesSpinPolarized)
+                            //    .find(subCellId)
+                            //    ->second;
+
+                            const auto &gradRhoTotalOutValues =
+                              gradRhoOutValues[0];
+                            const auto &gradRhoMagOutValues =
+                              gradRhoOutValues[1];
+
+                            for (unsigned int q = 0; q < numQuadPoints; ++q)
+                              for (unsigned int idim = 0; idim < 3; idim++)
+                                {
+                                  gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                     idim] =
+                                    (gradRhoTotalOutValues[subCellIndex *
+                                                             numQuadPoints * 3 +
+                                                           q * 3 + idim] +
+                                     gradRhoMagOutValues[subCellIndex *
+                                                           numQuadPoints * 3 +
+                                                         q * 3 + idim]) /
+                                    2.0;
+                                  gradRhoSpinPolarizedCellQuadValues[6 * q + 3 +
+                                                                     idim] =
+                                    (gradRhoTotalOutValues[subCellIndex *
+                                                             numQuadPoints * 3 +
+                                                           q * 3 + idim] -
+                                     gradRhoMagOutValues[subCellIndex *
+                                                           numQuadPoints * 3 +
+                                                         q * 3 + idim]) /
+                                    2.0;
+                                }
+
                             for (unsigned int q = 0; q < numQuadPoints; ++q)
                               for (unsigned int idim = 0; idim < 3; idim++)
                                 {
                                   gradRhoOutQuadsXCSpin0[q][idim] =
-                                    temp3[6 * q + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       idim];
                                   gradRhoOutQuadsXCSpin1[q][idim] =
-                                    temp3[6 * q + 3 + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       3 +
+                                                                       idim];
                                   gradRhoSpin0QuadsVect[q][idim][iSubCell] =
-                                    temp3[6 * q + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       idim];
                                   gradRhoSpin1QuadsVect[q][idim][iSubCell] =
-                                    temp3[6 * q + 3 + idim];
+                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
+                                                                       3 +
+                                                                       idim];
                                 }
 
                             if (d_dftParams.nonLinearCoreCorrection)
@@ -1121,13 +1184,25 @@ namespace dftfe
                           matrixFreeData.get_cell_iterator(cell, iSubCell);
                         dealii::CellId subCellId = subCellPtr->id();
 
-                        const std::vector<double> &temp1 =
-                          rhoOutValues.find(subCellId)->second;
+                        // const std::vector<double> &temp1 =
+                        //  rhoOutValues.find(subCellId)->second;
+
+                        const unsigned int subCellIndex =
+                          dftPtr->d_basisOperationsPtrHost->cellIndex(
+                            subCellId);
+                        const auto &rhoTotalOutValues = rhoOutValues[0];
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
-                            rhoOutQuadsXC[q]        = temp1[q];
-                            rhoQuads[q][iSubCell]   = temp1[q];
-                            rhoXCQuads[q][iSubCell] = temp1[q];
+                            rhoTotalCellQuadValues[q] =
+                              rhoTotalOutValues[subCellIndex * numQuadPoints +
+                                                q];
+                          }
+
+                        for (unsigned int q = 0; q < numQuadPoints; ++q)
+                          {
+                            rhoOutQuadsXC[q]        = rhoTotalCellQuadValues[q];
+                            rhoQuads[q][iSubCell]   = rhoTotalCellQuadValues[q];
+                            rhoXCQuads[q][iSubCell] = rhoTotalCellQuadValues[q];
                           }
 
                         if (d_dftParams.nonLinearCoreCorrection)
@@ -1145,15 +1220,25 @@ namespace dftfe
                               ->getDensityBasedFamilyType() ==
                             densityFamilyType::GGA)
                           {
-                            const std::vector<double> &temp3 =
-                              gradRhoOutValues.find(subCellId)->second;
+                            // const std::vector<double> &temp3 =
+                            //  gradRhoOutValues.find(subCellId)->second;
+                            const auto &gradRhoTotalOutValuesTemp =
+                              gradRhoOutValues[0];
+                            for (unsigned int q = 0; q < numQuadPoints; ++q)
+                              for (unsigned int idim = 0; idim < 3; idim++)
+                                gradRhoTotalCellQuadValues[3 * q + idim] =
+                                  gradRhoTotalOutValuesTemp[subCellIndex *
+                                                              numQuadPoints *
+                                                              3 +
+                                                            q * 3 + idim];
+
                             for (unsigned int q = 0; q < numQuadPoints; ++q)
                               for (unsigned int idim = 0; idim < 3; idim++)
                                 {
                                   gradRhoOutQuadsXC[q][idim] =
-                                    temp3[3 * q + idim];
+                                    gradRhoTotalCellQuadValues[3 * q + idim];
                                   gradRhoQuads[q][idim][iSubCell] =
-                                    temp3[3 * q + idim];
+                                    gradRhoTotalCellQuadValues[3 * q + idim];
                                 }
 
                             if (d_dftParams.nonLinearCoreCorrection)
@@ -1430,16 +1515,13 @@ namespace dftfe
           smearedChargeQuadratureId,
           lpspQuadratureIdElectro,
           phiTotRhoOutElectro,
-          rhoOutValuesElectro,
-          rhoOutValuesElectroLpsp,
-          gradRhoOutValuesElectro,
-          gradRhoOutValuesElectroLpsp,
+          rhoOutValues[0],
+          rhoTotalOutValuesLpsp,
+          gradRhoOutValues[0],
+          gradRhoTotalOutValuesLpsp,
           pseudoVLocElectro,
           pseudoVLocAtomsElectro,
-          vselfBinsManagerElectro,
-          shadowKSRhoMinValues,
-          phiRhoMinusApproxRho,
-          shadowPotentialForce);
+          vselfBinsManagerElectro);
       }
 
     MPI_Barrier(d_mpiCommParent);
@@ -1470,21 +1552,19 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRhoElectro,
-      const bool                       shadowPotentialForce)
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     dealii::FEEvaluation<
       3,
@@ -1547,12 +1627,12 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: mismatch in quadrature rule usage in force computation."));
 
-    if (gradRhoOutValuesElectroLpsp.size() != 0)
-      AssertThrow(
-        gradRhoOutValuesElectroLpsp.begin()->second.size() ==
-          3 * numQuadPointsLpsp,
-        dealii::ExcMessage(
-          "DFT-FE Error: mismatch in quadrature rule usage in force computation."));
+    // if (gradRhoTotalOutValuesLpsp.size() != 0)
+    //  AssertThrow(
+    //    gradRhoTotalOutValuesLpsp.begin()->second.size() == 3 *
+    //    numQuadPointsLpsp, dealii::ExcMessage(
+    //      "DFT-FE Error: mismatch in quadrature rule usage in force
+    //      computation."));
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
@@ -1587,10 +1667,11 @@ namespace dftfe
           zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
         }
 
-    // In case of shadow potential force the standard rhoQuads input is the
-    // rhoIn (or rhoTilde in the XLBOMD formulation) except for the external
-    // potential correction term where the rhoQuads is the variationally
-    // optimized one (rhOut)
+
+    std::vector<double> tempRhoVal(numQuadPoints, 0);
+    std::vector<double> tempLpspRhoVal(numQuadPointsLpsp, 0);
+    std::vector<double> tempLpspGradRhoVal(numQuadPointsLpsp * 3, 0);
+
 
     dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuadsElectro(
       numQuadPoints, dealii::make_vectorized_array(0.0));
@@ -1600,14 +1681,6 @@ namespace dftfe
       numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
-    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-      gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads(
-        numQuadPointsSmearedb, zeroTensor);
-    dealii::AlignedVector<dealii::VectorizedArray<double>>
-      shadowKSRhoMinQuadsElectro(numQuadPoints,
-                                 dealii::make_vectorized_array(0.0));
-    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-      gradPhiRhoMinusApproxRhoQuadsElectro(numQuadPoints, zeroTensor);
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       gradRhoQuadsElectro(numQuadPoints, zeroTensor);
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
@@ -1681,19 +1754,6 @@ namespace dftfe
             std::fill(gradPhiTotSmearedChargeQuads.begin(),
                       gradPhiTotSmearedChargeQuads.end(),
                       zeroTensor);
-            if (shadowPotentialForce)
-              {
-                std::fill(shadowKSRhoMinQuadsElectro.begin(),
-                          shadowKSRhoMinQuadsElectro.end(),
-                          dealii::make_vectorized_array(0.0));
-                std::fill(gradPhiRhoMinusApproxRhoQuadsElectro.begin(),
-                          gradPhiRhoMinusApproxRhoQuadsElectro.end(),
-                          zeroTensor);
-                std::fill(
-                  gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.begin(),
-                  gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.end(),
-                  zeroTensor);
-              }
             std::fill(gradRhoQuadsElectro.begin(),
                       gradRhoQuadsElectro.end(),
                       zeroTensor);
@@ -1710,31 +1770,50 @@ namespace dftfe
                 subCellPtr =
                   matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
                 dealii::CellId subCellId = subCellPtr->id();
+
+                const unsigned int subCellIndex =
+                  dftPtr->d_basisOperationsPtrElectroHost->cellIndex(subCellId);
+
                 for (unsigned int q = 0; q < numQuadPoints; ++q)
-                  {
-                    rhoQuadsElectro[q][iSubCell] =
-                      rhoOutValuesElectro.find(subCellId)->second[q];
-                    if (shadowPotentialForce)
-                      {
-                        // shadowKSRhoMinQuadsElectro[q][iSubCell]=shadowKSRhoMinValues.find(subCellId)->second[q];
+                  tempRhoVal[q] =
+                    rhoTotalOutValues[subCellIndex * numQuadPoints + q];
 
-                        // shadowKSRhoMinMinusRhoQuadsElectro[q][iSubCell]=shadowKSRhoMinQuadsElectro[q][iSubCell]-rhoQuadsElectro[q][iSubCell];
-
-                        // gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+0];
-                        // gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+1];
-                        // gradRhoAtomsQuadsElectro[q][2][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+2];
-                      }
-                  }
+                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                  rhoQuadsElectro[q][iSubCell] = tempRhoVal[q];
+                // rhoOutValuesElectro.find(subCellId)->second[q];
 
                 if (d_dftParams.isPseudopotential ||
                     d_dftParams.smearedNuclearCharges)
                   {
                     const std::vector<double> &tempPseudoVal =
                       pseudoVLocElectro.find(subCellId)->second;
-                    const std::vector<double> &tempLpspRhoVal =
-                      rhoOutValuesElectroLpsp.find(subCellId)->second;
-                    const std::vector<double> &tempLpspGradRhoVal =
-                      gradRhoOutValuesElectroLpsp.find(subCellId)->second;
+                    // const std::vector<double> &tempLpspRhoVal =
+                    //  rhoOutValuesLpsp.find(subCellId)->second;
+                    // const std::vector<double> &tempLpspGradRhoVal =
+                    //  gradRhoOutValuesLpsp.find(subCellId)->second;
+
+
+
+                    for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+                      {
+                        tempLpspRhoVal[q] =
+                          rhoTotalOutValuesLpsp[subCellIndex *
+                                                  numQuadPointsLpsp +
+                                                q];
+                        tempLpspGradRhoVal[3 * q + 0] =
+                          gradRhoTotalOutValuesLpsp[subCellIndex *
+                                                      numQuadPointsLpsp * 3 +
+                                                    3 * q + 0];
+                        tempLpspGradRhoVal[3 * q + 1] =
+                          gradRhoTotalOutValuesLpsp[subCellIndex *
+                                                      numQuadPointsLpsp * 3 +
+                                                    3 * q + 1];
+                        tempLpspGradRhoVal[3 * q + 2] =
+                          gradRhoTotalOutValuesLpsp[subCellIndex *
+                                                      numQuadPointsLpsp * 3 +
+                                                    3 * q + 2];
+                      }
+
                     for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
                       {
                         pseudoVLocQuadsElectro[q][iSubCell] = tempPseudoVal[q];

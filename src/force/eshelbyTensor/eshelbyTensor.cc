@@ -122,36 +122,6 @@ namespace dftfe
     }
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-    getShadowPotentialForceRhoDiffXcEshelbyTensor(
-      const dealii::VectorizedArray<double> &shadowKSRhoMinMinusRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-        &shadowKSGradRhoMinMinusGradRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
-      const dealii::VectorizedArray<double> &                      vxc,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-        &derVxcGradRho,
-      const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
-        &derExcGradRho,
-      const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-        &der2ExcGradRho)
-    {
-      dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
-        -outer_product(derVxcGradRho, gradRho) * shadowKSRhoMinMinusRho -
-        outer_product(shadowKSGradRhoMinMinusGradRho * der2ExcGradRho,
-                      gradRho) -
-        outer_product(derExcGradRho, shadowKSGradRhoMinMinusGradRho);
-      dealii::VectorizedArray<double> identityTensorFactor =
-        vxc * shadowKSRhoMinMinusRho +
-        scalar_product(derExcGradRho, shadowKSGradRhoMinMinusGradRho);
-
-
-      eshelbyTensor[0][0] += identityTensorFactor;
-      eshelbyTensor[1][1] += identityTensorFactor;
-      eshelbyTensor[2][2] += identityTensorFactor;
-      return eshelbyTensor;
-    }
-
-    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocPspEshelbyTensor(const dealii::VectorizedArray<double> &rho,
                             const dealii::VectorizedArray<double> &pseudoVLoc,
                             const dealii::VectorizedArray<double> &phiExt)

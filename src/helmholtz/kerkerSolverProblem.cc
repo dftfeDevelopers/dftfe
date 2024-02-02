@@ -40,22 +40,27 @@ namespace dftfe
 
 
   template <unsigned int FEOrderElectro>
-  void kerkerSolverProblem<FEOrderElectro>::init(
-    dealii::MatrixFree<3, double> &    matrixFreeDataPRefined,
+  void
+  kerkerSolverProblem<FEOrderElectro>::init(
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                                basisOperationsPtr,
     dealii::AffineConstraints<double> &constraintMatrixPRefined,
     distributedCPUVec<double> &        x,
     double                             kerkerMixingParameter,
     const unsigned int                 matrixFreeVectorComponent,
     const unsigned int                 matrixFreeQuadratureComponent)
   {
-    d_matrixFreeDataPRefinedPtr     = &matrixFreeDataPRefined;
+    d_basisOperationsPtr            = basisOperationsPtr;
+    d_matrixFreeDataPRefinedPtr     = &(basisOperationsPtr->matrixFreeData());
     d_constraintMatrixPRefinedPtr   = &constraintMatrixPRefined;
     d_gamma                         = kerkerMixingParameter;
     d_matrixFreeVectorComponent     = matrixFreeVectorComponent;
     d_matrixFreeQuadratureComponent = matrixFreeQuadratureComponent;
 
-    matrixFreeDataPRefined.initialize_dof_vector(x,
-                                                 d_matrixFreeVectorComponent);
+    d_matrixFreeDataPRefinedPtr->initialize_dof_vector(
+      x, d_matrixFreeVectorComponent);
     computeDiagonalA();
   }
 
@@ -63,11 +68,12 @@ namespace dftfe
   template <unsigned int FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::reinit(
-    distributedCPUVec<double> &                          x,
-    const std::map<dealii::CellId, std::vector<double>> &quadPointValues)
+    distributedCPUVec<double> &x,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadPointValues)
   {
-    d_xPtr                      = &x;
-    d_quadGradResidualValuesPtr = &quadPointValues;
+    d_xPtr                  = &x;
+    d_residualQuadValuesPtr = &quadPointValues;
   }
 
   template <unsigned int FEOrderElectro>
@@ -98,20 +104,15 @@ namespace dftfe
               d_matrixFreeVectorComponent,
               d_matrixFreeQuadratureComponent);
 
-    dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor;
-    for (unsigned int idim = 0; idim < 3; idim++)
-      zeroTensor[idim] = dealii::make_vectorized_array(0.0);
+    dealii::VectorizedArray<double> zeroVec = 0.0;
 
-
-    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-      residualGradQuads(fe_eval.n_q_points, zeroTensor);
+    dealii::AlignedVector<dealii::VectorizedArray<double>> residualQuads(
+      fe_eval.n_q_points, zeroVec);
     for (unsigned int macrocell = 0;
          macrocell < d_matrixFreeDataPRefinedPtr->n_cell_batches();
          ++macrocell)
       {
-        std::fill(residualGradQuads.begin(),
-                  residualGradQuads.end(),
-                  zeroTensor);
+        std::fill(residualQuads.begin(), residualQuads.end(), zeroVec);
         const unsigned int numSubCells =
           d_matrixFreeDataPRefinedPtr->n_active_entries_per_cell_batch(
             macrocell);
@@ -119,23 +120,21 @@ namespace dftfe
           {
             subCellPtr = d_matrixFreeDataPRefinedPtr->get_cell_iterator(
               macrocell, iSubCell, d_matrixFreeVectorComponent);
-            dealii::CellId             subCellId = subCellPtr->id();
-            const std::vector<double> &tempVec =
-              d_quadGradResidualValuesPtr->find(subCellId)->second;
+            dealii::CellId     subCellId = subCellPtr->id();
+            const unsigned int cellIndex =
+              d_basisOperationsPtr->cellIndex(subCellId);
+            const double *tempVec =
+              d_residualQuadValuesPtr->data() + fe_eval.n_q_points * cellIndex;
 
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
-              {
-                residualGradQuads[q][0][iSubCell] = tempVec[3 * q + 0];
-                residualGradQuads[q][1][iSubCell] = tempVec[3 * q + 1];
-                residualGradQuads[q][2][iSubCell] = tempVec[3 * q + 2];
-              }
+              residualQuads[q][iSubCell] = -tempVec[q];
           }
 
         fe_eval.reinit(macrocell);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
-          fe_eval.submit_gradient(residualGradQuads[q], q);
+          fe_eval.submit_value(residualQuads[q], q);
 
-        fe_eval.integrate(false, true);
+        fe_eval.integrate(true, false);
 
         fe_eval.distribute_local_to_global(rhs);
       }

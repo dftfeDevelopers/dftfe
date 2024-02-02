@@ -69,13 +69,13 @@ namespace dftfe
           "MAXIMUM SPRING CONSTANT",
           "5e-3",
           dealii::Patterns::Double(),
-          "[Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)");
+          R"([Standard] Sets the maximum allowable spring constant in (Ha/bohr\^2))");
 
         prm.declare_entry(
           "MINIMUM SPRING CONSTANT",
           "2e-3",
           dealii::Patterns::Double(),
-          "[Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)");
+          R"([Standard] Sets the minimum allowable spring constant in (Ha/bohr\^2))");
 
         prm.declare_entry(
           "PATH THRESHOLD",

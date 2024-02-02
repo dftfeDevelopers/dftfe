@@ -23,24 +23,41 @@
 
 namespace dftfe
 {
-  MixingScheme::MixingScheme(const MPI_Comm &mpi_comm_domain)
+  MixingScheme::MixingScheme(const MPI_Comm &   mpi_comm_parent,
+                             const MPI_Comm &   mpi_comm_domain,
+                             const unsigned int verbosity)
     : d_mpi_comm_domain(mpi_comm_domain)
+    , d_mpi_comm_parent(mpi_comm_parent)
+    , pcout(std::cout,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_verbosity(verbosity)
+
   {}
 
   void
-  MixingScheme::addMixingVariable(const mixingVariable       mixingVariableList,
-                                  const std::vector<double> &weightDotProducts,
-                                  const bool                 performMPIReduce,
-                                  const double               mixingValue)
+  MixingScheme::addMixingVariable(
+    const mixingVariable mixingVariableList,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &          weightDotProducts,
+    const bool   performMPIReduce,
+    const double mixingValue,
+    const bool   adaptMixingValue)
   {
-    d_variableHistoryIn[mixingVariableList] = std::deque<std::vector<double>>();
-    d_variableHistoryOut[mixingVariableList] =
-      std::deque<std::vector<double>>();
+    d_variableHistoryIn[mixingVariableList] = std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>();
+    d_variableHistoryResidual[mixingVariableList] = std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>();
     d_vectorDotProductWeights[mixingVariableList] = weightDotProducts;
 
-    d_performMPIReduce[mixingVariableList] = performMPIReduce;
-    d_mixingParameter[mixingVariableList]  = mixingValue;
-    unsigned int weightDotProductsSize     = weightDotProducts.size();
+    d_performMPIReduce[mixingVariableList]     = performMPIReduce;
+    d_mixingParameter[mixingVariableList]      = mixingValue;
+    d_adaptMixingParameter[mixingVariableList] = adaptMixingValue;
+    d_anyMixingParameterAdaptive =
+      adaptMixingValue || d_anyMixingParameterAdaptive;
+    d_adaptiveMixingParameterDecLastIteration = false;
+    d_adaptiveMixingParameterDecAllIterations = true;
+    d_adaptiveMixingParameterIncAllIterations = true;
+    unsigned int weightDotProductsSize        = weightDotProducts.size();
     MPI_Allreduce(MPI_IN_PLACE,
                   &weightDotProductsSize,
                   1,
@@ -59,13 +76,18 @@ namespace dftfe
 
   void
   MixingScheme::computeMixingMatrices(
-    const std::deque<std::vector<double>> &inHist,
-    const std::deque<std::vector<double>> &outHist,
-    const std::vector<double> &            weightDotProducts,
-    const bool                             isPerformMixing,
-    const bool                             isMPIAllReduce,
-    std::vector<double> &                  A,
-    std::vector<double> &                  c)
+    const std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &inHist,
+    const std::deque<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &residualHist,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                  weightDotProducts,
+    const bool           isPerformMixing,
+    const bool           isMPIAllReduce,
+    std::vector<double> &A,
+    std::vector<double> &c)
   {
     std::vector<double> Adensity;
     Adensity.resize(A.size());
@@ -89,15 +111,13 @@ namespace dftfe
                       "Please resize the vectors appropriately."));
         for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
           {
-            double Fn = outHist[N][iQuad] - inHist[N][iQuad];
+            double Fn = residualHist[N][iQuad];
             for (int m = 0; m < N; m++)
               {
-                double Fnm =
-                  outHist[N - 1 - m][iQuad] - inHist[N - 1 - m][iQuad];
+                double Fnm = residualHist[N - 1 - m][iQuad];
                 for (int k = 0; k < N; k++)
                   {
-                    double Fnk =
-                      outHist[N - 1 - k][iQuad] - inHist[N - 1 - k][iQuad];
+                    double Fnk = residualHist[N - 1 - k][iQuad];
                     Adensity[k * N + m] +=
                       (Fn - Fnm) * (Fn - Fnk) *
                       weightDotProducts[iQuad]; // (m,k)^th entry
@@ -153,123 +173,164 @@ namespace dftfe
 
   // Fucntion to compute the mixing coefficients based on anderson scheme
   void
-  MixingScheme::computeAndersonMixingCoeff()
+  MixingScheme::computeAndersonMixingCoeff(
+    const std::vector<mixingVariable> mixingVariablesList)
   {
     // initialize data structures
     // assumes rho is a mixing variable
-    int              N    = d_variableHistoryIn[mixingVariable::rho].size() - 1;
-    int              NRHS = 1, lda = N, ldb = N, info;
-    std::vector<int> ipiv(N);
-    d_A.resize(lda * N);
-    d_c.resize(ldb * NRHS);
-    for (int i = 0; i < lda * N; i++)
-      d_A[i] = 0.0;
-    for (int i = 0; i < ldb * NRHS; i++)
-      d_c[i] = 0.0;
-
-    for (const auto &[key, value] : d_variableHistoryIn)
+    int N = d_variableHistoryIn[mixingVariable::rho].size() - 1;
+    if (N > 0)
       {
-        computeMixingMatrices(d_variableHistoryIn[key],
-                              d_variableHistoryOut[key],
-                              d_vectorDotProductWeights[key],
-                              d_performMixing[key],
-                              d_performMPIReduce[key],
-                              d_A,
-                              d_c);
+        int              NRHS = 1, lda = N, ldb = N, info;
+        std::vector<int> ipiv(N);
+        d_A.resize(lda * N);
+        d_c.resize(ldb * NRHS);
+        for (int i = 0; i < lda * N; i++)
+          d_A[i] = 0.0;
+        for (int i = 0; i < ldb * NRHS; i++)
+          d_c[i] = 0.0;
+
+        for (const auto &key : mixingVariablesList)
+          {
+            computeMixingMatrices(d_variableHistoryIn[key],
+                                  d_variableHistoryResidual[key],
+                                  d_vectorDotProductWeights[key],
+                                  d_performMixing[key],
+                                  d_performMPIReduce[key],
+                                  d_A,
+                                  d_c);
+          }
+
+        dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
       }
-
-    dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
-
     d_cFinal = 1.0;
     for (int i = 0; i < N; i++)
       d_cFinal -= d_c[i];
+    computeAdaptiveAndersonMixingParameter();
+  }
+
+
+  // Fucntion to compute the mixing parameter based on an adaptive anderson
+  // scheme, algorithm 1 in [CPC. 292, 108865 (2023)]
+  void
+  MixingScheme::computeAdaptiveAndersonMixingParameter()
+  {
+    double ci = 1.0;
+    if (d_anyMixingParameterAdaptive &&
+        d_variableHistoryIn[mixingVariable::rho].size() > 1)
+      {
+        double bii   = std::abs(d_cFinal);
+        double gbase = 1.0;
+        double gpv   = 0.02;
+        double ggap  = 0.0;
+        double gi =
+          gpv * ((double)d_variableHistoryIn[mixingVariable::rho].size()) +
+          gbase;
+        double x = std::abs(bii) / gi;
+        if (x < 0.5)
+          ci = 1.0 / (2.0 + std::log(0.5 / x));
+        else if (x <= 2.0)
+          ci = x;
+        else
+          ci = 2.0 + std::log(x / 2.0);
+        double pi = 0.0;
+        if (ci < 1.0 == d_adaptiveMixingParameterDecLastIteration)
+          if (ci < 1.0)
+            if (d_adaptiveMixingParameterDecAllIterations)
+              pi = 1.0;
+            else
+              pi = 2.0;
+          else if (d_adaptiveMixingParameterIncAllIterations)
+            pi = 1.0;
+          else
+            pi = 2.0;
+        else
+          pi = 3.0;
+
+        ci                                        = std::pow(ci, 1.0 / pi);
+        d_adaptiveMixingParameterDecLastIteration = ci < 1.0;
+        d_adaptiveMixingParameterDecAllIterations =
+          d_adaptiveMixingParameterDecAllIterations & ci < 1.0;
+        d_adaptiveMixingParameterIncAllIterations =
+          d_adaptiveMixingParameterIncAllIterations & ci >= 1.0;
+      }
+    MPI_Bcast(&ci, 1, MPI_DOUBLE, 0, d_mpi_comm_parent);
+    for (const auto &[key, value] : d_variableHistoryIn)
+      if (d_adaptMixingParameter[key])
+        {
+          d_mixingParameter[key] *= ci;
+        }
+    if (d_verbosity > 0)
+      if (d_adaptMixingParameter[mixingVariable::rho])
+        pcout << "Adaptive Anderson mixing parameter for Rho: "
+              << d_mixingParameter[mixingVariable::rho] << std::endl;
+      else
+        pcout << "Anderson mixing parameter for Rho: "
+              << d_mixingParameter[mixingVariable::rho] << std::endl;
   }
 
   // Fucntions to add to the history
   void
-  MixingScheme::addVariableToInHist(
-    const mixingVariable       mixingVariableName,
-    const std::vector<double> &inputVariableToInHist)
+  MixingScheme::addVariableToInHist(const mixingVariable mixingVariableName,
+                                    const double *       inputVariableToInHist,
+                                    const unsigned int   length)
   {
-    d_variableHistoryIn[mixingVariableName].push_back(inputVariableToInHist);
+    d_variableHistoryIn[mixingVariableName].push_back(
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+        length));
+    std::memcpy(d_variableHistoryIn[mixingVariableName].back().data(),
+                inputVariableToInHist,
+                length * sizeof(double));
   }
 
   void
-  MixingScheme::addVariableToOutHist(
-    const mixingVariable       mixingVariableName,
-    const std::vector<double> &inputVariableToOutHist)
+  MixingScheme::addVariableToResidualHist(
+    const mixingVariable mixingVariableName,
+    const double *       inputVariableToResidualHist,
+    const unsigned int   length)
   {
-    d_variableHistoryOut[mixingVariableName].push_back(inputVariableToOutHist);
+    d_variableHistoryResidual[mixingVariableName].push_back(
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+        length));
+    std::memcpy(d_variableHistoryResidual[mixingVariableName].back().data(),
+                inputVariableToResidualHist,
+                length * sizeof(double));
   }
 
-  // Computes the new variable after mixing. It returns the L2 norm of
-  // the difference between the old and new input variables
-  double
-  MixingScheme::mixVariable(mixingVariable       mixingVariableName,
-                            std::vector<double> &outputVariable)
+  // Computes the new variable after mixing.
+  void
+  MixingScheme::mixVariable(mixingVariable     mixingVariableName,
+                            double *           outputVariable,
+                            const unsigned int lenVar)
   {
-    double       normValue = 0.0;
-    unsigned int N         = d_variableHistoryIn[mixingVariableName].size() - 1;
-    unsigned int lenVar = d_vectorDotProductWeights[mixingVariableName].size();
+    unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+    // Assumes the variable is present otherwise will lead to a seg fault
+    AssertThrow(
+      lenVar == d_variableHistoryIn[mixingVariableName][0].size(),
+      dealii::ExcMessage(
+        "DFT-FE Error: The size of the input variables in history does not match the provided size."));
 
-    if (lenVar > 0)
-      {
-        for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
-          {
-            double rhodiff =
-              std::abs(d_variableHistoryIn[mixingVariableName][N][iQuad] -
-                       d_variableHistoryOut[mixingVariableName][N][iQuad]);
-
-            normValue += rhodiff * rhodiff *
-                         d_vectorDotProductWeights[mixingVariableName][iQuad];
-          }
-      }
-    else
-      {
-        // Assumes the variable is present otherwise will lead to a seg fault
-        lenVar = d_variableHistoryIn[mixingVariableName][0].size();
-      }
-
-    outputVariable.resize(lenVar);
-    std::fill(outputVariable.begin(), outputVariable.end(), 0.0);
+    std::fill(outputVariable, outputVariable + lenVar, 0.0);
 
     for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
       {
-        double varOutBar =
-          d_cFinal * d_variableHistoryOut[mixingVariableName][N][iQuad];
+        double varResidualBar =
+          d_cFinal * d_variableHistoryResidual[mixingVariableName][N][iQuad];
         double varInBar =
           d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
         for (int i = 0; i < N; i++)
           {
-            varOutBar +=
+            varResidualBar +=
               d_c[i] *
-              d_variableHistoryOut[mixingVariableName][N - 1 - i][iQuad];
+              d_variableHistoryResidual[mixingVariableName][N - 1 - i][iQuad];
             varInBar +=
               d_c[i] *
               d_variableHistoryIn[mixingVariableName][N - 1 - i][iQuad];
           }
         outputVariable[iQuad] =
-          ((1 - d_mixingParameter[mixingVariableName]) * varInBar +
-           d_mixingParameter[mixingVariableName] * varOutBar);
+          (varInBar + d_mixingParameter[mixingVariableName] * varResidualBar);
       }
-
-    double totalNormValue = 0.0;
-    if (d_performMPIReduce[mixingVariableName])
-      {
-        MPI_Allreduce(&normValue,
-                      &totalNormValue,
-                      1,
-                      MPI_DOUBLE,
-                      MPI_SUM,
-                      d_mpi_comm_domain);
-      }
-    else
-      {
-        totalNormValue = normValue;
-      }
-
-    return std::sqrt(totalNormValue);
   }
 
   // Clears the history
@@ -281,7 +342,7 @@ namespace dftfe
     for (const auto &[key, value] : d_variableHistoryIn)
       {
         d_variableHistoryIn[key].clear();
-        d_variableHistoryOut[key].clear();
+        d_variableHistoryResidual[key].clear();
       }
   }
 
@@ -298,7 +359,7 @@ namespace dftfe
         for (const auto &[key, value] : d_variableHistoryIn)
           {
             d_variableHistoryIn[key].pop_front();
-            d_variableHistoryOut[key].pop_front();
+            d_variableHistoryResidual[key].pop_front();
           }
       }
   }

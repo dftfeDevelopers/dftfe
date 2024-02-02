@@ -544,8 +544,11 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEff(
-    const std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
@@ -565,6 +568,7 @@ namespace dftfe
     // allocate storage for exchange potential
     std::vector<double> exchangePotentialVal(numberQuadraturePoints);
     std::vector<double> corrPotentialVal(numberQuadraturePoints);
+    std::vector<double> densityValue(numberQuadraturePoints);
 
     //
     // loop over cell block
@@ -580,19 +584,22 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            std::vector<double> densityValue =
-              (*rhoValues).find(cellPtr->id())->second;
+            std::memcpy(densityValue.data(),
+                        rhoValues[0].data() +
+                          iElemCount * numberQuadraturePoints,
+                        numberQuadraturePoints * sizeof(double));
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
-                const std::vector<double> &temp2 =
-                  rhoCoreValues.find(cellPtr->id())->second;
-                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-                  densityValue[q] += temp2[q];
+                std::transform(densityValue.data(),
+                               densityValue.data() + numberQuadraturePoints,
+                               rhoCoreValues.find(cellPtr->id())->second.data(),
+                               densityValue.data(),
+                               std::plus<>{});
               }
 
             std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
@@ -640,9 +647,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEff(
-    const std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
@@ -670,6 +682,8 @@ namespace dftfe
     std::vector<double> derCorrEnergyWithSigmaVal(numberQuadraturePoints);
     std::vector<double> derExchEnergyWithDensityVal(numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> densityValue(numberQuadraturePoints);
+    std::vector<double> gradDensityValue(3 * numberQuadraturePoints);
 
     typename dealii::DoFHandler<3>::active_cell_iterator
       cellPtr = dftPtr->matrix_free_data
@@ -692,29 +706,33 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-            std::vector<double> densityValue =
-              (*rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (*gradRhoValues).find(cellPtr->id())->second;
+            std::memcpy(densityValue.data(),
+                        rhoValues[0].data() +
+                          iElemCount * numberQuadraturePoints,
+                        numberQuadraturePoints * sizeof(double));
+            std::memcpy(gradDensityValue.data(),
+                        gradRhoValues[0].data() +
+                          iElemCount * numberQuadraturePoints * 3,
+                        3 * numberQuadraturePoints * sizeof(double));
 
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
-                const std::vector<double> &temp2 =
-                  rhoCoreValues.find(cellPtr->id())->second;
-                const std::vector<double> &temp3 =
-                  gradRhoCoreValues.find(cellPtr->id())->second;
-                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-                  {
-                    densityValue[q] += temp2[q];
-                    gradDensityValue[3 * q + 0] += temp3[3 * q + 0];
-                    gradDensityValue[3 * q + 1] += temp3[3 * q + 1];
-                    gradDensityValue[3 * q + 2] += temp3[3 * q + 2];
-                  }
+                std::transform(densityValue.data(),
+                               densityValue.data() + numberQuadraturePoints,
+                               rhoCoreValues.find(cellPtr->id())->second.data(),
+                               densityValue.data(),
+                               std::plus<>{});
+                std::transform(
+                  gradDensityValue.data(),
+                  gradDensityValue.data() + 3 * numberQuadraturePoints,
+                  gradRhoCoreValues.find(cellPtr->id())->second.data(),
+                  gradDensityValue.data(),
+                  std::plus<>{});
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -1727,8 +1745,11 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffSpinPolarized(
-    const std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const unsigned int                                   spinIndex,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -1751,7 +1772,7 @@ namespace dftfe
     // allocate storage for exchange potential
     std::vector<double> exchangePotentialVal(2 * numberQuadraturePoints);
     std::vector<double> corrPotentialVal(2 * numberQuadraturePoints);
-
+    std::vector<double> densityValue(2 * numberQuadraturePoints);
     typename dealii::DoFHandler<3>::active_cell_iterator
       cellPtr = dftPtr->matrix_free_data
                   .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
@@ -1770,12 +1791,20 @@ namespace dftfe
         if (cellPtr->is_locally_owned())
           {
             fe_values.reinit(cellPtr);
+            const double *cellRhoValues =
+              rhoValues[0].data() + iElemCount * numberQuadraturePoints;
+            const double *cellMagValues =
+              rhoValues[1].data() + iElemCount * numberQuadraturePoints;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double rhoByTwo   = cellRhoValues[q] / 2.0;
+                const double magByTwo   = cellMagValues[q] / 2.0;
+                densityValue[2 * q]     = rhoByTwo + magByTwo;
+                densityValue[2 * q + 1] = rhoByTwo - magByTwo;
+              }
 
-            std::vector<double> densityValue =
-              (*rhoValues).find(cellPtr->id())->second;
-
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -1836,9 +1865,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffSpinPolarized(
-    const std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiValues,
     const unsigned int                                   spinIndex,
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
@@ -1869,6 +1903,8 @@ namespace dftfe
     std::vector<double> derExchEnergyWithSigma(3 * numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithSigma(3 * numberQuadraturePoints);
     std::vector<double> sigmaValue(3 * numberQuadraturePoints);
+    std::vector<double> densityValue(2 * numberQuadraturePoints);
+    std::vector<double> gradDensityValue(6 * numberQuadraturePoints);
 
 
     typename dealii::DoFHandler<3>::active_cell_iterator
@@ -1893,13 +1929,35 @@ namespace dftfe
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
-            std::vector<double> densityValue =
-              (*rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (*gradRhoValues).find(cellPtr->id())->second;
+            const double *cellRhoValues =
+              rhoValues[0].data() + iElemCount * numberQuadraturePoints;
+            const double *cellMagValues =
+              rhoValues[1].data() + iElemCount * numberQuadraturePoints;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double rhoByTwo   = cellRhoValues[q] / 2.0;
+                const double magByTwo   = cellMagValues[q] / 2.0;
+                densityValue[2 * q]     = rhoByTwo + magByTwo;
+                densityValue[2 * q + 1] = rhoByTwo - magByTwo;
+              }
+            const double *cellGradRhoValues =
+              gradRhoValues[0].data() + 3 * iElemCount * numberQuadraturePoints;
+            const double *cellGradMagValues =
+              gradRhoValues[1].data() + 3 * iElemCount * numberQuadraturePoints;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                {
+                  const double gradRhoByTwo =
+                    cellGradRhoValues[3 * q + iDim] / 2.0;
+                  const double gradMagByTwo =
+                    cellGradMagValues[3 * q + iDim] / 2.0;
+                  gradDensityValue[6 * q + iDim] = gradRhoByTwo + gradMagByTwo;
+                  gradDensityValue[6 * q + 3 + iDim] =
+                    gradRhoByTwo - gradMagByTwo;
+                }
 
-            const std::vector<double> &tempPhi =
-              phiValues.find(cellPtr->id())->second;
+            const double *tempPhi =
+              phiValues.data() + iElemCount * numberQuadraturePoints;
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -2108,9 +2166,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffPrime(
-    const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoPrimeValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiPrimeValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues)
   {
     const unsigned int totalLocallyOwnedCells =
@@ -2125,6 +2188,9 @@ namespace dftfe
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
 
+    std::vector<double> densityValue(numberQuadraturePoints);
+    std::vector<double> densityPrimeValue(numberQuadraturePoints);
+    std::vector<double> phiPrimeValue(numberQuadraturePoints);
     std::vector<double> der2ExchEnergyWithDensityVal(numberQuadraturePoints);
     std::vector<double> der2CorrEnergyWithDensityVal(numberQuadraturePoints);
 
@@ -2146,14 +2212,22 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
+            const auto &tempDensityTotalValues = rhoValues[0];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              densityValue[q] =
+                tempDensityTotalValues[iElemCount * numberQuadraturePoints + q];
 
-            std::vector<double> densityPrimeValue =
-              (rhoPrimeValues).find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues = rhoPrimeValues[0];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              densityPrimeValue[q] =
+                tempDensityTotalPrimeValues[iElemCount *
+                                              numberQuadraturePoints +
+                                            q];
 
-            const std::vector<double> &tempPhiPrime =
-              phiPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              phiPrimeValue[q] =
+                phiPrimeValues[iElemCount * numberQuadraturePoints + q];
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -2195,9 +2269,9 @@ namespace dftfe
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] =
-                  (tempPhiPrime[q] + (der2ExchEnergyWithDensityVal[q] +
-                                      der2CorrEnergyWithDensityVal[q]) *
-                                       densityPrimeValue[q]) *
+                  (phiPrimeValue[q] + (der2ExchEnergyWithDensityVal[q] +
+                                       der2CorrEnergyWithDensityVal[q]) *
+                                        densityPrimeValue[q]) *
                   fe_values.JxW(q);
               }
 
@@ -2213,9 +2287,14 @@ namespace dftfe
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     computeVEffPrimeSpinPolarized(
-      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoPrimeValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                                                  phiPrimeValues,
       const unsigned int                                   spinIndex,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues)
   {
@@ -2231,6 +2310,9 @@ namespace dftfe
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
 
+    std::vector<double> densityValue(2 * numberQuadraturePoints);
+    std::vector<double> densityPrimeValue(2 * numberQuadraturePoints);
+    std::vector<double> phiPrimeValue(numberQuadraturePoints);
     std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
 
@@ -2254,8 +2336,23 @@ namespace dftfe
             fe_values.reinit(cellPtr);
 
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+              }
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -2270,15 +2367,31 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
-
+            const auto &tempDensityTotalPrimeValues = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues   = rhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+              }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] += 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q] += 2.0 * lambda * densityPrimeValue[2 * q];
                 densityValue[2 * q + 1] +=
-                  2.0 * lambda * dirperturb1[2 * q + 1];
+                  2.0 * lambda * densityPrimeValue[2 * q + 1];
               }
 
             std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
@@ -2329,10 +2442,25 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            const std::vector<double> &tempPhiPrime =
-              phiPrimeValues.find(cellPtr->id())->second;
+
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+              }
+
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -2348,13 +2476,32 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues   = rhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+              }
+
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] += lambda * dirperturb1[2 * q];
-                densityValue[2 * q + 1] += lambda * dirperturb1[2 * q + 1];
+                densityValue[2 * q] += lambda * densityPrimeValue[2 * q];
+                densityValue[2 * q + 1] +=
+                  lambda * densityPrimeValue[2 * q + 1];
               }
 
             std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
@@ -2408,9 +2555,24 @@ namespace dftfe
             fe_values.reinit(cellPtr);
 
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
 
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+              }
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -2425,14 +2587,31 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues   = rhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+              }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] -= 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q] -= 2.0 * lambda * densityPrimeValue[2 * q];
                 densityValue[2 * q + 1] -=
-                  2.0 * lambda * dirperturb1[2 * q + 1];
+                  2.0 * lambda * densityPrimeValue[2 * q + 1];
               }
             std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
 
@@ -2484,10 +2663,28 @@ namespace dftfe
           {
             fe_values.reinit(cellPtr);
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            const std::vector<double> &tempPhiPrime =
-              phiPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalValues = rhoValues[0];
+            const auto &tempDensityMagValues   = rhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+              }
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              phiPrimeValue[q] =
+                phiPrimeValues[iElemCount * numberQuadraturePoints + q];
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -2502,14 +2699,32 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues   = rhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+              }
 
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] -= lambda * dirperturb1[2 * q];
-                densityValue[2 * q + 1] -= lambda * dirperturb1[2 * q + 1];
+                densityValue[2 * q] -= lambda * densityPrimeValue[2 * q];
+                densityValue[2 * q + 1] -=
+                  lambda * densityPrimeValue[2 * q + 1];
               }
 
             std::map<rhoDataAttributes, const std::vector<double> *> rhoData;
@@ -2548,7 +2763,7 @@ namespace dftfe
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] *=
                   1.0 / 12.0 / lambda;
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
-                  tempPhiPrime[q] * fe_values.JxW(q);
+                  phiPrimeValue[q] * fe_values.JxW(q);
               }
 
             iElemCount++;
@@ -2561,11 +2776,20 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffPrime(
-    const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
-    const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoPrimeValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoPrimeValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  phiPrimeValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
   {
@@ -2584,6 +2808,12 @@ namespace dftfe
     d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
                                                     numberQuadraturePoints * 3,
                                                   0.0);
+
+    std::vector<double> densityValue(numberQuadraturePoints);
+    std::vector<double> gradDensityValue(3 * numberQuadraturePoints);
+    std::vector<double> densityPrimeValue(numberQuadraturePoints);
+    std::vector<double> gradDensityPrimeValue(3 * numberQuadraturePoints);
+    std::vector<double> phiPrimeValue(numberQuadraturePoints);
 
     std::vector<double> sigmaValue(numberQuadraturePoints);
     std::vector<double> derExchEnergyWithSigmaVal(numberQuadraturePoints);
@@ -2620,18 +2850,40 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (gradRhoValues).find(cellPtr->id())->second;
 
-            std::vector<double> densityPrimeValue =
-              (rhoPrimeValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityPrimeValue =
-              (gradRhoPrimeValues).find(cellPtr->id())->second;
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[q] =
+                  tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                         q];
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  gradDensityValue[3 * q + idim] =
+                    tempGradDensityTotalValues[3 * iElemCount *
+                                                 numberQuadraturePoints +
+                                               3 * q + idim];
+              }
 
-            const std::vector<double> &tempPhiPrime =
-              phiPrimeValues.find(cellPtr->id())->second;
+
+            const auto &tempDensityTotalPrimeValues     = rhoPrimeValues[0];
+            const auto &tempGradDensityTotalPrimeValues = gradRhoPrimeValues[0];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[q] =
+                  tempDensityTotalPrimeValues[iElemCount *
+                                                numberQuadraturePoints +
+                                              q];
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  gradDensityPrimeValue[3 * q + idim] =
+                    tempGradDensityTotalPrimeValues[3 * iElemCount *
+                                                      numberQuadraturePoints +
+                                                    3 * q + idim];
+              }
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              phiPrimeValue[q] =
+                phiPrimeValues[iElemCount * numberQuadraturePoints + q];
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -2745,7 +2997,7 @@ namespace dftfe
 
 
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] =
-                  (tempPhiPrime[q] +
+                  (phiPrimeValue[q] +
                    (der2ExchEnergyWithDensityVal[q] +
                     der2CorrEnergyWithDensityVal[q]) *
                      densityPrimeValue[q] +
@@ -2823,11 +3075,20 @@ namespace dftfe
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     computeVEffPrimeSpinPolarized(
-      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
-      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoPrimeValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoPrimeValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                                                  phiPrimeValues,
       const unsigned int                                   spinIndex,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
@@ -2847,6 +3108,12 @@ namespace dftfe
     d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
                                                     numberQuadraturePoints * 3,
                                                   0.0);
+
+    std::vector<double> densityValue(2 * numberQuadraturePoints);
+    std::vector<double> gradDensityValue(6 * numberQuadraturePoints);
+    std::vector<double> densityPrimeValue(2 * numberQuadraturePoints);
+    std::vector<double> gradDensityPrimeValue(6 * numberQuadraturePoints);
+    std::vector<double> phiPrimeValue(numberQuadraturePoints);
 
     std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
@@ -2877,10 +3144,45 @@ namespace dftfe
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (gradRhoValues).find(cellPtr->id())->second;
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
+              }
+
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -2905,29 +3207,65 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues     = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues       = rhoPrimeValues[1];
+            const auto &tempGradDensityTotalPrimeValues = gradRhoPrimeValues[0];
+            const auto &tempGradDensityMagPrimeValues   = gradRhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityPrimeValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] +
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                    gradDensityPrimeValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] -
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                  }
+              }
 
-            const std::vector<double> &dirperturb2 =
-              gradRhoPrimeValues.find(cellPtr->id())->second;
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] += 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q] += 2.0 * lambda * densityPrimeValue[2 * q];
                 densityValue[2 * q + 1] +=
-                  2.0 * lambda * dirperturb1[2 * q + 1];
+                  2.0 * lambda * densityPrimeValue[2 * q + 1];
                 gradDensityValue[6 * q + 0] +=
-                  2.0 * lambda * dirperturb2[6 * q + 0];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 0];
                 gradDensityValue[6 * q + 1] +=
-                  2.0 * lambda * dirperturb2[6 * q + 1];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 1];
                 gradDensityValue[6 * q + 2] +=
-                  2.0 * lambda * dirperturb2[6 * q + 2];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 2];
                 gradDensityValue[6 * q + 3] +=
-                  2.0 * lambda * dirperturb2[6 * q + 3];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 3];
                 gradDensityValue[6 * q + 4] +=
-                  2.0 * lambda * dirperturb2[6 * q + 4];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 4];
                 gradDensityValue[6 * q + 5] +=
-                  2.0 * lambda * dirperturb2[6 * q + 5];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 5];
               }
 
 
@@ -3067,13 +3405,45 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
+              }
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (gradRhoValues).find(cellPtr->id())->second;
-            const std::vector<double> &tempPhiPrime =
-              phiPrimeValues.find(cellPtr->id())->second;
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -3097,22 +3467,64 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
-
-            const std::vector<double> &dirperturb2 =
-              gradRhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues     = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues       = rhoPrimeValues[1];
+            const auto &tempGradDensityTotalPrimeValues = gradRhoPrimeValues[0];
+            const auto &tempGradDensityMagPrimeValues   = gradRhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityPrimeValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] +
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                    gradDensityPrimeValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] -
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                  }
+              }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] += lambda * dirperturb1[2 * q];
-                densityValue[2 * q + 1] += lambda * dirperturb1[2 * q + 1];
-                gradDensityValue[6 * q + 0] += lambda * dirperturb2[6 * q + 0];
-                gradDensityValue[6 * q + 1] += lambda * dirperturb2[6 * q + 1];
-                gradDensityValue[6 * q + 2] += lambda * dirperturb2[6 * q + 2];
-                gradDensityValue[6 * q + 3] += lambda * dirperturb2[6 * q + 3];
-                gradDensityValue[6 * q + 4] += lambda * dirperturb2[6 * q + 4];
-                gradDensityValue[6 * q + 5] += lambda * dirperturb2[6 * q + 5];
+                densityValue[2 * q] += lambda * densityPrimeValue[2 * q];
+                densityValue[2 * q + 1] +=
+                  lambda * densityPrimeValue[2 * q + 1];
+                gradDensityValue[6 * q + 0] +=
+                  lambda * gradDensityPrimeValue[6 * q + 0];
+                gradDensityValue[6 * q + 1] +=
+                  lambda * gradDensityPrimeValue[6 * q + 1];
+                gradDensityValue[6 * q + 2] +=
+                  lambda * gradDensityPrimeValue[6 * q + 2];
+                gradDensityValue[6 * q + 3] +=
+                  lambda * gradDensityPrimeValue[6 * q + 3];
+                gradDensityValue[6 * q + 4] +=
+                  lambda * gradDensityPrimeValue[6 * q + 4];
+                gradDensityValue[6 * q + 5] +=
+                  lambda * gradDensityPrimeValue[6 * q + 5];
               }
 
 
@@ -3255,11 +3667,44 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
-
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (gradRhoValues).find(cellPtr->id())->second;
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
+              }
 
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
@@ -3284,29 +3729,64 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
-
-            const std::vector<double> &dirperturb2 =
-              gradRhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues     = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues       = rhoPrimeValues[1];
+            const auto &tempGradDensityTotalPrimeValues = gradRhoPrimeValues[0];
+            const auto &tempGradDensityMagPrimeValues   = gradRhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityPrimeValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] +
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                    gradDensityPrimeValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] -
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                  }
+              }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] -= 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q] -= 2.0 * lambda * densityPrimeValue[2 * q];
                 densityValue[2 * q + 1] -=
-                  2.0 * lambda * dirperturb1[2 * q + 1];
+                  2.0 * lambda * densityPrimeValue[2 * q + 1];
                 gradDensityValue[6 * q + 0] -=
-                  2.0 * lambda * dirperturb2[6 * q + 0];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 0];
                 gradDensityValue[6 * q + 1] -=
-                  2.0 * lambda * dirperturb2[6 * q + 1];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 1];
                 gradDensityValue[6 * q + 2] -=
-                  2.0 * lambda * dirperturb2[6 * q + 2];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 2];
                 gradDensityValue[6 * q + 3] -=
-                  2.0 * lambda * dirperturb2[6 * q + 3];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 3];
                 gradDensityValue[6 * q + 4] -=
-                  2.0 * lambda * dirperturb2[6 * q + 4];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 4];
                 gradDensityValue[6 * q + 5] -=
-                  2.0 * lambda * dirperturb2[6 * q + 5];
+                  2.0 * lambda * gradDensityPrimeValue[6 * q + 5];
               }
 
 
@@ -3448,13 +3928,49 @@ namespace dftfe
             const std::vector<dealii::DerivativeForm<1, 3, 3>>
               &inverseJacobians = fe_values.get_inverse_jacobians();
 
+            const auto &tempDensityTotalValues     = rhoValues[0];
+            const auto &tempDensityMagValues       = rhoValues[1];
+            const auto &tempGradDensityTotalValues = gradRhoValues[0];
+            const auto &tempGradDensityMagValues   = gradRhoValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q + 0] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] +
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                densityValue[2 * q + 1] =
+                  0.5 *
+                  (tempDensityTotalValues[iElemCount * numberQuadraturePoints +
+                                          q] -
+                   tempDensityMagValues[iElemCount * numberQuadraturePoints +
+                                        q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] +
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                    gradDensityValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalValues[3 * iElemCount *
+                                                    numberQuadraturePoints +
+                                                  3 * q + idim] -
+                       tempGradDensityMagValues[3 * iElemCount *
+                                                  numberQuadraturePoints +
+                                                3 * q + idim]);
+                  }
+              }
 
-            std::vector<double> densityValue =
-              (rhoValues).find(cellPtr->id())->second;
-            std::vector<double> gradDensityValue =
-              (gradRhoValues).find(cellPtr->id())->second;
-            const std::vector<double> &tempPhiPrime =
-              phiPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              phiPrimeValue[q] =
+                phiPrimeValues[iElemCount * numberQuadraturePoints + q];
 
             if (dftPtr->d_dftParamsPtr->nonLinearCoreCorrection)
               {
@@ -3478,22 +3994,64 @@ namespace dftfe
               }
 
 
-            const std::vector<double> &dirperturb1 =
-              rhoPrimeValues.find(cellPtr->id())->second;
-
-            const std::vector<double> &dirperturb2 =
-              gradRhoPrimeValues.find(cellPtr->id())->second;
+            const auto &tempDensityTotalPrimeValues     = rhoPrimeValues[0];
+            const auto &tempDensityMagPrimeValues       = rhoPrimeValues[1];
+            const auto &tempGradDensityTotalPrimeValues = gradRhoPrimeValues[0];
+            const auto &tempGradDensityMagPrimeValues   = gradRhoPrimeValues[1];
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityPrimeValue[2 * q + 0] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] +
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                densityPrimeValue[2 * q + 1] =
+                  0.5 * (tempDensityTotalPrimeValues[iElemCount *
+                                                       numberQuadraturePoints +
+                                                     q] -
+                         tempDensityMagPrimeValues[iElemCount *
+                                                     numberQuadraturePoints +
+                                                   q]);
+                for (unsigned int idim = 0; idim < 3; ++idim)
+                  {
+                    gradDensityPrimeValue[6 * q + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] +
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                    gradDensityPrimeValue[6 * q + 3 + idim] =
+                      0.5 *
+                      (tempGradDensityTotalPrimeValues
+                         [3 * iElemCount * numberQuadraturePoints + 3 * q +
+                          idim] -
+                       tempGradDensityMagPrimeValues[3 * iElemCount *
+                                                       numberQuadraturePoints +
+                                                     3 * q + idim]);
+                  }
+              }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                densityValue[2 * q] -= lambda * dirperturb1[2 * q];
-                densityValue[2 * q + 1] -= lambda * dirperturb1[2 * q + 1];
-                gradDensityValue[6 * q + 0] -= lambda * dirperturb2[6 * q + 0];
-                gradDensityValue[6 * q + 1] -= lambda * dirperturb2[6 * q + 1];
-                gradDensityValue[6 * q + 2] -= lambda * dirperturb2[6 * q + 2];
-                gradDensityValue[6 * q + 3] -= lambda * dirperturb2[6 * q + 3];
-                gradDensityValue[6 * q + 4] -= lambda * dirperturb2[6 * q + 4];
-                gradDensityValue[6 * q + 5] -= lambda * dirperturb2[6 * q + 5];
+                densityValue[2 * q] -= lambda * densityPrimeValue[2 * q];
+                densityValue[2 * q + 1] -=
+                  lambda * densityPrimeValue[2 * q + 1];
+                gradDensityValue[6 * q + 0] -=
+                  lambda * gradDensityPrimeValue[6 * q + 0];
+                gradDensityValue[6 * q + 1] -=
+                  lambda * gradDensityPrimeValue[6 * q + 1];
+                gradDensityValue[6 * q + 2] -=
+                  lambda * gradDensityPrimeValue[6 * q + 2];
+                gradDensityValue[6 * q + 3] -=
+                  lambda * gradDensityPrimeValue[6 * q + 3];
+                gradDensityValue[6 * q + 4] -=
+                  lambda * gradDensityPrimeValue[6 * q + 4];
+                gradDensityValue[6 * q + 5] -=
+                  lambda * gradDensityPrimeValue[6 * q + 5];
               }
 
 
@@ -3561,7 +4119,7 @@ namespace dftfe
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] *=
                   1.0 / 12.0 / lambda;
                 d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
-                  tempPhiPrime[q] * fe_values.JxW(q);
+                  phiPrimeValue[q] * fe_values.JxW(q);
               }
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)

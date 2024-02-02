@@ -1,8 +1,74 @@
 \subsection{Global parameters}
 \label{parameters:global}
 
-
 \begin{itemize}
+\item {\it Parameter name:} {\tt RESTART}
+\phantomsection\label{parameters:RESTART}
+
+
+\index[prmindex]{RESTART}
+\index[prmindexfull]{RESTART}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] If set to true solvermode triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt RESTART FOLDER}
+\phantomsection\label{parameters:RESTART FOLDER}
+\label{parameters:RESTART_20FOLDER}
+
+
+\index[prmindex]{RESTART FOLDER}
+\index[prmindexfull]{RESTART FOLDER}
+{\it Value:} .
+
+
+{\it Default:} .
+
+
+{\it Description:} [Standard] Folder to store restart files.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt SOLVER MODE}
+\phantomsection\label{parameters:SOLVER MODE}
+\label{parameters:SOLVER_20MODE}
+
+
+\index[prmindex]{SOLVER MODE}
+\index[prmindexfull]{SOLVER MODE}
+{\it Value:} GS
+
+
+{\it Default:} GS
+
+
+{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified
+
+
+{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF
+\item {\it Parameter name:} {\tt VERBOSITY}
+\phantomsection\label{parameters:VERBOSITY}
+
+
+\index[prmindex]{VERBOSITY}
+\index[prmindexfull]{VERBOSITY}
+{\it Value:} 1
+
+
+{\it Default:} 1
+
+
+{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.
+
+
+{\it Possible values:} An integer $n$ such that $-1\leq n \leq 5$
+
 \item {\it Parameter name:} {\tt KEEP SCRATCH FOLDER}
 \phantomsection\label{parameters:KEEP SCRATCH FOLDER}
 \label{parameters:KEEP_20SCRATCH_20FOLDER}
@@ -37,72 +103,6 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt RESTART}
-\phantomsection\label{parameters:RESTART}
-
-
-\index[prmindex]{RESTART}
-\index[prmindexfull]{RESTART}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] If set to true RESTART triggers restart checks and modifies the input files for coordinates, domain vectors. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt RESTART FOLDER}
-\phantomsection\label{parameters:RESTART FOLDER}
-\label{parameters:RESTART_20FOLDER}
-
-
-\index[prmindex]{RESTART FOLDER}
-\index[prmindexfull]{RESTART FOLDER}
-{\it Value:} .
-
-
-{\it Default:} .
-
-
-{\it Description:} [Standard] Folder to store restart files.
-
-
-{\it Possible values:} Any string
-\item {\it Parameter name:} {\tt SOLVER MODE}
-\phantomsection\label{parameters:SOLVER MODE}
-\label{parameters:SOLVER_20MODE}
-
-
-\index[prmindex]{SOLVER MODE}
-\index[prmindexfull]{SOLVER MODE}
-{\it Value:} NSCF
-
-
-{\it Default:} GS
-
-
-{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified
-
-
-{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF
-\item {\it Parameter name:} {\tt VERBOSITY}
-\phantomsection\label{parameters:VERBOSITY}
-
-
-\index[prmindex]{VERBOSITY}
-\index[prmindexfull]{VERBOSITY}
-{\it Value:} 4
-
-
-{\it Default:} 1
-
-
-{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.
-
-
-{\it Possible values:} An integer $n$ such that $-1\leq n \leq 5$
 \item {\it Parameter name:} {\tt WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
 \phantomsection\label{parameters:WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS}
 \label{parameters:WRITE_20STRUCTURE_20ENERGY_20FORCES_20DATA_20POST_20PROCESS}
@@ -122,249 +122,7 @@
 {\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
-\subsection{Parameters in section \tt NEB}
-\label{parameters:NEB}
 
-\begin{itemize}
-\item {\it Parameter name:} {\tt ALLOW IMAGE FREEZING}
-\phantomsection\label{parameters:NEB/ALLOW IMAGE FREEZING}
-\label{parameters:NEB/ALLOW_20IMAGE_20FREEZING}
-
-
-\index[prmindex]{ALLOW IMAGE FREEZING}
-\index[prmindexfull]{NEB!ALLOW IMAGE FREEZING}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} If true images less than threshold will freeze for optimization step
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt BFGS STEP METHOD}
-\phantomsection\label{parameters:NEB/BFGS STEP METHOD}
-\label{parameters:NEB/BFGS_20STEP_20METHOD}
-
-
-\index[prmindex]{BFGS STEP METHOD}
-\index[prmindexfull]{NEB!BFGS STEP METHOD}
-{\it Value:} QN
-
-
-{\it Default:} QN
-
-
-{\it Description:} [Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.
-
-
-{\it Possible values:} Any one of QN, RFO
-\item {\it Parameter name:} {\tt ION RELAX FLAGS FILE}
-\phantomsection\label{parameters:NEB/ION RELAX FLAGS FILE}
-\label{parameters:NEB/ION_20RELAX_20FLAGS_20FILE}
-
-
-\index[prmindex]{ION RELAX FLAGS FILE}
-\index[prmindexfull]{NEB!ION RELAX FLAGS FILE}
-{\it Value:} ion\_force\_flag.inp
-
-
-{\it Default:} 
-
-
-{\it Description:} [Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.
-
-
-{\it Possible values:} Any string
-\item {\it Parameter name:} {\tt LBFGS HISTORY}
-\phantomsection\label{parameters:NEB/LBFGS HISTORY}
-\label{parameters:NEB/LBFGS_20HISTORY}
-
-
-\index[prmindex]{LBFGS HISTORY}
-\index[prmindexfull]{NEB!LBFGS HISTORY}
-{\it Value:} 5
-
-
-{\it Default:} 5
-
-
-{\it Description:} [Standard] Number of previous steps to considered for the LBFGS update.
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
-\item {\it Parameter name:} {\tt MAXIMUM ION UPDATE STEP}
-\phantomsection\label{parameters:NEB/MAXIMUM ION UPDATE STEP}
-\label{parameters:NEB/MAXIMUM_20ION_20UPDATE_20STEP}
-
-
-\index[prmindex]{MAXIMUM ION UPDATE STEP}
-\index[prmindexfull]{NEB!MAXIMUM ION UPDATE STEP}
-{\it Value:} 0.5
-
-
-{\it Default:} 0.5
-
-
-{\it Description:} [Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.
-
-
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
-\item {\it Parameter name:} {\tt MAXIMUM NUMBER OF NEB ITERATIONS}
-\phantomsection\label{parameters:NEB/MAXIMUM NUMBER OF NEB ITERATIONS}
-\label{parameters:NEB/MAXIMUM_20NUMBER_20OF_20NEB_20ITERATIONS}
-
-
-\index[prmindex]{MAXIMUM NUMBER OF NEB ITERATIONS}
-\index[prmindexfull]{NEB!MAXIMUM NUMBER OF NEB ITERATIONS}
-{\it Value:} 2
-
-
-{\it Default:} 100
-
-
-{\it Description:} [Standard] Maximum number of NEB iterations that will be performed in the simulation
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 250$
-\item {\it Parameter name:} {\tt MAXIMUM SPRING CONSTANT}
-\phantomsection\label{parameters:NEB/MAXIMUM SPRING CONSTANT}
-\label{parameters:NEB/MAXIMUM_20SPRING_20CONSTANT}
-
-
-\index[prmindex]{MAXIMUM SPRING CONSTANT}
-\index[prmindexfull]{NEB!MAXIMUM SPRING CONSTANT}
-{\it Value:} 5e-3
-
-
-{\it Default:} 5e-3
-
-
-{\it Description:} [Standard] Sets the maximum allowable spring constant in (Ha/bohr^2)
-
-
-{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
-\item {\it Parameter name:} {\tt MAX LINE SEARCH ITER}
-\phantomsection\label{parameters:NEB/MAX LINE SEARCH ITER}
-\label{parameters:NEB/MAX_20LINE_20SEARCH_20ITER}
-
-
-\index[prmindex]{MAX LINE SEARCH ITER}
-\index[prmindexfull]{NEB!MAX LINE SEARCH ITER}
-{\it Value:} 5
-
-
-{\it Default:} 5
-
-
-{\it Description:} [Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
-\item {\it Parameter name:} {\tt MINIMUM SPRING CONSTANT}
-\phantomsection\label{parameters:NEB/MINIMUM SPRING CONSTANT}
-\label{parameters:NEB/MINIMUM_20SPRING_20CONSTANT}
-
-
-\index[prmindex]{MINIMUM SPRING CONSTANT}
-\index[prmindexfull]{NEB!MINIMUM SPRING CONSTANT}
-{\it Value:} 2e-3
-
-
-{\it Default:} 2e-3
-
-
-{\it Description:} [Standard] Sets the minimum allowable spring constant in (Ha/bohr^2)
-
-
-{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
-\item {\it Parameter name:} {\tt NEB COORDINATES FILE}
-\phantomsection\label{parameters:NEB/NEB COORDINATES FILE}
-\label{parameters:NEB/NEB_20COORDINATES_20FILE}
-
-
-\index[prmindex]{NEB COORDINATES FILE}
-\index[prmindexfull]{NEB!NEB COORDINATES FILE}
-{\it Value:} coordinates.inp
-
-
-{\it Default:} 
-
-
-{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
-
-
-{\it Possible values:} Any string
-\item {\it Parameter name:} {\tt NEB DOMAIN VECTORS FILE}
-\phantomsection\label{parameters:NEB/NEB DOMAIN VECTORS FILE}
-\label{parameters:NEB/NEB_20DOMAIN_20VECTORS_20FILE}
-
-
-\index[prmindex]{NEB DOMAIN VECTORS FILE}
-\index[prmindexfull]{NEB!NEB DOMAIN VECTORS FILE}
-{\it Value:} domainVectors.inp
-
-
-{\it Default:} 
-
-
-{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
-
-
-{\it Possible values:} Any string
-\item {\it Parameter name:} {\tt NEB OPT SOLVER}
-\phantomsection\label{parameters:NEB/NEB OPT SOLVER}
-\label{parameters:NEB/NEB_20OPT_20SOLVER}
-
-
-\index[prmindex]{NEB OPT SOLVER}
-\index[prmindexfull]{NEB!NEB OPT SOLVER}
-{\it Value:} LBFGS
-
-
-{\it Default:} LBFGS
-
-
-{\it Description:} [Standard] Method for Ion relaxation solver. LBFGS is the default
-
-
-{\it Possible values:} Any one of BFGS, LBFGS, CGPRP
-\item {\it Parameter name:} {\tt NUMBER OF IMAGES}
-\phantomsection\label{parameters:NEB/NUMBER OF IMAGES}
-\label{parameters:NEB/NUMBER_20OF_20IMAGES}
-
-
-\index[prmindex]{NUMBER OF IMAGES}
-\index[prmindexfull]{NEB!NUMBER OF IMAGES}
-{\it Value:} 7
-
-
-{\it Default:} 7
-
-
-{\it Description:} [Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 50$
-\item {\it Parameter name:} {\tt PATH THRESHOLD}
-\phantomsection\label{parameters:NEB/PATH THRESHOLD}
-\label{parameters:NEB/PATH_20THRESHOLD}
-
-
-\index[prmindex]{PATH THRESHOLD}
-\index[prmindexfull]{NEB!PATH THRESHOLD}
-{\it Value:} 0.0005
-
-
-{\it Default:} 5e-4
-
-
-{\it Description:} [Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD 
-
-
-{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
-\end{itemize}
 
 \subsection{Parameters in section \tt Boundary conditions}
 \label{parameters:Boundary_20conditions}
@@ -428,7 +186,7 @@
 
 \index[prmindex]{PERIODIC1}
 \index[prmindexfull]{Boundary conditions!PERIODIC1}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -445,7 +203,7 @@
 
 \index[prmindex]{PERIODIC2}
 \index[prmindexfull]{Boundary conditions!PERIODIC2}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -462,7 +220,7 @@
 
 \index[prmindex]{PERIODIC3}
 \index[prmindexfull]{Boundary conditions!PERIODIC3}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -570,7 +328,7 @@
 
 \index[prmindex]{kPOINT RULE FILE}
 \index[prmindexfull]{Brillouin zone k point sampling options!kPOINT RULE FILE}
-{\it Value:} kPoint2x2x2File
+{\it Value:} 
 
 
 {\it Default:} 
@@ -703,7 +461,7 @@
 
 \index[prmindex]{EXCHANGE CORRELATION TYPE}
 \index[prmindexfull]{DFT functional parameters!EXCHANGE CORRELATION TYPE}
-{\it Value:} 4
+{\it Value:} 1
 
 
 {\it Default:} 1
@@ -730,23 +488,6 @@
 
 
 {\it Possible values:} Any string
-\item {\it Parameter name:} {\tt NUMBER OF IMAGES}
-\phantomsection\label{parameters:DFT functional parameters/NUMBER OF IMAGES}
-\label{parameters:DFT_20functional_20parameters/NUMBER_20OF_20IMAGES}
-
-
-\index[prmindex]{NUMBER OF IMAGES}
-\index[prmindexfull]{DFT functional parameters!NUMBER OF IMAGES}
-{\it Value:} 1
-
-
-{\it Default:} 1
-
-
-{\it Description:} [Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 50$
 \item {\it Parameter name:} {\tt PSEUDOPOTENTIAL CALCULATION}
 \phantomsection\label{parameters:DFT functional parameters/PSEUDOPOTENTIAL CALCULATION}
 \label{parameters:DFT_20functional_20parameters/PSEUDOPOTENTIAL_20CALCULATION}
@@ -1006,7 +747,7 @@
 
 \index[prmindex]{POLYNOMIAL ORDER}
 \index[prmindexfull]{Finite element mesh parameters!POLYNOMIAL ORDER}
-{\it Value:} 5
+{\it Value:} 6
 
 
 {\it Default:} 6
@@ -1201,7 +942,7 @@
 
 \index[prmindex]{MESH SIZE AROUND ATOM}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE AROUND ATOM}
-{\it Value:} 1.6
+{\it Value:} 1.0
 
 
 {\it Default:} 1.0
@@ -1518,7 +1259,7 @@
 
 \index[prmindex]{NATOMS}
 \index[prmindexfull]{Geometry!NATOMS}
-{\it Value:} 4
+{\it Value:} 1
 
 
 {\it Default:} 0
@@ -2427,7 +2168,7 @@
 
 \index[prmindex]{LOAD RHO DATA}
 \index[prmindexfull]{SCF Checkpointing and Restart!LOAD RHO DATA}
-{\it Value:} true
+{\it Value:} false
 
 
 {\it Default:} false
@@ -2477,6 +2218,23 @@
 \label{parameters:SCF_20parameters}
 
 \begin{itemize}
+\item {\it Parameter name:} {\tt ADAPT ANDERSON MIXING PARAMETER}
+\phantomsection\label{parameters:SCF parameters/ADAPT ANDERSON MIXING PARAMETER}
+\label{parameters:SCF_20parameters/ADAPT_20ANDERSON_20MIXING_20PARAMETER}
+
+
+\index[prmindex]{ADAPT ANDERSON MIXING PARAMETER}
+\index[prmindexfull]{SCF parameters!ADAPT ANDERSON MIXING PARAMETER}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Boolean parameter specifying whether to adapt the Anderson mixing parameter based on algorithm 1 in [CPC. 292, 108865 (2023)].
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt COMPUTE ENERGY EACH ITER}
 \phantomsection\label{parameters:SCF parameters/COMPUTE ENERGY EACH ITER}
 \label{parameters:SCF_20parameters/COMPUTE_20ENERGY_20EACH_20ITER}
@@ -2578,7 +2336,7 @@
 {\it Description:} [Standard] Method for density mixing. ANDERSON is the default option.
 
 
-{\it Possible values:} Any one of BROYDEN, ANDERSON, ANDERSON\_WITH\_KERKER, LOW\_RANK\_DIELECM\_PRECOND
+{\it Possible values:} Any one of ANDERSON, ANDERSON\_WITH\_KERKER, ANDERSON\_WITH\_RESTA, LOW\_RANK\_DIELECM\_PRECOND
 \item {\it Parameter name:} {\tt MIXING PARAMETER}
 \phantomsection\label{parameters:SCF parameters/MIXING PARAMETER}
 \label{parameters:SCF_20parameters/MIXING_20PARAMETER}
@@ -2592,10 +2350,44 @@
 {\it Default:} 0.0
 
 
-{\it Description:} [Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson and Broyden, and 0.5 for Kerker and LRD.
+{\it Description:} [Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.
 
 
 {\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 1$
+\item {\it Parameter name:} {\tt RESTA FERMI WAVEVECTOR}
+\phantomsection\label{parameters:SCF parameters/RESTA FERMI WAVEVECTOR}
+\label{parameters:SCF_20parameters/RESTA_20FERMI_20WAVEVECTOR}
+
+
+\index[prmindex]{RESTA FERMI WAVEVECTOR}
+\index[prmindexfull]{SCF parameters!RESTA FERMI WAVEVECTOR}
+{\it Value:} 5.81
+
+
+{\it Default:} 5.81
+
+
+{\it Description:} [Standard] Fermi wavevector estimate (in Bohr\^-1) to be used in the Resta preconditioner.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1000$
+\item {\it Parameter name:} {\tt RESTA SCREENING LENGTH}
+\phantomsection\label{parameters:SCF parameters/RESTA SCREENING LENGTH}
+\label{parameters:SCF_20parameters/RESTA_20SCREENING_20LENGTH}
+
+
+\index[prmindex]{RESTA SCREENING LENGTH}
+\index[prmindexfull]{SCF parameters!RESTA SCREENING LENGTH}
+{\it Value:} 6.61
+
+
+{\it Default:} 6.61
+
+
+{\it Description:} [Standard] Screening length estimate (in Bohr) to be used in the Resta preconditioner.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1000$
 \item {\it Parameter name:} {\tt STARTING WFC}
 \phantomsection\label{parameters:SCF parameters/STARTING WFC}
 \label{parameters:SCF_20parameters/STARTING_20WFC}
@@ -2620,7 +2412,7 @@
 
 \index[prmindex]{TEMPERATURE}
 \index[prmindexfull]{SCF parameters!TEMPERATURE}
-{\it Value:} 500
+{\it Value:} 500.0
 
 
 {\it Default:} 500.0
@@ -2637,7 +2429,7 @@
 
 \index[prmindex]{TOLERANCE}
 \index[prmindexfull]{SCF parameters!TOLERANCE}
-{\it Value:} 5e-5
+{\it Value:} 1e-05
 
 
 {\it Default:} 1e-05
@@ -2798,7 +2590,7 @@
 
 \index[prmindex]{NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
-{\it Value:} 20
+{\it Value:} 0
 
 
 {\it Default:} 0
@@ -3273,4 +3065,247 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\end{itemize}
+\subsection{Parameters in section \tt NEB}
+\label{parameters:NEB}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt ALLOW IMAGE FREEZING}
+\phantomsection\label{parameters:NEB/ALLOW IMAGE FREEZING}
+\label{parameters:NEB/ALLOW_20IMAGE_20FREEZING}
+
+
+\index[prmindex]{ALLOW IMAGE FREEZING}
+\index[prmindexfull]{NEB!ALLOW IMAGE FREEZING}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} If true images less than threshold will freeze for optimization step
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt BFGS STEP METHOD}
+\phantomsection\label{parameters:NEB/BFGS STEP METHOD}
+\label{parameters:NEB/BFGS_20STEP_20METHOD}
+
+
+\index[prmindex]{BFGS STEP METHOD}
+\index[prmindexfull]{NEB!BFGS STEP METHOD}
+{\it Value:} QN
+
+
+{\it Default:} QN
+
+
+{\it Description:} [Standard] Method for computing update step in BFGS. Quasi-Newton step (default) or Rational Function Step as described in JPC 1985, 89:52-57.
+
+
+{\it Possible values:} Any one of QN, RFO
+\item {\it Parameter name:} {\tt ION RELAX FLAGS FILE}
+\phantomsection\label{parameters:NEB/ION RELAX FLAGS FILE}
+\label{parameters:NEB/ION_20RELAX_20FLAGS_20FILE}
+
+
+\index[prmindex]{ION RELAX FLAGS FILE}
+\index[prmindexfull]{NEB!ION RELAX FLAGS FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2). External forces are optional.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt LBFGS HISTORY}
+\phantomsection\label{parameters:NEB/LBFGS HISTORY}
+\label{parameters:NEB/LBFGS_20HISTORY}
+
+
+\index[prmindex]{LBFGS HISTORY}
+\index[prmindexfull]{NEB!LBFGS HISTORY}
+{\it Value:} 5
+
+
+{\it Default:} 5
+
+
+{\it Description:} [Standard] Number of previous steps to considered for the LBFGS update.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
+\item {\it Parameter name:} {\tt MAXIMUM ION UPDATE STEP}
+\phantomsection\label{parameters:NEB/MAXIMUM ION UPDATE STEP}
+\label{parameters:NEB/MAXIMUM_20ION_20UPDATE_20STEP}
+
+
+\index[prmindex]{MAXIMUM ION UPDATE STEP}
+\index[prmindexfull]{NEB!MAXIMUM ION UPDATE STEP}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} [Standard] Sets the maximum allowed step size (displacement in a.u.) during ion relaxation.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 5$
+\item {\it Parameter name:} {\tt MAXIMUM NUMBER OF NEB ITERATIONS}
+\phantomsection\label{parameters:NEB/MAXIMUM NUMBER OF NEB ITERATIONS}
+\label{parameters:NEB/MAXIMUM_20NUMBER_20OF_20NEB_20ITERATIONS}
+
+
+\index[prmindex]{MAXIMUM NUMBER OF NEB ITERATIONS}
+\index[prmindexfull]{NEB!MAXIMUM NUMBER OF NEB ITERATIONS}
+{\it Value:} 100
+
+
+{\it Default:} 100
+
+
+{\it Description:} [Standard] Maximum number of NEB iterations that will be performed in the simulation
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 250$
+\item {\it Parameter name:} {\tt MAXIMUM SPRING CONSTANT}
+\phantomsection\label{parameters:NEB/MAXIMUM SPRING CONSTANT}
+\label{parameters:NEB/MAXIMUM_20SPRING_20CONSTANT}
+
+
+\index[prmindex]{MAXIMUM SPRING CONSTANT}
+\index[prmindexfull]{NEB!MAXIMUM SPRING CONSTANT}
+{\it Value:} 5e-3
+
+
+{\it Default:} 5e-3
+
+
+{\it Description:} [Standard] Sets the maximum allowable spring constant in (Ha/bohr\^2)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt MAX LINE SEARCH ITER}
+\phantomsection\label{parameters:NEB/MAX LINE SEARCH ITER}
+\label{parameters:NEB/MAX_20LINE_20SEARCH_20ITER}
+
+
+\index[prmindex]{MAX LINE SEARCH ITER}
+\index[prmindexfull]{NEB!MAX LINE SEARCH ITER}
+{\it Value:} 5
+
+
+{\it Default:} 5
+
+
+{\it Description:} [Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
+\item {\it Parameter name:} {\tt MINIMUM SPRING CONSTANT}
+\phantomsection\label{parameters:NEB/MINIMUM SPRING CONSTANT}
+\label{parameters:NEB/MINIMUM_20SPRING_20CONSTANT}
+
+
+\index[prmindex]{MINIMUM SPRING CONSTANT}
+\index[prmindexfull]{NEB!MINIMUM SPRING CONSTANT}
+{\it Value:} 2e-3
+
+
+{\it Default:} 2e-3
+
+
+{\it Description:} [Standard] Sets the minimum allowable spring constant in (Ha/bohr\^2)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt NEB COORDINATES FILE}
+\phantomsection\label{parameters:NEB/NEB COORDINATES FILE}
+\label{parameters:NEB/NEB_20COORDINATES_20FILE}
+
+
+\index[prmindex]{NEB COORDINATES FILE}
+\index[prmindexfull]{NEB!NEB COORDINATES FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NEB DOMAIN VECTORS FILE}
+\phantomsection\label{parameters:NEB/NEB DOMAIN VECTORS FILE}
+\label{parameters:NEB/NEB_20DOMAIN_20VECTORS_20FILE}
+
+
+\index[prmindex]{NEB DOMAIN VECTORS FILE}
+\index[prmindexfull]{NEB!NEB DOMAIN VECTORS FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NEB OPT SOLVER}
+\phantomsection\label{parameters:NEB/NEB OPT SOLVER}
+\label{parameters:NEB/NEB_20OPT_20SOLVER}
+
+
+\index[prmindex]{NEB OPT SOLVER}
+\index[prmindexfull]{NEB!NEB OPT SOLVER}
+{\it Value:} LBFGS
+
+
+{\it Default:} LBFGS
+
+
+{\it Description:} [Standard] Method for Ion relaxation solver. LBFGS is the default
+
+
+{\it Possible values:} Any one of BFGS, LBFGS, CGPRP
+\item {\it Parameter name:} {\tt NUMBER OF IMAGES}
+\phantomsection\label{parameters:NEB/NUMBER OF IMAGES}
+\label{parameters:NEB/NUMBER_20OF_20IMAGES}
+
+
+\index[prmindex]{NUMBER OF IMAGES}
+\index[prmindexfull]{NEB!NUMBER OF IMAGES}
+{\it Value:} 7
+
+
+{\it Default:} 7
+
+
+{\it Description:} [Standard] NUMBER OF IMAGES:Default option is 7. When NEB is triggered this controls the total number of images along the MEP including the end points
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 50$
+\item {\it Parameter name:} {\tt PATH THRESHOLD}
+\phantomsection\label{parameters:NEB/PATH THRESHOLD}
+\label{parameters:NEB/PATH_20THRESHOLD}
+
+
+\index[prmindex]{PATH THRESHOLD}
+\index[prmindexfull]{NEB!PATH THRESHOLD}
+{\it Value:} 5e-4
+
+
+{\it Default:} 5e-4
+
+
+{\it Description:} [Standard] Simulation stops when the error(norm of force orthogonal to path in Ha/bohr) is less than PATH THRESHOLD 
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
 \end{itemize}

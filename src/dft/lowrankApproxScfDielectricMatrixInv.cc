@@ -237,13 +237,10 @@ namespace dftfe
 
       constraintsRhoNodal.set_zero(vVector);
 
-      vVector.update_ghost_values();
-
       //
       // evaluate l2 norm
       //
       vVector /= vVector.l2_norm();
-      vVector.update_ghost_values();
       int iter = 0;
       while (diffLambdaAbs > tol)
         {
@@ -257,7 +254,6 @@ namespace dftfe
 
           vVector = fVector;
           vVector /= vVector.l2_norm();
-          vVector.update_ghost_values();
           diffLambdaAbs = std::abs(lambdaNew - lambdaOld);
           iter++;
         }
@@ -299,13 +295,10 @@ namespace dftfe
 
       constraintsRhoNodal.set_zero(vVector);
 
-      vVector.update_ghost_values();
-
       //
       // evaluate l2 norm
       //
       vVector /= vVector.l2_norm();
-      vVector.update_ghost_values();
 
       int iter = 0;
       while (diffLambdaAbs > tol)
@@ -320,7 +313,6 @@ namespace dftfe
 
           vVector = fVector;
           vVector /= vVector.l2_norm();
-          vVector.update_ghost_values();
           diffLambdaAbs = std::abs(lambdaNew - lambdaOld);
           iter++;
         }
@@ -345,14 +337,15 @@ namespace dftfe
     double normValue = 0.0;
 
     distributedCPUVec<double> residualRho;
-    residualRho.reinit(d_rhoInNodalValues);
+    residualRho.reinit(d_densityInNodalValues[0]);
     residualRho = 0.0;
 
 
     // compute residual = rhoOut - rhoIn
-    residualRho.add(1.0, d_rhoOutNodalValues, -1.0, d_rhoInNodalValues);
-
-    residualRho.update_ghost_values();
+    residualRho.add(1.0,
+                    d_densityOutNodalValues[0],
+                    -1.0,
+                    d_densityInNodalValues[0]);
 
     // compute l2 norm of the field residual
     normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
@@ -537,7 +530,6 @@ namespace dftfe
             d_fvcontainerVals.push_back(residualRho);
             d_fvcontainerVals[d_rankCurrentLRD] = 0;
 
-            d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
             charge = totalCharge(d_matrixFreeDataPRefined,
                                  d_vcontainerVals[d_rankCurrentLRD]);
 
@@ -547,7 +539,6 @@ namespace dftfe
 
             d_vcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
 
-            d_vcontainerVals[d_rankCurrentLRD].update_ghost_values();
             charge = totalCharge(d_matrixFreeDataPRefined,
                                  d_vcontainerVals[d_rankCurrentLRD]);
 
@@ -562,7 +553,6 @@ namespace dftfe
               dummy,
               dummy);
 
-            d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
             charge = totalCharge(d_matrixFreeDataPRefined,
                                  d_fvcontainerVals[d_rankCurrentLRD]);
 
@@ -572,7 +562,6 @@ namespace dftfe
 
             d_fvcontainerVals[d_rankCurrentLRD].add(-charge / d_domainVolume);
 
-            d_fvcontainerVals[d_rankCurrentLRD].update_ghost_values();
             charge = totalCharge(d_matrixFreeDataPRefined,
                                  d_fvcontainerVals[d_rankCurrentLRD]);
             if (d_dftParamsPtr->verbosity >= 4)
@@ -677,31 +666,24 @@ namespace dftfe
     internalLowrankJacInv::predictNextStepResidual(
       d_fvcontainerVals, residualRho, d_residualPredicted, k0, -const2);
 
-    d_residualPredicted.update_ghost_values();
-
     // compute l2 norm of the field residual
     d_residualNormPredicted = rhofieldl2Norm(d_matrixFreeDataPRefined,
                                              d_residualPredicted,
                                              d_densityDofHandlerIndexElectro,
                                              d_densityQuadratureIdElectro);
 
-    d_rhoInNodalValues.add(const2, kernelAction);
-
-    d_rhoInNodalValues.update_ghost_values();
+    d_densityInNodalValues[0].add(const2, kernelAction);
 
     // interpolate nodal data to quadrature data
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+    interpolateDensityNodalDataToQuadratureDataGeneral(
+      d_basisOperationsPtrElectroHost,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      d_rhoInNodalValues,
-      *rhoInValues,
-      *gradRhoInValues,
-      *gradRhoInValues,
+      d_densityInNodalValues[0],
+      d_densityInQuadValues[0],
+      d_gradDensityInQuadValues[0],
+      d_gradDensityInQuadValues[0],
       d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
-
-    // push the rhoIn to deque storing the history of nodal values
-    d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

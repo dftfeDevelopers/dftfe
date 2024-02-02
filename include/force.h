@@ -144,16 +144,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -168,12 +168,7 @@ namespace dftfe
                      std::map<dealii::CellId, std::vector<double>>>
         &                                      pseudoVLocAtomsElectro,
       const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     /** @brief returns a copy of the configurational force on all global atoms.
      *
@@ -223,16 +218,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -326,16 +321,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -349,12 +344,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     computeConfigurationalForceEEshelbyEElectroPhiTot(
@@ -363,21 +353,19 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const distributedCPUVec<double> &                    phiRhoMinusApproxRho,
-      const bool shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     computeConfigurationalForcePhiExtLinFE();
@@ -407,16 +395,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
@@ -430,12 +418,7 @@ namespace dftfe
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const std::map<dealii::CellId, std::vector<double>> &shadowKSRhoMinValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &                              shadowKSGradRhoMinValues,
-      const distributedCPUVec<double> &phiRhoMinusApproxRho,
-      const bool                       shadowPotentialForce = false);
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     FPSPLocalGammaAtomsElementalContribution(
@@ -488,65 +471,6 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
         &smearedbQuads);
-
-    void
-    FShadowLocalGammaAtomsElementalContributionElectronic(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionLocalGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>>
-        &derVxcWithRhoTimesRhoDiffQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoAtomsQuadsSeparate,
-      const dealii::AlignedVector<
-        dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
-        &der2ExcWithGradRhoOutQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &derVxcWithGradRhoOutQuads,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>>
-        &shadowKSRhoMinMinusGradRhoQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &shadowKSGradRhoMinMinusGradRhoQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &hessianRhoAtomsQuadsSeparate,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &        hessianRhoCoreAtoms,
-      const bool isAtomicRhoSplitting = false,
-      const bool isXCGGA              = false,
-      const bool isNLCC               = false);
-
-    void
-    FShadowLocalGammaAtomsElementalContributionElectrostatic(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionLocalGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &gradPhiRhoMinusApproxRhoElectroQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &rhoAtomsQuadsSeparate);
-
 
     void
     FNonlinearCoreCorrectionGammaAtomsElementalContribution(
@@ -709,16 +633,16 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &rhoOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradRhoOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -741,49 +665,18 @@ namespace dftfe
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoTotalOutValuesLpsp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesElectro,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradRhoTotalOutValuesElectroLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
-
-    void
-    computeStressSpinPolarizedEEshelbyEPSPEnlEk(
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   eigenDofHandlerIndex,
-      const unsigned int                   smearedChargeQuadratureId,
-      const unsigned int                   lpspQuadratureIdElectro,
-      const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectro,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesElectroLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &pseudoVLocAtomsElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &                                              hessianRhoCoreAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void addEPSPStressContribution(

@@ -318,7 +318,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBins(
-    const dealii::MatrixFree<3, double> &    matrix_free_data,
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                                      basisOperationsPtr,
     const unsigned int                       offset,
     const unsigned int                       matrixFreeQuadratureIdAX,
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
@@ -342,6 +345,7 @@ namespace dftfe
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
   {
+    auto matrix_free_data = basisOperationsPtr->matrixFreeData();
     if (!isVselfPerturbationSolve)
       d_binsImages = d_bins;
     smearedChargeScaling.clear();
@@ -432,7 +436,7 @@ namespace dftfe
       d_vselfFieldPerturbedBins.resize(numberBins);
 
     std::map<dealii::CellId, std::vector<double>> bQuadValuesBin;
-    std::map<dealii::CellId, std::vector<double>> dummy;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
 
     distributedCPUVec<double>              vselfBinScratch;
     std::vector<distributedCPUVec<double>> vselfDerRBinScratch(3);
@@ -583,7 +587,7 @@ namespace dftfe
         //
         if (useSmearedCharges)
           vselfSolverProblem.reinit(
-            matrix_free_data,
+            basisOperationsPtr,
             vselfBinScratch,
             d_vselfBinConstraintMatrices[4 * iBin],
             constraintMatrixIdVself,
@@ -603,7 +607,7 @@ namespace dftfe
             false,
             true);
         else
-          vselfSolverProblem.reinit(matrix_free_data,
+          vselfSolverProblem.reinit(basisOperationsPtr,
                                     vselfBinScratch,
                                     d_vselfBinConstraintMatrices[4 * iBin],
                                     constraintMatrixIdVself,
@@ -643,7 +647,7 @@ namespace dftfe
               // call the poisson solver to compute vSelf in current bin
               //
               vselfSolverProblem.reinit(
-                matrix_free_data,
+                basisOperationsPtr,
                 vselfDerRBinScratch[idim],
                 d_vselfBinConstraintMatrices[4 * iBin + idim + 1],
                 constraintMatrixIdVselfDerR[idim],
@@ -815,7 +819,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsDevice(
-    const dealii::MatrixFree<3, double> &    matrix_free_data,
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                                      basisOperationsPtr,
     const unsigned int                       mfBaseDofHandlerIndex,
     const unsigned int                       matrixFreeQuadratureIdAX,
     const unsigned int                       offset,
@@ -841,6 +848,7 @@ namespace dftfe
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
   {
+    auto matrix_free_data = basisOperationsPtr->matrixFreeData();
     if (!isVselfPerturbationSolve)
       d_binsImages = d_bins;
     smearedChargeScaling.clear();
@@ -1620,10 +1628,13 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsPerturbedDomain(
-    const dealii::MatrixFree<3, double> &matrix_free_data,
-    const unsigned int                   mfBaseDofHandlerIndex,
-    const unsigned int                   matrixFreeQuadratureIdAX,
-    const unsigned int                   offset,
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                basisOperationsPtr,
+    const unsigned int mfBaseDofHandlerIndex,
+    const unsigned int matrixFreeQuadratureIdAX,
+    const unsigned int offset,
 #ifdef DFTFE_WITH_DEVICE
     operatorDFTDeviceClass &operatorMatrix,
 #endif
@@ -1635,6 +1646,7 @@ namespace dftfe
     const unsigned int                       smearedChargeQuadratureId,
     const bool                               useSmearedCharges)
   {
+    auto matrix_free_data = basisOperationsPtr->matrixFreeData();
     // dummy variables
     std::vector<std::vector<double>>              localVselfs;
     std::map<dealii::CellId, std::vector<double>> bQuadValuesAllAtoms;
@@ -1652,7 +1664,7 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParams.useDevice)
-      solveVselfInBinsDevice(matrix_free_data,
+      solveVselfInBinsDevice(basisOperationsPtr,
                              mfBaseDofHandlerIndex,
                              matrixFreeQuadratureIdAX,
                              offset,
@@ -1675,7 +1687,7 @@ namespace dftfe
                              useSmearedCharges,
                              true);
     else
-      solveVselfInBins(matrix_free_data,
+      solveVselfInBins(basisOperationsPtr,
                        offset,
                        matrixFreeQuadratureIdAX,
                        hangingPeriodicConstraintMatrix,
@@ -1696,7 +1708,7 @@ namespace dftfe
                        useSmearedCharges,
                        true);
 #else
-    solveVselfInBins(matrix_free_data,
+    solveVselfInBins(basisOperationsPtr,
                      offset,
                      matrixFreeQuadratureIdAX,
                      hangingPeriodicConstraintMatrix,

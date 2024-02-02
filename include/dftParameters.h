@@ -47,6 +47,7 @@ namespace dftfe
     std::string modelXCInputFile;
 
     double radiusAtomBall, mixingParameter;
+    bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       start_magnetization, absLinearSolverToleranceHelmholtz;
 
@@ -74,10 +75,11 @@ namespace dftfe
 
     std::string coordinatesGaussianDispFile;
 
-    double      outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
-    bool        autoAdaptBaseMeshSize;
-    double      meshSizeInnerBall, meshSizeOuterBall;
-    double      chebyshevTolerance, topfrac, kerkerParameter;
+    double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
+    bool   autoAdaptBaseMeshSize;
+    double meshSizeInnerBall, meshSizeOuterBall;
+    double chebyshevTolerance, topfrac, kerkerParameter, restaScreeningLength,
+      restaFermiWavevector;
     std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
 

@@ -18,6 +18,7 @@
 #include <headers.h>
 #include "constraintMatrixInfo.h"
 #include "dftParameters.h"
+#include "FEBasisOperations.h"
 #if defined(DFTFE_WITH_DEVICE)
 #  include <operatorDevice.h>
 #endif
@@ -122,7 +123,10 @@ namespace dftfe
      */
     void
     solveVselfInBins(
-      const dealii::MatrixFree<3, double> &    matrix_free_data,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                                      basisOperationsPtr,
       const unsigned int                       offset,
       const unsigned int                       matrixFreeQuadratureIdAX,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
@@ -165,7 +169,10 @@ namespace dftfe
      */
     void
     solveVselfInBinsDevice(
-      const dealii::MatrixFree<3, double> &    matrix_free_data,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                                      basisOperationsPtr,
       const unsigned int                       mfBaseDofHandlerIndex,
       const unsigned int                       matrixFreeQuadratureIdAX,
       const unsigned int                       offset,
@@ -201,10 +208,13 @@ namespace dftfe
      */
     void
     solveVselfInBinsPerturbedDomain(
-      const dealii::MatrixFree<3, double> &matrix_free_data,
-      const unsigned int                   mfBaseDofHandlerIndex,
-      const unsigned int                   matrixFreeQuadratureIdAX,
-      const unsigned int                   offset,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int mfBaseDofHandlerIndex,
+      const unsigned int matrixFreeQuadratureIdAX,
+      const unsigned int offset,
 #  ifdef DFTFE_WITH_DEVICE
       operatorDFTDeviceClass &operatorMatrix,
 #  endif

@@ -70,7 +70,7 @@ namespace dftfe
     //
     // solve for vself and compute Tr(XtHX)
     //
-    d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+    d_vselfBinsManager.solveVselfInBins(d_basisOperationsPtrElectroHost,
                                         d_binsStartDofHandlerIndexElectro,
                                         d_phiTotAXQuadratureIdElectro,
                                         d_constraintsPRefined,
@@ -93,7 +93,7 @@ namespace dftfe
     // solve for potential corresponding to initial electron-density
     //
     phiTotalSolverProblem.reinit(
-      d_matrixFreeDataPRefined,
+      d_basisOperationsPtrElectroHost,
       d_phiTotRhoIn,
       *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
       d_phiTotDofHandlerIndexElectro,
@@ -102,27 +102,27 @@ namespace dftfe
       d_atomNodeIdToChargeMap,
       d_bQuadValuesAllAtoms,
       d_smearedChargeQuadratureIdElectro,
-      *rhoInValues,
+      d_densityInQuadValues[0],
       true,
       d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
         d_dftParamsPtr->periodicZ && !d_dftParamsPtr->pinnedNodeForPBC,
       d_dftParamsPtr->smearedNuclearCharges);
 
-    std::map<dealii::CellId, std::vector<double>> phiInValues;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      phiInValues;
 
     CGSolver.solve(phiTotalSolverProblem,
                    d_dftParamsPtr->absLinearSolverTolerance,
                    d_dftParamsPtr->maxLinearSolverIterations,
                    d_dftParamsPtr->verbosity);
 
-    std::map<dealii::CellId, std::vector<double>> dummy;
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
+    interpolateElectroNodalDataToQuadratureDataGeneral(
+      d_basisOperationsPtrElectroHost,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,
       phiInValues,
-      dummy,
       dummy);
 
     //
@@ -144,7 +144,7 @@ namespace dftfe
     //
     if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::LDA)
       {
-        kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
+        kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
                                              phiInValues,
                                              d_pseudoVLoc,
                                              d_rhoCore,
@@ -153,8 +153,8 @@ namespace dftfe
     else if (d_excManagerPtr->getDensityBasedFamilyType() ==
              densityFamilyType::GGA)
       {
-        kohnShamDFTEigenOperator.computeVEff(rhoInValues.get(),
-                                             gradRhoInValues.get(),
+        kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
+                                             d_gradDensityInQuadValues,
                                              phiInValues,
                                              d_pseudoVLoc,
                                              d_rhoCore,

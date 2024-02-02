@@ -35,7 +35,7 @@ namespace dftfe
         "WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS",
         "false",
         dealii::Patterns::Bool(),
-        "[Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.");
+        R"([Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.)");
 
       prm.declare_entry(
         "REPRODUCIBLE OUTPUT",
@@ -81,13 +81,13 @@ namespace dftfe
           "SUBSPACE ROT FULL CPU MEM",
           "true",
           dealii::Patterns::Bool(),
-          "[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.");
+          R"([Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.)");
 
         prm.declare_entry(
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           dealii::Patterns::Bool(),
-          "[Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
+          R"([Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is either compiled with NVIDIA NCCL library or withGPUAwareMPI=ON. Both these routes require GPU Aware MPI library to be available as well relevant hardware. If both NVIDIA NCCL library and withGPUAwareMPI modes are toggled on, the NCCL mode takes precedence. Also note that one MPI rank per GPU can be used when using this option. Default: false.)");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -109,13 +109,13 @@ namespace dftfe
           "WRITE WFC FE MESH",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
+          R"([Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY FE MESH",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
+          R"([Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.)");
 
         prm.declare_entry(
           "WRITE DENSITY QUAD DATA",
@@ -140,7 +140,7 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.");
+          R"([Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.)");
 
         prm.declare_entry(
           "READ ATOMIC WFC PDOS FROM PSP FILE",
@@ -180,7 +180,7 @@ namespace dftfe
           "MPI ALLREDUCE BLOCK SIZE",
           "100.0",
           dealii::Patterns::Double(0),
-          "[Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
+          R"([Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.)");
 
         prm.declare_entry(
           "BAND PARAL OPT",
@@ -625,13 +625,13 @@ namespace dftfe
           "PSEUDOPOTENTIAL FILE NAMES LIST",
           "",
           dealii::Patterns::Anything(),
-          "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
+          R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
 
         prm.declare_entry(
           "EXCHANGE CORRELATION TYPE",
           "1",
           dealii::Patterns::Integer(1, 8),
-          "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), 6(ML-XC NNLDA: LDA-PW + NN), 7(ML-XC NNGGA: GGA-PBE + NN). Caution: options 6-7 are experimental and only accessible to the DFT-FE developers currently.");
+          R"([Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), 6(ML-XC NNLDA: LDA-PW + NN), 7(ML-XC NNGGA: GGA-PBE + NN). Caution: options 6-7 are experimental and only accessible to the DFT-FE developers currently.)");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
@@ -740,16 +740,34 @@ namespace dftfe
           "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
+          "ADAPT ANDERSON MIXING PARAMETER",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Boolean parameter specifying whether to adapt the Anderson mixing parameter based on algorithm 1 in [CPC. 292, 108865 (2023)].");
+
+        prm.declare_entry(
           "KERKER MIXING PARAMETER",
           "0.05",
           dealii::Patterns::Double(0.0, 1000.0),
-          "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).");
+          R"([Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).)");
+
+        prm.declare_entry(
+          "RESTA SCREENING LENGTH",
+          "6.61",
+          dealii::Patterns::Double(0.0, 1000.0),
+          "[Standard] Screening length estimate (in Bohr) to be used in the Resta preconditioner.");
+
+        prm.declare_entry(
+          "RESTA FERMI WAVEVECTOR",
+          "5.81",
+          dealii::Patterns::Double(0.0, 1000.0),
+          R"([Standard] Fermi wavevector estimate (in Bohr\^-1) to be used in the Resta preconditioner.)");
 
         prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
           dealii::Patterns::Selection(
-            "ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_DIELECM_PRECOND"),
+            "ANDERSON|ANDERSON_WITH_KERKER|ANDERSON_WITH_RESTA|LOW_RANK_DIELECM_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -778,7 +796,7 @@ namespace dftfe
             "METHOD SUB TYPE",
             "ADAPTIVE",
             dealii::Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.");
+            R"([Advanced] Method subtype for LOW\_RANK\_DIELECM\_PRECOND.)");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
@@ -797,7 +815,7 @@ namespace dftfe
             "BETA TOL",
             "0.1",
             dealii::Patterns::Double(0.0),
-            "[Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.");
+            R"([Advanced] Sets tolerance on deviation of linear indicator value from the ideal value of 1.0. For METHOD SUB TYPE=ACCUMULATED\_ADAPTIVE.)");
 
           prm.declare_entry(
             "POISSON SOLVER ABS TOL",
@@ -1514,11 +1532,15 @@ namespace dftfe
       selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
       mixingHistory                 = prm.get_integer("MIXING HISTORY");
       mixingParameter               = prm.get_double("MIXING PARAMETER");
-      kerkerParameter               = prm.get_double("KERKER MIXING PARAMETER");
-      mixingMethod                  = prm.get("MIXING METHOD");
-      constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
-      startingWFCType               = prm.get("STARTING WFC");
-      computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
+      adaptAndersonMixingParameter =
+        prm.get_bool("ADAPT ANDERSON MIXING PARAMETER");
+      kerkerParameter         = prm.get_double("KERKER MIXING PARAMETER");
+      restaFermiWavevector    = prm.get_double("RESTA FERMI WAVEVECTOR");
+      restaScreeningLength    = prm.get_double("RESTA SCREENING LENGTH");
+      mixingMethod            = prm.get("MIXING METHOD");
+      constraintMagnetization = prm.get_bool("CONSTRAINT MAGNETIZATION");
+      startingWFCType         = prm.get("STARTING WFC");
+      computeEnergyEverySCF   = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
       prm.enter_subsection("LOW RANK DIELECM PRECOND");
       {
@@ -1682,11 +1704,6 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: Implementation of this feature is not completed yet."));
 
-    if (spinPolarized == 1 && mixingMethod == "ANDERSON_WITH_KERKER")
-      AssertThrow(
-        false,
-        dealii::ExcMessage(
-          "DFT-FE Error: Implementation of this feature is not completed yet."));
     if (spinPolarized == 1 &&
         (extrapolateDensity >= 1 || reuseDensityGeoOpt == 2))
       AssertThrow(
@@ -1936,7 +1953,8 @@ namespace dftfe
           chebyshevTolerance = 1.0e+4;
         else if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           chebyshevTolerance = 2.0e-3;
-        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+        else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
+                 mixingMethod == "ANDERSON_WITH_RESTA")
           chebyshevTolerance = 1.0e-2;
         else if (solverMode != "NSCF")
           chebyshevTolerance = 5.0e-2;
@@ -1946,7 +1964,8 @@ namespace dftfe
       {
         if (mixingMethod == "LOW_RANK_DIELECM_PRECOND")
           mixingParameter = 0.5;
-        else if (mixingMethod == "ANDERSON_WITH_KERKER")
+        else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
+                 mixingMethod == "ANDERSON_WITH_RESTA")
           mixingParameter = 0.5;
         else
           mixingParameter = 0.2;

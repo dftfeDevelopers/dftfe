@@ -19,7 +19,7 @@
 #include <dftd.h>
 #include <excManager.h>
 #include "dftParameters.h"
-
+#include <FEBasisOperations.h>
 #ifndef energyCalculator_H_
 #  define energyCalculator_H_
 
@@ -93,114 +93,19 @@ namespace dftfe
      */
     double
     computeEnergy(
-      const dealii::DoFHandler<3> &           dofHandlerElectrostatic,
-      const dealii::DoFHandler<3> &           dofHandlerElectronic,
-      const dealii::Quadrature<3> &           quadratureElectrostatic,
-      const dealii::Quadrature<3> &           quadratureElectronic,
-      const dealii::Quadrature<3> &           quadratureSmearedCharge,
-      const dealii::Quadrature<3> &           quadratureLpsp,
-      const std::vector<std::vector<double>> &eigenValues,
-      const std::vector<double> &             kPointWeights,
-      const double                            fermiEnergy,
-      const excManager *                      excManagerPtr,
-      const dispersionCorrection &            dispersionCorr,
-      const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
-      const distributedCPUVec<double> &                    phiTotRhoOut,
-      const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectrostatic,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectrostaticLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoInValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::map<dealii::CellId, std::vector<unsigned int>>
-        &                                     smearedbNonTrivialAtomIds,
-      const std::vector<std::vector<double>> &localVselfs,
-      const std::map<dealii::CellId, std::vector<double>>
-        &pseudoValuesElectronic,
-      const std::map<dealii::CellId, std::vector<double>>
-        &pseudoValuesElectrostatic,
-      const std::map<dealii::types::global_dof_index, double>
-        &                atomElectrostaticNodeIdToChargeMap,
-      const unsigned int numberGlobalAtoms,
-      const unsigned int lowerBoundKindex,
-      const unsigned int scfConverged,
-      const bool         print,
-      const bool         smearedNuclearCharges = false) const;
-
-
-
-    /**
-     * Computes total energy of the spin polarized ksdft problem in the current
-     * state and also prints the individual components of the energy
-     *
-     * @param dofHandlerElectrostatic p refined DoFHandler object used for re-computing
-     * the electrostatic fields using the ground state electron density. If
-     * electrostatics is not recomputed on p refined mesh, use
-     * dofHandlerElectronic for this argument.
-     * @param dofHandlerElectronic DoFHandler object on which the electrostatics for the
-     * eigen solve are computed.
-     * @param quadratureElectrostatic qudarature object for dofHandlerElectrostatic.
-     * @param quadratureElectronic qudarature object for dofHandlerElectronic.
-     * @param eigenValues eigenValues for each k point.
-     * @param kPointWeights
-     * @param fermiEnergy
-     * @param fermiEnergyUp
-     * @param fermiEnergyDown
-     * @param funcX exchange functional object.
-     * @param funcC correlation functional object.
-     * @param phiTotRhoIn nodal vector field of total electrostatic potential using input
-     * electron density to an eigensolve. This vector field is based on
-     * dofHandlerElectronic.
-     * @param phiTotRhoOut nodal vector field of total electrostatic potential using output
-     * electron density to an eigensolve. This vector field is based on
-     * dofHandlerElectrostatic.
-     * @param rhoInValues cell quadrature data of input electron density to an eigensolve. This
-     * data must correspond to quadratureElectronic.
-     * @param rhoOutValues cell quadrature data of output electron density of an eigensolve. This
-     * data must correspond to quadratureElectronic.
-     * @param rhoOutValuesElectrostatic cell quadrature data of output electron density of an eigensolve
-     * evaluated on a p refined mesh. This data corresponds to
-     * quadratureElectrostatic.
-     * @param gradRhoInValues cell quadrature data of input gradient electron density
-     * to an eigensolve. This data must correspond to quadratureElectronic.
-     * @param gradRhoOutValues cell quadrature data of output gradient electron density
-     * of an eigensolve. This data must correspond to quadratureElectronic.
-     * @param rhoInValuesSpinPolarized cell quadrature data of input spin polarized
-     * electron density to an eigensolve. This data must correspond to
-     * quadratureElectronic.
-     * @param rhoOutValuesSpinPolarized cell quadrature data of output spin polarized
-     * electron density of an eigensolve. This data must correspond to
-     * quadratureElectronic.
-     * @param gradRhoInValuesSpinPolarized cell quadrature data of input gradient spin polarized
-     * electron density to an eigensolve. This data must correspond to
-     * quadratureElectronic.
-     * @param gradRhoOutValuesSpinPolarized cell quadrature data of output gradient spin polarized
-     * electron density of an eigensolve. This data must correspond to
-     * quadratureElectronic.
-     * @param localVselfs peak vselfs of local atoms in each vself bin
-     * @param atomElectrostaticNodeIdToChargeMap map between locally processor atom global node ids
-     * of dofHandlerElectrostatic to atom charge value.
-     * @param numberGlobalAtoms
-     * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
-     * @param if scf is converged
-     * @param print
-     *
-     * @return total energy
-     */
-    double
-    computeEnergySpinPolarized(
-      const dealii::DoFHandler<3> &           dofHandlerElectrostatic,
-      const dealii::DoFHandler<3> &           dofHandlerElectronic,
-      const dealii::Quadrature<3> &           quadratureElectrostatic,
-      const dealii::Quadrature<3> &           quadratureElectronic,
-      const dealii::Quadrature<3> &           quadratureSmearedCharge,
-      const dealii::Quadrature<3> &           quadratureLpsp,
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        &basisOperationsPtr,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                                     basisOperationsPtrElectro,
+      const unsigned int                      densityQuadratureID,
+      const unsigned int                      densityQuadratureIDElectro,
+      const unsigned int                      smearedChargeQuadratureIDElectro,
+      const unsigned int                      lpspQuadratureIDElectro,
       const std::vector<std::vector<double>> &eigenValues,
       const std::vector<double> &             kPointWeights,
       const double                            fermiEnergy,
@@ -208,42 +113,94 @@ namespace dftfe
       const double                            fermiEnergyDown,
       const excManager *                      excManagerPtr,
       const dispersionCorrection &            dispersionCorr,
-      const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
-      const distributedCPUVec<double> &                    phiTotRhoOut,
-      const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>> &rhoOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectrostatic,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesElectrostaticLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoInValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoOutValues,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoInValuesSpinPolarized,
-      const std::map<dealii::CellId, std::vector<double>>
-        &rhoOutValuesSpinPolarized,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoInValuesSpinPolarized,
-      const std::map<dealii::CellId, std::vector<double>>
-        &gradRhoOutValuesSpinPolarized,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &phiTotRhoInValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                              phiTotRhoOutValues,
+      const distributedCPUVec<double> &phiTotRhoOut,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradDensityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradDensityOutValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                                                  rhoOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
       const std::map<dealii::CellId, std::vector<unsigned int>>
         &                                     smearedbNonTrivialAtomIds,
       const std::vector<std::vector<double>> &localVselfs,
-      const std::map<dealii::CellId, std::vector<double>>
-        &pseudoValuesElectronic,
-      const std::map<dealii::CellId, std::vector<double>>
-        &pseudoValuesElectrostatic,
+      const std::map<dealii::CellId, std::vector<double>> &pseudoLocValues,
       const std::map<dealii::types::global_dof_index, double>
         &                atomElectrostaticNodeIdToChargeMap,
       const unsigned int numberGlobalAtoms,
       const unsigned int lowerBoundKindex,
       const unsigned int scfConverged,
       const bool         print,
-      const bool         smearedNuclearCharges = false) const;
+      const bool         smearedNuclearCharges = false);
+
+
+    void
+    computeXCEnergyTermsSpinPolarized(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int quadratureId,
+      const excManager * excManagerPtr,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradDensityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  gradDensityOutValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
+      double &                                             exchangeEnergy,
+      double &                                             correlationEnergy,
+      double &excCorrPotentialTimesRho);
+
+    void
+    computeXCEnergyTerms(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int quadratureId,
+      const excManager * excManagerPtr,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradDensityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  gradDensityOutValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
+      double &                                             exchangeEnergy,
+      double &                                             correlationEnergy,
+      double &excCorrPotentialTimesRho);
 
 
     double

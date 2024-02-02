@@ -183,9 +183,10 @@ namespace dftfe
     typename MemoryStorage<ValueType, memorySpace>::reference
       MemoryStorage<ValueType, memorySpace>::operator[](const std::size_t i)
     {
-      throwException<InvalidArgument>(
-        memorySpace != dftfe::utils::MemorySpace::DEVICE,
-        "[] operator return reference to element not implemented for DEVICE");
+      // throwException<InvalidArgument>(
+      //   memorySpace != dftfe::utils::MemorySpace::DEVICE,
+      //   "[] operator return reference to element not implemented for
+      //   DEVICE");
       return d_data[i];
     }
 
@@ -194,9 +195,10 @@ namespace dftfe
       MemoryStorage<ValueType, memorySpace>::
       operator[](const std::size_t i) const
     {
-      throwException<InvalidArgument>(
-        memorySpace != dftfe::utils::MemorySpace::DEVICE,
-        "[] operator return const reference to element not implemented for DEVICE");
+      // throwException<InvalidArgument>(
+      //   memorySpace != dftfe::utils::MemorySpace::DEVICE,
+      //   "[] operator return const reference to element not implemented for
+      //   DEVICE");
       return d_data[i];
     }
 

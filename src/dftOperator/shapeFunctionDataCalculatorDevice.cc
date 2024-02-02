@@ -253,11 +253,13 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   double device_time = MPI_Wtime();
 
 
-  basisOperationsPtrDevice->reinit(0, 0, dftPtr->d_feOrderPlusOneQuadratureId);
+  d_basisOperationsPtrDevice->reinit(0,
+                                     0,
+                                     dftPtr->d_feOrderPlusOneQuadratureId);
   unsigned int numberQuadraturePointsPlusOne =
-    basisOperationsPtrDevice->nQuadsPerCell();
+    d_basisOperationsPtrDevice->nQuadsPerCell();
   shapeFuncDevice::computeShapeGradNINJIntegral(
-    basisOperationsPtrDevice,
+    d_basisOperationsPtrDevice,
     d_cellShapeFunctionGradientIntegralFlattenedDevice);
 
   dftfe::utils::deviceSynchronize();
@@ -275,10 +277,10 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       MPI_Barrier(d_mpiCommParent);
       device_time = MPI_Wtime();
 
-      dftPtr->basisOperationsPtrElectroDevice->reinit(
+      dftPtr->d_basisOperationsPtrElectroDevice->reinit(
         0, 0, dftPtr->d_phiTotAXQuadratureIdElectro);
       shapeFuncDevice::computeShapeGradNINJIntegral(
-        dftPtr->basisOperationsPtrElectroDevice,
+        dftPtr->d_basisOperationsPtrElectroDevice,
         d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
 
       dftfe::utils::deviceSynchronize();
@@ -306,7 +308,8 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
       std::vector<double> inverseJacobiansNLP(
         numberPhysicalCells * numberQuadraturePointsNLP * 3 * 3, 0.0);
       std::vector<double> shapeFunctionGradientValueNLPTransposed(
-        numberQuadraturePointsNLP * basisOperationsPtrHost->nDofsPerCell() * 3,
+        numberQuadraturePointsNLP * d_basisOperationsPtrHost->nDofsPerCell() *
+          3,
         0.0);
 
       auto cellPtr = dftPtr->matrix_free_data
@@ -342,7 +345,7 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                 const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
                   fe_valuesNLP.get_jacobians();
                 for (unsigned int iNode = 0;
-                     iNode < basisOperationsPtrHost->nDofsPerCell();
+                     iNode < d_basisOperationsPtrHost->nDofsPerCell();
                      ++iNode)
                   for (unsigned int q_point = 0;
                        q_point < numberQuadraturePointsNLP;
@@ -357,15 +360,18 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
                                              shape_grad_real);
 
                       shapeFunctionGradientValueNLPTransposed
-                        [q_point * basisOperationsPtrHost->nDofsPerCell() * 3 +
+                        [q_point * d_basisOperationsPtrHost->nDofsPerCell() *
+                           3 +
                          iNode] = shape_grad_reference[0];
                       shapeFunctionGradientValueNLPTransposed
-                        [q_point * basisOperationsPtrHost->nDofsPerCell() * 3 +
-                         basisOperationsPtrHost->nDofsPerCell() + iNode] =
+                        [q_point * d_basisOperationsPtrHost->nDofsPerCell() *
+                           3 +
+                         d_basisOperationsPtrHost->nDofsPerCell() + iNode] =
                           shape_grad_reference[1];
                       shapeFunctionGradientValueNLPTransposed
-                        [q_point * basisOperationsPtrHost->nDofsPerCell() * 3 +
-                         basisOperationsPtrHost->nDofsPerCell() * 2 + iNode] =
+                        [q_point * d_basisOperationsPtrHost->nDofsPerCell() *
+                           3 +
+                         d_basisOperationsPtrHost->nDofsPerCell() * 2 + iNode] =
                           shape_grad_reference[2];
                     }
               }

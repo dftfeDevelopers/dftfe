@@ -47,20 +47,22 @@ namespace dftfe
     const double                            fermiEnergyDown,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
-      &                                            basisOperationsPtr,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const unsigned int                             quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-    std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
-    const bool                                     isEvaluateGradRho,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &                               interpoolcomm,
-    const MPI_Comm &                               interBandGroupComm,
-    const dftParameters &                          dftParams,
-    const bool                                     spectrumSplit)
+      &                        basisOperationsPtr,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  gradDensityValues,
+    const bool           isEvaluateGradRho,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams,
+    const bool           spectrumSplit)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -556,77 +558,47 @@ namespace dftfe
                         interBandGroupComm);
       }
 
-    for (unsigned int iElem = 0; iElem < totalLocallyOwnedCells; ++iElem)
+    if (dftParams.spinPolarized == 1)
       {
-        const dealii::CellId cellid = basisOperationsPtr->cellID(iElem);
-
-        std::vector<double>  dummy(1);
-        std::vector<double> &tempRhoQuads = (*rhoValues)[cellid];
-        std::vector<double> &tempGradRhoQuads =
-          isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
-
-        std::vector<double> &tempRhoQuadsSP =
-          (dftParams.spinPolarized == 1) ? (*rhoValuesSpinPolarized)[cellid] :
-                                           dummy;
-        std::vector<double> &tempGradRhoQuadsSP =
-          ((dftParams.spinPolarized == 1) && isEvaluateGradRho) ?
-            (*gradRhoValuesSpinPolarized)[cellid] :
-            dummy;
-
-        if (dftParams.spinPolarized == 1)
+        densityValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
+        densityValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
+        std::transform(rhoHost.begin(),
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       densityValues[0].begin(),
+                       std::plus<>{});
+        std::transform(rhoHost.begin(),
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       densityValues[1].begin(),
+                       std::minus<>{});
+        if (isEvaluateGradRho)
           {
-            for (unsigned int q = 0; q < numQuadPoints; ++q)
-              {
-                const double rho0 = rhoHost[iElem * numQuadPoints + q];
-                const double rho1 =
-                  rhoHost[totalLocallyOwnedCells * numQuadPoints +
-                          iElem * numQuadPoints + q];
-                tempRhoQuadsSP[2 * q + 0] = rho0;
-
-                tempRhoQuadsSP[2 * q + 1] = rho1;
-                tempRhoQuads[q]           = rho0 + rho1;
-              }
-
-            if (isEvaluateGradRho)
-              for (unsigned int q = 0; q < numQuadPoints; ++q)
-                {
-                  const double gradRho0x =
-                    gradRhoHost[iElem * numQuadPoints * 3 + 3 * q];
-                  const double gradRho0y =
-                    gradRhoHost[iElem * numQuadPoints * 3 + 3 * q + 1];
-                  const double gradRho0z =
-                    gradRhoHost[iElem * numQuadPoints * 3 + 3 * q + 2];
-                  const double gradRho1x =
-                    gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
-                                iElem * numQuadPoints * 3 + 3 * q];
-                  const double gradRho1y =
-                    gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
-                                iElem * numQuadPoints * 3 + 3 * q + 1];
-                  const double gradRho1z =
-                    gradRhoHost[totalLocallyOwnedCells * numQuadPoints * 3 +
-                                iElem * numQuadPoints * 3 + 3 * q + 2];
-                  tempGradRhoQuadsSP[6 * q + 0] = gradRho0x;
-                  tempGradRhoQuadsSP[6 * q + 1] = gradRho0y;
-                  tempGradRhoQuadsSP[6 * q + 2] = gradRho0z;
-                  tempGradRhoQuadsSP[6 * q + 3] = gradRho1x;
-                  tempGradRhoQuadsSP[6 * q + 4] = gradRho1y;
-                  tempGradRhoQuadsSP[6 * q + 5] = gradRho1z;
-                  tempGradRhoQuads[3 * q]       = gradRho0x + gradRho1x;
-                  tempGradRhoQuads[3 * q + 1]   = gradRho0y + gradRho1y;
-                  tempGradRhoQuads[3 * q + 2]   = gradRho0z + gradRho1z;
-                }
+            gradDensityValues[0].resize(3 * totalLocallyOwnedCells *
+                                        numQuadPoints);
+            gradDensityValues[1].resize(3 * totalLocallyOwnedCells *
+                                        numQuadPoints);
+            std::transform(gradRhoHost.begin(),
+                           gradRhoHost.begin() +
+                             3 * totalLocallyOwnedCells * numQuadPoints,
+                           gradRhoHost.begin() +
+                             3 * totalLocallyOwnedCells * numQuadPoints,
+                           gradDensityValues[0].begin(),
+                           std::plus<>{});
+            std::transform(gradRhoHost.begin(),
+                           gradRhoHost.begin() +
+                             3 * totalLocallyOwnedCells * numQuadPoints,
+                           gradRhoHost.begin() +
+                             3 * totalLocallyOwnedCells * numQuadPoints,
+                           gradDensityValues[1].begin(),
+                           std::minus<>{});
           }
-        else
-          {
-            std::memcpy(tempRhoQuads.data(),
-                        rhoHost.data() + iElem * numQuadPoints,
-                        numQuadPoints * sizeof(double));
-
-            if (isEvaluateGradRho)
-              std::memcpy(tempGradRhoQuads.data(),
-                          gradRhoHost.data() + iElem * numQuadPoints * 3,
-                          3 * numQuadPoints * sizeof(double));
-          }
+      }
+    else
+      {
+        densityValues[0] = rhoHost;
+        if (isEvaluateGradRho)
+          gradDensityValues[0] = gradRhoHost;
       }
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
@@ -725,20 +697,22 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
-      &                                            basisOperationsPtrDevice,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const unsigned int                             quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-    std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
-    const bool                                     isEvaluateGradRho,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &                               interpoolcomm,
-    const MPI_Comm &                               interBandGroupComm,
-    const dftParameters &                          dftParams,
-    const bool                                     spectrumSplit);
+      &                        basisOperationsPtrDevice,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  gradDensityValues,
+    const bool           isEvaluateGradRho,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams,
+    const bool           spectrumSplit);
 #endif
 
   template void
@@ -757,18 +731,20 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-      &                                            basisOperationsPtr,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const unsigned int                             quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> *rhoValues,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-    std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
-    const bool                                     isEvaluateGradRho,
-    const MPI_Comm &                               mpiCommParent,
-    const MPI_Comm &                               interpoolcomm,
-    const MPI_Comm &                               interBandGroupComm,
-    const dftParameters &                          dftParams,
-    const bool                                     spectrumSplit);
+      &                        basisOperationsPtr,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  gradDensityValues,
+    const bool           isEvaluateGradRho,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams,
+    const bool           spectrumSplit);
 } // namespace dftfe

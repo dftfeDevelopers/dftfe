@@ -423,6 +423,20 @@ namespace dftfe
 
 
 
+      /**
+       * @brief Return the underlying deal.II matrixfree object.
+       */
+      const dealii::MatrixFree<3, ValueTypeBasisData> &
+      matrixFreeData() const;
+
+      /**
+       * @brief Return the underlying deal.II dofhandler object.
+       */
+      const dealii::DoFHandler<3> &
+      getDofHandler() const;
+
+
+
       std::vector<constraintInfoClass> d_constraintInfo;
       unsigned int                     d_nOMPThreads;
       std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>

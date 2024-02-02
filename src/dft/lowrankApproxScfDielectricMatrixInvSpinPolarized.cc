@@ -282,12 +282,7 @@ namespace dftfe
         }
 
       constraintsRhoNodal.set_zero(vVectorSpin0);
-
-      vVectorSpin0.update_ghost_values();
-
       constraintsRhoNodal.set_zero(vVectorSpin1);
-
-      vVectorSpin1.update_ghost_values();
 
       //
       // evaluate l2 norm
@@ -296,8 +291,6 @@ namespace dftfe
         std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
       vVectorSpin1 /=
         std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
-      vVectorSpin0.update_ghost_values();
-      vVectorSpin1.update_ghost_values();
       int iter = 0;
       while (diffLambdaAbs > tol)
         {
@@ -322,8 +315,6 @@ namespace dftfe
                                     vVectorSpin1 * vVectorSpin1);
           vVectorSpin1 /= std::sqrt(vVectorSpin0 * vVectorSpin0 +
                                     vVectorSpin1 * vVectorSpin1);
-          vVectorSpin0.update_ghost_values();
-          vVectorSpin1.update_ghost_values();
 
           diffLambdaAbs = std::abs(lambdaNew - lambdaOld);
           iter++;
@@ -377,12 +368,7 @@ namespace dftfe
         }
 
       constraintsRhoNodal.set_zero(vVectorSpin0);
-
-      vVectorSpin0.update_ghost_values();
-
       constraintsRhoNodal.set_zero(vVectorSpin1);
-
-      vVectorSpin1.update_ghost_values();
 
       //
       // evaluate l2 norm
@@ -391,8 +377,6 @@ namespace dftfe
         std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
       vVectorSpin1 /=
         std::sqrt(vVectorSpin0 * vVectorSpin0 + vVectorSpin1 * vVectorSpin1);
-      vVectorSpin0.update_ghost_values();
-      vVectorSpin1.update_ghost_values();
       int iter = 0;
       while (diffLambdaAbs > tol)
         {
@@ -417,8 +401,6 @@ namespace dftfe
                                     vVectorSpin1 * vVectorSpin1);
           vVectorSpin1 /= std::sqrt(vVectorSpin0 * vVectorSpin0 +
                                     vVectorSpin1 * vVectorSpin1);
-          vVectorSpin0.update_ghost_values();
-          vVectorSpin1.update_ghost_values();
 
           diffLambdaAbs = std::abs(lambdaNew - lambdaOld);
           iter++;
@@ -446,28 +428,35 @@ namespace dftfe
     double normValue = 0.0;
 
     distributedCPUVec<double> residualRho, residualRhoSpin0, residualRhoSpin1;
-    residualRho.reinit(d_rhoInNodalValues);
-    residualRhoSpin0.reinit(d_rhoInNodalValues);
-    residualRhoSpin1.reinit(d_rhoInNodalValues);
+    residualRho.reinit(d_densityInNodalValues[0]);
+    residualRhoSpin0.reinit(d_densityInNodalValues[0]);
+    residualRhoSpin1.reinit(d_densityInNodalValues[0]);
 
     residualRho      = 0.0;
     residualRhoSpin0 = 0.0;
     residualRhoSpin1 = 0.0;
 
     // compute residual = rhoOut - rhoIn
-    residualRho.add(1.0, d_rhoOutNodalValues, -1.0, d_rhoInNodalValues);
-    residualRhoSpin0.add(1.0,
-                         d_rhoOutSpin0NodalValues,
-                         -1.0,
-                         d_rhoInSpin0NodalValues);
-    residualRhoSpin1.add(1.0,
-                         d_rhoOutSpin1NodalValues,
-                         -1.0,
-                         d_rhoInSpin1NodalValues);
-
-    residualRho.update_ghost_values();
-    residualRhoSpin0.update_ghost_values();
-    residualRhoSpin1.update_ghost_values();
+    residualRho.add(1.0,
+                    d_densityOutNodalValues[0],
+                    -1.0,
+                    d_densityInNodalValues[0]);
+    residualRhoSpin0.add(0.5,
+                         d_densityOutNodalValues[0],
+                         0.5,
+                         d_densityOutNodalValues[1]);
+    residualRhoSpin0.add(-0.5,
+                         d_densityInNodalValues[0],
+                         -0.5,
+                         d_densityInNodalValues[1]);
+    residualRhoSpin1.add(0.5,
+                         d_densityOutNodalValues[0],
+                         -0.5,
+                         d_densityOutNodalValues[1]);
+    residualRhoSpin1.add(-0.5,
+                         d_densityInNodalValues[0],
+                         0.5,
+                         d_densityInNodalValues[1]);
 
     // compute l2 norm of the field residual
     normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
@@ -577,13 +566,13 @@ namespace dftfe
         d_fvSpin1containerVals.push_back(residualRhoSpin1);
         d_fvSpin1containerVals[d_rankCurrentLRD] = 0;
 
-        for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
+        for (unsigned int idof = 0;
+             idof < tempDensityPrimeTotalVec.local_size();
              idof++)
           tempDensityPrimeTotalVec.local_element(idof) =
             d_vSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
             d_vSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
-        tempDensityPrimeTotalVec.update_ghost_values();
         charge =
           totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
@@ -600,13 +589,13 @@ namespace dftfe
         // d_constraintsRhoNodal.set_zero(d_vSpin0containerVals[d_rankCurrentLRD]);
         // d_constraintsRhoNodal.set_zero(d_vSpin1containerVals[d_rankCurrentLRD]);
 
-        for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
+        for (unsigned int idof = 0;
+             idof < tempDensityPrimeTotalVec.local_size();
              idof++)
           tempDensityPrimeTotalVec.local_element(idof) =
             d_vSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
             d_vSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
-        tempDensityPrimeTotalVec.update_ghost_values();
         charge =
           totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
@@ -622,13 +611,13 @@ namespace dftfe
           d_fvSpin0containerVals[d_rankCurrentLRD],
           d_fvSpin1containerVals[d_rankCurrentLRD]);
 
-        for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
+        for (unsigned int idof = 0;
+             idof < tempDensityPrimeTotalVec.local_size();
              idof++)
           tempDensityPrimeTotalVec.local_element(idof) =
             d_fvSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
             d_fvSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
-        tempDensityPrimeTotalVec.update_ghost_values();
         charge =
           totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
@@ -642,13 +631,13 @@ namespace dftfe
         d_fvSpin1containerVals[d_rankCurrentLRD].add(-charge / d_domainVolume /
                                                      2.0);
 
-        for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size();
+        for (unsigned int idof = 0;
+             idof < tempDensityPrimeTotalVec.local_size();
              idof++)
           tempDensityPrimeTotalVec.local_element(idof) =
             d_fvSpin0containerVals[d_rankCurrentLRD].local_element(idof) +
             d_fvSpin1containerVals[d_rankCurrentLRD].local_element(idof);
 
-        tempDensityPrimeTotalVec.update_ghost_values();
         charge =
           totalCharge(d_matrixFreeDataPRefined, tempDensityPrimeTotalVec);
 
@@ -775,47 +764,25 @@ namespace dftfe
       pcout << " Preconditioned mixing step, mixing constant: " << const2
             << std::endl;
 
-    d_rhoInSpin0NodalValues.add(const2, kernelActionSpin0);
-    d_rhoInSpin1NodalValues.add(const2, kernelActionSpin1);
+    d_densityInNodalValues[0].add(const2,
+                                  kernelActionSpin0,
+                                  const2,
+                                  kernelActionSpin1);
+    d_densityInNodalValues[1].add(const2,
+                                  kernelActionSpin0,
+                                  -const2,
+                                  kernelActionSpin1);
 
-    d_rhoInSpin0NodalValues.update_ghost_values();
-    d_rhoInSpin1NodalValues.update_ghost_values();
-
-    interpolateRhoSpinNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
-      d_densityDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_rhoInSpin0NodalValues,
-      d_rhoInSpin1NodalValues,
-      *rhoInValuesSpinPolarized,
-      *gradRhoInValuesSpinPolarized,
-      *gradRhoInValuesSpinPolarized,
-      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
-
-    // push the rhoIn to deque storing the history of nodal values
-    d_rhoInSpin0NodalVals.push_back(d_rhoInSpin0NodalValues);
-    d_rhoInSpin1NodalVals.push_back(d_rhoInSpin1NodalValues);
-
-    for (unsigned int idof = 0; idof < d_rhoInNodalValues.local_size(); idof++)
-      d_rhoInNodalValues.local_element(idof) =
-        d_rhoInSpin0NodalValues.local_element(idof) +
-        d_rhoInSpin1NodalValues.local_element(idof);
-
-    d_rhoInNodalValues.update_ghost_values();
-
-    // interpolate nodal data to quadrature data
-    interpolateRhoNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
-      d_densityDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_rhoInNodalValues,
-      *rhoInValues,
-      *gradRhoInValues,
-      *gradRhoInValues,
-      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
-
-    // push the rhoIn to deque storing the history of nodal values
-    d_rhoInNodalVals.push_back(d_rhoInNodalValues);
+    for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
+      interpolateDensityNodalDataToQuadratureDataGeneral(
+        d_basisOperationsPtrElectroHost,
+        d_densityDofHandlerIndexElectro,
+        d_densityQuadratureIdElectro,
+        d_densityInNodalValues[iComp],
+        d_densityInQuadValues[iComp],
+        d_gradDensityInQuadValues[iComp],
+        d_gradDensityInQuadValues[iComp],
+        d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

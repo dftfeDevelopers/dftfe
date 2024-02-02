@@ -128,10 +128,9 @@ SET(TARGET_SRC
   ./src/dft/initUnmovedTriangulation.cc
   ./src/dft/kohnShamEigenSolve.cc
   ./src/dft/localizationLength.cc
-  ./src/dft/mixingschemes.cc
   ./src/dft/moveAtoms.cc
   ./src/dft/moveMeshToAtoms.cc
-  ./src/dft/nodalDensityMixingSchemes.cc
+  ./src/dft/kerker.cc
   ./src/dft/pRefinedDoFHandler.cc
   ./src/dft/psiInitialGuess.cc
   ./src/dft/publicMethods.cc
@@ -142,7 +141,6 @@ SET(TARGET_SRC
   ./src/dft/computeOutputDensityDirectionalDerivative.cc
   ./src/force/configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc
-  ./src/force/configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FnlGammaElementalContribution.cc
   ./src/force/configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc
