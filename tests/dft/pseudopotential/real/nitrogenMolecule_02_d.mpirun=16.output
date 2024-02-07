@@ -1,6 +1,11 @@
 Restarting Optimization using saved data.
 number of atoms: 2
 number of atoms types: 1
+Z:7
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 10
+=============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
@@ -23,10 +28,6 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 Reading initial guess for electron-density.....
 
 Setting initial guess for wavefunctions....
-=============================================================================================================================
-number of electrons: 10
-number of eigen values: 10
-=============================================================================================================================
 
 Reading initial guess for electron-density.....
 
@@ -40,10 +41,6 @@ FE interpolating polynomial order for nodal electron density computation: 5
 number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
-=============================================================================================================================
-number of electrons: 10
-number of eigen values: 10
-=============================================================================================================================
 
 Reading initial guess for electron-density.....
 
@@ -58,8 +55,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.039749,0.000000,0.000000
-AtomId    1:  0.039749,0.000000,0.000000
+AtomId    0:  0.039750,0.000000,0.000000
+AtomId    1:  0.039750,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -80,10 +77,10 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.89423786
+             Total energy:         -19.89423785
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
 AtomId    0:  0.004861,0.000000,0.000000
-AtomId    1:  0.004868,0.000000,0.000000
+AtomId    1:  0.004869,0.000000,0.000000
 --------------------------------------------------------------------------------------------

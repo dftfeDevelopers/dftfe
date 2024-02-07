@@ -6,14 +6,19 @@ Finishing files search
 scfRestartFlag: 1
 number of atoms: 2
 number of atoms types: 1
+Z:7
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 10
+=============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.296487547812728458e+00 5.365505196105912339e-03 5.261733092969698988e-03
-AtomId 1:  1.296487534995906410e+00 -5.365505186512697228e-03 -5.261733078048498428e-03
+AtomId 0:  -1.296487328264226191e+00 5.365505101184674802e-03 5.261732997562832553e-03
+AtomId 1:  1.296487640120558504e+00 -5.365505125989161392e-03 -5.261733025434332800e-03
 -----------------------------------------------------------------------------------------
 Reading tria info and rho data from checkpoint in progress...
 ...Reading from checkpoint done.
@@ -28,10 +33,6 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
-=============================================================================================================================
-number of electrons: 10
-number of eigen values: 10
-=============================================================================================================================
 
 Reading initial guess for electron-density.....
 
@@ -45,11 +46,11 @@ SCF iterations converged to the specified tolerance after: 4 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841161
+             Total energy:         -19.78841164
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290497,0.001038,0.001018
+AtomId    0:  0.290496,0.001038,0.001018
 AtomId    1:  0.290492,0.001038,0.001018
 --------------------------------------------------------------------------------------------
 ---------------MDNVE() called------------------ 
@@ -72,7 +73,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79364553
+             Total energy:         -19.79364559
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -80,7 +81,7 @@ AtomId    0:  0.289416,0.001557,0.001527
 AtomId    1:  0.289416,0.001557,0.001527
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 3 ------------------ 
- Temperature from velocities: 1829.43
+ Temperature from velocities: 1829.44
  Total Energy in Ha at timeIndex -19.78496
 
 Finite element mesh information
@@ -97,18 +98,18 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.80164620
+             Total energy:         -19.80164629
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.287151,0.002070,0.002030
-AtomId    1:  0.287151,0.002070,0.002030
+AtomId    0:  0.287148,0.002070,0.002030
+AtomId    1:  0.287148,0.002070,0.002030
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 4 ------------------ 
- Temperature from velocities: 3511.55
+ Temperature from velocities: 3511.56
  Total Energy in Ha at timeIndex -19.78497
 ---MD run completed successfully---

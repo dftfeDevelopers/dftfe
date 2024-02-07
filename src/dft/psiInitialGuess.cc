@@ -561,11 +561,12 @@ namespace dftfe
                            iWave < d_numEigenValues;
                            ++iWave)
                         {
-                          double z = (-0.5 + (randomIntGenerator() -
-                                              randomIntGenerator.min()) /
-                                               (randomIntGenerator.max() -
-                                                randomIntGenerator.min())) *
-                                     3.0;
+                          double z =
+                            (-0.5 + ((double)randomIntGenerator() -
+                                     (double)randomIntGenerator.min()) /
+                                      ((double)randomIntGenerator.max() -
+                                       (double)randomIntGenerator.min())) *
+                            3.0;
                           double value = boost::math::pdf(normDist, z);
                           if (randomIntGenerator() % 2 == 0)
                             value = -1.0 * value;

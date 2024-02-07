@@ -1,5 +1,10 @@
 number of atoms: 2
 number of atoms types: 1
+Z:36
+=============================================================================================================================
+number of electrons: 16
+number of eigen values: 28
+=============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 4.000000000000000000e+01 0.000000000000000000e+00
@@ -20,10 +25,6 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
-=============================================================================================================================
-number of electrons: 16
-number of eigen values: 28
-=============================================================================================================================
 
 Reading initial guess for electron-density.....
 
@@ -32,7 +33,7 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 8 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -40,8 +41,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004761,0.000000,0.000000
-AtomId    1:  0.004761,0.000000,0.000000
+AtomId    0:  0.004720,0.000000,0.000000
+AtomId    1:  0.004720,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -58,16 +59,16 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 20 iterations.
+SCF iterations converged to the specified tolerance after: 19 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85746366
+             Total energy:         -41.85746330
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004626,0.000000,0.000000
-AtomId    1:  0.004626,0.000000,0.000000
+AtomId    0:  0.004600,0.000000,0.000000
+AtomId    1:  0.004600,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -84,40 +85,14 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 13 iterations.
+SCF iterations converged to the specified tolerance after: 16 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -41.85766310
+             Total energy:         -41.85839089
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.004047,0.000000,0.000000
-AtomId    1:  0.004047,0.000000,0.000000
---------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 1408
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 46693
--------------------------------------------------
-
-Pseudopotential initalization....
-
-Reading data for core electron-density to be used in nonlinear core-correction.....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 13 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -41.85839636
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.000641,0.000000,0.000000
-AtomId    1:  0.000642,0.000000,0.000000
+AtomId    0:  0.000695,0.000000,0.000000
+AtomId    1:  0.000695,0.000000,0.000000
 --------------------------------------------------------------------------------------------

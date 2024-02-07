@@ -32,6 +32,7 @@ subsection DFT functional parameters
 end
 subsection SCF parameters
   set TEMPERATURE                      = 500
+  set STARTING WFC=ATOMIC
 end
 
 subsection Finite element mesh parameters
