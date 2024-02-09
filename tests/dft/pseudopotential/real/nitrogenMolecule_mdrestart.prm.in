@@ -60,7 +60,8 @@ subsection SCF parameters
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
-  
+  set STARTING WFC=ATOMIC
+
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
